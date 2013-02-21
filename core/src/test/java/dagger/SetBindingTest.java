@@ -27,6 +27,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static dagger.Provides.Type.SET;
 import static org.fest.assertions.Assertions.assertThat;
@@ -34,6 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+@RunWith(JUnit4.class)
 public final class SetBindingTest {
   @Test public void multiValueBindings_SingleModule() {
     class TestEntryPoint {

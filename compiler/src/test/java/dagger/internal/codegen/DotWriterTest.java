@@ -18,9 +18,12 @@ package dagger.internal.codegen;
 import java.io.IOException;
 import java.io.StringWriter;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+@RunWith(JUnit4.class)
 public final class DotWriterTest {
   private final StringWriter stringWriter = new StringWriter();
   private final DotWriter dotWriter = new DotWriter(stringWriter);

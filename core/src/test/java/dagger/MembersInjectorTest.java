@@ -19,6 +19,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -27,6 +29,7 @@ import static org.junit.Assert.fail;
  * Tests MembersInjector injection, and how object graph features interact with
  * types unconstructable types (types that support members injection only).
  */
+@RunWith(JUnit4.class)
 public final class MembersInjectorTest {
   @Test public void injectMembers() {
     class TestEntryPoint {

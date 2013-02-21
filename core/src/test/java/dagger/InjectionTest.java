@@ -26,11 +26,14 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnit4.class)
 public final class InjectionTest {
   @Test public void basicInjection() {
     class TestEntryPoint {
@@ -497,10 +500,11 @@ public final class InjectionTest {
     }
   }
 
-  @Test public void noConstructorInjectionsForClassesWithTypeParameters() {
-    class Parameterized<T> {
+  static class Parameterized<T> {
       @Inject String string;
     }
+
+  @Test public void noConstructorInjectionsForClassesWithTypeParameters() {
 
     class TestEntryPoint {
       @Inject Parameterized<Long> parameterized;

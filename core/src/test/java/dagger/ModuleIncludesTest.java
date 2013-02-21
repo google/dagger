@@ -17,10 +17,13 @@ package dagger;
 
 import javax.inject.Inject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnit4.class)
 public final class ModuleIncludesTest {
   static class TestEntryPoint {
     @Inject String s;
@@ -73,9 +76,6 @@ public final class ModuleIncludesTest {
   }
 
   @Test public void childModuleWithBinding() {
-    class TestEntryPoint {
-      @Inject String s;
-    }
 
     @Module(
         entryPoints = TestEntryPoint.class,
@@ -95,9 +95,6 @@ public final class ModuleIncludesTest {
   }
 
   @Test public void childModuleWithChildModule() {
-    class TestEntryPoint {
-      @Inject String s;
-    }
 
     @Module(
         entryPoints = TestEntryPoint.class,
@@ -138,9 +135,6 @@ public final class ModuleIncludesTest {
   }
 
   @Test public void childModuleWithManualConstruction() {
-    class TestEntryPoint {
-      @Inject String s;
-    }
 
     @Module(
         entryPoints = TestEntryPoint.class,

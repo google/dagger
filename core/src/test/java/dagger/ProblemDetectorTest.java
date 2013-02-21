@@ -17,9 +17,12 @@ package dagger;
 
 import javax.inject.Inject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.fail;
 
+@RunWith(JUnit4.class)
 public final class ProblemDetectorTest {
   @Test public void atInjectCircularDependenciesDetected() {
     class TestEntryPoint {

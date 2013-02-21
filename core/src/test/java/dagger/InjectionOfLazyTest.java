@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -27,6 +29,7 @@ import static org.junit.Assert.assertNull;
 /**
  * Tests of injection of Lazy<T> bindings.
  */
+@RunWith(JUnit4.class)
 public final class InjectionOfLazyTest {
   @Test public void lazyValueCreation() {
     final AtomicInteger counter = new AtomicInteger();

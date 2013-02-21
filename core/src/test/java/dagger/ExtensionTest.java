@@ -20,10 +20,13 @@ import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 
+@RunWith(JUnit4.class)
 public final class ExtensionTest {
   @Singleton
   static class A {

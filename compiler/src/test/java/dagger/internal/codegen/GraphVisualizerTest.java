@@ -21,9 +21,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Named;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+@RunWith(JUnit4.class)
 public final class GraphVisualizerTest {
   private final GraphVisualizer graphVisualizer = new GraphVisualizer();
 

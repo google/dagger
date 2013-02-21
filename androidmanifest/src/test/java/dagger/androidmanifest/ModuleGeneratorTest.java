@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -30,6 +32,7 @@ import static dagger.androidmanifest.ModuleGenerator.cleanActivityName;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnit4.class)
 public final class ModuleGeneratorTest {
   private final ModuleGenerator generator = new ModuleGenerator();
   private final StringWriter stringWriter = new StringWriter();

@@ -18,9 +18,12 @@ package dagger;
 import javax.inject.Inject;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+@RunWith(JUnit4.class)
 public final class InjectStaticsTest {
   @Before public void setUp() {
     InjectsOneField.staticField = null;

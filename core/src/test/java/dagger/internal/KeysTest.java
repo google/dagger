@@ -25,10 +25,13 @@ import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Provider;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static dagger.Provides.Type.SET;
 import static org.fest.assertions.Assertions.assertThat;
 
+@RunWith(JUnit4.class)
 public final class KeysTest {
   int primitive;
   @Test public void lonePrimitiveGetsBoxed() throws NoSuchFieldException {

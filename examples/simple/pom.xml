@@ -18,7 +18,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.dagger.example</groupId>
+    <groupId>com.google.dagger.example</groupId>
     <artifactId>dagger-example-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
@@ -28,12 +28,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.dagger</groupId>
+      <groupId>com.google.dagger</groupId>
       <artifactId>dagger</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.squareup.dagger</groupId>
+      <groupId>com.google.dagger</groupId>
       <artifactId>dagger-compiler</artifactId>
       <version>${project.version}</version>
       <optional>true</optional>

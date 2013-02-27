@@ -19,10 +19,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.dagger</groupId>
+    <groupId>com.google.dagger</groupId>
     <artifactId>dagger-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>dagger-compiler</artifactId>

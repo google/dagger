@@ -50,6 +50,10 @@ public final class ClassloadingPlugin implements Plugin {
       Constructor<?> constructor = generatedClass.getConstructor();
       constructor.setAccessible(true);
       return (T) constructor.newInstance();
+    } catch (NoClassDefFoundError e) {
+      throw new RuntimeException("Adapter loader could not find class " + name, e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Adapter loader could not find class " + name, e);
     } catch (Exception e) {
       throw new RuntimeException("Unexpected failure loading " + name, e);
     }

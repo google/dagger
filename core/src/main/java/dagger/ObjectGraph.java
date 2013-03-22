@@ -61,7 +61,6 @@ import static dagger.internal.RuntimeAggregatingPlugin.getAllModuleAdapters;
  * </ul>
  */
 public abstract class ObjectGraph {
-
   /**
    * Returns an instance of {@code type}.
    *
@@ -122,13 +121,48 @@ public abstract class ObjectGraph {
    * the graph at runtime.
    */
   public static ObjectGraph create(Object... modules) {
-    RuntimeAggregatingPlugin plugin = new RuntimeAggregatingPlugin(
-            new ClassloadingPlugin(), new ReflectivePlugin());
-    return DaggerObjectGraph.makeGraph(null, plugin, modules);
+    return ObjectGraph.with(new ClassloadingPlugin(), new ReflectivePlugin()).create(modules);
+  }
+
+  /**
+   * A creator of a root ObjectGraph, typically used in providing a root with an
+   * alternate plugin configuration.
+   */
+  public interface ObjectGraphCreator {
+    /**
+     * Returns a new dependency graph using the {@literal @}{@link
+     * Module}-annotated modules.
+     *
+     * <p>This <strong>does not</strong> inject any members. Most applications
+     * should call {@link #injectStatics} to inject static members and {@link
+     * #inject} or get {@link #get(Class)} to inject instance members when this
+     * method has returned.
+     *
+     * <p>This <strong>does not</strong> validate the graph. Rely on build time
+     * tools for graph validation, or call {@link #validate} to find problems in
+     * the graph at runtime.
+     */
+    ObjectGraph create(Object ... modules);
+  }
+
+  /**
+   * Returns a graph creator configured with an ordered list of {@link Plugin}s
+   * used to configure the graph it will create.
+   *
+   * By default, Dagger is configured with a plugin which loads its generated code,
+   * and then another which binds and loads things reflectively.  Environments
+   * such as GWT or a strict android app may wish to use no reflection.
+   */
+  public static ObjectGraphCreator with(Plugin ... plugins) {
+    final RuntimeAggregatingPlugin plugin = new RuntimeAggregatingPlugin(plugins);
+    return new ObjectGraphCreator() {
+      @Override public ObjectGraph create(Object ... modules) {
+        return DaggerObjectGraph.makeGraph(null, plugin, modules);
+      }
+    };
   }
 
   static class DaggerObjectGraph extends ObjectGraph {
-
     private final DaggerObjectGraph base;
     private final Linker linker;
     private final Map<Class<?>, StaticInjection> staticInjections;

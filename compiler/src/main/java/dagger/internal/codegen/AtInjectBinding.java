@@ -113,10 +113,12 @@ final class AtInjectBinding extends Binding<Object> {
   @Override public void attach(Linker linker) {
     String requiredBy = type.getQualifiedName().toString();
     for (int i = 0; i < keys.size(); i++) {
-      bindings[i] = linker.requestBinding(keys.get(i), requiredBy);
+      bindings[i] = linker.requestBinding(keys.get(i), requiredBy,
+          Thread.currentThread().getContextClassLoader());
     }
     if (supertypeKey != null) {
-      supertypeBinding = linker.requestBinding(supertypeKey, requiredBy, false, true);
+      supertypeBinding = linker.requestBinding(supertypeKey, requiredBy,
+          Thread.currentThread().getContextClassLoader(), false, true);
     }
   }
 

@@ -438,12 +438,14 @@ public final class ProvidesProcessor extends AbstractProcessor {
       writer.beginMethod("void", "attach", PUBLIC, Linker.class.getCanonicalName(), "linker");
       for (VariableElement parameter : parameters) {
         String parameterKey = GeneratorKeys.get(parameter);
-        writer.emitStatement("%s = (%s) linker.requestBinding(%s, %s.class)",
+        writer.emitStatement(
+            "%s = (%s) linker.requestBinding(%s, %s.class, %s.class.getClassLoader())",
             parameterName(parameter),
             writer.compressType(JavaWriter.type(Binding.class,
                 CodeGen.typeToString(parameter.asType()))),
             JavaWriter.stringLiteral(parameterKey),
-            writer.compressType(moduleType));
+            writer.compressType(moduleType),
+            className);
       }
       writer.endMethod();
 

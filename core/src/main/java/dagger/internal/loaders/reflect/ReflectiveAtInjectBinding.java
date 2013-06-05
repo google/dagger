@@ -37,6 +37,7 @@ import javax.inject.Singleton;
  */
 final class ReflectiveAtInjectBinding<T> extends Binding<T> {
   private final Field[] fields;
+  private final ClassLoader loader;
   private final Constructor<T> constructor;
   private final Class<?> supertype;
   private final String[] keys;
@@ -62,6 +63,7 @@ final class ReflectiveAtInjectBinding<T> extends Binding<T> {
     this.keys = keys;
     this.parameterBindings = new Binding<?>[parameterCount];
     this.fieldBindings = new Binding<?>[fields.length];
+    this.loader = type.getClassLoader();
   }
 
   @SuppressWarnings("unchecked") // We're careful to make keys and bindings match up.
@@ -69,21 +71,21 @@ final class ReflectiveAtInjectBinding<T> extends Binding<T> {
     int k = 0;
     for (int i = 0; i < fields.length; i++) {
       if (fieldBindings[i] == null) {
-        fieldBindings[i] = linker.requestBinding(keys[k], fields[i]);
+        fieldBindings[i] = linker.requestBinding(keys[k], fields[i], loader);
       }
       k++;
     }
     if (constructor != null) {
       for (int i = 0; i < parameterBindings.length; i++) {
         if (parameterBindings[i] == null) {
-          parameterBindings[i] = linker.requestBinding(keys[k], constructor);
+          parameterBindings[i] = linker.requestBinding(keys[k], constructor, loader);
         }
         k++;
       }
     }
     if (supertype != null && supertypeBinding == null) {
       supertypeBinding =
-          (Binding<? super T>) linker.requestBinding(keys[k], membersKey, false, true);
+          (Binding<? super T>) linker.requestBinding(keys[k], membersKey, loader, false, true);
     }
   }
 

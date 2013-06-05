@@ -17,8 +17,8 @@ package dagger.internal.loaders.reflect;
 
 import dagger.Module;
 import dagger.internal.Binding;
-import dagger.internal.ModuleAdapter;
 import dagger.internal.Loader;
+import dagger.internal.ModuleAdapter;
 import dagger.internal.StaticInjection;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -31,10 +31,12 @@ import javax.inject.Inject;
  */
 public final class ReflectiveLoader implements Loader {
   @Override public Binding<?> getAtInjectBinding(
-      String key, String className, boolean mustHaveInjections) {
+      String key, String className, ClassLoader cl, boolean mustHaveInjections) {
     Class<?> c;
     try {
-      c = Class.forName(className);
+      // Seriously.  The bootstrap classloader could be null?  Who thought this API up?
+      cl = (cl != null) ? cl : Thread.currentThread().getContextClassLoader();
+      c = cl.loadClass(className);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -70,6 +72,7 @@ public final class ReflectiveLoader implements Loader {
     if (fields.isEmpty()) {
       throw new IllegalArgumentException("No static injections: " + injectedClass.getName());
     }
-    return new ReflectiveStaticInjection(fields.toArray(new Field[fields.size()]));
+    return new ReflectiveStaticInjection(injectedClass.getClassLoader(),
+        fields.toArray(new Field[fields.size()]));
   }
 }

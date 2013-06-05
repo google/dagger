@@ -24,7 +24,6 @@ package dagger.internal;
 public interface Loader {
   /**
    * Returns a binding that uses {@code @Inject} annotations.
-   * @param cl
    */
   Binding<?> getAtInjectBinding(
       String key, String className, ClassLoader cl, boolean mustHaveInjections);

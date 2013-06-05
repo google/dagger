@@ -259,7 +259,7 @@ public abstract class ObjectGraph {
     }
 
     /**
-     * @param cl
+     * @param cl the {@code ClassLoader} used to load dependent bindings.
      * @param injectableKey the key used to store the injectable type. This
      *     is a provides key for interfaces and a members injection key for
      *     other types. That way keys can always be created, even if the type

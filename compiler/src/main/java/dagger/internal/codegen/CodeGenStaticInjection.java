@@ -34,7 +34,8 @@ public final class CodeGenStaticInjection extends StaticInjection {
         Inject injectAnnotation = enclosedElement.getAnnotation(Inject.class);
         if (injectAnnotation != null) {
           String key = GeneratorKeys.get(enclosedElement.asType());
-          linker.requestBinding(key, enclosingClass.toString());
+          linker.requestBinding(key, enclosingClass.toString(),
+              Thread.currentThread().getContextClassLoader());
         }
       }
     }

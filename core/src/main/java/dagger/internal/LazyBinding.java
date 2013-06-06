@@ -26,17 +26,19 @@ final class LazyBinding<T> extends Binding<Lazy<T>> {
   private final static Object NOT_PRESENT = new Object();
 
   private final String lazyKey;
+  private final ClassLoader loader;
   private Binding<T> delegate;
 
-  public LazyBinding(String key, Object requiredBy, String lazyKey) {
+  public LazyBinding(String key, Object requiredBy, ClassLoader loader, String lazyKey) {
     super(key, null, false, requiredBy);
+    this.loader = loader;
     this.lazyKey = lazyKey;
   }
 
   @SuppressWarnings("unchecked") // At runtime we know it's a Binding<Lazy<T>>.
   @Override
   public void attach(Linker linker) {
-    delegate = (Binding<T>) linker.requestBinding(lazyKey, requiredBy);
+    delegate = (Binding<T>) linker.requestBinding(lazyKey, requiredBy, loader);
   }
 
   @Override public void injectMembers(Lazy<T> t) {

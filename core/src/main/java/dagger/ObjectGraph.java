@@ -202,7 +202,8 @@ public abstract class ObjectGraph {
 
     private void linkInjectableTypes() {
       for (Map.Entry<String, Class<?>> entry : injectableTypes.entrySet()) {
-        linker.requestBinding(entry.getKey(), entry.getValue(), false, true);
+        linker.requestBinding(entry.getKey(), entry.getValue(), entry.getValue().getClassLoader(),
+            false, true);
       }
     }
 
@@ -242,43 +243,46 @@ public abstract class ObjectGraph {
     @Override public <T> T get(Class<T> type) {
       String key = Keys.get(type);
       String injectableTypeKey = type.isInterface() ? key : Keys.getMembersKey(type);
+      ClassLoader cl = type.getClassLoader();
       @SuppressWarnings("unchecked") // The linker matches keys to bindings by their type.
-      Binding<T> binding = (Binding<T>) getInjectableTypeBinding(injectableTypeKey, key);
+      Binding<T> binding = (Binding<T>) getInjectableTypeBinding(cl, injectableTypeKey, key);
       return binding.get();
     }
 
     @Override public <T> T inject(T instance) {
       String membersKey = Keys.getMembersKey(instance.getClass());
+      ClassLoader cl = instance.getClass().getClassLoader();
       @SuppressWarnings("unchecked") // The linker matches keys to bindings by their type.
-      Binding<Object> binding = (Binding<Object>) getInjectableTypeBinding(membersKey, membersKey);
+      Binding<T> binding = (Binding<T>) getInjectableTypeBinding(cl, membersKey, membersKey);
       binding.injectMembers(instance);
       return instance;
     }
 
     /**
-     * @param injectableTypeKey the key used to store the injectable type. This
+     * @param cl the {@code ClassLoader} used to load dependent bindings.
+     * @param injectableKey the key used to store the injectable type. This
      *     is a provides key for interfaces and a members injection key for
      *     other types. That way keys can always be created, even if the type
      *     has no injectable constructor.
      * @param key the key to use when retrieving the binding. This may be a
      *     regular (provider) key or a members key.
      */
-    private Binding<?> getInjectableTypeBinding(String injectableTypeKey, String key) {
+    private Binding<?> getInjectableTypeBinding(ClassLoader cl, String injectableKey, String key) {
       Class<?> moduleClass = null;
       for (DaggerObjectGraph graph = this; graph != null; graph = graph.base) {
-        moduleClass = graph.injectableTypes.get(injectableTypeKey);
+        moduleClass = graph.injectableTypes.get(injectableKey);
         if (moduleClass != null) break;
       }
       if (moduleClass == null) {
-        throw new IllegalArgumentException("No inject registered for " + injectableTypeKey
+        throw new IllegalArgumentException("No inject registered for " + injectableKey
             + ". You must explicitly add it to the 'injects' option in one of your modules.");
       }
 
       synchronized (linker) {
-        Binding<?> binding = linker.requestBinding(key, moduleClass, false, true);
+        Binding<?> binding = linker.requestBinding(key, moduleClass, cl, false, true);
         if (binding == null || !binding.isLinked()) {
           linker.linkRequested();
-          binding = linker.requestBinding(key, moduleClass, false, true);
+          binding = linker.requestBinding(key, moduleClass, cl, false, true);
         }
         return binding;
       }

@@ -25,11 +25,13 @@ import java.lang.reflect.Field;
  * Uses reflection to inject the static fields of a class.
  */
 final class ReflectiveStaticInjection extends StaticInjection {
+  private final ClassLoader loader;
   private final Field[] fields;
   private Binding<?>[] bindings;
 
-  public ReflectiveStaticInjection(Field[] fields) {
+  public ReflectiveStaticInjection(ClassLoader loader, Field[] fields) {
     this.fields = fields;
+    this.loader = loader;
   }
 
   @Override public void attach(Linker linker) {
@@ -37,7 +39,7 @@ final class ReflectiveStaticInjection extends StaticInjection {
     for (int i = 0; i < fields.length; i++) {
       Field field = fields[i];
       String key = Keys.get(field.getGenericType(), field.getAnnotations(), field);
-      bindings[i] = linker.requestBinding(key, field);
+      bindings[i] = linker.requestBinding(key, field, loader);
     }
   }
 

@@ -38,7 +38,7 @@ public final class CompileTimeLoader implements Loader {
   }
 
   @Override public Binding<?> getAtInjectBinding(
-      String key, String className, boolean mustHaveInjections) {
+      String key, String className, ClassLoader cl, boolean mustHaveInjections) {
     String sourceClassName = className.replace('$', '.');
     TypeElement type = processingEnv.getElementUtils().getTypeElement(sourceClassName);
     if (type == null) {

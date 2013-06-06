@@ -106,11 +106,11 @@ public final class RuntimeAggregatingLoader implements Loader {
     throw new AssertionError();
   }
 
-  @Override public Binding<?> getAtInjectBinding(String key, String className,
+  @Override public Binding<?> getAtInjectBinding(String key, String className, ClassLoader cl,
       boolean mustHaveInjections) {
     for (int i = 0; i < plugins.length; i++) {
       try {
-        return plugins[i].getAtInjectBinding(key, className, mustHaveInjections);
+        return plugins[i].getAtInjectBinding(key, className, cl, mustHaveInjections);
       } catch (RuntimeException e) {
         if (i == plugins.length - 1) throw e;
         logNotFound("Binding", className, e);

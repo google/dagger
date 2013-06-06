@@ -155,7 +155,8 @@ public final class FullGraphProcessor extends AbstractProcessor {
           String key = CodeGen.isInterface(injectableType)
               ? GeneratorKeys.get(injectableType)
               : GeneratorKeys.rawMembersKey(injectableType);
-          linker.requestBinding(key, module.getQualifiedName().toString(), false, true);
+          linker.requestBinding(key, module.getQualifiedName().toString(),
+              Thread.currentThread().getContextClassLoader(), false, true);
         }
 
         // Gather the static injections.
@@ -286,7 +287,8 @@ public final class FullGraphProcessor extends AbstractProcessor {
       for (int i = 0; i < method.getParameters().size(); i++) {
         VariableElement parameter = method.getParameters().get(i);
         String parameterKey = GeneratorKeys.get(parameter);
-        parameters[i] = linker.requestBinding(parameterKey, method.toString());
+        parameters[i] = linker.requestBinding(parameterKey, method.toString(),
+            Thread.currentThread().getContextClassLoader());
       }
     }
 

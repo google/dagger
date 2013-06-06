@@ -152,7 +152,7 @@ final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
       parameters = new Binding[types.length];
       for (int i = 0; i < parameters.length; i++) {
         String key = Keys.get(types[i], annotations[i], method + " parameter " + i);
-        parameters[i] = linker.requestBinding(key, method);
+        parameters[i] = linker.requestBinding(key, method, instance.getClass().getClassLoader());
       }
     }
 

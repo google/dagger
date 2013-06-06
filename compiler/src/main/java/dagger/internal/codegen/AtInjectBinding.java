@@ -68,6 +68,11 @@ final class AtInjectBinding extends Binding<Object> {
         ExecutableElement constructor = (ExecutableElement) enclosed;
         List<? extends VariableElement> parameters = constructor.getParameters();
         if (hasAtInject(enclosed)) {
+          if (hasAtSingleton(enclosed)) {
+            throw new IllegalArgumentException("Singleton annotations have no effect on "
+                + "constructors. Did you mean to annotate the class? "
+                + type.getQualifiedName().toString());
+          }
           if (hasInjectConstructor) {
             throw new IllegalArgumentException("Too many injectable constructors on "
                 + type.getQualifiedName().toString());
@@ -108,6 +113,10 @@ final class AtInjectBinding extends Binding<Object> {
 
   private static boolean hasAtInject(Element enclosed) {
     return enclosed.getAnnotation(Inject.class) != null;
+  }
+
+  private static boolean hasAtSingleton(Element enclosed) {
+    return enclosed.getAnnotation(Singleton.class) != null;
   }
 
   @Override public void attach(Linker linker) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.internal.loaders.reflect;
+package dagger.internal.loaders;
 
 import dagger.Lazy;
 import dagger.Module;
@@ -34,7 +34,7 @@ import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
+public final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
   final Class<?> moduleClass;
 
   public ReflectiveModuleAdapter(Class<?> moduleClass, Module annotation) {
@@ -60,7 +60,7 @@ final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
   }
 
   @Override public void getBindings(Map<String, Binding<?>> bindings) {
-    for (Class<?> c = moduleClass; c != Object.class; c = c.getSuperclass()) {
+    for (Class<?> c = moduleClass; !c.equals(Object.class); c = c.getSuperclass()) {
       for (Method method : c.getDeclaredMethods()) {
         Provides provides = method.getAnnotation(Provides.class);
         if (provides != null) {
@@ -111,7 +111,7 @@ final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
         library));
   }
 
-  @Override protected Object newModule() {
+  @Override public Object newModule() {
     try {
       Constructor<?> constructor = moduleClass.getDeclaredConstructor();
       constructor.setAccessible(true);
@@ -127,6 +127,22 @@ final class ReflectiveModuleAdapter extends ModuleAdapter<Object> {
     } catch (IllegalAccessException e) {
       throw new AssertionError();
     }
+  }
+
+  /**
+   * Creates a ReflectiveModuleAdapter or throws an {@code IllegalArgumentException}.
+   */
+  @SuppressWarnings("unchecked") // Runtime checks validate that the result type matches 'T'.
+  public static <T> ModuleAdapter<T> createAdaptor(Class<? extends T> moduleClass) {
+    Module annotation = moduleClass.getAnnotation(Module.class);
+    if (annotation == null) {
+      throw new IllegalArgumentException("No @Module on " + moduleClass.getName());
+    }
+    if (!moduleClass.getSuperclass().equals(Object.class)) {
+      throw new IllegalArgumentException(
+          "Modules must not extend from other classes: " + moduleClass.getName());
+    }
+    return (ModuleAdapter<T>) new ReflectiveModuleAdapter(moduleClass, annotation);
   }
 
   /**

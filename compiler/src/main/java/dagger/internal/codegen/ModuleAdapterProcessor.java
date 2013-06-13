@@ -58,10 +58,9 @@ import static dagger.internal.codegen.TypeUtils.getPackage;
 import static dagger.internal.codegen.TypeUtils.isCallableConstructor;
 import static dagger.internal.codegen.TypeUtils.isInterface;
 import static dagger.internal.codegen.TypeUtils.typeToString;
-import static dagger.internal.loaders.generated.GeneratedAdapterLoader.MODULE_ADAPTER_SUFFIX;
+import static dagger.internal.loaders.GeneratedAdapters.MODULE_ADAPTER_SUFFIX;
 import static java.lang.reflect.Modifier.FINAL;
 import static java.lang.reflect.Modifier.PRIVATE;
-import static java.lang.reflect.Modifier.PROTECTED;
 import static java.lang.reflect.Modifier.PUBLIC;
 import static java.lang.reflect.Modifier.STATIC;
 
@@ -296,7 +295,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     if (noArgsConstructor != null && isCallableConstructor(noArgsConstructor)) {
       writer.emitEmptyLine();
       writer.emitAnnotation(Override.class);
-      writer.beginMethod(typeName, "newModule", PROTECTED);
+      writer.beginMethod(typeName, "newModule", PUBLIC);
       writer.emitStatement("return new %s()", typeName);
       writer.endMethod();
     }

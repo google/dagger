@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.internal.loaders.reflect;
+package dagger.internal.loaders;
 
 import dagger.internal.Binding;
 import dagger.internal.Keys;
@@ -35,7 +35,7 @@ import javax.inject.Singleton;
  * Injects the {@code @Inject}-annotated fields and constructors of a class
  * using reflection.
  */
-final class ReflectiveAtInjectBinding<T> extends Binding<T> {
+public final class ReflectiveAtInjectBinding<T> extends Binding<T> {
   private final Field[] fields;
   private final ClassLoader loader;
   private final Constructor<T> constructor;

@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.internal.loaders.reflect;
+package dagger.internal.loaders;
 
 import dagger.internal.Binding;
 import dagger.internal.Keys;
 import dagger.internal.Linker;
 import dagger.internal.StaticInjection;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import javax.inject.Inject;
 
 /**
  * Uses reflection to inject the static fields of a class.
  */
-final class ReflectiveStaticInjection extends StaticInjection {
+public final class ReflectiveStaticInjection extends StaticInjection {
   private final ClassLoader loader;
   private final Field[] fields;
   private Binding<?>[] bindings;
 
-  public ReflectiveStaticInjection(ClassLoader loader, Field[] fields) {
+  private ReflectiveStaticInjection(ClassLoader loader, Field[] fields) {
     this.fields = fields;
     this.loader = loader;
   }
@@ -51,5 +55,20 @@ final class ReflectiveStaticInjection extends StaticInjection {
     } catch (IllegalAccessException e) {
       throw new AssertionError(e);
     }
+  }
+
+  public static StaticInjection create(Class<?> injectedClass) {
+    List<Field> fields = new ArrayList<Field>();
+    for (Field field : injectedClass.getDeclaredFields()) {
+      if (Modifier.isStatic(field.getModifiers()) && field.isAnnotationPresent(Inject.class)) {
+        field.setAccessible(true);
+        fields.add(field);
+      }
+    }
+    if (fields.isEmpty()) {
+      throw new IllegalArgumentException("No static injections: " + injectedClass.getName());
+    }
+    return new ReflectiveStaticInjection(injectedClass.getClassLoader(),
+        fields.toArray(new Field[fields.size()]));
   }
 }

@@ -16,28 +16,16 @@
  */
 package dagger.internal;
 
-import dagger.ObjectGraph;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * Aggregates provided plugins and delegates its operations to them in order.  Also provides some
- * specific runtime facilities needed by the runtime.
+ * Static helper for organizing modules.
  */
-public final class RuntimeAggregatingLoader implements Loader {
-  private static final Logger logger = Logger.getLogger(ObjectGraph.class.getName());
+public final class Modules {
 
-  /** A list of {@code Linker.Plugin}s which will be consulted in-order to resolve requests. */
-  private final Loader[] plugins;
-
-  public RuntimeAggregatingLoader(Loader ... plugins) {
-    if (plugins == null || plugins.length == 0) {
-      throw new IllegalArgumentException("Must provide at least one plugin.");
-    }
-    this.plugins = plugins;
-  }
+  private Modules() { }
 
   /**
    * Returns a full set of module adapters, including module adapters for included
@@ -89,51 +77,4 @@ public final class RuntimeAggregatingLoader implements Loader {
     }
   }
 
-  /**
-   * Obtains a module adapter for {@code module} from the first responding resolver.
-   */
-  @Override public <T> ModuleAdapter<T> getModuleAdapter(Class<? extends T> moduleClass, T module) {
-    for (int i = 0; i < plugins.length; i++) {
-      try {
-        ModuleAdapter<T> result = plugins[i].getModuleAdapter(moduleClass, module);
-        result.module = (module != null) ? module : result.newModule();
-        return result;
-      } catch (RuntimeException e) {
-        if (i == plugins.length - 1) throw e;
-        logNotFound("Module adapter", moduleClass.getName(), e);
-      }
-    }
-    throw new AssertionError();
-  }
-
-  @Override public Binding<?> getAtInjectBinding(String key, String className,
-      ClassLoader classLoader, boolean mustHaveInjections) {
-    for (int i = 0; i < plugins.length; i++) {
-      try {
-        return plugins[i].getAtInjectBinding(key, className, classLoader, mustHaveInjections);
-      } catch (RuntimeException e) {
-        if (i == plugins.length - 1) throw e;
-        logNotFound("Binding", className, e);
-      }
-    }
-    throw new AssertionError();
-  }
-
-  @Override public StaticInjection getStaticInjection(Class<?> injectedClass) {
-    for (int i = 0; i < plugins.length; i++) {
-      try {
-        return plugins[i].getStaticInjection(injectedClass);
-      } catch (RuntimeException e) {
-        if (i == plugins.length - 1) throw e;
-        logNotFound("Static injection", injectedClass.getName(), e);
-      }
-    }
-    throw new AssertionError();
-  }
-
-  private void logNotFound(String type, String name, RuntimeException e) {
-    if (logger.isLoggable(Level.FINE)) {
-      logger.log(Level.FINE, String.format("%s for %s not found.", type, name), e);
-    }
-  }
 }

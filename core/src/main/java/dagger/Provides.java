@@ -46,7 +46,14 @@ public @interface Provides {
      * method as parameters. The {@code Set<T>} produced from the accumulation of values will be
      * immutable.
      */
-    SET
+    SET,
+
+    /**
+     * Like {@link #SET}, except the method's return type is {@code Set<T>}, where any values are
+     * contributed to the set. An example use is to provide a default empty set binding, which is
+     * otherwise not possible using {@link #SET}.
+     */
+    SET_VALUES;
   }
 
   Type type() default Type.UNIQUE;

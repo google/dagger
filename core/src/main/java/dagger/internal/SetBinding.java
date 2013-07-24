@@ -55,11 +55,16 @@ public final class SetBinding<T> extends Binding<Set<T>> {
     }
   }
 
-  @SuppressWarnings("unchecked") // Bindings<T> are the only thing added to contributors.
+  @SuppressWarnings("unchecked") // Only Binding<T> and Set<T> are added to contributors.
   @Override public Set<T> get() {
     Set<T> result = new LinkedHashSet<T>(contributors.size());
     for (Binding<?> contributor : contributors) {
-      result.add((T) contributor.get()); // Let runtime exceptions through.
+      Object contribution = contributor.get(); // Let runtime exceptions through.
+      if (contributor.provideKey.equals(provideKey)) {
+        result.addAll((Set<T>) contribution);
+      } else {
+        result.add((T) contribution);
+      }
     }
     return Collections.unmodifiableSet(result);
   }

@@ -30,10 +30,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 //TODO: Reduce the complexity of this and/or replace with a mock or fake.
-public final class TestOnlyModuleAdapter extends ModuleAdapter<Object> {
+public class TestingModuleAdapter<M> extends ModuleAdapter<M> {
   final Class<?> moduleClass;
 
-  public TestOnlyModuleAdapter(Class<?> moduleClass, Module annotation) {
+  public TestingModuleAdapter(Class<?> moduleClass, Module annotation) {
     super(
         injectableTypesToKeys(annotation.injects()),
         annotation.staticInjections(),
@@ -85,7 +85,12 @@ public final class TestOnlyModuleAdapter extends ModuleAdapter<Object> {
               handleBindings(bindings, method, key, library);
               break;
             case SET:
-              handleSetBindings(bindings, method, key, library);
+              String setKey = Keys.getSetKey(method.getGenericReturnType(),
+                  method.getAnnotations(), method);
+              handleSetBindings(bindings, method, setKey, key, library);
+              break;
+            case SET_VALUES:
+              handleSetBindings(bindings, method, key, key, library);
               break;
             default:
               throw new AssertionError("Unknown @Provides type " + provides.type());
@@ -95,23 +100,21 @@ public final class TestOnlyModuleAdapter extends ModuleAdapter<Object> {
     }
   }
 
-  private <T> void handleBindings(Map<String, Binding<?>> bindings, Method method, String key,
+  private void handleBindings(Map<String, Binding<?>> bindings, Method method, String key,
       boolean library) {
-    bindings.put(key, new ProviderMethodBinding<T>(method, key, module, library));
+    bindings.put(key, new ProviderMethodBinding<M>(method, key, module, library));
   }
 
-  private <T> void handleSetBindings(Map<String, Binding<?>> bindings, Method method, String key,
-      boolean library) {
-    String setKey = Keys.getSetKey(method.getGenericReturnType(), method.getAnnotations(), method);
-    SetBinding.<T>add(bindings, setKey, new ProviderMethodBinding<T>(method, key, module,
-        library));
+  private void handleSetBindings(Map<String, Binding<?>> bindings, Method method, String setKey,
+      String providerKey, boolean library) {
+    SetBinding.<M>add(bindings, setKey, new ProviderMethodBinding<M>(method, providerKey, module, library));
   }
 
-  @Override public Object newModule() {
+  @Override public M newModule() {
     try {
       Constructor<?> constructor = moduleClass.getDeclaredConstructor();
       constructor.setAccessible(true);
-      return constructor.newInstance();
+      return (M)constructor.newInstance();
     } catch (InvocationTargetException e) {
       throw new IllegalArgumentException(e.getCause());
     } catch (NoSuchMethodException e) {
@@ -126,10 +129,9 @@ public final class TestOnlyModuleAdapter extends ModuleAdapter<Object> {
   }
 
   /**
-   * Creates a TestOnlyModuleAdapter or throws an {@code IllegalArgumentException}.
+   * Creates a TestingModuleAdapter or throws an {@code IllegalArgumentException}.
    */
-  @SuppressWarnings("unchecked") // Runtime checks validate that the result type matches 'T'.
-  public static <T> ModuleAdapter<T> create(Class<? extends T> moduleClass) {
+  public static <M> ModuleAdapter<M> create(Class<? extends M> moduleClass) {
     Module annotation = moduleClass.getAnnotation(Module.class);
     if (annotation == null) {
       throw new IllegalArgumentException("No @Module on " + moduleClass.getName());
@@ -138,7 +140,7 @@ public final class TestOnlyModuleAdapter extends ModuleAdapter<Object> {
       throw new IllegalArgumentException(
           "Modules must not extend from other classes: " + moduleClass.getName());
     }
-    return (ModuleAdapter<T>) new TestOnlyModuleAdapter(moduleClass, annotation);
+    return new TestingModuleAdapter<M>(moduleClass, annotation);
   }
 
   /**

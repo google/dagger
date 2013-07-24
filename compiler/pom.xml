@@ -51,6 +51,13 @@
       <artifactId>fest-assert</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>dagger</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <classifier>tests</classifier>
+    </dependency>
   </dependencies>
 
   <build>
@@ -58,9 +65,26 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <compilerArgument>-proc:none</compilerArgument>
-        </configuration>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <goals><goal>compile</goal></goals>
+            <configuration>
+              <compilerArgument>-proc:none</compilerArgument>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-test-compile</id>
+            <goals><goal>testCompile</goal></goals>
+            <configuration>
+              <annotationProcessors>
+                <annotationProcessor>dagger.internal.codegen.InjectAdapterProcessor</annotationProcessor>
+                <annotationProcessor>dagger.internal.codegen.ModuleAdapterProcessor</annotationProcessor>
+                <annotationProcessor>dagger.internal.codegen.GraphAnalysisProcessor</annotationProcessor>
+              </annotationProcessors>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>

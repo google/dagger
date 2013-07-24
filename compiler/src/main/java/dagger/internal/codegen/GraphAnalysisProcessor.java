@@ -51,6 +51,8 @@ import javax.tools.FileObject;
 import javax.tools.JavaFileManager;
 import javax.tools.StandardLocation;
 
+import static dagger.Provides.Type.SET;
+import static dagger.Provides.Type.SET_VALUES;
 import static dagger.internal.codegen.TypeUtils.getAnnotation;
 import static dagger.internal.codegen.TypeUtils.getPackage;
 import static dagger.internal.codegen.TypeUtils.isInterface;
@@ -184,7 +186,8 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
 
           Binding previous = addTo.get(key);
           if (previous != null) {
-            if (provides.type() == Provides.Type.SET && previous instanceof SetBinding) {
+            if ((provides.type() == SET || provides.type() == SET_VALUES)
+                && previous instanceof SetBinding) {
               // No duplicate bindings error if both bindings are set bindings.
             } else {
               String message = "Duplicate bindings for " + key;
@@ -204,6 +207,10 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
             case SET:
               String setKey = GeneratorKeys.getSetKey(providerMethod);
               SetBinding.add(addTo, setKey, binding);
+              break;
+
+            case SET_VALUES:
+              SetBinding.add(addTo, key, binding);
               break;
 
             default:

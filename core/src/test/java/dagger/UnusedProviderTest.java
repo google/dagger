@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Set;
+
 import static org.junit.Assert.fail;
 
 @RunWith(JUnit4.class)
@@ -85,6 +87,22 @@ public class UnusedProviderTest {
     @Module
     class TestModule {
       @Provides(type = Provides.Type.SET) String provideA() {
+        throw new AssertionError();
+      }
+    }
+
+    ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
+    try {
+      graph.validate();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test public void unusedSetValuesBinding() throws Exception {
+    @Module
+    class TestModule {
+      @Provides(type = Provides.Type.SET_VALUES) Set<String> provideA() {
         throw new AssertionError();
       }
     }

@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.1.0 *(TBD)*
+----------------------------
+
+ * Allow multiple contributions to Set binding via `Provides.Type.SET_VALUES`
+
+
 Version 1.0.1 *(2013-06-03)*
 ----------------------------
 

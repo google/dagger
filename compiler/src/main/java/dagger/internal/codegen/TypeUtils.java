@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Square, Inc.
+ * Copyright (C) 2013 Google, Inc.
+ * Copyright (C) 2013 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +122,12 @@ final class TypeUtils {
         return null;
       }
       @Override public Void visitArray(ArrayType arrayType, Void v) {
-        typeToString(arrayType.getComponentType(), result, innerClassSeparator);
+        TypeMirror type = arrayType.getComponentType();
+        if (type instanceof PrimitiveType) {
+          result.append(type.toString()); // Don't box, since this is an array.
+        } else {
+          typeToString(arrayType.getComponentType(), result, innerClassSeparator);
+        }
         result.append("[]");
         return null;
       }

@@ -32,6 +32,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static dagger.Provides.Type.SET;
+import static dagger.Provides.Type.SET_VALUES;
+import static java.util.Collections.emptySet;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -67,11 +69,39 @@ public final class SetBindingTest {
     @Module(injects = TestEntryPoint.class, includes = TestIncludesModule.class)
     class TestModule {
       @Provides(type=SET) String provideFirstString() { return "string1"; }
+
+      @Provides(type=SET_VALUES) Set<String> provideDefaultStrings() {
+        return emptySet();
+      }
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(),
         new TestModule(), new TestIncludesModule());
     assertEquals(set("string1", "string2"), ep.strings);
+  }
+
+  @Test public void multiValueBindings_MultiModule_NestedSet() {
+    class TestEntryPoint {
+      @Inject Set<Set<String>> stringses;
+    }
+
+    @Module
+    class TestIncludesModule {
+      @Provides(type=SET) Set<String> provideSecondStrings() { return set("string2"); }
+    }
+
+    @Module(injects = TestEntryPoint.class, includes = TestIncludesModule.class)
+    class TestModule {
+      @Provides(type=SET) Set<String> provideFirstStrings() { return set("string1"); }
+
+      @Provides(type=SET_VALUES) Set<Set<String>> provideDefaultStringeses() {
+        return set(set("string3"));
+      }
+    }
+
+    TestEntryPoint ep = injectWithModule(new TestEntryPoint(),
+        new TestModule(), new TestIncludesModule());
+    assertEquals(set(set("string1"),set("string2"), set("string3")), ep.stringses);
   }
 
   @Test public void multiValueBindings_WithSingletonAndDefaultValues() {
@@ -125,10 +155,14 @@ public final class SetBindingTest {
 
     @Module(injects = TestEntryPoint.class)
     class TestModule {
-      @Provides(type=SET) String provideString1() { return "string1"; }
+      @Provides(type=SET_VALUES) Set<String> provideString1() {
+        return set("string1");
+      }
       @Provides(type=SET) String provideString2() { return "string2"; }
       @Provides(type=SET) @Named("foo") String provideString3() { return "string3"; }
-      @Provides(type=SET) @Named("foo") String provideString4() { return "string4"; }
+      @Provides(type=SET_VALUES) @Named("foo") Set<String> provideString4() {
+        return set("string4");
+      }
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
@@ -183,6 +217,22 @@ public final class SetBindingTest {
     class TestModule {
       @Provides(type=SET) String provideString1() { return "string1"; }
       @Provides(type=SET) String provideString2() { return "string2"; }
+    }
+
+    ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
+    graph.validate();
+  }
+
+  @Test public void validateEmptySetBinding() {
+    class TestEntryPoint {
+      @Inject Set<String> strings;
+    }
+
+    @Module(injects = TestEntryPoint.class)
+    class TestModule {
+      @Provides(type=SET_VALUES) Set<String> provideDefault() {
+        return emptySet();
+      }
     }
 
     ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());

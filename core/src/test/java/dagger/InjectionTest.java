@@ -20,6 +20,7 @@ import dagger.internal.TestingLoader;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.Set;
@@ -338,6 +339,50 @@ public final class InjectionTest {
     }
   }
 
+  @Test public void providesSet() {
+    final Set<A> set = Collections.emptySet();
+
+    class TestEntryPoint {
+      @Inject Set<A> set;
+    }
+
+    @Module(injects = TestEntryPoint.class)
+    class TestModule {
+      @Provides Set<A> provideSet() {
+        return set;
+      }
+    }
+
+    TestEntryPoint entryPoint = new TestEntryPoint();
+    TestModule module = new TestModule();
+    ObjectGraph.createWith(new TestingLoader(), module).inject(entryPoint);
+
+    assertThat(entryPoint.set).isSameAs(set);
+  }
+
+  @Test public void providesSetValues() {
+    final Set<A> set = Collections.emptySet();
+
+    class TestEntryPoint {
+      @Inject Set<A> set;
+    }
+
+    @Module(injects = TestEntryPoint.class)
+    class TestModule {
+      @Provides(type = Provides.Type.SET_VALUES) Set<A> provideSet() {
+        return set;
+      }
+    }
+
+    TestEntryPoint entryPoint = new TestEntryPoint();
+    TestModule module = new TestModule();
+    ObjectGraph.createWith(new TestingLoader(), module).inject(entryPoint);
+
+    // copies into immutable collection
+    assertThat(entryPoint.set).isNotSameAs(set);
+    assertThat(entryPoint.set).isEqualTo(set);
+  }
+
   @Test public void providerMethodsConflict() {
     @Module
     class TestModule {
@@ -356,7 +401,7 @@ public final class InjectionTest {
     }
   }
 
-  @Test public void providerMethodsConflictWithSet() {
+  @Test public void providesSetConflictsWithProvidesTypeSet() {
     @Module
     class TestModule {
       @Provides(type = Provides.Type.SET) A provideSetElement() {
@@ -372,6 +417,53 @@ public final class InjectionTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test public void providesSetConflictsWithProvidesTypeSetValues() {
+    @Module
+    class TestModule {
+      @Provides(type = Provides.Type.SET_VALUES) Set<A> provideSetContribution() {
+        throw new AssertionError();
+      }
+      @Provides Set<A> provideSet() {
+        throw new AssertionError();
+      }
+    }
+
+    try {
+      ObjectGraph.createWith(new TestingLoader(), new TestModule());
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void providesSetOfProvidersIsDifferentThanProvidesTypeSetValues() {
+    final Set<A> set = Collections.emptySet();
+    final Set<Provider<A>> providers = Collections.emptySet();
+
+    class TestEntryPoint {
+      @Inject Set<A> set;
+      @Inject Set<Provider<A>> providers;
+    }
+
+    @Module(injects = TestEntryPoint.class)
+    class TestModule {
+      @Provides(type = Provides.Type.SET_VALUES) Set<A> provideSetContribution() {
+        return set;
+      }
+      @Provides Set<Provider<A>> provideProviders() {
+        return providers;
+      }
+    }
+
+    TestEntryPoint entryPoint = new TestEntryPoint();
+    TestModule module = new TestModule();
+    ObjectGraph.createWith(new TestingLoader(), module).inject(entryPoint);
+
+    // copies into immutable collection
+    assertThat(entryPoint.set).isNotSameAs(set);
+    assertThat(entryPoint.set).isEqualTo(set);
+    assertThat(entryPoint.providers).isSameAs(providers);
   }
 
   @Test public void singletonsInjectedOnlyIntoProviders() {

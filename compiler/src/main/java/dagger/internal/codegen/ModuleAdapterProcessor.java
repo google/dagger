@@ -51,6 +51,8 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
+import static dagger.Provides.Type.SET;
+import static dagger.Provides.Type.SET_VALUES;
 import static dagger.internal.codegen.AdapterJavadocs.binderTypeDocs;
 import static dagger.internal.codegen.TypeUtils.adapterName;
 import static dagger.internal.codegen.TypeUtils.getAnnotation;
@@ -319,6 +321,13 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
                 bindingClassName(providerMethod, methodToClassName, methodNameToNextId));
             break;
           }
+          case SET_VALUES: {
+            String key = GeneratorKeys.get(providerMethod);
+            writer.emitStatement("SetBinding.add(map, %s, new %s(module))",
+                JavaWriter.stringLiteral(key),
+                bindingClassName(providerMethod, methodToClassName, methodNameToNextId));
+            break;
+          }
           default:
             throw new AssertionError("Unknown @Provides type " + provides.type());
         }
@@ -364,7 +373,8 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
 
   private boolean checkForMultibindings(List<ExecutableElement> providerMethods) {
     for (ExecutableElement element : providerMethods) {
-      if (element.getAnnotation(Provides.class).type() == Provides.Type.SET) {
+      Provides.Type providesType = element.getAnnotation(Provides.class).type();
+      if (providesType == SET || providesType == SET_VALUES) {
         return true;
       }
     }

@@ -29,7 +29,7 @@ import javax.lang.model.element.TypeElement;
  * {@link Binding#get} or {@link Binding#injectMembers} methods. They are only suitable
  * for graph analysis and error detection.
  */
-public final class GraphAnalysisLoader implements Loader {
+public final class GraphAnalysisLoader extends Loader {
 
   private final ProcessingEnvironment processingEnv;
 

@@ -53,10 +53,10 @@ import javax.tools.StandardLocation;
 
 import static dagger.Provides.Type.SET;
 import static dagger.Provides.Type.SET_VALUES;
-import static dagger.internal.codegen.TypeUtils.getAnnotation;
-import static dagger.internal.codegen.TypeUtils.getPackage;
-import static dagger.internal.codegen.TypeUtils.isInterface;
-import static dagger.internal.codegen.TypeUtils.methodName;
+import static dagger.internal.codegen.Util.getAnnotation;
+import static dagger.internal.codegen.Util.getPackage;
+import static dagger.internal.codegen.Util.isInterface;
+import static dagger.internal.codegen.Util.methodName;
 
 /**
  * Performs full graph analysis on a module.
@@ -84,7 +84,7 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
         }
         delayedModuleNames.add(((TypeElement) e).getQualifiedName().toString());
       }
-      return true;
+      return false;
     }
 
     Set<Element> modules = new LinkedHashSet<Element>();
@@ -132,7 +132,7 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
         }
       }
     }
-    return true;
+    return false;
   }
 
   private void error(String message, Element element) {

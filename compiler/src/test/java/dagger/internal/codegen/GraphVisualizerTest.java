@@ -36,12 +36,14 @@ public final class GraphVisualizerTest {
     assertThat(graphVisualizer.shortName(key)).isEqualTo("String");
   }
 
+  @SuppressWarnings("qualifiers")
   @Named String annotatedKey;
   @Test public void testAnnotatedKey() throws Exception {
     String key = fieldKey("annotatedKey");
     assertThat(graphVisualizer.shortName(key)).isEqualTo("@Named String");
   }
 
+  @SuppressWarnings("qualifiers")
   @Named("/@<>[]()") String annotatedKeyWithParameters;
   @Test public void testAnnotatedKeyWithParameters() throws Exception {
     String key = fieldKey("annotatedKeyWithParameters");
@@ -62,6 +64,7 @@ public final class GraphVisualizerTest {
         .isEqualTo("Map<java.lang.String, java.util.Set<java.lang.Object>>");
   }
 
+  @SuppressWarnings("qualifiers")
   @Named("/@<>[]()") Map<String, Set<Object>>[] everythingKey;
   @Test public void testEverythingKey() throws Exception {
     String key = fieldKey("everythingKey");

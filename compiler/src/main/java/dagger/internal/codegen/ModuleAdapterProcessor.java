@@ -16,6 +16,7 @@
 package dagger.internal.codegen;
 
 import com.squareup.javawriter.JavaWriter;
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.Binding;
@@ -25,6 +26,7 @@ import dagger.internal.SetBinding;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,19 +55,21 @@ import javax.tools.JavaFileObject;
 
 import static dagger.Provides.Type.SET;
 import static dagger.Provides.Type.SET_VALUES;
-import static dagger.internal.codegen.AdapterJavadocs.binderTypeDocs;
-import static dagger.internal.codegen.TypeUtils.adapterName;
-import static dagger.internal.codegen.TypeUtils.getAnnotation;
-import static dagger.internal.codegen.TypeUtils.getNoArgsConstructor;
-import static dagger.internal.codegen.TypeUtils.getPackage;
-import static dagger.internal.codegen.TypeUtils.isCallableConstructor;
-import static dagger.internal.codegen.TypeUtils.isInterface;
-import static dagger.internal.codegen.TypeUtils.typeToString;
+import static dagger.internal.codegen.AdapterJavadocs.bindingTypeDocs;
+import static dagger.internal.codegen.Util.adapterName;
+import static dagger.internal.codegen.Util.elementToString;
+import static dagger.internal.codegen.Util.getAnnotation;
+import static dagger.internal.codegen.Util.getNoArgsConstructor;
+import static dagger.internal.codegen.Util.getPackage;
+import static dagger.internal.codegen.Util.isCallableConstructor;
+import static dagger.internal.codegen.Util.isInterface;
+import static dagger.internal.codegen.Util.typeToString;
 import static dagger.internal.loaders.GeneratedAdapters.MODULE_ADAPTER_SUFFIX;
-import static java.lang.reflect.Modifier.FINAL;
-import static java.lang.reflect.Modifier.PRIVATE;
-import static java.lang.reflect.Modifier.PUBLIC;
-import static java.lang.reflect.Modifier.STATIC;
+import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * Generates an implementation of {@link ModuleAdapter} that includes a binding
@@ -93,7 +97,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
         // IllegalStateException.
         Map<String, Object> parsedAnnotation = getAnnotation(Module.class, type);
         try {
-          writeModuleAdapter(type, parsedAnnotation, providesTypes);
+          generateModuleAdapter(type, parsedAnnotation, providesTypes);
         } catch (IOException e) {
           error("Code gen failed: " + e, type);
         }
@@ -121,28 +125,30 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     Types types = processingEnv.getTypeUtils();
 
     Map<String, List<ExecutableElement>> result = new HashMap<String, List<ExecutableElement>>();
-    for (Element providerMethod : providesMethods(env)) {
+
+    provides:
+    for (Element providerMethod : findProvidesMethods(env)) {
       switch (providerMethod.getEnclosingElement().getKind()) {
         case CLASS:
           break; // valid, move along
         default:
           // TODO(tbroyer): pass annotation information
-          error("Unexpected @Provides on " + providerMethod, providerMethod);
+          error("Unexpected @Provides on " + elementToString(providerMethod), providerMethod);
           continue;
       }
       TypeElement type = (TypeElement) providerMethod.getEnclosingElement();
       Set<Modifier> typeModifiers = type.getModifiers();
-      if (typeModifiers.contains(Modifier.PRIVATE)
-          || typeModifiers.contains(Modifier.ABSTRACT)) {
+      if (typeModifiers.contains(PRIVATE)
+          || typeModifiers.contains(ABSTRACT)) {
         error("Classes declaring @Provides methods must not be private or abstract: "
                 + type.getQualifiedName(), type);
         continue;
       }
 
       Set<Modifier> methodModifiers = providerMethod.getModifiers();
-      if (methodModifiers.contains(Modifier.PRIVATE)
-          || methodModifiers.contains(Modifier.ABSTRACT)
-          || methodModifiers.contains(Modifier.STATIC)) {
+      if (methodModifiers.contains(PRIVATE)
+          || methodModifiers.contains(ABSTRACT)
+          || methodModifiers.contains(STATIC)) {
         error("@Provides methods must not be private, abstract or static: "
                 + type.getQualifiedName() + "." + providerMethod, providerMethod);
         continue;
@@ -157,14 +163,14 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
 
       // Invalidate return types.
       TypeMirror returnType = types.erasure(providerMethodAsExecutable.getReturnType());
-      for (String invalidTypeName : Arrays.asList("javax.inject.Provider", "dagger.Lazy")) {
+      for (String invalidTypeName : Arrays.asList(Provider.class.getCanonicalName(),
+          Lazy.class.getCanonicalName())) {
         TypeElement invalidTypeElement = elementUtils.getTypeElement(invalidTypeName);
-        if (invalidTypeElement != null) {
-          if (types.isSameType(returnType, types.erasure(invalidTypeElement.asType()))) {
-            error(String.format("@Provides method must not return %s directly: %s.%s",
-                invalidTypeElement, type.getQualifiedName(), providerMethod), providerMethod);
-            continue; // skip to next provides method.
-          }
+        if (invalidTypeElement != null && types.isSameType(returnType,
+            types.erasure(invalidTypeElement.asType()))) {
+          error(String.format("@Provides method must not return %s directly: %s.%s",
+              invalidTypeElement, type.getQualifiedName(), providerMethod), providerMethod);
+          continue provides; // Skip to next provides method.
         }
       }
 
@@ -182,7 +188,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     // should still be registered and a ModuleAdapter should still be written.
     for (Element module : env.getElementsAnnotatedWith(Module.class)) {
       if (!module.getKind().equals(ElementKind.CLASS)) {
-        error("Modules must be classes: " + module, module);
+        error("Modules must be classes: " + elementToString(module), module);
         continue;
       }
 
@@ -190,7 +196,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
 
       // Verify that all modules do not extend from non-Object types.
       if (!moduleType.getSuperclass().equals(objectType)) {
-        error("Modules must not extend from other classes: " + module, module);
+        error("Modules must not extend from other classes: " + elementToString(module), module);
       }
 
       String moduleName = moduleType.getQualifiedName().toString();
@@ -200,7 +206,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     return result;
   }
 
-  private Set<? extends Element> providesMethods(RoundEnvironment env) {
+  private Set<? extends Element> findProvidesMethods(RoundEnvironment env) {
     Set<Element> result = new LinkedHashSet<Element>();
     result.addAll(env.getElementsAnnotatedWith(Provides.class));
     return result;
@@ -210,7 +216,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
    * Write a companion class for {@code type} that implements {@link
    * ModuleAdapter} to expose its provider methods.
    */
-  private void writeModuleAdapter(TypeElement type, Map<String, Object> module,
+  private void generateModuleAdapter(TypeElement type, Map<String, Object> module,
       List<ExecutableElement> providerMethods) throws IOException {
     if (module == null) {
       error(type + " has @Provides methods but no @Module annotation", type);
@@ -235,14 +241,13 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
 
     writer.emitSingleLineComment(AdapterJavadocs.GENERATED_BY_DAGGER);
     writer.emitPackage(getPackage(type).getQualifiedName().toString());
-    writer.emitEmptyLine();
     writer.emitImports(
-        getImports(multibindings, !providerMethods.isEmpty(), providerMethodDependencies));
+        findImports(multibindings, !providerMethods.isEmpty(), providerMethodDependencies));
 
     String typeName = type.getQualifiedName().toString();
     writer.emitEmptyLine();
     writer.emitJavadoc(AdapterJavadocs.MODULE_TYPE);
-    writer.beginType(adapterName, "class", PUBLIC | FINAL,
+    writer.beginType(adapterName, "class", EnumSet.of(PUBLIC, FINAL),
         JavaWriter.type(ModuleAdapter.class, typeName));
 
     StringBuilder injectsField = new StringBuilder().append("{ ");
@@ -254,7 +259,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       injectsField.append(JavaWriter.stringLiteral(key)).append(", ");
     }
     injectsField.append("}");
-    writer.emitField("String[]", "INJECTS", PRIVATE | STATIC | FINAL,
+    writer.emitField("String[]", "INJECTS", EnumSet.of(PRIVATE, STATIC, FINAL),
         injectsField.toString());
 
     StringBuilder staticInjectionsField = new StringBuilder().append("{ ");
@@ -263,7 +268,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       staticInjectionsField.append(typeToString(typeMirror)).append(".class, ");
     }
     staticInjectionsField.append("}");
-    writer.emitField("Class<?>[]", "STATIC_INJECTIONS", PRIVATE | STATIC | FINAL,
+    writer.emitField("Class<?>[]", "STATIC_INJECTIONS", EnumSet.of(PRIVATE, STATIC, FINAL),
         staticInjectionsField.toString());
 
     StringBuilder includesField = new StringBuilder().append("{ ");
@@ -278,10 +283,11 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       includesField.append(typeToString(typeMirror)).append(".class, ");
     }
     includesField.append("}");
-    writer.emitField("Class<?>[]", "INCLUDES", PRIVATE | STATIC | FINAL, includesField.toString());
+    writer.emitField(
+        "Class<?>[]", "INCLUDES", EnumSet.of(PRIVATE, STATIC, FINAL), includesField.toString());
 
     writer.emitEmptyLine();
-    writer.beginMethod(null, adapterName, PUBLIC);
+    writer.beginMethod(null, adapterName, EnumSet.of(PUBLIC));
     writer.emitStatement("super(INJECTS, STATIC_INJECTIONS, %s /*overrides*/, "
         + "INCLUDES, %s /*complete*/, %s /*library*/)", overrides, complete, library);
     writer.endMethod();
@@ -290,7 +296,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     if (noArgsConstructor != null && isCallableConstructor(noArgsConstructor)) {
       writer.emitEmptyLine();
       writer.emitAnnotation(Override.class);
-      writer.beginMethod(typeName, "newModule", PUBLIC);
+      writer.beginMethod(typeName, "newModule", EnumSet.of(PUBLIC));
       writer.emitStatement("return new %s()", typeName);
       writer.endMethod();
     }
@@ -303,7 +309,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       writer.emitEmptyLine();
       writer.emitJavadoc(AdapterJavadocs.GET_DEPENDENCIES_METHOD);
       writer.emitAnnotation(Override.class);
-      writer.beginMethod("void", "getBindings", PUBLIC, BINDINGS_MAP, "map");
+      writer.beginMethod("void", "getBindings", EnumSet.of(PUBLIC), BINDINGS_MAP, "map");
 
       for (ExecutableElement providerMethod : providerMethods) {
         Provides provides = providerMethod.getAnnotation(Provides.class);
@@ -336,7 +342,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     }
 
     for (ExecutableElement providerMethod : providerMethods) {
-      writeProvidesAdapter(writer, providerMethod, methodToClassName, methodNameToNextId,
+      generateProvidesAdapter(writer, providerMethod, methodToClassName, methodNameToNextId,
           library);
     }
 
@@ -344,7 +350,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     writer.close();
   }
 
-  private Set<String> getImports(boolean multibindings, boolean providers, boolean dependencies) {
+  private Set<String> findImports(boolean multibindings, boolean providers, boolean dependencies) {
     Set<String> imports = new LinkedHashSet<String>();
     imports.add(ModuleAdapter.class.getCanonicalName());
     if (providers) {
@@ -403,31 +409,32 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     return className;
   }
 
-  private void writeProvidesAdapter(JavaWriter writer, ExecutableElement providerMethod,
+  private void generateProvidesAdapter(JavaWriter writer, ExecutableElement providerMethod,
       Map<ExecutableElement, String> methodToClassName,
       Map<String, AtomicInteger> methodNameToNextId, boolean library)
       throws IOException {
     String methodName = providerMethod.getSimpleName().toString();
     String moduleType = typeToString(providerMethod.getEnclosingElement().asType());
-    String className = bindingClassName(providerMethod, methodToClassName, methodNameToNextId);
+    String className =
+        bindingClassName(providerMethod, methodToClassName, methodNameToNextId);
     String returnType = typeToString(providerMethod.getReturnType());
     List<? extends VariableElement> parameters = providerMethod.getParameters();
     boolean dependent = !parameters.isEmpty();
 
     writer.emitEmptyLine();
-    writer.emitJavadoc(binderTypeDocs(returnType, false, false, dependent));
-    writer.beginType(className, "class", PUBLIC | FINAL | STATIC,
+    writer.emitJavadoc(bindingTypeDocs(returnType, false, false, dependent));
+    writer.beginType(className, "class", EnumSet.of(PUBLIC, STATIC, FINAL),
         JavaWriter.type(Binding.class, returnType),
         JavaWriter.type(Provider.class, returnType));
-    writer.emitField(moduleType, "module", PRIVATE | FINAL);
+    writer.emitField(moduleType, "module", EnumSet.of(PRIVATE, FINAL));
     for (Element parameter : parameters) {
       TypeMirror parameterType = parameter.asType();
       writer.emitField(JavaWriter.type(Binding.class, typeToString(parameterType)),
-          parameterName(parameter), PRIVATE);
+          parameterName(parameter), EnumSet.of(PRIVATE));
     }
 
     writer.emitEmptyLine();
-    writer.beginMethod(null, className, PUBLIC, moduleType, "module");
+    writer.beginMethod(null, className, EnumSet.of(PUBLIC), moduleType, "module");
     boolean singleton = providerMethod.getAnnotation(Singleton.class) != null;
     String key = JavaWriter.stringLiteral(GeneratorKeys.get(providerMethod));
     String membersKey = null;
@@ -443,7 +450,8 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       writer.emitJavadoc(AdapterJavadocs.ATTACH_METHOD);
       writer.emitAnnotation(Override.class);
       writer.emitAnnotation(SuppressWarnings.class, JavaWriter.stringLiteral("unchecked"));
-      writer.beginMethod("void", "attach", PUBLIC, Linker.class.getCanonicalName(), "linker");
+      writer.beginMethod(
+          "void", "attach", EnumSet.of(PUBLIC), Linker.class.getCanonicalName(), "linker");
       for (VariableElement parameter : parameters) {
         String parameterKey = GeneratorKeys.get(parameter);
         writer.emitStatement(
@@ -459,8 +467,8 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
       writer.emitJavadoc(AdapterJavadocs.GET_DEPENDENCIES_METHOD);
       writer.emitAnnotation(Override.class);
       String setOfBindings = JavaWriter.type(Set.class, "Binding<?>");
-      writer.beginMethod("void", "getDependencies", PUBLIC, setOfBindings, "getBindings",
-          setOfBindings, "injectMembersBindings");
+      writer.beginMethod("void", "getDependencies", EnumSet.of(PUBLIC), setOfBindings,
+          "getBindings", setOfBindings, "injectMembersBindings");
       for (Element parameter : parameters) {
         writer.emitStatement("getBindings.add(%s)", parameter.getSimpleName().toString());
       }
@@ -470,7 +478,7 @@ public final class ModuleAdapterProcessor extends AbstractProcessor {
     writer.emitEmptyLine();
     writer.emitJavadoc(AdapterJavadocs.GET_METHOD, returnType);
     writer.emitAnnotation(Override.class);
-    writer.beginMethod(returnType, "get", PUBLIC);
+    writer.beginMethod(returnType, "get", EnumSet.of(PUBLIC));
     StringBuilder args = new StringBuilder();
     boolean first = true;
     for (Element parameter : parameters) {

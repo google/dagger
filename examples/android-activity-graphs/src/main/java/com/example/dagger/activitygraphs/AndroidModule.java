@@ -37,7 +37,7 @@ public class AndroidModule {
 
   /**
    * Allow the application context to be injected but require that it be annotated with
-   * {@link ForApplication @Annotation} to explicitly differentiate it from an activity context.
+   * {@link ForApplication @ForApplication} to explicitly differentiate it from an activity context.
    */
   @Provides @Singleton @ForApplication Context provideApplicationContext() {
     return application;

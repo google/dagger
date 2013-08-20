@@ -30,7 +30,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-import static dagger.internal.codegen.TypeUtils.getApplicationSupertype;
+import static dagger.internal.codegen.Util.getApplicationSupertype;
 
 /**
  * A build time binding that injects the constructor and fields of a class.

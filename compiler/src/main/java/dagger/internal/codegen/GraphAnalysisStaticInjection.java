@@ -20,7 +20,7 @@ import dagger.internal.StaticInjection;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 
-import static dagger.internal.codegen.TypeUtils.isStatic;
+import static dagger.internal.codegen.Util.isStatic;
 
 public final class GraphAnalysisStaticInjection extends StaticInjection {
 

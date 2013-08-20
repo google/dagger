@@ -43,9 +43,9 @@ public final class AdapterJavadocs {
       + "A manager for {@code %s}'s injections into static fields.";
 
   /** Creates an appropriate javadoc depending on aspects of the type in question. */
-  static String binderTypeDocs(String type, boolean abstrakt, boolean members, boolean dependent) {
+  static String bindingTypeDocs(String type, boolean abstrakt, boolean members, boolean dependent) {
     StringBuffer sb = new StringBuffer();
-    sb.append("A {@code Binder<").append(type).append(">} implementation which satisfies\n");
+    sb.append("A {@code Binding<").append(type).append(">} implementation which satisfies\n");
     sb.append("Dagger's infrastructure requirements including:");
     if (dependent) {
       sb.append("\n\n");

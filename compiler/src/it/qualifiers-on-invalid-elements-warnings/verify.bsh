@@ -1,0 +1,18 @@
+import dagger.testing.it.BuildLogValidator;
+import java.io.File;
+
+File buildLog = new File(basedir, "build.log");
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on fields that are not annotated with @Inject: test.TestApp.TestClass.field1"});   
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on fields that are not annotated with @Inject: test.TestApp.TestClass.field2"});   
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on methods that are not @Provides methods: test.TestApp.TestClass.nonProvidesMethod(java.lang.String)"});  
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on parameters that are not @Inject constructor parameters or @Provides method parameters: methodParam"});  
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on parameters that are not @Inject constructor parameters or @Provides method parameters: constructorParam"});
+new BuildLogValidator().assertDoesNotHaveText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on fields that are not annotated with @Inject: test.TestApp.TestClass.fieldWithWarningSuppressed1"});
+new BuildLogValidator().assertDoesNotHaveText(buildLog, new String[]{
+    "Dagger will ignore qualifier annotations on fields that are not annotated with @Inject: test.TestApp.TestClass.fieldWithWarningSuppressed2"});

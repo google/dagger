@@ -31,6 +31,50 @@ public class BuildLogValidator {
    * @param expectedStrings the strings that must be present in the log file for it to be valid
    */
   public void assertHasText(File buildLogfile, String ... expectedStrings) throws Throwable {
+    String buildOutput = getBuildOutput(buildLogfile);
+
+    StringBuilder sb = new StringBuilder("Build output did not contain expected error text:");
+    boolean missing = false;
+
+    for (String expected : expectedStrings) {
+      if (!buildOutput.contains(expected)) {
+        missing = true;
+        sb.append("\n    \"").append(expected).append("\"");
+      }
+    }
+    if (missing) {
+      appendBuildStatus(sb, buildOutput);
+      throw new Exception(sb.toString());
+    }
+  }
+
+  /**
+   * Processes a log file, ensuring it does not contain any of the provided strings within it.
+   *
+   * @param buildLogfile a log file to be searched
+   * @param unexpectedStrings the strings that must not be present in the log file for it to be
+   *        valid
+   */
+  public void assertDoesNotHaveText(File buildLogfile, String... unexpectedStrings)
+      throws Throwable {
+    String buildOutput = getBuildOutput(buildLogfile);
+
+    StringBuilder sb = new StringBuilder("Build output contained unexpected text:");
+    boolean found = false;
+
+    for (String unexpected : unexpectedStrings) {
+      if (buildOutput.contains(unexpected)) {
+        found = true;
+        sb.append("\n    \"").append(unexpected).append("\"");
+      }
+    }
+    if (found) {
+      appendBuildStatus(sb, buildOutput);
+      throw new Exception(sb.toString());
+    }
+  }
+
+  private String getBuildOutput(File buildLogfile) throws Throwable {
     String buildOutput;
     FileInputStream stream = new FileInputStream(buildLogfile);
     try {
@@ -43,29 +87,20 @@ public class BuildLogValidator {
     if (buildOutput == null) {
       throw new Exception("Could not read build output");
     }
+    return buildOutput;
+  }
 
-    StringBuilder sb = new StringBuilder("Build output did not contain expected error text:");
-    boolean missing = false;
-
-    for (String expected : expectedStrings) {
-      if (!buildOutput.contains(expected)) {
-        missing = true;
-        sb.append("\n    \"").append(expected).append("\"");
+  private void appendBuildStatus(StringBuilder sb, String buildOutput) {
+    sb.append("\n\nBuild Output:\n\n");
+    boolean containsError = false;
+    for(String line : buildOutput.split("\n")) {
+      if (line.contains("[ERROR]")) {
+        containsError = true;
+        sb.append("\n        ").append(line);
       }
     }
-    if (missing) {
-      sb.append("\n\nBuild Output:\n\n");
-      boolean containsError = false;
-      for(String line : buildOutput.split("\n")) {
-        if (line.contains("[ERROR]")) {
-          containsError = true;
-          sb.append("\n        ").append(line);
-        }
-      }
-      if (!containsError) {
-        sb.append("\nTEST BUILD SUCCEEDED.\n");
-      }
-      throw new Exception(sb.toString());
+    if (!containsError) {
+      sb.append("\nTEST BUILD SUCCEEDED.\n");
     }
   }
 

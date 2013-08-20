@@ -1,0 +1,6 @@
+import dagger.testing.it.BuildLogValidator;
+import java.io.File;
+
+File buildLog = new File(basedir, "build.log");
+new BuildLogValidator().assertHasText(buildLog, new String[]{
+    "@Provides methods must be declared in modules: test.TestApp.providesString()"});

@@ -43,8 +43,8 @@ import javax.lang.model.util.SimpleTypeVisitor6;
 /**
  * Utilities for handling types in annotation processors
  */
-final class TypeUtils {
-  private TypeUtils() {
+final class Util {
+  private Util() {
   }
 
   public static PackageElement getPackage(Element type) {
@@ -218,6 +218,20 @@ final class TypeUtils {
       return value instanceof TypeMirror;
     } else {
       return expectedClass == value.getClass();
+    }
+  }
+
+  // TODO(sgoldfed): better format for other types of elements?
+  static String elementToString(Element element) {
+    switch (element.getKind()) {
+      case FIELD:
+      // fall through
+      case CONSTRUCTOR:
+      // fall through
+      case METHOD:
+        return element.getEnclosingElement() + "." + element;
+      default:
+        return element.toString();
     }
   }
 

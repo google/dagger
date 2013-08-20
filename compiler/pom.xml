@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger-parent</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.1.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>dagger-compiler</artifactId>
@@ -78,6 +78,7 @@
             <goals><goal>testCompile</goal></goals>
             <configuration>
               <annotationProcessors>
+                <annotationProcessor>dagger.internal.codegen.ValidationProcessor</annotationProcessor>
                 <annotationProcessor>dagger.internal.codegen.InjectAdapterProcessor</annotationProcessor>
                 <annotationProcessor>dagger.internal.codegen.ModuleAdapterProcessor</annotationProcessor>
                 <annotationProcessor>dagger.internal.codegen.GraphAnalysisProcessor</annotationProcessor>

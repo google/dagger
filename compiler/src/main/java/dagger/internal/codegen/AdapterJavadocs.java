@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Square, Inc.
+ * Copyright (C) 2013 Google, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +42,10 @@ public final class AdapterJavadocs {
       + "instance provision of types served by {@code @Provides} methods.";
   static final String STATIC_INJECTION_TYPE = ""
       + "A manager for {@code %s}'s injections into static fields.";
+  static final String PARENT_ADAPTER_TYPE = ""
+      + "An internal adapter used to provide InjectAdapters with access to their injected\n"
+      + "type's inheritance hierarchy allowing members injection, linker attachment,/n"
+      + "and dependency collection.";
 
   /** Creates an appropriate javadoc depending on aspects of the type in question. */
   static String bindingTypeDocs(String type, boolean abstrakt, boolean members, boolean dependent) {
@@ -64,5 +69,4 @@ public final class AdapterJavadocs {
     }
     return sb.toString();
   }
-
 }

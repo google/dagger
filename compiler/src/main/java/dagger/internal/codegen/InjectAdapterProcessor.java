@@ -47,10 +47,10 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
+import static dagger.internal.Keys.isPlatformType;
 import static dagger.internal.codegen.AdapterJavadocs.bindingTypeDocs;
 import static dagger.internal.codegen.Util.adapterName;
 import static dagger.internal.codegen.Util.elementToString;
-import static dagger.internal.codegen.Util.getApplicationSupertype;
 import static dagger.internal.codegen.Util.getNoArgsConstructor;
 import static dagger.internal.codegen.Util.getPackage;
 import static dagger.internal.codegen.Util.isCallableConstructor;
@@ -71,6 +71,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 @SupportedAnnotationTypes("javax.inject.Inject")
 public final class InjectAdapterProcessor extends AbstractProcessor {
   private final Set<String> remainingTypeNames = new LinkedHashSet<String>();
+
+  public static final String PARENT_ADAPTER_INFIX = "$$ParentAdapter$$";
 
   @Override public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
@@ -241,7 +243,7 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     String packageName = getPackage(type).getQualifiedName().toString();
     String strippedTypeName =
         strippedTypeName(type.getQualifiedName().toString(), packageName);
-    TypeMirror supertype = getApplicationSupertype(type);
+    TypeMirror supertype = getNextMemberInjectedAncestor(type);
     String adapterName = adapterName(type, INJECT_ADAPTER_SUFFIX);
     JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(adapterName, type);
     JavaWriter writer = new JavaWriter(sourceFile.openWriter());
@@ -266,7 +268,7 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
       writeParameterBindingsFields(writer, constructor, disambiguateFields);
      }
     if (supertype != null) {
-      writeSupertypeInjectorField(writer, supertype);
+      writeSupertypeInjectorField(writer, type, supertype);
     }
     writer.emitEmptyLine();
     writeInjectAdapterConstructor(writer, constructor, type, strippedTypeName, adapterName);
@@ -283,6 +285,63 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     }
     writer.endType();
     writer.close();
+    if (supertype != null) {
+      generateParentBindings(type,
+          ((TypeElement) processingEnv.getTypeUtils().asElement(supertype)));
+    }
+  }
+
+  private void generateParentBindings(TypeElement originChild, TypeElement ancestor)
+      throws IOException {
+    List<Element> ancestorFields = createInjectedClass(ancestor.toString()).fields;
+    TypeMirror nextAncestor = getNextMemberInjectedAncestor(ancestor);
+    TypeElement nextAncestorElement =
+        (nextAncestor != null) ? (TypeElement) processingEnv.getTypeUtils().asElement(nextAncestor)
+            : null;
+    String ancestorPackageName = getPackage(ancestor).getQualifiedName().toString();
+    String strippedAncestorType =
+        strippedTypeName(ancestor.getQualifiedName().toString(), ancestorPackageName);
+    String adapterName = parentAdapterName(originChild, ancestor);
+    JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(adapterName, ancestor);
+    JavaWriter writer = new JavaWriter(sourceFile.openWriter());
+    writer.emitSingleLineComment(AdapterJavadocs.GENERATED_BY_DAGGER);
+    writer.emitPackage(ancestorPackageName);
+    writer.emitImports(MembersInjector.class.getCanonicalName(), Binding.class.getCanonicalName());
+    writer.emitEmptyLine();
+    writer.emitJavadoc(AdapterJavadocs.PARENT_ADAPTER_TYPE);
+    writer.beginType(adapterName, "class", EnumSet.of(PUBLIC, FINAL), null,
+        JavaWriter.type(MembersInjector.class, strippedAncestorType));
+    writeMemberBindingsFields(writer, ancestorFields, false);
+    if (nextAncestor != null) {
+      writeSupertypeInjectorField(writer, originChild, nextAncestor); // next injectable ancestor
+    }
+    writer.emitEmptyLine();
+    writeAttachMethod(writer, null, ancestorFields, false, strippedAncestorType, nextAncestor,
+        false);
+    writeGetDependenciesMethod(writer, null, ancestorFields, false, nextAncestor, false);
+    writeMembersInjectMethod(writer, ancestorFields, false, strippedAncestorType, nextAncestor);
+    writer.endType();
+    writer.close();
+    if (nextAncestor != null) {
+      generateParentBindings(originChild, nextAncestorElement);
+    }
+  }
+
+  /**
+   * Returns the closest ancestor that has members injected or {@code null}
+   * if the class has no ancestors with injected members.
+   */
+  private TypeMirror getNextMemberInjectedAncestor(TypeElement type) {
+    TypeMirror nextAncestor = type.getSuperclass();
+    TypeElement nextAncestorElement =
+        (TypeElement) processingEnv.getTypeUtils().asElement(nextAncestor);
+    if (isPlatformType(nextAncestor.toString())) {
+      return null;
+    }
+    if (!createInjectedClass(nextAncestorElement.toString()).fields.isEmpty()) {
+      return nextAncestor;
+    }
+    return getNextMemberInjectedAncestor(nextAncestorElement);
   }
 
   /**
@@ -331,10 +390,13 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeSupertypeInjectorField(JavaWriter writer, TypeMirror supertype)
-      throws IOException {
-    writer.emitField(JavaWriter.type(Binding.class, rawTypeToString(supertype, '.')), "supertype",
-        EnumSet.of(PRIVATE));
+  private void writeSupertypeInjectorField(
+      JavaWriter writer, TypeElement type, TypeMirror nextAncestor) throws IOException {
+    TypeElement supertypeElement =
+        ((TypeElement) processingEnv.getTypeUtils().asElement(nextAncestor));
+    String adapterName = parentAdapterName(type, supertypeElement);
+    writer.emitField(
+        adapterName, "nextInjectableAncestor", EnumSet.of(PRIVATE), "new " + adapterName + "()");
   }
 
   private void writeInjectAdapterConstructor(JavaWriter writer, ExecutableElement constructor,
@@ -351,6 +413,10 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     writer.emitEmptyLine();
   }
 
+  /**
+   * Writes the {@code attach()} method for the generated adapters. The {@code supertype} provided
+   * is the next injectable ancestor.
+   */
   private void writeAttachMethod(JavaWriter writer, ExecutableElement constructor,
       List<Element> fields, boolean disambiguateFields, String typeName, TypeMirror supertype,
       boolean extendsBinding) throws IOException {
@@ -361,6 +427,9 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     writer.emitAnnotation(SuppressWarnings.class, JavaWriter.stringLiteral("unchecked"));
     writer.beginMethod(
         "void", "attach", EnumSet.of(PUBLIC), Linker.class.getCanonicalName(), "linker");
+    if (supertype != null) {
+      writer.emitStatement("nextInjectableAncestor.attach(linker)");
+    }
     if (constructor != null) {
       for (VariableElement parameter : constructor.getParameters()) {
         writer.emitStatement(
@@ -377,18 +446,14 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
           writer.compressType(JavaWriter.type(Binding.class, typeToString(field.asType()))),
           JavaWriter.stringLiteral(GeneratorKeys.get((VariableElement) field)), typeName);
     }
-    if (supertype != null) {
-      writer.emitStatement(
-          "%s = (%s) linker.requestBinding(%s, %s.class, getClass().getClassLoader()"
-              + ", false, true)",
-          "supertype",
-          writer.compressType(JavaWriter.type(Binding.class, rawTypeToString(supertype, '.'))),
-          JavaWriter.stringLiteral(GeneratorKeys.rawMembersKey(supertype)), typeName);
-    }
     writer.endMethod();
     writer.emitEmptyLine();
   }
 
+  /**
+   * Writes the {@code getDependencies()} method for the generated adapters. The {@code supertype}
+   * provided is the next injectable ancestor.
+   */
   private void writeGetDependenciesMethod(JavaWriter writer, ExecutableElement constructor,
       List<Element> fields, boolean disambiguateFields, TypeMirror supertype,
       boolean extendsBinding) throws IOException {
@@ -408,7 +473,7 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
       writer.emitStatement("injectMembersBindings.add(%s)", fieldName(disambiguateFields, field));
     }
     if (supertype != null) {
-      writer.emitStatement("injectMembersBindings.add(%s)", "supertype");
+      writer.emitStatement("nextInjectableAncestor.getDependencies(null, injectMembersBindings)");
     }
     writer.endMethod();
     writer.emitEmptyLine();
@@ -439,6 +504,10 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
     writer.emitEmptyLine();
   }
 
+  /**
+   * Writes the {@code injectMembers()} method for the generated adapters. The {@code supertype}
+   * provided is the next injectable ancestor.
+   */
   private void writeMembersInjectMethod(JavaWriter writer, List<Element> fields,
       boolean disambiguateFields, String strippedTypeName, TypeMirror supertype)
       throws IOException {
@@ -451,7 +520,7 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
           fieldName(disambiguateFields, field));
     }
     if (supertype != null) {
-      writer.emitStatement("supertype.injectMembers(object)");
+      writer.emitStatement("nextInjectableAncestor.injectMembers(object)");
     }
     writer.endMethod();
     writer.emitEmptyLine();
@@ -507,6 +576,28 @@ public final class InjectAdapterProcessor extends AbstractProcessor {
 
   private String parameterName(boolean disambiguateFields, Element parameter) {
     return (disambiguateFields ? "parameter_" : "") + parameter.getSimpleName().toString();
+  }
+
+  private String parentAdapterName(TypeElement originChild, TypeElement ancestor) {
+    StringBuilder result = new StringBuilder();
+    String ancestorPackageName = getPackage(ancestor).getQualifiedName().toString();
+    String childPackageName = getPackage(originChild).getQualifiedName().toString();
+    String childName = strippedTypeName(originChild.getQualifiedName().toString(), childPackageName)
+        .replace('.', '$');
+    String ancestorName = strippedTypeName(
+        ancestor.getQualifiedName().toString(), ancestorPackageName).replace('.', '$');
+    if (!ancestorPackageName.isEmpty()) {
+      result.append(ancestorPackageName);
+      result.append('.');
+    }
+    result.append(ancestorName);
+    result.append(PARENT_ADAPTER_INFIX);
+    if (!childPackageName.isEmpty()) {
+      result.append(childPackageName.replace('.', '_'));
+      result.append('_');
+    }
+    result.append(childName);
+    return result.toString();
   }
 
   private void error(String msg, Element element) {

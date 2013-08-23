@@ -1,0 +1,28 @@
+import java.io.File;
+
+File classes = new File(basedir, "target/classes/test/");
+
+File moduleAdapter = new File(classes, "TestApp$TestModule$$ModuleAdapter.class");
+if (!moduleAdapter.exists()) throw new Exception("No binding generated for module");
+
+File integerBinding = 
+    new File(classes, "TestApp$TestModule$$ModuleAdapter$ProvideIntegerProvidesAdapter.class");
+if (!integerBinding.exists()) throw new Exception("No binding generated for integer()");
+
+File stringBinding =
+    new File(classes, "TestApp$TestModule$$ModuleAdapter$ProvideStringProvidesAdapter.class");
+if (!stringBinding.exists()) throw new Exception("No binding generated for string()");
+
+File injectAdapter = new File(classes, "TestApp$InjectableSubclass$$InjectAdapter.class");
+if (!injectAdapter.exists()) 
+  throw new Exception("No inject adapter generated for InjectableSubclass");
+
+File parentAdapter = 
+    new File(classes, "parentpackage/ParentWithNoInjectedMembers$$ParentAdapter$$test_TestApp$InjectableSubclass.class");
+if (parentAdapter.exists()) 
+  throw new Exception("An unnecessary parent adapter was generated for ParentwithNoInjectedMembers.");
+    
+File grandparentAdapter = 
+    new File(classes, "grandparentpackage/GrandparentWithInjectedMember$$ParentAdapter$$test_TestApp$InjectableSubclass.class");
+if (!grandparentAdapter.exists()) 
+  throw new Exception("No parent adapter was generated for GrandparentwithInjectedMember.");

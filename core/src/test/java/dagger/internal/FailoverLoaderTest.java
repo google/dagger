@@ -27,8 +27,8 @@ import org.junit.runners.JUnit4;
 import static org.fest.assertions.Assertions.assertThat;
 
 /**
- * A test case to deal with fall-back to reflection where the concrete type has been generated
- * but the parent has no {@code @Inject} annotation, and so has not been generated.
+ * A test case to deal with fall-back to reflection where an inject adapter has not
+ * been generated.
  */
 @RunWith(JUnit4.class)
 public final class FailoverLoaderTest {

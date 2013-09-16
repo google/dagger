@@ -549,7 +549,7 @@ public final class InjectionTest {
 
   @Test public void noProvideBindingsForAbstractClasses() {
     class TestEntryPoint {
-      @Inject AbstractList<?> abstractList;
+      @Inject AbstractList abstractList;
     }
 
     @Module(injects = TestEntryPoint.class)

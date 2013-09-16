@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.Binding;
+import dagger.internal.Binding.InvalidBindingException;
 import dagger.internal.Linker;
 import dagger.internal.ProblemDetector;
 import dagger.internal.SetBinding;
@@ -45,6 +46,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -89,7 +91,7 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
 
     Set<Element> modules = new LinkedHashSet<Element>();
     for (String moduleName : delayedModuleNames) {
-      modules.add(processingEnv.getElementUtils().getTypeElement(moduleName));
+      modules.add(elements().getTypeElement(moduleName));
     }
 
     for (Element element : modules) {
@@ -108,7 +110,10 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
         } catch (ModuleValidationException e) {
           error("Graph validation failed: " + e.getMessage(), e.source);
           continue;
-        } catch (IllegalStateException e) {
+        } catch (InvalidBindingException e) {
+          error("Graph validation failed: " + e.getMessage(), elements().getTypeElement(e.type));
+          continue;
+        } catch (RuntimeException e) {
           error("Graph validation failed: " + e.getMessage(), moduleType);
           continue;
         }
@@ -233,6 +238,10 @@ public final class GraphAnalysisProcessor extends AbstractProcessor {
       // errors if any dependencies are missing.
       return linker.linkAll();
     }
+  }
+
+  private Elements elements() {
+    return processingEnv.getElementUtils();
   }
 
   private String shortMethodName(ExecutableElement method) {

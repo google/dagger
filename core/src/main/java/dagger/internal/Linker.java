@@ -15,6 +15,7 @@
  */
 package dagger.internal;
 
+import dagger.internal.Binding.InvalidBindingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -118,15 +119,19 @@ public final class Linker {
           Binding<?> scopedJitBinding = scope(jitBinding);
           toLink.add(scopedJitBinding);
           putBinding(scopedJitBinding);
+        } catch (InvalidBindingException e) {
+          addError(e.type + " " + e.getMessage() + " required by " + binding.requiredBy);
+          bindings.put(key, Binding.UNRESOLVED);
+        } catch (UnsupportedOperationException e) {
+          addError("Unsupported: " + e.getMessage() + " required by " + binding.requiredBy);
+          bindings.put(key, Binding.UNRESOLVED);
+        } catch (IllegalArgumentException e) {
+          addError(e.getMessage() + " required by " + binding.requiredBy);
+          bindings.put(key, Binding.UNRESOLVED);
+        } catch (RuntimeException e) {
+          throw e;
         } catch (Exception e) {
-          if (e.getMessage() != null) {
-            addError(e.getMessage() + " required by " + binding.requiredBy);
-            bindings.put(key, Binding.UNRESOLVED);
-          } else if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
-          } else {
-            throw new RuntimeException(e);
-          }
+          throw new RuntimeException(e);
         }
       } else {
         // Attempt to attach the binding to its dependencies. If any dependency
@@ -187,8 +192,7 @@ public final class Linker {
         return binding;
       }
     }
-
-    throw new IllegalArgumentException("No binding for " + key);
+    throw new InvalidBindingException(className, "could not be bound with key " + key);
   }
 
   /** @deprecated Older, generated code still using this should be re-generated. */

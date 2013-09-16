@@ -170,7 +170,7 @@ public final class ReflectiveAtInjectBinding<T> extends Binding<T> {
         continue;
       }
       if (injectedConstructor != null) {
-        throw new IllegalArgumentException("Too many injectable constructors on " + type.getName());
+        throw new InvalidBindingException(type.getName(), "has too many injectable constructors");
       }
       injectedConstructor = constructor;
     }
@@ -181,8 +181,8 @@ public final class ReflectiveAtInjectBinding<T> extends Binding<T> {
         } catch (NoSuchMethodException ignored) {
         }
       } else if (mustHaveInjections) {
-        throw new IllegalArgumentException("No injectable members on " + type.getName()
-            + ". Do you want to add an injectable constructor?");
+        throw new InvalidBindingException(type.getName(),
+            "has no injectable members. Do you want to add an injectable constructor?");
       }
     }
 

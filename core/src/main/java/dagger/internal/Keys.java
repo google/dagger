@@ -144,7 +144,7 @@ public final class Keys {
         result.append("[]");
       } else if (c.isPrimitive()) {
         if (topLevel) {
-          throw new UnsupportedOperationException("Uninjectable type " + type);
+          throw new UnsupportedOperationException("Uninjectable type " + c.getName());
         }
         result.append(c.getName());
       } else {

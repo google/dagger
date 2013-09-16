@@ -1,8 +1,0 @@
-import dagger.testing.it.BuildLogValidator;
-import java.io.File;
-
-File buildLog = new File(basedir, "build.log");
-new BuildLogValidator().assertHasText(buildLog, new String[]{
-    "Only one scoping annotation is allowed per element: test.TestApp.InjectableClass"});
-new BuildLogValidator().assertHasText(buildLog, new String[]{
-    "Only one scoping annotation is allowed per element: test.TestApp.TestModule.string()"});

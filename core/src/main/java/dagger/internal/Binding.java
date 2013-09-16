@@ -63,7 +63,8 @@ public abstract class Binding<T> implements Provider<T>, MembersInjector<T> {
 
   protected Binding(String provideKey, String membersKey, boolean singleton, Object requiredBy) {
     if (singleton && provideKey == null) {
-      throw new IllegalArgumentException();
+      throw new InvalidBindingException(Keys.getClassName(membersKey),
+          "is exclusively members injected and therefore cannot be scoped");
     }
     this.provideKey = provideKey;
     this.membersKey = membersKey;
@@ -148,5 +149,20 @@ public abstract class Binding<T> implements Provider<T>, MembersInjector<T> {
   @Override public String toString() {
     return getClass().getSimpleName()
             + "[provideKey=\"" + provideKey + "\", memberskey=\"" + membersKey + "\"]";
+  }
+
+  /** An exception thrown by anything attempting to construct a binding which is invalid. */
+  public static class InvalidBindingException extends RuntimeException {
+    public final String type;
+
+    public InvalidBindingException(String type, String error) {
+      super(error);
+      this.type = type;
+    }
+
+    public InvalidBindingException(String type, String error, Throwable cause) {
+      super("Binding for " + type + " was invalid: " + error, cause);
+      this.type = type;
+    }
   }
 }

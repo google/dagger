@@ -40,7 +40,7 @@ public final class InjectAdapterGenerationTest {
         "}"));
 
     JavaFileObject expectedModuleAdapter =
-        JavaFileObjects.forSourceString("Basic$A$$InjectAdapter", Joiner.on("\n").join(
+        JavaFileObjects.forSourceString("Basic$CyclicModule$$ModuleAdapter", Joiner.on("\n").join(
             "import dagger.internal.ModuleAdapter;",
             "public final class Basic$CyclicModule$$ModuleAdapter",
             "    extends ModuleAdapter<Basic.CyclicModule> {",
@@ -48,7 +48,8 @@ public final class InjectAdapterGenerationTest {
             "  private static final Class<?>[] STATIC_INJECTIONS = {};",
             "  private static final Class<?>[] INCLUDES = {};",
             "  public Basic$CyclicModule$$ModuleAdapter() {",
-            "    super(INJECTS, STATIC_INJECTIONS, false, INCLUDES, true, false);",
+            "    super(Basic.CyclicModule.class,INJECTS, STATIC_INJECTIONS, false, INCLUDES,",
+            "      true, false);",
             "  }",
             "  @Override public Basic.CyclicModule newModule() {",
             "    return new Basic.CyclicModule();",

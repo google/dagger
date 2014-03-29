@@ -47,10 +47,11 @@
     <guava.version>16.0.1</guava.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.10</junit.version>
+    <compile-testing.version>0.4</compile-testing.version>
     <fest.version>1.4</fest.version>
+    <junit.version>4.10</junit.version>
+    <mockito.version>1.9.5</mockito.version>
     <truth.version>0.13</truth.version>
-    <compile-testing.version>0.5</compile-testing.version>
   </properties>
 
   <scm>
@@ -113,6 +114,11 @@
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
         <version>${compile-testing.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
       </dependency>
       <dependency>
         <groupId>org.truth0</groupId>

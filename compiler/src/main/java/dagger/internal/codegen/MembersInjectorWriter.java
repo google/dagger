@@ -16,8 +16,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javawriter.JavaWriter.stringLiteral;
 import static com.squareup.javawriter.JavaWriter.type;
 import static dagger.internal.codegen.JavaWriterUtil.flattenVariableMap;
@@ -29,6 +27,7 @@ import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.FluentIterable;
@@ -66,7 +65,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.tools.JavaFileObject;
 
 /**
  * Writes {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
@@ -74,153 +72,143 @@ import javax.tools.JavaFileObject;
  * @author Gregory Kick
  * @since 2.0
  */
-final class MembersInjectorWriter {
-  private final Filer filer;
+final class MembersInjectorWriter extends SourceFileGenerator<MembersInjectorDescriptor> {
   private final ProviderTypeRepository providerTypeRepository;
 
   MembersInjectorWriter(Filer filer, ProviderTypeRepository providerTypeRepository) {
-    this.filer = checkNotNull(filer);
+    super(filer);
     this.providerTypeRepository = providerTypeRepository;
   }
 
-  /**
-   * Writes a new source file for the generated {@link MembersInjector}.
-   *
-   * @throws IllegalArgumentException if the given bindings are not all for the same
-   *     {@link MembersInjectionBinding#targetEnclosingType()}.
-   */
-  void write(ImmutableList<MembersInjectionBinding> bindings) throws IOException {
-    checkNotNull(bindings);
-    FluentIterable<MembersInjectionBinding> fluentBindings = FluentIterable.from(bindings);
-    checkArgument(!fluentBindings.isEmpty());
-    TypeElement injectedTypeElement = Iterables.getOnlyElement(fluentBindings
-        .transform(new Function<MembersInjectionBinding, TypeElement>() {
-          @Override public TypeElement apply(MembersInjectionBinding binding) {
-            return binding.targetEnclosingType();
-          }
-        })
-        .toSet());
+  @Override
+  ClassName nameGeneratedType(MembersInjectorDescriptor descriptor) {
+    ClassName injectedClassName = descriptor.injectedClassName();
+    return injectedClassName.peerNamed(injectedClassName.simpleName() + "$$MembersInjector");
+  }
 
-
-    ClassName injectedClassName = ClassName.fromTypeElement(injectedTypeElement);
-    ClassName injectorClassName =
-        injectedClassName.peerNamed(injectedClassName.simpleName() + "$$MembersInjector");
-
-    JavaFileObject sourceFile = filer.createSourceFile(injectorClassName.fullyQualifiedName(),
-        fluentBindings.transform(new Function<MembersInjectionBinding, Element>() {
+  @Override
+  Iterable<? extends Element> getOriginatingElements(
+      MembersInjectorDescriptor descriptor) {
+    return FluentIterable.from(descriptor.bindings())
+        .transform(new Function<MembersInjectionBinding, Element>() {
           @Override public Element apply(MembersInjectionBinding binding) {
             return binding.target();
           }
         })
-        .toArray(Element.class));
+        .toSet();
+  }
 
-    JavaWriter writer = new JavaWriter(sourceFile.openWriter());
-    try {
-      writer.emitPackage(injectedClassName.packageName());
+  @Override
+  Optional<? extends Element> getElementForErrorReporting(MembersInjectorDescriptor input) {
+    return Optional.of(input.injectedClass());
+  }
 
+  @Override
+  void write(ClassName injectorClassName, JavaWriter writer, MembersInjectorDescriptor descriptor)
+      throws IOException {
+    ClassName injectedClassName = descriptor.injectedClassName();
+    ImmutableSortedSet<MembersInjectionBinding> bindings = descriptor.bindings();
 
-      for (ClassName className : collectImports(injectorClassName, fluentBindings)) {
-        writer.emitImports(className.fullyQualifiedName());
-      }
-      writer.emitEmptyLine();
+    writer.emitPackage(injectedClassName.packageName());
 
-      writer.emitJavadoc("A {@link MembersInjector} implementation for {@link %s}.",
-          injectedClassName.simpleName());
-
-      String membersInjectorType = type(MembersInjector.class, injectedClassName.simpleName());
-      // @Generated("dagger.internal.codegen.InjectProcessor")
-      // public final class Blah$$MembersInjector implements MembersInjector<Blah>
-      writer.emitAnnotation(Generated.class, stringLiteral(InjectProcessor.class.getName()))
-          .beginType(injectorClassName.simpleName(), "class", EnumSet.of(FINAL), null,
-              membersInjectorType);
-
-      // Require a Provider/MembersInjector for each request
-      ImmutableSetMultimap.Builder<Key, DependencyRequest> dependenciesByKeyBuilder =
-          new ImmutableSetMultimap.Builder<Key, DependencyRequest>()
-              .orderValuesBy(DEPENDENCY_ORDERING);
-      for (MembersInjectionBinding binding : bindings) {
-        for (DependencyRequest dependency : binding.dependencies()) {
-          dependenciesByKeyBuilder.put(dependency.key(), dependency);
-        }
-      }
-      ImmutableSetMultimap<Key, DependencyRequest> dependenciesByKey =
-          dependenciesByKeyBuilder.build();
-
-
-      final ImmutableBiMap<Key, String> providerNames = generateProviderNames(dependenciesByKey);
-
-      // Add the fields
-      writeProviderFields(writer, providerNames);
-
-      // Add the constructor
-      writeConstructor(writer, providerNames);
-
-      // @Override public void injectMembers(Blah instance)
-      writer.emitAnnotation(Override.class)
-          .beginMethod("void", "injectMembers", EnumSet.of(PUBLIC),
-              injectedClassName.simpleName(), "instance");
-      writer.beginControlFlow("if (instance == null)")
-          .emitStatement(
-              "throw new NullPointerException(\"Cannot inject members into a null reference\")")
-          .endControlFlow();
-
-      for (MembersInjectionBinding binding : bindings) {
-        Element target = binding.target();
-        switch (target.getKind()) {
-          case FIELD:
-            Name fieldName = ((VariableElement) target).getSimpleName();
-            DependencyRequest singleDependency = Iterables.getOnlyElement(binding.dependencies());
-            String providerName = providerNames.get(singleDependency.key());
-            switch (singleDependency.kind()) {
-              case LAZY:
-                writer.emitStatement("instance.%s = %s.create(%s)",
-                    fieldName, DoubleCheckLazy.class.getSimpleName(), providerName);
-                break;
-              case INSTANCE:
-                writer.emitStatement("instance.%s = %s.get()", fieldName, providerName);
-                break;
-              case PROVIDER:
-                writer.emitStatement("instance.%s = %s", fieldName, providerName);
-                break;
-              default:
-                throw new AssertionError();
-            }
-            break;
-          case METHOD:
-            Name methodName = ((ExecutableElement) target).getSimpleName();
-            String parameterString =
-                Joiner.on(", ").join(FluentIterable.from(binding.dependencies())
-                    .transform(new Function<DependencyRequest, String>() {
-                      @Override public String apply(DependencyRequest input) {
-                        String providerName = providerNames.get(input.key());
-                        switch (input.kind()) {
-                          case LAZY:
-                            return String.format("%s.create(%s)",
-                                DoubleCheckLazy.class.getSimpleName(), providerName);
-                          case INSTANCE:
-                            return String.format("%s.get()", providerName);
-                          case PROVIDER:
-                            return String.format("%s", providerName);
-                          default:
-                            throw new AssertionError();
-                        }
-                      }
-                    }));
-            writer.emitStatement("instance.%s(%s)", methodName, parameterString);
-            break;
-          default:
-            throw new IllegalStateException(target.getKind().toString());
-        }
-      }
-      writer.endMethod();
-
-      writeToString(writer, injectedClassName);
-
-      writer.endType();
-    } finally {
-      writer.close();
-      // TODO(gak): clean up malformed files caused by failures
+    for (ClassName className : collectImports(injectorClassName, bindings)) {
+      writer.emitImports(className.fullyQualifiedName());
     }
+    writer.emitEmptyLine();
+
+    writer.emitJavadoc("A {@link MembersInjector} implementation for {@link %s}.",
+        injectedClassName.simpleName());
+
+    String membersInjectorType = type(MembersInjector.class, injectedClassName.simpleName());
+    // @Generated("dagger.internal.codegen.InjectProcessor")
+    // public final class Blah$$MembersInjector implements MembersInjector<Blah>
+    writer.emitAnnotation(Generated.class, stringLiteral(InjectProcessor.class.getName()))
+    .beginType(injectorClassName.simpleName(), "class", EnumSet.of(FINAL), null,
+        membersInjectorType);
+
+    // Require a Provider/MembersInjector for each request
+    ImmutableSetMultimap.Builder<Key, DependencyRequest> dependenciesByKeyBuilder =
+        new ImmutableSetMultimap.Builder<Key, DependencyRequest>()
+        .orderValuesBy(DEPENDENCY_ORDERING);
+    for (MembersInjectionBinding binding : bindings) {
+      for (DependencyRequest dependency : binding.dependencies()) {
+        dependenciesByKeyBuilder.put(dependency.key(), dependency);
+      }
+    }
+    ImmutableSetMultimap<Key, DependencyRequest> dependenciesByKey =
+        dependenciesByKeyBuilder.build();
+
+
+    final ImmutableBiMap<Key, String> providerNames = generateProviderNames(dependenciesByKey);
+
+    // Add the fields
+    writeProviderFields(writer, providerNames);
+
+    // Add the constructor
+    writeConstructor(writer, providerNames);
+
+    // @Override public void injectMembers(Blah instance)
+    writer.emitAnnotation(Override.class)
+    .beginMethod("void", "injectMembers", EnumSet.of(PUBLIC),
+        injectedClassName.simpleName(), "instance");
+    writer.beginControlFlow("if (instance == null)")
+    .emitStatement(
+        "throw new NullPointerException(\"Cannot inject members into a null reference\")")
+        .endControlFlow();
+
+    for (MembersInjectionBinding binding : bindings) {
+      Element target = binding.target();
+      switch (target.getKind()) {
+        case FIELD:
+          Name fieldName = ((VariableElement) target).getSimpleName();
+          DependencyRequest singleDependency = Iterables.getOnlyElement(binding.dependencies());
+          String providerName = providerNames.get(singleDependency.key());
+          switch (singleDependency.kind()) {
+            case LAZY:
+              writer.emitStatement("instance.%s = %s.create(%s)",
+                  fieldName, DoubleCheckLazy.class.getSimpleName(), providerName);
+              break;
+            case INSTANCE:
+              writer.emitStatement("instance.%s = %s.get()", fieldName, providerName);
+              break;
+            case PROVIDER:
+              writer.emitStatement("instance.%s = %s", fieldName, providerName);
+              break;
+            default:
+              throw new AssertionError();
+          }
+          break;
+        case METHOD:
+          Name methodName = ((ExecutableElement) target).getSimpleName();
+          String parameterString =
+              Joiner.on(", ").join(FluentIterable.from(binding.dependencies())
+                  .transform(new Function<DependencyRequest, String>() {
+                    @Override public String apply(DependencyRequest input) {
+                      String providerName = providerNames.get(input.key());
+                      switch (input.kind()) {
+                        case LAZY:
+                          return String.format("%s.create(%s)",
+                              DoubleCheckLazy.class.getSimpleName(), providerName);
+                        case INSTANCE:
+                          return String.format("%s.get()", providerName);
+                        case PROVIDER:
+                          return String.format("%s", providerName);
+                        default:
+                          throw new AssertionError();
+                      }
+                    }
+                  }));
+          writer.emitStatement("instance.%s(%s)", methodName, parameterString);
+          break;
+        default:
+          throw new IllegalStateException(target.getKind().toString());
+      }
+    }
+    writer.endMethod();
+
+    writeToString(writer, injectedClassName);
+
+    writer.endType();
   }
 
   private void writeProviderFields(JavaWriter writer, ImmutableBiMap<Key, String> providerNames)

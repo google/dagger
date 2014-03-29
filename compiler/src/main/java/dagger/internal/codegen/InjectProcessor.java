@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
@@ -158,10 +157,9 @@ public final class InjectProcessor extends AbstractProcessor {
 
     for (Collection<MembersInjectionBinding> bindings : membersInjectionsByType.asMap().values()) {
       try {
-        membersInjectorWriter.write(
-            MembersInjectionBinding.injectionOrdering().immutableSortedCopy(bindings));
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+        membersInjectorWriter.generate(MembersInjectorDescriptor.create(bindings));
+      } catch (SourceFileGenerationException e) {
+        e.printMessageTo(messager);
       }
     }
 

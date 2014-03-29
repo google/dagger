@@ -15,16 +15,14 @@
  */
 package dagger.internal.codegen;
 
-import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
-
 import com.google.common.collect.ImmutableList;
-
 import java.util.Map;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static org.junit.Assert.fail;
+import static org.truth0.Truth.ASSERT;
 
 @RunWith(JUnit4.class)
 public class ClassNameTest {
@@ -33,12 +31,18 @@ public class ClassNameTest {
         .isEqualTo(ClassName.create("java.lang", "String"));
   }
 
+  class Nested {
+    class Inner {
+    }
+  }
+
   @Test public void bestGuessForString_nestedClass() {
     ASSERT.that(ClassName.bestGuessFromString(Map.Entry.class.getCanonicalName()))
         .isEqualTo(ClassName.create("java.util", ImmutableList.of("Map"), "Entry"));
-    ASSERT.that(ClassName.bestGuessFromString(ProcessBuilder.Redirect.Type.class.getCanonicalName()))
+    ASSERT.that(ClassName.bestGuessFromString(ClassNameTest.Nested.Inner.class.getCanonicalName()))
         .isEqualTo(
-            ClassName.create("java.lang", ImmutableList.of("ProcessBuilder", "Redirect"), "Type"));
+            ClassName.create("dagger.internal.codegen",
+                ImmutableList.of("ClassNameTest", "Nested"), "Inner"));
   }
 
   @Test public void bestGuessForString_defaultPackage() {

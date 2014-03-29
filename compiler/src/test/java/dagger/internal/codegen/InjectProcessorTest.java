@@ -40,7 +40,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-
 @RunWith(JUnit4.class)
 public final class InjectProcessorTest {
   private static final JavaFileObject QUALIFIER_A =
@@ -268,5 +267,169 @@ public final class InjectProcessorTest {
         .processedWith(new InjectProcessor()).failsToCompile()
         // for whatever reason, javac only reports the error once on the method
         .withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6);
+  }
+
+  @Test public void fieldInjection() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.FieldInjection",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "class FieldInjection {",
+        "  @Inject String string;",
+        "  @Inject Lazy<String> lazyString;",
+        "  @Inject Provider<String> stringProvider;",
+        "}");
+    JavaFileObject expected = JavaFileObjects.forSourceLines("test.FieldInjection$$MembersInjector",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import dagger.MembersInjector;",
+        "import dagger.internal.DoubleCheckLazy;",
+        "import javax.annotation.Generated;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "@Generated(\"dagger.internal.codegen.InjectProcessor\")",
+        "final class FieldInjection$$MembersInjector ",
+        "    implements MembersInjector<FieldInjection> {",
+        "",
+        "  private final Provider<String> stringProvider;",
+        "",
+        "  @Inject FieldInjection$$MembersInjector(Provider<String> stringProvider) {",
+        "    assert stringProvider != null;",
+        "    this.stringProvider = stringProvider;",
+        "  }",
+        "",
+        "  @Override public void injectMembers(FieldInjection instance) {",
+        "    if (instance == null) {",
+        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
+        "    }",
+        "    instance.string = stringProvider.get();",
+        "    instance.lazyString = DoubleCheckLazy.create(stringProvider);",
+        "    instance.stringProvider = stringProvider;",
+        "  }",
+        "",
+        "  @Override public String toString() {",
+        "    return \"MembersInjector<FieldInjection>\";",
+        "  }",
+        "}");
+    ASSERT.about(javaSource()).that(file).processedWith(new InjectProcessor())
+        .compilesWithoutError()
+        .and().generatesSources(expected);
+  }
+
+  @Test public void methodInjection() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.MethodInjection",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "class MethodInjection {",
+        "  @Inject void noArgs() {}",
+        "  @Inject void oneArg(String string) {}",
+        "  @Inject void manyArgs(",
+        "      String string, Lazy<String> lazyString, Provider<String> stringProvider) {}",
+        "}");
+    JavaFileObject expected = JavaFileObjects.forSourceLines(
+        "test.MethodInjection$$MembersInjector",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import dagger.MembersInjector;",
+        "import dagger.internal.DoubleCheckLazy;",
+        "import javax.annotation.Generated;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "@Generated(\"dagger.internal.codegen.InjectProcessor\")",
+        "final class MethodInjection$$MembersInjector ",
+        "    implements MembersInjector<MethodInjection> {",
+        "",
+        "  private final Provider<String> stringProvider;",
+        "",
+        "  @Inject MethodInjection$$MembersInjector(Provider<String> stringProvider) {",
+        "    assert stringProvider != null;",
+        "    this.stringProvider = stringProvider;",
+        "  }",
+        "",
+        "  @Override public void injectMembers(MethodInjection instance) {",
+        "    if (instance == null) {",
+        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
+        "    }",
+        "    instance.noArgs();",
+        "    instance.oneArg(stringProvider.get());",
+        "    instance.manyArgs(stringProvider.get(), DoubleCheckLazy.create(stringProvider),",
+        "        stringProvider);",
+        "  }",
+        "",
+        "  @Override public String toString() {",
+        "    return \"MembersInjector<MethodInjection>\";",
+        "  }",
+        "}");
+    ASSERT.about(javaSource()).that(file).processedWith(new InjectProcessor())
+        .compilesWithoutError()
+        .and().generatesSources(expected);
+  }
+
+  @Test public void mixedMemberInjection() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.MixedMemberInjection",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "class MixedMemberInjection {",
+        "  @Inject String string;",
+        "  @Inject void setString(String s) {}",
+        "  @Inject Object object;",
+        "  @Inject void setObject(Object o) {}",
+        "}");
+    JavaFileObject expected = JavaFileObjects.forSourceLines(
+        "test.MixedMemberInjection$$MembersInjector",
+        "package test;",
+        "",
+        "import dagger.MembersInjector;",
+        "import javax.annotation.Generated;",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "@Generated(\"dagger.internal.codegen.InjectProcessor\")",
+        "final class MixedMemberInjection$$MembersInjector ",
+        "    implements MembersInjector<MixedMemberInjection> {",
+        "",
+        "  private final Provider<Object> objectAndOProvider;",
+        "  private final Provider<String> stringAndSProvider;",
+        "",
+        "  @Inject MixedMemberInjection$$MembersInjector(Provider<Object> objectAndOProvider,",
+        "      Provider<String> stringAndSProvider) {",
+        "    assert objectAndOProvider != null;",
+        "    this.objectAndOProvider = objectAndOProvider;",
+        "    assert stringAndSProvider != null;",
+        "    this.stringAndSProvider = stringAndSProvider;",
+        "  }",
+        "",
+        "  @Override public void injectMembers(MixedMemberInjection instance) {",
+        "    if (instance == null) {",
+        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
+        "    }",
+        "    instance.string = stringAndSProvider.get();",
+        "    instance.object = objectAndOProvider.get();",
+        "    instance.setString(stringAndSProvider.get());",
+        "    instance.setObject(objectAndOProvider.get());",
+        "  }",
+        "",
+        "  @Override public String toString() {",
+        "    return \"MembersInjector<MixedMemberInjection>\";",
+        "  }",
+        "}");
+    ASSERT.about(javaSource()).that(file).processedWith(new InjectProcessor())
+        .compilesWithoutError()
+        .and().generatesSources(expected);
   }
 }

@@ -50,12 +50,13 @@ abstract class ValidationReport<T> {
   }
 
   @AutoValue
-  static abstract class Item {
+  static abstract class Item implements PrintableErrorMessage {
     abstract String message();
     abstract Element element();
     abstract Optional<AnnotationMirror> annotation();
 
-    void printMessageTo(Messager messager) {
+    @Override
+    public void printMessageTo(Messager messager) {
       if (annotation().isPresent()) {
         messager.printMessage(ERROR, message(), element(), annotation().get());
       } else {

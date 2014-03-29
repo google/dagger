@@ -16,12 +16,17 @@
  */
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import dagger.internal.Keys;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -151,7 +156,7 @@ final class Util {
         result.append(errorType.toString());
         return null;
       }
-      public Void visitWildcard(WildcardType wildcardType, Void v) {
+      @Override public Void visitWildcard(WildcardType wildcardType, Void v) {
         result.append("?");
         if (wildcardType.getExtendsBound() != null) {
           result.append(" extends ");
@@ -354,6 +359,20 @@ final class Util {
       }
     }
     return false;
+  }
+
+  static boolean isValidJavaIdentifier(String possibleIdentifier) {
+    checkNotNull(possibleIdentifier);
+    checkArgument(!possibleIdentifier.isEmpty());
+    if (!Character.isJavaIdentifierStart(possibleIdentifier.charAt(0))) {
+      return false;
+    }
+    for (int i = 1; i < possibleIdentifier.length(); i++) {
+      if (!Character.isJavaIdentifierPart(possibleIdentifier.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

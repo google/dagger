@@ -47,7 +47,7 @@
     <guava.version>16.0.1</guava.version>
 
     <!-- Test Dependencies -->
-    <compile-testing.version>0.4</compile-testing.version>
+    <compile-testing.version>0.5-SNAPSHOT</compile-testing.version>
     <fest.version>1.4</fest.version>
     <junit.version>4.10</junit.version>
     <mockito.version>1.9.5</mockito.version>

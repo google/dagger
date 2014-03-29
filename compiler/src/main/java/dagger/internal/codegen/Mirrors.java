@@ -44,6 +44,7 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  * Utilities related to {@link TypeMirror} instances.
  *
  * @author Gregory Kick
+ * @since 2.0
  */
 final class Mirrors {
   private static final Equivalence<TypeMirror> TYPE_EQUIVALENCE = new Equivalence<TypeMirror>() {
@@ -247,6 +248,10 @@ final class Mirrors {
     return mirror == null ? 0 : mirror.accept(HASH_VISITOR, null);
   }
 
+  /**
+   * Returns the set of {@linkplain TypeElement types} that are referenced by the given
+   * {@link TypeMirror}.
+   */
   static ImmutableSet<TypeElement> referencedTypes(TypeMirror type) {
     checkNotNull(type);
     ImmutableSet.Builder<TypeElement> elements = ImmutableSet.builder();

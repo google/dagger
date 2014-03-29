@@ -34,11 +34,16 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -58,6 +63,8 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.ElementKindVisitor6;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * An annotation processor for generating Dagger implementation code based on the {@link Inject}
@@ -69,11 +76,19 @@ import javax.lang.model.util.ElementKindVisitor6;
 @SupportedSourceVersion(RELEASE_6)
 public final class InjectProcessor extends AbstractProcessor {
   private Messager messager;
+  private MembersInjectionBinding.Factory membersInjectionBindingFactory;
+  private MembersInjectorWriter membersInjectorWriter;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
     this.messager = processingEnv.getMessager();
+    Elements elements = processingEnv.getElementUtils();
+    Types types = processingEnv.getTypeUtils();
+    this.membersInjectionBindingFactory = new MembersInjectionBinding.Factory(
+        new DependencyRequest.Factory(elements, types));
+    this.membersInjectorWriter = new MembersInjectorWriter(processingEnv.getFiler(),
+        new ProviderTypeRepository(elements, types));
   }
 
   @Override
@@ -84,6 +99,8 @@ public final class InjectProcessor extends AbstractProcessor {
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     // TODO(gak): add some error handling for bad source files
+    final ImmutableSet.Builder<MembersInjectionBinding> membersInjections = ImmutableSet.builder();
+
     for (Element injectElement : roundEnv.getElementsAnnotatedWith(Inject.class)) {
       injectElement.accept(
           new ElementKindVisitor6<Void, Void>() {
@@ -108,7 +125,8 @@ public final class InjectProcessor extends AbstractProcessor {
               report.printMessagesTo(messager);
 
               if (report.isClean()) {
-                // collect bindings for generating members injectors
+                membersInjections.add(
+                    membersInjectionBindingFactory.forInjectField(fieldElement));
               }
 
               return null;
@@ -121,7 +139,8 @@ public final class InjectProcessor extends AbstractProcessor {
               report.printMessagesTo(messager);
 
               if (report.isClean()) {
-                // collect bindings for generating members injectors
+                membersInjections.add(
+                    membersInjectionBindingFactory.forInjectMethod(methodElement));
               }
 
               return null;
@@ -129,7 +148,22 @@ public final class InjectProcessor extends AbstractProcessor {
           }, null);
     }
 
-    // TODO(gak): generate the factories and members injectors
+    ImmutableListMultimap<TypeElement, MembersInjectionBinding> membersInjectionsByType =
+        Multimaps.index(membersInjections.build(),
+            new Function<MembersInjectionBinding, TypeElement>() {
+              @Override public TypeElement apply(MembersInjectionBinding binding) {
+                return binding.targetEnclosingType();
+              }
+            });
+
+    for (Collection<MembersInjectionBinding> bindings : membersInjectionsByType.asMap().values()) {
+      try {
+        membersInjectorWriter.write(
+            MembersInjectionBinding.injectionOrdering().immutableSortedCopy(bindings));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     return false;
   }

@@ -21,6 +21,10 @@ package dagger;
  * the first call to {@code get()} and remembers that same value for all
  * subsequent calls to {@code get()}.
  *
+ * <p>{@code null} is not a supported value.  Implementations of {@code Lazy}
+ * are expected to throw {@link NullPointerException} if the computed value is
+ * {@code null}.
+ *
  * <h2>Example</h2>
  * The differences between <strong>direct injection</strong>, <strong>provider
  * injection</strong> and <strong>lazy injection</strong> are best demonstrated
@@ -148,6 +152,8 @@ public interface Lazy<T> {
   /**
    * Return the underlying value, computing the value if necessary. All calls to
    * the same {@code Lazy} instance will return the same result.
+   *
+   * @throws NullPointerException if the computed value is {@code null}.
    */
   T get();
 }

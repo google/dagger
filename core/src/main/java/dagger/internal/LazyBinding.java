@@ -47,6 +47,7 @@ final class LazyBinding<T> extends Binding<Lazy<T>> {
 
   @Override
   public Lazy<T> get() {
+    // TODO(gak): Use DoubleCheckLazy
     return new Lazy<T>() {
       private volatile Object cacheValue = NOT_PRESENT;
 

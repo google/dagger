@@ -17,7 +17,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -25,17 +25,11 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 
 import dagger.Provides;
 
-import java.util.Iterator;
-import java.util.List;
-
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -61,19 +55,21 @@ abstract class Key {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return Objects.toStringHelper(Key.class)
         .omitNullValues()
         .add("qualifier", qualifier().orNull())
         .add("type", type())
         .toString();
   }
 
+  // TODO(gak): normalize boxed types
+
   static Key create(TypeMirror type) {
     return new AutoValue_Key(Optional.<AnnotationMirror>absent(), Mirrors.equivalence().wrap(type));
   }
 
-  static Key create(AnnotationMirror qualifier, TypeMirror type) {
-    return new AutoValue_Key(Optional.of(qualifier), Mirrors.equivalence().wrap(type));
+  static Key create(Optional<AnnotationMirror> qualifier, TypeMirror type) {
+    return new AutoValue_Key(qualifier, Mirrors.equivalence().wrap(type));
   }
 
   // TODO(gak): decide whether to address set bindings here or someplace else
@@ -98,24 +94,5 @@ abstract class Key {
     // Must use the enclosing element.  The return type is void for constructors(?!)
     TypeMirror type = e.getEnclosingElement().asType();
     return new AutoValue_Key(Optional.<AnnotationMirror>absent(), Mirrors.equivalence().wrap(type));
-  }
-
-  private static Optional<AnnotationMirror> getQualifier(Element e) {
-    List<? extends AnnotationMirror> annotations = e.getAnnotationMirrors();
-    Iterator<? extends AnnotationMirror> qualifiers = FluentIterable.from(annotations)
-        .filter(new Predicate<AnnotationMirror>() {
-          @Override
-          public boolean apply(AnnotationMirror input) {
-            return input.getAnnotationType().asElement().getAnnotation(Qualifier.class) != null;
-          }
-        })
-        .iterator();
-    if (qualifiers.hasNext()) {
-      AnnotationMirror qualifier = qualifiers.next();
-      checkState(!qualifiers.hasNext(), "More than one qualifier was present.");
-      return Optional.of(qualifier);
-    } else {
-      return Optional.absent();
-    }
   }
 }

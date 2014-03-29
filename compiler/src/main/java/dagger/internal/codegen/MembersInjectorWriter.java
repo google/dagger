@@ -273,7 +273,8 @@ final class MembersInjectorWriter extends SourceFileGenerator<MembersInjectorDes
             Mirrors.referencedTypes(dependency.key().type());
         switch (dependency.kind()) {
           case LAZY:
-            builder.add(ClassName.fromClass(Lazy.class), ClassName.fromClass(DoubleCheckLazy.class));
+            builder.add(ClassName.fromClass(Lazy.class),
+                ClassName.fromClass(DoubleCheckLazy.class));
             // fall through
           case INSTANCE:
           case PROVIDER:

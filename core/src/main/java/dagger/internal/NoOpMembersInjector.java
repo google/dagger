@@ -15,10 +15,10 @@ public final class NoOpMembersInjector<T> implements MembersInjector<T> {
     return (MembersInjector<T>) INSTANCE;
   }
 
-  private static final NoOpMembersInjector<Object> INSTANCE = new NoOpMembersInjector<Object>() ;
+  private static final NoOpMembersInjector<Object> INSTANCE = new NoOpMembersInjector<Object>();
 
   @Override
   public void injectMembers(T instance) {}
 
-  private NoOpMembersInjector () {}
+  private NoOpMembersInjector() {}
 }

@@ -15,9 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.AnnotationMirrors.getAnnotationMirror;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
@@ -26,16 +23,13 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -43,6 +37,9 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+
+import static dagger.internal.codegen.AnnotationMirrors.getAnnotationMirror;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 
 /**
  * The logical representation of a {@link Component} definition.
@@ -195,7 +192,7 @@ abstract class ComponentDescriptor {
               // TODO(gak): generate a factory for an @Inject dependency that wasn't run with the
               // processor
               throw new UnsupportedOperationException("@Injected classes that weren't run with the "
-                  + "compoenent processor are (briefly) unsupported.");
+                  + "compoenent processor are (briefly) unsupported: " + key);
             }
           } else {
             resolvedBindings.putAll(key, explicitBindingsForKey);

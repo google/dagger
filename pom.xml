@@ -50,9 +50,9 @@
     <!-- Test Dependencies -->
     <compile-testing.version>0.5</compile-testing.version>
     <fest.version>1.4</fest.version>
-    <junit.version>4.10</junit.version>
+    <junit.version>4.11</junit.version>
     <mockito.version>1.9.5</mockito.version>
-    <truth.version>0.13</truth.version>
+    <truth.version>0.20</truth.version>
   </properties>
 
   <scm>

@@ -5,6 +5,8 @@ import dagger.Provides;
 import javax.inject.Singleton;
 
 @Module(
+    complete = false,
+    library = true,
     injects = CoffeeApp.class,
     includes = PumpModule.class
 )

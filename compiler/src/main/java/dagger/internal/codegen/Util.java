@@ -16,17 +16,12 @@
  */
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import dagger.internal.Keys;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -45,6 +40,11 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor6;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * Utilities for handling types in annotation processors
@@ -156,6 +156,7 @@ final class Util {
         result.append(errorType.toString());
         return null;
       }
+      @Override
       public Void visitWildcard(WildcardType wildcardType, Void v) {
         result.append("?");
         if (wildcardType.getExtendsBound() != null) {
@@ -335,30 +336,32 @@ final class Util {
       return false;
     }
     TypeElement type = (TypeElement) constructor.getEnclosingElement();
-    return type.getEnclosingElement().getKind() == ElementKind.PACKAGE
-        || type.getModifiers().contains(Modifier.STATIC);
+    return type.getEnclosingElement().getKind().equals(ElementKind.PACKAGE)|| isStatic(type);
   }
 
 
   /**
    * Returns a user-presentable string like {@code coffee.CoffeeModule}.
    */
+  // TODO(cgruber): Migrate to auto-common/MoreElements.
   public static String className(ExecutableElement method) {
     return ((TypeElement) method.getEnclosingElement()).getQualifiedName().toString();
   }
 
-  public static boolean isInterface(TypeMirror typeMirror) {
+  // TODO(cgruber): Migrate to auto-common/MoreTypes.
+  static boolean isInterface(TypeMirror typeMirror) {
     return typeMirror instanceof DeclaredType
-        && ((DeclaredType) typeMirror).asElement().getKind() == ElementKind.INTERFACE;
+        && ((DeclaredType) typeMirror).asElement().getKind().equals(ElementKind.INTERFACE);
   }
 
+  // TODO(cgruber): Migrate to auto-common/MoreElements.
   static boolean isStatic(Element element) {
-    for (Modifier modifier : element.getModifiers()) {
-      if (modifier.equals(Modifier.STATIC)) {
-        return true;
-      }
-    }
-    return false;
+    return element.getModifiers().contains(STATIC);
+  }
+
+  // TODO(cgruber): Migrate to auto-common/MoreElements.
+  static boolean isAbstract(TypeElement type) {
+    return type.getModifiers().contains(ABSTRACT);
   }
 
   static boolean isValidJavaIdentifier(String possibleIdentifier) {

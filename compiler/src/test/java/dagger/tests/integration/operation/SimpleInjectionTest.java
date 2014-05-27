@@ -52,18 +52,18 @@ public final class SimpleInjectionTest {
   @Test public void memberInject_WithoutProvidesMethod() {
     Foo foo = new Foo();
     ObjectGraph.create(FooModule.class).inject(foo);
-    ASSERT.that(foo.blah).equals("blah");
+    ASSERT.that(foo.blah).isEqualTo("blah");
   }
 
   @Test public void membersInject_WithProvidesMethod() {
     Foo foo = new Foo();
     ObjectGraph.create(ProvidingFooModule.class).inject(foo);
-    ASSERT.that(foo.blah).equals("blah");
+    ASSERT.that(foo.blah).isEqualTo("blah");
   }
 
   @Test public void get_WithProvidesMethod() {
     Foo foo = ObjectGraph.create(ProvidingFooModule.class).get(Foo.class);
-    ASSERT.that(foo.blah).equals("blah");
+    ASSERT.that(foo.blah).isEqualTo("blah");
   }
 
   static class Bar { }

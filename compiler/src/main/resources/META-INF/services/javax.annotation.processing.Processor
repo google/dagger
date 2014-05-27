@@ -1,3 +1,4 @@
+dagger.internal.codegen.ComponentProcessor
 dagger.internal.codegen.ValidationProcessor
 dagger.internal.codegen.InjectAdapterProcessor
 dagger.internal.codegen.ModuleAdapterProcessor

@@ -15,22 +15,13 @@
  */
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
-import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
-import static javax.lang.model.element.ElementKind.METHOD;
-import static javax.lang.model.type.TypeKind.DECLARED;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-
+import dagger.MembersInjector;
 import dagger.Provides;
-
 import java.util.Set;
-
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -40,6 +31,14 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
+import static javax.lang.model.element.ElementKind.CLASS;
+import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
+import static javax.lang.model.element.ElementKind.METHOD;
+import static javax.lang.model.type.TypeKind.DECLARED;
 
 /**
  * Represents a unique combination of {@linkplain TypeMirror type} and
@@ -129,5 +128,17 @@ abstract class Key {
       return new AutoValue_Key(Optional.<AnnotationMirror>absent(),
           MoreTypes.equivalence().wrap(type));
     }
+
+    Key forMembersInjector(TypeElement e) {
+      checkNotNull(e);
+      checkArgument(e.getKind().equals(CLASS));
+      checkArgument(!getQualifier(e).isPresent());
+      // Must use the enclosing element.  The return type is void for constructors(?!)
+      TypeMirror type = types.getDeclaredType(
+          elements.getTypeElement(MembersInjector.class.getCanonicalName()), e.asType());
+      return new AutoValue_Key(Optional.<AnnotationMirror>absent(),
+          MoreTypes.equivalence().wrap(type));
+    }
+
   }
 }

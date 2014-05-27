@@ -15,6 +15,20 @@
  */
 package dagger.internal.codegen;
 
+import com.google.auto.common.MoreElements;
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import dagger.Provides;
+import java.util.Iterator;
+import javax.inject.Inject;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.immutableEnumSet;
@@ -24,23 +38,6 @@ import static dagger.internal.codegen.InjectionAnnotations.getScopeAnnotation;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.FIELD;
 import static javax.lang.model.element.ElementKind.METHOD;
-
-import com.google.auto.common.MoreElements;
-import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-
-import dagger.Provides;
-
-import java.util.Iterator;
-
-import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A value object representing the mechanism by which a {@link Key} can be provided. New instances
@@ -106,12 +103,13 @@ abstract class ProvisionBinding extends Binding {
       this.dependencyRequestFactory = dependencyRequestFactory;
     }
 
-    ProvisionBinding forInjectConstructor(ExecutableElement constructorElement) {
+    ProvisionBinding forNoArgsConstructor(ExecutableElement constructorElement) {
       checkNotNull(constructorElement);
       checkArgument(constructorElement.getKind().equals(CONSTRUCTOR));
-      checkArgument(constructorElement.getAnnotation(Inject.class) != null);
       Key key = keyFactory.forInjectConstructor(constructorElement);
       checkArgument(!key.qualifier().isPresent());
+      TypeElement typeElement = (TypeElement) constructorElement.getEnclosingElement();
+      boolean requiresMemberInjection = requiresMemberInjection(MoreElements.asType(typeElement));
       return new AutoValue_ProvisionBinding(
           constructorElement,
           dependencyRequestFactory.forRequiredVariables(constructorElement.getParameters()),
@@ -119,14 +117,19 @@ abstract class ProvisionBinding extends Binding {
           Provides.Type.UNIQUE,
           key,
           getScopeAnnotation(constructorElement.getEnclosingElement()),
-          requiresMemeberInjection(
-              MoreElements.asType(constructorElement.getEnclosingElement())));
+          requiresMemberInjection);
+    }
+
+    ProvisionBinding forInjectConstructor(ExecutableElement constructorElement) {
+      checkNotNull(constructorElement);
+      checkArgument(constructorElement.getAnnotation(Inject.class) != null);
+      return forNoArgsConstructor(constructorElement);
     }
 
     private static final ImmutableSet<ElementKind> MEMBER_KINDS =
         Sets.immutableEnumSet(METHOD, FIELD);
 
-    private static boolean requiresMemeberInjection(TypeElement type) {
+    private static boolean requiresMemberInjection(TypeElement type) {
       for (Element enclosedElement : type.getEnclosedElements()) {
         if (MEMBER_KINDS.contains(enclosedElement.getKind())
             && (enclosedElement.getAnnotation(Inject.class) != null)) {

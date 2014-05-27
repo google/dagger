@@ -41,12 +41,12 @@ public final class PrimitiveInjectionTest {
   @Module(injects = ArrayInjectable.class)
   static class PrimitiveArrayModule {
     @Provides byte[] byteArray() { return new byte[] { Byte.MAX_VALUE }; }
-    @Provides int[] provideInt() { return new int[] { Integer.MAX_VALUE }; }
-    @Provides boolean[] provideBoolean() { return new boolean[] { true }; }
-    @Provides long[] provideLong() { return new long[] { Long.MAX_VALUE }; }
-    @Provides char[] provideChar() { return new char[] { Character.MAX_VALUE }; }
-    @Provides float[] provideFloat() { return new float[] { Float.MAX_VALUE }; }
-    @Provides double[] provideDouble() { return new double[] { Double.MAX_VALUE }; }
+    @Provides int[] intArray() { return new int[] { Integer.MAX_VALUE }; }
+    @Provides boolean[] booleanArray() { return new boolean[] { true }; }
+    @Provides long[] longArray() { return new long[] { Long.MAX_VALUE }; }
+    @Provides char[] charArray() { return new char[] { Character.MAX_VALUE }; }
+    @Provides float[] floatArray() { return new float[] { Float.MAX_VALUE }; }
+    @Provides double[] doubleArray() { return new double[] { Double.MAX_VALUE }; }
   }
 
   @Test public void primitiveArrayTypesAllInjected() {

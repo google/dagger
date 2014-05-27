@@ -15,18 +15,11 @@
  */
 package dagger.internal.codegen;
 
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
-import static org.truth0.Truth.ASSERT;
-
 import com.google.common.collect.Iterables;
 import com.google.testing.compile.CompilationRule;
-
 import dagger.Module;
 import dagger.Provides;
-
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.lang.model.element.ExecutableElement;
@@ -36,12 +29,15 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static dagger.Provides.Type.SET;
+import static dagger.Provides.Type.SET_VALUES;
+import static org.truth0.Truth.ASSERT;
 
 /**
  * Tests {@link Key}.
@@ -67,7 +63,7 @@ public class KeyTest {
 
   static final class InjectedClass {
     @SuppressWarnings("unused")
-    @Inject InjectedClass(String s, int i) {}
+    @Inject InjectedClass(String s, Integer i) {}
   }
 
   @Test public void forProvidesMethod() {

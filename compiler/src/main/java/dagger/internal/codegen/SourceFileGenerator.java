@@ -15,19 +15,17 @@
  */
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.squareup.javawriter.JavaWriter;
-
 import java.io.IOException;
-
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.tools.JavaFileObject;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A template class that provides a framework for properly handling IO while generating source files
@@ -51,7 +49,7 @@ abstract class SourceFileGenerator<T> {
     JavaFileObject file = null;
     try {
       // first, try to create the file
-      file = filer.createSourceFile(generatedTypeName.fullyQualifiedName(),
+      file = filer.createSourceFile(generatedTypeName.fullyQualifiedClassFileName(),
           Iterables.toArray(originatingElements, Element.class));
       // try to create the writer
       JavaWriter writer = new JavaWriter(file.openWriter());

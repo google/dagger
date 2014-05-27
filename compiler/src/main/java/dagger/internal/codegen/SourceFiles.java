@@ -15,8 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
@@ -32,20 +30,21 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javawriter.JavaWriter;
-
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.internal.DoubleCheckLazy;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import javax.inject.Provider;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementKindVisitor6;
+
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static javax.lang.model.element.ElementKind.PACKAGE;
 
 /**
  * Utilities for generating files.
@@ -98,6 +97,28 @@ class SourceFiles {
             && !className.nameOfTopLevelClass().equals(topLevelClassName)) {
           builder.add(className);
         }
+      }
+    }
+    return builder.build();
+  }
+
+  static ImmutableSortedSet<ClassName> originatingClassNames(Iterable<? extends Element> elements) {
+    // Deeply nested types need to import their originating
+    ImmutableSortedSet.Builder<ClassName> builder = ImmutableSortedSet.<ClassName>naturalOrder();
+    for (Element element : elements) {
+      switch (element.getKind()) {
+        case METHOD:
+        case CONSTRUCTOR:
+        case FIELD:
+          element = element.getEnclosingElement();
+        case CLASS:
+          Element enclosing = element.getEnclosingElement();
+          if (!enclosing.getKind().equals(PACKAGE)) {
+            builder.add(ClassName.fromTypeElement((TypeElement) element));
+          }
+          break;
+        default:
+          break;
       }
     }
     return builder.build();

@@ -15,17 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import static com.squareup.javawriter.JavaWriter.stringLiteral;
-import static com.squareup.javawriter.JavaWriter.type;
-import static dagger.internal.codegen.SourceFiles.DEPENDENCY_ORDERING;
-import static dagger.internal.codegen.SourceFiles.collectImportsFromDependencies;
-import static dagger.internal.codegen.SourceFiles.flattenVariableMap;
-import static dagger.internal.codegen.SourceFiles.generateProviderNamesForDependencies;
-import static dagger.internal.codegen.SourceFiles.providerUsageStatement;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
-
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
@@ -53,6 +42,17 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.VariableElement;
+
+import static com.squareup.javawriter.JavaWriter.stringLiteral;
+import static com.squareup.javawriter.JavaWriter.type;
+import static dagger.internal.codegen.SourceFiles.DEPENDENCY_ORDERING;
+import static dagger.internal.codegen.SourceFiles.collectImportsFromDependencies;
+import static dagger.internal.codegen.SourceFiles.flattenVariableMap;
+import static dagger.internal.codegen.SourceFiles.generateProviderNamesForDependencies;
+import static dagger.internal.codegen.SourceFiles.providerUsageStatement;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 /**
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
@@ -109,6 +109,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjector
 
     List<ClassName> importsBuilder = new ArrayList<ClassName>();
     importsBuilder.addAll(collectImportsFromDependencies(injectorClassName, dependencies));
+    importsBuilder.addAll(SourceFiles.originatingClassNames(getOriginatingElements(descriptor)));
     importsBuilder.add(ClassName.fromClass(MembersInjector.class));
     importsBuilder.add(ClassName.fromClass(Generated.class));
     ImmutableSortedSet<String> imports = FluentIterable.from(importsBuilder)
@@ -123,7 +124,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjector
     // @Generated("dagger.internal.codegen.InjectProcessor")
     // public final class Blah$$MembersInjector implements MembersInjector<Blah>
     writer.emitAnnotation(Generated.class, stringLiteral(ComponentProcessor.class.getName()))
-        .beginType(injectorClassName.simpleName(), "class", EnumSet.of(FINAL), null,
+        .beginType(injectorClassName.classFileName(), "class", EnumSet.of(FINAL), null,
             membersInjectorType);
 
 

@@ -15,18 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import static com.squareup.javawriter.JavaWriter.stringLiteral;
-import static com.squareup.javawriter.JavaWriter.type;
-import static dagger.internal.codegen.ProvisionBinding.Kind.PROVISION;
-import static dagger.internal.codegen.SourceFiles.collectImportsFromDependencies;
-import static dagger.internal.codegen.SourceFiles.factoryNameForProvisionBinding;
-import static dagger.internal.codegen.SourceFiles.flattenVariableMap;
-import static dagger.internal.codegen.SourceFiles.generateProviderNamesForDependencies;
-import static dagger.internal.codegen.SourceFiles.providerUsageStatement;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
-
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
@@ -44,10 +32,8 @@ import dagger.Factory;
 import dagger.MembersInjector;
 import dagger.Provides;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Generated;
@@ -56,6 +42,18 @@ import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
+
+import static com.squareup.javawriter.JavaWriter.stringLiteral;
+import static com.squareup.javawriter.JavaWriter.type;
+import static dagger.internal.codegen.ProvisionBinding.Kind.PROVISION;
+import static dagger.internal.codegen.SourceFiles.collectImportsFromDependencies;
+import static dagger.internal.codegen.SourceFiles.factoryNameForProvisionBinding;
+import static dagger.internal.codegen.SourceFiles.flattenVariableMap;
+import static dagger.internal.codegen.SourceFiles.generateProviderNamesForDependencies;
+import static dagger.internal.codegen.SourceFiles.providerUsageStatement;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
@@ -98,7 +96,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     writeImports(writer, factoryClassName, binding, providedType);
 
     writer.emitAnnotation(Generated.class, stringLiteral(ComponentProcessor.class.getName()))
-        .beginType(factoryClassName.simpleName(), "class", EnumSet.of(PUBLIC, FINAL), null,
+        .beginType(factoryClassName.classFileName(), "class", EnumSet.of(PUBLIC, FINAL), null,
             type(Factory.class, Util.typeToString(binding.providedKey().type())));
 
     final ImmutableBiMap<Key, String> providerNames =
@@ -138,8 +136,10 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     ImmutableSortedSet.Builder<ClassName> importsBuilder =
         ImmutableSortedSet.<ClassName>naturalOrder()
             .addAll(collectImportsFromDependencies(factoryClassName, binding.dependencies()))
+            .addAll(SourceFiles.originatingClassNames(getOriginatingElements(binding)))
             .add(ClassName.fromClass(Factory.class))
             .add(ClassName.fromClass(Generated.class));
+
     if (binding.provisionType().equals(Provides.Type.SET)) {
       importsBuilder.add(ClassName.fromClass(Collections.class));
     }

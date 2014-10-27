@@ -17,15 +17,15 @@
 package dagger;
 
 import dagger.internal.TestingLoader;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests of injection of Lazy<T> bindings.
@@ -47,12 +47,12 @@ public final class InjectionOfLazyTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(0, counter.get());
-    assertEquals(1, ep.i.get().intValue());
-    assertEquals(1, counter.get());
-    assertEquals(2, ep.j.get().intValue());
-    assertEquals(1, ep.i.get().intValue());
-    assertEquals(2, counter.get());
+    assertThat(counter.get()).isEqualTo(0);
+    assertThat(ep.i.get().intValue()).isEqualTo(1);
+    assertThat(counter.get()).isEqualTo(1);
+    assertThat(ep.j.get().intValue()).isEqualTo(2);
+    assertThat(ep.i.get().intValue()).isEqualTo(1);
+    assertThat(counter.get()).isEqualTo(2);
   }
 
   @Test public void lazyNullCreation() {
@@ -69,11 +69,11 @@ public final class InjectionOfLazyTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(0, provideCounter.get());
-    assertNull(ep.i.get());
-    assertEquals(1, provideCounter.get());
-    assertNull(ep.i.get()); // still null
-    assertEquals(1, provideCounter.get()); // still only called once.
+    assertThat(provideCounter.get()).isEqualTo(0);
+    assertThat(ep.i.get()).isNull();
+    assertThat(provideCounter.get()).isEqualTo(1);
+    assertThat(ep.i.get()).isNull(); // still null
+    assertThat(provideCounter.get()).isEqualTo(1); // still only called once.
   }
 
   @Test public void providerOfLazyOfSomething() {
@@ -90,15 +90,15 @@ public final class InjectionOfLazyTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(0, counter.get());
+    assertThat(counter.get()).isEqualTo(0);
     Lazy<Integer> i = ep.providerOfLazyInteger.get();
-    assertEquals(1, i.get().intValue());
-    assertEquals(1, counter.get());
-    assertEquals(1, i.get().intValue());
+    assertThat(i.get().intValue()).isEqualTo(1);
+    assertThat(counter.get()).isEqualTo(1);
+    assertThat(i.get().intValue()).isEqualTo(1);
     Lazy<Integer> j = ep.providerOfLazyInteger.get();
-    assertEquals(2, j.get().intValue());
-    assertEquals(2, counter.get());
-    assertEquals(1, i.get().intValue());
+    assertThat(j.get().intValue()).isEqualTo(2);
+    assertThat(counter.get()).isEqualTo(2);
+    assertThat(i.get().intValue()).isEqualTo(1);
   }
 
   @Test public void sideBySideLazyVsProvider() {
@@ -116,15 +116,15 @@ public final class InjectionOfLazyTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(0, counter.get());
-    assertEquals(0, counter.get());
-    assertEquals(1, ep.lazyInteger.get().intValue());
-    assertEquals(1, counter.get());
-    assertEquals(2, ep.providerOfInteger.get().intValue()); // fresh instance
-    assertEquals(1, ep.lazyInteger.get().intValue()); // still the same instance
-    assertEquals(2, counter.get());
-    assertEquals(3, ep.providerOfInteger.get().intValue()); // fresh instance
-    assertEquals(1, ep.lazyInteger.get().intValue()); // still the same instance.
+    assertThat(counter.get()).isEqualTo(0);
+    assertThat(counter.get()).isEqualTo(0);
+    assertThat(ep.lazyInteger.get().intValue()).isEqualTo(1);
+    assertThat(counter.get()).isEqualTo(1);
+    assertThat(ep.providerOfInteger.get().intValue()).isEqualTo(2); // fresh instance
+    assertThat(ep.lazyInteger.get().intValue()).isEqualTo(1); // still the same instance
+    assertThat(counter.get()).isEqualTo(2);
+    assertThat(ep.providerOfInteger.get().intValue()).isEqualTo(3); // fresh instance
+    assertThat(ep.lazyInteger.get().intValue()).isEqualTo(1); // still the same instance.
   }
 
   private <T> T injectWithModule(T ep, Object ... modules) {

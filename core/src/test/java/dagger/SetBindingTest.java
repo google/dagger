@@ -17,6 +17,13 @@
 package dagger;
 
 import dagger.internal.TestingLoader;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -24,21 +31,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import static dagger.Provides.Type.SET;
 import static dagger.Provides.Type.SET_VALUES;
 import static java.util.Collections.emptySet;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @RunWith(JUnit4.class)
 public final class SetBindingTest {
@@ -54,7 +52,7 @@ public final class SetBindingTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(set("string1", "string2"), ep.strings);
+    assertThat(ep.strings).isEqualTo(set("string1", "string2"));
   }
 
   @Test public void multiValueBindings_MultiModule() {
@@ -78,7 +76,7 @@ public final class SetBindingTest {
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(),
         new TestModule(), new TestIncludesModule());
-    assertEquals(set("string1", "string2"), ep.strings);
+    assertThat(ep.strings).isEqualTo(set("string1", "string2"));
   }
 
   @Test public void multiValueBindings_MultiModule_NestedSet() {
@@ -102,7 +100,7 @@ public final class SetBindingTest {
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(),
         new TestModule(), new TestIncludesModule());
-    assertEquals(set(set("string1"),set("string2"), set("string3")), ep.stringses);
+    assertThat(ep.stringses).isEqualTo(set(set("string1"), set("string2"), set("string3")));
   }
 
   @Test public void multiValueBindings_WithSingletonAndDefaultValues() {
@@ -120,8 +118,8 @@ public final class SetBindingTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(set(100, 200), ep.objects1);
-    assertEquals(set(100, 201), ep.objects2);
+      assertThat(set(100, 200)).isEqualTo(ep.objects1);
+      assertThat(set(100, 201)).isEqualTo(ep.objects2);
   }
 
   @Test public void multiValueBindings_WithSingletonsAcrossMultipleInjectableTypes() {
@@ -143,8 +141,8 @@ public final class SetBindingTest {
     ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
     TestEntryPoint1 ep1 = graph.inject(new TestEntryPoint1());
     TestEntryPoint2 ep2 = graph.inject(new TestEntryPoint2());
-    assertEquals(set(100, 200), ep1.objects1);
-    assertEquals(set(100, 201), ep2.objects2);
+    assertThat(set(100, 200)).isEqualTo(ep1.objects1);
+    assertThat(set(100, 201)).isEqualTo(ep2.objects2);
 
  }
 
@@ -167,8 +165,8 @@ public final class SetBindingTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(), new TestModule());
-    assertEquals(set("string1", "string2"), ep.strings);
-    assertEquals(set("string4", "string3"), ep.fooStrings);
+    assertThat(ep.strings).isEqualTo(set("string1", "string2"));
+    assertThat(ep.fooStrings).isEqualTo(set("string4", "string3"));
   }
 
   // TODO(user): Move this into an example project.
@@ -202,9 +200,9 @@ public final class SetBindingTest {
     }
 
     TestEntryPoint ep = injectWithModule(new TestEntryPoint(),new TestModule(), new LogModule());
-    assertNull(logoutput.get());
+    assertThat(logoutput.get()).isNull();
     ep.doStuff();
-    assertNotNull(logoutput.get());
+    assertThat(logoutput.get()).isNotNull();
     assertThat(logoutput.get()).contains("Naughty Naughty");
     assertThat(logoutput.get()).contains("NullPointerException");
   }

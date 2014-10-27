@@ -19,12 +19,13 @@ package dagger.internal;
 import dagger.Module;
 import dagger.ObjectGraph;
 import dagger.Provides;
-import javax.inject.Inject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.fest.assertions.Assertions.assertThat;
+import javax.inject.Inject;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * A test case to deal with fall-back to reflection where an inject adapter has not

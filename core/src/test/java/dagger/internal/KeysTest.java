@@ -18,18 +18,19 @@ package dagger.internal;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Provides;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
-import javax.inject.Named;
-import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import javax.inject.Named;
+import javax.inject.Provider;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
+
 import static dagger.Provides.Type.SET;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(JUnit4.class)
 public final class KeysTest {

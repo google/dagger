@@ -108,4 +108,86 @@ public class PackageProxyTest {
         .compilesWithoutError()
         .and().generatesSources(generatedComponent);
   }
+
+  @Test public void testPackageProxyInheritance() {
+    JavaFileObject context = JavaFileObjects.forSourceLines("foreign.Context",
+        "package foreign;",
+        "",
+        "public class Context {",
+        "}");
+    JavaFileObject contextWrapper = JavaFileObjects.forSourceLines("foreign.ContextWrapper",
+        "package foreign;",
+        "",
+        "public class ContextWrapper extends Context {",
+        "}");
+    JavaFileObject testClass = JavaFileObjects.forSourceLines("test.TestClass",
+        "package test;",
+        "",
+        "import foreign.ContextWrapper;",
+        "",
+        "public final class TestClass extends ContextWrapper {",
+        "}");
+
+    JavaFileObject testComponent = JavaFileObjects.forSourceLines("test.TestComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "interface TestComponent {",
+        "  TestClass injectTestClass(TestClass testClass);",
+        "}");
+    JavaFileObject generatedComponent = JavaFileObjects.forSourceLines("test.Dagger_TestComponent",
+        "package test;",
+        "",
+        "import dagger.MembersInjector;",
+        "import dagger.internal.MembersInjectors;",
+        "import foreign.Dagger_TestComponent__PackageProxy;",
+        "import javax.annotation.Generated;",
+        "",
+        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        "public final class Dagger_TestComponent implements TestComponent {",
+        "  private final Dagger_TestComponent__PackageProxy foreign_Proxy = new Dagger_TestComponent__PackageProxy();",
+        "  private MembersInjector<TestClass> testClassMembersInjector;",
+        "",
+        "  private Dagger_TestComponent(Builder builder) {",
+        "    assert builder != null;",
+        "    initialize();",
+        "  }",
+        "",
+        "  public static Builder builder() {",
+        "    return new Builder();",
+        "  }",
+        "",
+        "  public static TestComponent create() {",
+        "    return builder().build();",
+        "  }",
+        "",
+        "  private void initialize() {",
+        "    this.foreign_Proxy.contextMembersInjector = MembersInjectors.noOp();",
+        "    this.foreign_Proxy.contextWrapperMembersInjector = MembersInjectors.delegatingTo(foreign_Proxy.contextMembersInjector);",
+        "    this.testClassMembersInjector = MembersInjectors.delegatingTo(foreign_Proxy.contextWrapperMembersInjector);",
+        "  }",
+        "",
+        "  @Override",
+        "  public TestClass injectTestClass(TestClass testClass) {",
+        "    testClassMembersInjector.injectMembers(testClass);",
+        "    return testClass;",
+        "  }",
+        "",
+        "  public static final class Builder {",
+        "    private Builder() {",
+        "    }",
+        "",
+        "    public TestComponent build() {",
+        "      return new Dagger_TestComponent(this);",
+        "    }",
+        "  }",
+        "}");
+    assert_().about(javaSources())
+        .that(ImmutableList.of(context, contextWrapper, testClass, testComponent))
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .and().generatesSources(generatedComponent);
+  }
 }

@@ -16,14 +16,15 @@
 package dagger;
 
 import dagger.internal.TestingLoader;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.fest.assertions.Assertions.assertThat;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.fail;
 
 /**

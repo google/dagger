@@ -16,15 +16,16 @@
 package dagger.internal.codegen.dagger1;
 
 import dagger.internal.Keys;
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Named;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.fest.assertions.Assertions.assertThat;
+import javax.inject.Named;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(JUnit4.class)
 public final class GraphVisualizerTest {

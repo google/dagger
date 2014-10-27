@@ -17,19 +17,18 @@
 package dagger;
 
 import dagger.internal.TestingLoader;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static dagger.Provides.Type.SET;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @RunWith(JUnit4.class)
 public final class ExtensionWithSetBindingsTest {
@@ -92,7 +91,7 @@ public final class ExtensionWithSetBindingsTest {
       ObjectGraph.createWith(new TestingLoader(), new RootModule()).plus(new TestModule());
       fail("Should throw exception.");
     } catch (IllegalArgumentException e) {
-      assertEquals("TestModule: Module overrides cannot contribute set bindings.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("TestModule: Module overrides cannot contribute set bindings.");
     }
   }
 
@@ -101,7 +100,7 @@ public final class ExtensionWithSetBindingsTest {
       ObjectGraph.createWith(new TestingLoader(), new EmptyModule(), new DuplicateModule());
       fail("Should throw exception.");
     } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().startsWith("DuplicateModule: Duplicate"));
+      assertThat(e.getMessage().startsWith("DuplicateModule: Duplicate")).isTrue();
     }
   }
 }

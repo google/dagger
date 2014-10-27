@@ -18,14 +18,15 @@ package dagger.tests.integration.operation.dagger1;
 
 import dagger.Module;
 import dagger.ObjectGraph;
-import javax.inject.Inject;
-import javax.inject.Qualifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import javax.inject.Inject;
+import javax.inject.Qualifier;
+
 import static junit.framework.Assert.fail;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(JUnit4.class)
 public final class FailureModeErrorsTest {

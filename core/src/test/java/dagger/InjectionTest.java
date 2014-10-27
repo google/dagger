@@ -17,24 +17,18 @@
 package dagger;
 
 import dagger.internal.TestingLoader;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.RandomAccess;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 @RunWith(JUnit4.class)
@@ -703,7 +697,7 @@ public final class InjectionTest {
     }
 
     ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
-    assertEquals(1, (int) graph.get(int.class));
+    assertThat((int) graph.get(int.class)).isEqualTo(1);
   }
 
   @Test public void getInstanceOfArray() {
@@ -715,7 +709,7 @@ public final class InjectionTest {
     }
 
     ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
-    assertEquals("[1, 2, 3]", Arrays.toString(graph.get(int[].class)));
+    assertThat(Arrays.toString(graph.get(int[].class))).isEqualTo("[1, 2, 3]");
   }
 
   @Test public void getInstanceAndInjectMembersUseDifferentKeys() {
@@ -739,11 +733,11 @@ public final class InjectionTest {
 
     ObjectGraph graph = ObjectGraph.createWith(new TestingLoader(), new TestModule());
     BoundTwoWays provided = graph.get(BoundTwoWays.class);
-    assertEquals("Pepsi", provided.s);
+    assertThat(provided.s).isEqualTo("Pepsi");
 
     BoundTwoWays membersInjected = new BoundTwoWays();
     graph.inject(membersInjected);
-    assertEquals("Coke", membersInjected.s);
+    assertThat(membersInjected.s).isEqualTo("Coke");
   }
 
   static class NoInjections {

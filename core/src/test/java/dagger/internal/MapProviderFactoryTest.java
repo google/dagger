@@ -71,7 +71,7 @@ public class MapProviderFactoryTest {
     expectedMap.put("four", p4);
     assert_()
         .that(factory.get().entrySet())
-        .containsExactlyElementsIn(expectedMap.entrySet())
+        .has().exactlyAs(expectedMap.entrySet())
         .inOrder();
   }
 

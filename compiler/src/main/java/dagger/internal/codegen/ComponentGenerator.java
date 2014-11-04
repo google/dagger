@@ -17,6 +17,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -216,7 +217,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
         ImmutableMap.builder();
 
     ImmutableSet.Builder<JavaWriter> proxyWriters = ImmutableSet.builder();
-    Map<String, ClassWriter> packageProxies = Maps.newHashMap();
+    Map<String, ClassWriterAndField> packageProxies = Maps.newHashMap();
 
     for (Entry<Key, ResolvedBindings> resolvedBindingsEntry : input.resolvedBindings().entrySet()) {
       Key key = resolvedBindingsEntry.getKey();
@@ -267,24 +268,29 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
         fieldModifiers = EnumSet.of(PRIVATE);
       } else {
         // get or create the proxy
-        ClassWriter proxyClassWriter = packageProxies.get(bindingPackage);
-        if (proxyClassWriter == null) {
+        ClassWriterAndField classWriterAndField = packageProxies.get(bindingPackage);
+        if (classWriterAndField == null) {
           JavaWriter proxyWriter = JavaWriter.inPackage(bindingPackage);
           proxyWriters.add(proxyWriter);
-          proxyClassWriter = proxyWriter.addClass(componentName.simpleName() + "__PackageProxy");
-          packageProxies.put(bindingPackage, proxyClassWriter);
+          ClassWriter proxyClassWriter =
+              proxyWriter.addClass(componentName.simpleName() + "__PackageProxy");
+          proxyClassWriter.addModifiers(PUBLIC, FINAL);
+
+          // create the field for the proxy in the component
+          FieldWriter proxyFieldWriter =
+              componentWriter.addField(proxyClassWriter.name(), bindingPackage.replace('.', '_')
+                  + "_Proxy");
+          proxyFieldWriter.addModifiers(PRIVATE, FINAL);
+          proxyFieldWriter.setInitializer("new %s()", proxyClassWriter.name());
+
+          classWriterAndField = ClassWriterAndField.of(proxyClassWriter, proxyFieldWriter.name());
+          packageProxies.put(bindingPackage, classWriterAndField);
         }
-        proxyClassWriter.addModifiers(PUBLIC, FINAL);
-        // create the field for the proxy in the component
-        FieldWriter proxyField =
-            componentWriter.addField(proxyClassWriter.name(), bindingPackage.replace('.', '_')
-                + "_Proxy");
-        proxyField.addModifiers(PRIVATE, FINAL);
-        proxyField.setInitializer("new %s()", proxyClassWriter.name());
+
         // add the field for the member select
-        proxySelector = Optional.of(proxyField.name());
+        proxySelector = Optional.of(classWriterAndField.fieldName());
         // proxy gets the fields
-        classWithFields = proxyClassWriter;
+        classWithFields = classWriterAndField.classWriter();
         // public fields in the proxy
         fieldModifiers = EnumSet.of(PUBLIC);
       }
@@ -713,5 +719,15 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       }
     }
     return false;
+  }
+
+  @AutoValue
+  static abstract class ClassWriterAndField {
+    abstract ClassWriter classWriter();
+    abstract String fieldName();
+
+    static ClassWriterAndField of(ClassWriter classWriter, String fieldName) {
+      return new AutoValue_ComponentGenerator_ClassWriterAndField(classWriter, fieldName);
+    }
   }
 }

@@ -132,6 +132,7 @@ public final class JavaWriter {
 
     ImmutableSet<String> declaredSimpleNames = declaredSimpleNamesBuilder.build();
 
+    boolean hasImports = false;
     BiMap<String, ClassName> importedClassIndex = HashBiMap.create();
     for (ClassName className : importCandidates) {
       if (!(className.packageName().equals(packageName)
@@ -148,18 +149,25 @@ public final class JavaWriter {
         if (importCandidate.isPresent()) {
           appendable.append("import ").append(importCandidate.get().canonicalName()).append(";\n");
           importedClassIndex.put(importCandidate.get().simpleName(), importCandidate.get());
+          hasImports = true;
         }
       }
     }
 
-    appendable.append('\n');
+    if (hasImports) {
+      appendable.append('\n');
+    }
 
     CompilationUnitContext context =
         new CompilationUnitContext(packageName, ImmutableSet.copyOf(importedClassIndex.values()));
 
     // write types
-    for (TypeWriter typeWriter : typeWriters) {
-      typeWriter.write(appendable, context.createSubcontext(typeNames)).append('\n');
+    for (int i = 0; i < typeWriters.size(); i++) {
+      if (i > 0) {
+        appendable.append('\n');
+      }
+      TypeWriter typeWriter = typeWriters.get(i);
+      typeWriter.write(appendable, context.createSubcontext(typeNames));
     }
     return appendable;
   }

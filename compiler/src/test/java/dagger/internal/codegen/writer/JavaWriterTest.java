@@ -15,6 +15,7 @@
  */
 package dagger.internal.codegen.writer;
 
+import java.util.concurrent.Executor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -29,5 +30,50 @@ public class JavaWriterTest {
     topClass.addNestedClass("Middle").addNestedClass("Bottom");
     topClass.addField(ClassName.create("some.other.pkg", "Bottom"), "field");
     assertThat(topClass.toString()).doesNotContain("import some.other.pkg.Bottom;");
+  }
+
+  @Test public void zeroImportsSingleNewline() {
+    JavaWriter javaWriter = JavaWriter.inPackage("test");
+    javaWriter.addClass("Top");
+
+    String expected = ""
+        + "package test;\n"
+        + "\n"
+        + "class Top {";
+
+    assertThat(javaWriter.toString()).startsWith(expected);
+  }
+
+  @Test public void newlineBetweenImports() {
+    JavaWriter javaWriter = JavaWriter.inPackage("test");
+    ClassWriter topClass = javaWriter.addClass("Top");
+    topClass.addField(Executor.class, "executor");
+
+    String expected = ""
+        + "package test;\n"
+        + "\n"
+        + "import java.util.concurrent.Executor;\n"
+        + "\n"
+        + "class Top {";
+
+    assertThat(javaWriter.toString()).startsWith(expected);
+  }
+
+  @Test public void newlinesBetweenTypes() {
+    JavaWriter javaWriter = JavaWriter.inPackage("test");
+    javaWriter.addClass("Top");
+    javaWriter.addClass("Middle");
+    javaWriter.addClass("Bottom");
+
+    String expected = ""
+        + "package test;\n"
+        + "\n"
+        + "class Top {}\n"
+        + "\n"
+        + "class Middle {}\n"
+        + "\n"
+        + "class Bottom {}\n";
+
+    assertThat(javaWriter.toString()).isEqualTo(expected);
   }
 }

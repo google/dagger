@@ -39,6 +39,18 @@ public final class WildcardName implements TypeName {
         Optional.fromNullable(mirror.getSuperBound()).transform(FOR_TYPE_MIRROR));
   }
 
+  public static WildcardName create() {
+    return new WildcardName(Optional.<TypeName>absent(), Optional.<TypeName>absent());
+  }
+
+  public static WildcardName createWithUpperBound(TypeName upperBound) {
+    return new WildcardName(Optional.of(upperBound), Optional.<TypeName>absent());
+  }
+
+  public static WildcardName createWithLowerBound(TypeName lowerBound) {
+    return new WildcardName(Optional.<TypeName>absent(), Optional.of(lowerBound));
+  }
+
   @Override
   public Set<ClassName> referencedClasses() {
     ImmutableSet.Builder<ClassName> builder = new ImmutableSet.Builder<ClassName>();

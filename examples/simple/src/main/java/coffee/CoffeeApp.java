@@ -5,7 +5,7 @@ import javax.inject.Singleton;
 
 public class CoffeeApp {
   @Singleton
-  @Component(modules = { DripCoffeeModule.class })
+  @Component(modules = { DripCoffeeModule.class, PumpModule.class })
   public interface Coffee {
     CoffeeMaker maker();
   }

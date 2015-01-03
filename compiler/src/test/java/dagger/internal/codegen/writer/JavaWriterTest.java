@@ -15,19 +15,64 @@
  */
 package dagger.internal.codegen.writer;
 
+import com.google.testing.compile.CompilationRule;
+import java.io.IOException;
+import java.util.Collections;
+import javax.lang.model.element.Element;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 
 @RunWith(JUnit4.class)
 public class JavaWriterTest {
-  @Test public void referencedAndDeclaredSimpleName() {
+
+  @Test public void referencedAndDeclaredSimpleName() throws IOException {
     JavaWriter javaWriter = JavaWriter.inPackage("test");
     ClassWriter topClass = javaWriter.addClass("Top");
     topClass.addNestedClass("Middle").addNestedClass("Bottom");
     topClass.addField(ClassName.create("some.other.pkg", "Bottom"), "field");
-    assertThat(topClass.toString()).doesNotContain("import some.other.pkg.Bottom;");
+
+    String source = javaWriter.write(new StringBuilder(), Collections.<Element>emptySet()).toString();
+
+    assert_().that(source).contains("some.other.pkg.Bottom field;");
+  }
+
+  @Rule public final CompilationRule compilation = new CompilationRule();
+
+  interface Top {
+    interface Foo {
+    }
+  }
+
+  interface Middle extends Top {
+    interface Foo {
+    }
+  }
+
+  interface Bottom extends Middle {
+    interface Foo {
+    }
+  }
+
+  @Test public void enclosedTypes() {
+    assert_().that(JavaWriter.enclosedTypes(originatingElements(Top.class)))
+        .containsExactly(className(Top.Foo.class));
+
+    assert_().that(JavaWriter.enclosedTypes(originatingElements(Middle.class)))
+        .containsExactly(className(Middle.Foo.class), className(Top.Foo.class));
+
+    assert_().that(JavaWriter.enclosedTypes(originatingElements(Bottom.class)))
+        .containsExactly(className(Bottom.Foo.class), className(Middle.Foo.class), className(Top.Foo.class));
+  }
+
+  private Iterable<? extends Element> originatingElements(Class<?> clazz) {
+    return Collections.singleton(compilation.getElements().getTypeElement(clazz.getCanonicalName()));
+  }
+
+  private ClassName className(Class clazz) {
+    return ClassName.bestGuessFromString(clazz.getCanonicalName());
   }
 }

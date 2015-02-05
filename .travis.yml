@@ -25,8 +25,8 @@ env:
     - secure: PEdRiHTy+xVFPnlBwOhr7RVW/QIFSgd4hO0LESRBeF7KGIjxTZWtKPjnYrysZFm6tozMk6WBVJO6avOss0v7L64nemwpCnSspNYBa6pRGPgQ3rv/wgdPSzqDDmABmpPC18EHbUtF94KVdRX3Cr4kmwKQyD+YUKNRCY11Txt+xfo=
 
 after_success:
-  - util/generate-latest-docs.sh
-  - util/publish-snapshot-on-commit.sh
+  - bash util/generate-latest-docs.sh
+  - bash util/publish-snapshot-on-commit.sh
 
 branches:
   except:

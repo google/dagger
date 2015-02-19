@@ -182,7 +182,9 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.1</version>
         <configuration>
           <doctitle>Dagger Dependency Injection ${project.version} API</doctitle>
         </configuration>
@@ -205,6 +207,12 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.5</version>
       </plugin>
     </plugins>
   </build>

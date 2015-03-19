@@ -280,7 +280,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       if (hasNoArgsConstructor(contributionElement)) {
         buildMethod.body()
             .addSnippet("if (%s == null) {", builderField.name())
-            .addSnippet("  this.%s = new %s();",
+            .addSnippet("  %s = new %s();",
                 builderField.name(), ClassName.fromTypeElement(contributionElement))
             .addSnippet("}");
       } else {

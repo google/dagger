@@ -119,7 +119,7 @@ public final class PrimitiveInjectionTest {
       "",
       "    public PrimitiveComponent build() {",
       "      if (primitiveModule == null) {",
-      "        this.primitiveModule = new PrimitiveModule();",
+      "        primitiveModule = new PrimitiveModule();",
       "      }",
       "      return new Dagger_PrimitiveComponent(this);",
       "    }",

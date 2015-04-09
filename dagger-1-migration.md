@@ -125,13 +125,14 @@ Subcomponents are further described in the [`@Subcomponent`][Subcomponent] and t
 
 Unlike Dagger 1, Dagger 2 performs implicit null checking unless a `@Nullable` annotation (from any package) is present.  During migration, applications may have to annotate injection sites and provides methods with the `@Nullable` of their choice. Any mismatch in nullability will be reported as a compile-time error.
 
-[Component]: </api/latest/dagger/Component.html>
-[Component-modules]: </api/latest/dagger/Component.html#modules()>
-[Lazy]: </api/latest/dagger/Lazy.html>
-[MembersInjector]: </api/latest/dagger/MembersInjector.html>
-[Module]: </api/latest/dagger/Module.html>
-[Provides]: </api/latest/dagger/Provides.html>
-[Subcomponent]: </api/latest/dagger/Subcomponent.html>
+[Component]: <api/latest/dagger/Component.html>
+[Component-modules]: <api/latest/dagger/Component.html#modules()>
+[Lazy]: <api/latest/dagger/Lazy.html>
+[MembersInjector]: <api/latest/dagger/MembersInjector.html>
+[Module]: <api/latest/dagger/Module.html>
+[Provides]: <api/latest/dagger/Provides.html>
+[Subcomponent]: <api/latest/dagger/Subcomponent.html>
 
+[Provider]: <http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html>
 [Scope]: <http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html>
 [Singleton]: <http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html>

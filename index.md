@@ -214,6 +214,23 @@ class BigCoffeeMaker {
 
 ***Note:*** Injecting `Provider<T>` has the possibility of creating confusing code, and may be a design smell of mis-scoped or mis-structured objects in your graph.  Often you will want to use a [factory](http://en.wikipedia.org/wiki/Factory_(object-oriented_programming)) or a `Lazy<T>` or re-organize the lifetimes and structure of your code to be able to just inject a `T`.  Injecting `Provider<T>` can, however, be a life saver in some cases.  A common use is when you must use a legacy architecture that doesn't line up with your object's natural lifetimes (e.g. servlets are singletons by design, but only are valid in the context of request-specfic data).
 
+### Member injections
+
+In the event that you don't have control over the instantiation of an object, you can populate the `@Inject`-annotated fields of an object after it is created.  To do so, you can define a void method on a component interface that takes a single instance as a parameter:
+
+```java
+@Component(modules = DripCoffeeModule.class)
+interface CoffeeShop {
+  void injectCoffeeMaker(CoffeeMaker maker);
+}
+```
+
+Invoking this method on a component will inject the appropriate values into all of the `@Inject` annotated fields on the `CoffeeMaker` class.  The `CoffeeMaker` instance here would be created by another system, such as a piece of infrastructure, and then the component's `injectCoffeeMaker(this)` would be called from an appropriate life-cycle method.
+
+This approach would often be used for an Android `Activity` or `Fragment` subclass, for example.  The injection method on the component would then be called from a life-cycle method such as `onCreate`.
+
+The component can also define a method that returns a `MemberInjector<T>`, eg. `MemberInjector<CoffeeMaker>`.  This interface will then provide the same capabilities as a void method on the component, via the `MemberInjector<T>.injectMembers(T obj)` method.
+
 ### Qualifiers
 
 Sometimes the type alone is insufficient to identify a dependency. For example, a sophisticated coffee maker app may want separate heaters for the water and the hot plate.

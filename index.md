@@ -322,10 +322,10 @@ limitations under the License.
 
 [DI]: <http://en.wikipedia.org/wiki/Dependency_injection>
 
-[Component]: </api/latest/dagger/Component.html>
-[Lazy]: </api/latest/dagger/Lazy.html>
-[Module]: </api/latest/dagger/Module.html>
-[Provides]: </api/latest/dagger/Provides.html>
+[Component]: </dagger/api/latest/dagger/Component.html>
+[Lazy]: </dagger/api/latest/Lazy.html>
+[Module]: </dagger/api/latest/Module.html>
+[Provides]: </dagger/api/latest/Provides.html>
 
 [Named]: <http://docs.oracle.com/javaee/7/api/javax/inject/Named.html>
 [Provider]: <http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html>

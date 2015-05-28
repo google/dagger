@@ -69,8 +69,8 @@ abstract class ComponentDescriptor {
   ComponentDescriptor() {}
 
   enum Kind {
-    COMPONENT(Component.class, Component.Builder.class),
-    SUBCOMPONENT(Subcomponent.class, Subcomponent.Builder.class),
+    COMPONENT(Component.class, null),
+    SUBCOMPONENT(Subcomponent.class, null),
     PRODUCTION_COMPONENT(ProductionComponent.class, null);
 
     private final Class<? extends Annotation> annotationType;
@@ -284,12 +284,6 @@ abstract class ComponentDescriptor {
         } else if (isAnnotationPresent(MoreTypes.asElement(returnType), Subcomponent.class)) {
           return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
               ComponentMethodKind.SUBCOMPONENT,
-              Optional.<DependencyRequest>absent(),
-              componentMethod);
-        } else if (isAnnotationPresent(MoreTypes.asElement(returnType),
-            Subcomponent.Builder.class)) {
-          return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-              ComponentMethodKind.SUBCOMPONENT_BUILDER,
               Optional.<DependencyRequest>absent(),
               componentMethod);
         }

@@ -38,14 +38,4 @@ public @interface Subcomponent {
    * here.
    */
   Class<?>[] modules() default {};
-  
-  /**
-   * A builder for a subcomponent.  This follows all the rules of {@link Component.Builder}, except
-   * it must appear in classes annotated with {@link Subcomponent} instead of {@code Component}.
-   * Components can have methods that return a {@link Subcomponent.Builder}-annotated type,
-   * allowing the user to set modules on the subcomponent using their defined API.
-   */
-  @Target(TYPE)
-  @Documented
-  @interface Builder {}
 }

@@ -20,6 +20,7 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.Factory;
@@ -71,16 +72,14 @@ final class ComponentProcessingStep implements ProcessingStep {
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return ImmutableSet.<Class<? extends Annotation>>of(Component.class, Component.Builder.class,
-        Subcomponent.class, Subcomponent.Builder.class);
+    return ImmutableSet.<Class<? extends Annotation>>of(Component.class, Subcomponent.class);
   }
 
   @Override
   public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     Map<Element, ValidationReport<TypeElement>> builderReportsByComponent =
-        processComponentBuilders(elementsByAnnotation.get(Component.Builder.class));
-    Set<? extends Element> subcomponentBuilderElements =
-        elementsByAnnotation.get(Subcomponent.Builder.class);
+        processComponentBuilders(Sets.<Element>newHashSet());
+    Set<? extends Element> subcomponentBuilderElements = Sets.newHashSet();
     Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent =
         processSubcomponentBuilders(subcomponentBuilderElements);
     Set<? extends Element> subcomponentElements = elementsByAnnotation.get(Subcomponent.class);

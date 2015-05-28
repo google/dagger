@@ -141,8 +141,7 @@ final class ComponentValidator {
           componentType.annotationType().getSimpleName()), subject);
     }
     
-    ImmutableList<DeclaredType> builders =
-        enclosedBuilders(subject, componentType.builderAnnotationType());
+    ImmutableList<DeclaredType> builders = ImmutableList.of();
     if (builders.size() > 1) {
       builder.addItem(
           String.format(ErrorMessages.builderMsgsFor(componentType).moreThanOne(), builders),
@@ -167,8 +166,7 @@ final class ComponentValidator {
         // first, check the return type.  if it's a subcomponent, validate that method as such.
         Optional<AnnotationMirror> subcomponentAnnotation =
             checkForAnnotation(returnType, Subcomponent.class);
-        Optional<AnnotationMirror> subcomponentBuilderAnnotation =
-            checkForAnnotation(returnType, Subcomponent.Builder.class);
+        Optional<AnnotationMirror> subcomponentBuilderAnnotation = Optional.absent();
         if (subcomponentAnnotation.isPresent()) {
           referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
           validateSubcomponentMethod(builder,

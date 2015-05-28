@@ -110,9 +110,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>Component implementations are primarily instantiated via a generated
  * <a href="http://en.wikipedia.org/wiki/Builder_pattern">builder</a>. An instance of the builder
  * is obtained using the {@code builder()} method on the component implementation.
- * If a nested {@code @Component.Builder} type exists in the component, the {@code builder()}
- * method will return a generated implementation of that type.  If no nested
- * {@code @Component.Builder} exists, the returned builder has a method to set each of the
+ * The returned builder has a method to set each of the
  * {@linkplain #modules} and component {@linkplain #dependencies} named with the
  * <a href="http://en.wikipedia.org/wiki/CamelCase">lower camel case</a> version of the module
  * or dependency type. Each component dependency and module without a visible default constructor
@@ -221,38 +219,4 @@ public @interface Component {
    * dependencies</a>.
    */
   Class<?>[] dependencies() default {};
-
-  /**
-   * A builder for a component. Components may have a single nested static abstract class or
-   * interface annotated with {@code @Component.Builder}.  If they do, then the component's
-   * generated builder will match the API in the type.  Builders must follow some rules:
-   * <ul>
-   * <li> A single abstract method with no arguments must exist, and must return the component.
-   *      (This is typically the {@code build()} method.)
-   * <li> All other abstract methods must take a single argument and must return void,
-   *      the Builder type, or a supertype of the builder.
-   * <li> Each component dependency <b>must</b> have an abstract setter method.
-   * <li> Each module dependency that Dagger can't instantiate itself (e.g, the module
-   *      doesn't have a visible no-args constructor) <b>must</b> have an abstract setter method.
-   *      Other module dependencies (ones that Dagger can instantiate) are allowed, but not required.
-   * <li> Non-abstract methods are allowed, but ignored as far as validation and builder generation
-   *      are concerned.
-   * </ul>
-   * 
-   * For example, this could be a valid Component with a Builder: <pre><code>
-   * {@literal @}Component(modules = {BackendModule.class, FrontendModule.class})
-   * interface MyComponent {
-   *   MyWidget myWidget();
-   *   
-   *   {@literal @}Component.Builder
-   *   interface Builder {
-   *     MyComponent build();
-   *     Builder backendModule(BackendModule bm);
-   *     Builder frontendModule(FrontendModule fm);
-   *   }
-   * }</code></pre>
-   */
-  @Target(TYPE)
-  @Documented
-  @interface Builder {}
 }

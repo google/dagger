@@ -11,9 +11,4 @@ interface ParentComponent {
   OnlyUsedInParent getOnlyUsedInParent();
 
   ChildComponent newChildComponent();
-
-  @Component.Builder
-  interface Builder {
-    ParentComponent build();
-  }
 }

@@ -15,6 +15,7 @@
  */
 package dagger.internal.codegen.writer;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.BiMap;
@@ -36,6 +37,9 @@ import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.tools.JavaFileObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -97,7 +101,7 @@ public final class JavaWriter {
     return writer;
   }
 
-  public Appendable write(Appendable appendable) throws IOException {
+  public Appendable write(Appendable appendable, Iterable<? extends Element> originatingElements) throws IOException {
     if (!packageName.isEmpty()) {
       appendable.append("package ").append(packageName).append(";\n\n");
     }
@@ -135,6 +139,13 @@ public final class JavaWriter {
     ImmutableSet<String> declaredSimpleNames = declaredSimpleNamesBuilder.build();
 
     BiMap<String, ClassName> importedClassIndex = HashBiMap.create();
+
+    for (ClassName className : enclosedTypes(originatingElements)) {
+      if (!declaredSimpleNames.contains(className.simpleName())) {
+        importedClassIndex.put(className.simpleName(), className);
+      }
+    }
+
     for (ClassName className : importCandidates) {
       if (!(className.packageName().equals(packageName)
               && !className.enclosingClassName().isPresent())
@@ -166,6 +177,23 @@ public final class JavaWriter {
     return appendable;
   }
 
+  /**
+   * This extracts any types enclosed by any originating element for the
+   * purpose of namespace collision avoidance.
+   */
+  static Iterable<ClassName> enclosedTypes(Iterable<? extends Element> originatingElements) {
+    ImmutableSet.Builder<ClassName> enclosedTypes = ImmutableSet.builder();
+    for (TypeElement originatingElement : ElementFilter.typesIn(originatingElements)) {
+      for (TypeElement enclosedType : ElementFilter.typesIn(originatingElement.getEnclosedElements())) {
+        enclosedTypes.add(ClassName.fromTypeElement(enclosedType));
+      }
+      for (TypeMirror interfaceMirror : originatingElement.getInterfaces()) {
+        enclosedTypes.addAll(enclosedTypes(MoreTypes.referencedTypes(interfaceMirror)));
+      }
+    }
+    return enclosedTypes.build();
+  }
+
   public void file(Filer filer, Iterable<? extends Element> originatingElements)
       throws IOException {
     file(filer, Iterables.getOnlyElement(typeWriters).name.canonicalName(), originatingElements);
@@ -177,7 +205,7 @@ public final class JavaWriter {
         Iterables.toArray(originatingElements, Element.class));
     Closer closer = Closer.create();
     try {
-      write(closer.register(sourceFile.openWriter()));
+      write(closer.register(sourceFile.openWriter()), originatingElements);
     } catch (Exception e) {
       try {
         sourceFile.delete();
@@ -193,7 +221,7 @@ public final class JavaWriter {
   @Override
   public String toString() {
     try {
-      return write(new StringBuilder()).toString();
+      return write(new StringBuilder(), ImmutableSet.<Element>of()).toString();
     } catch (IOException e) {
       throw new AssertionError();
     }

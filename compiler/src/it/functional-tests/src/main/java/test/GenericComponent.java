@@ -15,7 +15,7 @@
  */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 import test.sub.Exposed;
 import test.sub.PublicSubclass;
 

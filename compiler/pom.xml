@@ -122,7 +122,7 @@
             <goals><goal>testCompile</goal></goals>
             <configuration>
               <annotationProcessors>
-                <annotationProcessor>dagger.internal.codegen.ComponentProcessor</annotationProcessor>
+                <annotationProcessor>dagger2.internal.codegen.ComponentProcessor</annotationProcessor>
               </annotationProcessors>
             </configuration>
           </execution>
@@ -184,7 +184,7 @@
               <relocations>
                 <relocation>
                   <pattern>com.google.auto.common</pattern>
-                  <shadedPattern>dagger.shaded.auto.common</shadedPattern>
+                  <shadedPattern>dagger2.shaded.auto.common</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

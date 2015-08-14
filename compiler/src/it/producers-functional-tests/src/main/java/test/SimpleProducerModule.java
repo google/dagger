@@ -17,8 +17,8 @@ package test;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.producers.ProducerModule;
-import dagger.producers.Produces;
+import dagger2.producers.ProducerModule;
+import dagger2.producers.Produces;
 
 @ProducerModule
 final class SimpleProducerModule {

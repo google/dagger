@@ -15,7 +15,7 @@
 */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;

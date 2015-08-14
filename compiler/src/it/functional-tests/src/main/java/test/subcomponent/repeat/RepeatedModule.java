@@ -1,9 +1,9 @@
 package test.subcomponent.repeat;
 
-import static dagger.Provides.Type.SET;
+import static dagger2.Provides.Type.SET;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 @Module
 final class RepeatedModule {

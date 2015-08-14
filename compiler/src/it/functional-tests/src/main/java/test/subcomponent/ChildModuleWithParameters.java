@@ -15,7 +15,7 @@
  */
 package test.subcomponent;
 
-import dagger.Module;
+import dagger2.Module;
 
 /**
  * This is a module that can't be constructed with a default constructor.

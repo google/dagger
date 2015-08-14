@@ -18,12 +18,12 @@ package test;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.producers.ProducerModule;
-import dagger.producers.Produces;
+import dagger2.producers.ProducerModule;
+import dagger2.producers.Produces;
 import java.util.Set;
 
-import static dagger.producers.Produces.Type.SET;
-import static dagger.producers.Produces.Type.SET_VALUES;
+import static dagger2.producers.Produces.Type.SET;
+import static dagger2.producers.Produces.Type.SET_VALUES;
 
 @ProducerModule
 final class MultibindingProducerModule {

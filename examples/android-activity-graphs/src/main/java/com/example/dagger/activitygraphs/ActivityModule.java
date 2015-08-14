@@ -16,8 +16,8 @@
 package com.example.dagger.activitygraphs;
 
 import android.app.Activity;
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 /**
  * A module to wrap the Activity state and expose it to the graph.

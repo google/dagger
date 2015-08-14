@@ -15,7 +15,7 @@
  */
 package test.membersinject;
 
-import dagger.Component;
+import dagger2.Component;
 
 @Component(modules = {MembersInjectModule.class})
 interface MembersInjectComponent {

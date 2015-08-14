@@ -15,8 +15,8 @@
  */
 package test;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 @Module
 final class DependedModule {

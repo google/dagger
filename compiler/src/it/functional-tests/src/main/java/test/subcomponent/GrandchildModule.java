@@ -15,10 +15,10 @@
  */
 package test.subcomponent;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
-import static dagger.Provides.Type.SET;
+import static dagger2.Provides.Type.SET;
 
 @Module
 final class GrandchildModule {

@@ -1,7 +1,7 @@
 package test;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import java.util.ArrayList;
 import java.util.List;
 

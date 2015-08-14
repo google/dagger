@@ -15,7 +15,7 @@
  */
 package test.subcomponent.hiding;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 @Subcomponent(modules = test.subcomponent.hiding.b.CommonModuleName.class)
 interface ChildComponent {

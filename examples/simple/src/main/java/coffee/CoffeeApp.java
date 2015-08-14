@@ -1,6 +1,6 @@
 package coffee;
 
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Singleton;
 
 public class CoffeeApp {

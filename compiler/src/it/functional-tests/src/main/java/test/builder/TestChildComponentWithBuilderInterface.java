@@ -15,7 +15,7 @@
  */
 package test.builder;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 @Subcomponent(modules = {StringModule.class, IntModuleIncludingDoubleAndFloat.class,
     LongModule.class, ByteModule.class})

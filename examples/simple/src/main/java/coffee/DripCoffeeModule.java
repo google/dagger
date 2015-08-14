@@ -1,7 +1,7 @@
 package coffee;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import javax.inject.Singleton;
 
 @Module(includes = PumpModule.class)

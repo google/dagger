@@ -15,7 +15,7 @@
  */
 package test.builder;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 @MiddleScope
 @Subcomponent(modules = {StringModule.class, LongModule.class})

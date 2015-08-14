@@ -2,7 +2,7 @@
 
 package test.subcomponent.repeat;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 import java.util.Set;
 

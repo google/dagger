@@ -15,7 +15,7 @@
 */
 package test;
 
-import dagger.MapKey;
+import dagger2.MapKey;
 
 @MapKey(unwrapValue = true)
 @interface TestKey {

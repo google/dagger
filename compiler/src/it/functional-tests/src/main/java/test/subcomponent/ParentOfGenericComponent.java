@@ -15,7 +15,7 @@
  */
 package test.subcomponent;
 
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Singleton;
 
 @Component(modules = ParentModule.class)

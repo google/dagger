@@ -15,7 +15,7 @@
  */
 package test.subcomponent.hiding;
 
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Singleton;
 
 @Component(modules = test.subcomponent.hiding.a.CommonModuleName.class)

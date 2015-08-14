@@ -15,7 +15,7 @@
 */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Inject;
 import test.sub.OtherThing;
 

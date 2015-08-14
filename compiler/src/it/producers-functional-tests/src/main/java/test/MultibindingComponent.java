@@ -16,7 +16,7 @@
 package test;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.producers.ProductionComponent;
+import dagger2.producers.ProductionComponent;
 import java.util.Set;
 
 @ProductionComponent(modules = MultibindingProducerModule.class)

@@ -17,7 +17,7 @@
 package com.example.dagger.activitygraphs;
 
 import android.app.Activity;
-import dagger.Component;
+import dagger2.Component;
 
 /**
  * A base component upon which fragment's components may depend.  Activity-level components

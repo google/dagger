@@ -17,8 +17,8 @@ package com.example.dagger.simple;
 
 import android.content.Context;
 import android.location.LocationManager;
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import javax.inject.Singleton;
 
 import static android.content.Context.LOCATION_SERVICE;

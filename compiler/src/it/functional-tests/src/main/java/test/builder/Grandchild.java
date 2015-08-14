@@ -15,7 +15,7 @@
  */
 package test.builder;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 @Subcomponent(modules = IntModuleIncludingDoubleAndFloat.class)
 interface Grandchild {

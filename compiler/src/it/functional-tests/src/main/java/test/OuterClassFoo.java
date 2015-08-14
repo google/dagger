@@ -15,7 +15,7 @@
  */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 
 final class OuterClassFoo {
   @Component(modules = PrimitivesModule.class)

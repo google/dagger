@@ -15,15 +15,15 @@
 */
 package test;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
 
-import static dagger.Provides.Type.MAP;
-import static dagger.Provides.Type.SET;
+import static dagger2.Provides.Type.MAP;
+import static dagger2.Provides.Type.SET;
 
 @Module
 class MultibindingModule {

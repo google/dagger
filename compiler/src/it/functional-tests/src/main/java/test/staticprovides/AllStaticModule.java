@@ -15,12 +15,12 @@
  */
 package test.staticprovides;
 
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
+import static dagger2.Provides.Type.SET;
+import static dagger2.Provides.Type.SET_VALUES;
 import static java.util.Collections.emptySet;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import java.util.Set;
 
 @Module

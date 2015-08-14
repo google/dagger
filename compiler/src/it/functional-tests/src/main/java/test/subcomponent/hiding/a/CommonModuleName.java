@@ -15,8 +15,8 @@
  */
 package test.subcomponent.hiding.a;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 @Module
 public class CommonModuleName {

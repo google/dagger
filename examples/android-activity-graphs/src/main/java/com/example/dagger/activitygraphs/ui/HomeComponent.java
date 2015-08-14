@@ -19,7 +19,7 @@ import com.example.dagger.activitygraphs.AbstractActivityComponent;
 import com.example.dagger.activitygraphs.ActivityModule;
 import com.example.dagger.activitygraphs.ApplicationComponent;
 import com.example.dagger.activitygraphs.PerActivity;
-import dagger.Component;
+import dagger2.Component;
 
 @PerActivity
 @Component(dependencies = ApplicationComponent.class, modules = ActivityModule.class)

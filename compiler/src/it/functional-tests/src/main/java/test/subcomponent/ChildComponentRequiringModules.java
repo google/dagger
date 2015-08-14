@@ -15,7 +15,7 @@
  */
 package test.subcomponent;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 
 @Subcomponent(modules = {
     ChildModule.class,

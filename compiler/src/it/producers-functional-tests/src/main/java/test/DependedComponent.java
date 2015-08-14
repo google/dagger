@@ -15,8 +15,7 @@
  */
 package test;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import dagger.Component;
+import dagger2.Component;
 
 @Component(modules = DependedModule.class)
 interface DependedComponent {

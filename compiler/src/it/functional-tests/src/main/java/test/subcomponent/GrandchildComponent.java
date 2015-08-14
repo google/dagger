@@ -15,7 +15,7 @@
  */
 package test.subcomponent;
 
-import dagger.Subcomponent;
+import dagger2.Subcomponent;
 import java.util.Set;
 import javax.inject.Provider;
 

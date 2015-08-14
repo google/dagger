@@ -15,7 +15,7 @@
 */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 
 /**
  * This component tests behavior equivalent to {@link BasicComponent}, but as an abstract class

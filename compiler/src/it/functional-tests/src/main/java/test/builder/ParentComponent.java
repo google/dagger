@@ -15,7 +15,7 @@
  */
 package test.builder;
 
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Singleton;
 
 @Singleton

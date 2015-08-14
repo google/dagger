@@ -17,7 +17,7 @@ package com.example.dagger.activitygraphs;
 
 import android.app.Application;
 import android.location.LocationManager;
-import dagger.Component;
+import dagger2.Component;
 import javax.inject.Singleton;
 
 /**

@@ -15,7 +15,7 @@
  */
 package test;
 
-import dagger.Lazy;
+import dagger2.Lazy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 

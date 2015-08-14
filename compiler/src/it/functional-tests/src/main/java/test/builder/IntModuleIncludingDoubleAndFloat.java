@@ -15,8 +15,8 @@
  */
 package test.builder;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 @Module(includes = { DoubleModule.class, FloatModule.class })
 class IntModuleIncludingDoubleAndFloat {

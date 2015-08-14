@@ -15,8 +15,8 @@
  */
 package test;
 
-import dagger.Lazy;
-import dagger.MembersInjector;
+import dagger2.Lazy;
+import dagger2.MembersInjector;
 import javax.inject.Inject;
 import javax.inject.Provider;
 

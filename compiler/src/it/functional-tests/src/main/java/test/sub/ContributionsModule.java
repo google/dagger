@@ -15,15 +15,15 @@
  */
 package test.sub;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
+import static dagger2.Provides.Type.SET;
+import static dagger2.Provides.Type.SET_VALUES;
 
 @Module
 public final class ContributionsModule {

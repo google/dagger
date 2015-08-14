@@ -15,8 +15,8 @@
  */
 package test.subcomponent;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger2.Module;
+import dagger2.Provides;
 
 /**
  * This is a module that can be constructed with a default constructor, but has state, so callers

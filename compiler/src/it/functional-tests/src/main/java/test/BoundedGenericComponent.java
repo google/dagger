@@ -15,7 +15,7 @@
  */
 package test;
 
-import dagger.Component;
+import dagger2.Component;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

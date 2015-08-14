@@ -15,7 +15,7 @@
  */
 package test.staticprovides;
 
-import dagger.Component;
+import dagger2.Component;
 import java.util.Set;
 
 /**

@@ -7,7 +7,7 @@ While Dagger 1 and Dagger 2 are similar in many ways, one is not a drop-in repla
 
 ## Injected types
 
-Dagger 2 continues to rely on [JSR 330](https://jcp.org/en/jsr/detail?id=330) for declaring injection sites. All of the [types of injection](http://docs.oracle.com/javaee/6/api/javax/inject/Inject.html) supported by Dagger 1 (field and constructor) continue to be supported by Dagger 2, but Dagger 2 supports method injection as well. Dagger 2 ***does not*** support static injection.
+Dagger 2 continues to rely on [JSR 330](https://jcp.org/en/jsr/detail?id=330) for declaring injection sites. All of the [types of injection][Inject] supported by Dagger 1 (field and constructor) continue to be supported by Dagger 2, but Dagger 2 supports method injection as well. Dagger 2 ***does not*** support static injection.
 
 ## Framework types
 
@@ -103,7 +103,7 @@ Dagger 1 only supported a single scope: [`@Singleton`][Singleton].  Dagger 2 all
 
 ## Subgraphs
 
-Dagger 1 provided `ObjectGraph.plus` as the mechanism for creating new graphs from existing ones.  Dagger 2 has [two mechanisms](/api/latest/dagger/Component.html#component-relationships) for composing graphs - each with its own advantages - but [subcomponents][Subcomponent] is the most direct analog.  Defining a subcomponent is very similar to defining a component and the component is associated with the subcomponent via a factory method that accepts the necessary modules.  If the Dagger 1 code created a new subgraph by invoking `objectGraph.plus(new ChildGraphModule("child!"))`, the following definition and invocation would have the same effect.
+Dagger 1 provided `ObjectGraph.plus` as the mechanism for creating new graphs from existing ones.  Dagger 2 has [two mechanisms](api/latest/dagger/Component.html#component-relationships) for composing graphs - each with its own advantages - but [subcomponents][Subcomponent] is the most direct analog.  Defining a subcomponent is very similar to defining a component and the component is associated with the subcomponent via a factory method that accepts the necessary modules.  If the Dagger 1 code created a new subgraph by invoking `objectGraph.plus(new ChildGraphModule("child!"))`, the following definition and invocation would have the same effect.
 
 ```java
 @Component(/* … */)
@@ -119,19 +119,20 @@ interface MyComponent {
 MySubcomponent mySubcomponent = myComponent.plus(new ChildGraphModule("child!"));
 ```
 
-Subcomponents are further described in the [`@Subcomponent`][Subcomponent] and the [`@Component`](/api/latest/dagger/Component.html#subcomponents) javadoc.
+Subcomponents are further described in the [`@Subcomponent`][Subcomponent] and the [`@Component`](api/latest/dagger/Component.html#subcomponents) javadoc.
 
 ## Nullability
 
 Unlike Dagger 1, Dagger 2 performs implicit null checking unless a `@Nullable` annotation (from any package) is present.  During migration, applications may have to annotate injection sites and provides methods with the `@Nullable` of their choice. Any mismatch in nullability will be reported as a compile-time error.
 
-[Component]: </api/latest/dagger/Component.html>
-[Component-modules]: </api/latest/dagger/Component.html#modules()>
-[Lazy]: </api/latest/dagger/Lazy.html>
-[MembersInjector]: </api/latest/dagger/MembersInjector.html>
-[Module]: </api/latest/dagger/Module.html>
-[Provides]: </api/latest/dagger/Provides.html>
-[Subcomponent]: </api/latest/dagger/Subcomponent.html>
+[Component]: <api/latest/dagger/Component.html>
+[Component-modules]: <api/latest/dagger/Component.html#modules()>
+[Lazy]: <api/latest/dagger/Lazy.html>
+[MembersInjector]: <api/latest/dagger/MembersInjector.html>
+[Module]: <api/latest/dagger/Module.html>
+[Provides]: <api/latest/dagger/Provides.html>
+[Subcomponent]: <api/latest/dagger/Subcomponent.html>
 
+[Inject]: <http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html>
 [Scope]: <http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html>
 [Singleton]: <http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html>

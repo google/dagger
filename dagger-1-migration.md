@@ -123,7 +123,7 @@ Subcomponents are further described in the [`@Subcomponent`][Subcomponent] and t
 
 ## Nullability
 
-Unlike Dagger 1, Dagger 2 performs implicit null checking unless a `@Nullable` annotation (from any package) is present.  During migration, applications may have to annotate injection sites and provides methods with the `@Nullable` of their choice. Any mismatch in nullability will be reported as a compile-time error.
+Unlike Dagger 1, Dagger 2 performs implicit null checking unless a `@Nullable` annotation (from any package) is present.  During migration, applications may have to annotate injection sites and provides methods with the `@Nullable` of their choice. Any mismatch in nullability will be reported as a compile-time error unless the `-Adagger.nullableValidation` flag is passed to `javac`.
 
 [Component]: </api/latest/dagger/Component.html>
 [Component-modules]: </api/latest/dagger/Component.html#modules()>

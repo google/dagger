@@ -182,6 +182,7 @@
 
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.3</version>
         <configuration>
           <doctitle>Dagger Dependency Injection ${project.version} API</doctitle>
         </configuration>

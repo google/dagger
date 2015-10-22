@@ -139,6 +139,7 @@ public class ProductionComponentProcessorTest {
         "import test.TestClass.BModule;",
         "import test.TestClass.SimpleComponent;",
         "",
+        "@SuppressWarnings(\"unchecked\")",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
         "public final class DaggerTestClass_SimpleComponent implements SimpleComponent {",
         "  private Provider<B> bProvider;",

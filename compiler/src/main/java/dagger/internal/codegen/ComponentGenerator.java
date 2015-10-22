@@ -211,6 +211,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
     JavaWriter writer = JavaWriter.inPackage(componentName.packageName());
 
     ClassWriter componentWriter = writer.addClass(componentName.simpleName());
+    componentWriter.annotate(SuppressWarnings.class).setValue("unchecked");
     componentWriter.annotate(Generated.class).setValue(ComponentProcessor.class.getCanonicalName());
     componentWriter.addModifiers(PUBLIC, FINAL);
     checkState(componentDefinitionType.getModifiers().contains(ABSTRACT));

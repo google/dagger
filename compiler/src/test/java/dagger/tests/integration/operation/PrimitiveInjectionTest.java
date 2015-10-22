@@ -74,6 +74,7 @@ public final class PrimitiveInjectionTest {
       "import javax.annotation.Generated;",
       "import javax.inject.Provider;",
       "",
+      "@SuppressWarnings(\"unchecked\")",
       "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
       "public final class DaggerPrimitiveComponent implements PrimitiveComponent {",
       "  private Provider<Integer> primitiveIntProvider;",

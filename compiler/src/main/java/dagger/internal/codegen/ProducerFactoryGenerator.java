@@ -120,7 +120,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     factoryWriter.annotate(Generated.class).setValue(ComponentProcessor.class.getName());
     factoryWriter.addModifiers(PUBLIC);
     factoryWriter.addModifiers(FINAL);
-    factoryWriter.setSuperType(
+    factoryWriter.setSuperclass(
         ParameterizedTypeName.create(AbstractProducer.class, providedTypeName));
 
     MethodWriter getMethodWriter = factoryWriter.addMethod(futureTypeName, "compute");

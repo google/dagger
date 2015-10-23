@@ -33,7 +33,6 @@ import javax.lang.model.util.Elements;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ConfigurationAnnotations.getMapKeys;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
@@ -47,9 +46,9 @@ import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_SET_VALUES_RETURN_SET;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -84,7 +83,7 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
       builder.addItem(formatModuleErrorMessage(BINDING_METHOD_NOT_IN_MODULE),
           providesMethodElement);
     }
-    
+
     if (!providesMethodElement.getTypeParameters().isEmpty()) {
       builder.addItem(formatErrorMessage(BINDING_METHOD_TYPE_PARAMETER),
           providesMethodElement);
@@ -105,13 +104,12 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
       builder.addItem(formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE),
           providesMethodElement);
     }
-  
+
     // check mapkey is right
-    if (!providesAnnotation.type().equals(Provides.Type.MAP) 
-        && (getMapKeys(providesMethodElement) != null
-            && getMapKeys(providesMethodElement).size() > 0)) {
-      builder.addItem(formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY),
-          providesMethodElement);
+    if (!providesAnnotation.type().equals(Provides.Type.MAP)
+        && !getMapKeys(providesMethodElement).isEmpty()) {
+      builder.addItem(
+          formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY), providesMethodElement);
     }
 
     validateMethodQualifiers(builder, providesMethodElement);
@@ -123,18 +121,17 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
         break;
       case MAP:
         validateKeyType(builder, returnType);
-        ImmutableSet<? extends AnnotationMirror> annotationMirrors =
-            getMapKeys(providesMethodElement);
-        switch (annotationMirrors.size()) {
+        ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(providesMethodElement);
+        switch (mapKeys.size()) {
           case 0:
-            builder.addItem(formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY),
-                providesMethodElement);
+            builder.addItem(
+                formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY), providesMethodElement);
             break;
           case 1:
             break;
           default:
-            builder.addItem(formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEY),
-                providesMethodElement);
+            builder.addItem(
+                formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEY), providesMethodElement);
             break;
         }
         break;

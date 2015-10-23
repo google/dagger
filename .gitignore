@@ -27,3 +27,5 @@ obj
 .DS_Store
 
 dependency-reduced-pom.xml
+
+test_runs/

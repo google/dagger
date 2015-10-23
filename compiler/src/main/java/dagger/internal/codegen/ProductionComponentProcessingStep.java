@@ -32,13 +32,10 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Jesse Beder
  */
-final class ProductionComponentProcessingStep implements ProcessingStep {
+final class ProductionComponentProcessingStep extends AbstractComponentProcessingStep {
   private final Messager messager;
   private final ProductionComponentValidator componentValidator;
-  private final BindingGraphValidator bindingGraphValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
-  private final BindingGraph.Factory bindingGraphFactory;
-  private final ComponentGenerator componentGenerator;
 
   ProductionComponentProcessingStep(
       Messager messager,
@@ -47,12 +44,14 @@ final class ProductionComponentProcessingStep implements ProcessingStep {
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraph.Factory bindingGraphFactory,
       ComponentGenerator componentGenerator) {
+    super(
+        messager,
+        bindingGraphValidator,
+        bindingGraphFactory,
+        componentGenerator);
     this.messager = messager;
     this.componentValidator = componentValidator;
-    this.bindingGraphValidator = bindingGraphValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
-    this.bindingGraphFactory = bindingGraphFactory;
-    this.componentGenerator = componentGenerator;
   }
 
   @Override
@@ -61,29 +60,20 @@ final class ProductionComponentProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    Set<? extends Element> componentElements = elementsByAnnotation.get(ProductionComponent.class);
-
+  protected ImmutableSet<ComponentDescriptor> componentDescriptors(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet.Builder<ComponentDescriptor> componentDescriptors = ImmutableSet.builder();
+    Set<Element> componentElements = elementsByAnnotation.get(ProductionComponent.class);
     for (Element element : componentElements) {
       TypeElement componentTypeElement = MoreElements.asType(element);
       ValidationReport<TypeElement> componentReport =
           componentValidator.validate(componentTypeElement);
       componentReport.printMessagesTo(messager);
       if (componentReport.isClean()) {
-        ComponentDescriptor componentDescriptor =
-            componentDescriptorFactory.forProductionComponent(componentTypeElement);
-        BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
-        ValidationReport<BindingGraph> graphReport =
-            bindingGraphValidator.validate(bindingGraph);
-        graphReport.printMessagesTo(messager);
-        if (graphReport.isClean()) {
-          try {
-            componentGenerator.generate(bindingGraph);
-          } catch (SourceFileGenerationException e) {
-            e.printMessageTo(messager);
-          }
-        }
+        componentDescriptors.add(
+            componentDescriptorFactory.forProductionComponent(componentTypeElement));
       }
     }
+    return componentDescriptors.build();
   }
 }

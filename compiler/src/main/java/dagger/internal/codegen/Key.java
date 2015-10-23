@@ -48,12 +48,12 @@ import javax.lang.model.util.Types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ConfigurationAnnotations.getMapKeys;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
 import static dagger.internal.codegen.Util.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.Util.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
-import static javax.lang.model.type.TypeKind.DECLARED;
 
 /**
  * Represents a unique combination of {@linkplain TypeMirror type} and
@@ -187,9 +187,7 @@ abstract class Key {
       checkNotNull(componentMethod);
       checkArgument(componentMethod.getKind().equals(METHOD));
       TypeMirror returnType = normalize(types, componentMethod.getReturnType());
-      return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(componentMethod)),
-          MoreTypes.equivalence().wrap(returnType));
+      return forMethod(componentMethod, returnType);
     }
 
     Key forProductionComponentMethod(ExecutableElement componentMethod) {
@@ -200,97 +198,91 @@ abstract class Key {
       if (MoreTypes.isTypeOf(ListenableFuture.class, returnType)) {
         keyType = Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       }
-      return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(componentMethod)),
-          MoreTypes.equivalence().wrap(keyType));
+      return forMethod(componentMethod, keyType);
     }
 
-    Key forProvidesMethod(ExecutableType executableType, ExecutableElement e) {
-      checkNotNull(e);
-      checkArgument(e.getKind().equals(METHOD));
-      Provides providesAnnotation = e.getAnnotation(Provides.class);
+    Key forProvidesMethod(ExecutableType executableType, ExecutableElement method) {
+      checkNotNull(method);
+      checkArgument(method.getKind().equals(METHOD));
+      Provides providesAnnotation = method.getAnnotation(Provides.class);
       checkArgument(providesAnnotation != null);
       TypeMirror returnType = normalize(types, executableType.getReturnType());
-      switch (providesAnnotation.type()) {
-        case UNIQUE:
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(returnType));
-        case SET:
-          TypeMirror setType = types.getDeclaredType(getSetElement(), returnType);
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(setType));
-        case MAP:
-          AnnotationMirror mapKeyAnnotation = Iterables.getOnlyElement(getMapKeys(e));
-          MapKey mapKey =
-              mapKeyAnnotation.getAnnotationType().asElement().getAnnotation(MapKey.class);
-          TypeElement keyTypeElement =
-              mapKey.unwrapValue() ? Util.getKeyTypeElement(mapKeyAnnotation, elements)
-                  : (TypeElement) mapKeyAnnotation.getAnnotationType().asElement();
-          TypeMirror valueType = types.getDeclaredType(getProviderElement(), returnType);
-          TypeMirror mapType =
-              types.getDeclaredType(getMapElement(), keyTypeElement.asType(), valueType);
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(mapType));
-        case SET_VALUES:
-          // TODO(gak): do we want to allow people to use "covariant return" here?
-          checkArgument(returnType.getKind().equals(DECLARED));
-          checkArgument(((DeclaredType) returnType).asElement().equals(getSetElement()));
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(returnType));
-        default:
-          throw new AssertionError();
-      }
+      TypeMirror keyType =
+          providesOrProducesKeyType(
+              returnType,
+              method,
+              Optional.of(providesAnnotation.type()),
+              Optional.<Produces.Type>absent());
+      return forMethod(method, keyType);
     }
 
     // TODO(user): Reconcile this method with forProvidesMethod when Provides.Type and
     // Produces.Type are no longer different.
-    Key forProducesMethod(ExecutableType executableType, ExecutableElement e) {
-      checkNotNull(e);
-      checkArgument(e.getKind().equals(METHOD));
-      Produces producesAnnotation = e.getAnnotation(Produces.class);
+    Key forProducesMethod(ExecutableType executableType, ExecutableElement method) {
+      checkNotNull(method);
+      checkArgument(method.getKind().equals(METHOD));
+      Produces producesAnnotation = method.getAnnotation(Produces.class);
       checkArgument(producesAnnotation != null);
       TypeMirror returnType = normalize(types, executableType.getReturnType());
-      TypeMirror keyType = returnType;
+      TypeMirror unfuturedType = returnType;
       if (MoreTypes.isTypeOf(ListenableFuture.class, returnType)) {
-        keyType = Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
+        unfuturedType =
+            Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       }
-      switch (producesAnnotation.type()) {
+      TypeMirror keyType =
+          providesOrProducesKeyType(
+              unfuturedType,
+              method,
+              Optional.<Provides.Type>absent(),
+              Optional.of(producesAnnotation.type()));
+      return forMethod(method, keyType);
+    }
+
+    private TypeMirror providesOrProducesKeyType(
+        TypeMirror returnType,
+        ExecutableElement method,
+        Optional<Provides.Type> providesType,
+        Optional<Produces.Type> producesType) {
+      switch (providesType.isPresent()
+          ? providesType.get()
+          : Provides.Type.valueOf(producesType.get().name())) {
         case UNIQUE:
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(keyType));
+          return returnType;
         case SET:
-          TypeMirror setType = types.getDeclaredType(getSetElement(), keyType);
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(setType));
+          return types.getDeclaredType(getSetElement(), returnType);
         case MAP:
-          AnnotationMirror mapKeyAnnotation = Iterables.getOnlyElement(getMapKeys(e));
-          MapKey mapKey =
-              mapKeyAnnotation.getAnnotationType().asElement().getAnnotation(MapKey.class);
-          TypeElement keyTypeElement =
-              mapKey.unwrapValue() ? Util.getKeyTypeElement(mapKeyAnnotation, elements)
-                  : (TypeElement) mapKeyAnnotation.getAnnotationType().asElement();
-          TypeMirror valueType = types.getDeclaredType(getProducerElement(), keyType);
-          TypeMirror mapType =
-              types.getDeclaredType(getMapElement(), keyTypeElement.asType(), valueType);
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(mapType));
+          return mapOfFactoryType(
+              method,
+              returnType,
+              providesType.isPresent() ? getProviderElement() : getProducerElement());
         case SET_VALUES:
           // TODO(gak): do we want to allow people to use "covariant return" here?
-          checkArgument(keyType.getKind().equals(DECLARED));
-          checkArgument(((DeclaredType) keyType).asElement().equals(getSetElement()));
-          return new AutoValue_Key(
-              wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(e)),
-              MoreTypes.equivalence().wrap(keyType));
+          checkArgument(MoreTypes.isType(returnType) && MoreTypes.isTypeOf(Set.class, returnType));
+          return returnType;
         default:
           throw new AssertionError();
       }
+    }
+
+    private TypeMirror mapOfFactoryType(
+        ExecutableElement method, TypeMirror valueType, TypeElement factoryType) {
+      TypeMirror mapKeyType = mapKeyType(method);
+      TypeMirror mapValueFactoryType = types.getDeclaredType(factoryType, valueType);
+      return types.getDeclaredType(getMapElement(), mapKeyType, mapValueFactoryType);
+    }
+
+    private TypeMirror mapKeyType(ExecutableElement method) {
+      AnnotationMirror mapKeyAnnotation = getMapKey(method).get();
+      MapKey mapKey = mapKeyAnnotation.getAnnotationType().asElement().getAnnotation(MapKey.class);
+      return mapKey.unwrapValue()
+          ? getUnwrappedMapKeyType(mapKeyAnnotation.getAnnotationType(), types)
+          : mapKeyAnnotation.getAnnotationType();
+    }
+
+    private Key forMethod(ExecutableElement method, TypeMirror keyType) {
+      return new AutoValue_Key(
+          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(method)),
+          MoreTypes.equivalence().wrap(keyType));
     }
 
     Key forInjectConstructorWithResolvedType(TypeMirror type) {

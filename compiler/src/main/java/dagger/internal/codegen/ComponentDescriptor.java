@@ -31,8 +31,10 @@ import dagger.MembersInjector;
 import dagger.Subcomponent;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -51,6 +53,7 @@ import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
+import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isComponent;
 import static dagger.internal.codegen.InjectionAnnotations.getScopeAnnotation;
 import static dagger.internal.codegen.Util.unwrapOptionalEquivalence;
@@ -84,7 +87,7 @@ abstract class ComponentDescriptor {
     Class<? extends Annotation> annotationType() {
       return annotationType;
     }
-    
+
     Class<? extends Annotation> builderAnnotationType() {
       return builderType;
     }
@@ -104,6 +107,26 @@ abstract class ComponentDescriptor {
    * The set of component dependencies listed in {@link Component#dependencies}.
    */
   abstract ImmutableSet<TypeElement> dependencies();
+
+  abstract ImmutableSet<ModuleDescriptor> modules();
+
+  ImmutableSet<ModuleDescriptor> transitiveModules() {
+    Set<ModuleDescriptor> transitiveModules = new LinkedHashSet<>();
+    for (ModuleDescriptor module : modules()) {
+      addTransitiveModules(transitiveModules, module);
+    }
+    return ImmutableSet.copyOf(transitiveModules);
+  }
+
+  private static Set<ModuleDescriptor> addTransitiveModules(
+      Set<ModuleDescriptor> transitiveModules, ModuleDescriptor module) {
+    if (transitiveModules.add(module)) {
+      for (ModuleDescriptor includedModule : module.includedModules()) {
+        addTransitiveModules(transitiveModules, includedModule);
+      }
+    }
+    return transitiveModules;
+  }
 
   /**
    * An index of the type to which this component holds a reference (the type listed in
@@ -153,9 +176,9 @@ abstract class ComponentDescriptor {
     SUBCOMPONENT,
     SUBCOMPONENT_BUILDER,
   }
-  
+
   @AutoValue
-  static abstract class BuilderSpec {    
+  static abstract class BuilderSpec {
     abstract TypeElement builderDefinitionType();
     abstract Map<TypeElement, ExecutableElement> methodMap();
     abstract ExecutableElement buildMethod();
@@ -166,11 +189,17 @@ abstract class ComponentDescriptor {
     private final Elements elements;
     private final Types types;
     private final DependencyRequest.Factory dependencyRequestFactory;
+    private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
-    Factory(Elements elements, Types types, DependencyRequest.Factory dependencyRequestFactory) {
+    Factory(
+        Elements elements,
+        Types types,
+        DependencyRequest.Factory dependencyRequestFactory,
+        ModuleDescriptor.Factory moduleDescriptorFactory) {
       this.elements = elements;
       this.types = types;
       this.dependencyRequestFactory = dependencyRequestFactory;
+      this.moduleDescriptorFactory = moduleDescriptorFactory;
     }
 
     ComponentDescriptor forComponent(TypeElement componentDefinitionType) {
@@ -210,6 +239,11 @@ abstract class ComponentDescriptor {
               ? Optional.of(elements.getTypeElement(Executor.class.getCanonicalName()))
               : Optional.<TypeElement>absent();
 
+      ImmutableSet.Builder<ModuleDescriptor> modules = ImmutableSet.builder();
+      for (TypeMirror moduleIncludesType : getComponentModules(componentMirror)) {
+        modules.add(moduleDescriptorFactory.create(MoreTypes.asTypeElement(moduleIncludesType)));
+      }
+
       ImmutableSet<ExecutableElement> unimplementedMethods =
           Util.getUnimplementedMethods(elements, componentDefinitionType);
 
@@ -237,14 +271,14 @@ abstract class ComponentDescriptor {
             break;
           default: // nothing special to do for other methods.
         }
-        
+
       }
-      
+
       ImmutableList<DeclaredType> enclosedBuilders = kind.builderAnnotationType() == null
           ? ImmutableList.<DeclaredType>of()
           : enclosedBuilders(componentDefinitionType, kind.builderAnnotationType());
       Optional<DeclaredType> builderType =
-          Optional.fromNullable(getOnlyElement(enclosedBuilders, null));        
+          Optional.fromNullable(getOnlyElement(enclosedBuilders, null));
 
       Optional<AnnotationMirror> scope = getScopeAnnotation(componentDefinitionType);
       return new AutoValue_ComponentDescriptor(
@@ -252,6 +286,7 @@ abstract class ComponentDescriptor {
           componentMirror,
           componentDefinitionType,
           componentDependencyTypes,
+          modules.build(),
           dependencyMethodIndex.build(),
           executorDependency,
           wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), scope),

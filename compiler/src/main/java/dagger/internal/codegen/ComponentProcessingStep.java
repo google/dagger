@@ -17,6 +17,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
@@ -38,16 +39,13 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Gregory Kick
  */
-final class ComponentProcessingStep implements ProcessingStep {
+final class ComponentProcessingStep extends AbstractComponentProcessingStep {
   private final Messager messager;
   private final ComponentValidator componentValidator;
   private final ComponentValidator subcomponentValidator;
   private final BuilderValidator componentBuilderValidator;
   private final BuilderValidator subcomponentBuilderValidator;
-  private final BindingGraphValidator bindingGraphValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
-  private final BindingGraph.Factory bindingGraphFactory;
-  private final ComponentGenerator componentGenerator;
 
   ComponentProcessingStep(
       Messager messager,
@@ -59,15 +57,17 @@ final class ComponentProcessingStep implements ProcessingStep {
       Factory componentDescriptorFactory,
       BindingGraph.Factory bindingGraphFactory,
       ComponentGenerator componentGenerator) {
+    super(
+        messager,
+        bindingGraphValidator,
+        bindingGraphFactory,
+        componentGenerator);
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.subcomponentValidator = subcomponentValidator;
     this.componentBuilderValidator = componentBuilderValidator;
     this.subcomponentBuilderValidator = subcomponentBuilderValidator;
-    this.bindingGraphValidator = bindingGraphValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
-    this.bindingGraphFactory = bindingGraphFactory;
-    this.componentGenerator = componentGenerator;
   }
 
   @Override
@@ -76,18 +76,34 @@ final class ComponentProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+  protected ImmutableSet<ComponentDescriptor> componentDescriptors(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     Map<Element, ValidationReport<TypeElement>> builderReportsByComponent =
-        processComponentBuilders(Sets.<Element>newHashSet());
-    Set<? extends Element> subcomponentBuilderElements = Sets.newHashSet();
+        ImmutableMap.<Element, ValidationReport<TypeElement>>of();
+    Set<Element> subcomponentBuilderElements = ImmutableSet.<Element>of();
     Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent =
         processSubcomponentBuilders(subcomponentBuilderElements);
-    Set<? extends Element> subcomponentElements = elementsByAnnotation.get(Subcomponent.class);
+    Set<Element> subcomponentElements = elementsByAnnotation.get(Subcomponent.class);
     Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent =
         processSubcomponents(subcomponentElements, subcomponentBuilderElements);
-    Set<? extends Element> componentElements = elementsByAnnotation.get(Component.class);
-    processComponents(componentElements, builderReportsByComponent, subcomponentElements,
-        reportsBySubcomponent, subcomponentBuilderElements, builderReportsBySubcomponent);
+    Set<Element> componentElements = elementsByAnnotation.get(Component.class);
+
+    ImmutableSet.Builder<ComponentDescriptor> builder = ImmutableSet.builder();
+    for (Element element : componentElements) {
+      TypeElement componentTypeElement = MoreElements.asType(element);
+      ComponentValidationReport report = componentValidator.validate(
+          componentTypeElement, subcomponentElements, subcomponentBuilderElements);
+      report.report().printMessagesTo(messager);
+      if (isClean(
+          report, builderReportsByComponent, reportsBySubcomponent, builderReportsBySubcomponent)) {
+        try {
+          builder.add(componentDescriptorFactory.forComponent(componentTypeElement));
+        } catch (TypeNotPresentException e) {
+          // just skip it and get it later
+        }
+      }
+    }
+    return builder.build();
   }
 
   private Map<Element, ValidationReport<TypeElement>> processComponentBuilders(
@@ -125,37 +141,6 @@ final class ComponentProcessingStep implements ProcessingStep {
       reportsBySubcomponent.put(element, report.report());
     }
     return reportsBySubcomponent;
-  }
-
-  private void processComponents(
-      Set<? extends Element> componentElements,
-      Map<Element, ValidationReport<TypeElement>> builderReportsByComponent,
-      Set<? extends Element> subcomponentElements,
-      Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent,
-      Set<? extends Element> subcomponentBuilderElements,
-      Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent) {
-    for (Element element : componentElements) {
-      TypeElement componentTypeElement = MoreElements.asType(element);
-      ComponentValidationReport report = componentValidator.validate(
-          componentTypeElement, subcomponentElements, subcomponentBuilderElements);
-      report.report().printMessagesTo(messager);
-      if (isClean(report, builderReportsByComponent, reportsBySubcomponent,
-          builderReportsBySubcomponent)) {
-        ComponentDescriptor componentDescriptor =
-            componentDescriptorFactory.forComponent(componentTypeElement);
-        BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
-        ValidationReport<BindingGraph> graphReport =
-            bindingGraphValidator.validate(bindingGraph);
-        graphReport.printMessagesTo(messager);
-        if (graphReport.isClean()) {
-          try {
-            componentGenerator.generate(bindingGraph);
-          } catch (SourceFileGenerationException e) {
-            e.printMessageTo(messager);
-          }
-        }
-      }
-    }
   }
 
   /**

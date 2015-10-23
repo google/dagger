@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -101,7 +102,9 @@ final class ModuleValidator implements Validator<TypeElement> {
       
     validateModuleVisibility(subject, builder);
     validateMethodsWithSameName(builder, bindingMethodsByName);
-    validateProvidesOverrides(subject, builder, allMethodsByName, bindingMethodsByName);
+    if (subject.getKind() != ElementKind.INTERFACE) {
+      validateProvidesOverrides(subject, builder, allMethodsByName, bindingMethodsByName);
+    }
     validateModifiers(subject, builder);    
     validateReferencedModules(subject, builder);
     

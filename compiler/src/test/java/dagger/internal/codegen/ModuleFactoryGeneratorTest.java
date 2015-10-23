@@ -44,7 +44,7 @@ public class ModuleFactoryGeneratorTest {
   private final JavaFileObject NULLABLE = JavaFileObjects.forSourceLines("test.Nullable",
       "package test;",
       "public @interface Nullable {}");
-  
+
   private static final StringLiteral NPE_LITERAL =
       StringLiteral.forValue(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
 
@@ -890,7 +890,7 @@ public class ModuleFactoryGeneratorTest {
             + "test.NonPublicModule1 and test.NonPublicModule2 public.")
         .in(publicModuleFile).onLine(8);
   }
-  
+
   @Test
   public void genericSubclassedModule() {
     JavaFileObject parent = JavaFileObjects.forSourceLines("test.ParentModule",
@@ -944,40 +944,40 @@ public class ModuleFactoryGeneratorTest {
         "}");
     JavaFileObject listBFactory = JavaFileObjects.forSourceLines(
         "test.ParentModule_ProvidesListBFactory",
-        "package test;", 
-        "", 
+        "package test;",
+        "",
         "import dagger.internal.Factory;",
-        "import java.util.List;", 
-        "import javax.annotation.Generated;", 
-        "import javax.inject.Provider;", 
-        "", 
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")", 
+        "import java.util.List;",
+        "import javax.annotation.Generated;",
+        "import javax.inject.Provider;",
+        "",
+        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
         "public final class ParentModule_ProvideListBFactory<A extends CharSequence,",
-        "    B, C extends Number & Comparable<C>> implements Factory<List<B>> {", 
-        "  private final ParentModule<A, B, C> module;", 
-        "  private final Provider<B> bProvider;", 
-        "", 
+        "    B, C extends Number & Comparable<C>> implements Factory<List<B>> {",
+        "  private final ParentModule<A, B, C> module;",
+        "  private final Provider<B> bProvider;",
+        "",
         "  public ParentModule_ProvideListBFactory(",
-        "        ParentModule<A, B, C> module, Provider<B> bProvider) {", 
-        "    assert module != null;", 
-        "    this.module = module;", 
-        "    assert bProvider != null;", 
-        "    this.bProvider = bProvider;", 
-        "  }", 
-        "", 
-        "  @Override", 
-        "  public List<B> get() {  ", 
+        "        ParentModule<A, B, C> module, Provider<B> bProvider) {",
+        "    assert module != null;",
+        "    this.module = module;",
+        "    assert bProvider != null;",
+        "    this.bProvider = bProvider;",
+        "  }",
+        "",
+        "  @Override",
+        "  public List<B> get() {  ",
         "    List<B> provided = module.provideListB(bProvider.get());",
         "    if (provided == null) {",
         "      throw new NullPointerException(" + NPE_LITERAL + ");",
         "    }",
-        "    return provided;", 
-        "  }", 
-        "", 
+        "    return provided;",
+        "  }",
+        "",
         "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
         "      Factory<List<B>> create(ParentModule<A, B, C> module, Provider<B> bProvider) {",
-        "    return new ParentModule_ProvideListBFactory<A, B, C>(module, bProvider);", 
-        "  }", 
+        "    return new ParentModule_ProvideListBFactory<A, B, C>(module, bProvider);",
+        "  }",
         "}");
     JavaFileObject numberFactory = JavaFileObjects.forSourceLines(
         "test.ChildNumberModule_ProvideNumberFactory",

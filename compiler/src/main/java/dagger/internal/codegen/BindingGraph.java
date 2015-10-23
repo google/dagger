@@ -18,44 +18,38 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import dagger.Component;
-import dagger.Provides;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.producers.Produces;
 import dagger.producers.ProductionComponent;
-
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Executor;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
-import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.MembersInjectionBinding.Strategy.DELEGATE;
 import static dagger.internal.codegen.MembersInjectionBinding.Strategy.NO_OP;
-import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
 /**
  * The canonical representation of a full-resolved graph.
@@ -64,19 +58,29 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
  */
 @AutoValue
 abstract class BindingGraph {
-  enum ModuleStrategy {
-    PASSED,
-    CONSTRUCTED,
-  }
-
   abstract ComponentDescriptor componentDescriptor();
-  abstract ImmutableMap<TypeElement, ModuleStrategy> transitiveModules();
   abstract ImmutableMap<BindingKey, ResolvedBindings> resolvedBindings();
   abstract ImmutableMap<ExecutableElement, BindingGraph> subgraphs();
 
+  /**
+   * Returns the set of types necessary to implement the component, but are not part of the injected
+   * graph.  This includes modules, component dependencies and an {@link Executor} in the case of
+   * {@link ProductionComponent}.
+   */
+  ImmutableSet<TypeElement> componentRequirements() {
+    return FluentIterable.from(componentDescriptor().transitiveModules())
+        .transform(new Function<ModuleDescriptor, TypeElement>() {
+          @Override public TypeElement apply(ModuleDescriptor input) {
+            return input.moduleElement();
+          }
+        })
+        .append(componentDescriptor().dependencies())
+        .append(componentDescriptor().executorDependency().asSet())
+        .toSet();
+  }
+
   static final class Factory {
     private final Elements elements;
-    private final Types types;
     private final InjectBindingRegistry injectBindingRegistry;
     private final Key.Factory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
@@ -84,14 +88,12 @@ abstract class BindingGraph {
     private final ProductionBinding.Factory productionBindingFactory;
 
     Factory(Elements elements,
-        Types types,
         InjectBindingRegistry injectBindingRegistry,
         Key.Factory keyFactory,
         DependencyRequest.Factory dependencyRequestFactory,
         ProvisionBinding.Factory provisionBindingFactory,
         ProductionBinding.Factory productionBindingFactory) {
       this.elements = elements;
-      this.types = types;
       this.injectBindingRegistry = injectBindingRegistry;
       this.keyFactory = keyFactory;
       this.dependencyRequestFactory = dependencyRequestFactory;
@@ -109,7 +111,6 @@ abstract class BindingGraph {
           ImmutableSet.builder();
       ImmutableSet.Builder<ProductionBinding> explicitProductionBindingsBuilder =
           ImmutableSet.builder();
-      AnnotationMirror componentAnnotation = componentDescriptor.componentAnnotation();
 
       // binding for the component itself
       TypeElement componentDefinitionType = componentDescriptor.componentDefinitionType();
@@ -144,28 +145,15 @@ abstract class BindingGraph {
         }
       }
 
-      // Collect transitive modules provisions.
-      ImmutableSet<TypeElement> moduleTypes =
-          MoreTypes.asTypeElements(getComponentModules(componentAnnotation));
-
-      ImmutableMap.Builder<TypeElement, ModuleStrategy> transitiveModules = ImmutableMap.builder();
-      for (TypeElement module : getTransitiveModules(types, elements, moduleTypes)) {
-        transitiveModules.put(module,
-            (componentCanMakeNewInstances(module) && module.getTypeParameters().isEmpty())
-                ? ModuleStrategy.CONSTRUCTED
-                : ModuleStrategy.PASSED);
-
-        // traverse the modules, collect the bindings
-        List<ExecutableElement> moduleMethods = methodsIn(elements.getAllMembers(module));
-        for (ExecutableElement moduleMethod : moduleMethods) {
-          if (isAnnotationPresent(moduleMethod, Provides.class)) {
-            explicitProvisionBindingsBuilder.add(
-                provisionBindingFactory.forProvidesMethod(moduleMethod, module.asType()));
+      // Collect transitive module bindings.
+      for (ModuleDescriptor moduleDescriptor : componentDescriptor.transitiveModules()) {
+        for (ContributionBinding binding : moduleDescriptor.bindings()) {
+          if (binding instanceof ProvisionBinding) {
+            explicitProvisionBindingsBuilder.add((ProvisionBinding) binding);
           }
-          if (isAnnotationPresent(moduleMethod, Produces.class)) {
-            explicitProductionBindingsBuilder.add(
-                productionBindingFactory.forProducesMethod(moduleMethod, module.asType()));
-           }
+          if (binding instanceof ProductionBinding) {
+            explicitProductionBindingsBuilder.add((ProductionBinding) binding);
+          }
         }
       }
 
@@ -191,7 +179,6 @@ abstract class BindingGraph {
 
       return new AutoValue_BindingGraph(
           componentDescriptor,
-          transitiveModules.build(),
           requestResolver.getResolvedBindings(),
           subgraphsBuilder.build());
     }
@@ -212,7 +199,7 @@ abstract class BindingGraph {
       final ImmutableSetMultimap<Key, ProvisionBinding> explicitProvisionBindings;
       final ImmutableSetMultimap<Key, ProductionBinding> explicitProductionBindings;
       final Map<BindingKey, ResolvedBindings> resolvedBindings;
-      final Deque<BindingKey> cycleStack = Queues.newArrayDeque();
+      final Deque<BindingKey> cycleStack = new ArrayDeque<>();
 
       RequestResolver(Optional<RequestResolver> parentResolver,
           Optional<Equivalence.Wrapper<AnnotationMirror>> targetScope,

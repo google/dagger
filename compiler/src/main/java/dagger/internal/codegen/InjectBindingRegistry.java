@@ -23,11 +23,11 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Provides;
 import dagger.internal.codegen.writer.ClassName;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +63,7 @@ final class InjectBindingRegistry {
 
   final class BindingsCollection<B extends Binding> {
     private final Map<Key, B> bindingsByKey = Maps.newLinkedHashMap();
-    private final Deque<B> bindingsRequiringGeneration = Queues.newArrayDeque();
+    private final Deque<B> bindingsRequiringGeneration = new ArrayDeque<>();
     private final Set<B> materializedBindings = Sets.newLinkedHashSet();
 
     void generateBindings(SourceFileGenerator<B> generator) throws SourceFileGenerationException {
@@ -95,7 +95,7 @@ final class InjectBindingRegistry {
       tryToCacheBinding(binding);
       tryToGenerateBinding(binding, factoryName, explicit);
     }
-    
+
     /**
      * Tries to generate a binding, not generating if it already is generated. For resolved
      * bindings, this will try to generate the unresolved version of the binding.
@@ -111,22 +111,22 @@ final class InjectBindingRegistry {
         }
       }
     }
-    
+
     /** Returns true if the binding needs to be generated. */
     private boolean shouldGenerateBinding(B binding, ClassName factoryName) {
       return !binding.hasNonDefaultTypeParameters()
           && elements.getTypeElement(factoryName.canonicalName()) == null
           && !materializedBindings.contains(binding)
           && !bindingsRequiringGeneration.contains(binding);
-        
+
     }
 
     /** Caches the binding for future lookups by key. */
     private void tryToCacheBinding(B binding) {
       // We only cache resolved bindings or unresolved bindings w/o type arguments.
       // Unresolved bindings w/ type arguments aren't valid for the object graph.
-      if (binding.hasNonDefaultTypeParameters()          
-          || binding.bindingTypeElement().getTypeParameters().isEmpty()) {        
+      if (binding.hasNonDefaultTypeParameters()
+          || binding.bindingTypeElement().getTypeParameters().isEmpty()) {
         Key key = binding.key();
         Binding previousValue = bindingsByKey.put(key, binding);
         checkState(previousValue == null || binding.equals(previousValue),
@@ -220,7 +220,7 @@ final class InjectBindingRegistry {
     if (binding != null) {
       return Optional.of(binding);
     }
-    
+
     // ok, let's see if we can find an @Inject constructor
     TypeElement element = MoreElements.asType(types.asElement(key.type()));
     List<ExecutableElement> constructors =

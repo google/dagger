@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen.writer;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.List;
@@ -23,15 +22,12 @@ import java.util.Map;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Only named types. Doesn't cover anonymous inner classes.
  */
 public abstract class TypeWriter /* ha ha */ extends Modifiable
     implements Writable, HasTypeName, HasClassReferences {
   final ClassName name;
-  Optional<TypeName> supertype;
   final List<TypeName> implementedTypes;
   final List<MethodWriter> methodWriters;
   final List<TypeWriter> nestedTypeWriters;
@@ -39,7 +35,6 @@ public abstract class TypeWriter /* ha ha */ extends Modifiable
 
   TypeWriter(ClassName name) {
     this.name = name;
-    this.supertype = Optional.absent();
     this.implementedTypes = Lists.newArrayList();
     this.methodWriters = Lists.newArrayList();
     this.nestedTypeWriters = Lists.newArrayList();
@@ -89,15 +84,6 @@ public abstract class TypeWriter /* ha ha */ extends Modifiable
 
   public void addImplementedType(TypeElement typeElement) {
     implementedTypes.add(ClassName.fromTypeElement(typeElement));
-  }
-
-  public void setSuperType(TypeName typeReference) {
-    checkState(!supertype.isPresent());
-    supertype = Optional.of(typeReference);
-  }
-
-  public void setSuperType(TypeElement typeElement) {
-    setSuperType(ClassName.fromTypeElement(typeElement));
   }
 
   public FieldWriter addField(Class<?> type, String name) {

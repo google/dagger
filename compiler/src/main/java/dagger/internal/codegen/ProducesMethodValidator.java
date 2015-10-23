@@ -35,7 +35,6 @@ import javax.lang.model.util.Elements;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ConfigurationAnnotations.getMapKeys;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
@@ -48,6 +47,7 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_K
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.ARRAY;
@@ -108,10 +108,9 @@ final class ProducesMethodValidator implements Validator<ExecutableElement> {
 
     // check mapkey is right
     if (!producesAnnotation.type().equals(Produces.Type.MAP)
-        && (getMapKeys(producesMethodElement) != null
-            && !getMapKeys(producesMethodElement).isEmpty())) {
-      builder.addItem(formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY),
-          producesMethodElement);
+        && !getMapKeys(producesMethodElement).isEmpty()) {
+      builder.addItem(
+          formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY), producesMethodElement);
     }
 
     ProvidesMethodValidator.validateMethodQualifiers(builder, producesMethodElement);
@@ -123,18 +122,17 @@ final class ProducesMethodValidator implements Validator<ExecutableElement> {
         break;
       case MAP:
         validateSingleReturnType(builder, returnType);
-        ImmutableSet<? extends AnnotationMirror> annotationMirrors =
-            getMapKeys(producesMethodElement);
-        switch (annotationMirrors.size()) {
+        ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(producesMethodElement);
+        switch (mapKeys.size()) {
           case 0:
-            builder.addItem(formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY),
-                producesMethodElement);
+            builder.addItem(
+                formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY), producesMethodElement);
             break;
           case 1:
             break;
           default:
-            builder.addItem(formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEY),
-                producesMethodElement);
+            builder.addItem(
+                formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEY), producesMethodElement);
             break;
         }
         break;

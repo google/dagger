@@ -15,14 +15,15 @@
 */
 package test;
 
-import dagger.MapKey;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-@MapKey(unwrapValue = true)
-@interface TestKey {
-  String value();
+import static com.google.common.truth.Truth.assertThat;
 
-  @MapKey(unwrapValue = false)
-  @interface NestedWrappedKey {
-    Class<?> value();
+@RunWith(JUnit4.class)
+public class DependsOnGeneratedCodeTest {
+  @Test public void testComponentDependsOnGeneratedCode() {
+    assertThat(DaggerComponentDependsOnGeneratedCode.create().needsFactory()).isNotNull();
   }
 }

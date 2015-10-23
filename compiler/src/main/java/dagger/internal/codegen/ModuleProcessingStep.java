@@ -70,7 +70,8 @@ final class ModuleProcessingStep implements BasicAnnotationProcessor.ProcessingS
   }
 
   @Override
-  public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+  public Set<Element> process(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     // first, check and collect all provides methods
     ImmutableSet.Builder<ExecutableElement> validProvidesMethodsBuilder = ImmutableSet.builder();
     for (Element providesElement : elementsByAnnotation.get(Provides.class)) {
@@ -130,5 +131,6 @@ final class ModuleProcessingStep implements BasicAnnotationProcessor.ProcessingS
       }
       processedModuleElements.add(moduleElement);
     }
+    return ImmutableSet.of();
   }
 }

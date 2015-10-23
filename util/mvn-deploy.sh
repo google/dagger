@@ -3,9 +3,8 @@ if [ $# -lt 1 ]; then
   echo "usage $0 <ssl-key> [<param> ...]"
   exit 1;
 fi
-key=${1}
+key=$1
 shift
-params=${@}
 
 #validate key
 keystatus=$(gpg --list-keys | grep ${key} | awk '{print $1}')
@@ -14,7 +13,9 @@ if [ "${keystatus}" != "pub" ]; then
   echo -n "Available keys from: "
   gpg --list-keys | grep --invert-match '^sub'
 
-  exit 1
+  exit 64
 fi
 
-mvn ${params} -P '!examples' -P sonatype-oss-release clean site:jar -Dgpg.skip=false -Dgpg.keyname=${key} deploy
+mvn "$@" -P '!examples' -P sonatype-oss-release \
+    -Dgpg.skip=false -Dgpg.keyname=${key} \
+    clean site:jar deploy

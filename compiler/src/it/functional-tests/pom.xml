@@ -22,7 +22,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger-parent</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.2</version>
   </parent>
   <groupId>dagger.tests</groupId>
   <artifactId>functional-tests</artifactId>
@@ -44,6 +44,13 @@ limitations under the License.
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
       <version>${auto.value.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <!-- For map-bindings -->
+      <groupId>com.google.auto.factory</groupId>
+      <artifactId>auto-factory</artifactId>
+      <version>${auto.factory.version}</version>
       <optional>true</optional>
     </dependency>
 

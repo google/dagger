@@ -35,5 +35,15 @@ interface MultibindingComponent {
   Set<String> mapKeys();
   Collection<String> mapValues();
   Set<Integer> set();
-  Map<TestKey.NestedWrappedKey, String> nestedKeyMap();
+  Map<TestStringKey.NestedWrappedKey, String> nestedKeyMap();
+  Map<Class<? extends Number>, String> numberClassKeyMap();
+  Map<Class<?>, String> classKeyMap();
+  Map<Long, String> longKeyMap();
+  Map<Integer, String> integerKeyMap();
+  Map<Short, String> shortKeyMap();
+  Map<Byte, String> byteKeyMap();
+  Map<Boolean, String> booleanKeyMap();
+  Map<Character, String> characterKeyMap();
+  Map<TestStringKey, String> unwrappedAnnotationKeyMap();
+  Map<TestWrappedAnnotationKey, String> wrappedAnnotationKeyMap();
 }

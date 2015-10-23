@@ -25,11 +25,11 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closer;
 import dagger.internal.codegen.writer.Writable.Context;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Set;
@@ -125,7 +125,7 @@ public final class JavaWriter {
         .toSet();
 
     ImmutableSet.Builder<String> declaredSimpleNamesBuilder = ImmutableSet.builder();
-    Deque<TypeWriter> declaredTypes = Queues.newArrayDeque(typeWriters);
+    Deque<TypeWriter> declaredTypes = new ArrayDeque<>(typeWriters);
     while (!declaredTypes.isEmpty()) {
       TypeWriter currentType = declaredTypes.pop();
       declaredSimpleNamesBuilder.add(currentType.name().simpleName());

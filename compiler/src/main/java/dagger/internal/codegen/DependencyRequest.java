@@ -107,6 +107,12 @@ abstract class DependencyRequest {
   /** Returns true if this request allows null objects. */
   abstract boolean isNullable();
 
+  /**
+   * Factory for {@link DependencyRequest}s.
+   *
+   * <p>Any factory method may throw {@link TypeNotPresentException} if a type is not available,
+   * which may mean that the type will be generated in a later round of processing.
+   */
   static final class Factory {
     private final Key.Factory keyFactory;
 
@@ -260,9 +266,16 @@ abstract class DependencyRequest {
 
     /**
      * Extracts the correct requesting type & kind out a request type. For example, if a user
-     * requests Provider<Foo>, this will return Kind.PROVIDER with "Foo".
+     * requests {@code Provider<Foo>}, this will return ({@link Kind#PROVIDER}, {@code Foo}).
+     *
+     * @throws TypeNotPresentException if {@code type}'s kind is {@link TypeKind#ERROR}, which may
+     *     mean that the type will be generated in a later round of processing
      */
     static KindAndType extractKindAndType(TypeMirror type) {
+      if (type.getKind().equals(TypeKind.ERROR)) {
+        throw new TypeNotPresentException(type.toString(), null);
+      }
+
       // We must check TYPEVAR explicitly before the below checks because calling
       // isTypeOf(..) on a TYPEVAR throws an exception (because it can't be
       // represented as a Class).

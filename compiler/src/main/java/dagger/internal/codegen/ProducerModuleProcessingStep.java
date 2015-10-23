@@ -71,7 +71,8 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+  public Set<Element> process(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     // first, check and collect all produces methods
     ImmutableSet.Builder<ExecutableElement> validProducesMethodsBuilder = ImmutableSet.builder();
     for (Element producesElement : elementsByAnnotation.get(Produces.class)) {
@@ -135,5 +136,6 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
         processedModuleElements.add(moduleElement);
       }
     }
+    return ImmutableSet.of();
   }
 }

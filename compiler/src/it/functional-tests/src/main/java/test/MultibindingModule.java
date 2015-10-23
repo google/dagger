@@ -17,6 +17,8 @@ package test;
 
 import dagger.Module;
 import dagger.Provides;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -27,11 +29,15 @@ import static dagger.Provides.Type.SET;
 
 @Module
 class MultibindingModule {
-  @Provides(type = MAP) @TestKey("foo") String provideFooKey(double doubleDependency) {
+  @Provides(type = MAP)
+  @TestStringKey("foo")
+  String provideFooKey(double doubleDependency) {
     return "foo value";
   }
 
-  @Provides(type = MAP) @TestKey("bar") String provideBarKey() {
+  @Provides(type = MAP)
+  @TestStringKey("bar")
+  String provideBarKey() {
     return "bar value";
   }
 
@@ -51,11 +57,98 @@ class MultibindingModule {
     return map.values();
   }
 
-  @Provides(type = MAP) @TestKey.NestedWrappedKey(Integer.class) String valueForInteger() {
+  @Provides(type = MAP)
+  @TestStringKey.NestedWrappedKey(Integer.class)
+  String valueForInteger() {
     return "integer";
   }
 
-  @Provides(type = MAP) @TestKey.NestedWrappedKey(Long.class) String valueForLong() {
+  @Provides(type = MAP)
+  @TestStringKey.NestedWrappedKey(Long.class)
+  String valueForLong() {
     return "long";
+  }
+
+  @Provides(type = MAP)
+  @TestClassKey(Integer.class)
+  String valueForClassInteger() {
+    return "integer";
+  }
+
+  @Provides(type = MAP)
+  @TestClassKey(Long.class)
+  String valueForClassLong() {
+    return "long";
+  }
+
+  @Provides(type = MAP)
+  @TestNumberClassKey(BigDecimal.class)
+  String valueForNumberClassBigDecimal() {
+    return "bigdecimal";
+  }
+
+  @Provides(type = MAP)
+  @TestNumberClassKey(BigInteger.class)
+  String valueForNumberClassBigInteger() {
+    return "biginteger";
+  }
+
+  @Provides(type = MAP)
+  @TestLongKey(longValue = 100)
+  String valueFor100Long() {
+    return "100 long";
+  }
+
+  @Provides(type = MAP)
+  @TestIntKey(100)
+  String valueFor100Int() {
+    return "100 int";
+  }
+
+  @Provides(type = MAP)
+  @TestShortKey(100)
+  String valueFor100Short() {
+    return "100 short";
+  }
+
+  @Provides(type = MAP)
+  @TestByteKey(100)
+  String valueFor100Byte() {
+    return "100 byte";
+  }
+
+  @Provides(type = MAP)
+  @TestBooleanKey(true)
+  String valueForTrue() {
+    return "true";
+  }
+
+  @Provides(type = MAP)
+  @TestCharKey('a')
+  String valueForA() {
+    return "a char";
+  }
+
+  @Provides(type = MAP)
+  @TestCharKey('\n')
+  String valueForNewline() {
+    return "newline char";
+  }
+
+  @Provides(type = MAP)
+  @TestUnwrappedAnnotationKey(@TestStringKey("foo\n"))
+  String valueForUnwrappedAnnotationKeyFoo() {
+    return "foo annotation";
+  }
+
+  @Provides(type = MAP)
+  @TestWrappedAnnotationKey(
+    value = @TestStringKey("foo"),
+    integers = {1, 2, 3},
+    annotations = {},
+    classes = {Long.class, Integer.class}
+  )
+  String valueForWrappedAnnotationKeyFoo() {
+    return "wrapped foo annotation";
   }
 }

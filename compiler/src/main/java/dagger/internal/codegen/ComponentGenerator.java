@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -34,10 +33,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Component;
-import dagger.MapKey;
 import dagger.MembersInjector;
 import dagger.internal.Factory;
 import dagger.internal.InstanceFactory;
@@ -67,7 +64,6 @@ import dagger.producers.internal.Producers;
 import dagger.producers.internal.SetProducer;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -75,9 +71,6 @@ import java.util.Set;
 import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.inject.Provider;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -89,7 +82,6 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor6;
-import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
@@ -97,9 +89,10 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Binding.bindingPackageFor;
-import static dagger.internal.codegen.ConfigurationAnnotations.getMapKeys;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
+import static dagger.internal.codegen.MapKeys.getMapKeySnippet;
 import static dagger.internal.codegen.MembersInjectionBinding.Strategy.NO_OP;
 import static dagger.internal.codegen.ProvisionBinding.FactoryCreationStrategy.ENUM_INSTANCE;
 import static dagger.internal.codegen.ProvisionBinding.Kind.PROVISION;
@@ -108,6 +101,8 @@ import static dagger.internal.codegen.SourceFiles.factoryNameForProvisionBinding
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForMembersInjectionBinding;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.Util.getKeyTypeOfMap;
+import static dagger.internal.codegen.Util.getProvidedValueTypeOfMap;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -218,17 +213,8 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
     ClassWriter componentWriter = writer.addClass(componentName.simpleName());
     componentWriter.annotate(Generated.class).setValue(ComponentProcessor.class.getCanonicalName());
     componentWriter.addModifiers(PUBLIC, FINAL);
-    switch (componentDefinitionType.getKind()) {
-      case CLASS:
-        checkState(componentDefinitionType.getModifiers().contains(ABSTRACT));
-        componentWriter.setSuperType(componentDefinitionTypeName);
-        break;
-      case INTERFACE:
-        componentWriter.addImplementedType(componentDefinitionTypeName);
-        break;
-      default:
-        throw new IllegalStateException();
-    }
+    checkState(componentDefinitionType.getModifiers().contains(ABSTRACT));
+    componentWriter.setSupertype(componentDefinitionType);
 
     Set<JavaWriter> javaWriters = Sets.newHashSet();
     javaWriters.add(writer);
@@ -278,17 +264,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
     builderWriter.addConstructor().addModifiers(PRIVATE);
     if (builderSpec.isPresent()) {
       builderWriter.addModifiers(PRIVATE);
-      TypeElement builderType = builderSpec.get().builderDefinitionType();
-      switch (builderType.getKind()) {
-        case CLASS:
-          builderWriter.setSuperType(builderType);
-          break;
-        case INTERFACE:
-          builderWriter.addImplementedType(builderType);
-          break;
-        default:
-          throw new IllegalStateException("not a class or interface: " + builderType);
-      }
+      builderWriter.setSupertype(builderSpec.get().builderDefinitionType());
     } else {
       builderWriter.addModifiers(PUBLIC);
     }
@@ -296,11 +272,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
     // the full set of types that calling code uses to construct a component instance
     ImmutableMap<TypeElement, String> componentContributionNames =
         ImmutableMap.copyOf(Maps.asMap(
-            Sets.union(
-                Sets.union(
-                    input.transitiveModules().keySet(),
-                    input.componentDescriptor().dependencies()),
-                input.componentDescriptor().executorDependency().asSet()),
+            input.componentRequirements(),
             Functions.compose(
                 CaseFormat.UPPER_CAMEL.converterTo(LOWER_CAMEL),
                 new Function<TypeElement, String>() {
@@ -385,14 +357,8 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
 
   /** Returns true if the graph has any dependents that can't be automatically constructed. */
   private boolean requiresUserSuppliedDependents(BindingGraph input) {
-    Set<TypeElement> allDependents =
-        Sets.union(
-            Sets.union(
-                input.transitiveModules().keySet(),
-                input.componentDescriptor().dependencies()),
-            input.componentDescriptor().executorDependency().asSet());
     Set<TypeElement> userRequiredDependents =
-        Sets.filter(allDependents, new Predicate<TypeElement>() {
+        Sets.filter(input.componentRequirements(), new Predicate<TypeElement>() {
           @Override public boolean apply(TypeElement input) {
             return !Util.componentCanMakeNewInstances(input);
           }
@@ -426,7 +392,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
         componentWriter,
         proxyWriters,
         memberSelectSnippetsBuilder,
-        ImmutableMap.<ContributionBinding, Snippet>of(),
         multibindingContributionSnippetsBuilder,
         enumBindingKeysBuilder,
         packageProxies);
@@ -519,19 +484,9 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
     componentMethod.addModifiers(PUBLIC);
     componentMethod.annotate(Override.class);
 
-    TypeName subcomponentTypeName = TypeNames.forTypeMirror(subcomponentType);
-    Element subcomponentElement = MoreTypes.asElement(subcomponentType);
-    switch (subcomponentElement.getKind()) {
-      case CLASS:
-        checkState(subcomponentElement.getModifiers().contains(ABSTRACT));
-        subcomponentWriter.setSuperType(subcomponentTypeName);
-        break;
-      case INTERFACE:
-        subcomponentWriter.addImplementedType(subcomponentTypeName);
-        break;
-      default:
-        throw new IllegalStateException();
-    }
+    TypeElement subcomponentElement = MoreTypes.asTypeElement(subcomponentType);
+    checkState(subcomponentElement.getModifiers().contains(ABSTRACT));
+    subcomponentWriter.setSupertype(subcomponentElement);
 
     Map<BindingKey, MemberSelect> memberSelectSnippetsBuilder = Maps.newHashMap();
 
@@ -544,7 +499,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
         subcomponentWriter,
         proxyWriters,
         memberSelectSnippetsBuilder,
-        parentMultibindingContributionSnippets,
         multibindingContributionSnippetsBuilder,
         enumBindingKeysBuilder,
         packageProxies);
@@ -601,7 +555,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       VariableElement moduleVariable = params.get(i);
       TypeElement moduleTypeElement = MoreTypes.asTypeElement(paramTypes.get(i));
       TypeName moduleType = TypeNames.forTypeMirror(paramTypes.get(i));
-      verify(subgraph.transitiveModules().containsKey(moduleTypeElement));
       componentMethod.addParameter(moduleType, moduleVariable.getSimpleName().toString());
       if (!componentContributionFields.containsKey(moduleTypeElement)) {
         String preferredModuleName = CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL,
@@ -625,8 +578,12 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       }
     }
 
-    SetView<TypeElement> uninitializedModules = Sets.difference(
-        subgraph.transitiveModules().keySet(), componentContributionFields.keySet());
+    ImmutableSet<TypeElement> uninitializedModules =
+        FluentIterable.from(subgraph.componentDescriptor().transitiveModules())
+            .transform(ModuleDescriptor.getModuleElement())
+            .filter(Predicates.not(Predicates.in(componentContributionFields.keySet())))
+            .toSet();
+
     for (TypeElement moduleType : uninitializedModules) {
       String preferredModuleName = CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL,
           moduleType.getSimpleName().toString());
@@ -651,7 +608,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       ClassWriter componentWriter,
       Set<JavaWriter> proxyWriters,
       Map<BindingKey, MemberSelect> memberSelectSnippetsBuilder,
-      Map<ContributionBinding, Snippet> parentMultibindingContributionSnippetsBuilder,
       Map<ContributionBinding, Snippet> multibindingContributionSnippetsBuilder,
       ImmutableSet.Builder<BindingKey> enumBindingKeysBuilder,
       Map<String, ProxyClassAndField> packageProxies) {
@@ -660,7 +616,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
           componentWriter,
           proxyWriters,
           memberSelectSnippetsBuilder,
-          parentMultibindingContributionSnippetsBuilder,
           multibindingContributionSnippetsBuilder,
           enumBindingKeysBuilder,
           packageProxies,
@@ -672,7 +627,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       ClassWriter componentWriter,
       Set<JavaWriter> proxyWriters,
       Map<BindingKey, MemberSelect> memberSelectSnippetsBuilder,
-      Map<ContributionBinding, Snippet> parentMultibindingContributionSnippetsBuilder,
       Map<ContributionBinding, Snippet> multibindingContributionSnippetsBuilder,
       ImmutableSet.Builder<BindingKey> enumBindingKeysBuilder,
       Map<String, ProxyClassAndField> packageProxies, ResolvedBindings resolvedBindings) {
@@ -772,7 +726,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
         for (ContributionBinding contributionBinding : contributionBindings) {
           if (!contributionBinding.isSyntheticBinding()) {
             contributionNumber++;
-            if (!parentMultibindingContributionSnippetsBuilder.containsKey(contributionBinding)) {
+            if (resolvedBindings.ownedBindings().contains(contributionBinding)) {
               FrameworkField contributionBindingField =
                   frameworkFieldForSyntheticContributionBinding(
                         bindingKey, contributionNumber, contributionBinding);
@@ -959,7 +913,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
                   ImmutableSet<ProvisionBinding> provisionBindings =
                       (ImmutableSet<ProvisionBinding>) bindings;
                   for (ProvisionBinding provisionBinding : provisionBindings) {
-                    if (!isNonProviderMap(provisionBinding)
+                    if (!isNonProviderMap(provisionBinding.key().type())
                         && multibindingContributionSnippets.containsKey(provisionBinding)) {
                       Snippet snippet = multibindingContributionSnippets.get(provisionBinding);
                       initializeMethod.body().addSnippet("this.%s = %s;",
@@ -1370,137 +1324,44 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       ImmutableMap<BindingKey, MemberSelect> memberSelectSnippets,
       ImmutableMap<ContributionBinding, Snippet> multibindingContributionSnippets,
       Set<ProvisionBinding> bindings) {
-    Iterator<ProvisionBinding> iterator = bindings.iterator();
-    // get type information from first binding in iterator
-    ProvisionBinding firstBinding = iterator.next();
-    if (isNonProviderMap(firstBinding)) {
-      return Snippet.format("%s.create(%s)",
+    // Get type information from the first binding.
+    ProvisionBinding firstBinding = bindings.iterator().next();
+    DeclaredType mapType = asDeclared(firstBinding.key().type());
+
+    if (isNonProviderMap(mapType)) {
+      return Snippet.format(
+          "%s.create(%s)",
           ClassName.fromClass(MapFactory.class),
-          memberSelectSnippets.get(
-              Iterables.getOnlyElement(firstBinding.dependencies()).bindingKey())
-                  .getSnippetFor(componentName));
-    } else {
-      DeclaredType mapType = asDeclared(firstBinding.key().type());
-      TypeMirror mapKeyType = Util.getKeyTypeOfMap(mapType);
-      TypeMirror mapValueType = Util.getProvidedValueTypeOfMap(mapType); // V of Map<K, Provider<V>>
-      StringBuilder snippetFormatBuilder = new StringBuilder("%s.<%s, %s>builder(%d)");
-      for (int i = 0; i < bindings.size(); i++) {
-        snippetFormatBuilder.append("\n    .put(%s, %s)");
-      }
-      snippetFormatBuilder.append("\n    .build()");
-
-      List<Object> argsBuilder = Lists.newArrayList();
-      argsBuilder.add(ClassName.fromClass(MapProviderFactory.class));
-      argsBuilder.add(TypeNames.forTypeMirror(mapKeyType));
-      argsBuilder.add(TypeNames.forTypeMirror(mapValueType));
-      argsBuilder.add(bindings.size());
-
-      writeEntry(argsBuilder, firstBinding, multibindingContributionSnippets.get(firstBinding));
-      while (iterator.hasNext()) {
-        ProvisionBinding binding = iterator.next();
-        writeEntry(argsBuilder, binding, multibindingContributionSnippets.get(binding));
-      }
-
-      return Snippet.format(snippetFormatBuilder.toString(),
-          argsBuilder.toArray(new Object[0]));
+          memberSelectSnippets
+              .get(getOnlyElement(firstBinding.dependencies()).bindingKey())
+              .getSnippetFor(componentName));
     }
-  }
 
-  // add one map entry for map Provider in Constructor
-  private void writeEntry(List<Object> argsBuilder, Binding binding,
-      Snippet factory) {
-    AnnotationMirror mapKeyAnnotationMirror =
-        Iterables.getOnlyElement(getMapKeys(binding.bindingElement()));
-    Map<? extends ExecutableElement, ? extends AnnotationValue> map =
-        mapKeyAnnotationMirror.getElementValues();
-    MapKey mapKey =
-        mapKeyAnnotationMirror.getAnnotationType().asElement().getAnnotation(MapKey.class);
-    if (!mapKey.unwrapValue()) {// wrapped key case
-      FluentIterable<AnnotationValue> originIterable = FluentIterable.from(
-          AnnotationMirrors.getAnnotationValuesWithDefaults(mapKeyAnnotationMirror).values());
-      FluentIterable<Snippet> annotationValueNames =
-          originIterable.transform(new Function<AnnotationValue, Snippet>() {
-            @Override
-            public Snippet apply(AnnotationValue value) {
-              return getValueSnippet(value);
-            }
-          });
-      ImmutableList.Builder<Snippet> snippets = ImmutableList.builder();
-      for (Snippet snippet : annotationValueNames) {
-        snippets.add(snippet);
-      }
-      argsBuilder.add(Snippet.format("%s.create(%s)",
-          Util.getMapKeyCreatorClassName(
-              MoreTypes.asTypeElement(mapKeyAnnotationMirror.getAnnotationType())),
-          Snippet.makeParametersSnippet(snippets.build())));
-      argsBuilder.add(factory);
-    } else { // unwrapped key case
-      argsBuilder.add(Iterables.getOnlyElement(map.entrySet()).getValue());
-      argsBuilder.add(factory);
+    ImmutableList.Builder<dagger.internal.codegen.writer.Snippet> snippets =
+        ImmutableList.builder();
+    snippets.add(
+        Snippet.format(
+            "%s.<%s, %s>builder(%d)",
+            ClassName.fromClass(MapProviderFactory.class),
+            TypeNames.forTypeMirror(getKeyTypeOfMap(mapType)),
+            TypeNames.forTypeMirror(getProvidedValueTypeOfMap(mapType)), // V of Map<K, Provider<V>>
+            bindings.size()));
+
+    for (ProvisionBinding binding : bindings) {
+      snippets.add(
+          Snippet.format(
+              "    .put(%s, %s)",
+              getMapKeySnippet(binding.bindingElement()),
+              multibindingContributionSnippets.get(binding)));
     }
+
+    snippets.add(Snippet.format("    .build()"));
+
+    return Snippet.join(Joiner.on('\n'), snippets.build());
   }
 
-  // Get the Snippet representation of a Annotation Value
-  // TODO(user) write corresponding test to verify the AnnotationValueVisitor is right
-  private Snippet getValueSnippet(AnnotationValue value) {
-    AnnotationValueVisitor<Snippet, Void> mapKeyVisitor =
-        new SimpleAnnotationValueVisitor6<Snippet, Void>() {
-          @Override
-          public Snippet visitEnumConstant(VariableElement c, Void p) {
-            return Snippet.format("%s.%s",
-                TypeNames.forTypeMirror(c.getEnclosingElement().asType()), c.getSimpleName());
-          }
-
-          @Override
-          public Snippet visitAnnotation(AnnotationMirror a, Void p) {
-            if (a.getElementValues().isEmpty()) {
-              return Snippet.format("@%s", TypeNames.forTypeMirror(a.getAnnotationType()));
-            } else {
-              Map<ExecutableElement, AnnotationValue> map =
-                  AnnotationMirrors.getAnnotationValuesWithDefaults(a);
-              // build "@Annotation(a = , b = , c = ))
-              ImmutableList.Builder<Snippet> snippets = ImmutableList.builder();
-              for (Entry<ExecutableElement, AnnotationValue> entry : map.entrySet()) {
-                snippets.add(Snippet.format("%s = %s",
-                    TypeNames.forTypeMirror(entry.getKey().asType()),
-                    getValueSnippet(entry.getValue())));
-
-              }
-              return Snippet.format("@%s(%s)", TypeNames.forTypeMirror(a.getAnnotationType()),
-                  Snippet.makeParametersSnippet(snippets.build()));
-            }
-          }
-
-          @Override
-          public Snippet visitType(TypeMirror t, Void p) {
-            return Snippet.format("%s.class", TypeNames.forTypeMirror(t));
-          }
-
-          @Override
-          public Snippet visitString(String s, Void p) {
-            return Snippet.format("\"%s\"", s);
-          }
-
-          @Override
-          protected Snippet defaultAction(Object o, Void v) {
-            return Snippet.format("%s", o);
-          }
-
-          @Override
-          public Snippet visitArray(List<? extends AnnotationValue> values, Void v) {
-            ImmutableList.Builder<Snippet> snippets = ImmutableList.builder();
-            for (int i = 0; i < values.size(); i++) {
-              snippets.add(values.get(i).accept(this, null));
-            }
-            return Snippet.format("[%s]", Snippet.makeParametersSnippet(snippets.build()));
-          }
-        };
-    return value.accept(mapKeyVisitor, null);
-  }
-
-  private boolean isNonProviderMap(Binding binding) {
-    TypeMirror bindingType = binding.key().type();
-    return MoreTypes.isTypeOf(Map.class, bindingType) // Implicitly guarantees a declared type.
-        && !MoreTypes.isTypeOf(Provider.class, asDeclared(bindingType).getTypeArguments().get(1));
+  private boolean isNonProviderMap(TypeMirror type) {
+    return MoreTypes.isTypeOf(Map.class, type) // Implicitly guarantees a declared type.
+        && !MoreTypes.isTypeOf(Provider.class, asDeclared(type).getTypeArguments().get(1));
   }
 }

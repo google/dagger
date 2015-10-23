@@ -15,9 +15,18 @@
  */
 package dagger.internal.codegen;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.writer.StringLiteral;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -92,14 +101,14 @@ public class ComponentProcessorTest {
         .withErrorContaining("is not annotated with @Module");
   }
 
-  @Test public void cannotReferToAbstractModules() {
+  private void checkCannotReferToModuleOfType(String moduleType) {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module",
-        "abstract class TestModule {}");
+        moduleType + " TestModule {}");
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
         "package test;",
         "",
@@ -112,6 +121,14 @@ public class ComponentProcessorTest {
         .failsToCompile()
         .withErrorContaining(
             String.format(REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT, "test.TestModule"));
+  }
+
+  @Test public void cannotReferToAbstractClassModules() {
+    checkCannotReferToModuleOfType("abstract class");
+  }
+
+  @Test public void cannotReferToInterfaceModules() {
+    checkCannotReferToModuleOfType("interface");
   }
 
   @Test public void doubleBindingFromResolvedModules() {
@@ -614,11 +631,11 @@ public class ComponentProcessorTest {
         "",
         "  public static final class Builder {",
         "    private TestModule testModule;",
-        "    private DepModule depModule;",
-        "    private AlwaysIncluded alwaysIncluded;",
         "    private ParentTestIncluded parentTestIncluded;",
-        "    private RefByDep refByDep;",
+        "    private AlwaysIncluded alwaysIncluded;",
+        "    private DepModule depModule;",
         "    private ParentDepIncluded parentDepIncluded;",
+        "    private RefByDep refByDep;",
         "",
         "    private Builder() {",
         "    }",
@@ -627,20 +644,20 @@ public class ComponentProcessorTest {
         "      if (testModule == null) {",
         "        this.testModule = new TestModule();",
         "      }",
-        "      if (depModule == null) {",
-        "        this.depModule = new DepModule();",
+        "      if (parentTestIncluded == null) {",
+        "        this.parentTestIncluded = new ParentTestIncluded();",
         "      }",
         "      if (alwaysIncluded == null) {",
         "        this.alwaysIncluded = new AlwaysIncluded();",
         "      }",
-        "      if (parentTestIncluded == null) {",
-        "        this.parentTestIncluded = new ParentTestIncluded();",
-        "      }",
-        "      if (refByDep == null) {",
-        "        this.refByDep = new RefByDep();",
+        "      if (depModule == null) {",
+        "        this.depModule = new DepModule();",
         "      }",
         "      if (parentDepIncluded == null) {",
         "        this.parentDepIncluded = new ParentDepIncluded();",
+        "      }",
+        "      if (refByDep == null) {",
+        "        this.refByDep = new RefByDep();",
         "      }",
         "      return new DaggerTestComponent(this);",
         "    }",
@@ -653,11 +670,11 @@ public class ComponentProcessorTest {
         "      return this;",
         "    }",
         "",
-        "    public Builder depModule(DepModule depModule) {",
-        "      if (depModule == null) {",
-        "        throw new NullPointerException(\"depModule\");",
+        "    public Builder parentTestIncluded(ParentTestIncluded parentTestIncluded) {",
+        "      if (parentTestIncluded == null) {",
+        "        throw new NullPointerException(\"parentTestIncluded\");",
         "      }",
-        "      this.depModule = depModule;",
+        "      this.parentTestIncluded = parentTestIncluded;",
         "      return this;",
         "    }",
         "",
@@ -669,19 +686,11 @@ public class ComponentProcessorTest {
         "      return this;",
         "    }",
         "",
-        "    public Builder parentTestIncluded(ParentTestIncluded parentTestIncluded) {",
-        "      if (parentTestIncluded == null) {",
-        "        throw new NullPointerException(\"parentTestIncluded\");",
+        "    public Builder depModule(DepModule depModule) {",
+        "      if (depModule == null) {",
+        "        throw new NullPointerException(\"depModule\");",
         "      }",
-        "      this.parentTestIncluded = parentTestIncluded;",
-        "      return this;",
-        "    }",
-        "",
-        "    public Builder refByDep(RefByDep refByDep) {",
-        "      if (refByDep == null) {",
-        "        throw new NullPointerException(\"refByDep\");",
-        "      }",
-        "      this.refByDep = refByDep;",
+        "      this.depModule = depModule;",
         "      return this;",
         "    }",
         "",
@@ -690,6 +699,14 @@ public class ComponentProcessorTest {
         "        throw new NullPointerException(\"parentDepIncluded\");",
         "      }",
         "      this.parentDepIncluded = parentDepIncluded;",
+        "      return this;",
+        "    }",
+        "",
+        "    public Builder refByDep(RefByDep refByDep) {",
+        "      if (refByDep == null) {",
+        "        throw new NullPointerException(\"refByDep\");",
+        "      }",
+        "      this.refByDep = refByDep;",
         "      return this;",
         "    }",
         "  }",
@@ -707,6 +724,41 @@ public class ComponentProcessorTest {
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and().generatesSources(generatedComponent);
+  }
+
+  @Test
+  public void generatedTransitiveModule() {
+    JavaFileObject rootModule = JavaFileObjects.forSourceLines("test.RootModule",
+        "package test;",
+        "",
+        "import dagger.Module;",
+        "",
+        "@Module(includes = GeneratedModule.class)",
+        "final class RootModule {}");
+    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(modules = RootModule.class)",
+        "interface TestComponent {}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(rootModule, component))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile();
+    assertAbout(javaSources())
+        .that(ImmutableList.of(rootModule, component))
+        .processedWith(
+            new ComponentProcessor(),
+            new GeneratingProcessor(
+                "test.GeneratedModule",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "",
+                "@Module",
+                "final class GeneratedModule {}"))
+        .compilesWithoutError();
   }
 
   @Test public void testDefaultPackage() {
@@ -1748,6 +1800,43 @@ public class ComponentProcessorTest {
   }
 
   @Test
+  public void componentImplicitlyDependsOnGeneratedType() {
+    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class SomeInjectableType {",
+        "  @Inject SomeInjectableType(GeneratedType generatedType) {}",
+        "}");
+    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "import dagger.Lazy;",
+        "",
+        "import javax.inject.Provider;",
+        "",
+        "@Component",
+        "interface SimpleComponent {",
+        "  SomeInjectableType someInjectableType();",
+        "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(injectableTypeFile, componentFile))
+        .processedWith(
+            new ComponentProcessor(),
+            new GeneratingProcessor("test.GeneratedType",
+                "package test;",
+                "",
+                "import javax.inject.Inject;",
+                "",
+                "final class GeneratedType {",
+                "  @Inject GeneratedType() {}",
+                "}"))
+        .compilesWithoutError();
+  }
+
+  @Test
   @Ignore // modify this test as necessary while debugging for your situation.
   @SuppressWarnings("unused")
   public void genericTestToLetMeDebugInEclipse() {
@@ -1838,4 +1927,37 @@ public class ComponentProcessorTest {
          .compilesWithoutError()
          .and().generatesSources(generatedComponent);
    }
+
+  /**
+   * A simple {@link Processor} that generates one source file.
+   */
+  private static final class GeneratingProcessor extends AbstractProcessor {
+    private final String generatedClassName;
+    private final String generatedSource;
+    private boolean processed;
+
+    GeneratingProcessor(String generatedClassName, String... source) {
+      this.generatedClassName = generatedClassName;
+      this.generatedSource = Joiner.on("\n").join(source);
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+      return ImmutableSet.of("*");
+    }
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+      if (!processed) {
+        processed = true;
+        try (Writer writer =
+                processingEnv.getFiler().createSourceFile(generatedClassName).openWriter()) {
+          writer.append(generatedSource);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return false;
+    }
+  }
 }

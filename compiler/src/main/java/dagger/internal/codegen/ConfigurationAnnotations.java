@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Function;
@@ -23,20 +22,21 @@ import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Queues;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import dagger.Component;
-import dagger.MapKey;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -44,6 +44,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
@@ -92,10 +93,6 @@ final class ConfigurationAnnotations {
     return convertClassArrayToListOfTypes(moduleAnnotation, INJECTS_ATTRIBUTE);
   }
 
-  static ImmutableSet<? extends AnnotationMirror> getMapKeys(Element element) {
-    return AnnotationMirrors.getAnnotatedAnnotations(element, MapKey.class);
-  }
-
   /** Returns the first type that specifies this' nullability, or absent if none. */
   static Optional<DeclaredType> getNullableType(Element element) {
     List<? extends AnnotationMirror> mirrors = element.getAnnotationMirrors();
@@ -107,27 +104,67 @@ final class ConfigurationAnnotations {
     return Optional.absent();
   }
 
+  /**
+   * Extracts the list of types that is the value of the annotation member {@code elementName} of
+   * {@code annotationMirror}.
+   *
+   * @throws IllegalArgumentException if no such member exists on {@code annotationMirror}, or it
+   *     exists but is not an array
+   * @throws TypeNotPresentException if any of the values cannot be converted to a type
+   */
   static ImmutableList<TypeMirror> convertClassArrayToListOfTypes(
-      AnnotationMirror annotationMirror, final String elementName) {
-    @SuppressWarnings("unchecked") // that's the whole point of this method
-    List<? extends AnnotationValue> listValue = (List<? extends AnnotationValue>)
-        getAnnotationValue(annotationMirror, elementName).getValue();
-    return FluentIterable.from(listValue).transform(new Function<AnnotationValue, TypeMirror>() {
-      @Override public TypeMirror apply(AnnotationValue typeValue) {
-        return (TypeMirror) typeValue.getValue();
-      }
-    }).toList();
+      AnnotationMirror annotationMirror, String elementName) {
+    return TO_LIST_OF_TYPES.visit(getAnnotationValue(annotationMirror, elementName), elementName);
   }
+
+  private static final AnnotationValueVisitor<ImmutableList<TypeMirror>, String> TO_LIST_OF_TYPES =
+      new SimpleAnnotationValueVisitor6<ImmutableList<TypeMirror>, String>() {
+        @Override
+        public ImmutableList<TypeMirror> visitArray(
+            List<? extends AnnotationValue> vals, String elementName) {
+          return FluentIterable.from(vals)
+              .transform(
+                  new Function<AnnotationValue, TypeMirror>() {
+                    @Override
+                    public TypeMirror apply(AnnotationValue typeValue) {
+                      return TO_TYPE.visit(typeValue);
+                    }
+                  })
+              .toList();
+        }
+
+        @Override
+        protected ImmutableList<TypeMirror> defaultAction(Object o, String elementName) {
+          throw new IllegalArgumentException(elementName + " is not an array: " + o);
+        }
+      };
+
+  private static final AnnotationValueVisitor<TypeMirror, Void> TO_TYPE =
+      new SimpleAnnotationValueVisitor6<TypeMirror, Void>() {
+        @Override
+        public TypeMirror visitType(TypeMirror t, Void p) {
+          return t;
+        }
+
+        @Override
+        protected TypeMirror defaultAction(Object o, Void p) {
+          throw new TypeNotPresentException(o.toString(), null);
+        }
+      };
 
   /**
    * Returns the full set of modules transitively {@linkplain Module#includes included} from the
    * given seed modules.  If a module is malformed and a type listed in {@link Module#includes}
    * is not annotated with {@link Module}, it is ignored.
+   *
+   * @deprecated Use {@link ComponentDescriptor#transitiveModules}.
    */
+  @Deprecated
   static ImmutableSet<TypeElement> getTransitiveModules(
       Types types, Elements elements, Iterable<TypeElement> seedModules) {
     TypeMirror objectType = elements.getTypeElement(Object.class.getCanonicalName()).asType();
-    Queue<TypeElement> moduleQueue = Queues.newArrayDeque(seedModules);
+    Queue<TypeElement> moduleQueue = new ArrayDeque<>();
+    Iterables.addAll(moduleQueue, seedModules);
     Set<TypeElement> moduleElements = Sets.newLinkedHashSet();
     for (TypeElement moduleElement = moduleQueue.poll();
         moduleElement != null;
@@ -153,7 +190,7 @@ final class ConfigurationAnnotations {
     }
     return ImmutableSet.copyOf(moduleElements);
   }
-  
+
   /** Returns the enclosed elements annotated with the given annotation type. */
   static ImmutableList<DeclaredType> enclosedBuilders(TypeElement typeElement,
       final Class<? extends Annotation> annotation) {

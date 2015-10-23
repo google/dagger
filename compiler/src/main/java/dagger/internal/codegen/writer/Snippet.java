@@ -129,4 +129,46 @@ public final class Snippet implements HasClassReferences, Writable {
     }
     return new Snippet(stringBuilder.toString(), typesBuilder.build(), argsBuilder.build());
   }
+
+  /**
+   * A snippet that concatenates its arguments.
+   */
+  public static Snippet concat(Iterable<Snippet> snippets) {
+    return join(Joiner.on(""), snippets);
+  }
+
+  /**
+   * A snippet that joins its arguments with {@code joiner}.
+   */
+  public static Snippet join(Joiner joiner, Iterable<Snippet> snippets) {
+    FluentIterable<Snippet> fluentSnippets = FluentIterable.from(snippets);
+    return new Snippet(
+        fluentSnippets
+            .transform(
+                new Function<Snippet, String>() {
+                  @Override
+                  public String apply(Snippet snippet) {
+                    return snippet.format;
+                  }
+                })
+            .join(joiner),
+        fluentSnippets
+            .transformAndConcat(
+                new Function<Snippet, ImmutableSet<TypeName>>() {
+                  @Override
+                  public ImmutableSet<TypeName> apply(Snippet snippet) {
+                    return snippet.types;
+                  }
+                })
+            .toSet(),
+        fluentSnippets
+            .transformAndConcat(
+                new Function<Snippet, ImmutableList<Object>>() {
+                  @Override
+                  public ImmutableList<Object> apply(Snippet snippet) {
+                    return snippet.args;
+                  }
+                })
+            .toList());
+  }
 }

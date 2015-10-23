@@ -26,28 +26,23 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import dagger.internal.codegen.writer.ClassName;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 
 import static com.google.common.base.Preconditions.checkState;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 /**
@@ -80,46 +75,6 @@ final class Util {
     checkState(MoreTypes.isTypeOf(Map.class, mapType), "%s is not a Map.", mapType);
     List<? extends TypeMirror> mapArgs = mapType.getTypeArguments();
     return MoreTypes.asDeclared(mapArgs.get(0));
-  }
-
-  /**
-   * Returns the unwrapped key's {@link TypeElement} for a {@link Map} given the
-   * {@link AnnotationMirror} of the key.
-   */
-  public static TypeElement getKeyTypeElement(AnnotationMirror mapKey, final Elements elements) {
-    Map<? extends ExecutableElement, ? extends AnnotationValue> map = mapKey.getElementValues();
-    // TODO(user) Support literals other than String and Enum
-    AnnotationValueVisitor<TypeElement, Void> mapKeyVisitor =
-        new SimpleAnnotationValueVisitor6<TypeElement, Void>() {
-          @Override
-          public TypeElement visitEnumConstant(VariableElement c, Void p) {
-            return MoreElements.asType(c.getEnclosingElement()) ;
-          }
-
-          @Override
-          public TypeElement visitString(String s, Void p) {
-            return elements.getTypeElement(String.class.getCanonicalName());
-          }
-
-          @Override
-          protected TypeElement defaultAction(Object o, Void v) {
-            throw new IllegalStateException(
-                "Non-supported key type for map binding " + o.getClass().getCanonicalName());
-          }
-        };
-    TypeElement keyTypeElement =
-        Iterables.getOnlyElement(map.entrySet()).getValue().accept(mapKeyVisitor, null);
-    return keyTypeElement;
-  }
-
-  /**
-   * Returns the name of the generated class that contains the static {@code create} method for a
-   * {@code @MapKey} annotation type.
-   */
-  public static ClassName getMapKeyCreatorClassName(TypeElement mapKeyType) {
-    ClassName enclosingClassName = ClassName.fromTypeElement(mapKeyType);
-    return enclosingClassName.topLevelClassName().peerNamed(
-        enclosingClassName.classFileName() + "Creator");
   }
 
   /**
@@ -184,7 +139,8 @@ final class Util {
 
     for (Element enclosed : typeElement.getEnclosedElements()) {
       if (enclosed.getKind().equals(CONSTRUCTOR)
-          && ((ExecutableElement) enclosed).getParameters().isEmpty()) {
+          && ((ExecutableElement) enclosed).getParameters().isEmpty()
+          && !enclosed.getModifiers().contains(PRIVATE)) {
         return true;
       }
     }
@@ -205,8 +161,11 @@ final class Util {
     return ImmutableList.copyOf(methods);
   }
 
-  private static void findLocalAndInheritedMethodsRecursive(TypeElement objectType,
-      Elements elements, TypeElement type, List<ExecutableElement> methods) {
+  private static void findLocalAndInheritedMethodsRecursive(
+      TypeElement objectType,
+      Elements elements,
+      TypeElement type,
+      List<ExecutableElement> methods) {
     if (objectType.equals(type)) {
       return;
     }

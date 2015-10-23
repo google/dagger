@@ -69,7 +69,8 @@ final class InjectProcessingStep implements BasicAnnotationProcessor.ProcessingS
   }
 
   @Override
-  public void process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+  public Set<Element> process(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     // TODO(gak): add some error handling for bad source files
     final ImmutableSet.Builder<ProvisionBinding> provisions = ImmutableSet.builder();
     // TODO(gak): instead, we should collect reports by type and check later
@@ -133,5 +134,6 @@ final class InjectProcessingStep implements BasicAnnotationProcessor.ProcessingS
     for (ProvisionBinding binding : provisions.build()) {
       injectBindingRegistry.registerBinding(binding);
     }
+    return ImmutableSet.of();
   }
 }

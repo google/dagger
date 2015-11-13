@@ -61,14 +61,15 @@ class SubcomponentWriter extends AbstractComponentWriter {
         parent.elements,
         parent.keyFactory,
         parent.nullableValidationType,
-        parent.name.nestedClassNamed(subcomponentSimpleName(subgraph)),
+        parent.name.nestedClassNamed(subcomponentName(subgraph)),
         subgraph);
     this.parent = parent;
     this.subcomponentFactoryMethod = subcomponentFactoryMethod;
   }
 
-  private static String subcomponentSimpleName(BindingGraph subgraph) {
-    return subgraph.componentDescriptor().componentDefinitionType().getSimpleName() + "Impl";
+  private static String subcomponentName(BindingGraph subgraph) {
+    String qualifiedNameString = subgraph.componentDescriptor().componentDefinitionType().getQualifiedName().toString();
+    return (qualifiedNameString.substring(0, 1).toUpperCase() + qualifiedNameString.substring(1) + "Impl").replace(".", "_");
   }
   
   @Override

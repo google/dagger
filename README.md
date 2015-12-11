@@ -46,6 +46,7 @@ In order to activate code generation and generate implementations to manage
 your graph you will need to include `dagger-compiler-2.0.2.jar` in your build
 at compile time.
 
+### Maven
 In a Maven project, include the `dagger` artifact in the dependencies section
 of your `pom.xml` and the `dagger-compiler` artifact as either an `optional` or
 `provided` dependency:
@@ -79,6 +80,39 @@ then add this to your maven configuration:
 </dependencies>
 ```
 
+### Gradle
+For Gradle there are 2 plugins that help you keep from unnecessarily compiling the `dagger-compiler` library into your project. One for POJO projects and another for Android projects. They allow you to add the `dagger-compiler` artifact as an `apt` dependency.
+```groovy
+buildscript {
+  repositories {
+    // For POJO projects and the net.ltgt.gradle:gradle-apt-plugin
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+    // For Android projects and the com.neenbedankt.gradle.plugins:android-apt plugin
+    mavenCentral()
+  }
+  dependencies {
+    // For POJO projects
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.5"
+
+    // For Android projects
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+  }
+}
+
+// Apply plugin for POJO projects
+apply plugin: 'net.ltgt.apt'
+
+// Apply plugin for Android projects
+apply plugin: 'com.neenbedankt.android-apt'
+
+// Add Dagger dependencies (independent of project type)
+dependencies {
+  compile group: 'com.google.dagger', name: 'dagger', version: '2.0.2'
+  apt group: 'com.google.dagger', name: 'dagger-compiler', version: '2.0.2'
+}
+```
 
 ### Download 
 

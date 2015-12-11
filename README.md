@@ -82,13 +82,10 @@ then add this to your maven configuration:
 
 ### Java Gradle
 ```groovy
-// Add plugin to classpath
+// Add plugin https://plugins.gradle.org/plugin/net.ltgt.apt
 plugins {
   id "net.ltgt.apt" version "0.5"
 }
-
-// Apply plugin
-apply plugin: 'net.ltgt.apt'
 
 // Add Dagger dependencies
 dependencies {

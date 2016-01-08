@@ -96,7 +96,7 @@ dependencies {
 
 ### Android Gradle
 ```groovy
-// Add plugin to classpath
+// Add plugin https://bitbucket.org/hvisser/android-apt
 buildscript {
   repositories {
     mavenCentral()

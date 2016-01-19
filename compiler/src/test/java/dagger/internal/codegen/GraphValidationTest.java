@@ -476,7 +476,7 @@ public class GraphValidationTest {
         .compilesWithoutError();
         //.compilesWithoutWarning(); //TODO(cgruber)
   }
-  
+
   @Test public void duplicateExplicitBindings_ProvidesAndComponentProvision() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -560,7 +560,7 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedError).in(component).onLine(24);
   }
-  
+
   @Test public void duplicateExplicitBindings_MultipleProvisionTypes() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -611,27 +611,108 @@ public class GraphValidationTest {
         "}");
 
     String expectedSetError =
-        "java.util.Set<java.lang.String> has incompatible bindings:\n"
-            + "      Set bindings:\n"
+        "java.util.Set<java.lang.String> has incompatible bindings or declarations:\n"
+            + "      Set bindings and declarations:\n"
             + "          @Provides(type=SET) String test.Outer.TestModule1.stringSetElement()\n"
-            + "      Unique bindings:\n"
+            + "      Unique bindings and declarations:\n"
             + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
 
     String expectedMapError =
-        "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings:\n"
-            + "      Map bindings:\n"
+        "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+            + "or declarations:\n"
+            + "      Map bindings and declarations:\n"
             + "          @Provides(type=MAP) @test.Outer.StringKey(\"foo\") String"
             + " test.Outer.TestModule1.stringMapEntry()\n"
-            + "      Unique bindings:\n"
+            + "      Unique bindings and declarations:\n"
             + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
 
-    assertAbout(javaSource()).that(component)
+    assertAbout(javaSource())
+        .that(component)
         .processedWith(new ComponentProcessor())
         .failsToCompile()
-        .withErrorContaining(expectedSetError).in(component).onLine(43)
-        .and().withErrorContaining(expectedMapError).in(component).onLine(44);
+        .withErrorContaining(expectedSetError)
+        .in(component)
+        .onLine(43)
+        .and()
+        .withErrorContaining(expectedMapError)
+        .in(component)
+        .onLine(44);
   }
-  
+
+  @Test
+  public void duplicateExplicitBindings_UniqueBindingAndMultibindingDeclaration() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Multibindings;",
+            "import dagger.Provides;",
+            "import java.util.HashMap;",
+            "import java.util.HashSet;",
+            "import java.util.Map;",
+            "import java.util.Set;",
+            "",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "import static dagger.Provides.Type.MAP;",
+            "import static dagger.Provides.Type.SET;",
+            "",
+            "final class Outer {",
+            "  @Module",
+            "  static class TestModule1 {",
+            "    @Multibindings",
+            "    interface Empties {",
+            "      Map<String, String> stringMap();",
+            "      Set<String> stringSet();",
+            "    }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class TestModule2 {",
+            "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
+            "",
+            "    @Provides Map<String, String> stringMap() {",
+            "      return new HashMap<String, String>();",
+            "    }",
+            "  }",
+            "",
+            "  @Component(modules = { TestModule1.class, TestModule2.class })",
+            "  interface TestComponent {",
+            "    Set<String> getStringSet();",
+            "    Map<String, String> getStringMap();",
+            "  }",
+            "}");
+
+    String expectedSetError =
+        "java.util.Set<java.lang.String> has incompatible bindings or declarations:\n"
+            + "      Set bindings and declarations:\n"
+            + "          Set<String> test.Outer.TestModule1.Empties.stringSet()\n"
+            + "      Unique bindings and declarations:\n"
+            + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
+
+    String expectedMapError =
+        "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+            + "or declarations:\n"
+            + "      Map bindings and declarations:\n"
+            + "          Map<String,String> test.Outer.TestModule1.Empties.stringMap()\n"
+            + "      Unique bindings and declarations:\n"
+            + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
+
+    assertAbout(javaSource())
+        .that(component)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(expectedSetError)
+        .in(component)
+        .onLine(37)
+        .and()
+        .withErrorContaining(expectedMapError)
+        .in(component)
+        .onLine(38);
+  }
+
   @Test public void duplicateBindings_TruncateAfterLimit() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -1139,5 +1220,151 @@ public class GraphValidationTest {
         .withErrorContaining(mediumErrorMessage).in(mediumLifetime)
         .and()
         .withErrorContaining(shortErrorMessage).in(shortLifetime);
+  }
+
+  @Test
+  @Ignore
+  public void subcomponentBindingConflictsWithParent() {
+    JavaFileObject parentChildConflict =
+        JavaFileObjects.forSourceLines(
+            "test.ParentChildConflict",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier @interface ParentChildConflict {}");
+    JavaFileObject parentGrandchildConflict =
+        JavaFileObjects.forSourceLines(
+            "test.ParentGrandchildConflict",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier @interface ParentGrandchildConflict {}");
+    JavaFileObject childGrandchildConflict =
+        JavaFileObjects.forSourceLines(
+            "test.ChildGrandchildConflict",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier @interface ChildGrandchildConflict {}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  @ParentChildConflict Object parentChildConflict();",
+            "  @ParentGrandchildConflict Object parentGrandchildConflict();",
+            "",
+            "  Child child();",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides @ParentChildConflict static Object parentChildConflict() {",
+            "      return \"parent\";",
+            "    }",
+            "",
+            "    @Provides @ParentGrandchildConflict static Object parentGrandchildConflict() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  @ParentChildConflict Object parentChildConflict();",
+            "  @ChildGrandchildConflict Object childGrandchildConflict();",
+            "",
+            "  Grandchild grandchild();",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides @ParentChildConflict static Object parentChildConflict() {",
+            "      return \"child\";",
+            "    }",
+            "",
+            "    @Provides @ChildGrandchildConflict static Object childGrandchildConflict() {",
+            "      return \"child\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Grandchild.GrandchildModule.class)",
+            "interface Grandchild {",
+            "  @ParentChildConflict Object parentChildConflict();",
+            "  @ParentGrandchildConflict Object parentGrandchildConflict();",
+            "  @ChildGrandchildConflict Object childGrandchildConflict();",
+            "",
+            "  @Module",
+            "  static class GrandchildModule {",
+            "    @Provides @ParentGrandchildConflict static Object parentGrandchildConflict() {",
+            "      return \"grandchild\";",
+            "    }",
+            "",
+            "    @Provides @ChildGrandchildConflict static Object childGrandchildConflict() {",
+            "      return \"grandchild\";",
+            "    }",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(
+            ImmutableList.of(
+                parentChildConflict,
+                parentGrandchildConflict,
+                childGrandchildConflict,
+                parent,
+                child,
+                grandchild))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "@ParentChildConflict Object is rebound in test.Child:\n"
+                + "      @Provides @ParentChildConflict Object"
+                + " test.Parent.ParentModule.parentChildConflict()\n"
+                + "      @Provides @ParentChildConflict Object"
+                + " test.Child.ChildModule.parentChildConflict()\n")
+        .in(parent)
+        .onLine(12)
+        .and()
+        .withErrorContaining(
+            "@ParentGrandchildConflict Object is rebound in test.Grandchild:\n"
+                + "      @Provides @ParentGrandchildConflict Object"
+                + " test.Parent.ParentModule.parentGrandchildConflict()\n"
+                + "      @Provides @ParentGrandchildConflict Object"
+                + " test.Grandchild.GrandchildModule.parentGrandchildConflict()\n")
+        .in(parent)
+        .onLine(12)
+        .and()
+        .withErrorContaining(
+            "@ChildGrandchildConflict Object is rebound in test.Grandchild:\n"
+                + "      @Provides @ChildGrandchildConflict Object"
+                + " test.Child.ChildModule.childGrandchildConflict()\n"
+                + "      @Provides @ChildGrandchildConflict Object"
+                + " test.Grandchild.GrandchildModule.childGrandchildConflict()\n")
+        .in(child)
+        .onLine(12);
   }
 }

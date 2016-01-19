@@ -35,7 +35,7 @@ import static java.lang.annotation.ElementType.TYPE;
  *
  * <p>Each {@link Produces} method that contributes to the component will be called at most once per
  * component instance, no matter how many times that binding is used as a dependency.
- * TODO(user): Decide on how scope works for producers.
+ * TODO(beder): Decide on how scope works for producers.
  *
  * <h2>Component methods</h2>
  *
@@ -119,3 +119,4 @@ public @interface ProductionComponent {
   @Documented
   @interface Builder {}
 }
+

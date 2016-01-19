@@ -26,9 +26,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Module;
-import dagger.Subcomponent;
 import dagger.producers.ProducerModule;
-import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -45,7 +43,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
-import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
@@ -59,11 +56,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author Gregory Kick
  */
 final class ConfigurationAnnotations {
-
-  static boolean isComponent(TypeElement componentDefinitionType) {
-    return MoreElements.isAnnotationPresent(componentDefinitionType, Component.class)
-        || MoreElements.isAnnotationPresent(componentDefinitionType, ProductionComponent.class);
-  }
 
   private static final String MODULES_ATTRIBUTE = "modules";
 
@@ -201,23 +193,6 @@ final class ConfigurationAnnotations {
       }
     }
     return builders.build();
-  }
-
-  static boolean isSubcomponentType(TypeMirror type) {
-    return type.accept(new SubcomponentDetector(), null).isPresent();
-  }
-
-  private static final class SubcomponentDetector
-      extends SimpleTypeVisitor6<Optional<AnnotationMirror>, Void> {
-    @Override
-    protected Optional<AnnotationMirror> defaultAction(TypeMirror e, Void p) {
-      return Optional.absent();
-    }
-
-    @Override
-    public Optional<AnnotationMirror> visitDeclared(DeclaredType t, Void p) {
-      return MoreElements.getAnnotationMirror(t.asElement(), Subcomponent.class);
-    }
   }
 
   /** Traverses includes from superclasses and adds them into the builder. */

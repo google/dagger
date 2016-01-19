@@ -16,6 +16,7 @@
 package test;
 
 import dagger.Module;
+import dagger.Multibindings;
 import dagger.Provides;
 import dagger.mapkeys.ClassKey;
 import dagger.mapkeys.IntKey;
@@ -177,5 +178,54 @@ class MultibindingModule {
   @Named("complexQualifier")
   static String valueForComplexQualifierSet() {
     return "foo";
+  }
+
+  @Provides(type = SET)
+  static CharSequence setContribution() {
+    return "foo";
+  }
+
+  @Provides(type = SET)
+  @Named("complexQualifier")
+  static CharSequence qualifiedSetContribution() {
+    return "qualified foo";
+  }
+
+  @Provides(type = MAP)
+  @StringKey("key")
+  static CharSequence mapContribution() {
+    return "foo value";
+  }
+
+  @Provides(type = MAP)
+  @Named("complexQualifier")
+  @StringKey("key")
+  static CharSequence qualifiedMapContribution() {
+    return "qualified foo value";
+  }
+
+  interface EmptiesSupertype {
+    Set<Object> emptySet();
+
+    Map<String, Object> emptyMap();
+
+    Set<CharSequence> maybeEmptySet();
+
+    Map<String, CharSequence> maybeEmptyMap();
+  }
+
+  @Multibindings
+  interface Empties extends EmptiesSupertype {
+    @Named("complexQualifier")
+    Set<Object> emptyQualifiedSet();
+
+    @Named("complexQualifier")
+    Map<String, Object> emptyQualifiedMap();
+
+    @Named("complexQualifier")
+    Set<CharSequence> maybeEmptyQualifiedSet();
+
+    @Named("complexQualifier")
+    Map<String, CharSequence> maybeEmptyQualifiedMap();
   }
 }

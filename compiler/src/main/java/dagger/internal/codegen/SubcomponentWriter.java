@@ -20,7 +20,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
-import dagger.internal.codegen.ComponentGenerator.MemberSelect;
 import dagger.internal.codegen.writer.ClassName;
 import dagger.internal.codegen.writer.ClassWriter;
 import dagger.internal.codegen.writer.FieldWriter;
@@ -40,6 +39,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.difference;
 import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.UNINITIALIZED;
+import static dagger.internal.codegen.MemberSelect.localField;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -47,7 +47,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 /**
  * Creates the nested implementation class for a subcomponent.
  */
-class SubcomponentWriter extends AbstractComponentWriter {
+final class SubcomponentWriter extends AbstractComponentWriter {
 
   private AbstractComponentWriter parent;
   private ExecutableElement subcomponentFactoryMethod;
@@ -61,16 +61,18 @@ class SubcomponentWriter extends AbstractComponentWriter {
         parent.elements,
         parent.keyFactory,
         parent.nullableValidationType,
-        parent.name.nestedClassNamed(subcomponentSimpleName(subgraph)),
-        subgraph);
+        subcomponentName(parent, subgraph),
+        subgraph,
+        parent.subcomponentImplNames);
     this.parent = parent;
     this.subcomponentFactoryMethod = subcomponentFactoryMethod;
   }
 
-  private static String subcomponentSimpleName(BindingGraph subgraph) {
-    return subgraph.componentDescriptor().componentDefinitionType().getSimpleName() + "Impl";
+  private static ClassName subcomponentName(AbstractComponentWriter parent, BindingGraph subgraph) {
+    return parent.name.nestedClassNamed(
+        parent.subcomponentImplNames.get(subgraph.componentDescriptor()));
   }
-  
+
   @Override
   protected InitializationState getInitializationState(BindingKey bindingKey) {
     InitializationState initializationState = super.getInitializationState(bindingKey);
@@ -181,8 +183,7 @@ class SubcomponentWriter extends AbstractComponentWriter {
             .addSnippet("  throw new NullPointerException();")
             .addSnippet("}");
         constructorWriter.body().addSnippet("this.%1$s = %1$s;", actualModuleName);
-        MemberSelect moduleSelect =
-            MemberSelect.instanceSelect(name, Snippet.format(actualModuleName));
+        MemberSelect moduleSelect = localField(name, actualModuleName);
         componentContributionFields.put(moduleTypeElement, moduleSelect);
         subcomponentConstructorParameters.add(Snippet.format("%s", moduleVariable.getSimpleName()));
       }
@@ -190,7 +191,7 @@ class SubcomponentWriter extends AbstractComponentWriter {
 
     Set<TypeElement> uninitializedModules =
         difference(graph.componentRequirements(), componentContributionFields.keySet());
-    
+
     for (TypeElement moduleType : uninitializedModules) {
       String preferredModuleName =
           CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL, moduleType.getSimpleName().toString());
@@ -199,8 +200,7 @@ class SubcomponentWriter extends AbstractComponentWriter {
       String actualModuleName = contributionField.name();
       constructorWriter.body().addSnippet("this.%s = new %s();",
           actualModuleName, ClassName.fromTypeElement(moduleType));
-      MemberSelect moduleSelect =
-          MemberSelect.instanceSelect(name, Snippet.format(actualModuleName));
+      MemberSelect moduleSelect = localField(name, actualModuleName);
       componentContributionFields.put(moduleType, moduleSelect);
     }
 

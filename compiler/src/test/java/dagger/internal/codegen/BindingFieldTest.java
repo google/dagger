@@ -64,26 +64,21 @@ public class BindingFieldTest {
     Key key = keyFactory.forInjectConstructorWithResolvedType(
         getXConstructor().getEnclosingElement().asType());
     TypeName xClass = TypeNames.forTypeMirror(key.type());
-    assertThat(FrameworkField.createWithTypeFromKey(Provider.class,
-            BindingKey.create(BindingKey.Kind.CONTRIBUTION, key), "test")
-        .frameworkType())
-        .isEqualTo(ParameterizedTypeName.create(
-            ClassName.fromClass(Provider.class), xClass));
-    assertThat(FrameworkField.createWithTypeFromKey(MembersInjector.class,
-            BindingKey.create(BindingKey.Kind.MEMBERS_INJECTION, key), "test")
-        .frameworkType())
-        .isEqualTo(ParameterizedTypeName.create(
-            ClassName.fromClass(MembersInjector.class), xClass));
+    assertThat(FrameworkField.createWithTypeFromKey(Provider.class, key, "test").frameworkType())
+        .isEqualTo(ParameterizedTypeName.create(ClassName.fromClass(Provider.class), xClass));
+    assertThat(
+            FrameworkField.createWithTypeFromKey(MembersInjector.class, key, "test")
+                .frameworkType())
+        .isEqualTo(
+            ParameterizedTypeName.create(ClassName.fromClass(MembersInjector.class), xClass));
   }
 
   @Test public void nameSuffix() {
     Key key = keyFactory.forInjectConstructorWithResolvedType(
         getXConstructor().getEnclosingElement().asType());
-    assertThat(FrameworkField.createWithTypeFromKey(Provider.class,
-            BindingKey.create(BindingKey.Kind.CONTRIBUTION, key), "foo").name())
+    assertThat(FrameworkField.createWithTypeFromKey(Provider.class, key, "foo").name())
         .isEqualTo("fooProvider");
-    assertThat(FrameworkField.createWithTypeFromKey(Provider.class,
-            BindingKey.create(BindingKey.Kind.CONTRIBUTION, key), "fooProvider").name())
+    assertThat(FrameworkField.createWithTypeFromKey(Provider.class, key, "fooProvider").name())
         .isEqualTo("fooProvider");
 
   }

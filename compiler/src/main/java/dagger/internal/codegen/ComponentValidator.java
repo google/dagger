@@ -19,6 +19,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -26,8 +27,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
-import dagger.Module;
-import dagger.Subcomponent;
+import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
@@ -56,14 +56,14 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
 /**
- * Performs superficial validation of the contract of the {@link Component} annotation.
+ * Performs superficial validation of the contract of the {@link Component} and
+ * {@link ProductionComponent} annotations.
  *
  * @author Gregory Kick
  */
 final class ComponentValidator {
   private final Elements elements;
   private final Types types;
-  private final ComponentDescriptor.Kind componentType;
   private final ModuleValidator moduleValidator;
   private final ComponentValidator subcomponentValidator;
   private final BuilderValidator subcomponentBuilderValidator;
@@ -74,7 +74,6 @@ final class ComponentValidator {
       BuilderValidator subcomponentBuilderValidator) {
     this.elements = elements;
     this.types = types;
-    this.componentType = ComponentDescriptor.Kind.SUBCOMPONENT;
     this.moduleValidator = moduleValidator;
     this.subcomponentValidator = this;
     this.subcomponentBuilderValidator = subcomponentBuilderValidator;
@@ -87,7 +86,6 @@ final class ComponentValidator {
       BuilderValidator subcomponentBuilderValidator) {
     this.elements = elements;
     this.types = types;
-    this.componentType = ComponentDescriptor.Kind.COMPONENT;
     this.moduleValidator = moduleValidator;
     this.subcomponentValidator = subcomponentValidator;
     this.subcomponentBuilderValidator = subcomponentBuilderValidator;
@@ -98,21 +96,15 @@ final class ComponentValidator {
       ModuleValidator moduleValidator,
       ComponentValidator subcomponentValidator,
       BuilderValidator subcomponentBuilderValidator) {
-    return new ComponentValidator(elements,
-        types,
-        moduleValidator,
-        subcomponentValidator,
-        subcomponentBuilderValidator);
+    return new ComponentValidator(
+        elements, types, moduleValidator, subcomponentValidator, subcomponentBuilderValidator);
   }
 
   static ComponentValidator createForSubcomponent(Elements elements,
       Types types,
       ModuleValidator moduleValidator,
       BuilderValidator subcomponentBuilderValidator) {
-    return new ComponentValidator(elements,
-        types,
-        moduleValidator,
-        subcomponentBuilderValidator);
+    return new ComponentValidator(elements, types, moduleValidator, subcomponentBuilderValidator);
   }
 
   @AutoValue
@@ -130,20 +122,23 @@ final class ComponentValidator {
       Set<? extends Element> validatedSubcomponentBuilders) {
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(subject);
 
+    ComponentDescriptor.Kind componentKind =
+        ComponentDescriptor.Kind.forAnnotatedElement(subject).get();
+
     if (!subject.getKind().equals(INTERFACE)
         && !(subject.getKind().equals(CLASS) && subject.getModifiers().contains(ABSTRACT))) {
       builder.addError(
           String.format(
               "@%s may only be applied to an interface or abstract class",
-              componentType.annotationType().getSimpleName()),
+              componentKind.annotationType().getSimpleName()),
           subject);
     }
 
     ImmutableList<DeclaredType> builders =
-        enclosedBuilders(subject, componentType.builderAnnotationType());
+        enclosedBuilders(subject, componentKind.builderAnnotationType());
     if (builders.size() > 1) {
       builder.addError(
-          String.format(ErrorMessages.builderMsgsFor(componentType).moreThanOne(), builders),
+          String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
           subject);
     }
 
@@ -164,12 +159,23 @@ final class ComponentValidator {
         // abstract methods are ones we have to implement, so they each need to be validated
         // first, check the return type.  if it's a subcomponent, validate that method as such.
         Optional<AnnotationMirror> subcomponentAnnotation =
-            checkForAnnotation(returnType, Subcomponent.class);
+            checkForAnnotations(
+                returnType,
+                FluentIterable.from(componentKind.subcomponentKinds())
+                    .transform(ComponentDescriptor.Kind.toAnnotationType())
+                    .toSet());
         Optional<AnnotationMirror> subcomponentBuilderAnnotation =
-            checkForAnnotation(returnType, Subcomponent.Builder.class);
+            checkForAnnotations(
+                returnType,
+                FluentIterable.from(componentKind.subcomponentKinds())
+                    .transform(ComponentDescriptor.Kind.toBuilderAnnotationType())
+                    .toSet());
         if (subcomponentAnnotation.isPresent()) {
           referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
-          validateSubcomponentMethod(builder,
+          validateSubcomponentMethod(
+              builder,
+              ComponentDescriptor.Kind.forAnnotatedElement(MoreTypes.asTypeElement(returnType))
+                  .get(),
               method,
               parameters,
               parameterTypes,
@@ -224,9 +230,10 @@ final class ComponentValidator {
     }
 
     AnnotationMirror componentMirror =
-        getAnnotationMirror(subject, componentType.annotationType()).get();
+        getAnnotationMirror(subject, componentKind.annotationType()).get();
     ImmutableList<TypeMirror> moduleTypes = getComponentModules(componentMirror);
-    moduleValidator.validateReferencedModules(subject, builder, moduleTypes);
+    moduleValidator.validateReferencedModules(
+        subject, builder, moduleTypes, componentKind.moduleKinds());
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.
@@ -247,7 +254,9 @@ final class ComponentValidator {
         builder.build());
   }
 
-  private void validateSubcomponentMethod(final ValidationReport.Builder<TypeElement> builder,
+  private void validateSubcomponentMethod(
+      final ValidationReport.Builder<TypeElement> builder,
+      final ComponentDescriptor.Kind subcomponentKind,
       ExecutableElement method,
       List<? extends VariableElement> parameters,
       List<? extends TypeMirror> parameterTypes,
@@ -268,18 +277,26 @@ final class ComponentValidator {
     for (int i = 0; i < parameterTypes.size(); i++) {
       VariableElement parameter = parameters.get(i);
       TypeMirror parameterType = parameterTypes.get(i);
-      Optional<TypeElement> moduleType = parameterType.accept(
-          new SimpleTypeVisitor6<Optional<TypeElement>, Void>() {
-            @Override protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
-              return Optional.absent();
-            }
+      Optional<TypeElement> moduleType =
+          parameterType.accept(
+              new SimpleTypeVisitor6<Optional<TypeElement>, Void>() {
+                @Override
+                protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
+                  return Optional.absent();
+                }
 
-            @Override public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
-              return MoreElements.isAnnotationPresent(t.asElement(), Module.class)
-                  ? Optional.of(MoreTypes.asTypeElement(t))
-                  : Optional.<TypeElement>absent();
-            }
-          }, null);
+                @Override
+                public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
+                  for (ModuleDescriptor.Kind moduleKind : subcomponentKind.moduleKinds()) {
+                    if (MoreElements.isAnnotationPresent(
+                        t.asElement(), moduleKind.moduleAnnotation())) {
+                      return Optional.of(MoreTypes.asTypeElement(t));
+                    }
+                  }
+                  return Optional.absent();
+                }
+              },
+              null);
       if (moduleType.isPresent()) {
         if (variableTypes.contains(moduleType.get())) {
           builder.addError(
@@ -328,18 +345,27 @@ final class ComponentValidator {
     }
   }
 
-  private Optional<AnnotationMirror> checkForAnnotation(TypeMirror type,
-      final Class<? extends Annotation> annotation) {
-    return type.accept(new SimpleTypeVisitor6<Optional<AnnotationMirror>, Void>() {
-      @Override
-      protected Optional<AnnotationMirror> defaultAction(TypeMirror e, Void p) {
-        return Optional.absent();
-      }
+  private Optional<AnnotationMirror> checkForAnnotations(
+      TypeMirror type, final Set<Class<? extends Annotation>> annotations) {
+    return type.accept(
+        new SimpleTypeVisitor6<Optional<AnnotationMirror>, Void>() {
+          @Override
+          protected Optional<AnnotationMirror> defaultAction(TypeMirror e, Void p) {
+            return Optional.absent();
+          }
 
-      @Override
-      public Optional<AnnotationMirror> visitDeclared(DeclaredType t, Void p) {
-        return MoreElements.getAnnotationMirror(t.asElement(), annotation);
-      }
-    }, null);
+          @Override
+          public Optional<AnnotationMirror> visitDeclared(DeclaredType t, Void p) {
+            for (Class<? extends Annotation> annotation : annotations) {
+              Optional<AnnotationMirror> mirror =
+                  MoreElements.getAnnotationMirror(t.asElement(), annotation);
+              if (mirror.isPresent()) {
+                return mirror;
+              }
+            }
+            return Optional.absent();
+          }
+        },
+        null);
   }
 }

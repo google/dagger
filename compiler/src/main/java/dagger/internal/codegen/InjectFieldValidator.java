@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ErrorMessages.FINAL_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_QUALIFIERS;
 import static dagger.internal.codegen.ErrorMessages.PRIVATE_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_FIELD;
+import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -68,6 +69,10 @@ final class InjectFieldValidator {
       for (AnnotationMirror qualifier : qualifiers) {
         builder.addError(MULTIPLE_QUALIFIERS, fieldElement, qualifier);
       }
+    }
+
+    if (FrameworkTypes.isProducerType(fieldElement.asType())) {
+      builder.addError(provisionMayNotDependOnProducerType(fieldElement.asType()), fieldElement);
     }
 
     return builder.build();

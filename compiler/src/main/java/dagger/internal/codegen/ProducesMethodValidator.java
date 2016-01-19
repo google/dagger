@@ -47,6 +47,7 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_K
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_THROWS;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -54,19 +55,23 @@ import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import javax.lang.model.util.Types;
+
 /**
  * A {@linkplain ValidationReport validator} for {@link Produces} methods.
  *
  * @author Jesse Beder
  * @since 2.0
  */
-// TODO(user): Consider unifying this with the ProvidesMethodValidator after Provides.Type and
+// TODO(beder): Consider unifying this with the ProvidesMethodValidator after Provides.Type and
 // Produces.Type are reconciled.
 final class ProducesMethodValidator {
   private final Elements elements;
+  private final Types types;
 
-  ProducesMethodValidator(Elements elements) {
+  ProducesMethodValidator(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
+    this.types = checkNotNull(types);
   }
 
   private TypeElement getSetElement() {
@@ -103,6 +108,15 @@ final class ProducesMethodValidator {
     if (returnTypeKind.equals(VOID)) {
       builder.addError(
           formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE), producesMethodElement);
+    }
+
+    TypeMirror exceptionType = elements.getTypeElement(Exception.class.getCanonicalName()).asType();
+    TypeMirror errorType = elements.getTypeElement(Error.class.getCanonicalName()).asType();
+    for (TypeMirror thrownType : producesMethodElement.getThrownTypes()) {
+      if (!types.isSubtype(thrownType, exceptionType) && !types.isSubtype(thrownType, errorType)) {
+        builder.addError(PRODUCES_METHOD_THROWS, producesMethodElement);
+        break;
+      }
     }
 
     // check mapkey is right

@@ -15,75 +15,225 @@
  */
 package test.subcomponent;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.Collection;
+import com.google.common.collect.ImmutableSet;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
+import test.subcomponent.MultibindingSubcomponents.BoundInChild;
+import test.subcomponent.MultibindingSubcomponents.BoundInParent;
+import test.subcomponent.MultibindingSubcomponents.BoundInParentAndChild;
+import test.subcomponent.MultibindingSubcomponents.ParentWithProvisionHasChildWithProvision;
+import test.subcomponent.MultibindingSubcomponents.ParentWithProvisionHasChildWithoutProvision;
+import test.subcomponent.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithProvision;
+import test.subcomponent.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithoutProvision;
+import test.subcomponent.MultibindingSubcomponents.RequiresMultibindings;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.Truth.assertThat;
 
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public class SubcomponentMultibindingsTest {
 
-  @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
-    return ImmutableList.of(
-        new Object[] {DaggerParentComponentWithMultibindings.create()},
-        new Object[] {DaggerParentComponentWithoutMultibindings.create()});
-  }
+  private static final RequiresMultibindings<BoundInParent> BOUND_IN_PARENT =
+      new RequiresMultibindings<>(
+          ImmutableSet.of(BoundInParent.INSTANCE),
+          ImmutableMap.of("parent key", BoundInParent.INSTANCE));
 
-  private ParentComponentWithoutMultibindings parent;
+  private static final RequiresMultibindings<BoundInChild> BOUND_IN_CHILD =
+      new RequiresMultibindings<>(
+          ImmutableSet.of(BoundInChild.INSTANCE),
+          ImmutableMap.of("child key", BoundInChild.INSTANCE));
 
-  public SubcomponentMultibindingsTest(ParentComponentWithoutMultibindings parentComponent) {
-    this.parent = parentComponent;
+  private static final RequiresMultibindings<BoundInParentAndChild> BOUND_IN_PARENT_AND_CHILD =
+      new RequiresMultibindings<>(
+          ImmutableSet.of(BoundInParentAndChild.IN_PARENT, BoundInParentAndChild.IN_CHILD),
+          ImmutableMap.of(
+              "parent key", BoundInParentAndChild.IN_PARENT,
+              "child key", BoundInParentAndChild.IN_CHILD));
+
+  private static final RequiresMultibindings<BoundInParentAndChild>
+      BOUND_IN_PARENT_AND_CHILD_PROVIDED_BY_PARENT =
+          new RequiresMultibindings<>(
+              ImmutableSet.of(BoundInParentAndChild.IN_PARENT),
+              ImmutableMap.of("parent key", BoundInParentAndChild.IN_PARENT));
+
+  private ParentWithoutProvisionHasChildWithoutProvision
+      parentWithoutProvisionHasChildWithoutProvision;
+  private ParentWithoutProvisionHasChildWithProvision parentWithoutProvisionHasChildWithProvision;
+  private ParentWithProvisionHasChildWithoutProvision parentWithProvisionHasChildWithoutProvision;
+  private ParentWithProvisionHasChildWithProvision parentWithProvisionHasChildWithProvision;
+
+  @Before
+  public void setUp() {
+    parentWithoutProvisionHasChildWithoutProvision =
+        DaggerMultibindingSubcomponents_ParentWithoutProvisionHasChildWithoutProvision.create();
+    parentWithoutProvisionHasChildWithProvision =
+        DaggerMultibindingSubcomponents_ParentWithoutProvisionHasChildWithProvision.create();
+    parentWithProvisionHasChildWithoutProvision =
+        DaggerMultibindingSubcomponents_ParentWithProvisionHasChildWithoutProvision.create();
+    parentWithProvisionHasChildWithProvision =
+        DaggerMultibindingSubcomponents_ParentWithProvisionHasChildWithProvision.create();
   }
 
   @Test
-  public void testMultibindingsInSubcomponents() {
-    RequiresMultibindingsInChild requiresMultibindingsInChild =
-        parent.childComponent().requiresMultibindingsInChild();
+  public void testParentWithoutProvisionHasChildWithoutProvision() {
+    // Child
+    assertThat(
+            parentWithoutProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
 
-    assertWithMessage("requiresMultiboundObjects.setOfObjects")
-        .that(requiresMultibindingsInChild.requiresMultiboundObjects().setOfObjects())
-        .containsExactly("object provided by parent", "object provided by child");
+    // Grandchild
+    assertThat(
+            parentWithoutProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD);
+    assertThat(
+            parentWithoutProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInChild())
+        .isEqualTo(BOUND_IN_CHILD);
 
-    assertWithMessage("requiresMultiboundObjects.mapOfObjects")
-        .that(requiresMultibindingsInChild.requiresMultiboundObjects().mapOfObjects())
-        .isEqualTo(
-            ImmutableMap.of("parent key", "object in parent", "child key", "object in child"));
-
-    assertWithMessage("requiresMultiboundStrings")
-        .that(requiresMultibindingsInChild.requiresMultiboundStrings().setOfStrings())
-        .containsExactly("string provided by parent");
-
-    assertWithMessage("requiresMultiboundStrings.mapOfStrings")
-        .that(requiresMultibindingsInChild.requiresMultiboundStrings().mapOfStrings())
-        .isEqualTo(ImmutableMap.of("parent key", "string in parent"));
+    assertThat(
+            parentWithoutProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .setOfRequiresMultibindingsInParentAndChild())
+        .containsExactly(BOUND_IN_PARENT_AND_CHILD);
   }
 
   @Test
-  public void testOverriddenMultibindingsInSubcomponents() {
-    RequiresMultibindingsInChild requiresMultibindingsInChild =
-        parent.childComponent().requiresMultibindingsInChild();
+  public void testParentWithoutProvisionHasChildWithProvision() {
+    // Child
+    assertThat(
+            parentWithoutProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
 
-    assertWithMessage("setOfRequiresMultiboundObjects")
-        .that(requiresMultibindingsInChild.setOfRequiresMultiboundObjects())
-        .hasSize(1);
+    // Grandchild
+    assertThat(
+            parentWithoutProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD);
+    assertThat(
+            parentWithoutProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInChild())
+        .isEqualTo(BOUND_IN_CHILD);
 
-    RequiresMultiboundObjects onlyElementInMultiboundRequiresMultiboundObjects =
-        getOnlyElement(requiresMultibindingsInChild.setOfRequiresMultiboundObjects());
+    assertThat(
+            parentWithoutProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .setOfRequiresMultibindingsInParentAndChild())
+        .containsExactly(BOUND_IN_PARENT_AND_CHILD);
+  }
 
-    assertWithMessage("setOfRequiresMultiboundObjects[only].setOfObjects")
-        .that(onlyElementInMultiboundRequiresMultiboundObjects.setOfObjects())
-        .containsExactly("object provided by parent", "object provided by child");
+  @Test
+  public void testParentWithProvisionHasChildWithoutProvision() {
+    // Parent
+    assertThat(parentWithProvisionHasChildWithoutProvision.requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
 
-    assertWithMessage("setOfRequiresMultiboundObjects[only].mapOfObjects")
-        .that(onlyElementInMultiboundRequiresMultiboundObjects.mapOfObjects())
-        .isEqualTo(
-            ImmutableMap.of("parent key", "object in parent", "child key", "object in child"));
+    assertThat(
+            parentWithProvisionHasChildWithoutProvision
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD_PROVIDED_BY_PARENT);
+
+    // Grandchild
+    assertThat(
+            parentWithProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
+    assertThat(
+            parentWithProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInChild())
+        .isEqualTo(BOUND_IN_CHILD);
+
+    assertThat(
+            parentWithProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD);
+
+    assertThat(
+            parentWithProvisionHasChildWithoutProvision
+                .childWithoutProvision()
+                .grandchild()
+                .setOfRequiresMultibindingsInParentAndChild())
+        .containsExactly(BOUND_IN_PARENT_AND_CHILD);
+  }
+
+  @Test
+  public void testParentWithProvisionHasChildWithProvision() {
+    // Parent
+    assertThat(parentWithProvisionHasChildWithProvision.requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
+
+    // Child
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .requiresMultibindingsBoundInChild())
+        .isEqualTo(BOUND_IN_CHILD);
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD);
+
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .setOfRequiresMultibindingsInParentAndChild())
+        .containsExactly(BOUND_IN_PARENT_AND_CHILD);
+
+    // Grandchild
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParent())
+        .isEqualTo(BOUND_IN_PARENT);
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInChild())
+        .isEqualTo(BOUND_IN_CHILD);
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .requiresMultibindingsBoundInParentAndChild())
+        .isEqualTo(BOUND_IN_PARENT_AND_CHILD);
+
+    assertThat(
+            parentWithProvisionHasChildWithProvision
+                .childWithProvision()
+                .grandchild()
+                .setOfRequiresMultibindingsInParentAndChild())
+        .containsExactly(BOUND_IN_PARENT_AND_CHILD);
   }
 }

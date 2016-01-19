@@ -16,22 +16,24 @@
 package test;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 class GenericParent<X, Y> {
   
-  X registeredX;
+  Provider<X> registeredX;
   Y registeredY;
   B registeredB;
   
-  
   @Inject GenericParent() {}
   
-  @Inject X x;
+  @Inject Provider<X> x;
   @Inject Y y;
   @Inject B b;
   
-  @Inject void registerX(X x) { this.registeredX = x; }
+  @Inject
+  void registerX(Provider<X> x) {
+    this.registeredX = x;
+  }
   @Inject void registerY(Y y) { this.registeredY = y; }
   @Inject void registerB(B b) { this.registeredB = b; }
-
 }

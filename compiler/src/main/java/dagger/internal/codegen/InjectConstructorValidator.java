@@ -37,6 +37,7 @@ import static dagger.internal.codegen.ErrorMessages.MULTIPLE_INJECT_CONSTRUCTORS
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_QUALIFIERS;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_SCOPES;
 import static dagger.internal.codegen.ErrorMessages.QUALIFIER_ON_INJECT_CONSTRUCTOR;
+import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.getScopes;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -67,6 +68,9 @@ final class InjectConstructorValidator {
         for (AnnotationMirror qualifier : qualifiers) {
           builder.addError(MULTIPLE_QUALIFIERS, constructorElement, qualifier);
         }
+      }
+      if (FrameworkTypes.isProducerType(parameter.asType())) {
+        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
       }
     }
 

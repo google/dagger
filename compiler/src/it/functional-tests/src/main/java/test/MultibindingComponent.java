@@ -50,4 +50,23 @@ interface MultibindingComponent {
   Map<StringKey, String> unwrappedAnnotationKeyMap();
   Map<WrappedAnnotationKey, String> wrappedAnnotationKeyMap();
   @Named("complexQualifier") Set<String> complexQualifierStringSet();
+  Set<Object> emptySet();
+
+  @Named("complexQualifier")
+  Set<Object> emptyQualifiedSet();
+
+  Map<String, Object> emptyMap();
+
+  @Named("complexQualifier")
+  Map<String, Object> emptyQualifiedMap();
+
+  Set<CharSequence> maybeEmptySet();
+
+  @Named("complexQualifier")
+  Set<CharSequence> maybeEmptyQualifiedSet();
+
+  Map<String, CharSequence> maybeEmptyMap();
+
+  @Named("complexQualifier")
+  Map<String, CharSequence> maybeEmptyQualifiedMap();
 }

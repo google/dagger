@@ -18,6 +18,7 @@ package dagger.producers.monitoring;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.producers.Producer;
 import dagger.producers.Produces;
 
 /**
@@ -26,6 +27,7 @@ import dagger.producers.Produces;
  *
  * <p>The lifecycle of the monitor, under normal conditions, is:
  * <ul>
+ *   <li>{@link #requested()}
  *   <li>{@link #methodStarting()}
  *   <li>The method is called
  *   <li>{@link #methodFinished()}
@@ -46,6 +48,24 @@ import dagger.producers.Produces;
  * immediately with the failed input's exception. If more than one input fails, an arbitrary failed
  * input's exception is used.
  *
+ * <p>For example, given an entry point A that depends on B, which depends on C, when the entry
+ * point A is called, this will trigger the following sequence of events, assuming all methods and
+ * futures complete successfully:
+ * <ul>
+ *   <li>A requested
+ *   <li>B requested
+ *   <li>C requested
+ *   <li>C methodStarting
+ *   <li>C methodFinished
+ *   <li>C succeeded
+ *   <li>B methodStarting
+ *   <li>B methodFinished
+ *   <li>B succeeded
+ *   <li>A methodStarting
+ *   <li>A methodFinished
+ *   <li>A succeeded
+ * </ul>
+ *
  * <p>If any of the monitor's methods throw, then the exception will be logged and processing will
  * continue unaffected.
  *
@@ -53,10 +73,22 @@ import dagger.producers.Produces;
  */
 public abstract class ProducerMonitor {
   /**
-   * Called when the producer method is about to start executing.
+   * Called when the producer's output is requested; that is, when the first method is called that
+   * requires the production of this producer's output.
+   *
+   * <p>Note that if a method depends on {@link Producer Producer<T>}, then this does not count as
+   * requesting {@code T}; that is only triggered by calling {@link Producer#get()}.
    *
    * <p>When multiple monitors are installed, the order that each monitor will call this method is
    * unspecified, but will remain consistent throughout the course of the execution of a component.
+   */
+  public void requested() {}
+
+  /**
+   * Called when the producer method is about to start executing.
+   *
+   * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
+   * calls to {@link #requested()}.
    */
   public void methodStarting() {}
 
@@ -64,7 +96,7 @@ public abstract class ProducerMonitor {
    * Called when the producer method has finished executing.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
-   * calls to {@link #methodStarting()}.
+   * calls to {@link #requested()}.
    */
   public void methodFinished() {}
 
@@ -72,7 +104,7 @@ public abstract class ProducerMonitor {
    * Called when the producer’s future has completed successfully with a value.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
-   * calls to {@link #methodStarting()}.
+   * calls to {@link #requested()}.
    */
   public void succeeded(Object o) {}
 
@@ -80,7 +112,7 @@ public abstract class ProducerMonitor {
    * Called when the producer's future has failed with an exception.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
-   * calls to {@link #methodStarting()}.
+   * calls to {@link #requested()}.
    */
   public void failed(Throwable t) {}
 

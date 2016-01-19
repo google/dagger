@@ -52,6 +52,7 @@ final class ComponentHierarchyValidator {
       // validate the way that we create subcomponents
       switch (subcomponentMethodDescriptor.kind()) {
         case SUBCOMPONENT:
+        case PRODUCTION_SUBCOMPONENT:
           for (VariableElement factoryMethodParameter :
               subcomponentMethodDescriptor.methodElement().getParameters()) {
             TypeElement origininatingComponent =
@@ -70,6 +71,7 @@ final class ComponentHierarchyValidator {
           }
           break;
         case SUBCOMPONENT_BUILDER:
+        case PRODUCTION_SUBCOMPONENT_BUILDER:
           BuilderSpec subcomponentBuilderSpec = subcomponentDescriptor.builderSpec().get();
           for (Map.Entry<TypeElement, ExecutableElement> builderMethodEntry :
               subcomponentBuilderSpec.methodMap().entrySet()) {

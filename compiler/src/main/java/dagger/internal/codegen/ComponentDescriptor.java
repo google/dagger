@@ -18,12 +18,14 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Component;
 import dagger.Lazy;
@@ -31,6 +33,7 @@ import dagger.MembersInjector;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.producers.ProductionComponent;
+import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -57,7 +60,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
-import static dagger.internal.codegen.ConfigurationAnnotations.isComponent;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -74,7 +76,9 @@ abstract class ComponentDescriptor {
   enum Kind {
     COMPONENT(Component.class, Component.Builder.class, true),
     SUBCOMPONENT(Subcomponent.class, Subcomponent.Builder.class, false),
-    PRODUCTION_COMPONENT(ProductionComponent.class, ProductionComponent.Builder.class, true);
+    PRODUCTION_COMPONENT(ProductionComponent.class, ProductionComponent.Builder.class, true),
+    PRODUCTION_SUBCOMPONENT(
+        ProductionSubcomponent.class, ProductionSubcomponent.Builder.class, false);
 
     private final Class<? extends Annotation> annotationType;
     private final Class<? extends Annotation> builderType;
@@ -91,6 +95,25 @@ abstract class ComponentDescriptor {
       Set<Kind> kinds = EnumSet.noneOf(Kind.class);
       for (Kind kind : values()) {
         if (MoreElements.isAnnotationPresent(element, kind.annotationType())) {
+          kinds.add(kind);
+        }
+      }
+      checkArgument(
+          kinds.size() <= 1, "%s cannot be annotated with more than one of %s", element, kinds);
+      return Optional.fromNullable(getOnlyElement(kinds, null));
+    }
+
+    /**
+     * Returns the kind of an annotated element if it is annotated with one of the
+     * {@linkplain #builderAnnotationType() annotation types}.
+     *
+     * @throws IllegalArgumentException if the element is annotated with more than one of the
+     *     annotation types
+     */
+    static Optional<Kind> forAnnotatedBuilderElement(TypeElement element) {
+      Set<Kind> kinds = EnumSet.noneOf(Kind.class);
+      for (Kind kind : values()) {
+        if (MoreElements.isAnnotationPresent(element, kind.builderAnnotationType())) {
           kinds.add(kind);
         }
       }
@@ -116,8 +139,59 @@ abstract class ComponentDescriptor {
       return builderType;
     }
 
+    ImmutableSet<ModuleDescriptor.Kind> moduleKinds() {
+      switch (this) {
+        case COMPONENT:
+        case SUBCOMPONENT:
+          return Sets.immutableEnumSet(ModuleDescriptor.Kind.MODULE);
+        case PRODUCTION_COMPONENT:
+        case PRODUCTION_SUBCOMPONENT:
+          return Sets.immutableEnumSet(
+              ModuleDescriptor.Kind.MODULE, ModuleDescriptor.Kind.PRODUCER_MODULE);
+        default:
+          throw new AssertionError(this);
+      }
+    }
+
+    ImmutableSet<Kind> subcomponentKinds() {
+      switch (this) {
+        case COMPONENT:
+        case SUBCOMPONENT:
+          return ImmutableSet.of(SUBCOMPONENT, PRODUCTION_SUBCOMPONENT);
+        case PRODUCTION_COMPONENT:
+        case PRODUCTION_SUBCOMPONENT:
+          return ImmutableSet.of(PRODUCTION_SUBCOMPONENT);
+        default:
+          throw new AssertionError();
+      }
+    }
+
     boolean isTopLevel() {
       return isTopLevel;
+    }
+
+    private static final Function<Kind, Class<? extends Annotation>> TO_ANNOTATION_TYPE =
+        new Function<Kind, Class<? extends Annotation>>() {
+          @Override
+          public Class<? extends Annotation> apply(Kind kind) {
+            return kind.annotationType();
+          }
+        };
+
+    static Function<Kind, Class<? extends Annotation>> toAnnotationType() {
+      return TO_ANNOTATION_TYPE;
+    }
+
+    private static final Function<Kind, Class<? extends Annotation>> TO_BUILDER_ANNOTATION_TYPE =
+        new Function<Kind, Class<? extends Annotation>>() {
+          @Override
+          public Class<? extends Annotation> apply(Kind kind) {
+            return kind.builderAnnotationType();
+          }
+        };
+
+    static Function<Kind, Class<? extends Annotation>> toBuilderAnnotationType() {
+      return TO_BUILDER_ANNOTATION_TYPE;
     }
   }
 
@@ -204,28 +278,72 @@ abstract class ComponentDescriptor {
     abstract ComponentMethodKind kind();
     abstract Optional<DependencyRequest> dependencyRequest();
     abstract ExecutableElement methodElement();
-    
+
     /**
-     * A predicate that passes for {@link ComponentMethodDescriptor}s of a given kind.
+     * A predicate that passes for {@link ComponentMethodDescriptor}s of one of the given kinds.
      */
-    static Predicate<ComponentMethodDescriptor> isOfKind(final ComponentMethodKind kind) {
+    static Predicate<ComponentMethodDescriptor> isOfKind(ComponentMethodKind... kinds) {
+      final ImmutableSet<ComponentMethodKind> kindSet = ImmutableSet.copyOf(kinds);
       return new Predicate<ComponentMethodDescriptor>() {
         @Override
         public boolean apply(ComponentMethodDescriptor descriptor) {
-          return kind.equals(descriptor.kind());
+          return kindSet.contains(descriptor.kind());
         }
       };
+    }
+
+    static ComponentMethodDescriptor create(
+        ComponentMethodKind kind,
+        Optional<DependencyRequest> dependencyRequest,
+        ExecutableElement methodElement) {
+      return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
+          kind, dependencyRequest, methodElement);
+    }
+
+    static ComponentMethodDescriptor forProvision(
+        ExecutableElement methodElement, DependencyRequest dependencyRequest) {
+      return create(ComponentMethodKind.PROVISION, Optional.of(dependencyRequest), methodElement);
+    }
+
+    static ComponentMethodDescriptor forMembersInjection(
+        ExecutableElement methodElement, DependencyRequest dependencyRequest) {
+      return create(
+          ComponentMethodKind.MEMBERS_INJECTION, Optional.of(dependencyRequest), methodElement);
+    }
+
+    static ComponentMethodDescriptor forSubcomponent(
+        ComponentMethodKind kind, ExecutableElement methodElement) {
+      return create(kind, Optional.<DependencyRequest>absent(), methodElement);
     }
   }
 
   enum ComponentMethodKind {
-    PROVISON,
+    PROVISION,
     PRODUCTION,
     MEMBERS_INJECTION,
     SUBCOMPONENT,
     SUBCOMPONENT_BUILDER,
+    PRODUCTION_SUBCOMPONENT,
+    PRODUCTION_SUBCOMPONENT_BUILDER;
+
+    /**
+     * Returns the component kind associated with this component method, if it exists. Otherwise,
+     * throws.
+     */
+    Kind componentKind() {
+      switch (this) {
+        case SUBCOMPONENT:
+        case SUBCOMPONENT_BUILDER:
+          return Kind.SUBCOMPONENT;
+        case PRODUCTION_SUBCOMPONENT:
+        case PRODUCTION_SUBCOMPONENT_BUILDER:
+          return Kind.PRODUCTION_SUBCOMPONENT;
+        default:
+          throw new IllegalStateException("no component associated with method " + this);
+      }
+    }
   }
-  
+
   @AutoValue
   static abstract class BuilderSpec {
     abstract TypeElement builderDefinitionType();
@@ -261,17 +379,16 @@ abstract class ComponentDescriptor {
           kind.isPresent() && kind.get().isTopLevel(),
           "%s must be annotated with @Component or @ProductionComponent",
           componentDefinitionType);
-      return create(componentDefinitionType, kind.get());
+      return create(componentDefinitionType, kind.get(), Optional.<Kind>absent());
     }
 
-    private ComponentDescriptor create(TypeElement componentDefinitionType, Kind kind) {
+    private ComponentDescriptor create(
+        TypeElement componentDefinitionType, Kind kind, Optional<Kind> parentKind) {
       DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
       AnnotationMirror componentMirror =
-          getAnnotationMirror(componentDefinitionType, kind.annotationType())
-              .or(getAnnotationMirror(componentDefinitionType, Subcomponent.class))
-              .get();
+          getAnnotationMirror(componentDefinitionType, kind.annotationType()).get();
       ImmutableSet<TypeElement> componentDependencyTypes =
-          isComponent(componentDefinitionType)
+          kind.isTopLevel()
               ? MoreTypes.asTypeElements(getComponentDependencies(componentMirror))
               : ImmutableSet.<TypeElement>of();
 
@@ -289,7 +406,7 @@ abstract class ComponentDescriptor {
       }
 
       Optional<TypeElement> executorDependency =
-          kind.equals(Kind.PRODUCTION_COMPONENT)
+          kind.equals(Kind.PRODUCTION_COMPONENT) || kind.equals(Kind.PRODUCTION_SUBCOMPONENT)
               ? Optional.of(elements.getTypeElement(Executor.class.getCanonicalName()))
               : Optional.<TypeElement>absent();
 
@@ -297,7 +414,11 @@ abstract class ComponentDescriptor {
       for (TypeMirror moduleIncludesType : getComponentModules(componentMirror)) {
         modules.add(moduleDescriptorFactory.create(MoreTypes.asTypeElement(moduleIncludesType)));
       }
-      if (kind.equals(Kind.PRODUCTION_COMPONENT)) {
+      if (kind.equals(Kind.PRODUCTION_COMPONENT)
+          || (kind.equals(Kind.PRODUCTION_SUBCOMPONENT)
+              && parentKind.isPresent()
+              && (parentKind.get().equals(Kind.COMPONENT)
+                  || parentKind.get().equals(Kind.SUBCOMPONENT)))) {
         modules.add(descriptorForMonitoringModule(componentDefinitionType));
       }
 
@@ -317,19 +438,23 @@ abstract class ComponentDescriptor {
         componentMethodsBuilder.add(componentMethodDescriptor);
         switch (componentMethodDescriptor.kind()) {
           case SUBCOMPONENT:
+          case PRODUCTION_SUBCOMPONENT:
             subcomponentDescriptors.put(
                 componentMethodDescriptor,
                 create(
                     MoreElements.asType(MoreTypes.asElement(resolvedMethod.getReturnType())),
-                    Kind.SUBCOMPONENT));
+                    componentMethodDescriptor.kind().componentKind(),
+                    Optional.of(kind)));
             break;
           case SUBCOMPONENT_BUILDER:
+          case PRODUCTION_SUBCOMPONENT_BUILDER:
             subcomponentDescriptors.put(
                 componentMethodDescriptor,
                 create(
                     MoreElements.asType(
                         MoreTypes.asElement(resolvedMethod.getReturnType()).getEnclosingElement()),
-                    Kind.SUBCOMPONENT));
+                    componentMethodDescriptor.kind().componentKind(),
+                    Optional.of(kind)));
             break;
           default: // nothing special to do for other methods.
         }
@@ -357,38 +482,39 @@ abstract class ComponentDescriptor {
           createBuilderSpec(builderType));
     }
 
-    private ComponentMethodDescriptor getDescriptorForComponentMethod(TypeElement componentElement,
-        Kind componentKind,
-        ExecutableElement componentMethod) {
-      ExecutableType resolvedComponentMethod = MoreTypes.asExecutable(types.asMemberOf(
-          MoreTypes.asDeclared(componentElement.asType()), componentMethod));
+    private ComponentMethodDescriptor getDescriptorForComponentMethod(
+        TypeElement componentElement, Kind componentKind, ExecutableElement componentMethod) {
+      ExecutableType resolvedComponentMethod =
+          MoreTypes.asExecutable(
+              types.asMemberOf(MoreTypes.asDeclared(componentElement.asType()), componentMethod));
       TypeMirror returnType = resolvedComponentMethod.getReturnType();
       if (returnType.getKind().equals(DECLARED)) {
         if (MoreTypes.isTypeOf(Provider.class, returnType)
             || MoreTypes.isTypeOf(Lazy.class, returnType)) {
-          return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-              ComponentMethodKind.PROVISON,
-              Optional.of(dependencyRequestFactory.forComponentProvisionMethod(componentMethod,
-                  resolvedComponentMethod)),
-              componentMethod);
+          return ComponentMethodDescriptor.forProvision(
+              componentMethod,
+              dependencyRequestFactory.forComponentProvisionMethod(
+                  componentMethod, resolvedComponentMethod));
         } else if (MoreTypes.isTypeOf(MembersInjector.class, returnType)) {
-          return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-              ComponentMethodKind.MEMBERS_INJECTION,
-              Optional.of(dependencyRequestFactory.forComponentMembersInjectionMethod(
-                  componentMethod,
-                  resolvedComponentMethod)),
-              componentMethod);
+          return ComponentMethodDescriptor.forMembersInjection(
+              componentMethod,
+              dependencyRequestFactory.forComponentMembersInjectionMethod(
+                  componentMethod, resolvedComponentMethod));
         } else if (isAnnotationPresent(MoreTypes.asElement(returnType), Subcomponent.class)) {
-          return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-              ComponentMethodKind.SUBCOMPONENT,
-              Optional.<DependencyRequest>absent(),
-              componentMethod);
-        } else if (isAnnotationPresent(MoreTypes.asElement(returnType),
-            Subcomponent.Builder.class)) {
-          return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-              ComponentMethodKind.SUBCOMPONENT_BUILDER,
-              Optional.<DependencyRequest>absent(),
-              componentMethod);
+          return ComponentMethodDescriptor.forSubcomponent(
+              ComponentMethodKind.SUBCOMPONENT, componentMethod);
+        } else if (isAnnotationPresent(
+            MoreTypes.asElement(returnType), ProductionSubcomponent.class)) {
+          return ComponentMethodDescriptor.forSubcomponent(
+              ComponentMethodKind.PRODUCTION_SUBCOMPONENT, componentMethod);
+        } else if (isAnnotationPresent(
+            MoreTypes.asElement(returnType), Subcomponent.Builder.class)) {
+          return ComponentMethodDescriptor.forSubcomponent(
+              ComponentMethodKind.SUBCOMPONENT_BUILDER, componentMethod);
+        } else if (isAnnotationPresent(
+            MoreTypes.asElement(returnType), ProductionSubcomponent.Builder.class)) {
+          return ComponentMethodDescriptor.forSubcomponent(
+              ComponentMethodKind.PRODUCTION_SUBCOMPONENT_BUILDER, componentMethod);
         }
       }
 
@@ -398,17 +524,16 @@ abstract class ComponentDescriptor {
         switch (componentKind) {
           case COMPONENT:
           case SUBCOMPONENT:
-            return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-                ComponentMethodKind.PROVISON,
-                Optional.of(dependencyRequestFactory.forComponentProvisionMethod(componentMethod,
-                    resolvedComponentMethod)),
-                componentMethod);
+            return ComponentMethodDescriptor.forProvision(
+                componentMethod,
+                dependencyRequestFactory.forComponentProvisionMethod(
+                    componentMethod, resolvedComponentMethod));
           case PRODUCTION_COMPONENT:
-            return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-                ComponentMethodKind.PRODUCTION,
-                Optional.of(dependencyRequestFactory.forComponentProductionMethod(componentMethod,
-                    resolvedComponentMethod)),
-                componentMethod);
+          case PRODUCTION_SUBCOMPONENT:
+            return ComponentMethodDescriptor.forProvision(
+                componentMethod,
+                dependencyRequestFactory.forComponentProductionMethod(
+                    componentMethod, resolvedComponentMethod));
           default:
             throw new AssertionError();
         }
@@ -418,12 +543,10 @@ abstract class ComponentDescriptor {
       if (parameterTypes.size() == 1
           && (returnType.getKind().equals(VOID)
               || MoreTypes.equivalence().equivalent(returnType, parameterTypes.get(0)))) {
-        return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-            ComponentMethodKind.MEMBERS_INJECTION,
-            Optional.of(dependencyRequestFactory.forComponentMembersInjectionMethod(
-                componentMethod,
-                resolvedComponentMethod)),
-            componentMethod);
+        return ComponentMethodDescriptor.forMembersInjection(
+            componentMethod,
+            dependencyRequestFactory.forComponentMembersInjectionMethod(
+                componentMethod, resolvedComponentMethod));
       }
 
       throw new IllegalArgumentException("not a valid component method: " + componentMethod);

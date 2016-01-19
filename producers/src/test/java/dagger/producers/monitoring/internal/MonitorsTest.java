@@ -121,11 +121,13 @@ public final class MonitorsTest {
     ProducerMonitor producerMonitor =
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitor);
+    order.verify(mockProducerMonitor).requested();
     order.verify(mockProducerMonitor).methodStarting();
     order.verify(mockProducerMonitor).methodFinished();
     order.verify(mockProducerMonitor).succeeded(o);
@@ -142,11 +144,13 @@ public final class MonitorsTest {
     ProducerMonitor producerMonitor =
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
     Throwable t = new RuntimeException("monkey");
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.failed(t);
 
     InOrder order = inOrder(mockProducerMonitor);
+    order.verify(mockProducerMonitor).requested();
     order.verify(mockProducerMonitor).methodStarting();
     order.verify(mockProducerMonitor).methodFinished();
     order.verify(mockProducerMonitor).failed(t);
@@ -156,6 +160,7 @@ public final class MonitorsTest {
   @Test
   public void singleMonitor_throwingProducerMonitorSuccess() {
     setUpNormalSingleMonitor();
+    doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).requested();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).methodStarting();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).methodFinished();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).succeeded(any(Object.class));
@@ -166,11 +171,13 @@ public final class MonitorsTest {
     ProducerMonitor producerMonitor =
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitor);
+    order.verify(mockProducerMonitor).requested();
     order.verify(mockProducerMonitor).methodStarting();
     order.verify(mockProducerMonitor).methodFinished();
     order.verify(mockProducerMonitor).succeeded(o);
@@ -180,6 +187,7 @@ public final class MonitorsTest {
   @Test
   public void singleMonitor_throwingProducerMonitorFailure() {
     setUpNormalSingleMonitor();
+    doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).requested();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).methodStarting();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).methodFinished();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitor).failed(any(Throwable.class));
@@ -190,11 +198,13 @@ public final class MonitorsTest {
     ProducerMonitor producerMonitor =
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
     Throwable t = new RuntimeException("gorilla");
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.failed(t);
 
     InOrder order = inOrder(mockProducerMonitor);
+    order.verify(mockProducerMonitor).requested();
     order.verify(mockProducerMonitor).methodStarting();
     order.verify(mockProducerMonitor).methodFinished();
     order.verify(mockProducerMonitor).failed(t);
@@ -254,11 +264,13 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitorA);
+    order.verify(mockProducerMonitorA).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorA).methodFinished();
     order.verify(mockProducerMonitorA).succeeded(o);
@@ -288,11 +300,13 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitorA);
+    order.verify(mockProducerMonitorA).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorA).methodFinished();
     order.verify(mockProducerMonitorA).succeeded(o);
@@ -313,11 +327,15 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitorA, mockProducerMonitorB, mockProducerMonitorC);
+    order.verify(mockProducerMonitorA).requested();
+    order.verify(mockProducerMonitorB).requested();
+    order.verify(mockProducerMonitorC).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorB).methodStarting();
     order.verify(mockProducerMonitorC).methodStarting();
@@ -344,11 +362,15 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Throwable t = new RuntimeException("chimpanzee");
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.failed(t);
 
     InOrder order = inOrder(mockProducerMonitorA, mockProducerMonitorB, mockProducerMonitorC);
+    order.verify(mockProducerMonitorA).requested();
+    order.verify(mockProducerMonitorB).requested();
+    order.verify(mockProducerMonitorC).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorB).methodStarting();
     order.verify(mockProducerMonitorC).methodStarting();
@@ -364,6 +386,7 @@ public final class MonitorsTest {
   @Test
   public void multipleMonitors_someThrowingProducerMonitorsSuccess() {
     setUpNormalMultipleMonitors();
+    doThrow(new RuntimeException("monkey")).when(mockProducerMonitorA).requested();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorA).methodStarting();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorB).methodFinished();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorC).succeeded(any(Object.class));
@@ -378,11 +401,15 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Object o = new Object();
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.succeeded(o);
 
     InOrder order = inOrder(mockProducerMonitorA, mockProducerMonitorB, mockProducerMonitorC);
+    order.verify(mockProducerMonitorA).requested();
+    order.verify(mockProducerMonitorB).requested();
+    order.verify(mockProducerMonitorC).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorB).methodStarting();
     order.verify(mockProducerMonitorC).methodStarting();
@@ -398,6 +425,7 @@ public final class MonitorsTest {
   @Test
   public void multipleMonitors_someThrowingProducerMonitorsFailure() {
     setUpNormalMultipleMonitors();
+    doThrow(new RuntimeException("monkey")).when(mockProducerMonitorA).requested();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorA).methodStarting();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorB).methodFinished();
     doThrow(new RuntimeException("monkey")).when(mockProducerMonitorC).failed(any(Throwable.class));
@@ -412,11 +440,15 @@ public final class MonitorsTest {
         monitor.producerMonitorFor(ProducerToken.create(Object.class));
 
     Throwable t = new RuntimeException("chimpanzee");
+    producerMonitor.requested();
     producerMonitor.methodStarting();
     producerMonitor.methodFinished();
     producerMonitor.failed(t);
 
     InOrder order = inOrder(mockProducerMonitorA, mockProducerMonitorB, mockProducerMonitorC);
+    order.verify(mockProducerMonitorA).requested();
+    order.verify(mockProducerMonitorB).requested();
+    order.verify(mockProducerMonitorC).requested();
     order.verify(mockProducerMonitorA).methodStarting();
     order.verify(mockProducerMonitorB).methodStarting();
     order.verify(mockProducerMonitorC).methodStarting();

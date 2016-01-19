@@ -15,10 +15,13 @@
  */
 package dagger.internal.codegen;
 
+import com.google.auto.common.MoreTypes;
+import dagger.Multibindings;
 import dagger.Provides;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * The collection of error messages to be reported back to users.
@@ -110,11 +113,15 @@ final class ErrorMessages {
   }
 
   static final String PROVIDES_METHOD_RETURN_TYPE =
-      "@Provides methods must either return a primitive, an array or a declared type.";
+      "@Provides methods must either return a primitive, an array, a type variable, or a declared"
+          + " type.";
+
+  static final String PROVIDES_METHOD_THROWS =
+      "@Provides methods may only throw unchecked exceptions";
 
   static final String PRODUCES_METHOD_RETURN_TYPE =
-      "@Produces methods must either return a primitive, an array or a declared type, or a"
-      + " ListenableFuture of one of those types.";
+      "@Produces methods must either return a primitive, an array, a type variable, or a declared"
+          + " type, or a ListenableFuture of one of those types.";
 
   static final String PRODUCES_METHOD_RAW_FUTURE =
       "@Produces methods cannot return a raw ListenableFuture.";
@@ -127,6 +134,9 @@ final class ErrorMessages {
 
   static final String PRODUCES_METHOD_SET_VALUES_RETURN_SET =
       "@Produces methods of type set values must return a Set or ListenableFuture of Set";
+
+  static final String PRODUCES_METHOD_THROWS =
+      "@Produces methods may only throw unchecked exceptions or exceptions subclassing Exception";
 
   static final String BINDING_METHOD_MUST_RETURN_A_VALUE =
       "@%s methods must return a value (not void).";
@@ -189,7 +199,7 @@ final class ErrorMessages {
       "More than one binding present of different types %s";
 
   static final String MULTIPLE_BINDING_TYPES_FOR_KEY_FORMAT =
-      "%s has incompatible bindings:\n";
+      "%s has incompatible bindings or declarations:\n";
 
   static final String PROVIDER_ENTRY_POINT_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT =
       "%s is a provision entry-point, which cannot depend on a production.";
@@ -209,6 +219,15 @@ final class ErrorMessages {
 
   static final String REQUIRES_PROVIDER_OR_PRODUCER_FORMAT =
       "%s cannot be provided without an @Provides- or @Produces-annotated method.";
+
+  private static final String PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT =
+      "%s may only be injected in @Produces methods.";
+
+  static String provisionMayNotDependOnProducerType(TypeMirror type) {
+    return String.format(
+        PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT,
+        MoreTypes.asTypeElement(type).getSimpleName());
+  }
 
   static final String MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION =
       "This type supports members injection but cannot be implicitly provided.";
@@ -245,6 +264,8 @@ final class ErrorMessages {
         return SubcomponentBuilderMessages.INSTANCE;
       case PRODUCTION_COMPONENT:
         return ProductionComponentBuilderMessages.INSTANCE;
+      case PRODUCTION_SUBCOMPONENT:
+        return ProductionSubcomponentBuilderMessages.INSTANCE;
       default:
         throw new IllegalStateException(kind.toString());
     }
@@ -385,6 +406,50 @@ final class ErrorMessages {
       return s.replaceAll("component", "production component")
           .replaceAll("Component", "ProductionComponent");
     }
+  }
+
+  static final class ProductionSubcomponentBuilderMessages extends ComponentBuilderMessages {
+    @SuppressWarnings("hiding")
+    static final ProductionSubcomponentBuilderMessages INSTANCE =
+        new ProductionSubcomponentBuilderMessages();
+
+    @Override
+    protected String process(String s) {
+      return s.replaceAll("component", "production subcomponent")
+          .replaceAll("Component", "ProductionSubcomponent");
+    }
+
+    String builderMethodRequiresNoArgs() {
+      return "Methods returning a @ProductionSubcomponent.Builder must have no arguments";
+    }
+
+    String moreThanOneRefToSubcomponent() {
+      return "Only one method can create a given production subcomponent. %s is created by: %s";
+    }
+  }
+
+  /** Error messages related to {@link Multibindings @Multibindings}. */
+  static final class MultibindingsMessages {
+    static final String MUST_BE_INTERFACE = "@Multibindings can be applied only to interfaces";
+
+    static final String MUST_NOT_HAVE_TYPE_PARAMETERS =
+        "@Multibindings types must not have type parameters";
+
+    static final String MUST_BE_IN_MODULE =
+        "@Multibindings types must be nested within a @Module or @ProducerModule";
+
+    static final String METHOD_MUST_RETURN_MAP_OR_SET =
+        "@Multibindings methods must return Map<K, V> or Set<T>";
+
+    static final String TOO_MANY_QUALIFIERS =
+        "Cannot use more than one @Qualifier on a method in an @Multibindings type";
+
+    static String tooManyMethodsForKey(String formattedKey) {
+      return String.format(
+          "Too many @Multibindings methods for %s", stripCommonTypePrefixes(formattedKey));
+    }
+
+    private MultibindingsMessages() {}
   }
 
   /**

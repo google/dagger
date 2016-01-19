@@ -29,6 +29,7 @@ import static dagger.internal.codegen.ErrorMessages.GENERIC_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_QUALIFIERS;
 import static dagger.internal.codegen.ErrorMessages.PRIVATE_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_METHOD;
+import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -75,6 +76,9 @@ final class InjectMethodValidator {
         for (AnnotationMirror qualifier : qualifiers) {
           builder.addError(MULTIPLE_QUALIFIERS, methodElement, qualifier);
         }
+      }
+      if (FrameworkTypes.isProducerType(parameter.asType())) {
+        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
       }
     }
 

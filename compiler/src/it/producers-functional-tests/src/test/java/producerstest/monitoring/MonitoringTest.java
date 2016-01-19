@@ -84,6 +84,9 @@ public final class MonitoringTest {
     ProducerMonitor requestDataMonitor = entries.get(2).getValue();
 
     InOrder inOrder = inOrder(requestDataMonitor, callServer1Monitor, callServer2Monitor);
+    inOrder.verify(callServer2Monitor).requested();
+    inOrder.verify(callServer1Monitor).requested();
+    inOrder.verify(requestDataMonitor).requested();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");
@@ -124,6 +127,9 @@ public final class MonitoringTest {
     ProducerMonitor requestDataMonitor = entries.get(2).getValue();
 
     InOrder inOrder = inOrder(requestDataMonitor, callServer1Monitor, callServer2Monitor);
+    inOrder.verify(callServer2Monitor).requested();
+    inOrder.verify(callServer1Monitor).requested();
+    inOrder.verify(requestDataMonitor).requested();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");

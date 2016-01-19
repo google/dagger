@@ -20,6 +20,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -53,20 +54,34 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 /**
- * Represents the full members injection of a particular type. This does not pay attention to
- * injected members on supertypes.
+ * Represents the full members injection of a particular type.
  *
  * @author Gregory Kick
  * @since 2.0
  */
 @AutoValue
 abstract class MembersInjectionBinding extends Binding {
-  @Override abstract TypeElement bindingElement();
-        
+  @Override
+  abstract Optional<MembersInjectionBinding> unresolved();
+
+  @Override
+  TypeElement bindingElement() {
+    return MoreElements.asType(super.bindingElement());
+  }
+
+  @Override
+  Set<DependencyRequest> implicitDependencies() {
+    return dependencies();
+  }
+
   /** The set of individual sites where {@link Inject} is applied. */
   abstract ImmutableSortedSet<InjectionSite> injectionSites();
 
-  abstract Optional<DependencyRequest> parentInjectorRequest();
+  /**
+   * The {@link Key} for the non-object superclass of {@link #bindingElement()}. Absent if
+   * {@link #bindingElement()} is a direct subclass of {@link Object}. 
+   */
+  abstract Optional<Key> parentKey();
 
   enum Strategy {
     NO_OP,
@@ -77,21 +92,23 @@ abstract class MembersInjectionBinding extends Binding {
     return injectionSites().isEmpty() ? Strategy.NO_OP : Strategy.INJECT_MEMBERS;
   }
 
-  MembersInjectionBinding withoutParentInjectorRequest() {
-    return new AutoValue_MembersInjectionBinding(
-          key(),
-          dependencies(),
-          implicitDependencies(),
-          bindingPackage(),
-          hasNonDefaultTypeParameters(),
-          bindingElement(),
-          injectionSites(),
-          Optional.<DependencyRequest>absent());
+  @Override
+  public BindingType bindingType() {
+    return BindingType.MEMBERS_INJECTION;
   }
 
-  @Override
-  protected Binding.Type bindingType() {
-    return Binding.Type.MEMBERS_INJECTION;
+  /**
+   * Returns {@code true} if any of this binding's injection sites are directly on the bound type.
+   */
+  boolean hasLocalInjectionSites() {
+    return FluentIterable.from(injectionSites())
+        .anyMatch(
+            new Predicate<InjectionSite>() {
+              @Override
+              public boolean apply(InjectionSite injectionSite) {
+                return injectionSite.element().getEnclosingElement().equals(bindingElement());
+              }
+            });
   }
 
   @AutoValue
@@ -157,13 +174,6 @@ abstract class MembersInjectionBinding extends Binding {
                   containingType, fieldElement, resolved)));
     }
 
-    /** Returns an unresolved version of this binding. */
-    MembersInjectionBinding unresolve(MembersInjectionBinding binding) {
-      checkState(binding.hasNonDefaultTypeParameters());
-      DeclaredType unresolved = MoreTypes.asDeclared(binding.bindingElement().asType());
-      return forInjectedType(unresolved, Optional.<TypeMirror>absent());
-    }
-
     /** Returns true if the type has some injected members in itself or any of its super classes. */
     boolean hasInjectedMembers(DeclaredType declaredType) {
       return !getInjectionSites(declaredType).isEmpty();
@@ -199,27 +209,30 @@ abstract class MembersInjectionBinding extends Binding {
                   })
               .toSet();
 
-      Optional<DependencyRequest> parentInjectorRequest =
+      Optional<Key> parentKey =
           MoreTypes.nonObjectSuperclass(types, elements, declaredType)
               .transform(
-                  new Function<DeclaredType, DependencyRequest>() {
+                  new Function<DeclaredType, Key>() {
                     @Override
-                    public DependencyRequest apply(DeclaredType input) {
-                      return dependencyRequestFactory.forMembersInjectedType(input);
+                    public Key apply(DeclaredType superclass) {
+                      return keyFactory.forMembersInjectedType(superclass);
                     }
                   });
 
       Key key = keyFactory.forMembersInjectedType(declaredType);
       TypeElement typeElement = MoreElements.asType(declaredType.asElement());
       return new AutoValue_MembersInjectionBinding(
+          SourceElement.forElement(typeElement),
           key,
           dependencies,
-          dependencies,
           findBindingPackage(key),
-          hasNonDefaultTypeParameters(typeElement, key.type(), types),
-          typeElement,
+          hasNonDefaultTypeParameters(typeElement, key.type(), types)
+              ? Optional.of(
+                  forInjectedType(
+                      MoreTypes.asDeclared(typeElement.asType()), Optional.<TypeMirror>absent()))
+              : Optional.<MembersInjectionBinding>absent(),
           injectionSites,
-          parentInjectorRequest);
+          parentKey);
     }
 
     private ImmutableSortedSet<InjectionSite> getInjectionSites(DeclaredType declaredType) {

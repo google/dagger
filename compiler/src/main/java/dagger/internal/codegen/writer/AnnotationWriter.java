@@ -20,6 +20,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
@@ -59,12 +60,17 @@ public final class AnnotationWriter implements Writable, HasClassReferences {
     annotationName.write(appendable, context);
     if (!memberMap.isEmpty()) {
       appendable.append('(');
-      if (memberMap.size() == 1) {
-        Entry<String, Writable> onlyEntry = Iterables.getOnlyElement(memberMap.entrySet());
-        if (!onlyEntry.getKey().equals("value")) {
-          appendable.append(onlyEntry.getKey()).append(" = ");
+      boolean singleEntry = memberMap.size() == 1;
+      Iterator<Entry<String, Writable>> iterator = memberMap.entrySet().iterator();
+      while (iterator.hasNext()) {
+        Entry<String, Writable> member = iterator.next();
+        if (!singleEntry || !member.getKey().equals("value")) {
+          appendable.append(member.getKey()).append(" = ");
         }
-        onlyEntry.getValue().write(appendable, context);
+        member.getValue().write(appendable, context);
+        if (iterator.hasNext()) {
+          appendable.append(",");
+        }
       }
       appendable.append(')');
     }

@@ -15,16 +15,11 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import dagger.Component;
 import dagger.internal.codegen.writer.ClassName;
-import dagger.internal.codegen.writer.ClassWriter;
-import dagger.internal.codegen.writer.FieldWriter;
 import dagger.internal.codegen.writer.JavaWriter;
-import dagger.internal.codegen.writer.Snippet;
-import dagger.internal.codegen.writer.TypeName;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
@@ -37,7 +32,7 @@ import javax.tools.Diagnostic;
  * @author Gregory Kick
  * @since 2.0
  */
-final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
+final class ComponentGenerator extends JavaWriterSourceFileGenerator<BindingGraph> {
   private final Types types;
   private final Elements elements;
   private final Key.Factory keyFactory;
@@ -49,7 +44,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       Types types,
       Key.Factory keyFactory,
       Diagnostic.Kind nullableValidationType) {
-    super(filer);
+    super(filer, elements);
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
@@ -72,50 +67,6 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   @Override
   Optional<? extends Element> getElementForErrorReporting(BindingGraph input) {
     return Optional.of(input.componentDescriptor().componentDefinitionType());
-  }
-
-  @AutoValue static abstract class MemberSelect {
-    static MemberSelect instanceSelect(ClassName owningClass, Snippet snippet) {
-      return new AutoValue_ComponentGenerator_MemberSelect(
-          Optional.<TypeName> absent(), owningClass, false, snippet);
-    }
-
-    static MemberSelect staticSelect(ClassName owningClass, Snippet snippet) {
-      return new AutoValue_ComponentGenerator_MemberSelect(
-          Optional.<TypeName> absent(), owningClass, true, snippet);
-    }
-
-    static MemberSelect staticMethodInvocationWithCast(
-        ClassName owningClass, Snippet snippet, TypeName castType) {
-      return new AutoValue_ComponentGenerator_MemberSelect(
-          Optional.of(castType), owningClass, true, snippet);
-    }
-
-    /**
-     * This exists only to facilitate edge cases in which we need to select a member, but that
-     * member uses a type parameter that can't be inferred.
-     */
-    abstract Optional<TypeName> selectedCast();
-    abstract ClassName owningClass();
-    abstract boolean staticMember();
-    abstract Snippet snippet();
-
-    private Snippet qualifiedSelectSnippet() {
-      return Snippet.format(
-          "%s" + (staticMember() ? "" : ".this") + ".%s",
-          owningClass(), snippet());
-    }
-
-    Snippet getSnippetWithRawTypeCastFor(ClassName usingClass) {
-      Snippet snippet = getSnippetFor(usingClass);
-      return selectedCast().isPresent()
-          ? Snippet.format("(%s) %s", selectedCast().get(), snippet)
-          : snippet;
-    }
-
-    Snippet getSnippetFor(ClassName usingClass) {
-      return owningClass().equals(usingClass) ? snippet() : qualifiedSelectSnippet();
-    }
   }
 
   @Override

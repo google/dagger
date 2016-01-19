@@ -154,6 +154,47 @@ public class MultibindingTest {
   @Test public void complexQualifierSet() {
     assertThat(multibindingComponent.complexQualifierStringSet()).containsExactly("foo");
   }
+  
+  @Test
+  public void emptySet() {
+    assertThat(multibindingComponent.emptySet()).isEmpty();
+  }
+
+  @Test
+  public void emptyQualifiedSet() {
+    assertThat(multibindingComponent.emptyQualifiedSet()).isEmpty();
+  }
+
+  @Test
+  public void emptyMap() {
+    assertThat(multibindingComponent.emptyMap()).isEmpty();
+  }
+
+  @Test
+  public void emptyQualifiedMap() {
+    assertThat(multibindingComponent.emptyQualifiedMap()).isEmpty();
+  }
+
+  @Test
+  public void maybeEmptySet() {
+    assertThat(multibindingComponent.maybeEmptySet()).containsExactly("foo");
+  }
+
+  @Test
+  public void maybeEmptyQualifiedSet() {
+    assertThat(multibindingComponent.maybeEmptyQualifiedSet()).containsExactly("qualified foo");
+  }
+
+  @Test
+  public void maybeEmptyMap() {
+    assertThat(multibindingComponent.maybeEmptyMap()).containsEntry("key", "foo value");
+  }
+
+  @Test
+  public void maybeEmptyQualifiedMap() {
+    assertThat(multibindingComponent.maybeEmptyQualifiedMap())
+        .containsEntry("key", "qualified foo value");
+  }
 
   @AutoAnnotation
   static StringKey testStringKey(String value) {

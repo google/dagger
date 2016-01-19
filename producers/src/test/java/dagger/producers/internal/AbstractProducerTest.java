@@ -94,6 +94,7 @@ public class AbstractProducerTest {
 
     ListenableFuture<Integer> future = producer.get();
     assertThat(future.isDone()).isFalse();
+    verify(monitor).requested();
     verify(monitor).addCallbackTo(any(ListenableFuture.class));
     delegateFuture.set(-42);
     assertThat(future.get()).isEqualTo(-42);
@@ -108,6 +109,7 @@ public class AbstractProducerTest {
 
     ListenableFuture<Integer> future = producer.get();
     assertThat(future.isDone()).isFalse();
+    verify(monitor).requested();
     verify(monitor).addCallbackTo(any(ListenableFuture.class));
     Throwable t = new RuntimeException("monkey");
     delegateFuture.setException(t);

@@ -17,8 +17,11 @@ package producerstest;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Produced;
+import dagger.producers.Producer;
 import dagger.producers.ProductionComponent;
+import java.util.Map;
 import java.util.Set;
+import producerstest.MultibindingProducerModule.PossiblyThrowingMap;
 import producerstest.MultibindingProducerModule.PossiblyThrowingSet;
 
 @ProductionComponent(modules = MultibindingProducerModule.class)
@@ -30,4 +33,14 @@ interface MultibindingComponent {
 
   @PossiblyThrowingSet
   ListenableFuture<Set<Produced<String>>> possiblyThrowingSet();
+
+  ListenableFuture<Map<Integer, String>> map();
+
+  ListenableFuture<Map<Integer, Producer<String>>> mapOfProducers();
+
+  @PossiblyThrowingMap
+  ListenableFuture<Map<Integer, String>> possiblyThrowingMap();
+
+  @PossiblyThrowingMap
+  ListenableFuture<Map<Integer, Producer<String>>> possiblyThrowingMapOfProducers();
 }

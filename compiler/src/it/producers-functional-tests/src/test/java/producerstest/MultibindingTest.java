@@ -16,9 +16,12 @@
 package producerstest;
 
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import dagger.producers.Produced;
+import dagger.producers.Producer;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
@@ -26,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
 @RunWith(JUnit4.class)
 public class MultibindingTest {
@@ -69,5 +73,58 @@ public class MultibindingTest {
     assertThat(successes).containsExactly("singleton", "double", "ton");
     assertThat(failures).hasSize(1);
     assertThat(Iterables.getOnlyElement(failures).getCause()).hasMessage("monkey");
+  }
+
+  @Test
+  public void mapBinding() throws Exception {
+    MultibindingComponent multibindingComponent =
+        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    Map<Integer, String> map = multibindingComponent.map().get();
+    assertThat(map).hasSize(2);
+    assertThat(map).containsEntry(15, "fifteen");
+    assertThat(map).containsEntry(42, "forty two");
+  }
+
+  @Test
+  public void mapOfProducerBinding() throws Exception {
+    MultibindingComponent multibindingComponent =
+        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    Map<Integer, Producer<String>> map = multibindingComponent.mapOfProducers().get();
+    assertThat(map).hasSize(2);
+    assertThat(map).containsKey(15);
+    assertThat(map.get(15).get().get()).isEqualTo("fifteen");
+    assertThat(map).containsKey(42);
+    assertThat(map.get(42).get().get()).isEqualTo("forty two");
+  }
+
+  @Test
+  public void mapBindingWithFailures() throws Exception {
+    MultibindingComponent multibindingComponent =
+        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    try {
+      multibindingComponent.possiblyThrowingMap().get();
+      fail();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).hasMessage("monkey");
+    }
+  }
+
+  @Test
+  public void mapOfProducerBindingWithFailures() throws Exception {
+    MultibindingComponent multibindingComponent =
+        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    Map<Integer, Producer<String>> map =
+        multibindingComponent.possiblyThrowingMapOfProducers().get();
+    assertThat(map).hasSize(2);
+    assertThat(map).containsKey(42);
+    assertThat(map.get(42).get().get()).isEqualTo("forty two");
+    assertThat(map).containsKey(15);
+    ListenableFuture<String> future = map.get(15).get();
+    try {
+      future.get();
+      fail();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).hasMessage("monkey");
+    }
   }
 }

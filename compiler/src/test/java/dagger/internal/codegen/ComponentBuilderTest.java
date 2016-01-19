@@ -25,6 +25,7 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 /** Tests for {@link dagger.Component.Builder} */
 @RunWith(JUnit4.class)
@@ -66,7 +67,7 @@ public class ComponentBuilderTest {
         "import javax.annotation.Generated;",
         "import test.SimpleComponent",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private DaggerSimpleComponent(Builder builder) {",
         "    assert builder != null;",
@@ -139,7 +140,7 @@ public class ComponentBuilderTest {
         "import javax.inject.Provider;",
         "import test.TestComponent;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<String> stringProvider;",
         "",
@@ -241,7 +242,7 @@ public class ComponentBuilderTest {
         "import javax.inject.Provider;",
         "import test.TestComponent;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<String> stringProvider;",
         "  private Provider<Integer> integerProvider;",

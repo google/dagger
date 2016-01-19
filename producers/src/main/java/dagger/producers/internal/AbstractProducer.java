@@ -60,6 +60,7 @@ public abstract class AbstractProducer<T> implements Producer<T> {
         result = instance;
         if (result == null) {
           ProducerMonitor monitor = monitorProvider.get().producerMonitorFor(token);
+          monitor.requested();
           instance = result = compute(monitor);
           if (result == null) {
             throw new NullPointerException("compute returned null");

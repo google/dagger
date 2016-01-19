@@ -20,29 +20,28 @@ import com.google.auto.value.AutoAnnotation;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import dagger.MapKey;
 import dagger.internal.codegen.MapKeyGenerator.MapKeyCreatorSpecification;
-import dagger.internal.codegen.writer.ClassName;
-import dagger.internal.codegen.writer.JavaWriter;
-import dagger.internal.codegen.writer.MethodWriter;
-import dagger.internal.codegen.writer.Snippet;
-import dagger.internal.codegen.writer.TypeName;
-import dagger.internal.codegen.writer.TypeNames;
-import dagger.internal.codegen.writer.TypeWriter;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
 
-import static dagger.internal.codegen.MapKeys.getMapKeyCreatorClassName;
-import static dagger.internal.codegen.writer.Snippet.makeParametersSnippet;
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.MapKeys.getJavapoetMapKeyCreatorClassName;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -53,7 +52,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
  *
  * @since 2.0
  */
-final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecification> {
+final class MapKeyGenerator extends JavaPoetSourceFileGenerator<MapKeyCreatorSpecification> {
 
   /**
    * Specification of the {@link MapKey} annotation and the annotation type to generate.
@@ -90,18 +89,13 @@ final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecificati
     }
   }
 
-  MapKeyGenerator(Filer filer) {
-    super(filer);
+  MapKeyGenerator(Filer filer, Elements elements) {
+    super(filer, elements);
   }
 
   @Override
   ClassName nameGeneratedType(MapKeyCreatorSpecification mapKeyCreatorType) {
-    return getMapKeyCreatorClassName(mapKeyCreatorType.mapKeyElement());
-  }
-
-  @Override
-  Iterable<? extends Element> getOriginatingElements(MapKeyCreatorSpecification mapKeyCreatorType) {
-    return ImmutableSet.of(mapKeyCreatorType.mapKeyElement());
+    return getJavapoetMapKeyCreatorClassName(mapKeyCreatorType.mapKeyElement());
   }
 
   @Override
@@ -111,41 +105,41 @@ final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecificati
   }
 
   @Override
-  ImmutableSet<JavaWriter> write(
+  Optional<TypeSpec.Builder> write(
       ClassName generatedTypeName, MapKeyCreatorSpecification mapKeyCreatorType) {
-    JavaWriter writer = JavaWriter.inPackage(generatedTypeName.packageName());
-    TypeWriter mapKeyCreatorWriter = writer.addClass(generatedTypeName.simpleName());
-    mapKeyCreatorWriter.annotate(Generated.class).setValue(ComponentProcessor.class.getName());
-    mapKeyCreatorWriter.addModifiers(PUBLIC, FINAL);
+    TypeSpec.Builder mapKeyCreatorBuilder =
+        classBuilder(generatedTypeName.simpleName()).addModifiers(PUBLIC, FINAL);
 
     for (TypeElement annotationElement :
         nestedAnnotationElements(mapKeyCreatorType.annotationElement())) {
-      writeCreateMethod(mapKeyCreatorWriter, annotationElement);
+      mapKeyCreatorBuilder.addMethod(buildCreateMethod(generatedTypeName, annotationElement));
     }
 
-    return ImmutableSet.of(writer);
+    return Optional.of(mapKeyCreatorBuilder);
   }
 
-  private void writeCreateMethod(TypeWriter mapKeyCreatorWriter, TypeElement annotationElement) {
-    MethodWriter createMethod =
-        mapKeyCreatorWriter.addMethod(
-            annotationElement.asType(), "create" + annotationElement.getSimpleName());
+  private MethodSpec buildCreateMethod(
+      ClassName mapKeyGeneratedTypeName, TypeElement annotationElement) {
+    String createMethodName = "create" + annotationElement.getSimpleName();
+    MethodSpec.Builder createMethod =
+        methodBuilder(createMethodName)
+            .addAnnotation(AutoAnnotation.class)
+            .addModifiers(PUBLIC, STATIC)
+            .returns(TypeName.get(annotationElement.asType()));
 
-    createMethod.annotate(AutoAnnotation.class);
-    createMethod.addModifiers(PUBLIC, STATIC);
-
-    ImmutableList.Builder<Snippet> parameters = ImmutableList.builder();
+    ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (ExecutableElement annotationMember : methodsIn(annotationElement.getEnclosedElements())) {
       String parameterName = annotationMember.getSimpleName().toString();
-      TypeName parameterType = TypeNames.forTypeMirror(annotationMember.getReturnType());
+      TypeName parameterType = TypeName.get(annotationMember.getReturnType());
       createMethod.addParameter(parameterType, parameterName);
-      parameters.add(Snippet.format("%s", parameterName));
+      parameters.add(CodeBlocks.format("$L", parameterName));
     }
 
-    ClassName autoAnnotationClass = mapKeyCreatorWriter.name().peerNamed(
-        "AutoAnnotation_" + mapKeyCreatorWriter.name().simpleName() + "_" + createMethod.name());
-    createMethod.body().addSnippet(
-        "return new %s(%s);", autoAnnotationClass, makeParametersSnippet(parameters.build()));
+    ClassName autoAnnotationClass = mapKeyGeneratedTypeName.peerClass(
+        "AutoAnnotation_" + mapKeyGeneratedTypeName.simpleName() + "_" + createMethodName);
+    createMethod.addStatement(
+        "return new $T($L)", autoAnnotationClass, makeParametersCodeBlock(parameters.build()));
+    return createMethod.build();
   }
 
   private static Set<TypeElement> nestedAnnotationElements(TypeElement annotationElement) {

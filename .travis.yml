@@ -20,9 +20,9 @@ before_install:
   - export PATH=$M2_HOME/bin:$PATH
   - mvn --version
 
-install: mvn -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
+install: mvn -B -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
 
-script: mvn -P!standard-with-extra-repos -U verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
+script: mvn -B -P!standard-with-extra-repos -U verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
 
 notifications:
   email: dagger-firehose@googlegroups.com

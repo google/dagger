@@ -39,10 +39,12 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleTypeVisitor7;
 
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -71,26 +73,43 @@ abstract class DependencyRequest {
   enum Kind {
     /** A default request for an instance.  E.g.: {@code Blah} */
     INSTANCE,
+    
     /** A request for a {@link Provider}.  E.g.: {@code Provider<Blah>} */
-    PROVIDER,
+    PROVIDER(Provider.class),
+    
     /** A request for a {@link Lazy}.  E.g.: {@code Lazy<Blah>} */
-    LAZY,
+    LAZY(Lazy.class),
+    
     /** A request for a {@link MembersInjector}.  E.g.: {@code MembersInjector<Blah>} */
-    MEMBERS_INJECTOR,
+    MEMBERS_INJECTOR(MembersInjector.class),
+    
     /** A request for a {@link Producer}.  E.g.: {@code Producer<Blah>} */
-    PRODUCER,
+    PRODUCER(Producer.class),
+    
     /** A request for a {@link Produced}.  E.g.: {@code Produced<Blah>} */
-    PRODUCED,
+    PRODUCED(Produced.class),
+    
     /**
      * A request for a {@link ListenableFuture}.  E.g.: {@code ListenableFuture<Blah>}.
      * These can only be requested by component interfaces.
      */
     FUTURE,
+    ;
+
+    final Optional<Class<?>> frameworkClass;
+
+    Kind(Class<?> frameworkClass) {
+      this.frameworkClass = Optional.<Class<?>>of(frameworkClass);
+    }
+
+    Kind() {
+      this.frameworkClass = Optional.absent();
+    }
   }
 
   abstract Kind kind();
   abstract Key key();
-
+  
   BindingKey bindingKey() {
     switch (kind()) {
       case INSTANCE:
@@ -329,40 +348,44 @@ abstract class DependencyRequest {
     }
 
     /**
-     * Extracts the correct requesting type & kind out a request type. For example, if a user
-     * requests {@code Provider<Foo>}, this will return ({@link Kind#PROVIDER}, {@code Foo}).
+     * Extracts the dependency request type and kind from the type of a dependency request element.
+     * For example, if a user requests {@code Provider<Foo>}, this will return
+     * ({@link Kind#PROVIDER}, {@code Foo}).
      *
      * @throws TypeNotPresentException if {@code type}'s kind is {@link TypeKind#ERROR}, which may
      *     mean that the type will be generated in a later round of processing
      */
     static KindAndType extractKindAndType(TypeMirror type) {
-      if (type.getKind().equals(TypeKind.ERROR)) {
-        throw new TypeNotPresentException(type.toString(), null);
-      }
+      return type.accept(
+          new SimpleTypeVisitor7<KindAndType, Void>() {
+            @Override
+            public KindAndType visitError(ErrorType errorType, Void p) {
+              throw new TypeNotPresentException(errorType.toString(), null);
+            }
 
-      // We must check TYPEVAR explicitly before the below checks because calling
-      // isTypeOf(..) on a TYPEVAR throws an exception (because it can't be
-      // represented as a Class).
-      if (type.getKind().equals(TypeKind.TYPEVAR)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.INSTANCE, type);
-      } else if (isTypeOf(Provider.class, type)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.PROVIDER,
-            Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments()));
-      } else if (isTypeOf(Lazy.class, type)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.LAZY,
-            Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments()));
-      } else if (isTypeOf(MembersInjector.class, type)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.MEMBERS_INJECTOR,
-            Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments()));
-      } else if (isTypeOf(Producer.class, type)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.PRODUCER,
-            Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments()));
-      } else if (isTypeOf(Produced.class, type)) {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.PRODUCED,
-            Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments()));
-      } else {
-        return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.INSTANCE, type);
-      }
+            @Override
+            public KindAndType visitExecutable(ExecutableType executableType, Void p) {
+              return executableType.getReturnType().accept(this, null);
+            }
+
+            @Override
+            public KindAndType visitDeclared(DeclaredType declaredType, Void p) {
+              for (Kind kind : Kind.values()) {
+                if (kind.frameworkClass.isPresent()
+                    && isTypeOf(kind.frameworkClass.get(), declaredType)) {
+                  return new AutoValue_DependencyRequest_Factory_KindAndType(
+                      kind, Iterables.getOnlyElement(declaredType.getTypeArguments()));
+                }
+              }
+              return defaultAction(declaredType, p);
+            }
+
+            @Override
+            protected KindAndType defaultAction(TypeMirror otherType, Void p) {
+              return new AutoValue_DependencyRequest_Factory_KindAndType(Kind.INSTANCE, otherType);
+            }
+          },
+          null);
     }
 
     static DeclaredType getEnclosingType(Element element) {

@@ -111,6 +111,15 @@ public final class Monitors {
     }
 
     @Override
+    public void requested() {
+      try {
+        delegate.requested();
+      } catch (RuntimeException e) {
+        logProducerMonitorMethodException(e, delegate, "requested");
+      }
+    }
+
+    @Override
     public void methodStarting() {
       try {
         delegate.methodStarting();
@@ -223,6 +232,17 @@ public final class Monitors {
 
     DelegatingProducerMonitor(ImmutableList<ProducerMonitor> delegates) {
       this.delegates = delegates;
+    }
+
+    @Override
+    public void requested() {
+      for (ProducerMonitor delegate : delegates) {
+        try {
+          delegate.requested();
+        } catch (RuntimeException e) {
+          logProducerMonitorMethodException(e, delegate, "requested");
+        }
+      }
     }
 
     @Override

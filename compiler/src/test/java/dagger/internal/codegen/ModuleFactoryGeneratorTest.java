@@ -36,7 +36,9 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAM
 import static dagger.internal.codegen.ErrorMessages.MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_THROWS;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION_JAVAPOET;
 
 @RunWith(JUnit4.class)
 public class ModuleFactoryGeneratorTest {
@@ -372,7 +374,7 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideStringFactory implements Factory<String> {",
         "  private final TestModule module;",
         "",
@@ -418,7 +420,7 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideStringFactory implements Factory<String> {",
         "  private final TestModule module;",
         "",
@@ -459,7 +461,7 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideStringFactory implements Factory<String> {",
         "  private final TestModule module;",
         "",
@@ -543,7 +545,7 @@ public class ModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideObjectsFactory implements Factory<List<Object>> {",
         "  private final TestModule module;",
         "  private final Provider<Object> aProvider;",
@@ -614,7 +616,7 @@ public class ModuleFactoryGeneratorTest {
         "import java.util.Set;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideStringFactory implements Factory<Set<String>> {",
         "  private final TestModule module;",
         "",
@@ -665,7 +667,7 @@ public class ModuleFactoryGeneratorTest {
         "import java.util.Set;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideWildcardListFactory implements "
             + "Factory<Set<List<List<?>>>> {",
         "  private final TestModule module;",
@@ -712,7 +714,7 @@ public class ModuleFactoryGeneratorTest {
         "import java.util.Set;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class TestModule_ProvideStringsFactory implements Factory<Set<String>> {",
         "  private final TestModule module;",
         "",
@@ -762,6 +764,39 @@ public class ModuleFactoryGeneratorTest {
     .withErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME)).in(moduleFile).onLine(8)
         .and().withErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME))
         .in(moduleFile).onLine(12);
+  }
+
+  @Test
+  public void producesMethodThrowsChecked() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides int i() throws Exception {",
+            "    return 0;",
+            "  }",
+            "",
+            "  @Provides String s() throws Throwable {",
+            "    return \"\";",
+            "  }",
+            "}");
+    assertAbout(javaSource())
+        .that(moduleFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(formatErrorMessage(PROVIDES_METHOD_THROWS))
+        .in(moduleFile)
+        .onLine(8)
+        .and()
+        .withErrorContaining(formatErrorMessage(PROVIDES_METHOD_THROWS))
+        .in(moduleFile)
+        .onLine(12);
   }
 
   @Test
@@ -895,24 +930,38 @@ public class ModuleFactoryGeneratorTest {
 
   @Test
   public void genericSubclassedModule() {
-    JavaFileObject parent = JavaFileObjects.forSourceLines("test.ParentModule",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import java.util.List;",
-        "import java.util.ArrayList;",
-        "",
-        "@Module",
-        "abstract class ParentModule<A extends CharSequence,",
-        "                            B,",
-        "                            C extends Number & Comparable<C>> {",
-        "  @Provides List<B> provideListB(B b) {",
-        "    List<B> list = new ArrayList<B>();",
-        "    list.add(b);",
-        "    return list;",
-        "  }",
-        "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.mapkeys.StringKey;",
+            "import java.util.List;",
+            "import java.util.ArrayList;",
+            "",
+            "import static dagger.Provides.Type.MAP;",
+            "import static dagger.Provides.Type.SET;",
+            "",
+            "@Module",
+            "abstract class ParentModule<A extends CharSequence,",
+            "                            B,",
+            "                            C extends Number & Comparable<C>> {",
+            "  @Provides List<B> provideListB(B b) {",
+            "    List<B> list = new ArrayList<B>();",
+            "    list.add(b);",
+            "    return list;",
+            "  }",
+            "",
+            "  @Provides(type = SET) B provideBElement(B b) {",
+            "    return b;",
+            "  }",
+            "",
+            "  @Provides(type = MAP) @StringKey(\"b\") B provideBEntry(B b) {",
+            "    return b;",
+            "  }",
+            "}");
     JavaFileObject numberChild = JavaFileObjects.forSourceLines("test.ChildNumberModule",
         "package test;",
         "",
@@ -944,43 +993,116 @@ public class ModuleFactoryGeneratorTest {
         "  List<Number> numberList();",
         "  List<Integer> integerList();",
         "}");
-    JavaFileObject listBFactory = JavaFileObjects.forSourceLines(
-        "test.ParentModule_ProvidesListBFactory",
-        "package test;",
-        "",
-        "import dagger.internal.Factory;",
-        "import java.util.List;",
-        "import javax.annotation.Generated;",
-        "import javax.inject.Provider;",
-        "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class ParentModule_ProvideListBFactory<A extends CharSequence,",
-        "    B, C extends Number & Comparable<C>> implements Factory<List<B>> {",
-        "  private final ParentModule<A, B, C> module;",
-        "  private final Provider<B> bProvider;",
-        "",
-        "  public ParentModule_ProvideListBFactory(",
-        "        ParentModule<A, B, C> module, Provider<B> bProvider) {",
-        "    assert module != null;",
-        "    this.module = module;",
-        "    assert bProvider != null;",
-        "    this.bProvider = bProvider;",
-        "  }",
-        "",
-        "  @Override",
-        "  public List<B> get() {  ",
-        "    List<B> provided = module.provideListB(bProvider.get());",
-        "    if (provided == null) {",
-        "      throw new NullPointerException(" + NPE_LITERAL + ");",
-        "    }",
-        "    return provided;",
-        "  }",
-        "",
-        "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
-        "      Factory<List<B>> create(ParentModule<A, B, C> module, Provider<B> bProvider) {",
-        "    return new ParentModule_ProvideListBFactory<A, B, C>(module, bProvider);",
-        "  }",
-        "}");
+    JavaFileObject listBFactory =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule_ProvideListBFactory",
+            "package test;",
+            "",
+            "import dagger.internal.Factory;",
+            "import java.util.List;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class ParentModule_ProvideListBFactory<A extends CharSequence,",
+            "    B, C extends Number & Comparable<C>> implements Factory<List<B>> {",
+            "  private final ParentModule<A, B, C> module;",
+            "  private final Provider<B> bProvider;",
+            "",
+            "  public ParentModule_ProvideListBFactory(",
+            "        ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    assert module != null;",
+            "    this.module = module;",
+            "    assert bProvider != null;",
+            "    this.bProvider = bProvider;",
+            "  }",
+            "",
+            "  @Override",
+            "  public List<B> get() {  ",
+            "    List<B> provided = module.provideListB(bProvider.get());",
+            "    if (provided == null) {",
+            "      throw new NullPointerException(" + NPE_LITERAL + ");",
+            "    }",
+            "    return provided;",
+            "  }",
+            "",
+            "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
+            "      Factory<List<B>> create(ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    return new ParentModule_ProvideListBFactory<A, B, C>(module, bProvider);",
+            "  }",
+            "}");
+    JavaFileObject bElementFactory =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule_ProvideBElementFactory",
+            "package test;",
+            "",
+            "import dagger.internal.Factory;",
+            "import java.util.Collections;",
+            "import java.util.Set;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class ParentModule_ProvideBElementFactory<A extends CharSequence,",
+            "    B, C extends Number & Comparable<C>> implements Factory<Set<B>> {",
+            "  private final ParentModule<A, B, C> module;",
+            "  private final Provider<B> bProvider;",
+            "",
+            "  public ParentModule_ProvideBElementFactory(",
+            "        ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    assert module != null;",
+            "    this.module = module;",
+            "    assert bProvider != null;",
+            "    this.bProvider = bProvider;",
+            "  }",
+            "",
+            "  @Override",
+            "  public Set<B> get() {  ",
+            "    return Collections.<B>singleton(module.provideBElement(bProvider.get()));",
+            "  }",
+            "",
+            "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
+            "      Factory<Set<B>> create(ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    return new ParentModule_ProvideBElementFactory<A, B, C>(module, bProvider);",
+            "  }",
+            "}");
+    JavaFileObject bEntryFactory =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule_ProvideBEntryFactory",
+            "package test;",
+            "",
+            "import dagger.internal.Factory;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class ParentModule_ProvideBEntryFactory<A extends CharSequence,",
+            "    B, C extends Number & Comparable<C>> implements Factory<B>> {",
+            "  private final ParentModule<A, B, C> module;",
+            "  private final Provider<B> bProvider;",
+            "",
+            "  public ParentModule_ProvideBEntryFactory(",
+            "        ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    assert module != null;",
+            "    this.module = module;",
+            "    assert bProvider != null;",
+            "    this.bProvider = bProvider;",
+            "  }",
+            "",
+            "  @Override",
+            "  public B get() {  ",
+            "    B provided = module.provideBEntry(bProvider.get());",
+            "    if (provided == null) {",
+            "      throw new NullPointerException(" + NPE_LITERAL + ");",
+            "    }",
+            "    return provided;",
+            "  }",
+            "",
+            "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
+            "      Factory<B> create(ParentModule<A, B, C> module, Provider<B> bProvider) {",
+            "    return new ParentModule_ProvideBEntryFactory<A, B, C>(module, bProvider);",
+            "  }",
+            "}");
     JavaFileObject numberFactory = JavaFileObjects.forSourceLines(
         "test.ChildNumberModule_ProvideNumberFactory",
         "package test;",
@@ -988,7 +1110,7 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class ChildNumberModule_ProvideNumberFactory implements Factory<Number> {",
         "  private final ChildNumberModule module;",
         "",
@@ -1017,7 +1139,7 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class ChildIntegerModule_ProvideIntegerFactory",
         "    implements Factory<Integer> {",
         "  private final ChildIntegerModule module;",
@@ -1040,10 +1162,13 @@ public class ModuleFactoryGeneratorTest {
         "    return new ChildIntegerModule_ProvideIntegerFactory(module);",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(parent, numberChild, integerChild, component))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parent, numberChild, integerChild, component))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(listBFactory, numberFactory, integerFactory);
+        .and()
+        .generatesSources(
+            listBFactory, bElementFactory, bEntryFactory, numberFactory, integerFactory);
   }
 
   @Test public void providesMethodMultipleQualifiers() {
@@ -1066,5 +1191,45 @@ public class ModuleFactoryGeneratorTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS);
+  }
+
+  @Test public void providerDependsOnProduced() {
+    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+        "package test;",
+        "",
+        "import dagger.Module;",
+        "import dagger.Provides;",
+        "import dagger.producers.Producer;",
+        "",
+        "@Module",
+        "final class TestModule {",
+        "  @Provides String provideString(Producer<Integer> producer) {",
+        "    return \"foo\";",
+        "  }",
+        "}");
+    assertAbout(javaSource()).that(moduleFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Producer may only be injected in @Produces methods");
+  }
+
+  @Test public void providerDependsOnProducer() {
+    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+        "package test;",
+        "",
+        "import dagger.Module;",
+        "import dagger.Provides;",
+        "import dagger.producers.Produced;",
+        "",
+        "@Module",
+        "final class TestModule {",
+        "  @Provides String provideString(Produced<Integer> produced) {",
+        "    return \"foo\";",
+        "  }",
+        "}");
+    assertAbout(javaSource()).that(moduleFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Produced may only be injected in @Produces methods");
   }
 }

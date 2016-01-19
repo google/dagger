@@ -36,6 +36,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
  * @since 2.0
  */
 final class SourceFileGenerationException extends Exception {
+  // TODO(ronshapiro): remove these unused values
   private final ImmutableSet<ClassName> generatedClassNames;
   private final Optional<? extends Element> associatedElement;
 
@@ -55,6 +56,15 @@ final class SourceFileGenerationException extends Exception {
     this(generatedClassNames, cause, Optional.of(associatedElement));
   }
 
+  SourceFileGenerationException(
+      Optional<com.squareup.javapoet.ClassName> generatedClassName,
+      Throwable cause,
+      Optional<? extends Element> associatedElement) {
+    super(createMessage(generatedClassName, cause.getMessage()), cause);
+    this.generatedClassNames = ImmutableSet.of();
+    this.associatedElement = checkNotNull(associatedElement);
+  }
+
   public ImmutableSet<ClassName> generatedClassNames() {
     return generatedClassNames;
   }
@@ -68,6 +78,15 @@ final class SourceFileGenerationException extends Exception {
         Iterables.isEmpty(generatedClassNames)
             ? "unknown files"
             : Iterables.toString(generatedClassNames),
+        message);
+  }
+
+  private static String createMessage(
+      Optional<com.squareup.javapoet.ClassName> generatedClassName, String message) {
+    return String.format("Could not generate %s: %s.",
+        generatedClassName.isPresent()
+            ? generatedClassName.get()
+            : "unknown file",
         message);
   }
 

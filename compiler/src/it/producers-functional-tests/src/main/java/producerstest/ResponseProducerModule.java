@@ -17,18 +17,40 @@ package producerstest;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.Lazy;
+import dagger.producers.Produced;
+import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import javax.inject.Provider;
+import javax.inject.Qualifier;
 
 @ProducerModule(includes = ResponseModule.class)
 final class ResponseProducerModule {
+  @Qualifier
+  @interface RequestsProducerAndProduced {}
+
   @Produces
   static ListenableFuture<String> greeting() {
     return Futures.immediateFuture("Hello");
   }
 
   @Produces
-  static Response response(String greeting, Request request, int requestNumber) {
+  @RequestsProducerAndProduced
+  static ListenableFuture<String> intermediateGreeting(
+      // TODO(beder): Allow Producer and Provider of the same type (which would force the binding
+      // to be a provision binding), and add validation for that.
+      String greeting,
+      Producer<String> greetingProducer,
+      Produced<String> greetingProduced,
+      Provider<Integer> requestNumberProvider,
+      Lazy<Integer> requestNumberLazy) {
+    return greetingProducer.get();
+  }
+
+  @Produces
+  static Response response(
+      @RequestsProducerAndProduced String greeting, Request request, int requestNumber) {
     return new Response(String.format("%s, %s #%d!", greeting, request.name(), requestNumber));
   }
 }

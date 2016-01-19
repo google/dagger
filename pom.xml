@@ -46,16 +46,16 @@
     <javax.inject.version>1</javax.inject.version>
     <javax.annotation.version>2.0.1</javax.annotation.version>
     <javawriter.version>2.5.0</javawriter.version>
-    <auto.common.version>1.0-SNAPSHOT</auto.common.version>
+    <auto.common.version>0.5</auto.common.version>
     <auto.factory.version>1.0-beta3</auto.factory.version>
     <auto.service.version>1.0-rc2</auto.service.version>
     <auto.value.version>1.0</auto.value.version>
     <guava.version>19.0-rc2</guava.version>
-    <google.java.format.version>0.1-SNAPSHOT</google.java.format.version>
+    <google.java.format.version>0.1-alpha</google.java.format.version>
 
 
     <!-- Test Dependencies -->
-    <compile-testing.version>1.0-SNAPSHOT</compile-testing.version>
+    <compile-testing.version>0.8</compile-testing.version>
     <junit.version>4.11</junit.version>
     <mockito.version>1.9.5</mockito.version>
     <truth.version>0.26</truth.version>

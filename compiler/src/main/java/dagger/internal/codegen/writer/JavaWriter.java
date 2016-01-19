@@ -30,6 +30,7 @@ import com.google.common.io.CharSink;
 import com.google.common.io.CharSource;
 import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.FormatterException;
+import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.writer.Writable.Context;
 import java.io.IOException;
 import java.io.Writer;
@@ -37,6 +38,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
@@ -99,6 +101,12 @@ public final class JavaWriter {
     InterfaceWriter writer = new InterfaceWriter(ClassName.create(packageName, simpleName));
     typeWriters.add(writer);
     return writer;
+  }
+
+  public void markGenerated(boolean generatedAnnotationAvailable) {
+    for (TypeWriter typeWriter : typeWriters) {
+      typeWriter.markGenerated(generatedAnnotationAvailable);
+    }
   }
 
   public <A extends Appendable> A write(A appendable) throws IOException {

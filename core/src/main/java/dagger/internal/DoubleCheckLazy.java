@@ -40,7 +40,6 @@ public final class DoubleCheckLazy<T> implements Lazy<T> {
   @SuppressWarnings("unchecked") // cast only happens when result comes from the factory
   @Override
   public T get() {
-    // to suppress it.
     Object result = instance;
     if (result == UNINITIALIZED) {
       synchronized (this) {

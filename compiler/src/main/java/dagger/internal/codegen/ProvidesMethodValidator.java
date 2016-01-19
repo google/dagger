@@ -25,6 +25,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -44,14 +45,19 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_THROWS;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
+import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
+import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
+
+import javax.lang.model.util.Types;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link Provides} methods.
@@ -61,9 +67,11 @@ import static javax.lang.model.type.TypeKind.VOID;
  */
 final class ProvidesMethodValidator {
   private final Elements elements;
+  private final Types types;
 
-  ProvidesMethodValidator(Elements elements) {
+  ProvidesMethodValidator(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
+    this.types = checkNotNull(types);
   }
 
   private TypeElement getSetElement() {
@@ -100,6 +108,23 @@ final class ProvidesMethodValidator {
     if (returnTypeKind.equals(VOID)) {
       builder.addError(
           formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE), providesMethodElement);
+    }
+
+    TypeMirror runtimeExceptionType =
+        elements.getTypeElement(RuntimeException.class.getCanonicalName()).asType();
+    TypeMirror errorType = elements.getTypeElement(Error.class.getCanonicalName()).asType();
+    for (TypeMirror thrownType : providesMethodElement.getThrownTypes()) {
+      if (!types.isSubtype(thrownType, runtimeExceptionType)
+          && !types.isSubtype(thrownType, errorType)) {
+        builder.addError(PROVIDES_METHOD_THROWS, providesMethodElement);
+        break;
+      }
+    }
+
+    for (VariableElement parameter : providesMethodElement.getParameters()) {
+      if (FrameworkTypes.isProducerType(parameter.asType())) {
+        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
+      }
     }
 
     // check mapkey is right
@@ -178,7 +203,10 @@ final class ProvidesMethodValidator {
   private void validateKeyType(ValidationReport.Builder<? extends Element> reportBuilder,
       TypeMirror type) {
     TypeKind kind = type.getKind();
-    if (!(kind.isPrimitive() || kind.equals(DECLARED) || kind.equals(ARRAY))) {
+    if (!(kind.isPrimitive()
+        || kind.equals(DECLARED)
+        || kind.equals(ARRAY)
+        || kind.equals(TYPEVAR))) {
       reportBuilder.addError(PROVIDES_METHOD_RETURN_TYPE, reportBuilder.getSubject());
     }
   }

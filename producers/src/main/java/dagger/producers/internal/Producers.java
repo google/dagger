@@ -45,7 +45,7 @@ public final class Producers {
    * cancelling the input future will trigger the resulting future to succeed with a failing
    * {@code Produced}.
    */
-  // TODO(user): Document what happens with an InterruptedException after you figure out how to
+  // TODO(beder): Document what happens with an InterruptedException after you figure out how to
   // trigger one in a test.
   public static <T> ListenableFuture<Produced<T>> createFutureProduced(ListenableFuture<T> future) {
     return Futures.catchingAsync(

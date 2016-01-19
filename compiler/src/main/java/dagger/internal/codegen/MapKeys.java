@@ -48,6 +48,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDe
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.transform;
+import static dagger.internal.codegen.SourceFiles.classFileName;
 import static dagger.internal.codegen.writer.Snippet.makeParametersSnippet;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -130,6 +131,17 @@ final class MapKeys {
           }
         };
     return keyTypeElementVisitor.visit(onlyElement.getReturnType());
+  }
+
+  /**
+   * Returns the name of the generated class that contains the static {@code create} methods for a
+   * {@link MapKey} annotation type.
+   */
+  public static com.squareup.javapoet.ClassName getJavapoetMapKeyCreatorClassName(
+      TypeElement mapKeyType) {
+    com.squareup.javapoet.ClassName mapKeyTypeName =
+        com.squareup.javapoet.ClassName.get(mapKeyType);
+    return mapKeyTypeName.topLevelClassName().peerClass(classFileName(mapKeyTypeName) + "Creator");
   }
 
   /**

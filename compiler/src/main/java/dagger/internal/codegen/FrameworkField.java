@@ -15,11 +15,8 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
-import com.google.common.collect.ImmutableSet;
-import dagger.MembersInjector;
 import dagger.internal.codegen.writer.ClassName;
 import dagger.internal.codegen.writer.ParameterizedTypeName;
 import dagger.internal.codegen.writer.TypeNames;
@@ -29,9 +26,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor6;
 
-import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ContributionBinding.contributionTypeFor;
 
 /**
  * A value object that represents a field used by Dagger-generated code.
@@ -40,26 +35,26 @@ import static dagger.internal.codegen.ContributionBinding.contributionTypeFor;
  * @since 2.0
  */
 @AutoValue
+// TODO(gak): Reexamine the this class and how consistently we're using it and its creation methods.
 abstract class FrameworkField {
-  // TODO(gak): reexamine the this class and how consistently we're using it and its creation
-  // methods
-  static FrameworkField createWithTypeFromKey(
-      Class<?> frameworkClass, BindingKey bindingKey, String name) {
+  static FrameworkField createWithTypeFromKey(Class<?> frameworkClass, Key key, String name) {
     String suffix = frameworkClass.getSimpleName();
-    ParameterizedTypeName frameworkType = ParameterizedTypeName.create(
-        ClassName.fromClass(frameworkClass),
-        TypeNames.forTypeMirror(bindingKey.key().type()));
-    return new AutoValue_FrameworkField(frameworkClass, frameworkType, bindingKey,
-        name.endsWith(suffix) ? name : name + suffix);
+    ParameterizedTypeName frameworkType =
+        ParameterizedTypeName.create(
+            ClassName.fromClass(frameworkClass), TypeNames.forTypeMirror(key.type()));
+    com.squareup.javapoet.ParameterizedTypeName javapoetFrameworkType =
+        com.squareup.javapoet.ParameterizedTypeName.get(
+            com.squareup.javapoet.ClassName.get(frameworkClass),
+            com.squareup.javapoet.TypeName.get(key.type()));
+    return new AutoValue_FrameworkField(
+        javapoetFrameworkType, frameworkType, name.endsWith(suffix) ? name : name + suffix);
   }
 
-  private static FrameworkField createForMapBindingContribution(
-      Class<?> frameworkClass, BindingKey bindingKey, String name) {
-    TypeMirror mapValueType =
-        MoreTypes.asDeclared(bindingKey.key().type()).getTypeArguments().get(1);
-    return new AutoValue_FrameworkField(frameworkClass,
-        (ParameterizedTypeName) TypeNames.forTypeMirror(mapValueType),
-        bindingKey,
+  private static FrameworkField createForMapBindingContribution(Key key, String name) {
+    TypeMirror type = MapType.from(key.type()).valueType();
+    return new AutoValue_FrameworkField(
+        (com.squareup.javapoet.ParameterizedTypeName) com.squareup.javapoet.TypeName.get(type),
+        (ParameterizedTypeName) TypeNames.forTypeMirror(type),
         name);
   }
 
@@ -68,8 +63,7 @@ abstract class FrameworkField {
     switch (contributionBinding.contributionType()) {
       case MAP:
         return createForMapBindingContribution(
-            contributionBinding.frameworkClass(),
-            contributionBinding.bindingKey(),
+            contributionBinding.key(),
             KeyVariableNamer.INSTANCE.apply(contributionBinding.key())
                 + "Contribution"
                 + contributionNumber);
@@ -78,7 +72,7 @@ abstract class FrameworkField {
       case UNIQUE:
         return createWithTypeFromKey(
             contributionBinding.frameworkClass(),
-            contributionBinding.bindingKey(),
+            contributionBinding.key(),
             KeyVariableNamer.INSTANCE.apply(contributionBinding.key())
                 + "Contribution"
                 + contributionNumber);
@@ -88,42 +82,22 @@ abstract class FrameworkField {
   }
 
   static FrameworkField createForResolvedBindings(ResolvedBindings resolvedBindings) {
+    return createWithTypeFromKey(
+        resolvedBindings.frameworkClass(),
+        resolvedBindings.bindingKey().key(),
+        frameworkFieldName(resolvedBindings));
+  }
+
+  private static String frameworkFieldName(ResolvedBindings resolvedBindings) {
     BindingKey bindingKey = resolvedBindings.bindingKey();
-    switch (bindingKey.kind()) {
-      case CONTRIBUTION:
-        ImmutableSet<ContributionBinding> contributionBindings =
-            resolvedBindings.contributionBindings();
-        switch (contributionTypeFor(contributionBindings)) {
-          case SET:
-          case MAP:
-            return createWithTypeFromKey(
-                FrameworkField.frameworkClassForResolvedBindings(resolvedBindings),
-                bindingKey,
-                KeyVariableNamer.INSTANCE.apply(bindingKey.key()));
-          case UNIQUE:
-            ContributionBinding binding = getOnlyElement(contributionBindings);
-            return createWithTypeFromKey(
-                FrameworkField.frameworkClassForResolvedBindings(resolvedBindings),
-                bindingKey,
-                BINDING_ELEMENT_NAME.visit(binding.bindingElement()));
-          default:
-            throw new AssertionError();
-        }
-      case MEMBERS_INJECTION:
-        return createWithTypeFromKey(
-            MembersInjector.class,
-            bindingKey,
-            CaseFormat.UPPER_CAMEL.to(
-                CaseFormat.LOWER_CAMEL,
-                resolvedBindings
-                    .membersInjectionBinding()
-                    .get()
-                    .bindingElement()
-                    .getSimpleName()
-                    .toString()));
-      default:
-        throw new AssertionError();
+    if (bindingKey.kind().equals(BindingKey.Kind.CONTRIBUTION)
+        && resolvedBindings.contributionType().equals(ContributionType.UNIQUE)) {
+      ContributionBinding binding = getOnlyElement(resolvedBindings.contributionBindings());
+      if (!binding.bindingKind().equals(ContributionBinding.Kind.SYNTHETIC_MAP)) {
+        return BINDING_ELEMENT_NAME.visit(binding.bindingElement());
+      }
     }
+    return KeyVariableNamer.INSTANCE.apply(bindingKey.key());
   }
 
   private static final ElementVisitor<String, Void> BINDING_ELEMENT_NAME =
@@ -145,21 +119,7 @@ abstract class FrameworkField {
         }
       };
 
-  static Class<?> frameworkClassForResolvedBindings(ResolvedBindings resolvedBindings) {
-    switch (resolvedBindings.bindingKey().kind()) {
-      case CONTRIBUTION:
-        return any(resolvedBindings.contributionBindings(), Binding.Type.PRODUCTION)
-            ? Binding.Type.PRODUCTION.frameworkClass()
-            : Binding.Type.PROVISION.frameworkClass();
-      case MEMBERS_INJECTION:
-        return MembersInjector.class;
-      default:
-        throw new AssertionError();
-    }
-  }
-
-  abstract Class<?> frameworkClass();
+  abstract com.squareup.javapoet.ParameterizedTypeName javapoetFrameworkType();
   abstract ParameterizedTypeName frameworkType();
-  abstract BindingKey bindingKey();
   abstract String name();
 }

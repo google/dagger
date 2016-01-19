@@ -15,17 +15,27 @@
  */
 package dagger.internal.codegen;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.MembersInjector;
 import dagger.internal.codegen.writer.StringLiteral;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import org.junit.Ignore;
@@ -37,6 +47,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 
 @RunWith(JUnit4.class)
@@ -217,7 +228,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private DaggerSimpleComponent(Builder builder) {",
         "    assert builder != null;",
@@ -302,7 +313,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
         "",
@@ -385,7 +396,7 @@ public class ComponentProcessorTest {
         "import test.OuterType.B;",
         "import test.OuterType.SimpleComponent;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerOuterType_SimpleComponent implements SimpleComponent {",
         "  private MembersInjector<B> bMembersInjector;",
         "",
@@ -484,7 +495,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<B> bProvider;",
         "  private Provider<A> aProvider;",
@@ -619,7 +630,7 @@ public class ComponentProcessorTest {
         "",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "",
         "  private DaggerTestComponent(Builder builder) {",
@@ -844,7 +855,7 @@ public class ComponentProcessorTest {
             "import javax.annotation.Generated;",
             "import javax.inject.Provider;",
             "",
-            "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+            GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
             "  private Provider<Set<Object>> setOfObjectContribution1Provider;",
             "  private Provider<Set<Object>> setOfObjectProvider;",
@@ -1014,7 +1025,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<Set<String>> setOfStringContribution1Provider;",
         "  private Provider<Set<String>> setOfStringContribution2Provider;",
@@ -1127,7 +1138,7 @@ public class ComponentProcessorTest {
         "import dagger.MembersInjector;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private MembersInjector<SomeInjectedType> someInjectedTypeMembersInjector;",
         "",
@@ -1206,7 +1217,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private Provider<SimpleComponent> simpleComponentProvider;",
         "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
@@ -1286,7 +1297,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private MembersInjector<SomeInjectedType> someInjectedTypeMembersInjector;",
         "  private Provider<SomeInjectedType> someInjectedTypeProvider;",
@@ -1360,12 +1371,11 @@ public class ComponentProcessorTest {
         "test.DaggerSimpleComponent",
         "package test;",
         "",
-        "import dagger.MembersInjector;",
         "import dagger.internal.MembersInjectors;",
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
         "",
@@ -1385,7 +1395,7 @@ public class ComponentProcessorTest {
         "  @SuppressWarnings(\"unchecked\")",
         "  private void initialize(final Builder builder) {",
         "    this.someInjectableTypeProvider =",
-        "        SomeInjectableType_Factory.create((MembersInjector) MembersInjectors.noOp());",
+        "        SomeInjectableType_Factory.create(MembersInjectors.<SomeInjectableType>noOp());",
         "  }",
         "",
         "  @Override",
@@ -1458,7 +1468,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerBComponent implements BComponent {",
         "  private Provider<A> aProvider;",
         "  private Provider<B> bProvider;",
@@ -1575,7 +1585,7 @@ public class ComponentProcessorTest {
         "import other.test.TestModule;",
         "import other.test.TestModule_AFactory;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<test.A> aProvider;",
         "  private Provider<A> aProvider1;",
@@ -1704,7 +1714,7 @@ public class ComponentProcessorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
         "  private Provider<B> bProvider;",
         "  private Provider<A> aProvider;",
@@ -1811,7 +1821,7 @@ public class ComponentProcessorTest {
         "",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private DaggerSimpleComponent(Builder builder) {",
         "    assert builder != null;",
@@ -1900,7 +1910,7 @@ public class ComponentProcessorTest {
         "",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION,
         "public final class DaggerSimpleComponent implements SimpleComponent {",
         "  private DaggerSimpleComponent(Builder builder) {",
         "    assert builder != null;",
@@ -2108,7 +2118,7 @@ public class ComponentProcessorTest {
          "import javax.annotation.Generated;",
          "import javax.inject.Provider;",
          "",
-         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+         GENERATED_ANNOTATION,
          "public final class DaggerSimpleComponent implements SimpleComponent {",
          "  private Provider<D> dProvider;",
          "",
@@ -2149,6 +2159,197 @@ public class ComponentProcessorTest {
          .compilesWithoutError()
          .and().generatesSources(generatedComponent);
    }
+
+  /**
+   * We warn when generating a {@link MembersInjector} for a type post-hoc (i.e., if Dagger wasn't
+   * invoked when compiling the type). But Dagger only generates {@link MembersInjector}s for types
+   * with {@link Inject @Inject} constructors if they have any injection sites, and it only
+   * generates them for types without {@link Inject @Inject} constructors if they have local
+   * (non-inherited) injection sites. So make sure we warn in only those cases where running the
+   * Dagger processor actually generates a {@link MembersInjector}.
+   */
+  @Test
+  public void unprocessedMembersInjectorNotes() {
+    assertAbout(javaSources())
+        .that(
+            ImmutableList.of(
+                JavaFileObjects.forSourceLines(
+                    "test.TestComponent",
+                    "package test;",
+                    "",
+                    "import dagger.Component;",
+                    "",
+                    "@Component(modules = TestModule.class)",
+                    "interface TestComponent {",
+                    "  void inject(test.inject.NoInjectMemberNoConstructor object);",
+                    "  void inject(test.inject.NoInjectMemberWithConstructor object);",
+                    "  void inject(test.inject.LocalInjectMemberNoConstructor object);",
+                    "  void inject(test.inject.LocalInjectMemberWithConstructor object);",
+                    "  void inject(test.inject.ParentInjectMemberNoConstructor object);",
+                    "  void inject(test.inject.ParentInjectMemberWithConstructor object);",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.TestModule",
+                    "package test;",
+                    "",
+                    "import dagger.Module;",
+                    "import dagger.Provides;",
+                    "",
+                    "@Module",
+                    "class TestModule {",
+                    "  @Provides static Object object() {",
+                    "    return \"object\";",
+                    "  }",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.NoInjectMemberNoConstructor",
+                    "package test.inject;",
+                    "",
+                    "public class NoInjectMemberNoConstructor {",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.NoInjectMemberWithConstructor",
+                    "package test.inject;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class NoInjectMemberWithConstructor {",
+                    "  @Inject NoInjectMemberWithConstructor() {}",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.LocalInjectMemberNoConstructor",
+                    "package test.inject;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class LocalInjectMemberNoConstructor {",
+                    "  @Inject Object object;",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.LocalInjectMemberWithConstructor",
+                    "package test.inject;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class LocalInjectMemberWithConstructor {",
+                    "  @Inject LocalInjectMemberWithConstructor() {}",
+                    "  @Inject Object object;",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.ParentInjectMemberNoConstructor",
+                    "package test.inject;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class ParentInjectMemberNoConstructor",
+                    "    extends LocalInjectMemberNoConstructor {}"),
+                JavaFileObjects.forSourceLines(
+                    "test.inject.ParentInjectMemberWithConstructor",
+                    "package test.inject;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class ParentInjectMemberWithConstructor",
+                    "    extends LocalInjectMemberNoConstructor {",
+                    "  @Inject ParentInjectMemberWithConstructor() {}",
+                    "}")))
+        .processedWith(
+            new ElementFilteringComponentProcessor(
+                Predicates.not(
+                    new Predicate<Element>() {
+                      @Override
+                      public boolean apply(Element element) {
+                        return MoreElements.getPackage(element)
+                            .getQualifiedName()
+                            .toString()
+                            .equals("test.inject");
+                      }
+                    })))
+        .compilesWithoutError();
+        /* TODO(b/23108801): Uncomment when compilesWithoutWarnings() is implemented.
+        .compilesWithoutWarnings()
+        .withNoteContaining(
+            "Generating a MembersInjector or Factory for "
+                + "test.inject.LocalInjectMemberNoConstructor. "
+                + "Prefer to run the dagger processor over that class instead.")
+        .and()
+        .withNoteContaining(
+            "Generating a MembersInjector or Factory for "
+                + "test.inject.LocalInjectMemberWithConstructor. "
+                + "Prefer to run the dagger processor over that class instead.")
+        .and()
+        .withNoteContaining(
+            "Generating a MembersInjector or Factory for "
+                + "test.inject.ParentInjectMemberWithConstructor. "
+                + "Prefer to run the dagger processor over that class instead.")
+        .and()
+        .withNoteCount(3);
+         */
+  }
+
+  /**
+   * A {@link ComponentProcessor} that excludes elements using a {@link Predicate}.
+   */
+  private static final class ElementFilteringComponentProcessor extends AbstractProcessor {
+    private final ComponentProcessor componentProcessor = new ComponentProcessor();
+    private final Predicate<? super Element> filter;
+
+    /**
+     * Creates a {@link ComponentProcessor} that only processes elements that match {@code filter}.
+     */
+    public ElementFilteringComponentProcessor(Predicate<? super Element> filter) {
+      this.filter = filter;
+    }
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+      super.init(processingEnv);
+      componentProcessor.init(processingEnv);
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+      return componentProcessor.getSupportedAnnotationTypes();
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+      return componentProcessor.getSupportedSourceVersion();
+    }
+
+    @Override
+    public boolean process(
+        Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
+      return componentProcessor.process(
+          annotations,
+          new RoundEnvironment() {
+            @Override
+            public boolean processingOver() {
+              return roundEnv.processingOver();
+            }
+
+            @Override
+            public Set<? extends Element> getRootElements() {
+              return Sets.filter(roundEnv.getRootElements(), filter);
+            }
+
+            @Override
+            public Set<? extends Element> getElementsAnnotatedWith(Class<? extends Annotation> a) {
+              return Sets.filter(roundEnv.getElementsAnnotatedWith(a), filter);
+            }
+
+            @Override
+            public Set<? extends Element> getElementsAnnotatedWith(TypeElement a) {
+              return Sets.filter(roundEnv.getElementsAnnotatedWith(a), filter);
+            }
+
+            @Override
+            public boolean errorRaised() {
+              return roundEnv.errorRaised();
+            }
+          });
+    }
+  }
 
   /**
    * A simple {@link Processor} that generates one source file.

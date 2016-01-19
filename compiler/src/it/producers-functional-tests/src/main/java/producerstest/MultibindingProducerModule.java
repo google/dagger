@@ -18,11 +18,13 @@ package producerstest;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.mapkeys.IntKey;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.util.Set;
 import javax.inject.Qualifier;
 
+import static dagger.producers.Produces.Type.MAP;
 import static dagger.producers.Produces.Type.SET;
 import static dagger.producers.Produces.Type.SET_VALUES;
 
@@ -30,6 +32,9 @@ import static dagger.producers.Produces.Type.SET_VALUES;
 final class MultibindingProducerModule {
   @Qualifier
   @interface PossiblyThrowingSet {}
+
+  @Qualifier
+  @interface PossiblyThrowingMap {}
 
   @Produces(type = SET)
   static ListenableFuture<String> futureStr() {
@@ -71,6 +76,32 @@ final class MultibindingProducerModule {
   @Produces(type = SET)
   @PossiblyThrowingSet
   static String throwingStringForSet() {
+    throw new RuntimeException("monkey");
+  }
+
+  @Produces(type = MAP)
+  @IntKey(42)
+  static ListenableFuture<String> futureFor42() {
+    return Futures.immediateFuture("forty two");
+  }
+
+  @Produces(type = MAP)
+  @IntKey(15)
+  static String valueFor15() {
+    return "fifteen";
+  }
+
+  @Produces(type = MAP)
+  @PossiblyThrowingMap
+  @IntKey(42)
+  static ListenableFuture<String> successfulFutureFor42() {
+    return Futures.immediateFuture("forty two");
+  }
+
+  @Produces(type = MAP)
+  @PossiblyThrowingMap
+  @IntKey(15)
+  static String throwingValueFor15() {
     throw new RuntimeException("monkey");
   }
 }

@@ -15,13 +15,25 @@
  */
 package dagger.internal.codegen;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.writer.ClassName;
 import dagger.internal.codegen.writer.ClassWriter;
 import dagger.internal.codegen.writer.JavaWriter;
 import dagger.internal.codegen.writer.MethodWriter;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.annotation.Generated;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -35,7 +47,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 /**
  * Creates the implementation class for a component.
  */
-class ComponentWriter extends AbstractComponentWriter {
+final class ComponentWriter extends AbstractComponentWriter {
 
   ComponentWriter(
       Types types,
@@ -44,7 +56,89 @@ class ComponentWriter extends AbstractComponentWriter {
       Kind nullableValidationType,
       ClassName name,
       BindingGraph graph) {
-    super(types, elements, keyFactory, nullableValidationType, name, graph);
+    super(
+        types,
+        elements,
+        keyFactory,
+        nullableValidationType,
+        name,
+        graph,
+        new UniqueSubcomponentNamesGenerator(graph).generate());
+  }
+
+  /**
+   * Generates a map of unique simple names for all subcomponents, keyed by their {@link
+   * ComponentDescriptor}.
+   */
+  private static class UniqueSubcomponentNamesGenerator {
+
+    private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
+    private static final Joiner QUALIFIED_NAME_JOINER = Joiner.on('_');
+
+    private final BindingGraph graph;
+    private final ImmutableListMultimap<String, ComponentDescriptor>
+        componentDescriptorsBySimpleName;
+    private final ImmutableListMultimap<ComponentDescriptor, String> componentQualifiedNamePieces;
+
+    private UniqueSubcomponentNamesGenerator(BindingGraph graph) {
+      this.graph = graph;
+      componentDescriptorsBySimpleName =
+          Multimaps.index(
+              graph.componentDescriptors(),
+              new Function<ComponentDescriptor, String>() {
+                @Override
+                public String apply(ComponentDescriptor componentDescriptor) {
+                  return componentDescriptor.componentDefinitionType().getSimpleName().toString();
+                }
+              });
+      componentQualifiedNamePieces = qualifiedNames(graph.componentDescriptors());
+    }
+
+    private ImmutableBiMap<ComponentDescriptor, String> generate() {
+      Map<ComponentDescriptor, String> subcomponentImplSimpleNames = new LinkedHashMap<>();
+      for (Entry<String, Collection<ComponentDescriptor>> componentEntry :
+          componentDescriptorsBySimpleName.asMap().entrySet()) {
+        Collection<ComponentDescriptor> components = componentEntry.getValue();
+        subcomponentImplSimpleNames.putAll(disambiguateConflictingSimpleNames(components));
+      }
+      subcomponentImplSimpleNames.remove(graph.componentDescriptor());
+      return ImmutableBiMap.copyOf(subcomponentImplSimpleNames);
+    }
+
+    private ImmutableBiMap<ComponentDescriptor, String> disambiguateConflictingSimpleNames(
+        Collection<ComponentDescriptor> components) {
+      Map<String, ComponentDescriptor> generatedSimpleNames = new LinkedHashMap<>();
+      // The ending condition is when there is a unique simple name generated for every element
+      // in components. The sizes should be equivalent (with one generated name per component).
+      for (int levels = 0; generatedSimpleNames.size() != components.size(); levels++) {
+        generatedSimpleNames.clear();
+        for (ComponentDescriptor component : components) {
+          List<String> pieces = componentQualifiedNamePieces.get(component);
+          String simpleName =
+              QUALIFIED_NAME_JOINER.join(
+                      pieces.subList(Math.max(0, pieces.size() - levels - 1), pieces.size()))
+                  + "Impl";
+          ComponentDescriptor conflict = generatedSimpleNames.put(simpleName, component);
+          if (conflict != null) {
+            // if the map previously contained an entry for the same simple name, stop early since
+            // 2+ subcomponent descriptors will have the same simple name
+            break;
+          }
+        }
+      }
+      return ImmutableBiMap.copyOf(generatedSimpleNames).inverse();
+    }
+
+    private static ImmutableListMultimap<ComponentDescriptor, String> qualifiedNames(
+        Iterable<ComponentDescriptor> componentDescriptors) {
+      ImmutableListMultimap.Builder<ComponentDescriptor, String> builder =
+          ImmutableListMultimap.builder();
+      for (ComponentDescriptor component : componentDescriptors) {
+        Name qualifiedName = component.componentDefinitionType().getQualifiedName();
+        builder.putAll(component, QUALIFIED_NAME_SPLITTER.split(qualifiedName));
+      }
+      return builder.build();
+    }
   }
 
   @Override
@@ -53,7 +147,6 @@ class ComponentWriter extends AbstractComponentWriter {
     javaWriters.add(javaWriter);
 
     ClassWriter componentWriter = javaWriter.addClass(name.simpleName());
-    componentWriter.annotate(Generated.class).setValue(ComponentProcessor.class.getCanonicalName());
     componentWriter.addModifiers(PUBLIC, FINAL);
     componentWriter.setSupertype(componentDefinitionType());
     return componentWriter;

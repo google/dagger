@@ -39,6 +39,7 @@ import static dagger.internal.codegen.ErrorMessages.PRIVATE_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.QUALIFIER_ON_INJECT_CONSTRUCTOR;
 import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_METHOD;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION_JAVAPOET;
 
 @RunWith(JUnit4.class)
 // TODO(gak): add tests for generation in the default package.
@@ -135,7 +136,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class GenericClass_Factory<T> implements Factory<GenericClass<T>> {",
         "  private final Provider<T> tProvider;",
         "",
@@ -172,34 +173,37 @@ public final class InjectConstructorFactoryGeneratorTest {
         "",
         " @Inject void register(B b) {}",
         "}");
-    JavaFileObject expected = JavaFileObjects.forSourceLines("test.GenericClass_Factory",
-        "package test;",
-        "",
-        "import dagger.MembersInjector;",
-        "import dagger.internal.Factory;",
-        "import javax.annotation.Generated;",
-        "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {",
-        "  private final MembersInjector<GenericClass<A, B>> membersInjector;",
-        "",
-        "  public GenericClass_Factory(MembersInjector<GenericClass<A, B>> membersInjector) {",
-        "    assert membersInjector != null;",
-        "    this.membersInjector = membersInjector;",
-        "  }",
-        "",
-        "  @Override",
-        "  public GenericClass<A, B> get() {",
-        "    GenericClass<A, B> instance = new GenericClass<A, B>();",
-        "    membersInjector.injectMembers(instance);",
-        "    return instance;",
-        "  }",
-        "",
-        "  public static <A, B> Factory<GenericClass<A, B>> create(",
-        "      MembersInjector<GenericClass<A, B>> membersInjector) {",
-        "    return new GenericClass_Factory<A, B>(membersInjector);",
-        "  }",
-        "}");
+    JavaFileObject expected =
+        JavaFileObjects.forSourceLines(
+            "test.GenericClass_Factory",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.Factory;",
+            "import javax.annotation.Generated;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {",
+            "  private final MembersInjector<GenericClass<A, B>> genericClassMembersInjector;",
+            "",
+            "  public GenericClass_Factory(",
+            "      MembersInjector<GenericClass<A, B>> genericClassMembersInjector) {",
+            "    assert genericClassMembersInjector != null;",
+            "    this.genericClassMembersInjector = genericClassMembersInjector;",
+            "  }",
+            "",
+            "  @Override",
+            "  public GenericClass<A, B> get() {",
+            "    GenericClass<A, B> instance = new GenericClass<A, B>();",
+            "    genericClassMembersInjector.injectMembers(instance);",
+            "    return instance;",
+            "  }",
+            "",
+            "  public static <A, B> Factory<GenericClass<A, B>> create(",
+            "      MembersInjector<GenericClass<A, B>> genericClassMembersInjector) {",
+            "    return new GenericClass_Factory<A, B>(genericClassMembersInjector);",
+            "  }",
+            "}");
     assertAbout(javaSource()).that(file)
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
@@ -222,7 +226,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@SuppressWarnings(\"rawtypes\")",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public enum GenericClass_Factory implements Factory<GenericClass> {",
         "  INSTANCE;",
         "",
@@ -259,7 +263,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {",
         "  private final Provider<A> aProvider;",
         "  private final Provider<B> bProvider;",
@@ -307,7 +311,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class GenericClass_Factory<A extends Number & Comparable<A>,",
         "        B extends List<? extends String>,",
         "        C extends List<? super String>>",
@@ -367,7 +371,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {",
         "  private final Provider<A> aAndA2AndPaAndLaProvider;",
         "  private final Provider<A> qaProvider;",
@@ -700,6 +704,102 @@ public final class InjectConstructorFactoryGeneratorTest {
         .withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6);
   }
 
+  @Test public void injectConstructorDependsOnProduced() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Produced;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject A(Produced<String> str) {}",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Produced may only be injected in @Produces methods");
+  }
+
+  @Test public void injectConstructorDependsOnProducer() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Producer;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject A(Producer<String> str) {}",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Producer may only be injected in @Produces methods");
+  }
+
+  @Test public void injectFieldDependsOnProduced() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Produced;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject Produced<String> str;",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Produced may only be injected in @Produces methods");
+  }
+
+  @Test public void injectFieldDependsOnProducer() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Producer;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject Producer<String> str;",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Producer may only be injected in @Produces methods");
+  }
+
+  @Test public void injectMethodDependsOnProduced() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Produced;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject void inject(Produced<String> str) {}",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Produced may only be injected in @Produces methods");
+  }
+
+  @Test public void injectMethodDependsOnProducer() {
+    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+        "package test;",
+        "",
+        "import dagger.producers.Producer;",
+        "import javax.inject.Inject;",
+        "",
+        "final class A {",
+        "  @Inject void inject(Producer<String> str) {}",
+        "}");
+    assertAbout(javaSource()).that(aFile)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Producer may only be injected in @Produces methods");
+  }
+
   @Test public void injectConstructor() {
     JavaFileObject file = JavaFileObjects.forSourceLines("test.InjectConstructor",
         "package test;",
@@ -717,7 +817,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class InjectConstructor_Factory ",
         "    implements Factory<InjectConstructor> {",
         "",
@@ -752,42 +852,44 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject AllInjections(String s) {}",
         "  @Inject void s(String s) {}",
         "}");
-    JavaFileObject expectedFactory = JavaFileObjects.forSourceLines(
-        "test.AllInjections_Factory",
-        "package test;",
-        "",
-        "import dagger.MembersInjector;",
-        "import dagger.internal.Factory;",
-        "import javax.annotation.Generated;",
-        "import javax.inject.Provider;",
-        "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class AllInjections_Factory ",
-        "    implements Factory<AllInjections> {",
-        "",
-        "  private final MembersInjector<AllInjections> membersInjector;",
-        "  private final Provider<String> sProvider;",
-        "",
-        "  public AllInjections_Factory(MembersInjector<AllInjections> membersInjector, ",
-        "      Provider<String> sProvider) {",
-        "    assert membersInjector != null;",
-        "    this.membersInjector = membersInjector;",
-        "    assert sProvider != null;",
-        "    this.sProvider = sProvider;",
-        "  }",
-        "",
-        "  @Override public AllInjections get() {",
-        "    AllInjections instance = new AllInjections(sProvider.get());",
-        "    membersInjector.injectMembers(instance);",
-        "    return instance;",
-        "  }",
-        "",
-        "  public static Factory<AllInjections> create(",
-        "      MembersInjector<AllInjections> membersInjector, ",
-        "      Provider<String> sProvider) {",
-        "    return new AllInjections_Factory(membersInjector, sProvider);",
-        "  }",
-        "}");
+    JavaFileObject expectedFactory =
+        JavaFileObjects.forSourceLines(
+            "test.AllInjections_Factory",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.Factory;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class AllInjections_Factory ",
+            "    implements Factory<AllInjections> {",
+            "",
+            "  private final MembersInjector<AllInjections> allInjectionsMembersInjector;",
+            "  private final Provider<String> sProvider;",
+            "",
+            "  public AllInjections_Factory(",
+            "      MembersInjector<AllInjections> allInjectionsMembersInjector, ",
+            "      Provider<String> sProvider) {",
+            "    assert allInjectionsMembersInjector != null;",
+            "    this.allInjectionsMembersInjector = allInjectionsMembersInjector;",
+            "    assert sProvider != null;",
+            "    this.sProvider = sProvider;",
+            "  }",
+            "",
+            "  @Override public AllInjections get() {",
+            "    AllInjections instance = new AllInjections(sProvider.get());",
+            "    allInjectionsMembersInjector.injectMembers(instance);",
+            "    return instance;",
+            "  }",
+            "",
+            "  public static Factory<AllInjections> create(",
+            "      MembersInjector<AllInjections> allInjectionsMembersInjector, ",
+            "      Provider<String> sProvider) {",
+            "    return new AllInjections_Factory(allInjectionsMembersInjector, sProvider);",
+            "  }",
+            "}");
     assertAbout(javaSource()).that(file).processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -807,34 +909,35 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class B extends A {",
         "  @Inject B() {}",
         "}");
-    JavaFileObject expectedFactory = JavaFileObjects.forSourceLines(
-        "test.B_Factory",
-        "package test;",
-        "",
-        "import dagger.MembersInjector;",
-        "import dagger.internal.Factory;",
-        "import javax.annotation.Generated;",
-        "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class B_Factory implements Factory<B> {",
-        "",
-        "  private final MembersInjector<B> membersInjector;",
-        "",
-        "  public B_Factory(MembersInjector<B> membersInjector) {",
-        "    assert membersInjector != null;",
-        "    this.membersInjector = membersInjector;",
-        "  }",
-        "",
-        "  @Override public B get() {",
-        "    B instance = new B();",
-        "    membersInjector.injectMembers(instance);",
-        "    return instance;",
-        "  }",
-        "",
-        "  public static Factory<B> create(MembersInjector<B> membersInjector) {",
-        "    return new B_Factory(membersInjector);",
-        "  }",
-        "}");
+    JavaFileObject expectedFactory =
+        JavaFileObjects.forSourceLines(
+            "test.B_Factory",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.Factory;",
+            "import javax.annotation.Generated;",
+            "",
+            GENERATED_ANNOTATION_JAVAPOET,
+            "public final class B_Factory implements Factory<B> {",
+            "",
+            "  private final MembersInjector<B> bMembersInjector;",
+            "",
+            "  public B_Factory(MembersInjector<B> bMembersInjector) {",
+            "    assert bMembersInjector != null;",
+            "    this.bMembersInjector = bMembersInjector;",
+            "  }",
+            "",
+            "  @Override public B get() {",
+            "    B instance = new B();",
+            "    bMembersInjector.injectMembers(instance);",
+            "    return instance;",
+            "  }",
+            "",
+            "  public static Factory<B> create(MembersInjector<B> bMembersInjector) {",
+            "    return new B_Factory(bMembersInjector);",
+            "  }",
+            "}");
     assertAbout(javaSources()).that(ImmutableList.of(aFile, bFile))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
@@ -850,7 +953,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.inject.Inject;",
         "",
         "class InjectConstructor {",
-        "  @Inject InjectConstructor(List<? extends Object> objects) {}",
+        "  @Inject InjectConstructor(List<?> objects) {}",
         "}");
     JavaFileObject expected = JavaFileObjects.forSourceLines(
         "test.InjectConstructor_Factory",
@@ -861,13 +964,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class InjectConstructor_Factory ",
         "    implements Factory<InjectConstructor> {",
         "",
-        "  private final Provider<List<? extends Object>> objectsProvider;",
+        "  private final Provider<List<?>> objectsProvider;",
         "",
-        "  public InjectConstructor_Factory(Provider<List<? extends Object>> objectsProvider) {",
+        "  public InjectConstructor_Factory(Provider<List<?>> objectsProvider) {",
         "    assert objectsProvider != null;",
         "    this.objectsProvider = objectsProvider;",
         "  }",
@@ -877,7 +980,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "",
         "  public static Factory<InjectConstructor> create(",
-        "      Provider<List<? extends Object>> objectsProvider) {",
+        "      Provider<List<?>> objectsProvider) {",
         "    return new InjectConstructor_Factory(objectsProvider);",
         "  }",
         "}");
@@ -909,7 +1012,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class InjectConstructor_Factory ",
         "    implements Factory<InjectConstructor> {",
         "",
@@ -961,7 +1064,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import javax.inject.Provider;",
         "import other.pkg.Outer;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class InjectConstructor_Factory ",
         "    implements Factory<InjectConstructor> {",
         "",
@@ -1013,17 +1116,16 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "import javax.inject.Provider;",
-        "import other.pkg.CommonName;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public final class InjectConstructor_Factory ",
         "    implements Factory<InjectConstructor> {",
         "",
-        "  private final Provider<CommonName> otherPackageProvider;",
-        "  private final Provider<test.CommonName> samePackageProvider;",
+        "  private final Provider<other.pkg.CommonName> otherPackageProvider;",
+        "  private final Provider<CommonName> samePackageProvider;",
         "",
-        "  public InjectConstructor_Factory(Provider<CommonName> otherPackageProvider,",
-        "      Provider<test.CommonName> samePackageProvider) {",
+        "  public InjectConstructor_Factory(Provider<other.pkg.CommonName> otherPackageProvider,",
+        "      Provider<CommonName> samePackageProvider) {",
         "    assert otherPackageProvider != null;",
         "    this.otherPackageProvider = otherPackageProvider;",
         "    assert samePackageProvider != null;",
@@ -1035,8 +1137,8 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "",
         "  public static Factory<InjectConstructor> create(",
-        "      Provider<CommonName> otherPackageProvider,",
-        "      Provider<test.CommonName> samePackageProvider) {",
+        "      Provider<other.pkg.CommonName> otherPackageProvider,",
+        "      Provider<CommonName> samePackageProvider) {",
         "    return new InjectConstructor_Factory(otherPackageProvider, samePackageProvider);",
         "  }",
         "}");
@@ -1063,7 +1165,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
+        GENERATED_ANNOTATION_JAVAPOET,
         "public enum SimpleType_Factory implements Factory<SimpleType> {",
         "  INSTANCE;",
         "",
@@ -1107,16 +1209,16 @@ public final class InjectConstructorFactoryGeneratorTest {
         "",
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
-        "import test.OuterType.A;",
-        "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public enum OuterType$A_Factory implements Factory<A> {",
+        "",
+        GENERATED_ANNOTATION_JAVAPOET,
+        "public enum OuterType$A_Factory implements Factory<OuterType.A> {",
         "  INSTANCE;",
         "",
-        "  @Override public A get() {",
-        "    return new A();",
+        "  @Override public OuterType.A get() {",
+        "    return new OuterType.A();",
         "  }",
         "",
-        "  public static Factory<A> create() {",
+        "  public static Factory<OuterType.A> create() {",
         "    return INSTANCE;",
         "  }",
         "}");

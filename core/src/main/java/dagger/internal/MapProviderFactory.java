@@ -15,6 +15,7 @@
  */
 package dagger.internal;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Provider;
@@ -31,6 +32,9 @@ import static java.util.Collections.unmodifiableMap;
  *
  */
 public final class MapProviderFactory<K, V> implements Factory<Map<K, Provider<V>>> {
+  private static final MapProviderFactory<Object, Object> EMPTY =
+      new MapProviderFactory<Object, Object>(Collections.<Object, Provider<Object>>emptyMap());
+
   private final Map<K, Provider<V>> contributingMap;
 
   /**
@@ -40,7 +44,15 @@ public final class MapProviderFactory<K, V> implements Factory<Map<K, Provider<V
     return new Builder<K, V>(size);
   }
 
-  private MapProviderFactory(LinkedHashMap<K, Provider<V>> contributingMap) {
+  /**
+   * Returns a factory of an empty map.
+   */
+  @SuppressWarnings("unchecked") // safe contravariant cast
+  public static <K, V> MapProviderFactory<K, V> empty() {
+    return (MapProviderFactory<K, V>) EMPTY;
+  }
+
+  private MapProviderFactory(Map<K, Provider<V>> contributingMap) {
     this.contributingMap = unmodifiableMap(contributingMap);
   }
 

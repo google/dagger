@@ -17,17 +17,15 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import dagger.MembersInjector;
-import dagger.producers.Producer;
+import dagger.internal.codegen.BindingType.HasBindingType;
+import dagger.internal.codegen.Key.HasKey;
+import dagger.internal.codegen.SourceElement.HasSourceElement;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Provider;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -36,7 +34,6 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.SimpleElementVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
@@ -51,52 +48,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
  * @author Gregory Kick
  * @since 2.0
  */
-abstract class Binding {
-  
-  /**
-   * The subtype of this binding.
-   */
-  enum Type implements Predicate<Binding> {
-    /** A binding with this type is a {@link ProvisionBinding}. */
-    PROVISION(Provider.class),
-    /** A binding with this type is a {@link MembersInjectionBinding}. */
-    MEMBERS_INJECTION(MembersInjector.class),
-    /** A binding with this type is a {@link ProductionBinding}. */
-    PRODUCTION(Producer.class),
-    ;
-    
-    private final Class<?> frameworkClass;
-    
-    private Type(Class<?> frameworkClass) {
-      this.frameworkClass = frameworkClass;
-    }
-    
-    /**
-     * Returns the framework class associated with bindings of this type.
-     */
-    Class<?> frameworkClass() {
-      return frameworkClass;
-    }
-
-    BindingKey.Kind bindingKeyKind() {
-      switch (this) {
-        case MEMBERS_INJECTION:
-          return BindingKey.Kind.MEMBERS_INJECTION;
-        case PROVISION:
-        case PRODUCTION:
-          return BindingKey.Kind.CONTRIBUTION;
-        default:
-          throw new AssertionError();
-      }
-    }
-
-    @Override
-    public boolean apply(Binding binding) {
-      return this.equals(binding.bindingType());
-    }
-  }
-
-  abstract Binding.Type bindingType();
+abstract class Binding implements HasBindingType, HasKey, HasSourceElement {
 
   /**
    * Returns the framework class associated with this binding.
@@ -105,49 +57,19 @@ abstract class Binding {
     return bindingType().frameworkClass();
   }
 
-  static Optional<String> bindingPackageFor(Iterable<? extends Binding> bindings) {
-    ImmutableSet.Builder<String> bindingPackagesBuilder = ImmutableSet.builder();
-    for (Binding binding : bindings) {
-      bindingPackagesBuilder.addAll(binding.bindingPackage().asSet());
-    }
-    ImmutableSet<String> bindingPackages = bindingPackagesBuilder.build();
-    switch (bindingPackages.size()) {
-      case 0:
-        return Optional.absent();
-      case 1:
-        return Optional.of(bindingPackages.iterator().next());
-      default:
-        throw new IllegalArgumentException();
-    }
-  }
-
   /** The {@link Key} that is provided by this binding. */
-  protected abstract Key key();
-
-  BindingKey bindingKey() {
-    return BindingKey.create(bindingType().bindingKeyKind(), key());
-  }
+  @Override
+  public abstract Key key();
 
   /** Returns the {@link Element} instance that is responsible for declaring the binding. */
-  abstract Element bindingElement();
+  Element bindingElement() {
+    return sourceElement().element();
+  }
 
   /** The type enclosing the binding {@link #bindingElement()}. */
   TypeElement bindingTypeElement() {
-    return BINDING_TYPE_ELEMENT.visit(bindingElement());
+    return sourceElement().enclosingTypeElement();
   }
-
-  private static final ElementVisitor<TypeElement, Void> BINDING_TYPE_ELEMENT =
-      new SimpleElementVisitor6<TypeElement, Void>() {
-        @Override
-        protected TypeElement defaultAction(Element e, Void p) {
-          return visit(e.getEnclosingElement());
-        }
-
-        @Override
-        public TypeElement visitType(TypeElement e, Void p) {
-          return e;
-        }
-      };
 
   /**
    * The explicit set of {@link DependencyRequest dependencies} required to satisfy this binding.
@@ -220,10 +142,11 @@ abstract class Binding {
   }
 
   /**
-   * Returns true if this is a binding for a key that has a different type parameter list than the
-   * element it's providing.
+   * if this binding's key's type parameters are different from those of the
+   * {@link #bindingTypeElement()}, this is the binding for the {@link #bindingTypeElement()}'s
+   * unresolved type.
    */
-  abstract boolean hasNonDefaultTypeParameters();
+  abstract Optional<? extends Binding> unresolved();
 
   /**
    * The scope of this binding.

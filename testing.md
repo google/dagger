@@ -94,7 +94,7 @@ But there are limitations to this approach:
         they are not used.
 
     *   Similarly, the overriding module cannot add bindings to the graph,
-        including new [multibinding](multibindings.md)
+        including new [multibinding](multibindings.html)
         contributions.[^new-multibindings?] Any new `@Provides` methods in the
         subclass are silently ignored by Dagger. Practically, this means that
         your fakes cannot take advantage of dependency injection.
@@ -258,4 +258,3 @@ configuration the fake modules, as described
 
 <!-- TODO(gak): Document the elision of static module instances somewhere externally. -->
 [elide-static-module-instances]: https://github.com/google/dagger/commit/9b81e1091d5e9ddd1e84318fbab863a8c62fb757
-

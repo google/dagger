@@ -63,6 +63,37 @@ of your `pom.xml` and the `dagger-compiler` artifact as either an `optional` or
 </dependencies>
 ```
 
+or as an `annotationProcessorPaths` value of the `maven-compiler-plugin`
+(requires at least version 3.5):
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.google.dagger</groupId>
+    <artifactId>dagger</artifactId>
+    <version>2.x</version>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.6.1</version>
+      <configuration>
+        <annotationProcessorPaths>
+          <path>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-compiler</artifactId>
+            <version>2.x</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
 If you use the beta `dagger-producers` extension (which supplies
 parallelizable execution graphs), then add this to your maven configuration:
 
@@ -80,7 +111,7 @@ parallelizable execution graphs), then add this to your maven configuration:
 ```groovy
 // Add plugin https://plugins.gradle.org/plugin/net.ltgt.apt
 plugins {
-  id "net.ltgt.apt" version "0.5"
+  id "net.ltgt.apt" version "0.10"
 }
 
 // Add Dagger dependencies

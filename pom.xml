@@ -50,7 +50,7 @@
     <auto.common.version>0.5</auto.common.version>
     <auto.factory.version>1.0-beta3</auto.factory.version>
     <auto.service.version>1.0-rc2</auto.service.version>
-    <auto.value.version>1.0</auto.value.version>
+    <auto.value.version>1.1</auto.value.version>
     <guava.version>19.0</guava.version>
     <google.java.format.version>0.1-alpha</google.java.format.version>
 

@@ -47,7 +47,7 @@
     <javax.inject.version>1</javax.inject.version>
     <javax.annotation.version>2.0.1</javax.annotation.version>
     <javawriter.version>2.5.0</javawriter.version>
-    <auto.common.version>0.5</auto.common.version>
+    <auto.common.version>0.6</auto.common.version>
     <auto.factory.version>1.0-beta3</auto.factory.version>
     <auto.service.version>1.0-rc2</auto.service.version>
     <auto.value.version>1.1</auto.value.version>

@@ -45,7 +45,7 @@
     <!-- Compilation -->
     <java.version>1.7</java.version>
     <javax.inject.version>1</javax.inject.version>
-    <javax.annotation.version>2.0.1</javax.annotation.version>
+    <javax.annotation.version>3.0.1</javax.annotation.version>
     <javawriter.version>2.5.1</javawriter.version>
     <auto.common.version>0.6</auto.common.version>
     <auto.factory.version>1.0-beta3</auto.factory.version>

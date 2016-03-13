@@ -57,7 +57,7 @@
 
     <!-- Test Dependencies -->
     <compile-testing.version>0.9</compile-testing.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
     <mockito.version>1.9.5</mockito.version>
     <truth.version>0.26</truth.version>
   </properties>

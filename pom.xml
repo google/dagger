@@ -45,21 +45,21 @@
     <!-- Compilation -->
     <java.version>1.7</java.version>
     <javax.inject.version>1</javax.inject.version>
-    <javax.annotation.version>2.0.1</javax.annotation.version>
-    <javawriter.version>2.5.0</javawriter.version>
-    <auto.common.version>0.5</auto.common.version>
+    <javax.annotation.version>3.0.1</javax.annotation.version>
+    <javawriter.version>2.5.1</javawriter.version>
+    <auto.common.version>0.6</auto.common.version>
     <auto.factory.version>1.0-beta3</auto.factory.version>
     <auto.service.version>1.0-rc2</auto.service.version>
-    <auto.value.version>1.0</auto.value.version>
-    <guava.version>19.0-rc2</guava.version>
+    <auto.value.version>1.1</auto.value.version>
+    <guava.version>19.0</guava.version>
     <google.java.format.version>0.1-alpha</google.java.format.version>
 
 
     <!-- Test Dependencies -->
     <compile-testing.version>0.9</compile-testing.version>
-    <junit.version>4.11</junit.version>
-    <mockito.version>1.9.5</mockito.version>
-    <truth.version>0.26</truth.version>
+    <junit.version>4.12</junit.version>
+    <mockito.version>1.10.19</mockito.version>
+    <truth.version>0.28</truth.version>
   </properties>
 
   <scm>

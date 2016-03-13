@@ -41,3 +41,7 @@ branches:
   only:
     - master
     - /^release.*$/
+
+cache:
+  directories:
+  - $HOME/.m2

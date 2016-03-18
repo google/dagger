@@ -54,7 +54,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * class SomeInjectedType {
  *   {@literal @}Inject
- *   SomeInjectedType(Map<SomeEnum, Integer> map) {
+ *   {@literal SomeInjectedType(Map<SomeEnum, Integer>} map) {
  *     assert map.get(SomeEnum.FOO) == 2;
  *   }
  * }
@@ -89,7 +89,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * class SomeInjectedType {
  *   {@literal @}Inject
- *   SomeInjectedType(Map<MyMapKey, Integer> map) {
+ *   {@literal SomeInjectedType(Map<MyMapKey, Integer>} map) {
  *     assert map.get(new MyMapKeyImpl("foo", MyEnum.BAR)) == 2;
  *   }
  * }

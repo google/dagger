@@ -54,7 +54,7 @@
     <auto.value.version>1.1</auto.value.version>
     <errorprone.version>2.0.8</errorprone.version>
     <guava.version>19.0</guava.version>
-    <google.java.format.version>0.1-alpha</google.java.format.version>
+    <google.java.format.version>1.0</google.java.format.version>
 
 
     <!-- Test Dependencies -->
@@ -124,6 +124,13 @@
         <groupId>com.google.googlejavaformat</groupId>
         <artifactId>google-java-format</artifactId>
         <version>${google.java.format.version}</version>
+        <exclusions>
+          <!-- jcommander is used for CLI argument processing, not needed by Dagger -->
+          <exclusion>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.auto</groupId>

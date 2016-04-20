@@ -54,7 +54,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * class SomeInjectedType {
  *   {@literal @}Inject
- *   SomeInjectedType(Map<SomeEnum, Integer> map) {
+ *   SomeInjectedType({@literal Map<SomeEnum, Integer>} map) {
  *     assert map.get(SomeEnum.FOO) == 2;
  *   }
  * }
@@ -63,8 +63,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>If {@code unwrapValue} is true, the annotation's single member can be any type except an
  * array.
  *
- * <p>See {@link dagger.mapkeys} for standard unwrapped map key annotations for keys that are boxed
- * primitives, strings, or classes.
+ * <p>See {@link dagger.multibindings} for standard unwrapped map key annotations for keys that are
+ * boxed primitives, strings, or classes.
  *
  * <h2>Annotations as keys</h2>
  *
@@ -89,7 +89,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * class SomeInjectedType {
  *   {@literal @}Inject
- *   SomeInjectedType(Map<MyMapKey, Integer> map) {
+ *   SomeInjectedType({@literal Map<MyMapKey, Integer>} map) {
  *     assert map.get(new MyMapKeyImpl("foo", MyEnum.BAR)) == 2;
  *   }
  * }

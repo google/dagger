@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Google, Inc.
+ * Copyright (C) 2016 Google, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.mapkeys;
+package dagger;
 
-import dagger.MapKey;
 import java.lang.annotation.Documented;
-import java.lang.annotation.Target;
+import java.lang.annotation.Retention;
+import javax.inject.Scope;
 
-import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * A {@link MapKey} annotation for maps with {@code Class<?>} keys.
- * 
- * <p>If your map's keys can be constrained, consider using a custom annotation instead, with a
- * member whose type is {@code Class<? extends Something>}.
+ * A scope that indicates that the object returned by a binding may be (but might not be) reused.
+ *
+ * <p>{@code @Reusable} is useful when you want to limit the number of provisions of a type, but
+ * there is no specific lifetime over which there must be only one instance.
+ *
+ * @see <a href="http://google.github.io/dagger/users-guide.html#reusable-scope">Reusable Scope
+ * </a>
  */
 @Documented
-@Target(METHOD)
-@MapKey
-public @interface ClassKey {
-  Class<?> value();
-}
+@Retention(RUNTIME)
+@Scope
+public @interface Reusable {}

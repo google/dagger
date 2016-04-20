@@ -16,15 +16,19 @@
 package dagger.producers.monitoring;
 
 import dagger.producers.Produces;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /** A token that represents an individual {@linkplain Produces producer method}. */
 public final class ProducerToken {
-  private final Class<?> classToken;
+  @Nullable private final Class<?> classToken;
+  @Nullable private final String methodName;
 
-  private ProducerToken(Class<?> classToken) {
+  private ProducerToken(@Nullable Class<?> classToken, @Nullable String methodName) {
     this.classToken = classToken;
+    this.methodName = methodName;
   }
 
   /**
@@ -34,7 +38,17 @@ public final class ProducerToken {
    * signature may change at any time.
    */
   public static ProducerToken create(Class<?> classToken) {
-    return new ProducerToken(checkNotNull(classToken));
+    return new ProducerToken(checkNotNull(classToken), null);
+  }
+
+  /**
+   * Creates a token for a producer method.
+   *
+   * <p><b>Do not use this!</b> This is intended to be called by generated code only, and its
+   * signature may change at any time.
+   */
+  public static ProducerToken create(String methodName) {
+    return new ProducerToken(null, checkNotNull(methodName));
   }
 
   /** Two tokens are equal if they represent the same method. */
@@ -44,21 +58,33 @@ public final class ProducerToken {
       return true;
     } else if (o instanceof ProducerToken) {
       ProducerToken that = (ProducerToken) o;
-      return this.classToken.equals(that.classToken);
+      return Objects.equals(this.classToken, that.classToken)
+          && Objects.equals(this.methodName, that.methodName);
     } else {
       return false;
     }
   }
 
-  /** Returns an appropriate hash code to match {@link #equals). */
+  /** Returns an appropriate hash code to match {@link #equals(Object)}. */
   @Override
   public int hashCode() {
-    return classToken.hashCode();
+    int h = 1;
+    h *= 1000003;
+    h ^= Objects.hashCode(this.classToken);
+    h *= 1000003;
+    h ^= Objects.hashCode(this.methodName);
+    return h;
   }
 
   /** Returns a representation of the method. */
   @Override
   public String toString() {
-    return classToken.toString();
+    if (methodName != null) {
+      return methodName;
+    } else if (classToken != null) {
+      return classToken.toString();
+    } else {
+      throw new IllegalStateException();
+    }
   }
 }

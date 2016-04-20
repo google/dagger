@@ -23,7 +23,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import dagger.Reusable;
 import dagger.producers.ProductionScope;
+import java.lang.annotation.Annotation;
 import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -71,21 +73,30 @@ final class Scope {
   }
 
   /**
-   * Returns a representation for producer scope;
+   * Returns a representation for {@link ProductionScope @ProductionScope} scope.
    */
   static Scope productionScope(Elements elements) {
-    return new Scope(
-        SimpleAnnotationMirror.of(
-            elements.getTypeElement(ProductionScope.class.getCanonicalName())));
+    return scope(elements, ProductionScope.class);
   }
 
   /**
-   * Returns a representation for singleton scope.
+   * Returns a representation for {@link Singleton @Singleton} scope.
    */
   static Scope singletonScope(Elements elements) {
+    return scope(elements, Singleton.class);
+  }
+
+  /**
+   * Returns a representation for {@link Reusable @Reusable} scope.
+   */
+  static Scope reusableScope(Elements elements) {
+    return scope(elements, Reusable.class);
+  }
+
+  private static Scope scope(Elements elements, Class<? extends Annotation> scopeAnnotationClass) {
     return new Scope(
         SimpleAnnotationMirror.of(
-            elements.getTypeElement(Singleton.class.getCanonicalName())));
+            elements.getTypeElement(scopeAnnotationClass.getCanonicalName())));
   }
 
   /**

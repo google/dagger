@@ -46,7 +46,7 @@ import static java.lang.annotation.ElementType.TYPE;
  * {@link Producer} of a type that is {@link Inject injected}, {@link Provides provided}, or
  * {@link Produces produced}. Each may have a {@link Qualifier} annotation as well. The following
  * are all valid production method declarations: <pre><code>
- *   ListenableFuture<SomeType> getSomeType();
+ *   {@literal ListenableFuture<SomeType>} getSomeType();
  *   {@literal Producer<Set<SomeType>>} getSomeTypes();
  *   {@literal @Response ListenableFuture<Html>} getResponse();
  * </code></pre>
@@ -123,4 +123,3 @@ public @interface ProductionComponent {
   @Documented
   @interface Builder {}
 }
-

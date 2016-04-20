@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Google, Inc.
+ * Copyright (C) 2016 Google, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,24 @@ package dagger.internal;
 import dagger.Lazy;
 import javax.inject.Provider;
 
+import static dagger.internal.Preconditions.checkNotNull;
+
 /**
- * A basic {@link Lazy} implementation that memoizes the value returned from a {@link Provider}
- * using the double-check idiom described in Effective Java 2: Item 71.
- *
- * @author Gregory Kick
- * @since 2.0
+ * A {@link Lazy} and {@link Provider} implementation that memoizes the value returned from a
+ * delegate using the double-check idiom described in Item 71 of <i>Effective Java 2</i>.
  */
-// TODO(gak): Unify the duplicated code between this and ScopedProvider.
-public final class DoubleCheckLazy<T> implements Lazy<T> {
+public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   private static final Object UNINITIALIZED = new Object();
 
-  private final Provider<T> provider;
+  private volatile Provider<T> provider;
   private volatile Object instance = UNINITIALIZED;
 
-  private DoubleCheckLazy(Provider<T> provider) {
+  private DoubleCheck(Provider<T> provider) {
     assert provider != null;
     this.provider = provider;
   }
 
-  @SuppressWarnings("unchecked") // cast only happens when result comes from the factory
+  @SuppressWarnings("unchecked") // cast only happens when result comes from the provider
   @Override
   public T get() {
     Object result = instance;
@@ -46,26 +44,32 @@ public final class DoubleCheckLazy<T> implements Lazy<T> {
         result = instance;
         if (result == UNINITIALIZED) {
           instance = result = provider.get();
+          /* Null out the reference to the provider. We are never going to need it again, so we
+           * can make it eligible for GC. */
+          provider = null;
         }
       }
     }
     return (T) result;
   }
 
-  public static <T> Lazy<T> create(Provider<T> provider) {
-    if (provider == null) {
-      throw new NullPointerException();
-    }
+  /** Returns a new provider that caches the value from the given factory. */
+  public static <T> Provider<T> provider(Factory<T> factory) {
+    return new DoubleCheck<T>(checkNotNull(factory));
+  }
+
+  /** Returns a {@link Lazy} that caches the value from the given provider. */
+  public static <T> Lazy<T> lazy(Provider<T> provider) {
     if (provider instanceof Lazy) {
       @SuppressWarnings("unchecked")
       final Lazy<T> lazy = (Lazy<T>) provider;
       // Avoids memoizing a value that is already memoized.
       // NOTE: There is a pathological case where Provider<P> may implement Lazy<L>, but P and L
       // are different types using covariant return on get(). Right now this is used with
-      // ScopedProvider<T> exclusively, which is implemented such that P and L are always the same
-      // so it will be fine for that case.
+      // DoubleCheck<T> exclusively, which is implemented such that P and L are always
+      // the same, so it will be fine for that case.
       return lazy;
     }
-    return new DoubleCheckLazy<T>(provider);
+    return new DoubleCheck<T>(checkNotNull(provider));
   }
 }

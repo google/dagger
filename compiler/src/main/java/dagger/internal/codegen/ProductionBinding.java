@@ -123,7 +123,7 @@ abstract class ProductionBinding extends ContributionBinding {
           key,
           dependencies,
           findBindingPackage(key),
-          ConfigurationAnnotations.getNullableType(producesMethod),
+          Optional.<DeclaredType>absent(), // TODO(beder): Add nullability checking with Java 8.
           Optional.<DependencyRequest>absent(),
           kind,
           producesAnnotation.type(),

@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Multibindings;
-import dagger.mapkeys.IntKey;
+import dagger.multibindings.IntKey;
 import dagger.producers.Produced;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;

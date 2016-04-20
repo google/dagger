@@ -15,8 +15,8 @@ package test;
 
 import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableMap;
-import dagger.mapkeys.ClassKey;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.ClassKey;
+import dagger.multibindings.StringKey;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
@@ -154,7 +154,7 @@ public class MultibindingTest {
   @Test public void complexQualifierSet() {
     assertThat(multibindingComponent.complexQualifierStringSet()).containsExactly("foo");
   }
-  
+
   @Test
   public void emptySet() {
     assertThat(multibindingComponent.emptySet()).isEmpty();

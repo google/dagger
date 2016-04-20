@@ -60,7 +60,7 @@ public abstract class Produced<T> {
   @Override
   public abstract boolean equals(Object o);
 
-  /** Returns an appropriate hash code to match {@link #equals). */
+  /** Returns an appropriate hash code to match {@link #equals(Object)}. */
   @Override
   public abstract int hashCode();
 

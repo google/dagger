@@ -16,135 +16,192 @@
 package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
-import java.util.List;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.Provides;
+import dagger.producers.Produces;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleElementVisitor6;
+import javax.lang.model.util.ElementKindVisitor7;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.auto.common.MoreElements.asExecutable;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
 
 /**
  * Formats a {@link DependencyRequest} into a {@link String} suitable for an error message listing
  * a chain of dependencies.
- *
- * @author Christian Gruber
- * @since 2.0
+ * 
+ * <dl>
+ * <dt>For component provision methods
+ * <dd>{@code ComponentType.method() injects @Qualifier SomeType}
+ * 
+ * <dt>For component injection methods
+ * <dd>{@code ComponentType.method(foo) injects SomeType}
+ * 
+ * <dt>For parameters to {@link Provides @Provides}, {@link Produces @Produces}, or
+ * {@link Inject @Inject} methods:
+ * <dd>{@code EnclosingType.method([…, ]param[, …]) injects @Qualified ResolvedType}
+ * 
+ * <dt>For parameters to {@link Inject @Inject} constructors:
+ * <dd>{@code EnclosingType.<init>([…, ]param[, …]) injects @Qualified ResolvedType}
+ * 
+ * <dt>For {@link Inject @Inject} fields:
+ * <dd>{@code EnclosingType.field injects @Qualified ResolvedType}
+ * </dl>
  */
 final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
-  private final Types types;
 
-  DependencyRequestFormatter(Types types) {
+  private final Types types;
+  private final Elements elements;
+
+  DependencyRequestFormatter(Types types, Elements elements) {
     this.types = types;
+    this.elements = elements;
   }
 
   // TODO(cgruber): Sweep this class for TypeMirror.toString() usage and do some preventive format.
   // TODO(cgruber): consider returning a small structure containing strings to be indented later.
-  @Override public String format(final DependencyRequest request) {
-    Element requestElement = request.requestElement();
-    Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(requestElement);
-    return requestElement.accept(new SimpleElementVisitor6<String, Optional<AnnotationMirror>>(){
+  @Override
+  public String format(DependencyRequest request) {
+    return request
+        .requestElement()
+        .accept(
+            new ElementKindVisitor7<String, DependencyRequest>() {
 
-      /* Handle component methods */
-      @Override public String visitExecutable(
-          ExecutableElement method, Optional<AnnotationMirror> qualifier) {
-        StringBuilder builder = new StringBuilder(INDENT);
-        if (method.getParameters().isEmpty()) {
-          // some.package.name.MyComponent.myMethod()
-          //     [component method with return type: @other.package.Qualifier some.package.name.Foo]
-          appendEnclosingTypeAndMemberName(method, builder).append("()\n")
-              .append(INDENT).append(INDENT).append("[component method with return type: ");
-          if (qualifier.isPresent()) {
-            // TODO(cgruber) use chenying's annotation mirror stringifier
-            builder.append(qualifier.get()).append(' ');
-          }
-          builder.append(method.getReturnType()).append(']');
-        } else {
-          // some.package.name.MyComponent.myMethod(some.package.name.Foo foo)
-          //     [component injection method for type: some.package.name.Foo]
-          VariableElement componentMethodParameter = getOnlyElement(method.getParameters());
-          appendEnclosingTypeAndMemberName(method, builder).append("(");
-          appendParameter(componentMethodParameter, componentMethodParameter.asType(), builder);
-          builder.append(")\n");
-          builder.append(INDENT).append(INDENT).append("[component injection method for type: ")
-              .append(componentMethodParameter.asType())
-              .append(']');
-        }
-        return builder.toString();
-      }
+              /** Returns the description for component methods. */
+              @Override
+              public String visitExecutableAsMethod(
+                  ExecutableElement method, DependencyRequest request) {
+                StringBuilder builder = new StringBuilder(INDENT);
+                appendEnclosingTypeAndMemberName(method, builder);
+                builder.append('(');
+                for (VariableElement parameter : method.getParameters()) {
+                  builder.append(parameter.getSimpleName());
+                }
+                builder.append(')');
+                appendRequest(
+                    builder,
+                    componentMethodRequestVerb(request),
+                    request.key().qualifier(),
+                    request.key().type());
+                return builder.toString();
+              }
 
-      /* Handle injected fields or method/constructor parameter injection. */
-      @Override public String visitVariable(
-          VariableElement variable, Optional<AnnotationMirror> qualifier) {
-        StringBuilder builder = new StringBuilder(INDENT);
-        TypeMirror resolvedVariableType =
-            MoreTypes.asMemberOf(types, request.enclosingType(), variable);
-        if (variable.getKind().equals(ElementKind.PARAMETER)) {
-          // some.package.name.MyClass.myMethod(some.package.name.Foo arg0, some.package.Bar arg1)
-          //     [parameter: @other.package.Qualifier some.package.name.Foo arg0]
-          ExecutableElement methodOrConstructor =
-              MoreElements.asExecutable(variable.getEnclosingElement());
-          ExecutableType resolvedMethodOrConstructor = MoreTypes.asExecutable(
-              types.asMemberOf(request.enclosingType(), methodOrConstructor));
-          appendEnclosingTypeAndMemberName(methodOrConstructor, builder).append('(');
-          List<? extends VariableElement> parameters = methodOrConstructor.getParameters();
-          List<? extends TypeMirror> parameterTypes =
-              resolvedMethodOrConstructor.getParameterTypes();
-          checkState(parameters.size() == parameterTypes.size());
-          for (int i = 0; i < parameters.size(); i++) {
-            appendParameter(parameters.get(i), parameterTypes.get(i), builder);
-            if (i != parameters.size() - 1) {
-              builder.append(", ");
-            }
-          }
-          builder.append(")\n").append(INDENT).append(INDENT).append("[parameter: ");
-        } else {
-          // some.package.name.MyClass.myField
-          //     [injected field of type: @other.package.Qualifier some.package.name.Foo myField]
-          appendEnclosingTypeAndMemberName(variable, builder).append("\n")
-              .append(INDENT).append(INDENT).append("[injected field of type: ");
-        }
-        if (qualifier.isPresent()) {
-          // TODO(cgruber) use chenying's annotation mirror stringifier
-          builder.append(qualifier.get()).append(' ');
-        }
-        builder.append(resolvedVariableType)
-            .append(' ')
-            .append(variable.getSimpleName())
-            .append(']');
-        return builder.toString();
-      }
+              /**
+               * Returns the description for {@link javax.inject.Inject @Inject} constructor and
+               * method parameters and for {@link dagger.Provides @Provides} and
+               * {@link dagger.producers.Produces @Produces} method parameters.
+               */
+              @Override
+              public String visitVariableAsParameter(
+                  final VariableElement variable, DependencyRequest request) {
+                StringBuilder builder = new StringBuilder(INDENT);
+                ExecutableElement methodOrConstructor =
+                    asExecutable(variable.getEnclosingElement());
 
-      @Override
-      public String visitType(TypeElement e, Optional<AnnotationMirror> p) {
-        return ""; // types by themselves provide no useful information.
-      }
+                appendEnclosingTypeAndMemberName(methodOrConstructor, builder).append('(');
+                int parameterIndex = methodOrConstructor.getParameters().indexOf(variable);
+                if (parameterIndex > 0) {
+                  builder.append("…, ");
+                }
+                builder.append(variable.getSimpleName());
+                if (parameterIndex < methodOrConstructor.getParameters().size() - 1) {
+                  builder.append(", …");
+                }
+                builder.append(')');
+                appendRequest(builder, request);
+                return builder.toString();
+              }
 
-      @Override protected String defaultAction(Element element, Optional<AnnotationMirror> ignore) {
-        throw new IllegalStateException(
-            "Invalid request " + element.getKind() +  " element " + element);
-      }
-    }, qualifier);
+              /** Returns the description for {@link javax.inject.Inject @Inject} fields. */
+              @Override
+              public String visitVariableAsField(
+                  VariableElement variable, DependencyRequest request) {
+                StringBuilder builder = new StringBuilder(INDENT);
+                appendEnclosingTypeAndMemberName(variable, builder);
+                appendRequest(builder, request);
+                return builder.toString();
+              }
+
+              @Override
+              public String visitType(TypeElement e, DependencyRequest request) {
+                return ""; // types by themselves provide no useful information.
+              }
+
+              @Override
+              protected String defaultAction(Element element, DependencyRequest request) {
+                throw new IllegalStateException(
+                    "Invalid request " + element.getKind() + " element " + element);
+              }
+            },
+            request);
   }
 
-  private StringBuilder appendParameter(VariableElement parameter, TypeMirror type,
-      StringBuilder builder) {
-    return builder.append(type).append(' ').append(parameter.getSimpleName());
+  private void appendRequest(StringBuilder builder, DependencyRequest request) {
+    appendRequest(
+        builder, "injects", request.key().qualifier(), requestedTypeWithFrameworkClass(request));
   }
 
+  private void appendRequest(
+      StringBuilder builder, String verb, Optional<AnnotationMirror> qualifier, TypeMirror type) {
+    builder.append("\n    ").append(INDENT).append(verb).append(' ');
+    appendQualifiedType(builder, qualifier, type);
+  }
+
+  private TypeMirror requestedTypeWithFrameworkClass(DependencyRequest request) {
+    Optional<Class<?>> requestFrameworkClass = request.kind().frameworkClass;
+    if (requestFrameworkClass.isPresent()) {
+      return types.getDeclaredType(
+          elements.getTypeElement(requestFrameworkClass.get().getCanonicalName()),
+          request.key().type());
+    }
+    return request.key().type();
+  }
+
+  private void appendQualifiedType(
+      StringBuilder builder, Optional<AnnotationMirror> qualifier, TypeMirror type) {
+    if (qualifier.isPresent()) {
+      builder.append(qualifier.get()).append(' ');
+    }
+    builder.append(type);
+  }
+
+  /**
+   * Returns the verb for a component method dependency request. Returns "produces", "provides", or
+   * "injects", depending on the kind of request.
+   */
+  private String componentMethodRequestVerb(DependencyRequest request) {
+    switch (request.kind()) {
+      case FUTURE:
+      case PRODUCER:
+        return "produces";
+
+      case INSTANCE:
+      case LAZY:
+      case PROVIDER:
+        return "provides";
+
+      case MEMBERS_INJECTOR:
+        return "injects";
+
+      case PRODUCED:
+      default:
+        throw new AssertionError("illegal request kind for method: " + request);
+    }
+  }
+
+  @CanIgnoreReturnValue
   private StringBuilder appendEnclosingTypeAndMemberName(Element member, StringBuilder builder) {
     TypeElement type = MoreElements.asType(member.getEnclosingElement());
-    return builder.append(type.getQualifiedName())
+    return builder
+        .append(type.getQualifiedName())
         .append('.')
         .append(member.getSimpleName());
   }

@@ -15,12 +15,13 @@
  */
 package dagger.internal;
 
+import dagger.Provides;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Scope;
 
 /**
- * An {@linkplain Scope unscoped} {@link Provider}. While a {@link Provider} <i>may<i> apply
+ * An {@linkplain Scope unscoped} {@link Provider}. While a {@link Provider} <i>may</i> apply
  * scoping semantics while providing an instance, a factory implementation is guaranteed to exercise
  * the binding logic ({@link Inject} constructors, {@link Provides} methods) upon each call to
  * {@link #get}.

@@ -929,7 +929,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
-            "import dagger.mapkeys.StringKey;",
+            "import dagger.multibindings.StringKey;",
             "import java.util.List;",
             "import java.util.ArrayList;",
             "",

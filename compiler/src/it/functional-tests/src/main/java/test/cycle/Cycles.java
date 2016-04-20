@@ -20,7 +20,7 @@ import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.StringKey;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;

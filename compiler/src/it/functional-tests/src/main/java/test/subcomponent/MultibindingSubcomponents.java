@@ -19,7 +19,7 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.StringKey;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;

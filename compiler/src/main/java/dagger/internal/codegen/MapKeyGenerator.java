@@ -20,6 +20,7 @@ import com.google.auto.value.AutoAnnotation;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -38,14 +39,14 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
 
-import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.MapKeys.getMapKeyCreatorClassName;
 import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -54,7 +55,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
  *
  * @since 2.0
  */
-final class MapKeyGenerator extends JavaPoetSourceFileGenerator<MapKeyCreatorSpecification> {
+final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecification> {
 
   /**
    * Specification of the {@link MapKey} annotation and the annotation type to generate.
@@ -150,6 +151,7 @@ final class MapKeyGenerator extends JavaPoetSourceFileGenerator<MapKeyCreatorSpe
     return nestedAnnotationElements(annotationElement, new LinkedHashSet<TypeElement>());
   }
 
+  @CanIgnoreReturnValue
   private static Set<TypeElement> nestedAnnotationElements(
       TypeElement annotationElement, Set<TypeElement> annotationElements) {
     if (annotationElements.add(annotationElement)) {

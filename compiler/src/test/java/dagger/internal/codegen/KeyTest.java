@@ -101,7 +101,7 @@ public class KeyTest {
   @Module
   static final class ProvidesMethodModule {
     @Provides String provideString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -143,7 +143,7 @@ public class KeyTest {
     @Provides
     @TestQualifier(@InnerAnnotation)
     String provideQualifiedString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -179,11 +179,11 @@ public class KeyTest {
   @Module
   static final class SetProvidesMethodsModule {
     @Provides(type = SET) String provideString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Provides(type = SET_VALUES) Set<String> provideStrings() {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -242,11 +242,11 @@ public class KeyTest {
   @ProducerModule
   static final class ProducesMethodsModule {
     @Produces String produceString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Produces ListenableFuture<String> produceFutureString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -271,20 +271,20 @@ public class KeyTest {
   @ProducerModule
   static final class SetProducesMethodsModule {
     @Produces(type = Produces.Type.SET) String produceString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Produces(type = Produces.Type.SET) ListenableFuture<String> produceFutureString() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Produces(type = Produces.Type.SET_VALUES) Set<String> produceStrings() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Produces(type = Produces.Type.SET_VALUES)
     ListenableFuture<Set<String>> produceFutureStrings() {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 }

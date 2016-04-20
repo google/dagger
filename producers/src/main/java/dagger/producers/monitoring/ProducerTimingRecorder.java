@@ -28,7 +28,7 @@ import dagger.producers.ProductionComponent;
  *
  * <p>All timings are measured at nanosecond precision, but not necessarily nanosecond resolution.
  * That is, timings will be reported in nanoseconds, but the timing source will not necessarily
- * update at nanosecond resolution. For example, {@link System#nanoTime()) would satisfy these
+ * update at nanosecond resolution. For example, {@link System#nanoTime()} would satisfy these
  * constraints.
  *
  * @author Jesse Beder

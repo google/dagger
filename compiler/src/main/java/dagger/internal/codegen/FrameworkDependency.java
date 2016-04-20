@@ -117,6 +117,19 @@ abstract class FrameworkDependency {
     return frameworkDependencies.build();
   }
 
+  /** Indexes {@code dependencies} by their {@link #dependencyRequests()}. */
+  static ImmutableMap<DependencyRequest, FrameworkDependency> indexByDependencyRequest(
+      Iterable<FrameworkDependency> dependencies) {
+    ImmutableMap.Builder<DependencyRequest, FrameworkDependency> frameworkDependencyMap =
+        ImmutableMap.builder();
+    for (FrameworkDependency dependency : dependencies) {
+      for (DependencyRequest request : dependency.dependencyRequests()) {
+        frameworkDependencyMap.put(request, dependency);
+      }
+    }
+    return frameworkDependencyMap.build();
+  }
+
   /**
    * Groups {@code binding}'s implicit dependencies by their binding key, using the dependency keys
    * from the {@link Binding#unresolved()} binding if it exists.

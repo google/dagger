@@ -124,6 +124,7 @@ final class SubcomponentsWithBoundExecutor {
     ListenableFuture<String> fromChild();
 
     GrandchildComponent.Builder newGrandchildComponentBuilder();
+    GrandchildComponentWithoutBuilder newGrandchildComponent();
 
     @ProductionSubcomponent.Builder
     interface Builder {
@@ -162,6 +163,12 @@ final class SubcomponentsWithBoundExecutor {
     interface Builder {
       GrandchildComponent build();
     }
+  }
+
+  @ProductionSubcomponent(modules = GrandchildProducerModule.class)
+  interface GrandchildComponentWithoutBuilder {
+    @FromGrandchild
+    ListenableFuture<String> fromGrandchild();
   }
 
   private SubcomponentsWithBoundExecutor() {}

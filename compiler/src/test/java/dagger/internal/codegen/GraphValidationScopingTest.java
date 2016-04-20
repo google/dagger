@@ -21,7 +21,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static com.google.common.truth.Truth.assertAbout;
 import static com.google.common.truth.Truth.assert_;
+import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static java.util.Arrays.asList;
 
@@ -344,5 +346,49 @@ public class GraphValidationScopingTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(errorMessage);
+  }
+  
+  @Test
+  public void reusableNotAllowedOnComponent() {
+    JavaFileObject someComponent =
+        JavaFileObjects.forSourceLines(
+            "test.SomeComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Reusable;",
+            "",
+            "@Reusable",
+            "@Component",
+            "interface SomeComponent {}");
+    assertAbout(javaSource())
+        .that(someComponent)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("@Reusable cannot be applied to components or subcomponents.")
+        .in(someComponent)
+        .onLine(6);
+  }
+
+  @Test
+  public void reusableNotAllowedOnSubcomponent() {
+    JavaFileObject someSubcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.SomeComponent",
+            "package test;",
+            "",
+            "import dagger.Reusable;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Reusable",
+            "@Subcomponent",
+            "interface SomeSubcomponent {}");
+    assertAbout(javaSource())
+        .that(someSubcomponent)
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("@Reusable cannot be applied to components or subcomponents.")
+        .in(someSubcomponent)
+        .onLine(6);
   }
 }

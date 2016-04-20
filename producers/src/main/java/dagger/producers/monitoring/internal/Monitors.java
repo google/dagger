@@ -21,6 +21,7 @@ import dagger.producers.monitoring.ProducerMonitor;
 import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import java.util.Collection;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.inject.Provider;
@@ -50,6 +51,23 @@ public final class Monitors {
       return new NonThrowingProductionComponentMonitor.Factory(Iterables.getOnlyElement(factories));
     } else {
       return new DelegatingProductionComponentMonitor.Factory(factories);
+    }
+  }
+
+  /**
+   * Creates a new monitor for the given component, from a set of monitor factories. This will not
+   * throw a {@link RuntimeException} or return null.
+   */
+  public static ProductionComponentMonitor createMonitorForComponent(
+      Provider<?> componentProvider,
+      Provider<Set<ProductionComponentMonitor.Factory>> monitorFactorySetProvider) {
+    try {
+      ProductionComponentMonitor.Factory factory =
+          delegatingProductionComponentMonitorFactory(monitorFactorySetProvider.get());
+      return factory.create(componentProvider.get());
+    } catch (RuntimeException e) {
+      logger.log(Level.SEVERE, "RuntimeException while constructing monitor factories.", e);
+      return ProductionComponentMonitor.noOp();
     }
   }
 

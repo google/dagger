@@ -4,6 +4,27 @@ Change Log
 Dagger 2 (Components)
 ---------------------
 
+### Version 2.2 *(2016-03-22)*
+  * `dagger.mapkeys` moved to `dagger.multibindings` and all `@MapKey`
+    implementations now correctly have `@Beta` applied
+  * Better error messages for multibindings
+  * Compiler bug fixes!
+
+### Version 2.1 *(2016-03-10)*
+
+  * Correctly handle `@Component`s that inject generated types
+  * Adds `@ProductionSubcomponent` and `@ProductionScope`
+  * Allow the production `Executor` to be bound with `@Production`
+  * Allow multiple scope annotations on components
+  * A component's subcomponents’ (and their subcomponents’) simple names no longer need to be unique
+  * Adds the ability to depend on subcomponent builders
+  * GWT Integration
+  * Producers monitoring
+  * Multibindings for producers
+  * Add common `@MapKey` annotations to `dagger.mapkeys`.  These annotations are
+    not, but should be marked `@Beta` (since the `@MapKey` itself is beta).
+  * Lots of bug fixes!
+
 ### Version 2.0.2 *(2015-11-03)*
 
 A patch release, most crucially including:

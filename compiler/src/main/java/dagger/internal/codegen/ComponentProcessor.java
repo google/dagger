@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -49,11 +48,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   public Set<String> getSupportedOptions() {
-    return ImmutableSet.of(
-        CompilerOptions.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
-        CompilerOptions.NULLABLE_VALIDATION_KEY,
-        CompilerOptions.PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
-        CompilerOptions.STATIC_MEMBER_VALIDATION_TYPE_KEY);
+    return CompilerOptions.SUPPORTED_OPTIONS;
   }
 
   @Override
@@ -63,12 +58,13 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     Elements elements = processingEnv.getElementUtils();
     Filer filer = processingEnv.getFiler();
 
-    CompilerOptions compilerOptions = new CompilerOptions(processingEnv, elements);
+    CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
 
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     HasSourceElementFormatter hasSourceElementFormatter =
         new HasSourceElementFormatter(methodSignatureFormatter);
-    DependencyRequestFormatter dependencyRequestFormatter = new DependencyRequestFormatter(types);
+    DependencyRequestFormatter dependencyRequestFormatter =
+        new DependencyRequestFormatter(types, elements);
     KeyFormatter keyFormatter = new KeyFormatter(methodSignatureFormatter);
 
     InjectConstructorValidator injectConstructorValidator = new InjectConstructorValidator();
@@ -99,7 +95,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =
-        new ProducerFactoryGenerator(filer, elements);
+        new ProducerFactoryGenerator(filer, elements, compilerOptions);
     MonitoringModuleGenerator monitoringModuleGenerator =
         new MonitoringModuleGenerator(filer, elements);
     ProductionExecutorModuleGenerator productionExecutorModuleGenerator =

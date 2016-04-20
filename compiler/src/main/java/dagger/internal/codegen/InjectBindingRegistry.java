@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.Provides;
@@ -77,8 +78,7 @@ final class InjectBindingRegistry {
       this.bindingType = bindingType;
     }
 
-    void generateBindings(JavaPoetSourceFileGenerator<B> generator)
-        throws SourceFileGenerationException {
+    void generateBindings(SourceFileGenerator<B> generator) throws SourceFileGenerationException {
       for (B binding = bindingsRequiringGeneration.poll();
           binding != null;
           binding = bindingsRequiringGeneration.poll()) {
@@ -183,21 +183,18 @@ final class InjectBindingRegistry {
    * Registers the binding for generation and later lookup. If the binding is resolved, we also
    * attempt to register an unresolved version of it.
    */
-  private ProvisionBinding registerBinding(
-      ProvisionBinding binding, boolean warnIfNotAlreadyGenerated) {
+  private void registerBinding(ProvisionBinding binding, boolean warnIfNotAlreadyGenerated) {
     provisionBindings.tryRegisterBinding(binding, warnIfNotAlreadyGenerated);
     if (binding.unresolved().isPresent()) {
       provisionBindings.tryToGenerateBinding(binding.unresolved().get(), warnIfNotAlreadyGenerated);
     }
-    return binding;
   }
 
   /**
    * Registers the binding for generation and later lookup. If the binding is resolved, we also
    * attempt to register an unresolved version of it.
    */
-  private MembersInjectionBinding registerBinding(
-      MembersInjectionBinding binding, boolean warnIfNotAlreadyGenerated) {
+  private void registerBinding(MembersInjectionBinding binding, boolean warnIfNotAlreadyGenerated) {
     /*
      * We generate MembersInjector classes for types with @Inject constructors only if they have any
      * injection sites.
@@ -217,13 +214,14 @@ final class InjectBindingRegistry {
       membersInjectionBindings.tryToGenerateBinding(
           binding.unresolved().get(), warnIfNotAlreadyGenerated);
     }
-    return binding;
   }
 
+  @CanIgnoreReturnValue
   Optional<ProvisionBinding> tryRegisterConstructor(ExecutableElement constructorElement) {
     return tryRegisterConstructor(constructorElement, Optional.<TypeMirror>absent(), false);
   }
 
+  @CanIgnoreReturnValue
   private Optional<ProvisionBinding> tryRegisterConstructor(
       ExecutableElement constructorElement,
       Optional<TypeMirror> resolvedType,
@@ -250,10 +248,12 @@ final class InjectBindingRegistry {
     return Optional.absent();
   }
 
+  @CanIgnoreReturnValue
   Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(TypeElement typeElement) {
     return tryRegisterMembersInjectedType(typeElement, Optional.<TypeMirror>absent(), false);
   }
 
+  @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
       TypeElement typeElement,
       Optional<TypeMirror> resolvedType,
@@ -279,6 +279,7 @@ final class InjectBindingRegistry {
     return Optional.absent();
   }
 
+  @CanIgnoreReturnValue
   Optional<ProvisionBinding> getOrFindProvisionBinding(Key key) {
     checkNotNull(key);
     if (!key.isValidImplicitProvisionKey(types)) {
@@ -321,6 +322,7 @@ final class InjectBindingRegistry {
    * Returns a {@link MembersInjectionBinding} for {@code key}. If none has been registered yet,
    * registers one, along with all necessary members injection bindings for superclasses.
    */
+  @CanIgnoreReturnValue
   Optional<MembersInjectionBinding> getOrFindMembersInjectionBinding(Key key) {
     checkNotNull(key);
     // TODO(gak): is checking the kind enough?

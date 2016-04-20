@@ -69,10 +69,12 @@ import static javax.lang.model.element.Modifier.STATIC;
  * @author Jesse Beder
  * @since 2.0
  */
-final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<ProductionBinding> {
+final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
+  private final CompilerOptions compilerOptions;
 
-  ProducerFactoryGenerator(Filer filer, Elements elements) {
+  ProducerFactoryGenerator(Filer filer, Elements elements, CompilerOptions compilerOptions) {
     super(filer, elements);
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -106,15 +108,13 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
         constructorBuilder()
             .addModifiers(PUBLIC)
             .addStatement(
-                "super($L, $T.create($T.class))",
+                "super($L, $L)",
                 fields.get(binding.monitorRequest().get().bindingKey()).name(),
-                PRODUCER_TOKEN,
-                generatedTypeName);
+                producerTokenConstruction(generatedTypeName, binding));
 
     if (!binding.bindingElement().getModifiers().contains(STATIC)) {
       TypeName moduleType = TypeName.get(binding.bindingTypeElement().asType());
-      addFieldAndConstructorParameter(
-          factoryBuilder, constructorBuilder, "module", moduleType);
+      addFieldAndConstructorParameter(factoryBuilder, constructorBuilder, "module", moduleType);
     }
 
     for (FrameworkField bindingField : fields.values()) {
@@ -123,19 +123,6 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
           factoryBuilder, constructorBuilder, bindingField.name(), fieldType);
     }
 
-    boolean returnsFuture =
-        binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION);
-    ImmutableList<DependencyRequest> asyncDependencies =
-        FluentIterable.from(binding.implicitDependencies())
-            .filter(
-                new Predicate<DependencyRequest>() {
-                  @Override
-                  public boolean apply(DependencyRequest dependency) {
-                    return isAsyncDependency(dependency);
-                  }
-                })
-            .toList();
-
     MethodSpec.Builder computeMethodBuilder =
         methodBuilder("compute")
             .returns(futureTypeName)
@@ -143,6 +130,7 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
             .addModifiers(PROTECTED)
             .addParameter(ProducerMonitor.class, "monitor", FINAL);
 
+    ImmutableList<DependencyRequest> asyncDependencies = asyncDependencies(binding);
     for (DependencyRequest dependency : asyncDependencies) {
       TypeName futureType = listenableFutureOf(asyncDependencyType(dependency));
       CodeBlock futureAccess =
@@ -177,7 +165,6 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
             getThrowsClause(binding.thrownTypes()),
             getInvocationCodeBlock(
                 generatedTypeName,
-                !returnsFuture,
                 binding,
                 providedTypeName,
                 futureTransform.parameterCodeBlocks()));
@@ -205,6 +192,40 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
         .addParameter(variableType, variableName)
         .addStatement("assert $L != null", variableName)
         .addStatement("this.$1L = $1L", variableName);
+  }
+
+  /** Returns a list of dependencies that are generated asynchronously. */
+  private static ImmutableList<DependencyRequest> asyncDependencies(Binding binding) {
+    final ImmutableMap<DependencyRequest, FrameworkDependency> frameworkDependencies =
+        FrameworkDependency.indexByDependencyRequest(
+            FrameworkDependency.frameworkDependenciesForBinding(binding));
+    return FluentIterable.from(binding.implicitDependencies())
+        .filter(
+            new Predicate<DependencyRequest>() {
+              @Override
+              public boolean apply(DependencyRequest dependency) {
+                return isAsyncDependency(dependency)
+                    && frameworkDependencies
+                        .get(dependency)
+                        .frameworkClass()
+                        .equals(Producer.class);
+              }
+            })
+        .toList();
+  }
+
+  private CodeBlock producerTokenConstruction(
+      ClassName generatedTypeName, ProductionBinding binding) {
+    CodeBlock producerTokenArgs =
+        compilerOptions.writeProducerNameInToken()
+            ? CodeBlocks.format(
+                "$S",
+                String.format(
+                    "%s#%s",
+                    ClassName.get(binding.bindingTypeElement()),
+                    binding.bindingElement().getSimpleName()))
+            : CodeBlocks.format("$T.class", generatedTypeName);
+    return CodeBlocks.format("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
   }
 
   /** Returns a name of the variable representing this dependency's future. */
@@ -413,16 +434,15 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     for (DependencyRequest dependency : binding.dependencies()) {
       if (isAsyncDependency(dependency)) {
-        codeBlocks.add(CodeBlocks.format(
-            "($T) $L.get($L)",
-            asyncDependencyType(dependency),
-            listArgName,
-            argIndex));
+        codeBlocks.add(
+            CodeBlocks.format(
+                "($T) $L.get($L)", asyncDependencyType(dependency), listArgName, argIndex));
         argIndex++;
       } else {
-        codeBlocks.add(frameworkTypeUsageStatement(
-            CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
-            dependency.kind()));
+        codeBlocks.add(
+            frameworkTypeUsageStatement(
+                CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
+                dependency.kind()));
       }
     }
     return codeBlocks.build();
@@ -432,24 +452,23 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
    * Creates a code block for the invocation of the producer method from the module, which should be
    * used entirely within a method body.
    *
-   * @param wrapWithFuture If true, wraps the result of the call to the producer method
-   *        in an immediate future.
    * @param binding The binding to generate the invocation code block for.
    * @param providedTypeName The type name that should be provided by this producer.
    * @param parameterCodeBlocks The code blocks for all the parameters to the producer method.
    */
   private CodeBlock getInvocationCodeBlock(
       ClassName generatedTypeName,
-      boolean wrapWithFuture,
       ProductionBinding binding,
       TypeName providedTypeName,
       ImmutableList<CodeBlock> parameterCodeBlocks) {
-    CodeBlock moduleCodeBlock = CodeBlocks.format("$L.$L($L)",
-        binding.bindingElement().getModifiers().contains(STATIC)
-            ? CodeBlocks.format("$T", ClassName.get(binding.bindingTypeElement()))
-            : CodeBlocks.format("$T.this.module", generatedTypeName),
-        binding.bindingElement().getSimpleName(),
-        makeParametersCodeBlock(parameterCodeBlocks));
+    CodeBlock moduleCodeBlock =
+        CodeBlocks.format(
+            "$L.$L($L)",
+            binding.bindingElement().getModifiers().contains(STATIC)
+                ? CodeBlocks.format("$T", ClassName.get(binding.bindingTypeElement()))
+                : CodeBlocks.format("$T.this.module", generatedTypeName),
+            binding.bindingElement().getSimpleName(),
+            makeParametersCodeBlock(parameterCodeBlocks));
 
     // NOTE(beder): We don't worry about catching exceptions from the monitor methods themselves
     // because we'll wrap all monitoring in non-throwing monitors before we pass them to the
@@ -463,20 +482,16 @@ final class ProducerFactoryGenerator extends JavaPoetSourceFileGenerator<Product
         valueCodeBlock =
             CodeBlocks.format("$T.createFutureSingletonSet($L)", PRODUCERS, moduleCodeBlock);
       } else {
-        valueCodeBlock =
-            CodeBlocks.format("$T.of($L)", IMMUTABLE_SET, moduleCodeBlock);
+        valueCodeBlock = CodeBlocks.format("$T.of($L)", IMMUTABLE_SET, moduleCodeBlock);
       }
     } else {
       valueCodeBlock = moduleCodeBlock;
     }
     CodeBlock returnCodeBlock =
-        wrapWithFuture
-            ? CodeBlocks.format(
-                "$T.<$T>immediateFuture($L)",
-                FUTURES,
-                providedTypeName,
-                valueCodeBlock)
-            : valueCodeBlock;
+        binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION)
+            ? valueCodeBlock
+            : CodeBlocks.format(
+                "$T.<$T>immediateFuture($L)", FUTURES, providedTypeName, valueCodeBlock);
     return CodeBlocks.format(
         Joiner.on('\n')
             .join(

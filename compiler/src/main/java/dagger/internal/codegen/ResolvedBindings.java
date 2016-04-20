@@ -97,6 +97,16 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
         throw new AssertionError(bindingKey());
     }
   }
+  
+  /**
+   * All bindings for {@link #bindingKey()}, indexed by the component in which they were resolved.
+   */
+  ImmutableSetMultimap<ComponentDescriptor, Binding> bindingsByComponent() {
+    return new ImmutableSetMultimap.Builder<ComponentDescriptor, Binding>()
+        .putAll(allContributionBindings())
+        .putAll(allMembersInjectionBindings().entrySet())
+        .build();
+  }
 
   /**
    * {@code true} if there are no {@link #bindings()} or {@link #multibindingDeclarations()}.
@@ -173,23 +183,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
         ImmutableMap.<ComponentDescriptor, MembersInjectionBinding>of(),
         ImmutableSet.copyOf(multibindings));
   }
-
-  /**
-   * Creates a {@link ResolvedBindings} for contribution bindings.
-   */
-  static ResolvedBindings forContributionBindings(
-      BindingKey bindingKey,
-      ComponentDescriptor owningComponent,
-      ContributionBinding... ownedContributionBindings) {
-    return forContributionBindings(
-        bindingKey,
-        owningComponent,
-        ImmutableSetMultimap.<ComponentDescriptor, ContributionBinding>builder()
-            .putAll(owningComponent, ownedContributionBindings)
-            .build(),
-        ImmutableSet.<MultibindingDeclaration>of());
-  }
-
+  
   /**
    * Creates a {@link ResolvedBindings} for members injection bindings.
    */
@@ -237,6 +231,14 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   boolean isMultibindingContribution() {
     return contributionBindings().size() == 1
         && contributionBinding().contributionType().isMultibinding();
+  }
+
+  /**
+   * {@code true} if this is a {@linkplain ContributionBinding#isSyntheticBinding() synthetic}
+   * contribution.
+   */
+  boolean isSyntheticContribution() {
+    return contributionBindings().size() == 1 && contributionBinding().isSyntheticBinding();
   }
 
   /**

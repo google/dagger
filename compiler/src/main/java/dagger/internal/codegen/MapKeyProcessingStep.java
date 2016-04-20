@@ -36,7 +36,7 @@ import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
 
 /**
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
- * implementation of annotations marked with &#064MapKey where necessary.
+ * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  *
  * @author Chenying Hou
  * @since 2.0

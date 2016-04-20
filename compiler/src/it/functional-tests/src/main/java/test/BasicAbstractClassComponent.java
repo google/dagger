@@ -21,7 +21,7 @@ import dagger.Component;
  * This component tests behavior equivalent to {@link BasicComponent}, but as an abstract class
  * rather than an interface.
  */
-@Component(modules = PrimitivesModule.class)
+@Component(modules = {PrimitivesModule.class, NullableModule.class})
 abstract class BasicAbstractClassComponent implements BasicComponent {
   void throwAParty() {
     throw new RuntimeException("Paaarrrrrtaaaaaaaay!");

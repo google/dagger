@@ -16,8 +16,8 @@
 package test;
 
 import dagger.MapKey;
-import dagger.mapkeys.ClassKey;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.ClassKey;
+import dagger.multibindings.StringKey;
 
 @MapKey(unwrapValue = false)
 @interface WrappedAnnotationKey {

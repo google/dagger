@@ -24,14 +24,14 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.MembersInjector;
 import dagger.internal.DelegateFactory;
-import dagger.internal.DoubleCheckLazy;
+import dagger.internal.DoubleCheck;
 import dagger.internal.Factory;
 import dagger.internal.InstanceFactory;
 import dagger.internal.MapFactory;
 import dagger.internal.MapProviderFactory;
 import dagger.internal.MembersInjectors;
-import dagger.internal.ScopedProvider;
 import dagger.internal.SetFactory;
+import dagger.internal.SimpleLazilyInitializedProvider;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducer;
@@ -55,8 +55,8 @@ final class TypeNames {
 
   static final ClassName ABSTRACT_PRODUCER = ClassName.get(AbstractProducer.class);
   static final ClassName ASYNC_FUNCTION = ClassName.get(AsyncFunction.class);
-  static final ClassName DOUBLE_CHECK_LAZY = ClassName.get(DoubleCheckLazy.class);
   static final ClassName DELEGATE_FACTORY = ClassName.get(DelegateFactory.class);
+  static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
   static final ClassName EXECUTOR = ClassName.get(Executor.class);
   static final ClassName FACTORY = ClassName.get(Factory.class);
   static final ClassName FUTURES = ClassName.get(Futures.class);
@@ -77,7 +77,8 @@ final class TypeNames {
   static final ClassName PRODUCER = ClassName.get(Producer.class);
   static final ClassName PRODUCERS = ClassName.get(Producers.class);
   static final ClassName PROVIDER = ClassName.get(Provider.class);
-  static final ClassName SCOPED_PROVIDER = ClassName.get(ScopedProvider.class);
+  static final ClassName SIMPLE_LAZILY_INITIALIZED_PROVIDER =
+      ClassName.get(SimpleLazilyInitializedProvider.class);
   static final ClassName SET = ClassName.get(Set.class);
   static final ClassName SET_FACTORY = ClassName.get(SetFactory.class);
   static final ClassName SET_OF_PRODUCED_PRODUCER = ClassName.get(SetOfProducedProducer.class);

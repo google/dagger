@@ -15,7 +15,9 @@
  */
 package dagger.internal.codegen;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableSet;
 import dagger.producers.Produces;
 import java.util.EnumSet;
 import java.util.Map;
@@ -25,54 +27,45 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 /** A collection of options that dictate how the compiler will run. */
-final class CompilerOptions {
-  private final boolean usesProducers;
-  private final Diagnostic.Kind nullableValidationKind;
-  private final Diagnostic.Kind privateMemberValidationKind;
-  private final Diagnostic.Kind staticMemberValidationKind;
-  private final ValidationType scopeCycleValidationType;
+@AutoValue
+abstract class CompilerOptions {
+  abstract boolean usesProducers();
+  abstract boolean writeProducerNameInToken();
+  abstract Diagnostic.Kind nullableValidationKind();
+  abstract Diagnostic.Kind privateMemberValidationKind();
+  abstract Diagnostic.Kind staticMemberValidationKind();
+  abstract ValidationType scopeCycleValidationType();
 
-  CompilerOptions(ProcessingEnvironment processingEnv, Elements elements) {
-    this(
-        elements.getTypeElement(Produces.class.getCanonicalName()) != null,
-        nullableValidationType(processingEnv).diagnosticKind().get(),
-        privateMemberValidationType(processingEnv).diagnosticKind().get(),
-        staticMemberValidationType(processingEnv).diagnosticKind().get(),
-        scopeValidationType(processingEnv));
+  static Builder builder() {
+    return new AutoValue_CompilerOptions.Builder();
   }
 
-  CompilerOptions(
-      boolean usesProducers,
-      Diagnostic.Kind nullableValidationKind,
-      Diagnostic.Kind privateMemberValidationKind,
-      Diagnostic.Kind staticMemberValidationKind,
-      ValidationType scopeCycleValidationType) {
-    this.usesProducers = usesProducers;
-    this.nullableValidationKind = nullableValidationKind;
-    this.privateMemberValidationKind = privateMemberValidationKind;
-    this.staticMemberValidationKind = staticMemberValidationKind;
-    this.scopeCycleValidationType = scopeCycleValidationType;
+  static CompilerOptions create(ProcessingEnvironment processingEnv, Elements elements) {
+    return builder()
+        .usesProducers(elements.getTypeElement(Produces.class.getCanonicalName()) != null)
+        .writeProducerNameInToken(
+            writeProducerNameInToken(processingEnv).equals(FeatureStatus.ENABLED))
+        .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
+        .privateMemberValidationKind(
+            privateMemberValidationType(processingEnv).diagnosticKind().get())
+        .staticMemberValidationKind(
+            staticMemberValidationType(processingEnv).diagnosticKind().get())
+        .scopeCycleValidationType(scopeValidationType(processingEnv))
+        .build();
   }
 
-  boolean usesProducers() {
-    return usesProducers;
+  @AutoValue.Builder
+  interface Builder {
+    Builder usesProducers(boolean usesProduces);
+    Builder writeProducerNameInToken(boolean writeProducerNameInToken);
+    Builder nullableValidationKind(Diagnostic.Kind kind);
+    Builder privateMemberValidationKind(Diagnostic.Kind kind);
+    Builder staticMemberValidationKind(Diagnostic.Kind kind);
+    Builder scopeCycleValidationType(ValidationType type);
+    CompilerOptions build();
   }
 
-  Diagnostic.Kind nullableValidationKind() {
-    return nullableValidationKind;
-  }
-
-  Diagnostic.Kind privateMemberValidationKind() {
-    return privateMemberValidationKind;
-  }
-
-  Diagnostic.Kind staticMemberValidationKind() {
-    return staticMemberValidationKind;
-  }
-
-  ValidationType scopeCycleValidationType() {
-    return scopeCycleValidationType;
-  }
+  static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
 
   static final String DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY =
       "dagger.disableInterComponentScopeValidation";
@@ -82,6 +75,21 @@ final class CompilerOptions {
   static final String PRIVATE_MEMBER_VALIDATION_TYPE_KEY = "dagger.privateMemberValidation";
 
   static final String STATIC_MEMBER_VALIDATION_TYPE_KEY = "dagger.staticMemberValidation";
+
+  static final ImmutableSet<String> SUPPORTED_OPTIONS = ImmutableSet.of(
+        WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
+        DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
+        NULLABLE_VALIDATION_KEY,
+        PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
+        STATIC_MEMBER_VALIDATION_TYPE_KEY);
+
+  private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
 
   private static ValidationType scopeValidationType(ProcessingEnvironment processingEnv) {
     return valueOf(

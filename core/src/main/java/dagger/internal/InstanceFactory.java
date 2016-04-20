@@ -21,8 +21,8 @@ package dagger.internal;
  *
  * <p>Note that while this is a {@link Factory} implementation, and thus unscoped, each call to
  * {@link #get} will always return the same instance.  As such, any scoping applied to this factory
- * is redundant and unnecessary.  However, using this with the {@link ScopedProvider} is valid and
- * may be desired for testing or contractual guarantees.
+ * is redundant and unnecessary.  However, using this with {@link DoubleCheck#provider(Factory)} is
+ * valid and may be desired for testing or contractual guarantees.
  *
  * @author Gregory Kick
  * @since 2.0

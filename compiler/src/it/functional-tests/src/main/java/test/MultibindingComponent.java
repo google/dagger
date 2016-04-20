@@ -16,7 +16,7 @@
 package test;
 
 import dagger.Component;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.StringKey;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;

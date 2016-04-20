@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.mapkeys;
+package dagger.multibindings;
 
 import dagger.MapKey;
+import dagger.internal.Beta;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.METHOD;
 
-/** A {@link MapKey} annotation for maps with {@code int} keys. */
+/** A {@link MapKey} annotation for maps with {@link String} keys. */
+@Beta
 @Documented
 @Target(METHOD)
 @MapKey
-public @interface IntKey {
-  int value();
+public @interface StringKey {
+  String value();
 }

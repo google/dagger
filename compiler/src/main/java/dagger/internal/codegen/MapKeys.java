@@ -172,7 +172,7 @@ final class MapKeys {
    * when creating the value in a method body.
    *
    * <p>For example, inside an annotation, a nested array of {@code int}s is simply
-   * <code>{1, 2, 3}</code>, but in code it would have to be <code> new int[] {1, 2, 3}</code>.
+   * {@code {1, 2, 3}}, but in code it would have to be {@code new int[] {1, 2, 3}}.
    */
   private static class MapKeyExpression
       extends SimpleAnnotationValueVisitor6<CodeBlock, AnnotationValue> {

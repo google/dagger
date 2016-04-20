@@ -40,7 +40,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 
 /** Generates a producer executor module for use with production components. */
 // TODO(beder): Replace this with a single class when the producers client library exists.
-final class ProductionExecutorModuleGenerator extends JavaPoetSourceFileGenerator<TypeElement> {
+final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeElement> {
 
   ProductionExecutorModuleGenerator(Filer filer, Elements elements) {
     super(filer, elements);

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
@@ -50,7 +51,7 @@ import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static javax.lang.model.type.TypeKind.DECLARED;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 /**
@@ -132,7 +133,11 @@ abstract class DependencyRequest {
    * Returns the possibly resolved type that contained the requesting element. For members injection
    * requests, this is the type itself.
    */
-  abstract DeclaredType enclosingType();
+  DeclaredType enclosingType() {
+    return wrappedEnclosingType().get();
+  }
+
+  abstract Equivalence.Wrapper<DeclaredType> wrappedEnclosingType();
 
   /** Returns true if this request allows null objects. */
   abstract boolean isNullable();
@@ -196,7 +201,7 @@ abstract class DependencyRequest {
           Kind.PROVIDER,
           mapOfFactoryKey,
           mapOfValueRequest.requestElement(),
-          mapOfValueRequest.enclosingType(),
+          mapOfValueRequest.wrappedEnclosingType(),
           false /* doesn't allow null */,
           Optional.<String>absent());
     }
@@ -208,20 +213,32 @@ abstract class DependencyRequest {
     DependencyRequest forMultibindingContribution(
         DependencyRequest request, ContributionBinding multibindingContribution) {
       checkArgument(
-          multibindingContribution.contributionType().isMultibinding(),
-          "multibindingContribution must be a multibinding: %s",
-          multibindingContribution);
-      checkArgument(
           multibindingContribution.key().bindingMethod().isPresent(),
           "multibindingContribution's key must have a binding method identifier: %s",
           multibindingContribution);
       return new AutoValue_DependencyRequest(
-          Kind.PROVIDER,
+          multibindingContributionRequestKind(multibindingContribution),
           multibindingContribution.key(),
           request.requestElement(),
-          request.enclosingType(),
+          request.wrappedEnclosingType(),
           false /* doesn't allow null */,
           Optional.<String>absent());
+    }
+
+    private Kind multibindingContributionRequestKind(ContributionBinding multibindingContribution) {
+      switch (multibindingContribution.contributionType()) {
+        case MAP:
+          return multibindingContribution.bindingType().equals(BindingType.PRODUCTION)
+              ? Kind.PRODUCER
+              : Kind.PROVIDER;
+        case SET:
+          return Kind.INSTANCE;
+        case UNIQUE:
+          throw new IllegalArgumentException(
+              "multibindingContribution must be a multibinding: " + multibindingContribution);
+        default:
+          throw new AssertionError(multibindingContribution.toString());
+      }
     }
 
     /**
@@ -293,7 +310,7 @@ abstract class DependencyRequest {
             keyFactory.forQualifiedType(
                 qualifier, Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments())),
             productionMethod,
-            container,
+            MoreTypes.equivalence().wrap(container),
             false /* doesn't allow null */,
             Optional.<String>absent());
       } else {
@@ -310,26 +327,19 @@ abstract class DependencyRequest {
           InjectionAnnotations.getQualifier(membersInjectionMethod);
       checkArgument(!qualifier.isPresent());
       TypeMirror returnType = membersInjectionMethodType.getReturnType();
-      if (returnType.getKind().equals(DECLARED)
-          && MoreTypes.isTypeOf(MembersInjector.class, returnType)) {
-        return new AutoValue_DependencyRequest(
-            Kind.MEMBERS_INJECTOR,
-            keyFactory.forMembersInjectedType(
-                Iterables.getOnlyElement(((DeclaredType) returnType).getTypeArguments())),
-            membersInjectionMethod,
-            getEnclosingType(membersInjectionMethod),
-            false /* doesn't allow null */,
-            Optional.<String>absent());
-      } else {
-        return new AutoValue_DependencyRequest(
-            Kind.MEMBERS_INJECTOR,
-            keyFactory.forMembersInjectedType(
-                Iterables.getOnlyElement(membersInjectionMethodType.getParameterTypes())),
-            membersInjectionMethod,
-            getEnclosingType(membersInjectionMethod),
-            false /* doesn't allow null */,
-            Optional.<String>absent());
-      }
+      Equivalence.Wrapper<DeclaredType> container =
+          MoreTypes.equivalence().wrap(getEnclosingType(membersInjectionMethod));
+      TypeMirror membersInjectedType =
+          MoreTypes.isType(returnType) && MoreTypes.isTypeOf(MembersInjector.class, returnType)
+              ? getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments())
+              : getOnlyElement(membersInjectionMethodType.getParameterTypes());
+      return new AutoValue_DependencyRequest(
+          Kind.MEMBERS_INJECTOR,
+          keyFactory.forMembersInjectedType(membersInjectedType),
+          membersInjectionMethod,
+          container,
+          false /* doesn't allow null */,
+          Optional.<String>absent());
     }
 
     DependencyRequest forMembersInjectedType(DeclaredType type) {
@@ -337,7 +347,7 @@ abstract class DependencyRequest {
           Kind.MEMBERS_INJECTOR,
           keyFactory.forMembersInjectedType(type),
           type.asElement(),
-          type,
+          MoreTypes.equivalence().wrap(type),
           false /* doesn't allow null */,
           Optional.<String>absent());
     }
@@ -348,7 +358,7 @@ abstract class DependencyRequest {
           Kind.PROVIDER,
           key,
           MoreTypes.asElement(key.type()),
-          MoreTypes.asDeclared(key.type()),
+          MoreTypes.equivalence().wrap(MoreTypes.asDeclared(key.type())),
           false /* doesn't allow null */,
           Optional.<String>absent());
     }
@@ -383,7 +393,7 @@ abstract class DependencyRequest {
           kindAndType.kind(),
           keyFactory.forQualifiedType(qualifier, kindAndType.type()),
           requestElement,
-          container,
+          MoreTypes.equivalence().wrap(container),
           allowsNull,
           name);
     }

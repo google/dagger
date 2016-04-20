@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Google, Inc.
+ * Copyright (C) 2016 Google, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,32 @@ import static com.google.common.truth.Truth.assert_;
 import static org.junit.Assert.fail;
 
 @RunWith(JUnit4.class)
-public class DoubleCheckLazyTest {
+public class DoubleCheckTest {
+  @Test
+  public void provider_nullPointerException() {
+    try {
+      DoubleCheck.provider(null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+  }
+
+  @Test
+  public void lazy_nullPointerException() {
+    try {
+      DoubleCheck.lazy(null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+  }
+
   @Test public void get() throws Exception {
     int numThreads = 10;
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
     final CountDownLatch latch = new CountDownLatch(numThreads);
     LatchedProvider provider = new LatchedProvider(latch);
-    final Lazy<Object> lazy = DoubleCheckLazy.create(provider);
+    final Lazy<Object> lazy = DoubleCheck.lazy(provider);
 
     List<Callable<Object>> tasks = Lists.newArrayListWithCapacity(numThreads);
     for (int i = 0; i < numThreads; i++) {
@@ -64,19 +82,6 @@ public class DoubleCheckLazyTest {
       results.add(future.get());
     }
     assert_().that(results.size()).isEqualTo(1);
-  }
-
-  // TODO(gak): reenable this test once we can ensure that factories are no longer providing null
-  @Ignore @Test public void get_null() {
-    Lazy<Object> lazy = DoubleCheckLazy.create(new Provider<Object> () {
-      @Override public Object get() {
-        return null;
-      }
-    });
-    try {
-      lazy.get();
-      fail();
-    } catch (NullPointerException expected) {}
   }
 
   private static class LatchedProvider implements Provider<Object> {

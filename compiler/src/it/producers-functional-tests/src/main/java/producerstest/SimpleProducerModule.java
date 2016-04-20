@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import dagger.Lazy;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
@@ -128,6 +129,15 @@ final class SimpleProducerModule {
   static ListenableFuture<String> futureStrWithArgsThrowingException(
       int i, Produced<Double> b, Producer<Object> c, Provider<Boolean> d) throws IOException {
     return Futures.immediateFuture("str with args throwing exception");
+  }
+
+  @Produces
+  @Qual(12)
+  static String strWithFrameworkTypeArgs(
+      @Qual(1) int i, @Qual(1) Provider<Integer> iProvider, @Qual(1) Lazy<Integer> iLazy,
+      @Qual(2) int j, @Qual(2) Produced<Integer> jProduced, @Qual(2) Producer<Integer> jProducer,
+      @Qual(3) Produced<Integer> kProduced, @Qual(3) Producer<Integer> kProducer) {
+    return "str with framework type args";
   }
 
   // Set bindings.

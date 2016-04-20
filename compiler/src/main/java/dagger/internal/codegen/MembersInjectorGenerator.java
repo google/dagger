@@ -73,7 +73,7 @@ import static javax.lang.model.element.Modifier.STATIC;
  * @author Gregory Kick
  * @since 2.0
  */
-final class MembersInjectorGenerator extends JavaPoetSourceFileGenerator<MembersInjectionBinding> {
+final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
 
   MembersInjectorGenerator(Filer filer, Elements elements) {
     super(filer, elements);

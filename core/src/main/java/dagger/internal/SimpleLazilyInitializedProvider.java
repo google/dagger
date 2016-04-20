@@ -18,19 +18,19 @@ package dagger.internal;
 import dagger.Lazy;
 import javax.inject.Provider;
 
+import static dagger.internal.Preconditions.checkNotNull;
+
 /**
- * A {@link Provider} implementation that memoizes the result of a {@link Factory} instance.
- *
- * @author Gregory Kick
- * @since 2.0
+ * A {@link Provider} implementation that memoizes the result of a {@link Factory} instance using
+ * simple lazy initialization, not the double-checked lock pattern.
  */
-public final class ScopedProvider<T> implements Provider<T>, Lazy<T> {
+public final class SimpleLazilyInitializedProvider<T> implements Provider<T>, Lazy<T> {
   private static final Object UNINITIALIZED = new Object();
 
   private final Factory<T> factory;
   private volatile Object instance = UNINITIALIZED;
 
-  private ScopedProvider(Factory<T> factory) {
+  private SimpleLazilyInitializedProvider(Factory<T> factory) {
     assert factory != null;
     this.factory = factory;
   }
@@ -38,24 +38,14 @@ public final class ScopedProvider<T> implements Provider<T>, Lazy<T> {
   @SuppressWarnings("unchecked") // cast only happens when result comes from the factory
   @Override
   public T get() {
-    // double-check idiom from EJ2: Item 71
-    Object result = instance;
-    if (result == UNINITIALIZED) {
-      synchronized (this) {
-        result = instance;
-        if (result == UNINITIALIZED) {
-          instance = result = factory.get();
-        }
-      }
+    if (instance == UNINITIALIZED) {
+      instance = factory.get();
     }
-    return (T) result;
+    return (T) instance;
   }
 
-  /** Returns a new scoped provider for the given factory. */
+  /** Returns a new provider for the given factory. */
   public static <T> Provider<T> create(Factory<T> factory) {
-    if (factory == null) {
-      throw new NullPointerException();
-    }
-    return new ScopedProvider<T>(factory);
+    return new SimpleLazilyInitializedProvider<T>(checkNotNull(factory));
   }
 }

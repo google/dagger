@@ -153,7 +153,7 @@ abstract class Key {
   }
 
   boolean isValidMembersInjectionKey() {
-    return !qualifier().isPresent();
+    return !qualifier().isPresent() && !type().getKind().equals(TypeKind.WILDCARD);
   }
 
   /**
@@ -535,10 +535,11 @@ abstract class Key {
      * {@code Set<Produced<T>>}.
      */
     Optional<Key> implicitSetKeyFromProduced(Key possibleSetOfProducedKey) {
-      if (MoreTypes.isTypeOf(Set.class, possibleSetOfProducedKey.type())) {
+      if (MoreTypes.isType(possibleSetOfProducedKey.type())
+          && MoreTypes.isTypeOf(Set.class, possibleSetOfProducedKey.type())) {
         TypeMirror argType =
             MoreTypes.asDeclared(possibleSetOfProducedKey.type()).getTypeArguments().get(0);
-        if (MoreTypes.isTypeOf(Produced.class, argType)) {
+        if (MoreTypes.isType(argType) && MoreTypes.isTypeOf(Produced.class, argType)) {
           TypeMirror producedArgType = MoreTypes.asDeclared(argType).getTypeArguments().get(0);
           TypeMirror setType = types.getDeclaredType(getSetElement(), producedArgType);
           return Optional.of(possibleSetOfProducedKey.withType(types, setType));

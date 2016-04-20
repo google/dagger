@@ -391,4 +391,34 @@ public class MultibindingsValidatorTest {
         .in(testModule)
         .onLine(29);
   }
+
+  @Test
+  public void attemptToInjectWildcardGenerics() {
+    JavaFileObject testComponent =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Lazy;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Lazy<? extends Number> qualifiedNumberLazy();",
+            "  Provider<? super Number> qualifiedNumberProvider();",
+            "}");
+    assertAbout(javaSources())
+        .that(asList(testComponent))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("wildcard type")
+        .in(testComponent)
+        .onLine(9)
+        .and()
+        .withErrorContaining("wildcard type")
+        .in(testComponent)
+        .onLine(10);
+  }
+
 }

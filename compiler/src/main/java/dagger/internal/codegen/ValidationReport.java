@@ -18,6 +18,8 @@ package dagger.internal.codegen;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import javax.annotation.CheckReturnValue;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -132,6 +134,7 @@ abstract class ValidationReport<T extends Element> {
     return new Builder<T>(subject);
   }
 
+  @CanIgnoreReturnValue
   static final class Builder<T extends Element> {
     private final T subject;
     private final ImmutableSet.Builder<Item> items = ImmutableSet.builder();
@@ -141,6 +144,7 @@ abstract class ValidationReport<T extends Element> {
       this.subject = subject;
     }
 
+    @CheckReturnValue
     T getSubject() {
       return subject;
     }
@@ -151,58 +155,47 @@ abstract class ValidationReport<T extends Element> {
     }
 
     Builder<T> addError(String message) {
-      addItem(message, ERROR, subject, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, ERROR, subject, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addError(String message, Element element) {
-      addItem(message, ERROR, element, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, ERROR, element, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addError(String message, Element element, AnnotationMirror annotation) {
-      addItem(message, ERROR, element, Optional.of(annotation));
-      return this;
+      return addItem(message, ERROR, element, Optional.of(annotation));
     }
 
     Builder<T> addWarning(String message) {
-      addItem(message, WARNING, subject, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, WARNING, subject, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addWarning(String message, Element element) {
-      addItem(message, WARNING, element, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, WARNING, element, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addWarning(String message, Element element, AnnotationMirror annotation) {
-      addItem(message, WARNING, element, Optional.of(annotation));
-      return this;
+      return addItem(message, WARNING, element, Optional.of(annotation));
     }
 
     Builder<T> addNote(String message) {
-      addItem(message, NOTE, subject, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, NOTE, subject, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addNote(String message, Element element) {
-      addItem(message, NOTE, element, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, NOTE, element, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addNote(String message, Element element, AnnotationMirror annotation) {
-      addItem(message, NOTE, element, Optional.of(annotation));
-      return this;
+      return addItem(message, NOTE, element, Optional.of(annotation));
     }
 
     Builder<T> addItem(String message, Kind kind, Element element) {
-      addItem(message, kind, element, Optional.<AnnotationMirror>absent());
-      return this;
+      return addItem(message, kind, element, Optional.<AnnotationMirror>absent());
     }
 
     Builder<T> addItem(String message, Kind kind, Element element, AnnotationMirror annotation) {
-      addItem(message, kind, element, Optional.of(annotation));
-      return this;
+      return addItem(message, kind, element, Optional.of(annotation));
     }
 
     private Builder<T> addItem(String message, Kind kind, Element element,
@@ -216,6 +209,7 @@ abstract class ValidationReport<T extends Element> {
       return this;
     }
 
+    @CheckReturnValue
     ValidationReport<T> build() {
       return new AutoValue_ValidationReport<T>(subject, items.build(), subreports.build());
     }

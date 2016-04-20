@@ -76,8 +76,8 @@ public abstract class ProducerMonitor {
    * Called when the producer's output is requested; that is, when the first method is called that
    * requires the production of this producer's output.
    *
-   * <p>Note that if a method depends on {@link Producer Producer<T>}, then this does not count as
-   * requesting {@code T}; that is only triggered by calling {@link Producer#get()}.
+   * <p>Note that if a method depends on {@code Producer<T>}, then this does not count as requesting
+   * {@code T}; that is only triggered by calling {@link Producer#get()}.
    *
    * <p>When multiple monitors are installed, the order that each monitor will call this method is
    * unspecified, but will remain consistent throughout the course of the execution of a component.

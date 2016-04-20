@@ -1,49 +1,47 @@
-Dagger 2
-========
+# Dagger 2
 
 A fast dependency injector for Android and Java.
 
-About Google's Fork
--------------
+## About Google's Fork
 
-Dagger 2 is a compile-time evolution approach to dependency injection.  Taking the approach
-started in Dagger 1.x to its ultimate conclusion, Dagger 2.0 eliminates all reflection, and
-improves code clarity by removing the traditional ObjectGraph/Injector in favor of
-user-specified @Component interfaces. 
+Dagger 2 is a compile-time evolution approach to dependency injection.
+Taking the approach started in Dagger 1.x to its ultimate conclusion,
+Dagger 2.x eliminates all reflection, and improves code clarity by
+removing the traditional ObjectGraph/Injector in favor of user-specified
+`@Component` interfaces.
 
-This github project represents the Dagger 2 development stream.  The earlier 
-[project page][square] (Square, Inc's repository) represents the earlier 1.0 development stream.  
-Both versions have benefitted from strong involvement from Square, Google, and other contributors. 
+This github project represents the Dagger 2 development stream.  The earlier
+[project page][square] (Square, Inc's repository) represents the earlier 1.0
+development stream. Both versions have benefitted from strong involvement from
+Square, Google, and other contributors.
 
-## [Dagger 2's main documentation website can be found here.][website]
+> [Dagger 2's main documentation website can be found here.][website]
 
-Status
-------
+## Status
 
-  - ***Release Version:* 2.0.2**
-  - ***Snapshot Version:* 2.1-SNAPSHOT**
+  - ***Release Version:* 2.2**
+  - ***Snapshot Version:* 2.3-SNAPSHOT**
 
-Dagger is currently in active development, primarily internally at Google, with regular pushes
-to the open-source community.  Snapshot releases are auto-deployed to sonatype's central maven
-repository on a clean build with the version `2.1-SNAPSHOT`.
+Dagger is currently in active development, primarily internally at Google,
+with regular pushes to the open-source community. Snapshot releases are
+auto-deployed to sonatype's central maven repository on a clean build with
+the version `2.3-SNAPSHOT`.
 
-Documentation
--------------
+## Documentation
 
 You can [find the dagger documentation here][website] which has extended usage
 instructions and other useful information.  Substantial usage information can be
 found in the [API documentation][20api].
 
-You can also learn more from [the original proposal][proposal], 
+You can also learn more from [the original proposal][proposal],
 [this talk by Greg Kick][gaktalk], and on the dagger-discuss@googlegroups.com
-mailing list. 
+mailing list.
 
-Installation
---------
+## Installation
 
-You will need to include the `dagger-2.0.2.jar` in your application's runtime.
+You will need to include the `dagger-2.1.jar` in your application's runtime.
 In order to activate code generation and generate implementations to manage
-your graph you will need to include `dagger-compiler-2.0.2.jar` in your build
+your graph you will need to include `dagger-compiler-2.1.jar` in your build
 at compile time.
 
 ### Maven
@@ -56,26 +54,26 @@ of your `pom.xml` and the `dagger-compiler` artifact as either an `optional` or
   <dependency>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger</artifactId>
-    <version>2.0.2</version>
+    <version>2.2</version>
   </dependency>
   <dependency>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger-compiler</artifactId>
-    <version>2.0.2</version>
+    <version>2.2</version>
     <optional>true</optional>
   </dependency>
 </dependencies>
 ```
 
-If you use the beta `dagger-producers` extension (which supplies parallelizable execution graphs),
-then add this to your maven configuration:
+If you use the beta `dagger-producers` extension (which supplies
+parallelizable execution graphs), then add this to your maven configuration:
 
 ```xml
 <dependencies>
   <dependency>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger-producers</artifactId>
-    <version>2.0-beta</version>
+    <version>2.2</version>
   </dependency>
 </dependencies>
 ```
@@ -116,28 +114,31 @@ dependencies {
 }
 ```
 
-### Download 
+### Download
 
   * 2.x (google/dagger)
     * [Dagger 2.0 Documentation][website]
     * [Dagger 2.0 Javadocs][20api]
-    * [Dagger development Javadocs][latestapi] (from the `master` branch on GitHub)
+    * [Dagger development Javadocs][latestapi] (from the `master` branch
+      on GitHub)
     * [Google's Dagger project site on GitHub][project]
-    * <a href="https://plus.google.com/118328287768685565185" rel="publisher">Google+ Dagger Project Page</a>
+    * <a href="https://plus.google.com/118328287768685565185"
+         rel="publisher">Google+ Dagger Project Page</a>
     * [Google+ Dagger Users Community][community]
   * 1.x (square/dagger)
     * [Square's original Dagger project site on GitHub][square]
     * [Square Open Source Community][squarecommunity]
 
 
-If you do not use maven, gradle, ivy, or other build systems that consume maven-style binary
-artifacts, they can be downloaded directly via the [Maven Central Repository][mavensearch].
+If you do not use maven, gradle, ivy, or other build systems that consume
+maven-style binary artifacts, they can be downloaded directly via the
+[Maven Central Repository][mavensearch].
 
-Developer snapshots are available from [Sonatype's snapshot repository][dagger-snap], and
-are built on a clean build of the GitHub project's master branch.
+Developer snapshots are available from Sonatype's
+[snapshot repository][dagger-snap], and are built on a clean build of
+the GitHub project's master branch.
 
-License
--------
+## License
 
     Copyright 2012 Square, Inc.
     Copyright 2012 Google, Inc.

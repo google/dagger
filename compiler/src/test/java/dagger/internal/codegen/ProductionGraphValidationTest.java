@@ -15,6 +15,7 @@
  */
 package dagger.internal.codegen;
 
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
@@ -267,5 +268,88 @@ public class ProductionGraphValidationTest {
         .withErrorContaining(expectedError)
         .in(component)
         .onLine(36);
+  }
+  
+  @Test
+  public void cycleNotBrokenByMap() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "TestComponent",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  ListenableFuture<String> string();",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "TestModule",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "import static dagger.producers.Produces.Type.MAP;",
+            "",
+            "@ProducerModule",
+            "final class TestModule {",
+            "  @Produces static String string(Map<String, String> map) {",
+            "    return \"string\";",
+            "  }",
+            "",
+            "  @Produces(type = MAP) @StringKey(\"key\")",
+            "  static String entry(String string) {",
+            "    return string;",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(component, module))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("cycle")
+        .in(component)
+        .onLine(6);
+  }
+
+  @Test
+  public void cycleNotBrokenByProducerMap() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "TestComponent",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  ListenableFuture<String> string();",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "TestModule",
+            "import dagger.producers.Producer;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "import static dagger.producers.Produces.Type.MAP;",
+            "",
+            "@ProducerModule",
+            "final class TestModule {",
+            "  @Produces static String string(Map<String, Producer<String>> map) {",
+            "    return \"string\";",
+            "  }",
+            "",
+            "  @Produces(type = MAP) @StringKey(\"key\")",
+            "  static String entry(String string) {",
+            "    return string;",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(component, module))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("cycle")
+        .in(component)
+        .onLine(6);
   }
 }

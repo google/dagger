@@ -29,7 +29,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * method's return type is bound to its returned value. The {@linkplain Component component}
  * implementation will pass dependencies to the method as parameters.
  *
- * <h3>Nullability
+ * <h3>Nullability</h3>
  *
  * <p>Dagger forbids injecting {@code null} by default. Component implemenations that invoke
  * {@code @Provides} methods that return {@code null} will throw a {@link NullPointerException}

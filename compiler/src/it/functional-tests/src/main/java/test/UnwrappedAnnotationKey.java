@@ -16,7 +16,7 @@
 package test;
 
 import dagger.MapKey;
-import dagger.mapkeys.StringKey;
+import dagger.multibindings.StringKey;
 
 @MapKey(unwrapValue = true)
 @interface UnwrappedAnnotationKey {

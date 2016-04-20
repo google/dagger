@@ -37,7 +37,7 @@ import javax.lang.model.type.TypeMirror;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.FrameworkDependency.frameworkDependenciesForBinding;
-import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK_LAZY;
+import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 
 /**
  * Utilities for generating files.
@@ -125,8 +125,7 @@ class SourceFiles {
       CodeBlock frameworkTypeMemberSelect, DependencyRequest.Kind dependencyKind) {
     switch (dependencyKind) {
       case LAZY:
-        return CodeBlocks.format(
-            "$T.create($L)", DOUBLE_CHECK_LAZY, frameworkTypeMemberSelect);
+        return CodeBlocks.format("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
       case INSTANCE:
       case FUTURE:
         return CodeBlocks.format("$L.get()", frameworkTypeMemberSelect);

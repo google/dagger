@@ -19,8 +19,9 @@ import dagger.Component;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import javax.inject.Provider;
+import test.NullableModule.Nullable;
 
-@Component(modules = PrimitivesModule.class)
+@Component(modules = {PrimitivesModule.class, NullableModule.class})
 interface BasicComponent extends Injector<Thing> {
   byte getByte();
   char getChar();
@@ -74,6 +75,10 @@ interface BasicComponent extends Injector<Thing> {
   Provider<InjectedThing> injectedThingProvider();
   Lazy<InjectedThing> lazyInjectedThing();
   MembersInjector<InjectedThing> injectedThingMembersInjector();
+  
+  @Nullable Object nullObject();
+  Provider<Object> nullObjectProvider();
+  Lazy<Object> lazyNullObject();
 
   TypeWithInheritedMembersInjection typeWithInheritedMembersInjection();
   MembersInjector<TypeWithInheritedMembersInjection>

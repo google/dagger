@@ -31,7 +31,7 @@ import javax.lang.model.util.Types;
  * @author Gregory Kick
  * @since 2.0
  */
-final class ComponentGenerator extends JavaPoetSourceFileGenerator<BindingGraph> {
+final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final Types types;
   private final Elements elements;
   private final Key.Factory keyFactory;

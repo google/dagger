@@ -132,7 +132,7 @@ public class DependencyRequestMapperTest {
   static final class ProvidesMethodModule {
     @Provides String provideString(
         Integer a, Lazy<Integer> b, Provider<Integer> c, MembersInjector<Y> d) {
-      return null;
+      throw new UnsupportedOperationException();
     }
   }
 

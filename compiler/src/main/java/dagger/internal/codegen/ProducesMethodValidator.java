@@ -44,6 +44,7 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RA
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
+import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_NULLABLE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
@@ -101,6 +102,11 @@ final class ProducesMethodValidator {
     }
     if (modifiers.contains(ABSTRACT)) {
       builder.addError(formatErrorMessage(BINDING_METHOD_ABSTRACT), producesMethodElement);
+    }
+
+    if (ConfigurationAnnotations.getNullableType(producesMethodElement).isPresent()) {
+      // TODO(beder): Make this an error.
+      builder.addWarning(PRODUCES_METHOD_NULLABLE, producesMethodElement);
     }
 
     TypeMirror returnType = producesMethodElement.getReturnType();

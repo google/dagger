@@ -574,6 +574,86 @@ public class ProducerModuleFactoryGeneratorTest {
         .generatesSources(factoryFile);
   }
 
+  @Test
+  public void singleProducesMethodNoArgsFutureWithProducerName() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.Futures;",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "final class TestModule {",
+            "  @Produces ListenableFuture<String> produceString() {",
+            "    return Futures.immediateFuture(\"\");",
+            "  }",
+            "}");
+    JavaFileObject factoryFile =
+        JavaFileObjects.forSourceLines(
+            "TestModule_ProduceStringFactory",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.AsyncFunction;",
+            "import com.google.common.util.concurrent.Futures;",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.internal.AbstractProducer;",
+            "import dagger.producers.monitoring.ProducerMonitor;",
+            "import dagger.producers.monitoring.ProducerToken;",
+            "import dagger.producers.monitoring.ProductionComponentMonitor;",
+            "import java.util.concurrent.Executor;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
+            "  private final TestModule module;",
+            "  private final Provider<Executor> executorProvider;",
+            "  private final Provider<ProductionComponentMonitor> monitorProvider;",
+            "",
+            "  public TestModule_ProduceStringFactory(",
+            "      TestModule module,",
+            "      Provider<Executor> executorProvider,",
+            "      Provider<ProductionComponentMonitor> monitorProvider) {",
+            "    super(",
+            "        monitorProvider,",
+            "        ProducerToken.create(\"test.TestModule#produceString\"));",
+            "    assert module != null;",
+            "    this.module = module;",
+            "    assert executorProvider != null;",
+            "    this.executorProvider = executorProvider;",
+            "    assert monitorProvider != null;",
+            "    this.monitorProvider = monitorProvider;",
+            "  }",
+            "",
+            "  @Override protected ListenableFuture<String> compute(",
+            "      final ProducerMonitor monitor) {",
+            "    return Futures.transformAsync(",
+            "      Futures.<Void>immediateFuture(null),",
+            "      new AsyncFunction<Void, String>() {",
+            "        @Override public ListenableFuture<String> apply(Void ignoredVoidArg) {",
+            "          monitor.methodStarting();",
+            "          try {",
+            "            return TestModule_ProduceStringFactory.this.module.produceString();",
+            "          } finally {",
+            "            monitor.methodFinished();",
+            "          }",
+            "        }",
+            "      }, executorProvider.get());",
+            "  }",
+            "}");
+    assertAbout(javaSource())
+        .that(moduleFile)
+        .withCompilerOptions("-Adagger.writeProducerNameInToken=ENABLED")
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(factoryFile);
+  }
+
   private static final JavaFileObject QUALIFIER_A =
       JavaFileObjects.forSourceLines("test.QualifierA",
           "package test;",

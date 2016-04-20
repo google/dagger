@@ -27,6 +27,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
+import dagger.Reusable;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -50,6 +51,7 @@ import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
+import static dagger.internal.codegen.ErrorMessages.COMPONENT_ANNOTATED_REUSABLE;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -140,6 +142,11 @@ final class ComponentValidator {
       builder.addError(
           String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
           subject);
+    }
+    
+    Optional<AnnotationMirror> reusableAnnotation = getAnnotationMirror(subject, Reusable.class);
+    if (reusableAnnotation.isPresent()) {
+      builder.addError(COMPONENT_ANNOTATED_REUSABLE, subject, reusableAnnotation.get());
     }
 
     DeclaredType subjectType = MoreTypes.asDeclared(subject.asType());

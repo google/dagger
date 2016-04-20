@@ -23,6 +23,7 @@ import org.junit.runners.JUnit4;
 import producerstest.subcomponent.SubcomponentsWithBoundExecutor.ChildComponent;
 import producerstest.subcomponent.SubcomponentsWithBoundExecutor.ExecutorModule;
 import producerstest.subcomponent.SubcomponentsWithBoundExecutor.GrandchildComponent;
+import producerstest.subcomponent.SubcomponentsWithBoundExecutor.GrandchildComponentWithoutBuilder;
 import producerstest.subcomponent.SubcomponentsWithBoundExecutor.ParentComponent;
 import producerstest.subcomponent.SubcomponentsWithBoundExecutor.ParentProductionComponent;
 
@@ -73,6 +74,15 @@ public final class SubcomponentWithBoundExecutorTest {
   }
 
   @Test
+  public void topLevelComponent_grandchildWithoutBuilder() throws Exception {
+    ChildComponent child = parentComponent.newChildComponentBuilder().build();
+    GrandchildComponentWithoutBuilder grandchild = child.newGrandchildComponent();
+    assertThat(grandchild.fromGrandchild().get()).isEqualTo("grandchild:child:parent");
+    assertThat(executorConstructionCount.get()).isEqualTo(1);
+    assertThat(executionCount.get()).isEqualTo(2);
+  }
+
+  @Test
   public void topLevelProductionComponent_child() throws Exception {
     ChildComponent child = parentProductionComponent.newChildComponentBuilder().build();
     assertThat(child.fromChild().get()).isEqualTo("child:parentproduction");
@@ -84,6 +94,15 @@ public final class SubcomponentWithBoundExecutorTest {
   public void topLevelProductionComponent_grandchild() throws Exception {
     ChildComponent child = parentProductionComponent.newChildComponentBuilder().build();
     GrandchildComponent grandchild = child.newGrandchildComponentBuilder().build();
+    assertThat(grandchild.fromGrandchild().get()).isEqualTo("grandchild:child:parentproduction");
+    assertThat(executorConstructionCount.get()).isEqualTo(1);
+    assertThat(executionCount.get()).isEqualTo(3);
+  }
+
+  @Test
+  public void topLevelProductionComponent_grandchildWithoutBuilder() throws Exception {
+    ChildComponent child = parentProductionComponent.newChildComponentBuilder().build();
+    GrandchildComponentWithoutBuilder grandchild = child.newGrandchildComponent();
     assertThat(grandchild.fromGrandchild().get()).isEqualTo("grandchild:child:parentproduction");
     assertThat(executorConstructionCount.get()).isEqualTo(1);
     assertThat(executionCount.get()).isEqualTo(3);

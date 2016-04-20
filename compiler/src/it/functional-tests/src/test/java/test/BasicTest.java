@@ -113,4 +113,11 @@ public class BasicTest {
   @Theory public void inheritedMembersInjection(BasicComponent basicComponent) {
     assertThat(basicComponent.typeWithInheritedMembersInjection().thing).isNotNull();
   }
+  
+  @Theory
+  public void nullableInjection(BasicComponent basicComponent) {
+    assertThat(basicComponent.nullObject()).isNull();
+    assertThat(basicComponent.nullObjectProvider().get()).isNull();
+    assertThat(basicComponent.lazyNullObject().get()).isNull();
+  }
 }

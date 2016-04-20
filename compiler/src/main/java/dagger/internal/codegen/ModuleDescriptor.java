@@ -22,6 +22,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Module;
 import dagger.Multibindings;
 import dagger.Provides;
@@ -196,6 +197,7 @@ abstract class ModuleDescriptor {
           .or(getAnnotationMirror(moduleElement, ProducerModule.class));
     }
 
+    @CanIgnoreReturnValue
     private Set<ModuleDescriptor> collectIncludedModules(
         Set<ModuleDescriptor> includedModules, TypeElement moduleElement) {
       TypeMirror superclass = moduleElement.getSuperclass();

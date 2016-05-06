@@ -7,9 +7,9 @@ Dagger 2 (Components)
 ### Version 2.4 *(2016-04-21)*
   * Adds [`@Binds`](http://google.github.io/dagger/api/latest/dagger/Binds.html) API for delegating
     one binding to another
-  * Adds @IntoSet, @ElementsIntoSet and @IntoMap to replace @Provides(type = ...) and @Produces(type = ...)
-  * Allow injection of Provider<Lazy<Foo>>
-  * Report an error if a @Scope annotation is applied to an @Inject constructor
+  * Adds `@IntoSet`, `@ElementsIntoSet` and `@IntoMap` to replace `@Provides(type = ...)` and `@Produces(type = ...)`
+  * Allow injection of `Provider<Lazy<Foo>>`
+  * Report an error if a `@Scope` annotation is applied to an `@Inject` constructor
   * Remove the ability to set the production executor on a component builder.
   * Ensure that no binding methods are binding framework types.
   * New format of dependency traces in error messages

@@ -19,6 +19,8 @@ import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
 import dagger.Lazy;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Provider;
 
 /**
@@ -32,6 +34,8 @@ import javax.inject.Provider;
  */
 //TODO(gak): develop the heuristics to get better names
 final class DependencyVariableNamer implements Function<DependencyRequest, String> {
+  private static final Pattern LAZY_PROVIDER_PATTERN = Pattern.compile("lazy(\\w+)Provider");
+
   @Override
   public String apply(DependencyRequest dependency) {
     if (dependency.overriddenVariableName().isPresent()) {
@@ -48,6 +52,12 @@ final class DependencyVariableNamer implements Function<DependencyRequest, Strin
         return variableName.startsWith("lazy") && !variableName.equals("lazy")
             ? toLowerCamel(variableName.substring(4))
             : variableName;
+      case PROVIDER_OF_LAZY:
+        Matcher matcher = LAZY_PROVIDER_PATTERN.matcher(variableName);
+        if (matcher.matches()) {
+          return toLowerCamel(matcher.group(1));
+        }
+        // fall through
       case PROVIDER:
         return variableName.endsWith("Provider") && !variableName.equals("Provider")
             ? variableName.substring(0, variableName.length() - 8)

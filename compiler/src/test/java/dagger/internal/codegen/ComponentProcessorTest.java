@@ -46,7 +46,6 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 
@@ -111,36 +110,6 @@ public class ComponentProcessorTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("is not annotated with @Module");
-  }
-
-  private void checkCannotReferToModuleOfType(String moduleType) {
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "",
-        "@Module",
-        moduleType + " TestModule {}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = TestModule.class)",
-        "interface BadComponent {}");
-    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT, "test.TestModule"));
-  }
-
-  @Test public void cannotReferToAbstractClassModules() {
-    checkCannotReferToModuleOfType("abstract class");
-  }
-
-  @Test public void cannotReferToInterfaceModules() {
-    checkCannotReferToModuleOfType("interface");
   }
 
   @Test public void doubleBindingFromResolvedModules() {
@@ -409,12 +378,12 @@ public class ComponentProcessorTest {
         "  @SuppressWarnings(\"unchecked\")",
         "  private void initialize(final Builder builder) {",
         "    this.bMembersInjector =",
-        "        OuterType$B_MembersInjector.create(OuterType$A_Factory.create());",
+        "        OuterType_B_MembersInjector.create(OuterType_A_Factory.create());",
         "  }",
         "",
         "  @Override",
         "  public OuterType.A a() {",
-        "    return OuterType$A_Factory.create().get();",
+        "    return OuterType_A_Factory.create().get();",
         "  }",
         "",
         "  @Override",
@@ -793,18 +762,17 @@ public class ComponentProcessorTest {
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import dagger.multibindings.IntoMap;",
             "import dagger.multibindings.StringKey;",
-            "",
-            "import static dagger.Provides.Type.SET;",
-            "import static dagger.Provides.Type.MAP;",
             "",
             "@Module",
             "class ParentModule {",
-            "  @Provides(type = SET) static Object parentObject() {",
+            "  @Provides @IntoSet static Object parentObject() {",
             "    return \"parent object\";",
             "  }",
             "",
-            "  @Provides(type = MAP) @StringKey(\"parent key\") Object parentKeyObject() {",
+            "  @Provides @IntoMap @StringKey(\"parent key\") Object parentKeyObject() {",
             "    return \"parent value\";",
             "  }",
             "}");
@@ -961,24 +929,24 @@ public class ComponentProcessorTest {
         "",
         "import dagger.Module;",
         "import dagger.Provides;",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import java.util.Collections;",
         "import java.util.Set;",
         "",
         "@Module",
         "final class EmptySetModule {",
-        "  @Provides(type = SET_VALUES) Set<String> emptySet() { return Collections.emptySet(); }",
+        "  @Provides @ElementsIntoSet Set<String> emptySet() { return Collections.emptySet(); }",
         "}");
     JavaFileObject setModuleFile = JavaFileObjects.forSourceLines("test.SetModule",
         "package test;",
         "",
-        "import static dagger.Provides.Type.SET;",
-        "",
         "import dagger.Module;",
         "import dagger.Provides;",
+        "import dagger.multibindings.IntoSet;",
         "",
         "@Module",
         "final class SetModule {",
-        "  @Provides(type = SET) String string() { return \"\"; }",
+        "  @Provides @IntoSet String string() { return \"\"; }",
         "}");
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
         "package test;",
@@ -2232,6 +2200,36 @@ public class ComponentProcessorTest {
                 + "Prefer to run the dagger processor over that class instead.")
         .and()
         .withNoteCount(3);
+  }
+
+  @Test
+  public void scopeAnnotationOnInjectConstructorNotValid() {
+    JavaFileObject aScope =
+        JavaFileObjects.forSourceLines(
+            "test.AScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface AScope {}");
+    JavaFileObject aClass =
+        JavaFileObjects.forSourceLines(
+            "test.AClass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class AClass {",
+            "  @Inject @AScope AClass() {}",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(aScope, aClass))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("@Scope annotations are not allowed on @Inject constructors.")
+        .in(aClass)
+        .onLine(6);
   }
 
   /**

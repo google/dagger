@@ -24,13 +24,13 @@ import static dagger.internal.Preconditions.checkNotNull;
  * A {@link Provider} implementation that memoizes the result of a {@link Factory} instance using
  * simple lazy initialization, not the double-checked lock pattern.
  */
-public final class SimpleLazilyInitializedProvider<T> implements Provider<T>, Lazy<T> {
+public final class SingleCheck<T> implements Provider<T>, Lazy<T> {
   private static final Object UNINITIALIZED = new Object();
 
-  private final Factory<T> factory;
+  private volatile Factory<T> factory;
   private volatile Object instance = UNINITIALIZED;
 
-  private SimpleLazilyInitializedProvider(Factory<T> factory) {
+  private SingleCheck(Factory<T> factory) {
     assert factory != null;
     this.factory = factory;
   }
@@ -38,14 +38,22 @@ public final class SimpleLazilyInitializedProvider<T> implements Provider<T>, La
   @SuppressWarnings("unchecked") // cast only happens when result comes from the factory
   @Override
   public T get() {
+    // factory is volatile and might become null afer the check to instance == UNINITIALIZED
+    // retrieve the factory first, which should not be null if instance is UNINITIALIZED.
+    // This relies upon instance also being volatile so that the reads and writes of both variables
+    // cannot be reordered.
+    Factory<T> factoryReference = factory;
     if (instance == UNINITIALIZED) {
-      instance = factory.get();
+      instance = factoryReference.get();
+      // Null out the reference to the provider. We are never going to need it again, so we can make
+      // it eligble for GC.
+      factory = null;
     }
     return (T) instance;
   }
 
   /** Returns a new provider for the given factory. */
-  public static <T> Provider<T> create(Factory<T> factory) {
-    return new SimpleLazilyInitializedProvider<T>(checkNotNull(factory));
+  public static <T> Provider<T> provider(Factory<T> factory) {
+    return new SingleCheck<T>(checkNotNull(factory));
   }
 }

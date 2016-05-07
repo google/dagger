@@ -18,7 +18,7 @@ package producerstest;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionComponent;
 
-@ProductionComponent(modules = DependedProducerModule.class)
+@ProductionComponent(modules = {ExecutorModule.class, DependedProducerModule.class})
 interface DependedProductionComponent {
   ListenableFuture<Integer> numGreetings();
 }

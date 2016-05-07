@@ -26,10 +26,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
+import dagger.Binds;
 import dagger.Module;
 import dagger.producers.ProducerModule;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -53,13 +55,14 @@ import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
 import static com.google.common.collect.Iterables.any;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
+import static dagger.internal.codegen.ErrorMessages.INCOMPATIBLE_MODULE_METHODS;
 import static dagger.internal.codegen.ErrorMessages.METHOD_OVERRIDES_PROVIDES_METHOD;
 import static dagger.internal.codegen.ErrorMessages.MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_ANOTHER;
-import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link Module}s or {@link ProducerModule}s.
@@ -86,11 +89,28 @@ final class ModuleValidator {
     List<ExecutableElement> moduleMethods = ElementFilter.methodsIn(subject.getEnclosedElements());
     ListMultimap<String, ExecutableElement> allMethodsByName = ArrayListMultimap.create();
     ListMultimap<String, ExecutableElement> bindingMethodsByName = ArrayListMultimap.create();
+
+    Set<ModuleMethodKind> methodKinds = EnumSet.noneOf(ModuleMethodKind.class);
     for (ExecutableElement moduleMethod : moduleMethods) {
       if (isAnnotationPresent(moduleMethod, moduleKind.methodAnnotation())) {
         bindingMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
+        methodKinds.add(
+            moduleMethod.getModifiers().contains(STATIC)
+                ? ModuleMethodKind.STATIC_BINDING
+                : ModuleMethodKind.INSTANCE_BINDING);
+      } else if (isAnnotationPresent(moduleMethod, Binds.class)) {
+        methodKinds.add(ModuleMethodKind.ABSTRACT_DECLARATION);
       }
       allMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
+    }
+
+    if (methodKinds.containsAll(
+        EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
+      builder.addError(
+          String.format(
+              INCOMPATIBLE_MODULE_METHODS,
+              moduleKind.moduleAnnotation().getSimpleName(),
+              moduleKind.methodAnnotation().getSimpleName()));
     }
 
     validateModuleVisibility(subject, moduleKind, builder);
@@ -104,6 +124,12 @@ final class ModuleValidator {
 
     // TODO(gak): port the dagger 1 module validation?
     return builder.build();
+  }
+
+  enum ModuleMethodKind {
+    ABSTRACT_DECLARATION,
+    INSTANCE_BINDING,
+    STATIC_BINDING,
   }
 
   private void validateModifiers(
@@ -138,8 +164,8 @@ final class ModuleValidator {
       ValidationReport.Builder<TypeElement> builder) {
     // Validate that all the modules we include are valid for inclusion.
     AnnotationMirror mirror = getAnnotationMirror(subject, moduleKind.moduleAnnotation()).get();
-    ImmutableList<TypeMirror> includedTypes = getModuleIncludes(mirror);
-    validateReferencedModules(subject, builder, includedTypes, ImmutableSet.of(moduleKind));
+    ImmutableList<TypeMirror> includes = getModuleIncludes(mirror);
+    validateReferencedModules(subject, mirror, builder, includes, ImmutableSet.of(moduleKind));
   }
 
   private static ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses(
@@ -161,14 +187,15 @@ final class ModuleValidator {
    */
   void validateReferencedModules(
       final TypeElement subject,
+      final AnnotationMirror moduleAnnotation,
       final ValidationReport.Builder<TypeElement> builder,
-      ImmutableList<TypeMirror> includedTypes,
+      ImmutableList<TypeMirror> includes,
       ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {
     final ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses =
         includedModuleClasses(validModuleKinds);
 
-    for (TypeMirror includedType : includedTypes) {
-      includedType.accept(
+    for (TypeMirror includesType : includes) {
+      includesType.accept(
           new SimpleTypeVisitor6<Void, Void>() {
             @Override
             protected Void defaultAction(TypeMirror mirror, Void p) {
@@ -211,12 +238,6 @@ final class ModuleValidator {
                                                 return "@" + otherClass.getSimpleName();
                                               }
                                             }))),
-                    subject);
-              }
-              if (element.getModifiers().contains(ABSTRACT)) {
-                builder.addError(
-                    String.format(
-                        REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT, element.getQualifiedName()),
                     subject);
               }
               return null;

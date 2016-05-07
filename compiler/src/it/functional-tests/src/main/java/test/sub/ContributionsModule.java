@@ -17,25 +17,30 @@ package test.sub;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoSet;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
-
 @Module
 public final class ContributionsModule {
-  @Provides(type = SET) int contributeAnInt(double doubleDependency) {
+  @Provides
+  @IntoSet
+  static int contributeAnInt(double doubleDependency) {
     return 1742;
   }
 
-  @Provides(type = SET) int contributeAnotherInt() {
+  @Provides
+  @IntoSet
+  static int contributeAnotherInt() {
     return 832;
   }
 
-  @Provides(type = SET_VALUES) Set<Integer> contributeSomeInts() {
+  @Provides
+  @ElementsIntoSet
+  static Set<Integer> contributeSomeInts() {
     return Collections.unmodifiableSet(new LinkedHashSet<Integer>(Arrays.asList(-1, -90, -17)));
   }
 }

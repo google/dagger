@@ -17,8 +17,6 @@ package producerstest.subcomponent;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.Executor;
 import producerstest.subcomponent.MultiPackageSubcomponents.ParentComponent;
 import producerstest.subcomponent.sub.ChildComponent;
 import org.junit.Test;
@@ -30,9 +28,8 @@ public final class MultiPackageSubcomponentTest {
 
   @Test
   public void childComponent() throws Exception {
-    Executor executor = MoreExecutors.directExecutor();
     ParentComponent parent = DaggerMultiPackageSubcomponents_ParentComponent.create();
-    ChildComponent child = parent.childComponentBuilder().executor(executor).build();
+    ChildComponent child = parent.childComponentBuilder().build();
     assertThat(child.str().get()).isEqualTo("Hello, World 42");
   }
 }

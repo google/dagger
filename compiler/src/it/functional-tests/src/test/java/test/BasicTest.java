@@ -15,6 +15,8 @@
 */
 package test;
 
+import dagger.Lazy;
+import javax.inject.Provider;
 import org.junit.experimental.theories.DataPoint;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -119,5 +121,17 @@ public class BasicTest {
     assertThat(basicComponent.nullObject()).isNull();
     assertThat(basicComponent.nullObjectProvider().get()).isNull();
     assertThat(basicComponent.lazyNullObject().get()).isNull();
+  }
+  
+  @Theory
+  public void providerOfLazy(BasicComponent basicComponent) {
+    Provider<Lazy<InjectedThing>> lazyInjectedThingProvider =
+        basicComponent.lazyInjectedThingProvider();
+    Lazy<InjectedThing> lazyInjectedThing1 = lazyInjectedThingProvider.get();
+    Lazy<InjectedThing> lazyInjectedThing2 = lazyInjectedThingProvider.get();
+    assertThat(lazyInjectedThing2).isNotSameAs(lazyInjectedThing1);
+    assertThat(lazyInjectedThing1.get()).isSameAs(lazyInjectedThing1.get());
+    assertThat(lazyInjectedThing2.get()).isSameAs(lazyInjectedThing2.get());
+    assertThat(lazyInjectedThing2.get()).isNotSameAs(lazyInjectedThing1.get());
   }
 }

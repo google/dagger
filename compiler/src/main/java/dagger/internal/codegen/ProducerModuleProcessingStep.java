@@ -23,6 +23,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import dagger.Binds;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
@@ -48,6 +49,7 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ModuleValidator moduleValidator;
   private final ProducesMethodValidator producesMethodValidator;
+  private final BindsMethodValidator bindsMethodValidator;
   private final ProductionBinding.Factory productionBindingFactory;
   private final ProducerFactoryGenerator factoryGenerator;
   private final Set<Element> processedModuleElements = Sets.newLinkedHashSet();
@@ -56,11 +58,13 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
       Messager messager,
       ModuleValidator moduleValidator,
       ProducesMethodValidator producesMethodValidator,
+      BindsMethodValidator bindsMethodValidator,
       ProductionBinding.Factory productionBindingFactory,
       ProducerFactoryGenerator factoryGenerator) {
     this.messager = messager;
     this.moduleValidator = moduleValidator;
     this.producesMethodValidator = producesMethodValidator;
+    this.bindsMethodValidator = bindsMethodValidator;
     this.productionBindingFactory = productionBindingFactory;
     this.factoryGenerator = factoryGenerator;
   }
@@ -74,19 +78,11 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
   public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     // first, check and collect all produces methods
-    ImmutableSet.Builder<ExecutableElement> validProducesMethodsBuilder = ImmutableSet.builder();
-    for (Element producesElement : elementsByAnnotation.get(Produces.class)) {
-      if (producesElement.getKind().equals(METHOD)) {
-        ExecutableElement producesMethodElement = (ExecutableElement) producesElement;
-        ValidationReport<ExecutableElement> methodReport =
-            producesMethodValidator.validate(producesMethodElement);
-        methodReport.printMessagesTo(messager);
-        if (methodReport.isClean()) {
-          validProducesMethodsBuilder.add(producesMethodElement);
-        }
-      }
-    }
-    ImmutableSet<ExecutableElement> validProducesMethods = validProducesMethodsBuilder.build();
+    ImmutableSet<ExecutableElement> validProducesMethods =
+        validateProducesMethods(elementsByAnnotation);
+
+    // second, check and collect all bind methods
+    ImmutableSet<ExecutableElement> validBindsMethods = validateBindsMethods(elementsByAnnotation);
 
     // process each module
     for (Element moduleElement :
@@ -100,17 +96,24 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
         if (report.isClean()) {
           ImmutableSet.Builder<ExecutableElement> moduleProducesMethodsBuilder =
               ImmutableSet.builder();
+          ImmutableSet.Builder<ExecutableElement> moduleBindsMethodsBuilder =
+              ImmutableSet.builder();
           List<ExecutableElement> moduleMethods =
               ElementFilter.methodsIn(moduleElement.getEnclosedElements());
           for (ExecutableElement methodElement : moduleMethods) {
             if (isAnnotationPresent(methodElement, Produces.class)) {
               moduleProducesMethodsBuilder.add(methodElement);
             }
+            if (isAnnotationPresent(methodElement, Binds.class)) {
+              moduleBindsMethodsBuilder.add(methodElement);
+            }
           }
           ImmutableSet<ExecutableElement> moduleProducesMethods =
               moduleProducesMethodsBuilder.build();
+          ImmutableSet<ExecutableElement> moduleBindsMethods = moduleBindsMethodsBuilder.build();
 
-          if (Sets.difference(moduleProducesMethods, validProducesMethods).isEmpty()) {
+          if (Sets.difference(moduleProducesMethods, validProducesMethods).isEmpty()
+              && Sets.difference(moduleBindsMethods, validBindsMethods).isEmpty()) {
             // all of the produces methods in this module are valid!
             // time to generate some factories!
             ImmutableSet<ProductionBinding> bindings =
@@ -140,5 +143,39 @@ final class ProducerModuleProcessingStep implements ProcessingStep {
       }
     }
     return ImmutableSet.of();
+  }
+
+  private ImmutableSet<ExecutableElement> validateProducesMethods(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet.Builder<ExecutableElement> validProducesMethodsBuilder = ImmutableSet.builder();
+    for (Element producesElement : elementsByAnnotation.get(Produces.class)) {
+      if (producesElement.getKind().equals(METHOD)) {
+        ExecutableElement producesMethodElement = (ExecutableElement) producesElement;
+        ValidationReport<ExecutableElement> methodReport =
+            producesMethodValidator.validate(producesMethodElement);
+        methodReport.printMessagesTo(messager);
+        if (methodReport.isClean()) {
+          validProducesMethodsBuilder.add(producesMethodElement);
+        }
+      }
+    }
+    return validProducesMethodsBuilder.build();
+  }
+
+  private ImmutableSet<ExecutableElement> validateBindsMethods(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet.Builder<ExecutableElement> validBindsMethodsBuilder = ImmutableSet.builder();
+    for (Element bindElement : elementsByAnnotation.get(Binds.class)) {
+      if (bindElement.getKind().equals(METHOD)) {
+        ExecutableElement bindsMethodElement = (ExecutableElement) bindElement;
+        ValidationReport<ExecutableElement> methodReport =
+            bindsMethodValidator.validate(bindsMethodElement);
+        methodReport.printMessagesTo(messager);
+        if (methodReport.isClean()) {
+          validBindsMethodsBuilder.add(bindsMethodElement);
+        }
+      }
+    }
+    return validBindsMethodsBuilder.build();
   }
 }

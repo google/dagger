@@ -16,9 +16,12 @@
 package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
+import dagger.internal.codegen.BindingGraphValidator.DependencyPath;
 import dagger.producers.Produces;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -40,20 +43,20 @@ import static dagger.internal.codegen.ErrorMessages.INDENT;
  * 
  * <dl>
  * <dt>For component provision methods
- * <dd>{@code ComponentType.method() injects @Qualifier SomeType}
+ * <dd>{@code @Qualifier SomeType is provided at\n    ComponentType.method()}
  * 
  * <dt>For component injection methods
- * <dd>{@code ComponentType.method(foo) injects SomeType}
+ * <dd>{@code SomeType is injected at\n    ComponentType.method(foo)}
  * 
  * <dt>For parameters to {@link Provides @Provides}, {@link Produces @Produces}, or
  * {@link Inject @Inject} methods:
- * <dd>{@code EnclosingType.method([…, ]param[, …]) injects @Qualified ResolvedType}
+ * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.method([…, ]param[, …])}
  * 
  * <dt>For parameters to {@link Inject @Inject} constructors:
- * <dd>{@code EnclosingType.<init>([…, ]param[, …]) injects @Qualified ResolvedType}
+ * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.<init>([…, ]param[, …])}
  * 
  * <dt>For {@link Inject @Inject} fields:
- * <dd>{@code EnclosingType.field injects @Qualified ResolvedType}
+ * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.field}
  * </dl>
  */
 final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
@@ -64,6 +67,22 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
   DependencyRequestFormatter(Types types, Elements elements) {
     this.types = types;
     this.elements = elements;
+  }
+
+  /**
+   * A string representation of the dependency trace, starting with the
+   * {@linkplain DependencyPath#currentDependencyRequest() current request} and ending with the
+   * entry point.
+   */
+  String toDependencyTrace(DependencyPath dependencyPath) {
+    return Joiner.on('\n')
+        .join(
+            dependencyPath
+                .nonsyntheticRequests()
+                .transform(this)
+                .filter(Predicates.not(Predicates.equalTo("")))
+                .toList()
+                .reverse());
   }
 
   // TODO(cgruber): Sweep this class for TypeMirror.toString() usage and do some preventive format.
@@ -80,17 +99,17 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
               public String visitExecutableAsMethod(
                   ExecutableElement method, DependencyRequest request) {
                 StringBuilder builder = new StringBuilder(INDENT);
+                appendRequestedKeyAndVerb(
+                    builder,
+                    request.key().qualifier(),
+                    request.key().type(),
+                    componentMethodRequestVerb(request));
                 appendEnclosingTypeAndMemberName(method, builder);
                 builder.append('(');
                 for (VariableElement parameter : method.getParameters()) {
                   builder.append(parameter.getSimpleName());
                 }
                 builder.append(')');
-                appendRequest(
-                    builder,
-                    componentMethodRequestVerb(request),
-                    request.key().qualifier(),
-                    request.key().type());
                 return builder.toString();
               }
 
@@ -103,9 +122,10 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
               public String visitVariableAsParameter(
                   final VariableElement variable, DependencyRequest request) {
                 StringBuilder builder = new StringBuilder(INDENT);
+                appendRequestedKeyAndVerb(request, builder);
+
                 ExecutableElement methodOrConstructor =
                     asExecutable(variable.getEnclosingElement());
-
                 appendEnclosingTypeAndMemberName(methodOrConstructor, builder).append('(');
                 int parameterIndex = methodOrConstructor.getParameters().indexOf(variable);
                 if (parameterIndex > 0) {
@@ -116,7 +136,6 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
                   builder.append(", …");
                 }
                 builder.append(')');
-                appendRequest(builder, request);
                 return builder.toString();
               }
 
@@ -125,8 +144,8 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
               public String visitVariableAsField(
                   VariableElement variable, DependencyRequest request) {
                 StringBuilder builder = new StringBuilder(INDENT);
+                appendRequestedKeyAndVerb(request, builder);
                 appendEnclosingTypeAndMemberName(variable, builder);
-                appendRequest(builder, request);
                 return builder.toString();
               }
 
@@ -144,15 +163,18 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
             request);
   }
 
-  private void appendRequest(StringBuilder builder, DependencyRequest request) {
-    appendRequest(
-        builder, "injects", request.key().qualifier(), requestedTypeWithFrameworkClass(request));
+  private void appendRequestedKeyAndVerb(DependencyRequest request, StringBuilder builder) {
+    appendRequestedKeyAndVerb(
+        builder, request.key().qualifier(), requestedTypeWithFrameworkClass(request), "injected");
   }
 
-  private void appendRequest(
-      StringBuilder builder, String verb, Optional<AnnotationMirror> qualifier, TypeMirror type) {
-    builder.append("\n    ").append(INDENT).append(verb).append(' ');
-    appendQualifiedType(builder, qualifier, type);
+  private void appendRequestedKeyAndVerb(
+      StringBuilder builder,
+      Optional<AnnotationMirror> qualifier,
+      TypeMirror requestedType,
+      String verb) {
+    appendQualifiedType(builder, qualifier, requestedType);
+    builder.append(" is ").append(verb).append(" at\n    ").append(INDENT);
   }
 
   private TypeMirror requestedTypeWithFrameworkClass(DependencyRequest request) {
@@ -174,22 +196,22 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
   }
 
   /**
-   * Returns the verb for a component method dependency request. Returns "produces", "provides", or
-   * "injects", depending on the kind of request.
+   * Returns the verb for a component method dependency request. Returns "produced", "provided", or
+   * "injected", depending on the kind of request.
    */
   private String componentMethodRequestVerb(DependencyRequest request) {
     switch (request.kind()) {
       case FUTURE:
       case PRODUCER:
-        return "produces";
+        return "produced";
 
       case INSTANCE:
       case LAZY:
       case PROVIDER:
-        return "provides";
+        return "provided";
 
       case MEMBERS_INJECTOR:
-        return "injects";
+        return "injected";
 
       case PRODUCED:
       default:

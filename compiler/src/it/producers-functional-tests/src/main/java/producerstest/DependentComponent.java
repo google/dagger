@@ -21,8 +21,9 @@ import dagger.producers.ProductionComponent;
 import java.util.List;
 
 @ProductionComponent(
-    modules = DependentProducerModule.class,
-    dependencies = {DependedComponent.class, DependedProductionComponent.class})
+  modules = {ExecutorModule.class, DependentProducerModule.class},
+  dependencies = {DependedComponent.class, DependedProductionComponent.class}
+)
 interface DependentComponent {
   ListenableFuture<List<String>> greetings();
 }

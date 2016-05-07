@@ -59,7 +59,7 @@ final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeEl
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement componentElement) {
     return Optional.of(
-        classBuilder(generatedTypeName.simpleName())
+        classBuilder(generatedTypeName)
             .addAnnotation(
                 AnnotationSpec.builder(Module.class)
                     .build())

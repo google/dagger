@@ -17,15 +17,14 @@ package producerstest.subcomponent.sub;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionSubcomponent;
-import java.util.concurrent.Executor;
+import producerstest.ExecutorModule;
 
-@ProductionSubcomponent(modules = ChildModule.class)
+@ProductionSubcomponent(modules = {ExecutorModule.class, ChildModule.class})
 public interface ChildComponent {
   ListenableFuture<String> str();
 
   @ProductionSubcomponent.Builder
   interface Builder {
-    Builder executor(Executor executor);
     ChildComponent build();
   }
 }

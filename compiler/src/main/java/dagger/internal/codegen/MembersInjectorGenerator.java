@@ -100,7 +100,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
 
     ImmutableList<TypeVariableName> typeParameters = bindingTypeElementTypeVariableNames(binding);
     TypeSpec.Builder injectorTypeBuilder =
-        classBuilder(generatedTypeName.simpleName())
+        classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariables(typeParameters);
 
@@ -176,7 +176,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
       constructorBuilder.addStatement("assert $N != null", field);
       constructorBuilder.addStatement("this.$N = $N", field, field);
       dependencyFieldsBuilder.put(bindingKey, field);
-      constructorInvocationParameters.add(CodeBlocks.format("$N", field));
+      constructorInvocationParameters.add(CodeBlock.of("$N", field));
     }
     createMethodBuilder.addCode(CodeBlocks.join(constructorInvocationParameters.build(), ", "));
     createMethodBuilder.addCode(");");
@@ -235,7 +235,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
       MembersInjectionBinding binding,
       ImmutableMap<BindingKey, FieldSpec> dependencyFields,
       InjectionSite injectionSite) {
-    return CodeBlocks.format(
+    return CodeBlock.of(
         injectionSite.element().getKind().isField() ? "$L.$L = $L;" : "$L.$L($L);",
         getInstanceCodeBlockWithPotentialCast(
             injectionSite.element().getEnclosingElement(), binding.bindingElement()),
@@ -250,14 +250,14 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
    */
   private CodeBlock delegateInjectMemberCodeBlock(
       ImmutableMap<BindingKey, FieldSpec> dependencyFields, InjectionSite injectionSite) {
-    return CodeBlocks.format(
+    return CodeBlock.of(
         "$L.$L($L);",
         membersInjectorNameForType(
             MoreElements.asType(injectionSite.element().getEnclosingElement())),
         injectionSiteDelegateMethodName(injectionSite.element()),
         makeParametersCodeBlock(
             new ImmutableList.Builder<CodeBlock>()
-                .add(CodeBlocks.format("instance"))
+                .add(CodeBlock.of("instance"))
                 .addAll(parameterCodeBlocks(dependencyFields, injectionSite.dependencies(), false))
                 .build()));
   }
@@ -276,7 +276,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (DependencyRequest dependency : dependencies) {
       CodeBlock fieldCodeBlock =
-          CodeBlocks.format("$L", dependencyFields.get(dependency.bindingKey()).name);
+          CodeBlock.of("$L", dependencyFields.get(dependency.bindingKey()).name);
       parameters.add(
           passValue
               ? frameworkTypeUsageStatement(fieldCodeBlock, dependency.kind())
@@ -288,13 +288,13 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   private CodeBlock getInstanceCodeBlockWithPotentialCast(
       Element injectionSiteElement, Element bindingElement) {
     if (injectionSiteElement.equals(bindingElement)) {
-      return CodeBlocks.format("instance");
+      return CodeBlock.of("instance");
     }
     TypeName injectionSiteName = TypeName.get(injectionSiteElement.asType());
     if (injectionSiteName instanceof ParameterizedTypeName) {
       injectionSiteName = ((ParameterizedTypeName) injectionSiteName).rawType;
     }
-    return CodeBlocks.format("(($T) instance)", injectionSiteName);
+    return CodeBlock.of("(($T) instance)", injectionSiteName);
   }
 
   private String injectionSiteDelegateMethodName(Element injectionSiteElement) {
@@ -325,7 +325,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
               .build();
       methodBuilder.addParameter(parameter);
       providedParameters.add(
-          frameworkTypeUsageStatement(CodeBlocks.format("$N", parameter), dependency.kind()));
+          frameworkTypeUsageStatement(CodeBlock.of("$N", parameter), dependency.kind()));
     }
     if (injectionElement.getKind().isField()) {
       methodBuilder.addStatement(

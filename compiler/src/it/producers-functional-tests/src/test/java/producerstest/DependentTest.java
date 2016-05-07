@@ -17,7 +17,6 @@ package producerstest;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,30 +26,24 @@ import static com.google.common.truth.Truth.assertThat;
 @RunWith(JUnit4.class)
 public class DependentTest {
   @Test public void dependentComponent() throws Exception {
-    DependentComponent dependentComponent = DaggerDependentComponent
-        .builder()
-        .dependedProductionComponent(DaggerDependedProductionComponent.builder()
-            .executor(MoreExecutors.directExecutor())
-            .build())
-        .dependedComponent(DaggerDependedComponent.create())
-        .executor(MoreExecutors.directExecutor())
-        .build();
+    DependentComponent dependentComponent =
+        DaggerDependentComponent.builder()
+            .dependedProductionComponent(DaggerDependedProductionComponent.create())
+            .dependedComponent(DaggerDependedComponent.create())
+            .build();
     assertThat(dependentComponent).isNotNull();
     assertThat(dependentComponent.greetings().get()).containsExactly(
         "2", "Hello world!", "HELLO WORLD!");
   }
 
   @Test public void reuseBuilderWithDependentComponent() throws Exception {
-    DaggerDependentComponent.Builder dependentComponentBuilder = DaggerDependentComponent
-        .builder()
-        .executor(MoreExecutors.directExecutor());
+    DaggerDependentComponent.Builder dependentComponentBuilder = DaggerDependentComponent.builder();
 
-    DependentComponent componentUsingComponents = dependentComponentBuilder
-        .dependedProductionComponent(DaggerDependedProductionComponent.builder()
-            .executor(MoreExecutors.directExecutor())
-            .build())
-        .dependedComponent(DaggerDependedComponent.create())
-        .build();
+    DependentComponent componentUsingComponents =
+        dependentComponentBuilder
+            .dependedProductionComponent(DaggerDependedProductionComponent.create())
+            .dependedComponent(DaggerDependedComponent.create())
+            .build();
 
     DependentComponent componentUsingJavaImpls = dependentComponentBuilder
         .dependedProductionComponent(new DependedProductionComponent() {

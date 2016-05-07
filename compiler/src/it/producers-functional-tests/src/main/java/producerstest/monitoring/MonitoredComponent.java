@@ -17,8 +17,11 @@ package producerstest.monitoring;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionComponent;
+import producerstest.ExecutorModule;
 
-@ProductionComponent(modules = {MonitoringModule.class, StubModule.class, ServingModule.class})
+@ProductionComponent(
+  modules = {ExecutorModule.class, MonitoringModule.class, StubModule.class, ServingModule.class}
+)
 interface MonitoredComponent {
   ListenableFuture<String> output();
 }

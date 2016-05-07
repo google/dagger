@@ -26,9 +26,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Identifies annotation types that are used to associate keys with values returned by
- * {@linkplain Provides provider methods} in order to compose a {@linkplain Provides.Type#MAP map}.
+ * {@linkplain Provides provider methods} in order to compose a {@linkplain
+ * dagger.multibindings.IntoMap map}.
  *
- * <p>Every provider method annotated with {@code @Provides(type = MAP)} must also have an
+ * <p>Every provider method annotated with {@code @Provides} and {@code @IntoMap} must also have an
  * annotation that identifies the key for that map entry. That annotation's type must be annotated
  * with {@code @MapKey}.
  *
@@ -45,7 +46,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * {@literal @}Module
  * class SomeModule {
- *   {@literal @}Provides(type = MAP)
+ *   {@literal @}Provides
+ *   {@literal @}IntoMap
  *   {@literal @}SomeEnumKey(SomeEnum.FOO)
  *   Integer provideFooValue() {
  *     return 2;
@@ -80,7 +82,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * {@literal @}Module
  * class SomeModule {
- *   {@literal @}Provides(type = MAP)
+ *   {@literal @}Provides
+ *   {@literal @}IntoMap
  *   {@literal @}MyMapKey(someString = "foo", someEnum = BAR)
  *   Integer provideFooBarValue() {
  *     return 2;

@@ -160,6 +160,48 @@ public class GraphValidationTest {
         .withErrorContaining(expectedError).in(component).onLine(19);
   }
 
+  @Test
+  public void membersInjectDependsOnUnboundedType() {
+    JavaFileObject injectsUnboundedType =
+        JavaFileObjects.forSourceLines(
+            "test.InjectsUnboundedType",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import java.util.ArrayList;",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectsUnboundedType {",
+            "  @Inject MembersInjector<ArrayList<?>> listInjector;",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  void injectsUnboundedType(InjectsUnboundedType injects);",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(injectsUnboundedType, component))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            Joiner.on('\n')
+                .join(
+                    "Type parameters must be bounded for members injection."
+                        + " ? required by java.util.ArrayList<?>, via:",
+                    "      dagger.MembersInjector<java.util.ArrayList<?>> is injected at",
+                    "          test.InjectsUnboundedType.listInjector",
+                    "      test.InjectsUnboundedType is injected at",
+                    "          test.TestComponent.injectsUnboundedType(injects)"))
+        .in(component)
+        .onLine(7);
+  }
+
   @Test public void cyclicDependency() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -192,12 +234,14 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 "test.Outer.CComponent.getC() contains a dependency cycle:",
-                "      test.Outer.C.<init>(bParam)",
-                "          injects test.Outer.B",
-                "      test.Outer.B.<init>(aParam)",
-                "          injects test.Outer.A",
-                "      test.Outer.A.<init>(cParam)",
-                "          injects test.Outer.C");
+                "      test.Outer.C is injected at",
+                "          test.Outer.A.<init>(cParam)",
+                "      test.Outer.A is injected at",
+                "          test.Outer.B.<init>(aParam)",
+                "      test.Outer.B is injected at",
+                "          test.Outer.C.<init>(bParam)",
+                "      test.Outer.C is provided at",
+                "          test.Outer.CComponent.getC()");
 
     assertAbout(javaSource()).that(component)
         .processedWith(new ComponentProcessor())
@@ -243,14 +287,16 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 "test.Outer.DComponent.getD() contains a dependency cycle:",
-                "      test.Outer.D.<init>(cParam)",
-                "          injects test.Outer.C",
-                "      test.Outer.C.<init>(bParam)",
-                "          injects test.Outer.B",
-                "      test.Outer.B.<init>(aParam)",
-                "          injects test.Outer.A",
-                "      test.Outer.A.<init>(cParam)",
-                "          injects test.Outer.C");
+                "      test.Outer.C is injected at",
+                "          test.Outer.A.<init>(cParam)",
+                "      test.Outer.A is injected at",
+                "          test.Outer.B.<init>(aParam)",
+                "      test.Outer.B is injected at",
+                "          test.Outer.C.<init>(bParam)",
+                "      test.Outer.C is injected at",
+                "          test.Outer.D.<init>(cParam)",
+                "      test.Outer.D is provided at",
+                "          test.Outer.DComponent.getD()");
 
     assertAbout(javaSource())
         .that(component)
@@ -272,6 +318,7 @@ public class GraphValidationTest {
             "import dagger.MapKey;",
             "import dagger.Module;",
             "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
             "import java.util.Map;",
             "import javax.inject.Inject;",
             "",
@@ -295,7 +342,7 @@ public class GraphValidationTest {
             "",
             "  @Module",
             "  static class CModule {",
-            "    @Provides(type = Provides.Type.MAP)",
+            "    @Provides @IntoMap",
             "    @StringKey(\"C\")",
             "    static C c(C c) {",
             "      return c;",
@@ -312,14 +359,16 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 "test.Outer.CComponent.getC() contains a dependency cycle:",
-                "      test.Outer.C.<init>(bParam)",
-                "          injects test.Outer.B",
-                "      test.Outer.B.<init>(aParam)",
-                "          injects test.Outer.A",
-                "      test.Outer.A.<init>(cMap)",
-                "          injects java.util.Map<java.lang.String,test.Outer.C>",
-                "      test.Outer.CModule.c(c)",
-                "          injects test.Outer.C");
+                "      test.Outer.C is injected at",
+                "          test.Outer.CModule.c(c)",
+                "      java.util.Map<java.lang.String,test.Outer.C> is injected at",
+                "          test.Outer.A.<init>(cMap)",
+                "      test.Outer.A is injected at",
+                "          test.Outer.B.<init>(aParam)",
+                "      test.Outer.B is injected at",
+                "          test.Outer.C.<init>(bParam)",
+                "      test.Outer.C is provided at",
+                "          test.Outer.CComponent.getC()");
 
     assertAbout(javaSource())
         .that(component)
@@ -327,7 +376,7 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedError)
         .in(component)
-        .onLine(25);
+        .onLine(26);
   }
 
   @Test
@@ -340,6 +389,7 @@ public class GraphValidationTest {
             "import dagger.Component;",
             "import dagger.Module;",
             "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
             "import java.util.Set;",
             "import javax.inject.Inject;",
             "",
@@ -363,7 +413,7 @@ public class GraphValidationTest {
             "",
             "  @Module",
             "  static class CModule {",
-            "    @Provides(type = Provides.Type.SET)",
+            "    @Provides @IntoSet",
             "    static C c(C c) {",
             "      return c;",
             "    }",
@@ -374,15 +424,16 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 "test.Outer.CComponent.getC() contains a dependency cycle:",
-                "      test.Outer.C.<init>(bParam)",
-                "          injects test.Outer.B",
-                "      test.Outer.B.<init>(aParam)",
-                "          injects test.Outer.A",
-                "      test.Outer.A.<init>(cSet)",
-                "          injects java.util.Set<test.Outer.C>",
-                "      test.Outer.CModule.c(c)",
-                "          injects test.Outer.C"
-                );
+                "      test.Outer.C is injected at",
+                "          test.Outer.CModule.c(c)",
+                "      java.util.Set<test.Outer.C> is injected at",
+                "          test.Outer.A.<init>(cSet)",
+                "      test.Outer.A is injected at",
+                "          test.Outer.B.<init>(aParam)",
+                "      test.Outer.B is injected at",
+                "          test.Outer.C.<init>(bParam)",
+                "      test.Outer.C is provided at",
+                "          test.Outer.CComponent.getC()");
 
     assertAbout(javaSource())
         .that(component)
@@ -390,7 +441,7 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedError)
         .in(component)
-        .onLine(24);
+        .onLine(25);
   }
 
   @Test
@@ -433,14 +484,16 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 "test.Outer.DComponent.getD() contains a dependency cycle:",
-                "      test.Outer.D.<init>(cParam)",
-                "          injects javax.inject.Provider<test.Outer.C>",
-                "      test.Outer.C.<init>(bParam)",
-                "          injects test.Outer.B",
-                "      test.Outer.B.<init>(aParam)",
-                "          injects test.Outer.A",
-                "      test.Outer.A.<init>(cParam)",
-                "          injects test.Outer.C");
+                "      test.Outer.C is injected at",
+                "          test.Outer.A.<init>(cParam)",
+                "      test.Outer.A is injected at",
+                "          test.Outer.B.<init>(aParam)",
+                "      test.Outer.B is injected at",
+                "          test.Outer.C.<init>(bParam)",
+                "      javax.inject.Provider<test.Outer.C> is injected at",
+                "          test.Outer.D.<init>(cParam)",
+                "      test.Outer.D is provided at",
+                "          test.Outer.DComponent.getD()");
 
     assertAbout(javaSource())
         .that(component)
@@ -544,15 +597,14 @@ public class GraphValidationTest {
         "import dagger.Module;",
         "import dagger.Provides;",
         "import dagger.MapKey;",
+        "import dagger.multibindings.IntoMap;",
+        "import dagger.multibindings.IntoSet;",
         "import java.util.HashMap;",
         "import java.util.HashSet;",
         "import java.util.Map;",
         "import java.util.Set;",
         "",
         "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "import static dagger.Provides.Type.MAP;",
-        "import static dagger.Provides.Type.SET;",
-        "",
         "final class Outer {",
         "  @MapKey(unwrapValue = true)",
         "  @interface StringKey {",
@@ -561,11 +613,11 @@ public class GraphValidationTest {
         "",
         "  @Module",
         "  static class TestModule1 {",
-        "    @Provides(type = MAP)",
+        "    @Provides @IntoMap",
         "    @StringKey(\"foo\")",
         "    String stringMapEntry() { return \"\"; }",
         "",
-        "    @Provides(type = SET) String stringSetElement() { return \"\"; }",
+        "    @Provides @IntoSet String stringSetElement() { return \"\"; }",
         "  }",
         "",
         "  @Module",
@@ -587,7 +639,8 @@ public class GraphValidationTest {
     String expectedSetError =
         "java.util.Set<java.lang.String> has incompatible bindings or declarations:\n"
             + "      Set bindings and declarations:\n"
-            + "          @Provides(type=SET) String test.Outer.TestModule1.stringSetElement()\n"
+            + "          @Provides @dagger.multibindings.IntoSet String "
+            + "test.Outer.TestModule1.stringSetElement()\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
 
@@ -595,7 +648,8 @@ public class GraphValidationTest {
         "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
             + "or declarations:\n"
             + "      Map bindings and declarations:\n"
-            + "          @Provides(type=MAP) @test.Outer.StringKey(\"foo\") String"
+            + "          @Provides @dagger.multibindings.IntoMap "
+            + "@test.Outer.StringKey(\"foo\") String"
             + " test.Outer.TestModule1.stringMapEntry()\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
@@ -606,11 +660,11 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedSetError)
         .in(component)
-        .onLine(43)
+        .onLine(42)
         .and()
         .withErrorContaining(expectedMapError)
         .in(component)
-        .onLine(44);
+        .onLine(43);
   }
 
   @Test
@@ -630,8 +684,6 @@ public class GraphValidationTest {
             "import java.util.Set;",
             "",
             "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-            "import static dagger.Provides.Type.MAP;",
-            "import static dagger.Provides.Type.SET;",
             "",
             "final class Outer {",
             "  @Module",
@@ -680,11 +732,11 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedSetError)
         .in(component)
-        .onLine(37)
+        .onLine(35)
         .and()
         .withErrorContaining(expectedMapError)
         .in(component)
-        .onLine(38);
+        .onLine(36);
   }
   
   @Test public void duplicateBindings_TruncateAfterLimit() {
@@ -847,26 +899,26 @@ public class GraphValidationTest {
         Joiner.on('\n')
             .join(
                 errorText,
-                "      test.TestClass.B.<init>(a)",
-                "          injects test.TestClass.A",
-                "      test.TestClass.C.b",
-                "          injects test.TestClass.B",
-                "      test.TestClass.DImpl.<init>(c, …)",
-                "          injects test.TestClass.C",
-                "      test.TestClass.DModule.d(…, impl, …)",
-                "          injects test.TestClass.DImpl",
-                "      test.TestClass.AComponent.getFoo()",
-                "          provides @javax.inject.Named(\"slim shady\") test.TestClass.D");
+                "      test.TestClass.A is injected at",
+                "          test.TestClass.B.<init>(a)",
+                "      test.TestClass.B is injected at",
+                "          test.TestClass.C.b",
+                "      test.TestClass.C is injected at",
+                "          test.TestClass.DImpl.<init>(c, …)",
+                "      test.TestClass.DImpl is injected at",
+                "          test.TestClass.DModule.d(…, impl, …)",
+                "      @javax.inject.Named(\"slim shady\") test.TestClass.D is provided at",
+                "          test.TestClass.AComponent.getFoo()");
     String secondError =
         Joiner.on('\n')
             .join(
                 errorText,
-                "      test.TestClass.B.<init>(a)",
-                "          injects test.TestClass.A",
-                "      test.TestClass.C.b",
-                "          injects test.TestClass.B",
-                "      test.TestClass.AComponent.injectC(c)",
-                "          injects test.TestClass.C");
+                "      test.TestClass.A is injected at",
+                "          test.TestClass.B.<init>(a)",
+                "      test.TestClass.B is injected at",
+                "          test.TestClass.C.b",
+                "      test.TestClass.C is injected at",
+                "          test.TestClass.AComponent.injectC(c)");
     assertAbout(javaSource())
         .that(component)
         .processedWith(new ComponentProcessor())
@@ -920,14 +972,14 @@ public class GraphValidationTest {
         Joiner.on("\n")
             .join(
                 "java.util.List cannot be provided without an @Provides-annotated method.",
-                "      test.TestClass.<init>(list)",
-                "          injects java.util.List",
-                "      test.Generic.<init>(t)",
-                "          injects test.TestClass",
-                "      test.UsesTest.<init>(genericTestClass)",
-                "          injects test.Generic<test.TestClass>",
-                "      test.TestComponent.usesTest()",
-                "          provides test.UsesTest");
+                "      java.util.List is injected at",
+                "          test.TestClass.<init>(list)",
+                "      test.TestClass is injected at",
+                "          test.Generic.<init>(t)",
+                "      test.Generic<test.TestClass> is injected at",
+                "          test.UsesTest.<init>(genericTestClass)",
+                "      test.UsesTest is provided at",
+                "          test.TestComponent.usesTest()");
     assertAbout(javaSources()).that(ImmutableList.of(generic, testClass, usesTest, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
@@ -975,14 +1027,14 @@ public class GraphValidationTest {
         Joiner.on("\n")
             .join(
                 "java.util.List cannot be provided without an @Provides-annotated method.",
-                "      test.TestClass.<init>(list)",
-                "          injects java.util.List",
-                "      test.Generic.t",
-                "          injects test.TestClass",
-                "      test.UsesTest.<init>(genericTestClass)",
-                "          injects test.Generic<test.TestClass>",
-                "      test.TestComponent.usesTest()",
-                "          provides test.UsesTest");
+                "      java.util.List is injected at",
+                "          test.TestClass.<init>(list)",
+                "      test.TestClass is injected at",
+                "          test.Generic.t",
+                "      test.Generic<test.TestClass> is injected at",
+                "          test.UsesTest.<init>(genericTestClass)",
+                "      test.UsesTest is provided at",
+                "          test.TestComponent.usesTest()");
     assertAbout(javaSources()).that(ImmutableList.of(generic, testClass, usesTest, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()

@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.SourceFiles.canonicalName;
+import static dagger.internal.codegen.SourceFiles.classFileName;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 /**
@@ -138,7 +138,7 @@ final class MapKeys {
    */
   public static ClassName getMapKeyCreatorClassName(TypeElement mapKeyType) {
     ClassName mapKeyTypeName = ClassName.get(mapKeyType);
-    return mapKeyTypeName.topLevelClassName().peerClass(canonicalName(mapKeyTypeName) + "Creator");
+    return mapKeyTypeName.topLevelClassName().peerClass(classFileName(mapKeyTypeName) + "Creator");
   }
 
   /**
@@ -185,7 +185,7 @@ final class MapKeys {
 
     @Override
     public CodeBlock visitEnumConstant(VariableElement c, AnnotationValue p) {
-      return CodeBlocks.format(
+      return CodeBlock.of(
           "$T.$L", TypeName.get(c.getEnclosingElement().asType()), c.getSimpleName());
     }
 
@@ -196,52 +196,52 @@ final class MapKeys {
 
     @Override
     public CodeBlock visitType(TypeMirror t, AnnotationValue p) {
-      return CodeBlocks.format("$T.class", TypeName.get(t));
+      return CodeBlock.of("$T.class", TypeName.get(t));
     }
 
     @Override
     public CodeBlock visitString(String s, AnnotationValue p) {
-      return CodeBlocks.format("$S", s);
+      return CodeBlock.of("$S", s);
     }
 
     @Override
     public CodeBlock visitByte(byte b, AnnotationValue p) {
-      return CodeBlocks.format("(byte) $L", b);
+      return CodeBlock.of("(byte) $L", b);
     }
 
     @Override
     public CodeBlock visitChar(char c, AnnotationValue p) {
-      return CodeBlocks.format("$L", p);
+      return CodeBlock.of("$L", p);
     }
 
     @Override
     public CodeBlock visitDouble(double d, AnnotationValue p) {
-      return CodeBlocks.format("$LD", d);
+      return CodeBlock.of("$LD", d);
     }
 
     @Override
     public CodeBlock visitFloat(float f, AnnotationValue p) {
-      return CodeBlocks.format("$LF", f);
+      return CodeBlock.of("$LF", f);
     }
 
     @Override
     public CodeBlock visitInt(int i, AnnotationValue p) {
-      return CodeBlocks.format("(int) $L", i);
+      return CodeBlock.of("(int) $L", i);
     }
 
     @Override
     public CodeBlock visitLong(long i, AnnotationValue p) {
-      return CodeBlocks.format("$LL", i);
+      return CodeBlock.of("$LL", i);
     }
 
     @Override
     public CodeBlock visitShort(short s, AnnotationValue p) {
-      return CodeBlocks.format("(short) $L", s);
+      return CodeBlock.of("(short) $L", s);
     }
 
     @Override
     protected CodeBlock defaultAction(Object o, AnnotationValue p) {
-      return CodeBlocks.format("$L", o);
+      return CodeBlock.of("$L", o);
     }
 
     @Override
@@ -250,7 +250,7 @@ final class MapKeys {
       for (int i = 0; i < values.size(); i++) {
         codeBlocks.add(this.visit(values.get(i), p));
       }
-      return CodeBlocks.format("{$L}", makeParametersCodeBlock(codeBlocks.build()));
+      return CodeBlock.of("{$L}", makeParametersCodeBlock(codeBlocks.build()));
     }
   }
 
@@ -278,7 +278,7 @@ final class MapKeys {
    */
   private static CodeBlock annotationExpression(
       AnnotationMirror mapKeyAnnotation, final MapKeyExpression mapKeyExpression) {
-    return CodeBlocks.format(
+    return CodeBlock.of(
         "$T.create$L($L)",
         mapKeyExpression.mapKeyCreator,
         mapKeyAnnotation.getAnnotationType().asElement().getSimpleName(),
@@ -304,7 +304,7 @@ final class MapKeys {
 
         @Override
         public CodeBlock visitArray(ArrayType t, CodeBlock p) {
-          return CodeBlocks.format("new $T[] $L", RAW_TYPE_NAME.visit(t.getComponentType()), p);
+          return CodeBlock.of("new $T[] $L", RAW_TYPE_NAME.visit(t.getComponentType()), p);
         }
 
         @Override

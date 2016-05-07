@@ -60,6 +60,7 @@ abstract class DependencyRequestMapper {
       switch (request.kind()) {
         case INSTANCE:
         case PROVIDER:
+        case PROVIDER_OF_LAZY:
         case LAZY:
           return Provider.class;
         case MEMBERS_INJECTOR:
@@ -83,6 +84,7 @@ abstract class DependencyRequestMapper {
         case PRODUCER:
           return Producer.class;
         case PROVIDER:
+        case PROVIDER_OF_LAZY:
         case LAZY:
           return Provider.class;
         case MEMBERS_INJECTOR:

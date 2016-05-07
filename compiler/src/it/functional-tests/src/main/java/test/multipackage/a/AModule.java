@@ -18,12 +18,13 @@ package test.multipackage.a;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static dagger.Provides.Type.SET;
+import dagger.multibindings.IntoSet;
 
 @Module
 public final class AModule {
-  @Provides(type = SET) String provideString() {
+  @Provides
+  @IntoSet
+  static String provideString() {
     return "a";
   }
 }

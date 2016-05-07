@@ -20,12 +20,11 @@ import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
+import dagger.multibindings.IntoMap;
 import dagger.multibindings.StringKey;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
-
-import static dagger.Provides.Type.MAP;
 
 /**
  * Cycle classes used for testing cyclic dependencies.
@@ -119,13 +118,15 @@ final class Cycles {
 
   @Module
   static class CycleMapModule {
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("X")
     static X x(X x) {
       return x;
     }
 
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("Y")
     static Y y(Y y) {
       return y;

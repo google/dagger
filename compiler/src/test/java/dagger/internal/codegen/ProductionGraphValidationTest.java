@@ -17,14 +17,12 @@ package dagger.internal.codegen;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
-import java.util.Arrays;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
 /**
@@ -32,6 +30,24 @@ import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
  */
 @RunWith(JUnit4.class)
 public class ProductionGraphValidationTest {
+  private static final JavaFileObject EXECUTOR_MODULE =
+      JavaFileObjects.forSourceLines(
+          "test.ExecutorModule",
+          "package test;",
+          "",
+          "import com.google.common.util.concurrent.MoreExecutors;",
+          "import dagger.Module;",
+          "import dagger.Provides;",
+          "import dagger.producers.Production;",
+          "import java.util.concurrent.Executor;",
+          "",
+          "@Module",
+          "class ExecutorModule {",
+          "  @Provides @Production Executor executor() {",
+          "    return MoreExecutors.directExecutor();",
+          "  }",
+          "}");
+
   @Test public void componentWithUnprovidedInput() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.MyComponent",
         "package test;",
@@ -39,7 +55,7 @@ public class ProductionGraphValidationTest {
         "import com.google.common.util.concurrent.ListenableFuture;",
         "import dagger.producers.ProductionComponent;",
         "",
-        "@ProductionComponent(modules = FooModule.class)",
+        "@ProductionComponent(modules = {ExecutorModule.class, FooModule.class})",
         "interface MyComponent {",
         "  ListenableFuture<Foo> getFoo();",
         "}");
@@ -58,7 +74,7 @@ public class ProductionGraphValidationTest {
         "    return null;",
         "  }",
         "}");
-    assertAbout(javaSources()).that(Arrays.asList(module, component))
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, module, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("test.Bar cannot be provided without an @Inject constructor or from "
@@ -76,14 +92,14 @@ public class ProductionGraphValidationTest {
         "final class TestClass {",
         "  interface A {}",
         "",
-        "  @ProductionComponent()",
+        "  @ProductionComponent(modules = ExecutorModule.class)",
         "  interface AComponent {",
         "    ListenableFuture<A> getA();",
         "  }",
         "}");
     String expectedError =
         "test.TestClass.A cannot be provided without an @Provides- or @Produces-annotated method.";
-    assertAbout(javaSource()).that(component)
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(expectedError).in(component).onLine(11);
@@ -118,14 +134,14 @@ public class ProductionGraphValidationTest {
         "    }",
         "  }",
         "",
-        "  @ProductionComponent(modules = {AModule.class, BModule.class})",
+        "  @ProductionComponent(modules = {ExecutorModule.class, AModule.class, BModule.class})",
         "  interface AComponent {",
         "    ListenableFuture<A> getA();",
         "  }",
         "}");
     String expectedError =
         "test.TestClass.A is a provision, which cannot depend on a production.";
-    assertAbout(javaSource()).that(component)
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(expectedError).in(component).onLine(30);
@@ -150,14 +166,14 @@ public class ProductionGraphValidationTest {
         "    }",
         "  }",
         "",
-        "  @ProductionComponent(modules = AModule.class)",
+        "  @ProductionComponent(modules = {ExecutorModule.class, AModule.class})",
         "  interface AComponent {",
         "    A getA();",
         "  }",
         "}");
     String expectedError =
         "test.TestClass.A is a provision entry-point, which cannot depend on a production.";
-    assertAbout(javaSource()).that(component)
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(expectedError).in(component).onLine(20);
@@ -173,19 +189,18 @@ public class ProductionGraphValidationTest {
             "import com.google.common.util.concurrent.ListenableFuture;",
             "import dagger.Module;",
             "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
             "import dagger.producers.ProducerModule;",
             "import dagger.producers.Produces;",
             "import dagger.producers.ProductionComponent;",
             "import dagger.producers.monitoring.ProductionComponentMonitor;",
-            "",
-            "import static dagger.Provides.Type.SET;",
             "",
             "final class TestClass {",
             "  interface A {}",
             "",
             "  @Module",
             "  final class MonitoringModule {",
-            "    @Provides(type = SET)",
+            "    @Provides @IntoSet",
             "    ProductionComponentMonitor.Factory monitorFactory(A unbound) {",
             "      return null;",
             "    }",
@@ -198,20 +213,21 @@ public class ProductionGraphValidationTest {
             "    }",
             "  }",
             "",
-            "  @ProductionComponent(modules = {MonitoringModule.class, StringModule.class})",
+            "  @ProductionComponent(",
+            "    modules = {ExecutorModule.class, MonitoringModule.class, StringModule.class}",
+            "  )",
             "  interface StringComponent {",
             "    ListenableFuture<String> getString();",
             "  }",
             "}");
     String expectedError =
         "test.TestClass.A cannot be provided without an @Provides-annotated method.";
-    assertAbout(javaSource())
-        .that(component)
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(expectedError)
         .in(component)
-        .onLine(33);
+        .onLine(34);
   }
 
   @Test
@@ -224,19 +240,18 @@ public class ProductionGraphValidationTest {
             "import com.google.common.util.concurrent.ListenableFuture;",
             "import dagger.Module;",
             "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
             "import dagger.producers.ProducerModule;",
             "import dagger.producers.Produces;",
             "import dagger.producers.ProductionComponent;",
             "import dagger.producers.monitoring.ProductionComponentMonitor;",
-            "",
-            "import static dagger.Provides.Type.SET;",
             "",
             "final class TestClass {",
             "  interface A {}",
             "",
             "  @Module",
             "  final class MonitoringModule {",
-            "    @Provides(type = SET) ProductionComponentMonitor.Factory monitorFactory(A a) {",
+            "    @Provides @IntoSet ProductionComponentMonitor.Factory monitorFactory(A a) {",
             "      return null;",
             "    }",
             "  }",
@@ -252,44 +267,50 @@ public class ProductionGraphValidationTest {
             "    }",
             "  }",
             "",
-            "  @ProductionComponent(modules = {MonitoringModule.class, StringModule.class})",
+            "  @ProductionComponent(",
+            "    modules = {ExecutorModule.class, MonitoringModule.class, StringModule.class}",
+            "  )",
             "  interface StringComponent {",
             "    ListenableFuture<String> getString();",
             "  }",
             "}");
     String expectedError =
-        "@Provides(type=SET) dagger.producers.monitoring.ProductionComponentMonitor.Factory"
+        "@Provides @dagger.multibindings.IntoSet"
+            + " dagger.producers.monitoring.ProductionComponentMonitor.Factory"
             + " test.TestClass.MonitoringModule.monitorFactory(test.TestClass.A) is a provision,"
             + " which cannot depend on a production.";
-    assertAbout(javaSource())
-        .that(component)
+    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(expectedError)
         .in(component)
-        .onLine(36);
+        .onLine(37);
   }
   
   @Test
   public void cycleNotBrokenByMap() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "TestComponent",
+            "test.TestComponent",
+            "package test;",
+            "",
             "import com.google.common.util.concurrent.ListenableFuture;",
             "import dagger.producers.ProductionComponent;",
             "",
-            "@ProductionComponent(modules = TestModule.class)",
+            "@ProductionComponent(modules = {ExecutorModule.class, TestModule.class})",
             "interface TestComponent {",
             "  ListenableFuture<String> string();",
             "}");
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
-            "TestModule",
+            "test.TestModule",
+            "package test;",
+            "",
             "import dagger.producers.ProducerModule;",
             "import dagger.producers.Produces;",
+            "import dagger.multibindings.IntoMap;",
             "import dagger.multibindings.StringKey;",
             "import java.util.Map;",
-            "import static dagger.producers.Produces.Type.MAP;",
             "",
             "@ProducerModule",
             "final class TestModule {",
@@ -297,41 +318,45 @@ public class ProductionGraphValidationTest {
             "    return \"string\";",
             "  }",
             "",
-            "  @Produces(type = MAP) @StringKey(\"key\")",
+            "  @Produces @IntoMap @StringKey(\"key\")",
             "  static String entry(String string) {",
             "    return string;",
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(component, module))
+        .that(ImmutableList.of(EXECUTOR_MODULE, component, module))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("cycle")
         .in(component)
-        .onLine(6);
+        .onLine(8);
   }
 
   @Test
   public void cycleNotBrokenByProducerMap() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "TestComponent",
+            "test.TestComponent",
+            "package test;",
+            "",
             "import com.google.common.util.concurrent.ListenableFuture;",
             "import dagger.producers.ProductionComponent;",
             "",
-            "@ProductionComponent(modules = TestModule.class)",
+            "@ProductionComponent(modules = {ExecutorModule.class, TestModule.class})",
             "interface TestComponent {",
             "  ListenableFuture<String> string();",
             "}");
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
-            "TestModule",
+            "test.TestModule",
+            "package test;",
+            "",
             "import dagger.producers.Producer;",
             "import dagger.producers.ProducerModule;",
             "import dagger.producers.Produces;",
             "import dagger.multibindings.StringKey;",
+            "import dagger.multibindings.IntoMap;",
             "import java.util.Map;",
-            "import static dagger.producers.Produces.Type.MAP;",
             "",
             "@ProducerModule",
             "final class TestModule {",
@@ -339,17 +364,17 @@ public class ProductionGraphValidationTest {
             "    return \"string\";",
             "  }",
             "",
-            "  @Produces(type = MAP) @StringKey(\"key\")",
+            "  @Produces @IntoMap @StringKey(\"key\")",
             "  static String entry(String string) {",
             "    return string;",
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(component, module))
+        .that(ImmutableList.of(EXECUTOR_MODULE, component, module))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("cycle")
         .in(component)
-        .onLine(6);
+        .onLine(8);
   }
 }

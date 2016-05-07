@@ -42,7 +42,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -273,11 +272,6 @@ abstract class ComponentDescriptor {
   abstract ImmutableMap<ExecutableElement, TypeElement> dependencyMethodIndex();
 
   /**
-   * The element representing {@link Executor}, if it should be a dependency of this component.
-   */
-  abstract Optional<TypeElement> executorDependency();
-
-  /**
    * The scopes of the component.
    */
   abstract ImmutableSet<Scope> scopes();
@@ -486,7 +480,6 @@ abstract class ComponentDescriptor {
         scopes = FluentIterable.from(scopes).append(Scope.productionScope(elements)).toSet();
       }
 
-      Optional<TypeElement> executorDependency = createExecutorDependency(kind, builderSpec);
       return new AutoValue_ComponentDescriptor(
           kind,
           componentMirror,
@@ -494,7 +487,6 @@ abstract class ComponentDescriptor {
           componentDependencyTypes,
           modules.build(),
           dependencyMethodIndex.build(),
-          executorDependency,
           scopes,
           subcomponentDescriptors.build(),
           componentMethodsBuilder.build(),
@@ -593,25 +585,6 @@ abstract class ComponentDescriptor {
       verify(buildMethod != null); // validation should have ensured this.
       return Optional.<BuilderSpec>of(new AutoValue_ComponentDescriptor_BuilderSpec(element,
           map.build(), buildMethod, element.getEnclosingElement().asType()));
-    }
-
-    // TODO(beder): Remove the executor dependency when all clients have been updated.
-    private Optional<TypeElement> createExecutorDependency(
-        Kind componentKind, Optional<BuilderSpec> builderSpec) {
-      if (!componentKind.isProducer()) {
-        return Optional.absent();
-      }
-      TypeElement executorTypeElement = elements.getTypeElement(Executor.class.getCanonicalName());
-      if (!builderSpec.isPresent()) {
-        // if there's no builder on a component (not a subcomponent!), we'll add an executor()
-        // method to the generated builder so it must be specified
-        return componentKind.equals(Kind.PRODUCTION_COMPONENT)
-            ? Optional.of(executorTypeElement)
-            : Optional.<TypeElement>absent();
-      }
-      return builderSpec.get().methodMap().containsKey(executorTypeElement)
-          ? Optional.of(executorTypeElement)
-          : Optional.<TypeElement>absent();
     }
 
     /**

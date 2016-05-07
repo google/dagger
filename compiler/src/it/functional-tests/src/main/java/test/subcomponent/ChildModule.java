@@ -17,12 +17,13 @@ package test.subcomponent;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static dagger.Provides.Type.SET;
+import dagger.multibindings.IntoSet;
 
 @Module
 final class ChildModule {
-  @Provides(type = SET) Object provideUnscopedObject() {
+  @Provides
+  @IntoSet
+  static Object provideUnscopedObject() {
     return new Object() {
       @Override public String toString() {
         return "unscoped in child";

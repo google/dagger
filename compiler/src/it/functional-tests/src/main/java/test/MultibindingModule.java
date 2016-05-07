@@ -20,53 +20,84 @@ import dagger.Multibindings;
 import dagger.Provides;
 import dagger.multibindings.ClassKey;
 import dagger.multibindings.IntKey;
+import dagger.multibindings.IntoMap;
+import dagger.multibindings.IntoSet;
 import dagger.multibindings.LongKey;
 import dagger.multibindings.StringKey;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import javax.inject.Named;
 import javax.inject.Provider;
 
 import static dagger.Provides.Type.MAP;
 import static dagger.Provides.Type.SET;
+import static dagger.Provides.Type.SET_VALUES;
 
 @Module
 class MultibindingModule {
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @StringKey("foo")
   static String provideFooKey(double doubleDependency) {
     return "foo value";
   }
 
   @Provides(type = MAP)
+  @StringKey("foo @Provides(type)")
+  static String provideFooProvidesTypeKey(double doubleDependency) {
+    return "foo @Provides(type) value";
+  }
+
+  @Provides
+  @IntoMap
   @StringKey("bar")
   static String provideBarKey() {
     return "bar value";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @StringKey("foo")
   static String[] provideFooArrayValue(double doubleDependency) {
     return new String[] {"foo1", "foo2"};
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @StringKey("bar")
   static String[] provideBarArrayValue() {
     return new String[] {"bar1", "bar2"};
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   static int provideFiveToSet() {
     return 5;
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   static int provideSixToSet() {
     return 6;
+  }
+
+  @Provides(type = SET)
+  static int provideIntoSetWithProvidesType() {
+    return -100;
+  }
+
+  @Provides(type = SET_VALUES)
+  static Set<Integer> provideElementsIntoSetWithProvidesType() {
+    Set<Integer> set = new HashSet<>();
+    set.add(-101);
+    set.add(-102);
+    return set;
   }
 
   @Provides
@@ -79,91 +110,106 @@ class MultibindingModule {
     return map.values();
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @NestedAnnotationContainer.NestedWrappedKey(Integer.class)
   static String valueForInteger() {
     return "integer";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @NestedAnnotationContainer.NestedWrappedKey(Long.class)
   static String valueForLong() {
     return "long";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @ClassKey(Integer.class)
   static String valueForClassInteger() {
     return "integer";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @ClassKey(Long.class)
   static String valueForClassLong() {
     return "long";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @NumberClassKey(BigDecimal.class)
   static String valueForNumberClassBigDecimal() {
     return "bigdecimal";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @NumberClassKey(BigInteger.class)
   static String valueForNumberClassBigInteger() {
     return "biginteger";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @LongKey(100)
   static String valueFor100Long() {
     return "100 long";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @IntKey(100)
   static String valueFor100Int() {
     return "100 int";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @ShortKey(100)
   static String valueFor100Short() {
     return "100 short";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @ByteKey(100)
   static String valueFor100Byte() {
     return "100 byte";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @BooleanKey(true)
   static String valueForTrue() {
     return "true";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @CharKey('a')
   static String valueForA() {
     return "a char";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @CharKey('\n')
   static String valueForNewline() {
     return "newline char";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @UnwrappedAnnotationKey(@StringKey("foo\n"))
   static String valueForUnwrappedAnnotationKeyFoo() {
     return "foo annotation";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @WrappedAnnotationKey(
     value = @StringKey("foo"),
     integers = {1, 2, 3},
@@ -174,30 +220,35 @@ class MultibindingModule {
     return "wrapped foo annotation";
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   @Named("complexQualifier")
   static String valueForComplexQualifierSet() {
     return "foo";
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   static CharSequence setContribution() {
     return "foo";
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   @Named("complexQualifier")
   static CharSequence qualifiedSetContribution() {
     return "qualified foo";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @StringKey("key")
   static CharSequence mapContribution() {
     return "foo value";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @Named("complexQualifier")
   @StringKey("key")
   static CharSequence qualifiedMapContribution() {

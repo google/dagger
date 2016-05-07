@@ -143,7 +143,7 @@ final class ComponentValidator {
           String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
           subject);
     }
-    
+
     Optional<AnnotationMirror> reusableAnnotation = getAnnotationMirror(subject, Reusable.class);
     if (reusableAnnotation.isPresent()) {
       builder.addError(COMPONENT_ANNOTATED_REUSABLE, subject, reusableAnnotation.get());
@@ -240,7 +240,7 @@ final class ComponentValidator {
         getAnnotationMirror(subject, componentKind.annotationType()).get();
     ImmutableList<TypeMirror> moduleTypes = getComponentModules(componentMirror);
     moduleValidator.validateReferencedModules(
-        subject, builder, moduleTypes, componentKind.moduleKinds());
+        subject, componentMirror, builder, moduleTypes, componentKind.moduleKinds());
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.

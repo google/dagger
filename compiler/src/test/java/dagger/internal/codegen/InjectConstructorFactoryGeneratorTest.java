@@ -1205,14 +1205,14 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "}");
     JavaFileObject aFactory = JavaFileObjects.forSourceLines(
-        "test.OuterType$A_Factory",
+        "test.OuterType_A_Factory",
         "package test;",
         "",
         "import dagger.internal.Factory;",
         "import javax.annotation.Generated;",
         "",
         GENERATED_ANNOTATION,
-        "public enum OuterType$A_Factory implements Factory<OuterType.A> {",
+        "public enum OuterType_A_Factory implements Factory<OuterType.A> {",
         "  INSTANCE;",
         "",
         "  @Override public OuterType.A get() {",

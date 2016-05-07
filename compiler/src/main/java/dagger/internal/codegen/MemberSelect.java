@@ -61,8 +61,8 @@ abstract class MemberSelect {
     @Override
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
-          ? CodeBlocks.format("$L", fieldName)
-          : CodeBlocks.format("$T.this.$L", owningClass(), fieldName);
+          ? CodeBlock.of("$L", fieldName)
+          : CodeBlock.of("$T.this.$L", owningClass(), fieldName);
     }
   }
 
@@ -86,7 +86,7 @@ abstract class MemberSelect {
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
           ? methodCodeBlock
-          : CodeBlocks.format("$T.$L", owningClass(), methodCodeBlock);
+          : CodeBlock.of("$T.$L", owningClass(), methodCodeBlock);
     }
   }
 
@@ -97,7 +97,7 @@ abstract class MemberSelect {
     return new ParameterizedStaticMethod(
         MEMBERS_INJECTORS,
         ImmutableList.of(type),
-        CodeBlocks.format("noOp()"),
+        CodeBlock.of("noOp()"),
         MEMBERS_INJECTOR);
   }
 
@@ -117,7 +117,7 @@ abstract class MemberSelect {
     return new ParameterizedStaticMethod(
         frameworkMapFactoryClass,
         ImmutableList.of(keyType, unwrappedValueType),
-        CodeBlocks.format("empty()"),
+        CodeBlock.of("empty()"),
         frameworkMapFactoryClass);
   }
 
@@ -130,7 +130,7 @@ abstract class MemberSelect {
     return new ParameterizedStaticMethod(
         setFactoryType,
         ImmutableList.of(setType.elementType()),
-        CodeBlocks.format("create()"),
+        CodeBlock.of("create()"),
         SET);
   }
 
@@ -158,13 +158,13 @@ abstract class MemberSelect {
       }
 
       if (accessible) {
-        return CodeBlocks.format(
+        return CodeBlock.of(
             "$T.<$L>$L",
             owningClass(),
             makeParametersCodeBlock(toCodeBlocks(typeParameters)),
             methodCodeBlock);
       } else {
-        return CodeBlocks.format("(($T) $T.$L)", rawReturnType, owningClass(), methodCodeBlock);
+        return CodeBlock.of("(($T) $T.$L)", rawReturnType, owningClass(), methodCodeBlock);
       }
     }
   }

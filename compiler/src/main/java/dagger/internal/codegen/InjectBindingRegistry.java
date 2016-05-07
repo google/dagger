@@ -62,8 +62,7 @@ final class InjectBindingRegistry {
   private final Elements elements;
   private final Types types;
   private final Messager messager;
-  private final InjectConstructorValidator injectConstructorValidator;
-  private final MembersInjectedTypeValidator membersInjectedTypeValidator;
+  private final InjectValidator injectValidator;
   private final Key.Factory keyFactory;
   private final ProvisionBinding.Factory provisionBindingFactory;
   private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
@@ -153,16 +152,14 @@ final class InjectBindingRegistry {
       Elements elements,
       Types types,
       Messager messager,
-      InjectConstructorValidator injectConstructorValidator,
-      MembersInjectedTypeValidator membersInjectedTypeValidator,
+      InjectValidator injectValidator,
       Key.Factory keyFactory,
       ProvisionBinding.Factory provisionBindingFactory,
       MembersInjectionBinding.Factory membersInjectionBindingFactory) {
     this.elements = elements;
     this.types = types;
     this.messager = messager;
-    this.injectConstructorValidator = injectConstructorValidator;
-    this.membersInjectedTypeValidator = membersInjectedTypeValidator;
+    this.injectValidator = injectValidator;
     this.keyFactory = keyFactory;
     this.provisionBindingFactory = provisionBindingFactory;
     this.membersInjectionBindingFactory = membersInjectionBindingFactory;
@@ -234,7 +231,7 @@ final class InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report = injectConstructorValidator.validate(constructorElement);
+    ValidationReport<TypeElement> report = injectValidator.validateConstructor(constructorElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       ProvisionBinding binding =
@@ -265,7 +262,7 @@ final class InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report = membersInjectedTypeValidator.validate(typeElement);
+    ValidationReport<TypeElement> report = injectValidator.validateType(typeElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       MembersInjectionBinding binding =

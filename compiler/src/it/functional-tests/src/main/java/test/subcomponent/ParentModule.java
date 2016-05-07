@@ -17,13 +17,14 @@ package test.subcomponent;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.IntoSet;
 import javax.inject.Singleton;
-
-import static dagger.Provides.Type.SET;
 
 @Module
 final class ParentModule {
-  @Provides(type = SET) Object provideUnscopedObject() {
+  @Provides
+  @IntoSet
+  static Object provideUnscopedObject() {
     return new Object() {
       @Override public String toString() {
         return "unscoped in parent";
@@ -31,7 +32,10 @@ final class ParentModule {
     };
   }
 
-  @Provides(type = SET) @Singleton Object provideSingletonObject() {
+  @Provides
+  @IntoSet
+  @Singleton
+  static Object provideSingletonObject() {
     return new Object() {
       @Override public String toString() {
         return "singleton";
@@ -39,8 +43,10 @@ final class ParentModule {
     };
   }
 
-  @Provides @Singleton @BoundAsSingleton UnscopedType provideUnscopedTypeBoundAsSingleton(
-      UnscopedType unscopedType) {
+  @Provides
+  @Singleton
+  @BoundAsSingleton
+  static UnscopedType provideUnscopedTypeBoundAsSingleton(UnscopedType unscopedType) {
     return unscopedType;
   }
 }

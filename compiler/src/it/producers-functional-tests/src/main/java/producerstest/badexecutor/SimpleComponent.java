@@ -17,12 +17,16 @@ package producerstest.badexecutor;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionComponent;
+import producerstest.ExecutorModule;
 
 /**
  * A component that contains entry points that exercise different execution paths, for verifying the
  * behavior when the executor throws a {@link java.util.concurrent.RejectedExecutionException}.
  */
-@ProductionComponent(dependencies = ComponentDependency.class, modules = SimpleProducerModule.class)
+@ProductionComponent(
+  dependencies = ComponentDependency.class,
+  modules = {ExecutorModule.class, SimpleProducerModule.class}
+)
 interface SimpleComponent {
   /** An entry point exposing a producer method with no args. */
   ListenableFuture<String> noArgStr();

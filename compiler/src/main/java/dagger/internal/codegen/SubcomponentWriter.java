@@ -107,7 +107,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
 
   @Override
   protected TypeSpec.Builder createComponentClass() {
-    TypeSpec.Builder subcomponent = classBuilder(name.simpleName()).addModifiers(PRIVATE, FINAL);
+    TypeSpec.Builder subcomponent = classBuilder(name).addModifiers(PRIVATE, FINAL);
 
     addSupertype(
         subcomponent,
@@ -192,7 +192,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
         MemberSelect moduleSelect = localField(name, actualModuleName);
         componentContributionFields.put(moduleTypeElement, moduleSelect);
         subcomponentConstructorParameters.add(
-            CodeBlocks.format("$L", moduleVariable.getSimpleName()));
+            CodeBlock.of("$L", moduleVariable.getSimpleName()));
       }
     }
 

@@ -15,21 +15,26 @@
  */
 package test.staticprovides;
 
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
 import static java.util.Collections.emptySet;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoSet;
+
 import java.util.Set;
 
 @Module
 final class AllStaticModule {
-  @Provides(type = SET) static String contributeString() {
+  @Provides
+  @IntoSet
+  static String contributeString() {
     return AllStaticModule.class + ".contributeString";
   }
 
-  @Provides(type = SET_VALUES) static Set<Integer> contibuteEmptyIntegerSet() {
+  @Provides
+  @ElementsIntoSet
+  static Set<Integer> contibuteEmptyIntegerSet() {
     return emptySet();
   }
 }

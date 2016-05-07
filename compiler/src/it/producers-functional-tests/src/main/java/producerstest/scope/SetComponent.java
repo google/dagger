@@ -18,8 +18,9 @@ package producerstest.scope;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionComponent;
 import java.util.Set;
+import producerstest.ExecutorModule;
 
-@ProductionComponent(modules = {ScopedModule.class, SetProducerModule.class})
+@ProductionComponent(modules = {ExecutorModule.class, ScopedModule.class, SetProducerModule.class})
 interface SetComponent {
   ScopedObject scopedObject();
 

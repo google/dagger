@@ -15,6 +15,7 @@
  */
 package dagger;
 
+import dagger.internal.Beta;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import javax.inject.Scope;
@@ -31,6 +32,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * </a>
  */
 @Documented
+@Beta
 @Retention(RUNTIME)
 @Scope
 public @interface Reusable {}

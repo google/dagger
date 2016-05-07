@@ -74,6 +74,7 @@ interface BasicComponent extends Injector<Thing> {
   InjectedThing injectedThing();
   Provider<InjectedThing> injectedThingProvider();
   Lazy<InjectedThing> lazyInjectedThing();
+  Provider<Lazy<InjectedThing>> lazyInjectedThingProvider();
   MembersInjector<InjectedThing> injectedThingMembersInjector();
   
   @Nullable Object nullObject();

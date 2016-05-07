@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import producerstest.ExecutorModule;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
@@ -31,7 +32,7 @@ public final class BadExecutorTest {
     ListeningExecutorService executorService = MoreExecutors.newDirectExecutorService();
     component =
         DaggerSimpleComponent.builder()
-            .executor(executorService)
+            .executorModule(new ExecutorModule(executorService))
             .componentDependency(dependency)
             .build();
     executorService.shutdown();

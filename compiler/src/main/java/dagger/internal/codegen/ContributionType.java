@@ -18,6 +18,15 @@ package dagger.internal.codegen;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
+import dagger.Provides;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoMap;
+import dagger.multibindings.IntoSet;
+import dagger.producers.Produces;
+import javax.lang.model.element.ExecutableElement;
+
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Whether a binding or declaration is for a unique contribution or a map or set multibinding.
@@ -27,6 +36,8 @@ enum ContributionType {
   MAP,
   /** Represents set bindings. */
   SET,
+  /** Represents set values bindings. */
+  SET_VALUES,
   /** Represents a valid non-collection binding. */
   UNIQUE,
   ;
@@ -48,17 +59,59 @@ enum ContributionType {
   }
 
   /** The contribution type for a given provision type. */
-  static ContributionType forProvisionType(dagger.Provides.Type provisionType) {
+  private static ContributionType forProvisionType(Provides.Type provisionType) {
     switch (provisionType) {
       case SET:
-      case SET_VALUES:
         return SET;
+      case SET_VALUES:
+        return SET_VALUES;
       case MAP:
         return MAP;
       case UNIQUE:
         return UNIQUE;
       default:
         throw new AssertionError("Unknown provision type: " + provisionType);
+    }
+  }
+
+  private static ContributionType forProductionType(Produces.Type productionType) {
+    switch (productionType) {
+      case SET:
+        return SET;
+      case SET_VALUES:
+        return SET_VALUES;
+      case MAP:
+        return MAP;
+      case UNIQUE:
+        return UNIQUE;
+      default:
+        throw new AssertionError("Unknown production type: " + productionType);
+    }
+  }
+
+  /**
+   * The contribution type from a binding method annotations. Presumes a well-formed binding method
+   * (only one of @IntoSet, @IntoMap, @ElementsIntoSet, @Provides.type or @Produces.type. {@link
+   * ProvidesMethodValidator} and {@link ProducesMethodValidator} validate correctness on their own.
+   */
+  static ContributionType fromBindingMethod(ExecutableElement method) {
+    checkArgument(
+        isAnnotationPresent(method, Provides.class)
+            || isAnnotationPresent(method, Produces.class));
+    if (isAnnotationPresent(method, IntoMap.class)) {
+      return ContributionType.MAP;
+    } else if (isAnnotationPresent(method, IntoSet.class)) {
+      return ContributionType.SET;
+    } else if (isAnnotationPresent(method, ElementsIntoSet.class)) {
+      return ContributionType.SET_VALUES;
+    }
+
+    if (isAnnotationPresent(method, Provides.class)) {
+      return forProvisionType(method.getAnnotation(Provides.class).type());
+    } else if (isAnnotationPresent(method, Produces.class)) {
+      return forProductionType(method.getAnnotation(Produces.class).type());
+    } else {
+      throw new AssertionError();
     }
   }
 

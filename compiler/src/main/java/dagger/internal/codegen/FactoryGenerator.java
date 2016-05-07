@@ -29,6 +29,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.Provides;
 import dagger.internal.Factory;
 import dagger.internal.MembersInjectors;
 import dagger.internal.Preconditions;
@@ -47,13 +48,13 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static com.squareup.javapoet.TypeSpec.enumBuilder;
-import static dagger.Provides.Type.SET;
 import static dagger.internal.codegen.AnnotationSpecs.SUPPRESS_WARNINGS_RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.SUPPRESS_WARNINGS_UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.ENUM_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
+import static dagger.internal.codegen.ContributionType.SET;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
@@ -126,7 +127,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         break;
       case CLASS_CONSTRUCTOR:
         factoryBuilder =
-            classBuilder(generatedTypeName.simpleName())
+            classBuilder(generatedTypeName)
                 .addTypeVariables(typeParameters)
                 .addModifiers(FINAL);
         constructorBuilder = Optional.of(constructorBuilder().addModifiers(PUBLIC));
@@ -146,6 +147,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
               constructorBuilder.get());
         }
         break;
+      case DELEGATE:
+        return Optional.absent();
       default:
         throw new AssertionError();
     }
@@ -211,7 +214,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     for (DependencyRequest dependency : binding.dependencies()) {
       parameters.add(
           frameworkTypeUsageStatement(
-              CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
+              CodeBlock.of("$L", fields.get(dependency.bindingKey()).name()),
               dependency.kind()));
     }
     CodeBlock parametersCodeBlock = makeParametersCodeBlock(parameters);
@@ -233,7 +236,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
           ".$L($L)", binding.bindingElement().getSimpleName(), parametersCodeBlock);
       CodeBlock providesMethodInvocation = providesMethodInvocationBuilder.build();
 
-      if (binding.provisionType().equals(SET)) {
+      if (binding.contributionType().equals(SET)) {
         TypeName paramTypeName = TypeName.get(
             MoreTypes.asDeclared(keyType).getTypeArguments().get(0));
         // TODO(cgruber): only be explicit with the parameter if paramType contains wildcards.

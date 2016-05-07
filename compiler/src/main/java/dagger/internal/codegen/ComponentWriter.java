@@ -39,7 +39,7 @@ import javax.lang.model.util.Types;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
-import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.Util.requiresAPassedInstance;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -142,7 +142,7 @@ final class ComponentWriter extends AbstractComponentWriter {
 
   @Override
   protected TypeSpec.Builder createComponentClass() {
-    TypeSpec.Builder component = classBuilder(name.simpleName()).addModifiers(PUBLIC, FINAL);
+    TypeSpec.Builder component = classBuilder(name).addModifiers(PUBLIC, FINAL);
     addSupertype(component, componentDefinitionType());
     return component;
   }
@@ -195,12 +195,12 @@ final class ComponentWriter extends AbstractComponentWriter {
 
   /** {@code true} if all of the graph's required dependencies can be automatically constructed. */
   private boolean canInstantiateAllRequirements() {
-    return Iterables.all(
+    return !Iterables.any(
         graph.componentRequirements(),
         new Predicate<TypeElement>() {
           @Override
           public boolean apply(TypeElement dependency) {
-            return componentCanMakeNewInstances(dependency);
+            return requiresAPassedInstance(elements, dependency);
           }
         });
   }

@@ -17,6 +17,7 @@ package test.subcomponent;
 
 import dagger.Module;
 import dagger.Provides;
+import test.SomeQualifier;
 
 @Module
 final class UnresolvableChildComponentModule {

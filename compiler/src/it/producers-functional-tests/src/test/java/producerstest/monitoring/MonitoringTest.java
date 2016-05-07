@@ -18,7 +18,6 @@ package producerstest.monitoring;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import dagger.producers.monitoring.ProducerMonitor;
 import dagger.producers.monitoring.ProducerToken;
@@ -67,7 +66,6 @@ public final class MonitoringTest {
   public void basicMonitoring() throws Exception {
     MonitoredComponent component =
         DaggerMonitoredComponent.builder()
-            .executor(MoreExecutors.directExecutor())
             .monitoringModule(new MonitoringModule(componentMonitorFactory))
             .stubModule(new StubModule(server1, server2))
             .build();
@@ -110,7 +108,6 @@ public final class MonitoringTest {
   public void basicMonitoringWithFailure() throws Exception {
     MonitoredComponent component =
         DaggerMonitoredComponent.builder()
-            .executor(MoreExecutors.directExecutor())
             .monitoringModule(new MonitoringModule(componentMonitorFactory))
             .stubModule(new StubModule(server1, server2))
             .build();

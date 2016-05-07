@@ -17,18 +17,19 @@ package test.scope;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static dagger.Provides.Type.SET;
+import dagger.multibindings.IntoSet;
 
 @Module
 final class TurquoiseModule {
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   @BlueScope
   static Object blue() {
     return new Object();
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   @GreenScope
   static Object green() {
     return new Object();

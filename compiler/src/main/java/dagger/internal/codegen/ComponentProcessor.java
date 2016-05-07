@@ -67,11 +67,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new DependencyRequestFormatter(types, elements);
     KeyFormatter keyFormatter = new KeyFormatter(methodSignatureFormatter);
 
-    InjectConstructorValidator injectConstructorValidator = new InjectConstructorValidator();
-    InjectFieldValidator injectFieldValidator = new InjectFieldValidator(compilerOptions);
-    InjectMethodValidator injectMethodValidator = new InjectMethodValidator(compilerOptions);
-    MembersInjectedTypeValidator membersInjectedTypeValidator =
-        new MembersInjectedTypeValidator(injectFieldValidator, injectMethodValidator);
+    InjectValidator injectValidator = new InjectValidator(compilerOptions);
     ModuleValidator moduleValidator =
         new ModuleValidator(types, elements, methodSignatureFormatter);
     BuilderValidator builderValidator = new BuilderValidator(elements, types);
@@ -84,6 +80,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     MapKeyValidator mapKeyValidator = new MapKeyValidator();
     ProvidesMethodValidator providesMethodValidator = new ProvidesMethodValidator(elements, types);
     ProducesMethodValidator producesMethodValidator = new ProducesMethodValidator(elements, types);
+    BindsMethodValidator bindsMethodValidator = new BindsMethodValidator(elements, types);
 
     Key.Factory keyFactory = new Key.Factory(types, elements);
 
@@ -113,13 +110,15 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     MembersInjectionBinding.Factory membersInjectionBindingFactory =
         new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
 
+    DelegateDeclaration.Factory bindingDelegateDeclarationFactory =
+        new DelegateDeclaration.Factory(types, keyFactory, dependencyRequestFactory);
+
     this.injectBindingRegistry =
         new InjectBindingRegistry(
             elements,
             types,
             messager,
-            injectConstructorValidator,
-            membersInjectedTypeValidator,
+            injectValidator,
             keyFactory,
             provisionBindingFactory,
             membersInjectionBindingFactory);
@@ -129,7 +128,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements,
             provisionBindingFactory,
             productionBindingFactory,
-            multibindingDeclarationFactory);
+            multibindingDeclarationFactory,
+            bindingDelegateDeclarationFactory);
 
     ComponentDescriptor.Factory componentDescriptorFactory = new ComponentDescriptor.Factory(
         elements, types, dependencyRequestFactory, moduleDescriptorFactory);
@@ -162,11 +162,13 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new MonitoringModuleProcessingStep(messager, monitoringModuleGenerator),
         new ProductionExecutorModuleProcessingStep(messager, productionExecutorModuleGenerator),
         new MultibindingsProcessingStep(messager, multibindingsValidator),
+        new MultibindingAnnotationsProcessingStep(messager),
         new ModuleProcessingStep(
             messager,
             moduleValidator,
             providesMethodValidator,
             provisionBindingFactory,
+            bindsMethodValidator,
             factoryGenerator),
         new ComponentProcessingStep(
             ComponentDescriptor.Kind.COMPONENT,
@@ -183,6 +185,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             messager,
             moduleValidator,
             producesMethodValidator,
+            bindsMethodValidator,
             productionBindingFactory,
             producerFactoryGenerator),
         new ComponentProcessingStep(

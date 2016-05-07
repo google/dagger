@@ -19,14 +19,13 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
+import dagger.multibindings.IntoMap;
+import dagger.multibindings.IntoSet;
 import dagger.multibindings.StringKey;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
-
-import static dagger.Provides.Type.MAP;
-import static dagger.Provides.Type.SET;
 
 final class MultibindingSubcomponents {
 
@@ -86,23 +85,27 @@ final class MultibindingSubcomponents {
   @Module
   static final class ParentMultibindingModule {
 
-    @Provides(type = SET)
+    @Provides
+    @IntoSet
     static BoundInParent onlyInParentElement() {
       return BoundInParent.INSTANCE;
     }
 
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("parent key")
     static BoundInParent onlyInParentEntry() {
       return BoundInParent.INSTANCE;
     }
 
-    @Provides(type = SET)
+    @Provides
+    @IntoSet
     static BoundInParentAndChild inParentAndChildElement() {
       return BoundInParentAndChild.IN_PARENT;
     }
 
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("parent key")
     static BoundInParentAndChild inParentAndChildEntry() {
       return BoundInParentAndChild.IN_PARENT;
@@ -110,8 +113,9 @@ final class MultibindingSubcomponents {
 
     /* This is not static because otherwise we have no tests that cover the case where a
      * subcomponent uses a module instance installed onto a parent component. */
-    @Provides(type = SET)
-    RequiresMultibindings<BoundInParentAndChild>
+    @Provides
+    @IntoSet
+    static RequiresMultibindings<BoundInParentAndChild>
         requiresMultibindingsInParentAndChildElement(
             RequiresMultibindings<BoundInParentAndChild> requiresMultibindingsInParentAndChild) {
       return requiresMultibindingsInParentAndChild;
@@ -121,23 +125,27 @@ final class MultibindingSubcomponents {
   @Module
   static final class ChildMultibindingModule {
 
-    @Provides(type = SET)
+    @Provides
+    @IntoSet
     static BoundInParentAndChild inParentAndChildElement() {
       return BoundInParentAndChild.IN_CHILD;
     }
 
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("child key")
     static BoundInParentAndChild inParentAndChildEntry() {
       return BoundInParentAndChild.IN_CHILD;
     }
 
-    @Provides(type = SET)
+    @Provides
+    @IntoSet
     static BoundInChild onlyInChildElement() {
       return BoundInChild.INSTANCE;
     }
 
-    @Provides(type = MAP)
+    @Provides
+    @IntoMap
     @StringKey("child key")
     static BoundInChild onlyInChildEntry() {
       return BoundInChild.INSTANCE;

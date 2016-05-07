@@ -74,20 +74,22 @@ final class ErrorMessages {
       "@Inject constructors are invalid on inner classes";
   static final String INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS =
       "@Inject is nonsense on the constructor of an abstract class";
-    static final String QUALIFIER_ON_INJECT_CONSTRUCTOR =
+  static final String QUALIFIER_ON_INJECT_CONSTRUCTOR =
       "@Qualifier annotations are not allowed on @Inject constructors.";
+  static final String SCOPE_ON_INJECT_CONSTRUCTOR =
+      "@Scope annotations are not allowed on @Inject constructors. Annotate the class instead.";
 
   /* fields */
   static final String PRIVATE_INJECT_FIELD =
       "Dagger does not support injection into private fields";
-  
+
   static final String STATIC_INJECT_FIELD =
       "Dagger does not support injection into static fields";
 
   /* methods */
   static final String PRIVATE_INJECT_METHOD =
       "Dagger does not support injection into private methods";
-  
+
   static final String STATIC_INJECT_METHOD =
       "Dagger does not support injection into static methods";
 
@@ -98,7 +100,7 @@ final class ErrorMessages {
   static final String CANNOT_INJECT_WILDCARD_TYPE =
       "Dagger does not support injecting Provider<T>, Lazy<T> or Produced<T> when T is a wildcard "
           + "type such as <%s>.";
-  
+
   /*
    * Configuration errors
    *
@@ -118,13 +120,13 @@ final class ErrorMessages {
 
   static final String COMPONENT_ANNOTATED_REUSABLE =
       "@Reusable cannot be applied to components or subcomponents.";
-  
-  static final String PROVIDES_METHOD_RETURN_TYPE =
-      "@Provides methods must either return a primitive, an array, a type variable, or a declared"
+
+  static final String BINDING_METHOD_RETURN_TYPE =
+      "@%s methods must either return a primitive, an array, a type variable, or a declared"
           + " type.";
 
-  static final String PROVIDES_METHOD_THROWS =
-      "@Provides methods may only throw unchecked exceptions";
+  static final String BINDING_METHOD_THROWS_CHECKED =
+      "@%s methods may only throw unchecked exceptions";
 
   static final String PRODUCES_METHOD_NULLABLE =
       "@Nullable on @Produces methods does not do anything.";
@@ -151,12 +153,20 @@ final class ErrorMessages {
   static final String BINDING_METHOD_MUST_RETURN_A_VALUE =
       "@%s methods must return a value (not void).";
 
+  static final String BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES =
+      "@%s methods must not return framework types.";
+
   static final String BINDING_METHOD_ABSTRACT = "@%s methods cannot be abstract";
+
+  static final String BIND_METHOD_NOT_ABSTRACT = "@Bind methods must be abstract";
 
   static final String BINDING_METHOD_PRIVATE = "@%s methods cannot be private";
 
   static final String BINDING_METHOD_TYPE_PARAMETER =
       "@%s methods may not have type parameters.";
+
+  static final String BIND_METHOD_ONE_ASSIGNABLE_PARAMETER =
+      "@Bind methods must have only one parameter whose type is assignable to the return type";
 
   static final String BINDING_METHOD_NOT_IN_MODULE =
       "@%s methods can only be present within a @%s";
@@ -172,6 +182,10 @@ final class ErrorMessages {
 
   static final String BINDING_METHOD_WITH_SAME_NAME =
       "Cannot have more than one @%s method with the same name in a single module";
+
+  static final String INCOMPATIBLE_MODULE_METHODS =
+      "A @%1$s may contain non-static @%2$s methods or @Bind methods,"
+          + " but not both at the same time.  (Static @%2$s may be used with either.)";
 
   static final String MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT =
       "Modules with type parameters must be abstract";
@@ -191,8 +205,8 @@ final class ErrorMessages {
   static final String METHOD_OVERRIDES_PROVIDES_METHOD =
       "@%s methods may not be overridden in modules. Overrides: %s";
 
-  static final String PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS =
-      "Cannot use more than one @Qualifier on a @Provides or @Produces method";
+  static final String BINDING_METHOD_MULTIPLE_QUALIFIERS =
+      "Cannot use more than one @Qualifier";
 
   /* mapKey errors*/
   static final String MAPKEY_WITHOUT_MEMBERS =
@@ -213,7 +227,7 @@ final class ErrorMessages {
 
   static final String PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT =
       "%s is a provision, which cannot depend on a production.";
-  
+
   static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
       "%s may not depend on the production executor.";
 
@@ -269,6 +283,16 @@ final class ErrorMessages {
 
   static final String CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD =
       "Cannot return null from a non-@Nullable @Provides method";
+
+  /* Multibinding messages */
+  static final String MULTIBINDING_ANNOTATION_NOT_ON_PROVIDES_OR_PRODUCES =
+      "Multibinding annotations may only be on @Provides or @Produces methods";
+
+  static final String MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD =
+      "Multiple multibinding annotations cannot be placed on the same %s method";
+
+  static final String MULTIBINDING_ANNOTATION_CONFLICTS_WITH_BINDING_ANNOTATION_ENUM =
+      "@%s.type cannot be used with multibinding annotations";
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {

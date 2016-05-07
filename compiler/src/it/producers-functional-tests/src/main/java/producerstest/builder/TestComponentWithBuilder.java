@@ -17,10 +17,10 @@ package producerstest.builder;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProductionComponent;
-import java.util.concurrent.Executor;
+import producerstest.ExecutorModule;
 
 @ProductionComponent(
-  modules = {StringModule.class, IntModule.class},
+  modules = {ExecutorModule.class, StringModule.class, IntModule.class},
   dependencies = DepComponent.class
 )
 interface TestComponentWithBuilder {
@@ -31,7 +31,6 @@ interface TestComponentWithBuilder {
   interface Builder {
     Builder depComponent(DepComponent depComponent);
     Builder strModule(StringModule strModule);
-    Builder executor(Executor executor);
     TestComponentWithBuilder build();
   }
 }

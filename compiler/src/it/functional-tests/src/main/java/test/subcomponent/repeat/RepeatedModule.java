@@ -17,8 +17,7 @@ package test.subcomponent.repeat;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static dagger.Provides.Type.SET;
+import dagger.multibindings.IntoSet;
 
 @Module
 final class RepeatedModule {
@@ -34,7 +33,8 @@ final class RepeatedModule {
     return "a string";
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   static String contributeString() {
     return "a string in a set";
   }

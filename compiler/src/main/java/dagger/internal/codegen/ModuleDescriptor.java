@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Multibindings;
 import dagger.Provides;
@@ -67,11 +68,16 @@ abstract class ModuleDescriptor {
   abstract ImmutableSet<ModuleDescriptor> includedModules();
 
   abstract ImmutableSet<ContributionBinding> bindings();
-  
+
   /**
    * The multibinding declarations contained in this module.
    */
   abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
+
+  /**
+   * The {@link Binds} method declarations that define delegate bindings.
+   */
+  abstract ImmutableSet<DelegateDeclaration> delegateDeclarations();
 
   enum DefaultCreationStrategy {
     PASSED,
@@ -138,16 +144,19 @@ abstract class ModuleDescriptor {
     private final ProvisionBinding.Factory provisionBindingFactory;
     private final ProductionBinding.Factory productionBindingFactory;
     private final MultibindingDeclaration.Factory multibindingDeclarationFactory;
+    private final DelegateDeclaration.Factory bindingDelegateDeclarationFactory;
 
     Factory(
         Elements elements,
         ProvisionBinding.Factory provisionBindingFactory,
         ProductionBinding.Factory productionBindingFactory,
-        MultibindingDeclaration.Factory multibindingDeclarationFactory) {
+        MultibindingDeclaration.Factory multibindingDeclarationFactory,
+        DelegateDeclaration.Factory bindingDelegateDeclarationFactory) {
       this.elements = elements;
       this.provisionBindingFactory = provisionBindingFactory;
       this.productionBindingFactory = productionBindingFactory;
       this.multibindingDeclarationFactory = multibindingDeclarationFactory;
+      this.bindingDelegateDeclarationFactory = bindingDelegateDeclarationFactory;
     }
 
     ModuleDescriptor create(TypeElement moduleElement) {
@@ -158,6 +167,7 @@ abstract class ModuleDescriptor {
       AnnotationMirror moduleAnnotation = probableModuleAnnotation.get();
 
       ImmutableSet.Builder<ContributionBinding> bindings = ImmutableSet.builder();
+      ImmutableSet.Builder<DelegateDeclaration> delegates = ImmutableSet.builder();
       for (ExecutableElement moduleMethod : methodsIn(elements.getAllMembers(moduleElement))) {
         if (isAnnotationPresent(moduleMethod, Provides.class)) {
           bindings.add(provisionBindingFactory.forProvidesMethod(moduleMethod, moduleElement));
@@ -165,8 +175,11 @@ abstract class ModuleDescriptor {
         if (isAnnotationPresent(moduleMethod, Produces.class)) {
           bindings.add(productionBindingFactory.forProducesMethod(moduleMethod, moduleElement));
         }
+        if (isAnnotationPresent(moduleMethod, Binds.class)) {
+          delegates.add(bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));
+        }
       }
-      
+
       ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations =
           ImmutableSet.builder();
       for (TypeElement memberType : typesIn(elements.getAllMembers(moduleElement))) {
@@ -189,6 +202,7 @@ abstract class ModuleDescriptor {
               collectIncludedModules(new LinkedHashSet<ModuleDescriptor>(), moduleElement)),
           bindings.build(),
           multibindingDeclarations.build(),
+          delegates.build(),
           defaultCreationStrategy);
     }
 

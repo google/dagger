@@ -17,7 +17,6 @@ package producerstest.multibindings;
 
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.HashSet;
@@ -35,8 +34,7 @@ import static org.junit.Assert.fail;
 public class MultibindingTest {
   @Test
   public void setBinding() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     assertThat(multibindingComponent.strs().get())
         .containsExactly("foo", "foo1", "foo2", "bar", "bar1", "bar2");
     assertThat(multibindingComponent.strCount().get()).isEqualTo(6);
@@ -44,8 +42,7 @@ public class MultibindingTest {
 
   @Test
   public void setBindingOfProduced() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     assertThat(multibindingComponent.successfulSet().get())
         .containsExactly(
             Produced.successful("foo"),
@@ -58,8 +55,7 @@ public class MultibindingTest {
 
   @Test
   public void setBindingOfProducedWithFailures() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Set<Produced<String>> possiblyThrowingSet = multibindingComponent.possiblyThrowingSet().get();
     Set<String> successes = new HashSet<>();
     Set<ExecutionException> failures = new HashSet<>();
@@ -77,8 +73,7 @@ public class MultibindingTest {
 
   @Test
   public void mapBinding() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, String> map = multibindingComponent.map().get();
     assertThat(map).hasSize(2);
     assertThat(map).containsEntry(15, "fifteen");
@@ -87,8 +82,7 @@ public class MultibindingTest {
 
   @Test
   public void mapOfProducerBinding() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Producer<String>> map = multibindingComponent.mapOfProducer().get();
     assertThat(map).hasSize(2);
     assertThat(map).containsKey(15);
@@ -99,8 +93,7 @@ public class MultibindingTest {
 
   @Test
   public void mapOfProducedBinding() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Produced<String>> map = multibindingComponent.mapOfProduced().get();
     assertThat(map).hasSize(2);
     assertThat(map).containsKey(15);
@@ -111,8 +104,7 @@ public class MultibindingTest {
 
   @Test
   public void mapBindingWithFailures() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     try {
       multibindingComponent.possiblyThrowingMap().get();
       fail();
@@ -123,8 +115,7 @@ public class MultibindingTest {
 
   @Test
   public void mapOfProducerBindingWithFailures() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Producer<String>> map =
         multibindingComponent.possiblyThrowingMapOfProducer().get();
     assertThat(map).hasSize(2);
@@ -142,8 +133,7 @@ public class MultibindingTest {
 
   @Test
   public void mapOfProducedBindingWithFailures() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Produced<String>> map =
         multibindingComponent.possiblyThrowingMapOfProduced().get();
     assertThat(map).hasSize(2);
@@ -161,8 +151,7 @@ public class MultibindingTest {
 
   @Test
   public void emptySet() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     assertThat(multibindingComponent.objs().get()).isEmpty();
     assertThat(multibindingComponent.producedObjs().get()).isEmpty();
     assertThat(multibindingComponent.objCount().get()).isEqualTo(0);
@@ -170,8 +159,7 @@ public class MultibindingTest {
 
   @Test
   public void emptyMap() throws Exception {
-    MultibindingComponent multibindingComponent =
-        DaggerMultibindingComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     assertThat(multibindingComponent.objMap().get()).isEmpty();
     assertThat(multibindingComponent.objMapOfProduced().get()).isEmpty();
     assertThat(multibindingComponent.objMapOfProducer().get()).isEmpty();

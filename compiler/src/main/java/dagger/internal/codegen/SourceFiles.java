@@ -38,6 +38,7 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.FrameworkDependency.frameworkDependenciesForBinding;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
 
 /**
  * Utilities for generating files.
@@ -48,7 +49,6 @@ import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 class SourceFiles {
 
   private static final Joiner CLASS_FILE_NAME_JOINER = Joiner.on('_');
-  private static final Joiner CANONICAL_NAME_JOINER = Joiner.on('$');
 
   /**
    * Sorts {@link DependencyRequest} instances in an order likely to reflect their logical
@@ -125,14 +125,16 @@ class SourceFiles {
       CodeBlock frameworkTypeMemberSelect, DependencyRequest.Kind dependencyKind) {
     switch (dependencyKind) {
       case LAZY:
-        return CodeBlocks.format("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
+        return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
       case INSTANCE:
       case FUTURE:
-        return CodeBlocks.format("$L.get()", frameworkTypeMemberSelect);
+        return CodeBlock.of("$L.get()", frameworkTypeMemberSelect);
       case PROVIDER:
       case PRODUCER:
       case MEMBERS_INJECTOR:
-        return CodeBlocks.format("$L", frameworkTypeMemberSelect);
+        return CodeBlock.of("$L", frameworkTypeMemberSelect);
+      case PROVIDER_OF_LAZY:
+        return CodeBlock.of("$T.create($L)", PROVIDER_OF_LAZY, frameworkTypeMemberSelect);
       default:
         throw new AssertionError();
     }
@@ -156,7 +158,7 @@ class SourceFiles {
             return enclosingClassName
                 .topLevelClassName()
                 .peerClass(
-                    canonicalName(enclosingClassName)
+                    classFileName(enclosingClassName)
                         + "_"
                         + factoryPrefix(contribution)
                         + "Factory");
@@ -236,15 +238,6 @@ class SourceFiles {
     return siblingClassName(typeElement,  "_MembersInjector");
   }
 
-  /**
-   * @deprecated prefer {@link #classFileName(ClassName)} instead and avoid dollar signs in
-   * generated source.
-   */
-  @Deprecated
-  static String canonicalName(ClassName className) {
-    return CANONICAL_NAME_JOINER.join(className.simpleNames());
-  }
-
   static String classFileName(ClassName className) {
     return CLASS_FILE_NAME_JOINER.join(className.simpleNames());
   }
@@ -262,7 +255,7 @@ class SourceFiles {
   // which could use this.
   private static ClassName siblingClassName(TypeElement typeElement, String suffix) {
     ClassName className = ClassName.get(typeElement);
-    return className.topLevelClassName().peerClass(canonicalName(className) + suffix);
+    return className.topLevelClassName().peerClass(classFileName(className) + suffix);
   }
 
   private static String factoryPrefix(ContributionBinding binding) {

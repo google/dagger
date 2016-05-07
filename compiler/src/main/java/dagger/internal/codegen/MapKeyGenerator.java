@@ -111,7 +111,7 @@ final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecificati
   Optional<TypeSpec.Builder> write(
       ClassName generatedTypeName, MapKeyCreatorSpecification mapKeyCreatorType) {
     TypeSpec.Builder mapKeyCreatorBuilder =
-        classBuilder(generatedTypeName.simpleName()).addModifiers(PUBLIC, FINAL);
+        classBuilder(generatedTypeName).addModifiers(PUBLIC, FINAL);
 
     mapKeyCreatorBuilder.addMethod(constructorBuilder().addModifiers(PRIVATE).build());
 
@@ -137,7 +137,7 @@ final class MapKeyGenerator extends SourceFileGenerator<MapKeyCreatorSpecificati
       String parameterName = annotationMember.getSimpleName().toString();
       TypeName parameterType = TypeName.get(annotationMember.getReturnType());
       createMethod.addParameter(parameterType, parameterName);
-      parameters.add(CodeBlocks.format("$L", parameterName));
+      parameters.add(CodeBlock.of("$L", parameterName));
     }
 
     ClassName autoAnnotationClass = mapKeyGeneratedTypeName.peerClass(

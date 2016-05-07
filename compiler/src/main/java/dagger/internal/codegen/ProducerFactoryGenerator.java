@@ -29,8 +29,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.producers.Producer;
-import dagger.producers.Produces;
-import dagger.producers.Produces.Type;
 import dagger.producers.monitoring.ProducerMonitor;
 import java.util.List;
 import javax.annotation.processing.Filer;
@@ -45,6 +43,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.SUPPRESS_WARNINGS_UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toCodeBlocks;
+import static dagger.internal.codegen.ContributionType.MAP;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.TypeNames.ASYNC_FUNCTION;
@@ -90,14 +89,14 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
     TypeMirror keyType =
-        binding.productionType().equals(Type.MAP)
+        binding.contributionType().equals(MAP)
             ? MapType.from(binding.key().type()).unwrappedValueType(Producer.class)
             : binding.key().type();
     TypeName providedTypeName = TypeName.get(keyType);
     TypeName futureTypeName = listenableFutureOf(providedTypeName);
 
     TypeSpec.Builder factoryBuilder =
-        classBuilder(generatedTypeName.simpleName())
+        classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
             .superclass(abstractProducerOf(providedTypeName));
 
@@ -134,18 +133,18 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     for (DependencyRequest dependency : asyncDependencies) {
       TypeName futureType = listenableFutureOf(asyncDependencyType(dependency));
       CodeBlock futureAccess =
-          CodeBlocks.format("$L.get()", fields.get(dependency.bindingKey()).name());
+          CodeBlock.of("$L.get()", fields.get(dependency.bindingKey()).name());
       computeMethodBuilder.addStatement(
           "$T $L = $L",
           futureType,
           dependencyFutureName(dependency),
           dependency.kind().equals(DependencyRequest.Kind.PRODUCED)
-              ? CodeBlocks.format("$T.createFutureProduced($L)", PRODUCERS, futureAccess)
+              ? CodeBlock.of("$T.createFutureProduced($L)", PRODUCERS, futureAccess)
               : futureAccess);
     }
     FutureTransform futureTransform = FutureTransform.create(fields, binding, asyncDependencies);
     CodeBlock transformCodeBlock =
-        CodeBlocks.format(
+        CodeBlock.of(
             Joiner.on('\n')
                 .join(
                     "new $1T<$2T, $3T>() {",
@@ -158,7 +157,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             futureTransform.applyArgType(),
             providedTypeName,
             futureTransform.hasUncheckedCast()
-                ? CodeBlocks.format("$L // safe by specification", SUPPRESS_WARNINGS_UNCHECKED)
+                ? CodeBlock.of("$L // safe by specification", SUPPRESS_WARNINGS_UNCHECKED)
                 : "",
             futureTypeName,
             futureTransform.applyArgName(),
@@ -218,14 +217,14 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       ClassName generatedTypeName, ProductionBinding binding) {
     CodeBlock producerTokenArgs =
         compilerOptions.writeProducerNameInToken()
-            ? CodeBlocks.format(
+            ? CodeBlock.of(
                 "$S",
                 String.format(
                     "%s#%s",
                     ClassName.get(binding.bindingTypeElement()),
                     binding.bindingElement().getSimpleName()))
-            : CodeBlocks.format("$T.class", generatedTypeName);
-    return CodeBlocks.format("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
+            : CodeBlock.of("$T.class", generatedTypeName);
+    return CodeBlock.of("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
   }
 
   /** Returns a name of the variable representing this dependency's future. */
@@ -283,7 +282,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     CodeBlock futureCodeBlock() {
-      return CodeBlocks.format("$T.<$T>immediateFuture(null)", FUTURES, VOID_CLASS);
+      return CodeBlock.of("$T.<$T>immediateFuture(null)", FUTURES, VOID_CLASS);
     }
 
     @Override
@@ -302,7 +301,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       for (DependencyRequest dependency : binding.dependencies()) {
         parameterCodeBlocks.add(
             frameworkTypeUsageStatement(
-                CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
+                CodeBlock.of("$L", fields.get(dependency.bindingKey()).name()),
                 dependency.kind()));
       }
       return parameterCodeBlocks.build();
@@ -322,7 +321,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     CodeBlock futureCodeBlock() {
-      return CodeBlocks.format("$L", dependencyFutureName(asyncDependency));
+      return CodeBlock.of("$L", dependencyFutureName(asyncDependency));
     }
 
     @Override
@@ -342,12 +341,12 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
         // We really want to compare instances here, because asyncDependency is an element in the
         // set binding.dependencies().
         if (dependency == asyncDependency) {
-          parameterCodeBlocks.add(CodeBlocks.format("$L", applyArgName()));
+          parameterCodeBlocks.add(CodeBlock.of("$L", applyArgName()));
         } else {
           parameterCodeBlocks.add(
               // TODO(ronshapiro) extract this into a method shared by FutureTransform subclasses
               frameworkTypeUsageStatement(
-                  CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
+                  CodeBlock.of("$L", fields.get(dependency.bindingKey()).name()),
                   dependency.kind()));
         }
       }
@@ -368,7 +367,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     CodeBlock futureCodeBlock() {
-      return CodeBlocks.format(
+      return CodeBlock.of(
           "$T.<$T>allAsList($L)",
           FUTURES,
           OBJECT,
@@ -378,7 +377,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                       new Function<DependencyRequest, CodeBlock>() {
                         @Override
                         public CodeBlock apply(DependencyRequest dependency) {
-                          return CodeBlocks.format("$L", dependencyFutureName(dependency));
+                          return CodeBlock.of("$L", dependencyFutureName(dependency));
                         }
                       })));
     }
@@ -435,13 +434,13 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     for (DependencyRequest dependency : binding.dependencies()) {
       if (isAsyncDependency(dependency)) {
         codeBlocks.add(
-            CodeBlocks.format(
+            CodeBlock.of(
                 "($T) $L.get($L)", asyncDependencyType(dependency), listArgName, argIndex));
         argIndex++;
       } else {
         codeBlocks.add(
             frameworkTypeUsageStatement(
-                CodeBlocks.format("$L", fields.get(dependency.bindingKey()).name()),
+                CodeBlock.of("$L", fields.get(dependency.bindingKey()).name()),
                 dependency.kind()));
       }
     }
@@ -462,11 +461,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       TypeName providedTypeName,
       ImmutableList<CodeBlock> parameterCodeBlocks) {
     CodeBlock moduleCodeBlock =
-        CodeBlocks.format(
+        CodeBlock.of(
             "$L.$L($L)",
             binding.bindingElement().getModifiers().contains(STATIC)
-                ? CodeBlocks.format("$T", ClassName.get(binding.bindingTypeElement()))
-                : CodeBlocks.format("$T.this.module", generatedTypeName),
+                ? CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement()))
+                : CodeBlock.of("$T.this.module", generatedTypeName),
             binding.bindingElement().getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));
 
@@ -474,15 +473,15 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     // because we'll wrap all monitoring in non-throwing monitors before we pass them to the
     // factories.
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
-    codeBlocks.add(CodeBlocks.format("monitor.methodStarting();"));
+    codeBlocks.add(CodeBlock.of("monitor.methodStarting();"));
 
     final CodeBlock valueCodeBlock;
-    if (binding.productionType().equals(Produces.Type.SET)) {
+    if (binding.contributionType().equals(ContributionType.SET)) {
       if (binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION)) {
         valueCodeBlock =
-            CodeBlocks.format("$T.createFutureSingletonSet($L)", PRODUCERS, moduleCodeBlock);
+            CodeBlock.of("$T.createFutureSingletonSet($L)", PRODUCERS, moduleCodeBlock);
       } else {
-        valueCodeBlock = CodeBlocks.format("$T.of($L)", IMMUTABLE_SET, moduleCodeBlock);
+        valueCodeBlock = CodeBlock.of("$T.of($L)", IMMUTABLE_SET, moduleCodeBlock);
       }
     } else {
       valueCodeBlock = moduleCodeBlock;
@@ -490,9 +489,9 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     CodeBlock returnCodeBlock =
         binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION)
             ? valueCodeBlock
-            : CodeBlocks.format(
+            : CodeBlock.of(
                 "$T.<$T>immediateFuture($L)", FUTURES, providedTypeName, valueCodeBlock);
-    return CodeBlocks.format(
+    return CodeBlock.of(
         Joiner.on('\n')
             .join(
                 "monitor.methodStarting();",
@@ -511,8 +510,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
    */
   private CodeBlock getThrowsClause(List<? extends TypeMirror> thrownTypes) {
     if (thrownTypes.isEmpty()) {
-      return CodeBlocks.format("");
+      return CodeBlock.of("");
     }
-    return CodeBlocks.format("throws $L", makeParametersCodeBlock(toCodeBlocks(thrownTypes)));
+    return CodeBlock.of("throws $L", makeParametersCodeBlock(toCodeBlocks(thrownTypes)));
   }
 }

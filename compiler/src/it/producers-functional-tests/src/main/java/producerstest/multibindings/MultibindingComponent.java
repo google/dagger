@@ -21,11 +21,12 @@ import dagger.producers.Producer;
 import dagger.producers.ProductionComponent;
 import java.util.Map;
 import java.util.Set;
+import producerstest.ExecutorModule;
 import producerstest.multibindings.Qualifiers.ObjCount;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingMap;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingSet;
 
-@ProductionComponent(modules = MultibindingProducerModule.class)
+@ProductionComponent(modules = {ExecutorModule.class, MultibindingProducerModule.class})
 interface MultibindingComponent {
   ListenableFuture<Set<String>> strs();
   ListenableFuture<Integer> strCount();

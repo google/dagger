@@ -23,19 +23,19 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertThat;
 
 /**
- * Tests {@link SimpleLazilyInitializedProvider}.
+ * Tests {@link SingleCheck}.
  */
 @RunWith(JUnit4.class)
-public class SimpleLazilyInitializedProviderTest {
+public class SingleCheckTest {
   @Test(expected = NullPointerException.class)
   public void create_nullPointerException() {
-    SimpleLazilyInitializedProvider.create(null);
+    SingleCheck.provider(null);
   }
 
   @Test
   public void get() {
     Provider<Integer> provider =
-        SimpleLazilyInitializedProvider.create(
+        SingleCheck.provider(
             new Factory<Integer>() {
               int i = 0;
 

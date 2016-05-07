@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import dagger.Lazy;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoSet;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
@@ -28,9 +30,6 @@ import java.io.IOException;
 import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Qualifier;
-
-import static dagger.producers.Produces.Type.SET;
-import static dagger.producers.Produces.Type.SET_VALUES;
 
 /**
  * A module that contains various signatures of produces methods. This is not used in any
@@ -142,85 +141,101 @@ final class SimpleProducerModule {
 
   // Set bindings.
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static String setOfStrElement() {
     return "set of str element";
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static String setOfStrElementThrowingException() throws IOException {
     return "set of str element throwing exception";
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static ListenableFuture<String> setOfStrFutureElement() {
     return Futures.immediateFuture("set of str element");
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static ListenableFuture<String> setOfStrFutureElementThrowingException() throws IOException {
     return Futures.immediateFuture("set of str element throwing exception");
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static String setOfStrElementWithArg(int i) {
     return "set of str element with arg";
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static String setOfStrElementWithArgThrowingException(int i) throws IOException {
     return "set of str element with arg throwing exception";
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static ListenableFuture<String> setOfStrFutureElementWithArg(int i) {
     return Futures.immediateFuture("set of str element with arg");
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static ListenableFuture<String> setOfStrFutureElementWithArgThrowingException(int i)
       throws IOException {
     return Futures.immediateFuture("set of str element with arg throwing exception");
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static Set<String> setOfStrValues() {
     return ImmutableSet.of("set of str 1", "set of str 2");
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static Set<String> setOfStrValuesThrowingException() throws IOException {
     return ImmutableSet.of("set of str 1", "set of str 2 throwing exception");
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static ListenableFuture<Set<String>> setOfStrFutureValues() {
     return Futures.<Set<String>>immediateFuture(ImmutableSet.of("set of str 1", "set of str 2"));
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static ListenableFuture<Set<String>> setOfStrFutureValuesThrowingException() throws IOException {
     return Futures.<Set<String>>immediateFuture(
         ImmutableSet.of("set of str 1", "set of str 2 throwing exception"));
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static Set<String> setOfStrValuesWithArg(int i) {
     return ImmutableSet.of("set of str with arg 1", "set of str with arg 2");
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static Set<String> setOfStrValuesWithArgThrowingException(int i) throws IOException {
     return ImmutableSet.of("set of str with arg 1", "set of str with arg 2 throwing exception");
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static ListenableFuture<Set<String>> setOfStrFutureValuesWithArg(int i) {
     return Futures.<Set<String>>immediateFuture(
         ImmutableSet.of("set of str with arg 1", "set of str with arg 2"));
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static ListenableFuture<Set<String>> setOfStrFutureValuesWithArgThrowingException(int i)
       throws IOException {
     return Futures.<Set<String>>immediateFuture(

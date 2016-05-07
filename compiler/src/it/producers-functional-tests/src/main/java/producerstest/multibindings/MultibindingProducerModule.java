@@ -19,7 +19,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Multibindings;
+import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntKey;
+import dagger.multibindings.IntoMap;
+import dagger.multibindings.IntoSet;
 import dagger.producers.Produced;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
@@ -29,28 +32,28 @@ import producerstest.multibindings.Qualifiers.ObjCount;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingMap;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingSet;
 
-import static dagger.producers.Produces.Type.MAP;
-import static dagger.producers.Produces.Type.SET;
-import static dagger.producers.Produces.Type.SET_VALUES;
-
 @ProducerModule
 final class MultibindingProducerModule {
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static ListenableFuture<String> futureStr() {
     return Futures.immediateFuture("foo");
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static String str() {
     return "bar";
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static ListenableFuture<Set<String>> futureStrs() {
     return Futures.<Set<String>>immediateFuture(ImmutableSet.of("foo1", "foo2"));
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   static Set<String> strs() {
     return ImmutableSet.of("bar1", "bar2");
   }
@@ -60,44 +63,51 @@ final class MultibindingProducerModule {
     return strs.size();
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   @PossiblyThrowingSet
   static String successfulStringForSet() {
     return "singleton";
   }
 
-  @Produces(type = SET_VALUES)
+  @Produces
+  @ElementsIntoSet
   @PossiblyThrowingSet
   static Set<String> successfulStringsForSet() {
     return ImmutableSet.of("double", "ton");
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   @PossiblyThrowingSet
   static String throwingStringForSet() {
     throw new RuntimeException("monkey");
   }
 
-  @Produces(type = MAP)
+  @Produces
+  @IntoMap
   @IntKey(42)
   static ListenableFuture<String> futureFor42() {
     return Futures.immediateFuture("forty two");
   }
 
-  @Produces(type = MAP)
+  @Produces
+  @IntoMap
   @IntKey(15)
   static String valueFor15() {
     return "fifteen";
   }
 
-  @Produces(type = MAP)
+  @Produces
+  @IntoMap
   @PossiblyThrowingMap
   @IntKey(42)
   static ListenableFuture<String> successfulFutureFor42() {
     return Futures.immediateFuture("forty two");
   }
 
-  @Produces(type = MAP)
+  @Produces
+  @IntoMap
   @PossiblyThrowingMap
   @IntKey(15)
   static String throwingValueFor15() {

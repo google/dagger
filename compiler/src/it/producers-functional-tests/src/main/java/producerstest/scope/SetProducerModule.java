@@ -15,10 +15,9 @@
  */
 package producerstest.scope;
 
+import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
-
-import static dagger.producers.Produces.Type.SET;
 
 /**
  * A module that provides two entries into a set; but since the inputs are scoped, the set should
@@ -26,12 +25,14 @@ import static dagger.producers.Produces.Type.SET;
  */
 @ProducerModule
 final class SetProducerModule {
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static Object setValue1(Object value) {
     return value;
   }
 
-  @Produces(type = SET)
+  @Produces
+  @IntoSet
   static Object setValue2(Object value) {
     return value;
   }

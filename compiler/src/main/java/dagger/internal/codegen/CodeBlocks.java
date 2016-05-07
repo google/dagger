@@ -24,11 +24,6 @@ import javax.lang.model.type.TypeMirror;
 
 final class CodeBlocks {
 
-  /** Shorthand for a {@link CodeBlock} with a single format and an argument list. */
-  static CodeBlock format(String format, Object... args) {
-    return CodeBlock.builder().add(format, args).build();
-  }
-
   /**
    * Returns a comma-separated version of {@code codeBlocks} as one unified {@link CodeBlock}.
    */
@@ -61,14 +56,14 @@ final class CodeBlocks {
   }
 
   static CodeBlock stringLiteral(String toWrap) {
-    return format("$S", toWrap);
+    return CodeBlock.of("$S", toWrap);
   }
 
   private static final Function<TypeMirror, CodeBlock> TYPE_MIRROR_TO_CODE_BLOCK =
       new Function<TypeMirror, CodeBlock>() {
         @Override
         public CodeBlock apply(TypeMirror typeMirror) {
-          return CodeBlocks.format("$T", typeMirror);
+          return CodeBlock.of("$T", typeMirror);
         }
       };
 
@@ -76,7 +71,7 @@ final class CodeBlocks {
       new Function<ParameterSpec, CodeBlock>() {
           @Override
           public CodeBlock apply(ParameterSpec input) {
-            return CodeBlocks.format("$N", input);
+            return CodeBlock.of("$N", input);
           }
       };
 

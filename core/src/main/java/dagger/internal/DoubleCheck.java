@@ -53,9 +53,15 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
     return (T) result;
   }
 
-  /** Returns a new provider that caches the value from the given factory. */
-  public static <T> Provider<T> provider(Factory<T> factory) {
-    return new DoubleCheck<T>(checkNotNull(factory));
+  /** Returns a {@link Provider} that caches the value from the given delegate provider. */
+  public static <T> Provider<T> provider(Provider<T> delegate) {
+    checkNotNull(delegate);
+    if (delegate instanceof DoubleCheck) {
+      /* This should be a rare case, but if we have a scoped @Bind that delegates to a scoped
+       * binding, we shouldn't cache the value again. */
+      return delegate;
+    }
+    return new DoubleCheck<T>(delegate);
   }
 
   /** Returns a {@link Lazy} that caches the value from the given provider. */

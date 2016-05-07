@@ -28,11 +28,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Provider;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assert_;
 import static org.junit.Assert.fail;
 
@@ -56,7 +56,29 @@ public class DoubleCheckTest {
     }
   }
 
-  @Test public void get() throws Exception {
+  private static final Provider<Object> DOUBLE_CHECK_OBJECT_PROVIDER =
+      DoubleCheck.provider(
+          new Provider<Object>() {
+            @Override
+            public Object get() {
+              return new Object();
+            }
+          });
+
+  @Test
+  public void doubleWrapping_provider() {
+    assertThat(DoubleCheck.provider(DOUBLE_CHECK_OBJECT_PROVIDER))
+        .isSameAs(DOUBLE_CHECK_OBJECT_PROVIDER);
+  }
+
+  @Test
+  public void doubleWrapping_lazy() {
+    assertThat(DoubleCheck.lazy(DOUBLE_CHECK_OBJECT_PROVIDER))
+        .isSameAs(DOUBLE_CHECK_OBJECT_PROVIDER);
+  }
+
+  @Test
+  public void get() throws Exception {
     int numThreads = 10;
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
@@ -66,12 +88,14 @@ public class DoubleCheckTest {
 
     List<Callable<Object>> tasks = Lists.newArrayListWithCapacity(numThreads);
     for (int i = 0; i < numThreads; i++) {
-      tasks.add(new Callable<Object>() {
-        @Override public Object call() throws Exception {
-          latch.countDown();
-          return lazy.get();
-        }
-      });
+      tasks.add(
+          new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              latch.countDown();
+              return lazy.get();
+            }
+          });
     }
 
     List<Future<Object>> futures = executor.invokeAll(tasks);

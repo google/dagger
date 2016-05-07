@@ -27,6 +27,8 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
+import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MULTIPLE_QUALIFIERS;
+import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
@@ -37,7 +39,6 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_THROWS;
-import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 @RunWith(JUnit4.class)
@@ -120,6 +121,45 @@ public class ProducerModuleFactoryGeneratorTest {
         .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE));
   }
 
+  @Test public void producesMethodFrameworkType() {
+    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+        "package test;",
+        "",
+        "import dagger.Lazy;",
+        "import dagger.MembersInjector;",
+        "import dagger.producers.ProducerModule;",
+        "import dagger.producers.Produced;",
+        "import dagger.producers.Producer;",
+        "import dagger.producers.Produces;",
+        "import javax.inject.Provider;",
+        "",
+        "@ProducerModule",
+        "final class TestModule {",
+        "  @Produces Provider<String> produceProvider() {}",
+        "  @Produces Lazy<String> produceLazy() {}",
+        "  @Produces MembersInjector<String> produceMembersInjector() {}",
+        "  @Produces Producer<String> produceProducer() {}",
+        "  @Produces Produced<String> produceProduced() {}",
+        "}");
+    assertAbout(javaSource()).that(moduleFile)
+    .processedWith(new ComponentProcessor())
+    .failsToCompile()
+    .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES))
+    .in(moduleFile).onLine(13)
+    .and()
+    .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES))
+    .in(moduleFile).onLine(14)
+    .and()
+    .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES))
+    .in(moduleFile).onLine(15)
+    .and()
+    .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES))
+    .in(moduleFile).onLine(16)
+    .and()
+    .withErrorContaining(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES))
+    .in(moduleFile).onLine(17);
+  }
+
   @Test public void producesMethodReturnRawFuture() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
@@ -179,8 +219,7 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -188,7 +227,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) Set<?> produceWildcard() {",
+        "  @Produces @ElementsIntoSet Set<?> produceWildcard() {",
         "    return null;",
         "  }",
         "}");
@@ -202,8 +241,7 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -211,7 +249,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) Set produceSomething() {",
+        "  @Produces @ElementsIntoSet Set produceSomething() {",
         "    return null;",
         "  }",
         "}");
@@ -225,8 +263,7 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -234,7 +271,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) List<String> produceStrings() {",
+        "  @Produces @ElementsIntoSet List<String> produceStrings() {",
         "    return null;",
         "  }",
         "}");
@@ -248,9 +285,8 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
         "import com.google.common.util.concurrent.ListenableFuture;",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -258,7 +294,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) ListenableFuture<Set<?>> produceWildcard() {",
+        "  @Produces @ElementsIntoSet ListenableFuture<Set<?>> produceWildcard() {",
         "    return null;",
         "  }",
         "}");
@@ -272,9 +308,8 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
         "import com.google.common.util.concurrent.ListenableFuture;",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -282,7 +317,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) ListenableFuture<Set> produceSomething() {",
+        "  @Produces @ElementsIntoSet ListenableFuture<Set> produceSomething() {",
         "    return null;",
         "  }",
         "}");
@@ -296,9 +331,8 @@ public class ProducerModuleFactoryGeneratorTest {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
-        "import static dagger.producers.Produces.Type.SET_VALUES;",
-        "",
         "import com.google.common.util.concurrent.ListenableFuture;",
+        "import dagger.multibindings.ElementsIntoSet;",
         "import dagger.producers.ProducerModule;",
         "import dagger.producers.Produces;",
         "",
@@ -306,7 +340,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "",
         "@ProducerModule",
         "final class TestModule {",
-        "  @Produces(type = SET_VALUES) ListenableFuture<List<String>> produceStrings() {",
+        "  @Produces @ElementsIntoSet ListenableFuture<List<String>> produceStrings() {",
         "    return null;",
         "  }",
         "}");
@@ -685,6 +719,6 @@ public class ProducerModuleFactoryGeneratorTest {
     assertAbout(javaSources()).that(ImmutableList.of(moduleFile, QUALIFIER_A, QUALIFIER_B))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
-        .withErrorContaining(PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS);
+        .withErrorContaining(BINDING_METHOD_MULTIPLE_QUALIFIERS);
   }
 }

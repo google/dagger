@@ -17,9 +17,8 @@ package producerstest.monitoring;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.IntoSet;
 import dagger.producers.monitoring.ProductionComponentMonitor;
-
-import static dagger.Provides.Type.SET;
 
 @Module
 final class MonitoringModule {
@@ -29,7 +28,8 @@ final class MonitoringModule {
     this.monitorFactory = monitorFactory;
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   ProductionComponentMonitor.Factory monitorFactory() {
     return monitorFactory;
   }

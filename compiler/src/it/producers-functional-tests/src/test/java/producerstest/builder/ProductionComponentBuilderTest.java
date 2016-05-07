@@ -17,7 +17,6 @@ package producerstest.builder;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,7 +31,6 @@ public final class ProductionComponentBuilderTest {
   public void successfulBuild() throws Exception {
     TestComponentWithBuilder component =
         DaggerTestComponentWithBuilder.builder()
-            .executor(MoreExecutors.directExecutor())
             .depComponent(depComponent(15.3))
             .strModule(new StringModule())
             .build();
@@ -44,7 +42,6 @@ public final class ProductionComponentBuilderTest {
   public void successfulBuild_withMissingZeroArgModule() throws Exception {
     TestComponentWithBuilder component =
         DaggerTestComponentWithBuilder.builder()
-            .executor(MoreExecutors.directExecutor())
             .depComponent(depComponent(15.3))
             .build();
     assertThat(component.s().get()).isEqualTo("arg: 42");
@@ -52,17 +49,8 @@ public final class ProductionComponentBuilderTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void missingExecutor() {
-    DaggerTestComponentWithBuilder.builder()
-        .depComponent(depComponent(15.3))
-        .strModule(new StringModule())
-        .build();
-  }
-
-  @Test(expected = IllegalStateException.class)
   public void missingDepComponent() {
     DaggerTestComponentWithBuilder.builder()
-        .executor(MoreExecutors.directExecutor())
         .strModule(new StringModule())
         .build();
   }

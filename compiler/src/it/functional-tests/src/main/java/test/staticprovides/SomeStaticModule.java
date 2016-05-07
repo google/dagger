@@ -15,18 +15,21 @@
  */
 package test.staticprovides;
 
-import static dagger.Provides.Type.SET;
-
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.IntoSet;
 
 @Module
 final class SomeStaticModule {
-  @Provides(type = SET) static String contributeStringFromAStaticMethod() {
+  @Provides
+  @IntoSet
+  static String contributeStringFromAStaticMethod() {
     return SomeStaticModule.class + ".contributeStringFromAStaticMethod";
   }
 
-  @Provides(type = SET) String contributeStringFromAnInstanceMethod() {
+  @Provides
+  @IntoSet
+  static String contributeStringFromAnInstanceMethod() {
     return SomeStaticModule.class + ".contributeStringFromAnInstanceMethod";
   }
 }

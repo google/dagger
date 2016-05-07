@@ -28,12 +28,11 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.Binds;
 import dagger.Multibindings;
-import dagger.Provides;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.Production;
-import dagger.producers.Produces;
 import dagger.producers.internal.ProductionImplementation;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +44,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
@@ -54,6 +54,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -302,48 +303,29 @@ abstract class Key {
     }
 
     Key forProvidesMethod(SourceElement sourceElement) {
-      checkArgument(sourceElement.element().getKind().equals(METHOD));
-      ExecutableElement method = MoreElements.asExecutable(sourceElement.element());
-      ExecutableType methodType =
-          MoreTypes.asExecutable(sourceElement.asMemberOfContributingType(types));
-      Provides providesAnnotation = method.getAnnotation(Provides.class);
-      checkArgument(providesAnnotation != null);
-      TypeMirror returnType = normalize(types, methodType.getReturnType());
-      TypeMirror keyType =
-          providesOrProducesKeyType(
-              returnType,
-              method,
-              Optional.of(providesAnnotation.type()),
-              Optional.<Produces.Type>absent());
-      Key key = forMethod(method, keyType);
-      return providesAnnotation.type().equals(Provides.Type.UNIQUE)
-          ? key
-          : key.withBindingMethod(sourceElement);
+      return forProvidesOrProducesMethod(sourceElement, getProviderElement());
     }
 
-    // TODO(beder): Reconcile this method with forProvidesMethod when Provides.Type and
-    // Produces.Type are no longer different.
     Key forProducesMethod(SourceElement sourceElement) {
+      return forProvidesOrProducesMethod(sourceElement, getProducerElement());
+    }
+
+    private Key forProvidesOrProducesMethod(
+        SourceElement sourceElement, TypeElement frameworkType) {
       checkArgument(sourceElement.element().getKind().equals(METHOD));
       ExecutableElement method = MoreElements.asExecutable(sourceElement.element());
       ExecutableType methodType =
           MoreTypes.asExecutable(sourceElement.asMemberOfContributingType(types));
-      Produces producesAnnotation = method.getAnnotation(Produces.class);
-      checkArgument(producesAnnotation != null);
+      ContributionType contributionType = ContributionType.fromBindingMethod(method);
       TypeMirror returnType = normalize(types, methodType.getReturnType());
-      TypeMirror unfuturedType = returnType;
-      if (MoreTypes.isTypeOf(ListenableFuture.class, returnType)) {
-        unfuturedType =
-            Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
+      if (frameworkType.equals(getProducerElement())
+          && MoreTypes.isTypeOf(ListenableFuture.class, returnType)) {
+        returnType = Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       }
       TypeMirror keyType =
-          providesOrProducesKeyType(
-              unfuturedType,
-              method,
-              Optional.<Provides.Type>absent(),
-              Optional.of(producesAnnotation.type()));
+          providesOrProducesKeyType(returnType, method, contributionType, frameworkType);
       Key key = forMethod(method, keyType);
-      return producesAnnotation.type().equals(Produces.Type.UNIQUE)
+      return contributionType.equals(ContributionType.UNIQUE)
           ? key
           : key.withBindingMethod(sourceElement);
     }
@@ -370,26 +352,42 @@ abstract class Key {
       return forMethod(method, keyType);
     }
 
+    /** Returns the key bound by a {@link Binds} method. */
+    Key forBindsMethod(SourceElement bindsMethodElement) {
+      ExecutableElement method = MoreElements.asExecutable(bindsMethodElement.element());
+      ExecutableType methodType =
+          MoreTypes.asExecutable(bindsMethodElement.asMemberOfContributingType(types));
+      checkArgument(isAnnotationPresent(method, Binds.class));
+      TypeMirror returnType = normalize(types, methodType.getReturnType());
+      return forMethod(method, returnType);
+    }
+
+    /** Returns the key for the single parameter of a {@link Binds} method. */
+    Key forBindParameter(SourceElement bindsMethodElement) {
+      ExecutableElement method = MoreElements.asExecutable(bindsMethodElement.element());
+      VariableElement parameterElement = Iterables.getOnlyElement(method.getParameters());
+      ExecutableType methodType =
+          MoreTypes.asExecutable(bindsMethodElement.asMemberOfContributingType(types));
+      checkArgument(isAnnotationPresent(method, Binds.class));
+      TypeMirror parameterType = Iterables.getOnlyElement(methodType.getParameterTypes());
+      return forQualifiedType(getQualifier(parameterElement), parameterType);
+    }
+
     private TypeMirror providesOrProducesKeyType(
         TypeMirror returnType,
         ExecutableElement method,
-        Optional<Provides.Type> providesType,
-        Optional<Produces.Type> producesType) {
-      switch (providesType.isPresent()
-          ? providesType.get()
-          : Provides.Type.valueOf(producesType.get().name())) {
+        ContributionType contributionType,
+        TypeElement frameworkType) {
+      switch (contributionType) {
         case UNIQUE:
           return returnType;
         case SET:
           return types.getDeclaredType(getSetElement(), returnType);
         case MAP:
-          return mapOfFrameworkType(
-              mapKeyType(method),
-              providesType.isPresent() ? getProviderElement() : getProducerElement(),
-              returnType);
+          return mapOfFrameworkType(mapKeyType(method), frameworkType, returnType);
         case SET_VALUES:
           // TODO(gak): do we want to allow people to use "covariant return" here?
-          checkArgument(MoreTypes.isType(returnType) && MoreTypes.isTypeOf(Set.class, returnType));
+          checkArgument(SetType.isSet(returnType));
           return returnType;
         default:
           throw new AssertionError();

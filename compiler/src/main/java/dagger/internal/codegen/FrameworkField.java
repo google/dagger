@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Optional;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -53,14 +54,17 @@ abstract class FrameworkField {
         name.endsWith(suffix) ? name : name + suffix);
   }
 
-  static FrameworkField createForResolvedBindings(ResolvedBindings resolvedBindings) {
+  static FrameworkField createForResolvedBindings(
+      ResolvedBindings resolvedBindings, Optional<BindingType> bindingType) {
     if (resolvedBindings.isMultibindingContribution()
         && resolvedBindings.contributionType().equals(ContributionType.MAP)) {
       return createForMapBindingContribution(
           resolvedBindings.key(), frameworkFieldName(resolvedBindings));
     } else {
       return createWithTypeFromKey(
-          resolvedBindings.frameworkClass(),
+          bindingType.isPresent()
+              ? bindingType.get().frameworkClass()
+              : resolvedBindings.frameworkClass(),
           resolvedBindings.key(),
           frameworkFieldName(resolvedBindings));
     }

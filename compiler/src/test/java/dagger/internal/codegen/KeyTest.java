@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.testing.compile.CompilationRule;
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.IntoSet;
+import dagger.multibindings.ElementsIntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.util.Set;
@@ -43,8 +45,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
 
 /**
  * Tests {@link Key}.
@@ -178,11 +178,11 @@ public class KeyTest {
 
   @Module
   static final class SetProvidesMethodsModule {
-    @Provides(type = SET) String provideString() {
+    @Provides @IntoSet String provideString() {
       throw new UnsupportedOperationException();
     }
 
-    @Provides(type = SET_VALUES) Set<String> provideStrings() {
+    @Provides @ElementsIntoSet Set<String> provideStrings() {
       throw new UnsupportedOperationException();
     }
   }
@@ -270,19 +270,19 @@ public class KeyTest {
 
   @ProducerModule
   static final class SetProducesMethodsModule {
-    @Produces(type = Produces.Type.SET) String produceString() {
+    @Produces @IntoSet String produceString() {
       throw new UnsupportedOperationException();
     }
 
-    @Produces(type = Produces.Type.SET) ListenableFuture<String> produceFutureString() {
+    @Produces @IntoSet ListenableFuture<String> produceFutureString() {
       throw new UnsupportedOperationException();
     }
 
-    @Produces(type = Produces.Type.SET_VALUES) Set<String> produceStrings() {
+    @Produces @ElementsIntoSet Set<String> produceStrings() {
       throw new UnsupportedOperationException();
     }
 
-    @Produces(type = Produces.Type.SET_VALUES)
+    @Produces @ElementsIntoSet
     ListenableFuture<Set<String>> produceFutureStrings() {
       throw new UnsupportedOperationException();
     }

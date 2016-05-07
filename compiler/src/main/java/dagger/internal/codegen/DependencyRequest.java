@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Provides;
+import dagger.internal.codegen.DependencyRequest.Factory.KindAndType;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducer;
@@ -47,6 +48,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor7;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -74,22 +77,25 @@ abstract class DependencyRequest {
   enum Kind {
     /** A default request for an instance.  E.g.: {@code Blah} */
     INSTANCE,
-    
+
     /** A request for a {@link Provider}.  E.g.: {@code Provider<Blah>} */
     PROVIDER(Provider.class),
-    
+
     /** A request for a {@link Lazy}.  E.g.: {@code Lazy<Blah>} */
     LAZY(Lazy.class),
-    
+
+    /** A request for a {@link Provider} of a {@link Lazy}. E.g.: {@code Provider<Lazy<Blah>>} */
+    PROVIDER_OF_LAZY,
+
     /** A request for a {@link MembersInjector}.  E.g.: {@code MembersInjector<Blah>} */
     MEMBERS_INJECTOR(MembersInjector.class),
-    
+
     /** A request for a {@link Producer}.  E.g.: {@code Producer<Blah>} */
     PRODUCER(Producer.class),
-    
+
     /** A request for a {@link Produced}.  E.g.: {@code Produced<Blah>} */
     PRODUCED(Produced.class),
-    
+
     /**
      * A request for a {@link ListenableFuture}.  E.g.: {@code ListenableFuture<Blah>}.
      * These can only be requested by component interfaces.
@@ -106,6 +112,23 @@ abstract class DependencyRequest {
     Kind() {
       this.frameworkClass = Optional.absent();
     }
+    
+    /**
+     * If {@code type}'s raw type is {@link #frameworkClass}, returns a {@link KindAndType} with
+     * this kind that represents the dependency request.
+     */
+    Optional<KindAndType> from(TypeMirror type) {
+      return frameworkClass.isPresent() && isType(type) && isTypeOf(frameworkClass.get(), type)
+          ? Optional.of(this.ofType(getOnlyElement(asDeclared(type).getTypeArguments())))
+          : Optional.<KindAndType>absent();
+    }
+
+    /**
+     * Returns a {@link KindAndType} with this kind and {@code type} type.
+     */
+    KindAndType ofType(TypeMirror type) {
+      return new AutoValue_DependencyRequest_Factory_KindAndType(this, type);
+    }
   }
 
   abstract Kind kind();
@@ -116,6 +139,7 @@ abstract class DependencyRequest {
       case INSTANCE:
       case LAZY:
       case PROVIDER:
+      case PROVIDER_OF_LAZY:
       case PRODUCER:
       case PRODUCED:
       case FUTURE:
@@ -232,6 +256,7 @@ abstract class DependencyRequest {
               ? Kind.PRODUCER
               : Kind.PROVIDER;
         case SET:
+        case SET_VALUES:
           return Kind.INSTANCE;
         case UNIQUE:
           throw new IllegalArgumentException(
@@ -402,6 +427,31 @@ abstract class DependencyRequest {
     static abstract class KindAndType {
       abstract Kind kind();
       abstract TypeMirror type();
+
+      static Optional<KindAndType> from(TypeMirror type) {
+        for (Kind kind : Kind.values()) {
+          Optional<KindAndType> kindAndType = kind.from(type);
+          if (kindAndType.isPresent()) {
+            return kindAndType.get().maybeProviderOfLazy().or(kindAndType);
+          }
+        }
+        return Optional.absent();
+      }
+
+      /**
+       * If {@code kindAndType} represents a {@link Kind#PROVIDER} of a {@code Lazy<T>} for some
+       * type {@code T}, then this method returns ({@link Kind#PROVIDER_OF_LAZY}, {@code T}).
+       */
+      private Optional<KindAndType> maybeProviderOfLazy() {
+        if (kind().equals(Kind.PROVIDER)) {
+          Optional<KindAndType> providedKindAndType = from(type());
+          if (providedKindAndType.isPresent()
+              && providedKindAndType.get().kind().equals(Kind.LAZY)) {
+            return Optional.of(Kind.PROVIDER_OF_LAZY.ofType(providedKindAndType.get().type()));
+          }
+        }
+        return Optional.absent();
+      }
     }
 
     /**
@@ -427,14 +477,7 @@ abstract class DependencyRequest {
 
             @Override
             public KindAndType visitDeclared(DeclaredType declaredType, Void p) {
-              for (Kind kind : Kind.values()) {
-                if (kind.frameworkClass.isPresent()
-                    && isTypeOf(kind.frameworkClass.get(), declaredType)) {
-                  return new AutoValue_DependencyRequest_Factory_KindAndType(
-                      kind, Iterables.getOnlyElement(declaredType.getTypeArguments()));
-                }
-              }
-              return defaultAction(declaredType, p);
+              return KindAndType.from(declaredType).or(defaultAction(declaredType, p));
             }
 
             @Override

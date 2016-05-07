@@ -17,12 +17,13 @@ package test.subcomponent;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static dagger.Provides.Type.SET;
+import dagger.multibindings.IntoSet;
 
 @Module
 final class GrandchildModule {
-  @Provides(type = SET) Object provideUnscopedObject() {
+  @Provides
+  @IntoSet
+  static Object provideUnscopedObject() {
     return new Object() {
       @Override public String toString() {
         return "unscoped in grandchild";
@@ -30,11 +31,13 @@ final class GrandchildModule {
     };
   }
 
-  @Provides AnInterface provideAnInterface(ImplementsAnInterface implementsAnInterface) {
+  @Provides
+  static AnInterface provideAnInterface(ImplementsAnInterface implementsAnInterface) {
     return implementsAnInterface;
   }
 
-  @Provides NeedsAnInterface provideNeedsAnInterface(AnInterface anInterface) {
+  @Provides
+  static NeedsAnInterface provideNeedsAnInterface(AnInterface anInterface) {
     return new NeedsAnInterface(anInterface);
   }
 }

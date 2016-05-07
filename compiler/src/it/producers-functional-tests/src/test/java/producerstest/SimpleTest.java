@@ -15,7 +15,6 @@
 */
 package producerstest;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -25,10 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 @RunWith(JUnit4.class)
 public class SimpleTest {
   @Test public void testSimpleComponent() throws Exception {
-    SimpleComponent simpleComponent = DaggerSimpleComponent
-        .builder()
-        .executor(MoreExecutors.directExecutor())
-        .build();
+    SimpleComponent simpleComponent = DaggerSimpleComponent.create();
     assertThat(simpleComponent).isNotNull();
     assertThat(simpleComponent.response().get().data()).isEqualTo("Hello, Request #5!");
   }

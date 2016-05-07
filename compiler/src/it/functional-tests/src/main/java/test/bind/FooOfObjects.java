@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.subcomponent;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import javax.inject.Qualifier;
+package test.bind;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.inject.Inject;
 
-@Documented
-@Retention(RUNTIME)
-@Qualifier
-@interface SomeQualifier {}
+final class FooOfObjects implements Foo<Object> {
+  @Inject FooOfObjects() {}
+}

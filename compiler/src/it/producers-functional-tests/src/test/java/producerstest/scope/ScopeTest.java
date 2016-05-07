@@ -15,7 +15,6 @@
  */
 package producerstest.scope;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,8 +26,7 @@ public final class ScopeTest {
 
   @Test
   public void scope() throws Exception {
-    SetComponent component =
-        DaggerSetComponent.builder().executor(MoreExecutors.directExecutor()).build();
+    SetComponent component = DaggerSetComponent.create();
     assertThat(component.set().get()).hasSize(1);
     assertThat(component.scopedObject()).isSameAs(component.scopedObject());
   }

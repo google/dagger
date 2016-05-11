@@ -43,12 +43,10 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.SUPPRESS_WARNINGS_UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toCodeBlocks;
-import static dagger.internal.codegen.ContributionType.MAP;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.TypeNames.ASYNC_FUNCTION;
 import static dagger.internal.codegen.TypeNames.FUTURES;
-import static dagger.internal.codegen.TypeNames.IMMUTABLE_SET;
 import static dagger.internal.codegen.TypeNames.PRODUCERS;
 import static dagger.internal.codegen.TypeNames.PRODUCER_TOKEN;
 import static dagger.internal.codegen.TypeNames.VOID_CLASS;
@@ -88,11 +86,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
-    TypeMirror keyType =
-        binding.contributionType().equals(MAP)
-            ? MapType.from(binding.key().type()).unwrappedValueType(Producer.class)
-            : binding.key().type();
-    TypeName providedTypeName = TypeName.get(keyType);
+    TypeName providedTypeName = TypeName.get(binding.factoryType());
     TypeName futureTypeName = listenableFutureOf(providedTypeName);
 
     TypeSpec.Builder factoryBuilder =
@@ -474,22 +468,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     codeBlocks.add(CodeBlock.of("monitor.methodStarting();"));
 
-    final CodeBlock valueCodeBlock;
-    if (binding.contributionType().equals(ContributionType.SET)) {
-      if (binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION)) {
-        valueCodeBlock =
-            CodeBlock.of("$T.createFutureSingletonSet($L)", PRODUCERS, moduleCodeBlock);
-      } else {
-        valueCodeBlock = CodeBlock.of("$T.of($L)", IMMUTABLE_SET, moduleCodeBlock);
-      }
-    } else {
-      valueCodeBlock = moduleCodeBlock;
-    }
     CodeBlock returnCodeBlock =
         binding.bindingKind().equals(ContributionBinding.Kind.FUTURE_PRODUCTION)
-            ? valueCodeBlock
+            ? moduleCodeBlock
             : CodeBlock.of(
-                "$T.<$T>immediateFuture($L)", FUTURES, providedTypeName, valueCodeBlock);
+                "$T.<$T>immediateFuture($L)", FUTURES, providedTypeName, moduleCodeBlock);
     return CodeBlock.of(
         Joiner.on('\n')
             .join(

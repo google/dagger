@@ -15,8 +15,8 @@
  */
 package dagger.internal;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 
 final class Collections {
   /**
@@ -28,11 +28,11 @@ final class Collections {
   }
 
   /**
-   * Creates a {@link LinkedHashSet} instance, with a high enough "initial capacity" that it
-   * <em>should</em> hold {@code expectedSize} elements without growth.
+   * Creates a {@link HashSet} instance, with a high enough "intial capcity" that it <em>should</em>
+   * hold {@code expectedSize} elements without growth.
    */
-  static <E> LinkedHashSet<E> newLinkedHashSetWithExpectedSize(int expectedSize) {
-    return new LinkedHashSet<E>(calculateInitialCapacity(expectedSize));
+  static <T> HashSet<T> newHashSetWithExpectedSize(int expectedSize) {
+    return new HashSet<T>(calculateInitialCapacity(expectedSize));
   }
 
   /**

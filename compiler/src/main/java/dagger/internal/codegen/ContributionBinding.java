@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_KIND;
@@ -226,6 +227,25 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
             : FactoryCreationStrategy.CLASS_CONSTRUCTOR;
       default:
         return FactoryCreationStrategy.CLASS_CONSTRUCTOR;
+    }
+  }
+
+  /**
+   * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created
+   * for this binding. Uses the binding's key, V in the came of {@code Map<K, FrameworkClass<V>>>},
+   * and E {@code Set<E>} for {@link dagger.multibindings.IntoSet @IntoSet} methods.
+   */
+  final TypeMirror factoryType() {
+    switch (contributionType()) {
+      case MAP:
+        return MapType.from(key().type()).unwrappedValueType(frameworkClass());
+      case SET:
+        return SetType.from(key().type()).elementType();
+      case SET_VALUES:
+      case UNIQUE:
+        return key().type();
+      default:
+        throw new AssertionError();
     }
   }
 

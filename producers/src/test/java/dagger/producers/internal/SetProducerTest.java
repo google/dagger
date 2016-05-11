@@ -33,19 +33,22 @@ import static org.junit.Assert.fail;
  */
 @RunWith(JUnit4.class)
 public class SetProducerTest {
-  @Test public void success() throws Exception {
+  @Test
+  public void success() throws Exception {
     Producer<Set<Integer>> producer =
-        SetProducer.create(
-            Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)),
-            Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)));
-    assertThat(producer.get().get()).containsExactly(1, 2, 5, 7);
+        SetProducer.<Integer>builder()
+            .addProducer(Producers.immediateProducer(1))
+            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)))
+            .build();
+    assertThat(producer.get().get()).containsExactly(1, 5, 7);
   }
 
-  @Test public void delegateSetNpe() throws Exception {
+  @Test
+  public void delegateNpe() throws Exception {
     Producer<Set<Integer>> producer =
-        SetProducer.create(
-            Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)),
-            Producers.<Set<Integer>>immediateProducer(null));
+        SetProducer.<Integer>builder()
+            .addProducer(Producers.<Integer>immediateProducer(null))
+            .build();
     ListenableFuture<Set<Integer>> future = producer.get();
     try {
       future.get();
@@ -55,11 +58,29 @@ public class SetProducerTest {
     }
   }
 
-  @Test public void delegateElementNpe() throws Exception {
+  @Test
+  public void delegateSetNpe() throws Exception {
     Producer<Set<Integer>> producer =
-        SetProducer.create(
-            Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)),
-            Producers.<Set<Integer>>immediateProducer(Collections.<Integer>singleton(null)));
+        SetProducer.<Integer>builder()
+            .addSetProducer(Producers.<Set<Integer>>immediateProducer(null))
+            .build();
+    ListenableFuture<Set<Integer>> future = producer.get();
+    try {
+      future.get();
+      fail();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).isInstanceOf(NullPointerException.class);
+    }
+  }
+
+  @Test
+  public void delegateElementNpe() throws Exception {
+    Producer<Set<Integer>> producer =
+        SetProducer.<Integer>builder()
+            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)))
+            .addSetProducer(
+                Producers.<Set<Integer>>immediateProducer(Collections.<Integer>singleton(null)))
+            .build();
     ListenableFuture<Set<Integer>> future = producer.get();
     try {
       future.get();

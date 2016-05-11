@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * A {@link Producer} implementation used to implement {@link Set} bindings. This producer returns a
  * future {@code Set<Produced<T>>} whose elements are populated by subsequent calls to the delegate
@@ -40,19 +42,52 @@ public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produce
     return SetProducer.create();
   }
 
-  /**
-   * Returns a new producer that creates {@link Set} futures from the union of the given
-   * {@link Producer} instances.
-   */
-  @SafeVarargs
-  public static <T> Producer<Set<Produced<T>>> create(Producer<Set<T>>... producers) {
-    return new SetOfProducedProducer<T>(ImmutableSet.copyOf(producers));
+  public static <T> SetOfProducedProducer.Builder<T> builder() {
+    return new Builder<T>();
   }
 
-  private final ImmutableSet<Producer<Set<T>>> contributingProducers;
+  public static final class Builder<T> {
+    private final List<Producer<T>> individualProducers = new ArrayList<Producer<T>>();
+    private final List<Producer<Set<T>>> setProducers = new ArrayList<Producer<Set<T>>>();
 
-  private SetOfProducedProducer(ImmutableSet<Producer<Set<T>>> contributingProducers) {
-    this.contributingProducers = contributingProducers;
+    public Builder<T> addProducer(Producer<T> individualProducer) {
+      assert individualProducer != null : "Codegen error? Null producer";
+      individualProducers.add(individualProducer);
+      return this;
+    }
+
+    public Builder<T> addSetProducer(Producer<Set<T>> multipleProducer) {
+      assert multipleProducer != null : "Codegen error? Null producer";
+      setProducers.add(multipleProducer);
+      return this;
+    }
+
+    public SetOfProducedProducer<T> build() {
+      assert !hasDuplicates(individualProducers)
+          : "Codegen error?  Duplicates in the producer list";
+      assert !hasDuplicates(setProducers)
+          : "Codegen error?  Duplicates in the producer list";
+
+      return new SetOfProducedProducer<T>(
+          ImmutableSet.<Producer<T>>copyOf(individualProducers),
+          ImmutableSet.<Producer<Set<T>>>copyOf(setProducers));
+    }
+  }
+
+  /**
+   * Returns true if at least one pair of items in (@code original) are equals.
+   */
+  private static boolean hasDuplicates(List<? extends Object> original) {
+    return original.size() != ImmutableSet.copyOf(original).size();
+  }
+
+  private final ImmutableSet<Producer<T>> individualProducers;
+  private final ImmutableSet<Producer<Set<T>>> setProducers;
+
+  private SetOfProducedProducer(
+      ImmutableSet<Producer<T>> individualProducers, ImmutableSet<Producer<Set<T>>> setProducers) {
+    this.individualProducers = individualProducers;
+    this.setProducers = setProducers;
   }
 
   /**
@@ -71,14 +106,19 @@ public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produce
   @Override
   public ListenableFuture<Set<Produced<T>>> compute(ProducerMonitor unusedMonitor) {
     List<ListenableFuture<Produced<Set<T>>>> futureProducedSets =
-        new ArrayList<ListenableFuture<Produced<Set<T>>>>(contributingProducers.size());
-    for (Producer<Set<T>> producer : contributingProducers) {
-      ListenableFuture<Set<T>> futureSet = producer.get();
-      if (futureSet == null) {
-        throw new NullPointerException(producer + " returned null");
-      }
-      futureProducedSets.add(Producers.createFutureProduced(futureSet));
+        new ArrayList<ListenableFuture<Produced<Set<T>>>>(
+            individualProducers.size() + setProducers.size());
+    for (Producer<T> producer : individualProducers) {
+      // TODO(ronshapiro): Don't require individual productions to be added to a set just to be
+      // materialized into futureProducedSets.
+      futureProducedSets.add(
+          Producers.createFutureProduced(
+              Producers.createFutureSingletonSet(checkNotNull(producer.get()))));
     }
+    for (Producer<Set<T>> producer : setProducers) {
+      futureProducedSets.add(Producers.createFutureProduced(checkNotNull(producer.get())));
+    }
+
     return Futures.transform(
         Futures.allAsList(futureProducedSets),
         new Function<List<Produced<Set<T>>>, Set<Produced<T>>>() {

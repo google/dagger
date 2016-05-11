@@ -1084,8 +1084,7 @@ abstract class AbstractComponentWriter {
   /**
    * The expressions that represent factory arguments for the dependencies of a binding.
    */
-  private ImmutableList<CodeBlock> getDependencyArguments(
-      Binding binding) {
+  private ImmutableList<CodeBlock> getDependencyArguments(Binding binding) {
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (FrameworkDependency frameworkDependency : frameworkDependenciesForBinding(binding)) {
       parameters.add(getDependencyArgument(frameworkDependency));
@@ -1108,10 +1107,40 @@ abstract class AbstractComponentWriter {
   }
 
   private CodeBlock initializeFactoryForSetMultibinding(ContributionBinding binding) {
-    return CodeBlock.of(
-        "$T.create($L)",
+    CodeBlock.Builder builder = CodeBlock.builder();
+    SetType setType = SetType.from(binding.key().type());
+    builder.add(
+        "$T.<$T>builder()",
         setFactoryClassName(binding.bindingType(), binding.key()),
-        makeParametersCodeBlock(getDependencyArguments(binding)));
+        setType.elementsAreTypeOf(Produced.class)
+            ? setType.unwrappedElementType(Produced.class)
+            : setType.elementType());
+    for (FrameworkDependency frameworkDependency : frameworkDependenciesForBinding(binding)) {
+      builder.add(
+          ".$L($L)",
+          setFactoryBuilderMethodName(frameworkDependency),
+          getDependencyArgument(frameworkDependency));
+    }
+    return builder.add(".build()").build();
+  }
+
+  /**
+   * The method name which will add a provider for {@code binding} to the {@link
+   * dagger.internal.SetFactory.Builder}, {@link SetProducer.Builder} or {@link
+   * dagger.producers.internal.SetOfProducedProducer.Builder}.
+   */
+  private String setFactoryBuilderMethodName(FrameworkDependency frameworkDependency) {
+    ContributionType contributionType =
+        graph.resolvedBindings().get(frameworkDependency.bindingKey()).contributionType();
+    String frameworkClassName = frameworkDependency.frameworkClass().getSimpleName();
+    switch (contributionType) {
+      case SET:
+        return "add" + frameworkClassName;
+      case SET_VALUES:
+        return "addSet" + frameworkClassName;
+      default:
+        throw new AssertionError(frameworkDependency + " is not a set multibinding");
+    }
   }
 
   private CodeBlock initializeFactoryForMapMultibinding(ContributionBinding binding) {

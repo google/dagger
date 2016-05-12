@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.ContributionType.UNIQUE;
 
 /**
- * The declaration for a delegate binding established by a {@link Bind} method.
+ * The declaration for a delegate binding established by a {@link Binds} method.
  */
 @AutoValue
 abstract class DelegateDeclaration extends BindingDeclaration implements HasContributionType {

@@ -114,7 +114,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
     /**
      * A binding (provision or production) that delegates from requests for one key to another.
-     * These are the bindings that satisfy {@code @Bind} declarations.
+     * These are the bindings that satisfy {@code @Binds} declarations.
      */
     SYNTHETIC_DELEGATE_BINDING,
 

@@ -106,6 +106,7 @@ But there are limitations to this approach:
     their module instances cannot be [elided][elide-static-module-instances].
 
 <a name="separate-component-configurations"></a>
+
 ### Option 2: Separate component configurations
 
 Another approach requires more up-front design of the modules in your

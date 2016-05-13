@@ -8,13 +8,13 @@ title: Frequently Asked Questions
 
 <!-- This is an h2 tag instead of ## because there is no way to have a header
      that spans multiple lines in markdown -->
- <h2>Why can't I put [`@Binds`] methods and instance [`@Provides`] methods in the
-     same module?</h2>
+ <h2>Why can't I put [`@Binds`] methods and instance [`@Provides`] methods in
+     the same module?</h2>
 
 Because `@Binds` methods are _just_ a method _declaration_, they are expressed
 as `abstract` methods — no implementation is ever created and nothing is never
-invoked. On the other hand, a `@Provides` method _does_ have an implmentation and
-_will_ be invoked.
+invoked. On the other hand, a `@Provides` method _does_ have an implmentation
+and _will_ be invoked.
 
 Since `@Binds` methods are never implemented, no concrete class is ever created
 that implements those methods.  However, instance `@Provides` methods _require_

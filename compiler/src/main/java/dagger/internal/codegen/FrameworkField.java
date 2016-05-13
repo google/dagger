@@ -29,8 +29,17 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor6;
 
 /**
- * A field that holds a {@link javax.inject.Provider}, {@link dagger.producers.Producer}, or other
- * framework type.
+ * A value object that represents a field in the generated Component class.
+ *
+ * <p>Examples:
+ * <ul>
+ *   <li>{@code Provider<String>}
+ *   <li>{@code Producer<Widget>}
+ *   <li>{@code Provider<Map<SomeMapKey, MapValue>>}.
+ * </ul>
+ *
+ * @author Jesse Beder
+ * @since 2.0
  */
 @AutoValue
 abstract class FrameworkField {
@@ -65,11 +74,18 @@ abstract class FrameworkField {
   }
 
   private static TypeMirror fieldValueType(ResolvedBindings resolvedBindings) {
-    return resolvedBindings.isMultibindingContribution()
-            && resolvedBindings.contributionType().equals(ContributionType.MAP)
-        ? MapType.from(resolvedBindings.key().type())
-            .unwrappedValueType(resolvedBindings.frameworkClass())
-        : resolvedBindings.key().type();
+    if (resolvedBindings.isMultibindingContribution()) {
+      switch (resolvedBindings.contributionType()) {
+        case MAP:
+          return MapType.from(resolvedBindings.key().type())
+              .unwrappedValueType(resolvedBindings.frameworkClass());
+        case SET:
+          return SetType.from((resolvedBindings.key().type())).elementType();
+        default:
+          // do nothing
+      }
+    }
+    return resolvedBindings.key().type();
   }
 
   private static String frameworkFieldName(ResolvedBindings resolvedBindings) {

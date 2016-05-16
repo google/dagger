@@ -165,6 +165,35 @@ public class ComponentProcessorTest {
             "@Provides List<Integer> test.AnotherModule.provideListOfInteger()");
   }
 
+  @Test public void privateNestedClassWithWarningThatIsAnErrorInComponent() {
+    JavaFileObject outerClass = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  @Inject OuterClass(InnerClass innerClass) {}",
+        "",
+        "  private static final class InnerClass {",
+        "    @Inject InnerClass() {}",
+        "  }",
+        "}");
+    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "interface BadComponent {",
+        "  OuterClass outerClass();",
+        "}");
+    assertAbout(javaSources()).that(ImmutableList.of(outerClass, componentFile))
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Dagger does not support injection into private classes");
+  }
+
   @Test public void simpleComponent() {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
         "package test;",

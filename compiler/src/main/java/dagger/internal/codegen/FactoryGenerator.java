@@ -72,10 +72,16 @@ import static javax.lang.model.element.Modifier.STATIC;
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
 
   private final CompilerOptions compilerOptions;
+  private final InjectValidator injectValidator;
 
-  FactoryGenerator(Filer filer, Elements elements, CompilerOptions compilerOptions) {
+  FactoryGenerator(
+      Filer filer,
+      Elements elements,
+      CompilerOptions compilerOptions,
+      InjectValidator injectValidator) {
     super(filer, elements);
     this.compilerOptions = compilerOptions;
+    this.injectValidator = injectValidator;
   }
 
   @Override
@@ -92,6 +98,11 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProvisionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkState(!binding.unresolved().isPresent());
+
+    if (binding.bindingKind().equals(INJECTION)
+        && !injectValidator.isValidType(binding.factoryType())) {
+      return Optional.absent();
+    }
 
     TypeName providedTypeName = TypeName.get(binding.factoryType());
     ParameterizedTypeName parameterizedFactoryName = factoryOf(providedTypeName);

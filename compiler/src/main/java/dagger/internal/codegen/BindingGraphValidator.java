@@ -84,6 +84,7 @@ import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.SU
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_KIND;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionType.indexByContributionType;
@@ -102,6 +103,7 @@ import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 public class BindingGraphValidator {
@@ -109,6 +111,7 @@ public class BindingGraphValidator {
   private final Elements elements;
   private final Types types;
   private final CompilerOptions compilerOptions;
+  private final InjectValidator injectValidator;
   private final InjectBindingRegistry injectBindingRegistry;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
@@ -120,6 +123,7 @@ public class BindingGraphValidator {
       Elements elements,
       Types types,
       CompilerOptions compilerOptions,
+      InjectValidator injectValidator,
       InjectBindingRegistry injectBindingRegistry,
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
@@ -129,6 +133,7 @@ public class BindingGraphValidator {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
+    this.injectValidator = injectValidator;
     this.injectBindingRegistry = injectBindingRegistry;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
@@ -384,6 +389,17 @@ public class BindingGraphValidator {
           if (resolvedBinding.contributionBindings().size() > 1) {
             reportDuplicateBindings(path);
             return;
+          }
+          ContributionBinding binding =
+              Iterables.getOnlyElement(resolvedBinding.contributionBindings());
+          if (binding.bindingKind().equals(INJECTION)) {
+            TypeMirror type = resolvedBinding.bindingKey().key().type();
+            ValidationReport<TypeElement> report =
+                injectValidator.validateType(MoreTypes.asTypeElement(type));
+            if (!report.isClean()) {
+              reportBuilder.addSubreport(report);
+              return;
+            }
           }
           ContributionBinding contributionBinding = resolvedBinding.contributionBinding();
           if (contributionBinding.bindingType().equals(BindingType.PRODUCTION)

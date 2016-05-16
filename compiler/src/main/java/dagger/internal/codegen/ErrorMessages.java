@@ -78,6 +78,8 @@ final class ErrorMessages {
       "@Qualifier annotations are not allowed on @Inject constructors.";
   static final String SCOPE_ON_INJECT_CONSTRUCTOR =
       "@Scope annotations are not allowed on @Inject constructors. Annotate the class instead.";
+  static final String CHECKED_EXCEPTIONS_ON_CONSTRUCTORS =
+      "Dagger does not support checked exceptions on @Inject constructors.";
 
   /* fields */
   static final String PRIVATE_INJECT_FIELD =

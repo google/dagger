@@ -262,7 +262,8 @@ final class InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report = injectValidator.validateType(typeElement);
+    ValidationReport<TypeElement> report =
+        injectValidator.validateMembersInjectionType(typeElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       MembersInjectionBinding binding =

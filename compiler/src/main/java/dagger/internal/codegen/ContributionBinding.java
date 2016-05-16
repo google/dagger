@@ -41,8 +41,8 @@ import javax.lang.model.type.TypeMirror;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_KIND;
-import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.unwrapValue;
+import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static javax.lang.model.element.Modifier.STATIC;
 
 /**
@@ -89,6 +89,12 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
   /** If this provision requires members injection, this will be the corresponding request. */
   abstract Optional<DependencyRequest> membersInjectionRequest();
+
+  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
+
+  final Optional<AnnotationMirror> mapKey() {
+    return unwrapOptionalEquivalence(wrappedMapKey());
+  }
 
   /**
    * The kind of contribution this binding represents. Defines which elements can specify this kind
@@ -262,7 +268,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
             new Function<ContributionBinding, Object>() {
               @Override
               public Object apply(ContributionBinding mapBinding) {
-                AnnotationMirror mapKey = getMapKey(mapBinding.bindingElement()).get();
+                AnnotationMirror mapKey = mapBinding.mapKey().get();
                 Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
                 return unwrappedValue.isPresent() ? unwrappedValue.get().getValue() : mapKey;
               }
@@ -281,7 +287,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
               @Override
               public Equivalence.Wrapper<DeclaredType> apply(ContributionBinding mapBinding) {
                 return MoreTypes.equivalence()
-                    .wrap(getMapKey(mapBinding.bindingElement()).get().getAnnotationType());
+                    .wrap(mapBinding.mapKey().get().getAnnotationType());
               }
             }));
   }

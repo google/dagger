@@ -62,7 +62,7 @@ final class MapKeys {
    * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
    *     annotation
    */
-  static Optional<? extends AnnotationMirror> getMapKey(Element bindingElement) {
+  static Optional<AnnotationMirror> getMapKey(Element bindingElement) {
     ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(bindingElement);
     return mapKeys.isEmpty()
         ? Optional.<AnnotationMirror>absent()
@@ -150,8 +150,7 @@ final class MapKeys {
    * @throws IllegalStateException if {@code bindingElement} is not annotated with a {@code MapKey}
    *     annotation
    */
-  static CodeBlock getMapKeyExpression(Element bindingElement) {
-    AnnotationMirror mapKey = getMapKey(bindingElement).get();
+  static CodeBlock getMapKeyExpression(AnnotationMirror mapKey) {
     ClassName mapKeyCreator =
         getMapKeyCreatorClassName(MoreTypes.asTypeElement(mapKey.getAnnotationType()));
     Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);

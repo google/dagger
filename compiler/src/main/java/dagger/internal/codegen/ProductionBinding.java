@@ -17,12 +17,15 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Set;
+
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -32,6 +35,8 @@ import javax.lang.model.util.Types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 /**
@@ -114,6 +119,7 @@ abstract class ProductionBinding extends ContributionBinding {
           findBindingPackage(key),
           Optional.<DeclaredType>absent(), // TODO(beder): Add nullability checking with Java 8.
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(producesMethod)),
           kind,
           ImmutableList.copyOf(producesMethod.getThrownTypes()),
           Optional.of(executorRequest),
@@ -145,6 +151,7 @@ abstract class ProductionBinding extends ContributionBinding {
           findBindingPackage(requestForMapOfValuesOrProduced.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(requestForMapOfProducers.requestElement())),
           Kind.SYNTHETIC_MAP,
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),
@@ -168,6 +175,7 @@ abstract class ProductionBinding extends ContributionBinding {
           findBindingPackage(request.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.forMultibindingRequest(request),
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),
@@ -188,6 +196,7 @@ abstract class ProductionBinding extends ContributionBinding {
           Optional.<String>absent(),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT_PRODUCTION,
           ImmutableList.copyOf(componentMethod.getThrownTypes()),
           Optional.<DependencyRequest>absent(),
@@ -205,6 +214,7 @@ abstract class ProductionBinding extends ContributionBinding {
           findBindingPackage(delegateDeclaration.key()),
           delegateBinding.nullableType(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.SYNTHETIC_DELEGATE_BINDING,
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),

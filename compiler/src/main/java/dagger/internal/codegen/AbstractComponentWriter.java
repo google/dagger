@@ -1180,7 +1180,7 @@ abstract class AbstractComponentWriter {
       codeBlocks.add(
           CodeBlock.of(
               ".put($L, $L)",
-              getMapKeyExpression(contributionBinding.bindingElement()),
+              getMapKeyExpression(contributionBinding.mapKey().get()),
               potentiallyCast(
                   useRawTypes,
                   frameworkDependency.frameworkClass(),

@@ -60,6 +60,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
+import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 /**
@@ -242,27 +244,6 @@ abstract class Key {
             }));
   }
 
-  /**
-   * Wraps an {@link Optional} of a type in an {@code Optional} of a {@link Wrapper} for that type.
-   */
-  private static <T> Optional<Equivalence.Wrapper<T>> wrapOptionalInEquivalence(
-      Equivalence<T> equivalence, Optional<T> optional) {
-    return optional.isPresent()
-        ? Optional.of(equivalence.wrap(optional.get()))
-        : Optional.<Equivalence.Wrapper<T>>absent();
-  }
-
-  /**
-   * Unwraps an {@link Optional} of a {@link Wrapper} into an {@code Optional} of the underlying
-   * type.
-   */
-  private static <T> Optional<T> unwrapOptionalEquivalence(
-      Optional<Equivalence.Wrapper<T>> wrappedOptional) {
-    return wrappedOptional.isPresent()
-        ? Optional.of(wrappedOptional.get().get())
-        : Optional.<T>absent();
-  }
-
   static final class Factory {
     private final Types types;
     private final Elements elements;
@@ -416,7 +397,7 @@ abstract class Key {
 
     private Key forMethod(ExecutableElement method, TypeMirror keyType) {
       return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(method)),
+          wrapOptionalInEquivalence(getQualifier(method)),
           MoreTypes.equivalence().wrap(keyType),
           Optional.<BindingMethodIdentifier>absent());
     }
@@ -444,7 +425,7 @@ abstract class Key {
 
     Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {
       return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), qualifier),
+          wrapOptionalInEquivalence(qualifier),
           MoreTypes.equivalence().wrap(normalize(types, type)),
           Optional.<BindingMethodIdentifier>absent());
     }

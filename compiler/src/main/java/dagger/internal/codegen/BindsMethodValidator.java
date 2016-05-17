@@ -45,7 +45,7 @@ import static dagger.internal.codegen.Validation.validateUncheckedThrows;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 /**
- * A {@linkplain ValidationReport validator} for {@link Bind} methods.
+ * A {@linkplain ValidationReport validator} for {@link Binds} methods.
  */
 final class BindsMethodValidator {
   private final Elements elements;

@@ -165,6 +165,35 @@ public class ComponentProcessorTest {
             "@Provides List<Integer> test.AnotherModule.provideListOfInteger()");
   }
 
+  @Test public void privateNestedClassWithWarningThatIsAnErrorInComponent() {
+    JavaFileObject outerClass = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  @Inject OuterClass(InnerClass innerClass) {}",
+        "",
+        "  private static final class InnerClass {",
+        "    @Inject InnerClass() {}",
+        "  }",
+        "}");
+    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "interface BadComponent {",
+        "  OuterClass outerClass();",
+        "}");
+    assertAbout(javaSources()).that(ImmutableList.of(outerClass, componentFile))
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("Dagger does not support injection into private classes");
+  }
+
   @Test public void simpleComponent() {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
         "package test;",
@@ -971,8 +1000,8 @@ public class ComponentProcessorTest {
             "",
             "    @SuppressWarnings(\"unchecked\")",
             "    private void initialize() {",
-            "      this.setOfObjectProvider = SetFactory.create(",
-            "          ParentModule_ParentObjectFactory.create());",
+            "      this.setOfObjectProvider = SetFactory.<Object>builder()",
+            "          .addProvider(ParentModule_ParentObjectFactory.create()).build();",
             "      this.mapOfStringAndProviderOfObjectProvider =",
             "          MapProviderFactory.<String, Object>builder(1)",
             "              .put(\"parent key\", DaggerParent.this.parentKeyObjectProvider)",
@@ -1083,7 +1112,7 @@ public class ComponentProcessorTest {
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
             "  private Provider<Set<String>> emptySetProvider;",
-            "  private Provider<Set<String>> stringProvider;",
+            "  private Provider<String> stringProvider;",
             "  private Provider<Set<String>> setOfStringProvider;",
             "",
             "  private DaggerTestComponent(Builder builder) {",
@@ -1105,8 +1134,11 @@ public class ComponentProcessorTest {
             "        EmptySetModule_EmptySetFactory.create(builder.emptySetModule);",
             "    this.stringProvider =",
             "        SetModule_StringFactory.create(builder.setModule);",
-            "    this.setOfStringProvider = SetFactory.create(",
-            "        emptySetProvider, stringProvider);",
+            "    this.setOfStringProvider = ",
+            "        SetFactory.<String>builder()",
+            "            .addSetProvider(emptySetProvider)",
+            "            .addProvider(stringProvider)",
+            "            .build();",
             "  }",
             "",
             "  @Override",

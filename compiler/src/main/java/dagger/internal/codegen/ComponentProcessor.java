@@ -67,7 +67,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new DependencyRequestFormatter(types, elements);
     KeyFormatter keyFormatter = new KeyFormatter(methodSignatureFormatter);
 
-    InjectValidator injectValidator = new InjectValidator(compilerOptions);
+    InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
+    InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();
     ModuleValidator moduleValidator =
         new ModuleValidator(types, elements, methodSignatureFormatter);
     BuilderValidator builderValidator = new BuilderValidator(elements, types);
@@ -87,8 +88,10 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     MultibindingsValidator multibindingsValidator =
         new MultibindingsValidator(elements, keyFactory, keyFormatter, methodSignatureFormatter);
 
-    this.factoryGenerator = new FactoryGenerator(filer, elements, compilerOptions);
-    this.membersInjectorGenerator = new MembersInjectorGenerator(filer, elements);
+    this.factoryGenerator =
+        new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
+    this.membersInjectorGenerator =
+        new MembersInjectorGenerator(filer, elements, injectValidatorWhenGeneratingCode);
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =
@@ -149,6 +152,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements,
             types,
             compilerOptions,
+            injectValidatorWhenGeneratingCode,
             injectBindingRegistry,
             bindingDeclarationFormatter,
             methodSignatureFormatter,

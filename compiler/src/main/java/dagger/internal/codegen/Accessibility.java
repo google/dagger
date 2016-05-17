@@ -15,6 +15,7 @@
  */
 package dagger.internal.codegen;
 
+import com.google.auto.common.MoreElements;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -139,6 +140,12 @@ final class Accessibility {
   //TODO(gak): account for protected
   static boolean isElementAccessibleFrom(Element element, final String packageName) {
     return element.accept(new ElementAccessibilityVisitor(packageName), null);
+  }
+
+  /** Returns true if the given element can be referenced from other code in its own package. */
+  static boolean isElementAccessibleFromOwnPackage(Element element) {
+    return isElementAccessibleFrom(
+        element, MoreElements.getPackage(element).getQualifiedName().toString());
   }
 
   private static final class ElementAccessibilityVisitor

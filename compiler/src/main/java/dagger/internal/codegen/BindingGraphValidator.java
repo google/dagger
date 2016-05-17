@@ -103,7 +103,6 @@ import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
-import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 public class BindingGraphValidator {

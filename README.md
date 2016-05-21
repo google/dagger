@@ -39,9 +39,9 @@ mailing list.
 
 ## Installation
 
-You will need to include the `dagger-2.1.jar` in your application's runtime.
+You will need to include the `dagger-2.2.jar` in your application's runtime.
 In order to activate code generation and generate implementations to manage
-your graph you will need to include `dagger-compiler-2.1.jar` in your build
+your graph you will need to include `dagger-compiler-2.2.jar` in your build
 at compile time.
 
 In a Maven project, include the `dagger` artifact in the dependencies section

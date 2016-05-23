@@ -44,6 +44,7 @@ In order to activate code generation and generate implementations to manage
 your graph you will need to include `dagger-compiler-2.1.jar` in your build
 at compile time.
 
+### Maven
 In a Maven project, include the `dagger` artifact in the dependencies section
 of your `pom.xml` and the `dagger-compiler` artifact as either an `optional` or
 `provided` dependency:
@@ -77,6 +78,41 @@ parallelizable execution graphs), then add this to your maven configuration:
 </dependencies>
 ```
 
+### Java Gradle
+```groovy
+// Add plugin https://plugins.gradle.org/plugin/net.ltgt.apt
+plugins {
+  id "net.ltgt.apt" version "0.5"
+}
+
+// Add Dagger dependencies
+dependencies {
+  compile 'com.google.dagger:dagger:2.0.2'
+  apt 'com.google.dagger:dagger-compiler:2.0.2'
+}
+```
+
+### Android Gradle
+```groovy
+// Add plugin https://bitbucket.org/hvisser/android-apt
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+  }
+}
+
+// Apply plugin
+apply plugin: 'com.neenbedankt.android-apt'
+
+// Add Dagger dependencies
+dependencies {
+  compile 'com.google.dagger:dagger:2.0.2'
+  apt 'com.google.dagger:dagger-compiler:2.0.2'
+}
+```
 
 ### Download
 

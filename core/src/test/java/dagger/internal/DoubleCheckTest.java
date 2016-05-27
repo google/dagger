@@ -27,7 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -126,21 +125,5 @@ public class DoubleCheckTest {
       provisions.incrementAndGet();
       return new Object();
     }
-  }
-
-  @Test public void reentranceThrowsIllegalStateException() {
-    final AtomicReference<Provider<Object>> doubleCheckReference =
-        new AtomicReference<Provider<Object>>();
-    Provider<Object> doubleCheck = DoubleCheck.provider(new Provider<Object>() {
-      @Override
-      public Object get() {
-        return doubleCheckReference.get().get();
-      }
-    });
-    doubleCheckReference.set(doubleCheck);
-    try {
-      doubleCheck.get();
-      fail();
-    } catch (IllegalStateException expected) {}
   }
 }

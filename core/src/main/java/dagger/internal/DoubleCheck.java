@@ -26,7 +26,6 @@ import static dagger.internal.Preconditions.checkNotNull;
  */
 public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   private static final Object UNINITIALIZED = new Object();
-  private static final Object INITIALIZING = new Object();
 
   private volatile Provider<T> provider;
   private volatile Object instance = UNINITIALIZED;
@@ -40,19 +39,14 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   @Override
   public T get() {
     Object result = instance;
-    if (result == UNINITIALIZED | result == INITIALIZING) {
+    if (result == UNINITIALIZED) {
       synchronized (this) {
         result = instance;
         if (result == UNINITIALIZED) {
-          /* Here we set the instance to INITIALIZING so that we can check for the case that the
-           * delegate provider is part of a chain of circular dependencies. */
-          instance = INITIALIZING;
           instance = result = provider.get();
           /* Null out the reference to the provider. We are never going to need it again, so we
            * can make it eligible for GC. */
           provider = null;
-        } else if (result == INITIALIZING) {
-          throw new IllegalStateException("get() was called in a circular dependency");
         }
       }
     }

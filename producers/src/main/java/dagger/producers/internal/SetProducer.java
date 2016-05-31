@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -117,7 +116,7 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
    * @throws NullPointerException if any of the delegate producers return null
    */
   @Override
-  public ListenableFuture<Set<T>> compute(ProducerMonitor unusedMonitor) {
+  public ListenableFuture<Set<T>> compute() {
     List<ListenableFuture<T>> individualFutures =
         new ArrayList<ListenableFuture<T>>(individualProducers.size());
     for (Producer<T> producer : individualProducers) {

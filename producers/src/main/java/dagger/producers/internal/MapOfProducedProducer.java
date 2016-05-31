@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.Beta;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +61,7 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
   }
 
   @Override
-  public ListenableFuture<Map<K, Produced<V>>> compute(ProducerMonitor unusedMonitor) {
+  public ListenableFuture<Map<K, Produced<V>>> compute() {
     return Futures.transformAsync(
         mapProducerProducer.get(),
         new AsyncFunction<Map<K, Producer<V>>, Map<K, Produced<V>>>() {

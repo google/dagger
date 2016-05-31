@@ -79,7 +79,7 @@ public class AbstractProducerTest {
           int i = 0;
 
           @Override
-          public ListenableFuture<Integer> compute(ProducerMonitor unusedMonitor) {
+          public ListenableFuture<Integer> compute() {
             return Futures.immediateFuture(i++);
           }
         };
@@ -144,7 +144,8 @@ public class AbstractProducerTest {
     }
 
     @Override
-    public ListenableFuture<T> compute(ProducerMonitor unusedMonitor) {
+    public ListenableFuture<T> compute() {
+      assertThat(monitor).isNotNull();
       return delegate;
     }
   }

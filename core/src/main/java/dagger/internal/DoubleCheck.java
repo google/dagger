@@ -43,7 +43,16 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
       synchronized (this) {
         result = instance;
         if (result == UNINITIALIZED) {
-          instance = result = provider.get();
+          result = provider.get();
+          /* Get the current instance and test to see if the call to provider.get() has resulted
+           * in a recursive call.  If it returns the same instance, we'll allow it, but if the
+           * instances differ, throw. */
+          Object currentInstance = instance;
+          if (currentInstance != UNINITIALIZED && currentInstance != result) {
+            throw new IllegalStateException("Scoped provider was invoked recursively returning "
+                + "different results: " + currentInstance + " & " + result);
+          }
+          instance = result;
           /* Null out the reference to the provider. We are never going to need it again, so we
            * can make it eligible for GC. */
           provider = null;

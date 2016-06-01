@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -125,5 +126,59 @@ public class DoubleCheckTest {
       provisions.incrementAndGet();
       return new Object();
     }
+  }
+
+  @Test public void reentranceWithoutCondition_throwsStackOverflow() {
+    final AtomicReference<Provider<Object>> doubleCheckReference =
+        new AtomicReference<Provider<Object>>();
+    Provider<Object> doubleCheck = DoubleCheck.provider(new Provider<Object>() {
+      @Override
+      public Object get() {
+        return doubleCheckReference.get().get();
+      }
+    });
+    doubleCheckReference.set(doubleCheck);
+    try {
+      doubleCheck.get();
+      fail();
+    } catch (StackOverflowError expected) {}
+  }
+
+  @Test public void reentranceReturningSameInstance() {
+    final AtomicReference<Provider<Object>> doubleCheckReference =
+        new AtomicReference<Provider<Object>>();
+    final AtomicInteger invocationCount = new AtomicInteger();
+    final Object object = new Object();
+    Provider<Object> doubleCheck = DoubleCheck.provider(new Provider<Object>() {
+     @Override
+      public Object get() {
+         if (invocationCount.incrementAndGet() == 1) {
+          doubleCheckReference.get().get();
+        }
+        return object;
+      }
+    });
+    doubleCheckReference.set(doubleCheck);
+    assertThat(doubleCheck.get()).isSameAs(object);
+  }
+
+  @Test public void reentranceReturningDifferentInstances_throwsIllegalStateException() {
+    final AtomicReference<Provider<Object>> doubleCheckReference =
+        new AtomicReference<Provider<Object>>();
+    final AtomicInteger invocationCount = new AtomicInteger();
+    Provider<Object> doubleCheck = DoubleCheck.provider(new Provider<Object>() {
+     @Override
+      public Object get() {
+        if (invocationCount.incrementAndGet() == 1) {
+          doubleCheckReference.get().get();
+        }
+        return new Object();
+      }
+    });
+    doubleCheckReference.set(doubleCheck);
+    try {
+      doubleCheck.get();
+      fail();
+    } catch (IllegalStateException expected) {}
   }
 }

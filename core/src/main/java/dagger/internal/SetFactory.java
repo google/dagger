@@ -16,6 +16,7 @@
 package dagger.internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Provider;
@@ -51,54 +52,60 @@ public final class SetFactory<T> implements Factory<Set<T>> {
 
   /**
    * Constructs a new {@link Builder} for a {@link SetFactory} with {@code individualProviderSize}
-   * individual {@code Provider<T>} and {@code setProviderSize} {@code Provider<Set<T>>} instances.
+   * individual {@code Provider<T>} and {@code collectionProviderSize} {@code
+   * Provider<Collection<T>>} instances.
    */
-  public static <T> Builder<T> builder(int individualProviderSize, int setProviderSize) {
-    return new Builder<T>(individualProviderSize, setProviderSize);
+  public static <T> Builder<T> builder(int individualProviderSize, int collectionProviderSize) {
+    return new Builder<T>(individualProviderSize, collectionProviderSize);
   }
 
   /**
-   * A builder to accumulate {@code Provider<T>} and {@code Provider<Set<T>>} instances. These are
-   * only intended to be single-use and from within generated code. Do <em>NOT</em> add providers
-   * after calling {@link #build()}.
+   * A builder to accumulate {@code Provider<T>} and {@code Provider<Collection<T>>} instances.
+   * These are only intended to be single-use and from within generated code. Do <em>NOT</em> add
+   * providers after calling {@link #build()}.
    */
   public static final class Builder<T> {
     private final List<Provider<T>> individualProviders;
-    private final List<Provider<Set<T>>> setProviders;
+    private final List<Provider<Collection<T>>> collectionProviders;
 
-    private Builder(int individualProviderSize, int setProviderSize) {
+    private Builder(int individualProviderSize, int collectionProviderSize) {
       individualProviders = presizedList(individualProviderSize);
-      setProviders = presizedList(setProviderSize);
+      collectionProviders = presizedList(collectionProviderSize);
     }
 
-    public Builder<T> addProvider(Provider<T> individualProvider) {
+    @SuppressWarnings("unchecked")
+    public Builder<T> addProvider(Provider<? extends T> individualProvider) {
       assert individualProvider != null : "Codegen error? Null provider";
-      individualProviders.add(individualProvider);
+      // TODO(ronshapiro): Store a List<? extends Provider<T>> and avoid the cast to Provider<T>
+      individualProviders.add((Provider<T>) individualProvider);
       return this;
     }
 
-    public Builder<T> addSetProvider(Provider<Set<T>> multipleProvider) {
-      assert multipleProvider != null : "Codegen error? Null provider";
-      setProviders.add(multipleProvider);
+    @SuppressWarnings("unchecked")
+    public Builder<T> addCollectionProvider(
+        Provider<? extends Collection<? extends T>> collectionProvider) {
+      assert collectionProvider != null : "Codegen error? Null provider";
+      collectionProviders.add((Provider<Collection<T>>) collectionProvider);
       return this;
     }
 
     public SetFactory<T> build() {
       assert !hasDuplicates(individualProviders)
           : "Codegen error?  Duplicates in the provider list";
-      assert !hasDuplicates(setProviders)
+      assert !hasDuplicates(collectionProviders)
           : "Codegen error?  Duplicates in the provider list";
 
-      return new SetFactory<T>(individualProviders, setProviders);
+      return new SetFactory<T>(individualProviders, collectionProviders);
     }
   }
 
   private final List<Provider<T>> individualProviders;
-  private final List<Provider<Set<T>>> setProviders;
+  private final List<Provider<Collection<T>>> collectionProviders;
 
-  private SetFactory(List<Provider<T>> individualProviders, List<Provider<Set<T>>> setProviders) {
+  private SetFactory(
+      List<Provider<T>> individualProviders, List<Provider<Collection<T>>> collectionProviders) {
     this.individualProviders = individualProviders;
-    this.setProviders = setProviders;
+    this.collectionProviders = collectionProviders;
   }
 
   /**
@@ -115,19 +122,20 @@ public final class SetFactory<T> implements Factory<Set<T>> {
     // these loops were changed to use c-style for.  Versus enhanced for-each loops, C-style for is
     // faster for ArrayLists, at least through Java 8.
 
-    List<Set<T>> providedSets = new ArrayList<Set<T>>(setProviders.size());
-    for (int i = 0, c = setProviders.size(); i < c; i++) {
-      Set<T> providedSet = setProviders.get(i).get();
-      size += providedSet.size();
-      providedSets.add(providedSet);
+    List<Collection<T>> providedCollections =
+        new ArrayList<Collection<T>>(collectionProviders.size());
+    for (int i = 0, c = collectionProviders.size(); i < c; i++) {
+      Collection<T> providedCollection = collectionProviders.get(i).get();
+      size += providedCollection.size();
+      providedCollections.add(providedCollection);
     }
 
     Set<T> providedValues = newHashSetWithExpectedSize(size);
     for (int i = 0, c = individualProviders.size(); i < c; i++) {
       providedValues.add(checkNotNull(individualProviders.get(i).get()));
     }
-    for (int i = 0, c = providedSets.size(); i < c; i++) {
-      for (T element : providedSets.get(i)) {
+    for (int i = 0, c = providedCollections.size(); i < c; i++) {
+      for (T element : providedCollections.get(i)) {
         providedValues.add(checkNotNull(element));
       }
     }

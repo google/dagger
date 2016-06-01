@@ -16,11 +16,9 @@
 package dagger.internal.codegen;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
+import dagger.Binds;
 import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
@@ -35,14 +33,17 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
-import static dagger.internal.codegen.ErrorMessages.MULTIBINDING_ANNOTATION_NOT_ON_PROVIDES_OR_PRODUCES;
-import static dagger.internal.codegen.Util.hasAnnotationType;
+import static dagger.internal.codegen.ErrorMessages.MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD;
+import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 
 /**
  * Processing step which verifies that {@link IntoSet @IntoSet}, {@link ElementsIntoSet
  * @ElementsIntoSet} and {@link IntoMap @IntoMap} are not present on invalid elements.
  */
 final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
+
+  private static final ImmutableSet<Class<? extends Annotation>> VALID_BINDING_ANNOTATIONS =
+      ImmutableSet.of(Provides.class, Produces.class, Binds.class);
 
   private final Messager messager;
 
@@ -60,18 +61,12 @@ final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     for (Entry<Class<? extends Annotation>, Element> entry : elementsByAnnotation.entries()) {
       Element element = entry.getValue();
-      boolean onBindingMethod =
-          FluentIterable.from(element.getAnnotationMirrors()).anyMatch(providesOrProducesMethod());
-      if (!onBindingMethod) {
+      if (!isAnyAnnotationPresent(element, VALID_BINDING_ANNOTATIONS)) {
         AnnotationMirror annotation = getAnnotationMirror(entry.getValue(), entry.getKey()).get();
         messager.printMessage(
-            Kind.ERROR, MULTIBINDING_ANNOTATION_NOT_ON_PROVIDES_OR_PRODUCES, element, annotation);
+            Kind.ERROR, MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD, element, annotation);
       }
     }
     return ImmutableSet.of();
-  }
-
-  private static Predicate<AnnotationMirror> providesOrProducesMethod() {
-    return Predicates.or(hasAnnotationType(Provides.class), hasAnnotationType(Produces.class));
   }
 }

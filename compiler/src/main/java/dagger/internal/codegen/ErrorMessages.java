@@ -143,6 +143,9 @@ final class ErrorMessages {
   static final String BINDING_METHOD_SET_VALUES_RAW_SET =
       "@%s methods of type set values cannot return a raw Set";
 
+  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RAW_SET_PARAMETER =
+      "@Binds @ElementsIntoSet methods cannot take a raw Set parameter";
+
   static final String BINDING_METHOD_SET_VALUES_RETURN_SET =
       "@%s methods of type set values must return a Set";
 
@@ -171,11 +174,17 @@ final class ErrorMessages {
   static final String BINDING_METHOD_TYPE_PARAMETER =
       "@%s methods may not have type parameters.";
 
+  // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
+  // right-hand-side might not be assignable to the left-hand-side, but still compatible with
+  // Set.addAll(Collection<? extends E>)
   static final String BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER =
       "@Binds methods must have only one parameter whose type is assignable to the return type";
 
   static final String BINDING_METHOD_NOT_IN_MODULE =
       "@%s methods can only be present within a @%s";
+
+  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET =
+      "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter";
 
   static final String BINDING_METHOD_NOT_MAP_HAS_MAP_KEY =
       "@%s methods of non map type cannot declare a map key";
@@ -291,8 +300,8 @@ final class ErrorMessages {
       "Cannot return null from a non-@Nullable @Provides method";
 
   /* Multibinding messages */
-  static final String MULTIBINDING_ANNOTATION_NOT_ON_PROVIDES_OR_PRODUCES =
-      "Multibinding annotations may only be on @Provides or @Produces methods";
+  static final String MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD =
+      "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods";
 
   static final String MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD =
       "Multiple multibinding annotations cannot be placed on the same %s method";

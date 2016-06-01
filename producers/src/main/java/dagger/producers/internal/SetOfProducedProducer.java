@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -45,63 +46,67 @@ public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produce
 
   /**
    * Constructs a new {@link Builder} for a {@link SetProducer} with {@code individualProducerSize}
-   * individual {@code Producer<T>} and {@code setProducerSize} {@code Producer<Set<T>>} instances.
+   * individual {@code Producer<T>} and {@code collectionProducerSize} {@code
+   * Producer<Collection<T>>} instances.
    */
-  public static <T> Builder<T> builder(int individualProducerSize, int setProducerSize) {
-    return new Builder<T>(individualProducerSize, setProducerSize);
+  public static <T> Builder<T> builder(int individualProducerSize, int collectionProducerSize) {
+    return new Builder<T>(individualProducerSize, collectionProducerSize);
   }
 
   /**
-   * A builder to accumulate {@code Producer<T>} and {@code Producer<Set<T>>} instances. These are
-   * only intended to be single-use and from within generated code. Do <em>NOT</em> add producers
-   * after calling {@link #build()}.
+   * A builder to accumulate {@code Producer<T>} and {@code Producer<Collection<T>>} instances.
+   * These are only intended to be single-use and from within generated code. Do <em>NOT</em> add
+   * producers after calling {@link #build()}.
    */
   public static final class Builder<T> {
     private final List<Producer<T>> individualProducers;
-    private final List<Producer<Set<T>>> setProducers;
+    private final List<Producer<Collection<T>>> collectionProducers;
 
-    private Builder(int individualProducerSize, int setProducerSize) {
+    private Builder(int individualProducerSize, int collectionProducerSize) {
       individualProducers = presizedList(individualProducerSize);
-      setProducers = presizedList(setProducerSize);
+      collectionProducers = presizedList(collectionProducerSize);
     }
 
-    public Builder<T> addProducer(Producer<T> individualProducer) {
+    @SuppressWarnings("unchecked")
+    public Builder<T> addProducer(Producer<? extends T> individualProducer) {
       assert individualProducer != null : "Codegen error? Null producer";
-      individualProducers.add(individualProducer);
+      individualProducers.add((Producer<T>) individualProducer);
       return this;
     }
 
-    public Builder<T> addSetProducer(Producer<Set<T>> multipleProducer) {
+    @SuppressWarnings("unchecked")
+    public Builder<T> addCollectionProducer(
+        Producer<? extends Collection<? extends T>> multipleProducer) {
       assert multipleProducer != null : "Codegen error? Null producer";
-      setProducers.add(multipleProducer);
+      collectionProducers.add((Producer<Collection<T>>) multipleProducer);
       return this;
     }
 
     public SetOfProducedProducer<T> build() {
       assert !hasDuplicates(individualProducers)
           : "Codegen error?  Duplicates in the producer list";
-      assert !hasDuplicates(setProducers)
+      assert !hasDuplicates(collectionProducers)
           : "Codegen error?  Duplicates in the producer list";
 
-      return new SetOfProducedProducer<T>(individualProducers, setProducers);
+      return new SetOfProducedProducer<T>(individualProducers, collectionProducers);
     }
   }
 
   private final List<Producer<T>> individualProducers;
-  private final List<Producer<Set<T>>> setProducers;
+  private final List<Producer<Collection<T>>> collectionProducers;
 
   private SetOfProducedProducer(
-      List<Producer<T>> individualProducers, List<Producer<Set<T>>> setProducers) {
+      List<Producer<T>> individualProducers, List<Producer<Collection<T>>> collectionProducers) {
     this.individualProducers = individualProducers;
-    this.setProducers = setProducers;
+    this.collectionProducers = collectionProducers;
   }
 
   /**
    * Returns a future {@link Set} of {@link Produced} values whose iteration order is that of the
    * elements given by each of the producers, which are invoked in the order given at creation.
    *
-   * <p>If any of the delegate sets, or any elements therein, are null, then that corresponding
-   * {@code Produced} element will fail with a NullPointerException.
+   * <p>If any of the delegate collections, or any elements therein, are null, then that
+   * corresponding {@code Produced} element will fail with a NullPointerException.
    *
    * <p>Canceling this future will attempt to cancel all of the component futures; but if any of the
    * delegate futures fail or are canceled, this future succeeds, with the appropriate failed
@@ -111,40 +116,41 @@ public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produce
    */
   @Override
   public ListenableFuture<Set<Produced<T>>> compute() {
-    List<ListenableFuture<Produced<Set<T>>>> futureProducedSets =
-        new ArrayList<ListenableFuture<Produced<Set<T>>>>(
-            individualProducers.size() + setProducers.size());
+    List<ListenableFuture<? extends Produced<? extends Collection<T>>>> futureProducedCollections =
+        new ArrayList<ListenableFuture<? extends Produced<? extends Collection<T>>>>(
+            individualProducers.size() + collectionProducers.size());
     for (Producer<T> producer : individualProducers) {
-      // TODO(ronshapiro): Don't require individual productions to be added to a set just to be
-      // materialized into futureProducedSets.
-      futureProducedSets.add(
+      // TODO(ronshapiro): Don't require individual productions to be added to a collection just to
+      // be materialized into futureProducedCollections.
+      futureProducedCollections.add(
           Producers.createFutureProduced(
               Producers.createFutureSingletonSet(checkNotNull(producer.get()))));
     }
-    for (Producer<Set<T>> producer : setProducers) {
-      futureProducedSets.add(Producers.createFutureProduced(checkNotNull(producer.get())));
+    for (Producer<Collection<T>> producer : collectionProducers) {
+      futureProducedCollections.add(Producers.createFutureProduced(checkNotNull(producer.get())));
     }
 
     return Futures.transform(
-        Futures.allAsList(futureProducedSets),
-        new Function<List<Produced<Set<T>>>, Set<Produced<T>>>() {
+        Futures.allAsList(futureProducedCollections),
+        new Function<List<Produced<? extends Collection<T>>>, Set<Produced<T>>>() {
           @Override
-          public Set<Produced<T>> apply(List<Produced<Set<T>>> producedSets) {
+          public Set<Produced<T>> apply(
+              List<Produced<? extends Collection<T>>> producedCollections) {
             ImmutableSet.Builder<Produced<T>> builder = ImmutableSet.builder();
-            for (Produced<Set<T>> producedSet : producedSets) {
+            for (Produced<? extends Collection<T>> producedCollection : producedCollections) {
               try {
-                Set<T> set = producedSet.get();
-                if (set == null) {
+                Collection<T> collection = producedCollection.get();
+                if (collection == null) {
                   // TODO(beder): This is a vague exception. Can we somehow point to the failing
                   // producer? See the similar comment in the component writer about null
                   // provisions.
                   builder.add(
                       Produced.<T>failed(
                           new NullPointerException(
-                              "Cannot contribute a null set into a producer set binding when it's"
-                                  + " injected as Set<Produced<T>>.")));
+                              "Cannot contribute a null collection into a producer set binding when"
+                                  + " it's injected as Set<Produced<T>>.")));
                 } else {
-                  for (T value : set) {
+                  for (T value : collection) {
                     if (value == null) {
                       builder.add(
                           Produced.<T>failed(

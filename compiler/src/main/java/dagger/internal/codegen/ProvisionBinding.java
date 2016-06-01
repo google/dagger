@@ -217,7 +217,7 @@ abstract class ProvisionBinding extends ContributionBinding {
      * <p>Note that these could be set multibindings or map multibindings.
      */
     ProvisionBinding syntheticMultibinding(
-        final DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
+        DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
       return new AutoValue_ProvisionBinding(
           ContributionType.UNIQUE,
           request.requestElement(),
@@ -294,7 +294,7 @@ abstract class ProvisionBinding extends ContributionBinding {
     ProvisionBinding delegate(
         DelegateDeclaration delegateDeclaration, ProvisionBinding delegate) {
       return new AutoValue_ProvisionBinding(
-          delegate.contributionType(),
+          delegateDeclaration.contributionType(),
           delegateDeclaration.bindingElement(),
           delegateDeclaration.contributingModule(),
           delegateDeclaration.key(),
@@ -302,7 +302,6 @@ abstract class ProvisionBinding extends ContributionBinding {
           findBindingPackage(delegateDeclaration.key()),
           delegate.nullableType(),
           Optional.<DependencyRequest>absent(),
-          // TODO(ronshapiro): for @Binds @IntoMap, this should be delegateDeclaration.mapKey()
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.SYNTHETIC_DELEGATE_BINDING,
           Optional.<ProvisionBinding>absent(),

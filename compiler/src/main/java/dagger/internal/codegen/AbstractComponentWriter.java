@@ -1137,23 +1137,23 @@ abstract class AbstractComponentWriter {
       ContributionType contributionType =
           graph.resolvedBindings().get(frameworkDependency.bindingKey()).contributionType();
       String methodName;
+      String methodNameSuffix = frameworkDependency.frameworkClass().getSimpleName();
       switch (contributionType) {
         case SET:
           individualProviders++;
-          methodName = "add";
+          methodName = "add" + methodNameSuffix;
           break;
         case SET_VALUES:
           setProviders++;
-          methodName = "addSet";
+          methodName = "addCollection" + methodNameSuffix;
           break;
         default:
           throw new AssertionError(frameworkDependency + " is not a set multibinding");
       }
 
       builderMethodCalls.add(
-          ".$L$L($L)",
+          ".$L($L)",
           methodName,
-          frameworkDependency.frameworkClass().getSimpleName(),
           potentiallyCast(
               useRawTypes,
               frameworkDependency.frameworkClass(),

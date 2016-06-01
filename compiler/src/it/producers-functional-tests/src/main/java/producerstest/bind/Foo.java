@@ -13,30 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package producerstest.bind;
 
-import dagger.Component;
-import java.util.Set;
-import javax.inject.Singleton;
-import test.SomeQualifier;
-
-@Singleton
-@Component(modules = SimpleBindingModule.class)
-public interface TestComponent {
-  Object object();
-
-  Foo<String> fooOfStrings();
-
-  Foo<Object> fooOfObjects();
-
-  @SomeQualifier
-  Foo<String> qualifiedFooOfStrings();
-
-  Foo<Integer> fooOfIntegers();
-
-  Set<Foo<? extends Number>> foosOfNumbers();
-
-  Set<Object> objects();
-
-  Set<CharSequence> charSequences();
-}
+/**
+ * This is the type that will be bound.  We throw in generics just to complicate the test.
+ */
+interface Foo<T> {}

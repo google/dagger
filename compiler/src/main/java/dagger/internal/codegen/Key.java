@@ -322,7 +322,7 @@ abstract class Key {
         returnType = Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       }
       TypeMirror keyType =
-          providesOrProducesKeyType(returnType, method, contributionType, frameworkType);
+          bindingMethodKeyType(returnType, method, contributionType, frameworkType);
       Key key = forMethod(method, keyType);
       return contributionType.equals(ContributionType.UNIQUE)
           ? key
@@ -356,10 +356,24 @@ abstract class Key {
     /** Returns the key bound by a {@link Binds} method. */
     Key forBindsMethod(ExecutableElement method, ExecutableType methodType) {
       checkArgument(isAnnotationPresent(method, Binds.class));
-      return forMethod(method, normalize(types, methodType.getReturnType()));
+      ContributionType contributionType = ContributionType.fromBindingMethod(method);
+      TypeMirror returnType = normalize(types, methodType.getReturnType());
+      TypeMirror keyType =
+          bindingMethodKeyType(
+              // TODO(ronshapiro): Map<K, Framework<V>> can't be determined at this point. When
+              // @IntoMap support is added, consider replacing getProviderElement() with a
+              // placeholder type, which is then replaced when the DelegateDeclaration is translated
+              // into a Provision or ProductionBinding
+              returnType, method, contributionType, getProviderElement());
+      Key key = forMethod(method, keyType);
+      return contributionType.equals(ContributionType.UNIQUE)
+          ? key
+          : key.withBindingMethodIdentifier(
+              BindingMethodIdentifier.create(
+                  method, MoreElements.asType(method.getEnclosingElement())));
     }
 
-    private TypeMirror providesOrProducesKeyType(
+    private TypeMirror bindingMethodKeyType(
         TypeMirror returnType,
         ExecutableElement method,
         ContributionType contributionType,

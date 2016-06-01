@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package producerstest.bind;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
+import dagger.producers.ProducerModule;
+import dagger.producers.Produces;
+import dagger.producers.Production;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,10 +33,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Executor;
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
-import test.SomeQualifier;
 
-@Module(includes = InterfaceModule.class)
+@ProducerModule(includes = SimpleBindingModule.ExecutorModule.class)
 abstract class SimpleBindingModule {
   @Binds
   abstract Object bindObject(FooOfStrings impl);
@@ -46,13 +53,18 @@ abstract class SimpleBindingModule {
   @SomeQualifier
   abstract Foo<String> bindQualifiedFooOfStrings(FooOfStrings impl);
 
-  @Provides
-  static Foo<Integer> provideFooOfIntegers() {
+  @Produces
+  static FooOfStrings produceFooOfStrings() {
+    return new FooOfStrings();
+  }
+
+  @Produces
+  static Foo<Integer> produceFooOfIntegers() {
     return new Foo<Integer>() {};
   }
 
-  @Provides
-  static Foo<Double> provideFooOfDoubles() {
+  @Produces
+  static Foo<Double> produceFooOfDoubles() {
     return new Foo<Double>() {};
   }
 
@@ -72,18 +84,18 @@ abstract class SimpleBindingModule {
   @IntoSet
   abstract Object bindFooOfStringsIntoSetOfObjects(FooOfStrings impl);
 
-  @Provides
-  static HashSet<String> provideStringHashSet() {
+  @Produces
+  static HashSet<String> produceStringHashSet() {
     return new HashSet<>(Arrays.asList("hash-string1", "hash-string2"));
   }
 
-  @Provides
-  static TreeSet<CharSequence> provideCharSequenceTreeSet() {
+  @Produces
+  static TreeSet<CharSequence> produceCharSequenceTreeSet() {
     return new TreeSet<CharSequence>(Arrays.asList("tree-charSequence1", "tree-charSequence2"));
   }
 
-  @Provides
-  static Collection<CharSequence> provideCharSequenceCollection() {
+  @Produces
+  static Collection<CharSequence> produceCharSequenceCollection() {
     return Arrays.<CharSequence>asList("list-charSequence");
   }
 
@@ -98,4 +110,16 @@ abstract class SimpleBindingModule {
   @Binds
   @ElementsIntoSet
   abstract Set<CharSequence> bindCollectionOfCharSequences(Collection<CharSequence> collection);
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface SomeQualifier {}
+
+  @Module
+  static final class ExecutorModule {
+    @Provides @Production
+    static Executor provideExecutor() {
+      return MoreExecutors.directExecutor();
+    }
+  }
 }

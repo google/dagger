@@ -40,7 +40,7 @@ public class SetOfProducedProducerTest {
     Producer<Set<Produced<Integer>>> producer =
         SetOfProducedProducer.<Integer>builder(1, 1)
             .addProducer(Producers.immediateProducer(1))
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)))
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)))
             .build();
     assertThat(producer.get().get())
         .containsExactly(
@@ -54,7 +54,7 @@ public class SetOfProducedProducerTest {
     RuntimeException e = new RuntimeException("monkey");
     Producer<Set<Produced<Integer>>> producer =
         SetOfProducedProducer.<Integer>builder(1, 1)
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)))
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)))
             .addProducer(Producers.<Integer>immediateFailedProducer(e))
             .build();
     assertThat(producer.get().get())
@@ -79,7 +79,7 @@ public class SetOfProducedProducerTest {
   public void delegateSetNpe() throws Exception {
     Producer<Set<Produced<Integer>>> producer =
         SetOfProducedProducer.<Integer>builder(0, 1)
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(null))
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(null))
             .build();
     Results<Integer> results = Results.create(producer.get().get());
     assertThat(results.successes).isEmpty();
@@ -92,7 +92,7 @@ public class SetOfProducedProducerTest {
   public void delegateElementNpe() throws Exception {
     Producer<Set<Produced<Integer>>> producer =
         SetOfProducedProducer.<Integer>builder(0, 1)
-            .addSetProducer(
+            .addCollectionProducer(
                 Producers.<Set<Integer>>immediateProducer(Collections.<Integer>singleton(null)))
             .build();
     Results<Integer> results = Results.create(producer.get().get());
@@ -106,7 +106,7 @@ public class SetOfProducedProducerTest {
   public void oneOfDelegateElementNpe() throws Exception {
     Producer<Set<Produced<Integer>>> producer =
         SetOfProducedProducer.<Integer>builder(0, 1)
-            .addSetProducer(
+            .addCollectionProducer(
                 Producers.<Set<Integer>>immediateProducer(
                     Sets.newHashSet(Arrays.asList(5, 2, null))))
             .build();

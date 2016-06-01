@@ -99,6 +99,31 @@ public class BindsMethodValidatorTest {
     assertThatMethod("@Binds abstract Object noParameters();").hasError("one parameter");
   }
 
+  @Test
+  public void intoMap() {
+    assertThatMethod("@Binds @IntoMap @IntKey(1) abstract Object bindObject(String string);")
+        .hasError("@Binds @IntoMap is not yet supported");
+  }
+
+  @Test
+  public void setElementsNotAssignable() {
+    assertThatMethod(
+            "@Binds @ElementsIntoSet abstract Set<String> bindSetOfIntegers(Set<Integer> ints);")
+        .hasError("assignable");
+  }
+
+  @Test
+  public void setElements_primitiveArgument() {
+    assertThatMethod("@Binds @ElementsIntoSet abstract Set<Number> bindInt(int integer);")
+        .hasError("assignable");
+  }
+
+  @Test
+  public void elementsIntoSet_withRawSets() {
+    assertThatMethod("@Binds @ElementsIntoSet abstract Set bindRawSet(HashSet hashSet);")
+        .hasError("cannot return a raw Set");
+  }
+
   private DaggerModuleMethodSubject assertThatMethod(String method) {
     return assertThatModuleMethod(method).withDeclaration(moduleDeclaration);
   }

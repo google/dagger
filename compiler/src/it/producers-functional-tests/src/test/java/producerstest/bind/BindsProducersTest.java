@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package producerstest.bind;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,33 +23,32 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertThat;
 
 @RunWith(JUnit4.class)
-public class BindTest {
+public class BindsProducersTest {
 
-  private TestComponent component;
+  private SimpleBindsProductionComponent component;
 
   @Before
   public void setUp() {
-    component = DaggerTestComponent.create();
+    component = DaggerSimpleBindsProductionComponent.create();
   }
 
   @Test
-  public void bindDelegates() {
-    assertThat(component.object()).isInstanceOf(FooOfStrings.class);
-    assertThat(component.fooOfStrings()).isInstanceOf(FooOfStrings.class);
-    assertThat(component.fooOfObjects()).isInstanceOf(FooOfObjects.class);
-    assertThat(component.fooOfIntegers()).isNotNull();
+  public void bindDelegates() throws Exception {
+    assertThat(component.object().get()).isInstanceOf(FooOfStrings.class);
+    assertThat(component.fooOfStrings().get()).isInstanceOf(FooOfStrings.class);
+    assertThat(component.fooOfIntegers().get()).isNotNull();
   }
 
   @Test
-  public void bindWithScope() {
-    assertThat(component.qualifiedFooOfStrings())
-        .isSameAs(component.qualifiedFooOfStrings());
+  public void bindWithScope() throws Exception {
+    assertThat(component.qualifiedFooOfStrings().get())
+        .isSameAs(component.qualifiedFooOfStrings().get());
   }
 
   @Test
-  public void multibindings() {
-    assertThat(component.foosOfNumbers()).hasSize(2);
-    assertThat(component.objects()).hasSize(3);
-    assertThat(component.charSequences()).hasSize(5);
+  public void multibindings() throws Exception {
+    assertThat(component.foosOfNumbers().get()).hasSize(2);
+    assertThat(component.objects().get()).hasSize(3);
+    assertThat(component.charSequences().get()).hasSize(5);
   }
 }

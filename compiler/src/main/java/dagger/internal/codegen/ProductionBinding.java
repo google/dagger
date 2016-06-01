@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Set;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -165,7 +164,7 @@ abstract class ProductionBinding extends ContributionBinding {
      * <p>Note that these could be set multibindings or map multibindings.
      */
     ProductionBinding syntheticMultibinding(
-        final DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
+        DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
       return new AutoValue_ProductionBinding(
           ContributionType.UNIQUE,
           request.requestElement(),
@@ -206,7 +205,7 @@ abstract class ProductionBinding extends ContributionBinding {
     ProductionBinding delegate(
         DelegateDeclaration delegateDeclaration, ProductionBinding delegateBinding) {
       return new AutoValue_ProductionBinding(
-          delegateBinding.contributionType(),
+          delegateDeclaration.contributionType(),
           delegateDeclaration.bindingElement(),
           delegateDeclaration.contributingModule(),
           delegateDeclaration.key(),

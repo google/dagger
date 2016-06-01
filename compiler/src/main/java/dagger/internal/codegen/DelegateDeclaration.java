@@ -18,17 +18,20 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.util.Types;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.ContributionType.UNIQUE;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 
 /**
  * The declaration for a delegate binding established by a {@link Binds} method.
@@ -36,11 +39,6 @@ import static dagger.internal.codegen.ContributionType.UNIQUE;
 @AutoValue
 abstract class DelegateDeclaration extends BindingDeclaration implements HasContributionType {
   abstract DependencyRequest delegateRequest();
-
-  @Override
-  public ContributionType contributionType() {
-    return UNIQUE;
-  }
 
   static final class Factory {
     private final Types types;
@@ -65,6 +63,7 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
               Iterables.getOnlyElement(bindsMethod.getParameters()),
               Iterables.getOnlyElement(resolvedMethod.getParameterTypes()));
       return new AutoValue_DelegateDeclaration(
+          ContributionType.fromBindingMethod(bindsMethod),
           keyFactory.forBindsMethod(bindsMethod, resolvedMethod),
           bindsMethod,
           Optional.of(contributingElement),

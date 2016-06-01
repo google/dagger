@@ -1137,7 +1137,7 @@ public class ComponentProcessorTest {
             "        SetModule_StringFactory.create(builder.setModule);",
             "    this.setOfStringProvider = ",
             "        SetFactory.<String>builder(1, 1)",
-            "            .addSetProvider(emptySetProvider)",
+            "            .addCollectionProvider(emptySetProvider)",
             "            .addProvider(stringProvider)",
             "            .build();",
             "  }",

@@ -38,7 +38,7 @@ public class SetProducerTest {
     Producer<Set<Integer>> producer =
         SetProducer.<Integer>builder(1, 1)
             .addProducer(Producers.immediateProducer(1))
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)))
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(5, 7)))
             .build();
     assertThat(producer.get().get()).containsExactly(1, 5, 7);
   }
@@ -62,7 +62,7 @@ public class SetProducerTest {
   public void delegateSetNpe() throws Exception {
     Producer<Set<Integer>> producer =
         SetProducer.<Integer>builder(0, 1)
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(null))
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(null))
             .build();
     ListenableFuture<Set<Integer>> future = producer.get();
     try {
@@ -77,8 +77,8 @@ public class SetProducerTest {
   public void delegateElementNpe() throws Exception {
     Producer<Set<Integer>> producer =
         SetProducer.<Integer>builder(0, 2)
-            .addSetProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)))
-            .addSetProducer(
+            .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(ImmutableSet.of(1, 2)))
+            .addCollectionProducer(
                 Producers.<Set<Integer>>immediateProducer(Collections.<Integer>singleton(null)))
             .build();
     ListenableFuture<Set<Integer>> future = producer.get();

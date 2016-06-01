@@ -298,7 +298,7 @@ abstract class BindingMethodValidator {
     checkSetValuesType(builder, builder.getSubject().getReturnType());
   }
 
-  /** Adds an error if {@code type} is not a a {@code Set<T>} for a reasonable {@code T}. */
+  /** Adds an error if {@code type} is not a {@code Set<T>} for a reasonable {@code T}. */
   protected final void checkSetValuesType(
       ValidationReport.Builder<ExecutableElement> builder, TypeMirror type) {
     if (!SetType.isSet(type)) {

@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package producerstest.bind;
 
-import dagger.Component;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.producers.ProductionComponent;
 import java.util.Set;
 import javax.inject.Singleton;
-import test.SomeQualifier;
+import producerstest.bind.SimpleBindingModule.SomeQualifier;
 
 @Singleton
-@Component(modules = SimpleBindingModule.class)
-public interface TestComponent {
-  Object object();
+@ProductionComponent(modules = SimpleBindingModule.class)
+public interface SimpleBindsProductionComponent {
+  ListenableFuture<Object> object();
 
-  Foo<String> fooOfStrings();
-
-  Foo<Object> fooOfObjects();
+  ListenableFuture<Foo<String>> fooOfStrings();
 
   @SomeQualifier
-  Foo<String> qualifiedFooOfStrings();
+  ListenableFuture<Foo<String>> qualifiedFooOfStrings();
 
-  Foo<Integer> fooOfIntegers();
+  ListenableFuture<Foo<Integer>> fooOfIntegers();
 
-  Set<Foo<? extends Number>> foosOfNumbers();
+  ListenableFuture<Set<Foo<? extends Number>>> foosOfNumbers();
 
-  Set<Object> objects();
+  ListenableFuture<Set<Object>> objects();
 
-  Set<CharSequence> charSequences();
+  ListenableFuture<Set<CharSequence>> charSequences();
 }

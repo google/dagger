@@ -37,7 +37,7 @@ public class SetFactoryTest {
   @Test
   public void providerReturnsNull() {
     Factory<Set<Integer>> factory =
-        SetFactory.<Integer>builder(0, 1).addSetProvider(providerOf((Set<Integer>) null)).build();
+        SetFactory.<Integer>builder(0, 1).addCollectionProvider(providerOf((Set<Integer>) null)).build();
     thrown.expect(NullPointerException.class);
     factory.get();
   }
@@ -54,7 +54,7 @@ public class SetFactoryTest {
   public void providerReturnsSetWithNullElement() {
     Set<Integer> set = new LinkedHashSet<Integer>(Arrays.asList(1, null, 3));
     Factory<Set<Integer>> factory =
-        SetFactory.<Integer>builder(0, 1).addSetProvider(providerOf(set)).build();
+        SetFactory.<Integer>builder(0, 1).addCollectionProvider(providerOf(set)).build();
     thrown.expect(NullPointerException.class);
     factory.get();
   }
@@ -65,8 +65,8 @@ public class SetFactoryTest {
         SetFactory.<Integer>builder(2, 2)
             .addProvider(incrementingIntegerProvider(0))
             .addProvider(incrementingIntegerProvider(10))
-            .addSetProvider(incrementingIntegerSetProvider(20))
-            .addSetProvider(incrementingIntegerSetProvider(30))
+            .addCollectionProvider(incrementingIntegerSetProvider(20))
+            .addCollectionProvider(incrementingIntegerSetProvider(30))
             .build();
     assertThat(factory.get()).containsExactly(0, 10, 20, 21, 30, 31);
     assertThat(factory.get()).containsExactly(1, 11, 22, 23, 32, 33);

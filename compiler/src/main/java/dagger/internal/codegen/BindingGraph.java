@@ -435,6 +435,7 @@ abstract class BindingGraph {
         return ImmutableSet.<Key>builder()
             .add(key)
             .addAll(keyFactory.implicitSetKeyFromProduced(key).asSet())
+            .addAll(keyFactory.implicitProviderMapKeyFromProducer(key).asSet())
             .build();
       }
 

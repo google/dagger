@@ -26,7 +26,9 @@ import producerstest.multibindings.Qualifiers.ObjCount;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingMap;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingSet;
 
-@ProductionComponent(modules = {ExecutorModule.class, MultibindingProducerModule.class})
+@ProductionComponent(
+  modules = {ExecutorModule.class, MultibindingProducerModule.class, MultibindingModule.class}
+)
 interface MultibindingComponent {
   ListenableFuture<Set<String>> strs();
   ListenableFuture<Integer> strCount();

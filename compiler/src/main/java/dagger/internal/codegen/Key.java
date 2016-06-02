@@ -545,5 +545,13 @@ abstract class Key {
       }
       return Optional.absent();
     }
+
+    /**
+     * Optionally extract a {@link Key} for a {@code Map<K, Provider<V>>} if the given key is for
+     * {@code Map<K, Producer<V>>}.
+     */
+    Optional<Key> implicitProviderMapKeyFromProducer(Key possibleMapOfProducerKey) {
+      return maybeRewrapMapValue(possibleMapOfProducerKey, Producer.class, Provider.class);
+    }
   }
 }

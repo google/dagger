@@ -542,7 +542,7 @@ abstract class AbstractComponentWriter {
           switch (contributionBinding.bindingKind()) {
             case SYNTHETIC_MULTIBOUND_MAP:
               BindingType bindingType = contributionBinding.bindingType();
-              MapType mapType = MapType.from(contributionBinding.key().type());
+              MapType mapType = MapType.from(contributionBinding.key());
               return Optional.of(
                   emptyFrameworkMapFactory(
                       frameworkMapFactoryClassName(bindingType),
@@ -586,7 +586,7 @@ abstract class AbstractComponentWriter {
    * bindings.
    */
   private static MemberSelect emptySetFactoryStaticMemberSelect(BindingType bindingType, Key key) {
-    return emptySetProvider(setFactoryClassName(bindingType, key), SetType.from(key.type()));
+    return emptySetProvider(setFactoryClassName(bindingType, key), SetType.from(key));
   }
 
   /**
@@ -602,7 +602,7 @@ abstract class AbstractComponentWriter {
     if (bindingType.equals(BindingType.PROVISION)) {
       return SET_FACTORY;
     } else {
-      SetType setType = SetType.from(key.type());
+      SetType setType = SetType.from(key);
       return setType.elementsAreTypeOf(Produced.class) ? SET_OF_PRODUCED_PRODUCER : SET_PRODUCER;
     }
   }
@@ -618,7 +618,7 @@ abstract class AbstractComponentWriter {
   private static ClassName mapFactoryClassName(ContributionBinding binding) {
     switch (binding.bindingType()) {
       case PRODUCTION:
-        return MapType.from(binding.key().type()).valuesAreTypeOf(Produced.class)
+        return MapType.from(binding.key()).valuesAreTypeOf(Produced.class)
             ? MAP_OF_PRODUCED_PRODUCER : MAP_PRODUCER;
 
       case PROVISION:
@@ -1123,7 +1123,7 @@ abstract class AbstractComponentWriter {
         CodeBlock.builder().add("$T.", setFactoryClassName(binding.bindingType(), binding.key()));
     boolean useRawTypes = useRawType(binding);
     if (!useRawTypes) {
-      SetType setType = SetType.from(binding.key().type());
+      SetType setType = SetType.from(binding.key());
       builder.add(
           "<$T>",
           setType.elementsAreTypeOf(Produced.class)

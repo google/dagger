@@ -484,8 +484,8 @@ abstract class Key {
     private Optional<Key> maybeRewrapMapValue(
         Key possibleMapKey, Class<?> currentWrappingClass, Class<?> newWrappingClass) {
       checkArgument(!currentWrappingClass.equals(newWrappingClass));
-      if (MapType.isMap(possibleMapKey.type())) {
-        MapType mapType = MapType.from(possibleMapKey.type());
+      if (MapType.isMap(possibleMapKey)) {
+        MapType mapType = MapType.from(possibleMapKey);
         if (mapType.valuesAreTypeOf(currentWrappingClass)) {
           TypeElement wrappingElement = getClassElement(newWrappingClass);
           if (wrappingElement == null) {
@@ -509,8 +509,8 @@ abstract class Key {
      * {@code Map<K, V>}.
      */
     private Optional<Key> maybeWrapMapValue(Key possibleMapKey, Class<?> wrappingClass) {
-      if (MapType.isMap(possibleMapKey.type())) {
-        MapType mapType = MapType.from(possibleMapKey.type());
+      if (MapType.isMap(possibleMapKey)) {
+        MapType mapType = MapType.from(possibleMapKey);
         if (!mapType.valuesAreTypeOf(wrappingClass)) {
           TypeElement wrappingElement = getClassElement(wrappingClass);
           if (wrappingElement == null) {

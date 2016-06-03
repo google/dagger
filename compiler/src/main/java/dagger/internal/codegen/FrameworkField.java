@@ -77,10 +77,10 @@ abstract class FrameworkField {
     if (resolvedBindings.isMultibindingContribution()) {
       switch (resolvedBindings.contributionType()) {
         case MAP:
-          return MapType.from(resolvedBindings.key().type())
+          return MapType.from(resolvedBindings.key())
               .unwrappedValueType(resolvedBindings.frameworkClass());
         case SET:
-          return SetType.from((resolvedBindings.key().type())).elementType();
+          return SetType.from(resolvedBindings.key()).elementType();
         default:
           // do nothing
       }

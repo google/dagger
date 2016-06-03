@@ -184,9 +184,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
      */
     static Kind forMultibindingRequest(DependencyRequest request) {
       Key key = request.key();
-      if (SetType.isSet(key.type())) {
+      if (SetType.isSet(key)) {
         return SYNTHETIC_MULTIBOUND_SET;
-      } else if (MapType.isMap(key.type())) {
+      } else if (MapType.isMap(key)) {
         return SYNTHETIC_MULTIBOUND_MAP;
       } else {
         throw new IllegalArgumentException(
@@ -244,9 +244,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   final TypeMirror factoryType() {
     switch (contributionType()) {
       case MAP:
-        return MapType.from(key().type()).unwrappedValueType(frameworkClass());
+        return MapType.from(key()).unwrappedValueType(frameworkClass());
       case SET:
-        return SetType.from(key().type()).elementType();
+        return SetType.from(key()).elementType();
       case SET_VALUES:
       case UNIQUE:
         return key().type();

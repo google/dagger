@@ -7,15 +7,15 @@ Dagger 2 (Components)
 ### Version 2.4 *(2016-04-21)*
   * Adds [`@Binds`](http://google.github.io/dagger/api/latest/dagger/Binds.html) API for delegating
     one binding to another
-  * Adds @IntoSet, @ElementsIntoSet and @IntoMap to replace @Provides(type = ...) and @Produces(type = ...)
-  * Allow injection of Provider<Lazy<Foo>>
-  * Report an error if a @Scope annotation is applied to an @Inject constructor
+  * Adds `@IntoSet`, `@ElementsIntoSet` and `@IntoMap` to replace `@Provides(type = ...)` and `@Produces(type = ...)`
+  * Allow injection of `Provider<Lazy<Foo>>`
+  * Report an error if a `@Scope` annotation is applied to an `@Inject` constructor
   * Remove the ability to set the production executor on a component builder.
   * Ensure that no binding methods are binding framework types.
   * New format of dependency traces in error messages
   * Fixed bug: Exception when a binding in a parent that is used only in a subcomponent depends on a binding in the subcomponent
   * Update to JavaPoet 1.6.1 and Google Java Format 1.0
-    * Fixes NoSuchMethodError from [Issue #356](https://github.com/google/dagger/issues/356)
+    * Fixes `NoSuchMethodError` from [Issue #356](https://github.com/google/dagger/issues/356)
 
 ### Version 2.3 *(2016-04-08)*
   * Adds [`@Reusable`]
@@ -60,8 +60,8 @@ A patch release, most crucially including:
 A maintenance release fixing immediate issues following the Dagger 2.0 release, including:
 
   * Speed up Graph Validation (reduce build times by 10s of seconds on sampled large projects)
-  * Generate correct code for @MapKey annotation types (beta)
-  * Fix to properly emit code for class literal values in @MapKey annotations.
+  * Generate correct code for `@MapKey` annotation types (beta)
+  * Fix to properly emit code for class literal values in `@MapKey` annotations.
   * Fix for injecting component dependencies
   * Fixes to generated code to account for differences in generics handling in ecg vs. javac.
   * Subcomponents can now be abstract classes.

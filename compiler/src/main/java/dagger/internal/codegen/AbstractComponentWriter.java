@@ -33,6 +33,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.DelegateFactory;
 import dagger.internal.MapFactory;
 import dagger.internal.MapProviderFactory;
@@ -109,7 +110,6 @@ import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.STRING;
 import static dagger.internal.codegen.TypeNames.UNSUPPORTED_OPERATION_EXCEPTION;
-import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.requiresAPassedInstance;
@@ -534,7 +534,8 @@ abstract class AbstractComponentWriter {
    * injector.
    */
   private Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
-    switch (resolvedBindings.bindingKey().kind()) {
+    BindingKey bindingKey = resolvedBindings.bindingKey();
+    switch (bindingKey.kind()) {
       case CONTRIBUTION:
         ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
         if (contributionBinding.factoryCreationStrategy().equals(ENUM_INSTANCE)
@@ -553,6 +554,19 @@ abstract class AbstractComponentWriter {
               return Optional.of(
                   emptySetFactoryStaticMemberSelect(
                       contributionBinding.bindingType(), contributionBinding.key()));
+
+            case INJECTION:
+            case PROVISION:
+              if (bindingKey.key().type().getKind().equals(DECLARED)) {
+                ImmutableList<TypeVariableName> typeVariables =
+                    SourceFiles.bindingTypeElementTypeVariableNames(contributionBinding);
+                if (!typeVariables.isEmpty()) {
+                  List<? extends TypeMirror> typeArguments =
+                      ((DeclaredType) bindingKey.key().type()).getTypeArguments();
+                  return Optional.of(MemberSelect.parameterizedFactoryCreateMethod(
+                      generatedClassNameForBinding(contributionBinding), typeArguments));
+                }
+              }
 
             default:
               return Optional.of(
@@ -684,19 +698,6 @@ abstract class AbstractComponentWriter {
               }
               break;
             case INSTANCE:
-              if (memberSelect.staticMember()
-                  && bindingKey.key().type().getKind().equals(DECLARED)
-                  && !((DeclaredType) bindingKey.key().type()).getTypeArguments().isEmpty()) {
-                // If using a parameterized enum type, then we need to store the factory
-                // in a temporary variable, in order to help javac be able to infer
-                // the generics of the Factory.create methods.
-                TypeName factoryType = providerOf(TypeName.get(requestType.getReturnType()));
-                interfaceMethod
-                    .addStatement("$T factory = $L", factoryType, memberSelectCodeBlock)
-                    .addStatement("return factory.get()");
-                break;
-              }
-              // fall through in the else case.
             case LAZY:
             case PRODUCED:
             case PRODUCER:

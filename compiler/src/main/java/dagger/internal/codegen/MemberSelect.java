@@ -21,6 +21,7 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.MembersInjector;
 import dagger.internal.MapProviderFactory;
 import dagger.producers.internal.MapOfProducerProducer;
+import java.util.List;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 
@@ -29,6 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toCodeBlocks;
+import static dagger.internal.codegen.TypeNames.FACTORY;
 import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCER_PRODUCER;
 import static dagger.internal.codegen.TypeNames.MAP_PROVIDER_FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
@@ -72,6 +74,19 @@ abstract class MemberSelect {
    */
   static MemberSelect staticMethod(ClassName owningClass, CodeBlock methodInvocationCodeBlock) {
     return new StaticMethod(owningClass, methodInvocationCodeBlock);
+  }
+
+  /**
+   * Returns a {@link MemberSelect} for the instance of a {@code create()} method on a factory.
+   * This only applies for factories that do not have any dependencies.
+   */
+  static MemberSelect parameterizedFactoryCreateMethod(
+      ClassName owningClass, List<? extends TypeMirror> parameters) {
+    return new ParameterizedStaticMethod(
+        owningClass,
+        ImmutableList.<TypeMirror>copyOf(parameters),
+        CodeBlock.of("create()"),
+        FACTORY);
   }
 
   private static final class StaticMethod extends MemberSelect {

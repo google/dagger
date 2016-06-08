@@ -102,6 +102,16 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   }
 
   /**
+   * Returns the single binding.
+   *
+   * @throws IllegalStateException if there is not exactly one element in {@link #bindings()},
+   *     which will never happen for contributions in valid graphs
+   */
+  Binding binding() {
+    return getOnlyElement(bindings());
+  }
+
+  /**
    * All bindings for {@link #bindingKey()}, together with the component in which they were
    * resolved.
    */

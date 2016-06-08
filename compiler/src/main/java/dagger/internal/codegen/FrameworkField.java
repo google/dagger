@@ -95,7 +95,7 @@ abstract class FrameworkField {
         return BINDING_ELEMENT_NAME.visit(binding.bindingElement(), binding);
       }
     }
-    return KeyVariableNamer.INSTANCE.apply(resolvedBindings.key());
+    return BindingVariableNamer.name(resolvedBindings.binding());
   }
 
   private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =

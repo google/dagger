@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,7 +45,6 @@ import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import javax.inject.Provider;
 
 /**
@@ -58,11 +56,9 @@ final class TypeNames {
   static final ClassName ASYNC_FUNCTION = ClassName.get(AsyncFunction.class);
   static final ClassName DELEGATE_FACTORY = ClassName.get(DelegateFactory.class);
   static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
-  static final ClassName EXECUTOR = ClassName.get(Executor.class);
   static final ClassName FACTORY = ClassName.get(Factory.class);
   static final ClassName FUTURES = ClassName.get(Futures.class);
   static final ClassName ILLEGAL_STATE_EXCEPTION = ClassName.get(IllegalStateException.class);
-  static final ClassName IMMUTABLE_SET = ClassName.get(ImmutableSet.class);
   static final ClassName INSTANCE_FACTORY = ClassName.get(InstanceFactory.class);
   static final ClassName LIST = ClassName.get(List.class);
   static final ClassName LISTENABLE_FUTURE = ClassName.get(ListenableFuture.class);

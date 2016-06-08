@@ -40,8 +40,8 @@ import static dagger.internal.DaggerCollections.presizedList;
  * @since 2.0
  */
 public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produced<T>>> {
-  public static <T> Producer<Set<T>> create() {
-    return SetProducer.create();
+  public static <T> Producer<Set<T>> empty() {
+    return SetProducer.empty();
   }
 
   /**

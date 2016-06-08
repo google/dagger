@@ -28,10 +28,5 @@ final class AnnotationSpecs {
     return AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", value).build();
   }
 
-  static final AnnotationSpec PROVIDES_SET_VALUES =
-      AnnotationSpec.builder(Provides.class)
-          .addMember("type", "$T.SET_VALUES", ClassName.get(Provides.Type.class))
-          .build();
-
   private AnnotationSpecs() {}
 }

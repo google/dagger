@@ -70,16 +70,6 @@ abstract class BindingDeclaration implements HasKey {
     return contributingModule().transform(AS_DECLARED_TYPE);
   }
 
-  /**
-   * The type of {@link #bindingElement()}, considered as a member of {@link #contributingModule()}
-   * if it is present.
-   */
-  TypeMirror declaredType(Types types) {
-    return contributingModuleType().isPresent()
-        ? types.asMemberOf(contributingModuleType().get(), bindingElement())
-        : bindingElement().asType();
-  }
-
   static final Function<BindingDeclaration, Set<TypeElement>> CONTRIBUTING_MODULE =
       new Function<BindingDeclaration, Set<TypeElement>>() {
         @Override

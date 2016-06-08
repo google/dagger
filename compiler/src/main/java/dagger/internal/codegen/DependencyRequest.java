@@ -199,19 +199,6 @@ abstract class DependencyRequest {
       return builder.build();
     }
 
-    ImmutableSet<DependencyRequest> forRequiredVariables(
-        List<? extends VariableElement> variables) {
-      return FluentIterable.from(variables)
-          .transform(
-              new Function<VariableElement, DependencyRequest>() {
-                @Override
-                public DependencyRequest apply(VariableElement input) {
-                  return forRequiredVariable(input);
-                }
-              })
-          .toSet();
-    }
-
     /**
      * Creates a implicit {@link DependencyRequest} for {@code mapOfFactoryKey}, which will be used
      * to satisfy the {@code mapOfValueRequest}.
@@ -480,13 +467,6 @@ abstract class DependencyRequest {
             }
           },
           null);
-    }
-
-    static DeclaredType getEnclosingType(Element element) {
-      while (!MoreElements.isType(element)) {
-        element = element.getEnclosingElement();
-      }
-      return MoreTypes.asDeclared(element.asType());
     }
   }
 }

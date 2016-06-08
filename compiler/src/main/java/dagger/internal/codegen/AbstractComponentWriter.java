@@ -593,10 +593,8 @@ abstract class AbstractComponentWriter {
   }
 
   /**
-   * A static member select for an empty set factory. Calls
-   * {@link SetFactory#create(javax.inject.Provider...)},
-   * {@link SetProducer#create(dagger.producers.Producer...)}, or
-   * {@link SetOfProducedProducer#create(dagger.producers.Producer...)}, depending on the set
+   * A static member select for an empty set factory. Calls {@link SetFactory#empty()}, {@link
+   * SetProducer#empty()}, or {@link SetOfProducedProducer#empty()}, depending on the set
    * bindings.
    */
   private static MemberSelect emptySetFactoryStaticMemberSelect(BindingType bindingType, Key key) {

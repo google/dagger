@@ -21,7 +21,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/** A {@link Validator} for methods in {@link Multibindings @Multibindings} interfaces. */
+/** A validator for methods in {@link Multibindings @Multibindings} interfaces. */
 final class MultibindingsMethodValidator extends MultibindsMethodValidator {
 
   MultibindingsMethodValidator(Elements elements, Types types) {

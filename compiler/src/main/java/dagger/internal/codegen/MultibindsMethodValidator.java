@@ -40,12 +40,12 @@ import static dagger.internal.codegen.FrameworkTypes.isFrameworkType;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
 
 /**
- * A {@link Validator} for {@link Multibinds @Multibinds} methods or methods in
- * {@link Multibindings @Multibindings} interfaces.
+ * A validator for {@link Multibinds @Multibinds} methods or methods in {@link Multibindings
+ * @Multibindings} interfaces.
  */
 class MultibindsMethodValidator extends BindingMethodValidator {
 
-  /** Creates a {@link Validator} for {@link Multibinds @Multibinds} methods. */
+  /** Creates a validator for {@link Multibinds @Multibinds} methods. */
   MultibindsMethodValidator(Elements elements, Types types) {
     this(elements, types, Multibinds.class, ImmutableSet.of(Module.class, ProducerModule.class));
   }

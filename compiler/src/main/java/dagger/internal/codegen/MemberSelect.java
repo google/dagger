@@ -145,7 +145,7 @@ abstract class MemberSelect {
     return new ParameterizedStaticMethod(
         setFactoryType,
         ImmutableList.of(setType.elementType()),
-        CodeBlock.of("create()"),
+        CodeBlock.of("empty()"),
         SET);
   }
 

@@ -258,14 +258,6 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   }
 
   /**
-   * {@code true} if this is a {@linkplain ContributionBinding#isSyntheticBinding() synthetic}
-   * contribution.
-   */
-  boolean isSyntheticContribution() {
-    return contributionBindings().size() == 1 && contributionBinding().isSyntheticBinding();
-  }
-
-  /**
    * Returns the single contribution binding.
    *
    * @throws IllegalStateException if there is not exactly one element in

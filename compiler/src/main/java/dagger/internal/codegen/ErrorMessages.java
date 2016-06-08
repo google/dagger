@@ -205,9 +205,6 @@ final class ErrorMessages {
   static final String MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT =
       "Modules with type parameters must be abstract";
 
-  static final String REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT =
-      "%s is listed as a module, but is an abstract class or interface";
-
   static final String REFERENCED_MODULE_NOT_ANNOTATED =
       "%s is listed as a module, but is not annotated with %s";
 
@@ -268,10 +265,6 @@ final class ErrorMessages {
         MoreTypes.asTypeElement(type).getSimpleName());
   }
 
-  static final String PRODUCTION_COMPONENT_SCOPE =
-      "Production components may not declare any @Scope other than @ProductionScope; they are "
-          + "automatically scoped with @ProductionScope if no scope is applied.";
-
   static final String MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION =
       "This type supports members injection but cannot be implicitly provided.";
 
@@ -282,9 +275,6 @@ final class ErrorMessages {
       "Type parameters must be bounded for members injection. %s required by %s, via:\n%s";
 
   static final String CONTAINS_DEPENDENCY_CYCLE_FORMAT = "%s.%s() contains a dependency cycle:\n%s";
-
-  static final String MALFORMED_MODULE_METHOD_FORMAT =
-      "Cannot generated a graph because method %s on module %s was malformed";
 
   static String nullableToNonNullable(String typeName, String bindingString) {
     return String.format(
@@ -450,7 +440,7 @@ final class ErrorMessages {
     }
   }
 
-  static final class ProductionComponentBuilderMessages extends ComponentBuilderMessages {
+  private static final class ProductionComponentBuilderMessages extends ComponentBuilderMessages {
     @SuppressWarnings("hiding")
     static final ProductionComponentBuilderMessages INSTANCE =
         new ProductionComponentBuilderMessages();
@@ -461,7 +451,8 @@ final class ErrorMessages {
     }
   }
 
-  static final class ProductionSubcomponentBuilderMessages extends ComponentBuilderMessages {
+  private static final class ProductionSubcomponentBuilderMessages
+      extends ComponentBuilderMessages {
     @SuppressWarnings("hiding")
     static final ProductionSubcomponentBuilderMessages INSTANCE =
         new ProductionSubcomponentBuilderMessages();
@@ -470,14 +461,6 @@ final class ErrorMessages {
     protected String process(String s) {
       return s.replaceAll("component", "production subcomponent")
           .replaceAll("Component", "ProductionSubcomponent");
-    }
-
-    String builderMethodRequiresNoArgs() {
-      return "Methods returning a @ProductionSubcomponent.Builder must have no arguments";
-    }
-
-    String moreThanOneRefToSubcomponent() {
-      return "Only one method can create a given production subcomponent. %s is created by: %s";
     }
   }
 
@@ -498,7 +481,7 @@ final class ErrorMessages {
 
     private MultibindingsMessages() {}
   }
-  
+
   /**
    * Error messages related to {@link Multibinds @Multibinds} methods and methods in
    * {@link Multibindings} interfaces.

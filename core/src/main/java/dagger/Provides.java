@@ -60,6 +60,8 @@ public @interface Provides {
      * method as parameters. The {@code Set<T>} produced from the accumulation of values will be
      * immutable.
      *
+     * @see <a href="http://google.github.io/dagger/multibindings#set-multibindings">Set
+     *      multibinding</a>
      */
     SET,
 
@@ -68,6 +70,8 @@ public @interface Provides {
      * contributed to the set. An example use is to provide a default empty set binding, which is
      * otherwise not possible using {@link #SET}.
      *
+     * @see <a href="http://google.github.io/dagger/multibindings#set-multibindings">Set
+     *      multibinding</a>
      */
     SET_VALUES,
 
@@ -77,6 +81,8 @@ public @interface Provides {
      * is contributed to the map as a key/value pair. The {@code Map<K, Provider<V>>} produced from
      * the accumulation of values will be immutable.
      *
+     * @see <a href="http://google.github.io/dagger/multibindings#map-multibindings">Map
+     *      multibinding</a>
      */
     @Beta
     MAP;

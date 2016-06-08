@@ -21,6 +21,33 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.METHOD;
 
+/**
+ * Annotates abstract module methods that declare multibindings.
+ *
+ * <p>You can declare that a multibound set or map is bound by annotating an abstract module method
+ * that returns the set or map you want to declare with {@code @Multibinds}.
+ *
+ * <p>You do not have to use {@code @Multibinds} for sets or maps that have at least one
+ * contribution, but you do have to declare them if they may be empty.
+ *
+ * <pre><code>
+ *   {@literal @Module} abstract class MyModule {
+ *     {@literal @Multibinds Set<Foo> aSet();}
+ *     {@literal @Multibinds @MyQualifier Set<Foo> aQualifiedSet();}
+ *     {@literal @Multibinds Map<String, Foo> aMap();}
+ *     {@literal @Multibinds @MyQualifier Map<String, Foo> aQualifiedMap();}
+ *
+ *     {@literal @Provides}
+ *     {@literal static Object usesMultibindings(Set<Foo> set, @MyQualifier Map<String, Foo> map}) {
+ *       return …
+ *     }
+ *   }</code></pre>
+ *
+ * <p>A given set or map multibinding can be declared any number of times without error. Dagger
+ * never implements calls any {@code @Multibinds} methods.
+ *
+ * @see <a href="http://google.github.io/dagger/multibindings">Multibindings</a>
+ */
 @Documented
 @Target(METHOD)
 @Beta

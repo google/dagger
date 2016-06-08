@@ -224,7 +224,6 @@ abstract class MembersInjectionBinding extends Binding {
           Optional.<TypeElement>absent(),
           key,
           dependencies,
-          findBindingPackage(key),
           hasNonDefaultTypeParameters(typeElement, key.type(), types)
               ? Optional.of(
                   forInjectedType(

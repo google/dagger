@@ -33,6 +33,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.DelegateFactory;
 import dagger.internal.MapFactory;
 import dagger.internal.MapProviderFactory;
@@ -109,7 +110,6 @@ import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.STRING;
 import static dagger.internal.codegen.TypeNames.UNSUPPORTED_OPERATION_EXCEPTION;
-import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.requiresAPassedInstance;
@@ -516,7 +516,14 @@ abstract class AbstractComponentWriter {
   }
 
   private boolean useRawType(ResolvedBindings resolvedBindings) {
-    Optional<String> bindingPackage = resolvedBindings.bindingPackage();
+    return useRawType(resolvedBindings.bindingPackage());
+  }
+
+  private boolean useRawType(Binding binding) {
+    return useRawType(binding.bindingPackage());
+  }
+
+  private boolean useRawType(Optional<String> bindingPackage) {
     return bindingPackage.isPresent() && !bindingPackage.get().equals(name.packageName());
   }
 
@@ -527,7 +534,8 @@ abstract class AbstractComponentWriter {
    * injector.
    */
   private Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
-    switch (resolvedBindings.bindingKey().kind()) {
+    BindingKey bindingKey = resolvedBindings.bindingKey();
+    switch (bindingKey.kind()) {
       case CONTRIBUTION:
         ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
         if (contributionBinding.factoryCreationStrategy().equals(ENUM_INSTANCE)
@@ -535,7 +543,7 @@ abstract class AbstractComponentWriter {
           switch (contributionBinding.bindingKind()) {
             case SYNTHETIC_MULTIBOUND_MAP:
               BindingType bindingType = contributionBinding.bindingType();
-              MapType mapType = MapType.from(contributionBinding.key().type());
+              MapType mapType = MapType.from(contributionBinding.key());
               return Optional.of(
                   emptyFrameworkMapFactory(
                       frameworkMapFactoryClassName(bindingType),
@@ -546,6 +554,19 @@ abstract class AbstractComponentWriter {
               return Optional.of(
                   emptySetFactoryStaticMemberSelect(
                       contributionBinding.bindingType(), contributionBinding.key()));
+
+            case INJECTION:
+            case PROVISION:
+              if (bindingKey.key().type().getKind().equals(DECLARED)) {
+                ImmutableList<TypeVariableName> typeVariables =
+                    SourceFiles.bindingTypeElementTypeVariableNames(contributionBinding);
+                if (!typeVariables.isEmpty()) {
+                  List<? extends TypeMirror> typeArguments =
+                      ((DeclaredType) bindingKey.key().type()).getTypeArguments();
+                  return Optional.of(MemberSelect.parameterizedFactoryCreateMethod(
+                      generatedClassNameForBinding(contributionBinding), typeArguments));
+                }
+              }
 
             default:
               return Optional.of(
@@ -572,14 +593,12 @@ abstract class AbstractComponentWriter {
   }
 
   /**
-   * A static member select for an empty set factory. Calls
-   * {@link SetFactory#create(javax.inject.Provider...)},
-   * {@link SetProducer#create(dagger.producers.Producer...)}, or
-   * {@link SetOfProducedProducer#create(dagger.producers.Producer...)}, depending on the set
+   * A static member select for an empty set factory. Calls {@link SetFactory#empty()}, {@link
+   * SetProducer#empty()}, or {@link SetOfProducedProducer#empty()}, depending on the set
    * bindings.
    */
   private static MemberSelect emptySetFactoryStaticMemberSelect(BindingType bindingType, Key key) {
-    return emptySetProvider(setFactoryClassName(bindingType, key), SetType.from(key.type()));
+    return emptySetProvider(setFactoryClassName(bindingType, key), SetType.from(key));
   }
 
   /**
@@ -595,7 +614,7 @@ abstract class AbstractComponentWriter {
     if (bindingType.equals(BindingType.PROVISION)) {
       return SET_FACTORY;
     } else {
-      SetType setType = SetType.from(key.type());
+      SetType setType = SetType.from(key);
       return setType.elementsAreTypeOf(Produced.class) ? SET_OF_PRODUCED_PRODUCER : SET_PRODUCER;
     }
   }
@@ -611,7 +630,7 @@ abstract class AbstractComponentWriter {
   private static ClassName mapFactoryClassName(ContributionBinding binding) {
     switch (binding.bindingType()) {
       case PRODUCTION:
-        return MapType.from(binding.key().type()).valuesAreTypeOf(Produced.class)
+        return MapType.from(binding.key()).valuesAreTypeOf(Produced.class)
             ? MAP_OF_PRODUCED_PRODUCER : MAP_PRODUCER;
 
       case PROVISION:
@@ -677,19 +696,6 @@ abstract class AbstractComponentWriter {
               }
               break;
             case INSTANCE:
-              if (memberSelect.staticMember()
-                  && bindingKey.key().type().getKind().equals(DECLARED)
-                  && !((DeclaredType) bindingKey.key().type()).getTypeArguments().isEmpty()) {
-                // If using a parameterized enum type, then we need to store the factory
-                // in a temporary variable, in order to help javac be able to infer
-                // the generics of the Factory.create methods.
-                TypeName factoryType = providerOf(TypeName.get(requestType.getReturnType()));
-                interfaceMethod
-                    .addStatement("$T factory = $L", factoryType, memberSelectCodeBlock)
-                    .addStatement("return factory.get()");
-                break;
-              }
-              // fall through in the else case.
             case LAZY:
             case PRODUCED:
             case PRODUCER:
@@ -778,6 +784,8 @@ abstract class AbstractComponentWriter {
 
   private Optional<CodeBlock> initializeContributionBinding(BindingKey bindingKey) {
     ContributionBinding binding = graph.resolvedBindings().get(bindingKey).contributionBinding();
+    /* We have some duplication in the branches below b/c initializeDeferredDependencies must be
+     * called before we get the code block that initializes the member. */
     switch (binding.factoryCreationStrategy()) {
       case DELEGATE:
         CodeBlock delegatingCodeBlock = CodeBlock.of(
@@ -787,11 +795,14 @@ abstract class AbstractComponentWriter {
                 Iterables.getOnlyElement(binding.dependencies()).bindingKey())
                     .getExpressionFor(name));
         return Optional.of(
-            initializeMember(
-                bindingKey,
-                binding.scope().isPresent()
-                    ? decorateForScope(delegatingCodeBlock, binding.scope().get())
-                    : delegatingCodeBlock));
+            CodeBlocks.concat(
+                ImmutableList.of(
+                    initializeDeferredDependencies(binding),
+                    initializeMember(
+                        bindingKey,
+                        binding.scope().isPresent()
+                            ? decorateForScope(delegatingCodeBlock, binding.scope().get())
+                            : delegatingCodeBlock))));
       case ENUM_INSTANCE:
         if (!binding.scope().isPresent()) {
           return Optional.absent();
@@ -1084,8 +1095,7 @@ abstract class AbstractComponentWriter {
   /**
    * The expressions that represent factory arguments for the dependencies of a binding.
    */
-  private ImmutableList<CodeBlock> getDependencyArguments(
-      Binding binding) {
+  private ImmutableList<CodeBlock> getDependencyArguments(Binding binding) {
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (FrameworkDependency frameworkDependency : frameworkDependenciesForBinding(binding)) {
       parameters.add(getDependencyArgument(frameworkDependency));
@@ -1108,10 +1118,49 @@ abstract class AbstractComponentWriter {
   }
 
   private CodeBlock initializeFactoryForSetMultibinding(ContributionBinding binding) {
-    return CodeBlock.of(
-        "$T.create($L)",
-        setFactoryClassName(binding.bindingType(), binding.key()),
-        makeParametersCodeBlock(getDependencyArguments(binding)));
+    CodeBlock.Builder builder =
+        CodeBlock.builder().add("$T.", setFactoryClassName(binding.bindingType(), binding.key()));
+    boolean useRawTypes = useRawType(binding);
+    if (!useRawTypes) {
+      SetType setType = SetType.from(binding.key());
+      builder.add(
+          "<$T>",
+          setType.elementsAreTypeOf(Produced.class)
+              ? setType.unwrappedElementType(Produced.class)
+              : setType.elementType());
+    }
+    int individualProviders = 0;
+    int setProviders = 0;
+    CodeBlock.Builder builderMethodCalls = CodeBlock.builder();
+    for (FrameworkDependency frameworkDependency : frameworkDependenciesForBinding(binding)) {
+      ContributionType contributionType =
+          graph.resolvedBindings().get(frameworkDependency.bindingKey()).contributionType();
+      String methodName;
+      String methodNameSuffix = frameworkDependency.frameworkClass().getSimpleName();
+      switch (contributionType) {
+        case SET:
+          individualProviders++;
+          methodName = "add" + methodNameSuffix;
+          break;
+        case SET_VALUES:
+          setProviders++;
+          methodName = "addCollection" + methodNameSuffix;
+          break;
+        default:
+          throw new AssertionError(frameworkDependency + " is not a set multibinding");
+      }
+
+      builderMethodCalls.add(
+          ".$L($L)",
+          methodName,
+          potentiallyCast(
+              useRawTypes,
+              frameworkDependency.frameworkClass(),
+              getDependencyArgument(frameworkDependency)));
+    }
+    builder.add("builder($L, $L)", individualProviders, setProviders);
+    builder.add(builderMethodCalls.build());
+    return builder.add(".build()").build();
   }
 
   private CodeBlock initializeFactoryForMapMultibinding(ContributionBinding binding) {
@@ -1120,28 +1169,43 @@ abstract class AbstractComponentWriter {
 
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     MapType mapType = MapType.from(binding.key().type());
-    codeBlocks.add(
-        CodeBlock.of(
-            "$T.<$T, $T>builder($L)",
-            frameworkMapFactoryClassName(binding.bindingType()),
-            TypeName.get(mapType.keyType()),
-            TypeName.get(
-                mapType.unwrappedValueType(binding.bindingType().frameworkClass())),
-            frameworkDependencies.size()));
+    CodeBlock.Builder builderCall =
+        CodeBlock.builder().add("$T.", frameworkMapFactoryClassName(binding.bindingType()));
+    boolean useRawTypes = useRawType(binding);
+    if (!useRawTypes) {
+      builderCall.add("<$T, $T>", TypeName.get(mapType.keyType()),
+          TypeName.get(mapType.unwrappedValueType(binding.bindingType().frameworkClass())));
+    }
+    builderCall.add("builder($L)", frameworkDependencies.size());
+    codeBlocks.add(builderCall.build());
 
     for (FrameworkDependency frameworkDependency : frameworkDependencies) {
       BindingKey bindingKey = frameworkDependency.bindingKey();
       ContributionBinding contributionBinding =
           graph.resolvedBindings().get(bindingKey).contributionBinding();
+      CodeBlock value =
+          potentiallyCast(
+              useRawTypes,
+              frameworkDependency.frameworkClass(),
+              getDependencyArgument(frameworkDependency));
+      if (binding.bindingType().frameworkClass().equals(Producer.class)
+          && frameworkDependency.frameworkClass().equals(Provider.class)) {
+        value = CodeBlock.of("$T.producerFromProvider($L)", PRODUCERS, value);
+      }
       codeBlocks.add(
           CodeBlock.of(
-              ".put($L, $L)",
-              getMapKeyExpression(contributionBinding.bindingElement()),
-              getDependencyArgument(frameworkDependency)));
+              ".put($L, $L)", getMapKeyExpression(contributionBinding.mapKey().get()), value));
     }
     codeBlocks.add(CodeBlock.of(".build()"));
 
     return CodeBlocks.concat(codeBlocks.build());
+  }
+
+  private CodeBlock potentiallyCast(boolean shouldCast, Class<?> classToCast, CodeBlock notCasted) {
+    if (!shouldCast) {
+      return notCasted;
+    }
+    return CodeBlock.of("($T) $L", classToCast, notCasted);
   }
 
   private static String simpleVariableName(TypeElement typeElement) {

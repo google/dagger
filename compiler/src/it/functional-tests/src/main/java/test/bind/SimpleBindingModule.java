@@ -18,6 +18,15 @@ package test.bind;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.inject.Singleton;
 import test.SomeQualifier;
 
@@ -41,4 +50,52 @@ abstract class SimpleBindingModule {
   static Foo<Integer> provideFooOfIntegers() {
     return new Foo<Integer>() {};
   }
+
+  @Provides
+  static Foo<Double> provideFooOfDoubles() {
+    return new Foo<Double>() {};
+  }
+
+  @Binds
+  @IntoSet
+  abstract Foo<? extends Number> bindFooOfIntegersIntoSet(Foo<Integer> fooOfIntegers);
+
+  @Binds
+  @IntoSet
+  abstract Foo<? extends Number> bindFooExtendsNumberIntoSet(Foo<Double> fooOfDoubles);
+
+  @Binds
+  @ElementsIntoSet
+  abstract Set<Object> bindSetOfFooNumbersToObjects(Set<Foo<? extends Number>> setOfFooNumbers);
+
+  @Binds
+  @IntoSet
+  abstract Object bindFooOfStringsIntoSetOfObjects(FooOfStrings impl);
+
+  @Provides
+  static HashSet<String> provideStringHashSet() {
+    return new HashSet<>(Arrays.asList("hash-string1", "hash-string2"));
+  }
+
+  @Provides
+  static TreeSet<CharSequence> provideCharSequenceTreeSet() {
+    return new TreeSet<CharSequence>(Arrays.asList("tree-charSequence1", "tree-charSequence2"));
+  }
+
+  @Provides
+  static Collection<CharSequence> provideCharSequenceCollection() {
+    return Arrays.<CharSequence>asList("list-charSequence");
+  }
+
+  @Binds
+  @ElementsIntoSet
+  abstract Set<CharSequence> bindHashSetOfStrings(HashSet<String> set);
+
+  @Binds
+  @ElementsIntoSet
+  abstract Set<CharSequence> bindTreeSetOfCharSequences(TreeSet<CharSequence> set);
+
+  @Binds
+  @ElementsIntoSet
+  abstract Set<CharSequence> bindCollectionOfCharSequences(Collection<CharSequence> collection);
 }

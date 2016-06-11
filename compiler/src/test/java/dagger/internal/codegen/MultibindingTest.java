@@ -142,17 +142,17 @@ public class MultibindingTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "Multibinding annotations may only be on @Provides or @Produces methods")
+            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
         .onLine(12)
         .and()
         .withErrorContaining(
-            "Multibinding annotations may only be on @Provides or @Produces methods")
+            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
         .onLine(13)
         .and()
         .withErrorContaining(
-            "Multibinding annotations may only be on @Provides or @Produces methods")
+            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
         .onLine(14);
   }

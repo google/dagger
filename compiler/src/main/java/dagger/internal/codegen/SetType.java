@@ -88,6 +88,13 @@ abstract class SetType {
   }
 
   /**
+   * {@code true} if {@code key.type()} is a {@link Set} type.
+   */
+  static boolean isSet(Key key) {
+    return isSet(key.type());
+  }
+
+  /**
    * Returns a {@link SetType} for {@code type}.
    *
    * @throws IllegalArgumentException if {@code type} is not a {@link Set} type
@@ -95,5 +102,14 @@ abstract class SetType {
   static SetType from(TypeMirror type) {
     checkArgument(isSet(type), "%s must be a Set", type);
     return new AutoValue_SetType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
+  }
+
+  /**
+   * Returns a {@link SetType} for {@code key}'s {@link Key#type() type}.
+   *
+   * @throws IllegalArgumentException if {@code key.type()} is not a {@link Set} type
+   */
+  static SetType from(Key key) {
+    return from (key.type());
   }
 }

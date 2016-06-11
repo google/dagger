@@ -29,7 +29,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * is contributed to the map as a key/value pair. The {@code Map<K, Provider<V>>} produced from
  * the accumulation of values will be immutable.
  *
- * @see <a href=google.github.io/dagger/multibindings#map-multibindings>Map multibinding</a>
+ * @see <a href="http://google.github.io/dagger/multibindings#map-multibindings">Map
+ *      multibinding</a>
  */
 @Documented
 @Target(METHOD)

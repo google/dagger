@@ -20,6 +20,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -160,6 +161,18 @@ abstract class DependencyRequest {
    * use a name derived from {@link #requestElement}.
    */
   abstract Optional<String> overriddenVariableName();
+  
+  /** {@code true} if this is a synthetic request, which should not appear in dependency traces. */
+  abstract boolean isSynthetic();
+
+  /** A predicate that passes for synthetic requests. */
+  static final Predicate<DependencyRequest> IS_SYNTHETIC =
+      new Predicate<DependencyRequest>() {
+        @Override
+        public boolean apply(DependencyRequest request) {
+          return request.isSynthetic();
+        }
+      };
 
   /**
    * Factory for {@link DependencyRequest}s.
@@ -186,19 +199,6 @@ abstract class DependencyRequest {
       return builder.build();
     }
 
-    ImmutableSet<DependencyRequest> forRequiredVariables(
-        List<? extends VariableElement> variables) {
-      return FluentIterable.from(variables)
-          .transform(
-              new Function<VariableElement, DependencyRequest>() {
-                @Override
-                public DependencyRequest apply(VariableElement input) {
-                  return forRequiredVariable(input);
-                }
-              })
-          .toSet();
-    }
-
     /**
      * Creates a implicit {@link DependencyRequest} for {@code mapOfFactoryKey}, which will be used
      * to satisfy the {@code mapOfValueRequest}.
@@ -215,7 +215,8 @@ abstract class DependencyRequest {
           mapOfFactoryKey,
           mapOfValueRequest.requestElement(),
           false /* doesn't allow null */,
-          Optional.<String>absent());
+          Optional.<String>absent(),
+          true /* synthetic */);
     }
 
     /**
@@ -233,7 +234,8 @@ abstract class DependencyRequest {
           multibindingContribution.key(),
           request.requestElement(),
           false /* doesn't allow null */,
-          Optional.<String>absent());
+          Optional.<String>absent(),
+          true /* synthetic */);
     }
 
     private Kind multibindingContributionRequestKind(ContributionBinding multibindingContribution) {
@@ -319,7 +321,8 @@ abstract class DependencyRequest {
                 qualifier, Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments())),
             productionMethod,
             false /* doesn't allow null */,
-            Optional.<String>absent());
+            Optional.<String>absent(),
+            false /* not synthetic */);
       } else {
         return newDependencyRequest(productionMethod, type, qualifier, Optional.<String>absent());
       }
@@ -342,7 +345,8 @@ abstract class DependencyRequest {
           keyFactory.forMembersInjectedType(membersInjectedType),
           membersInjectionMethod,
           false /* doesn't allow null */,
-          Optional.<String>absent());
+          Optional.<String>absent(),
+          false /* not synthetic */);
     }
 
     DependencyRequest forMembersInjectedType(DeclaredType type) {
@@ -351,7 +355,8 @@ abstract class DependencyRequest {
           keyFactory.forMembersInjectedType(type),
           type.asElement(),
           false /* doesn't allow null */,
-          Optional.<String>absent());
+          Optional.<String>absent(),
+          false /* not synthetic */);
     }
 
     DependencyRequest forProductionImplementationExecutor() {
@@ -361,7 +366,8 @@ abstract class DependencyRequest {
           key,
           MoreTypes.asElement(key.type()),
           false /* doesn't allow null */,
-          Optional.<String>absent());
+          Optional.<String>absent(),
+          false /* not synthetic */);
     }
 
     DependencyRequest forProductionComponentMonitorProvider() {
@@ -394,11 +400,12 @@ abstract class DependencyRequest {
           keyFactory.forQualifiedType(qualifier, kindAndType.type()),
           requestElement,
           allowsNull,
-          name);
+          name,
+          false /* not synthetic */);
     }
 
     @AutoValue
-    static abstract class KindAndType {
+    abstract static class KindAndType {
       abstract Kind kind();
       abstract TypeMirror type();
 
@@ -460,13 +467,6 @@ abstract class DependencyRequest {
             }
           },
           null);
-    }
-
-    static DeclaredType getEnclosingType(Element element) {
-      while (!MoreElements.isType(element)) {
-        element = element.getEnclosingElement();
-      }
-      return MoreTypes.asDeclared(element.asType());
     }
   }
 }

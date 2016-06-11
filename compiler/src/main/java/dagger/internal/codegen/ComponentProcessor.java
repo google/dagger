@@ -26,6 +26,9 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import static dagger.internal.codegen.ModuleProcessingStep.moduleProcessingStep;
+import static dagger.internal.codegen.ModuleProcessingStep.producerModuleProcessingStep;
+
 /**
  * The annotation processor responsible for generating the classes that drive the Dagger 2.0
  * implementation.
@@ -67,7 +70,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new DependencyRequestFormatter(types, elements);
     KeyFormatter keyFormatter = new KeyFormatter(methodSignatureFormatter);
 
-    InjectValidator injectValidator = new InjectValidator(compilerOptions);
+    InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
+    InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();
     ModuleValidator moduleValidator =
         new ModuleValidator(types, elements, methodSignatureFormatter);
     BuilderValidator builderValidator = new BuilderValidator(elements, types);
@@ -81,14 +85,25 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ProvidesMethodValidator providesMethodValidator = new ProvidesMethodValidator(elements, types);
     ProducesMethodValidator producesMethodValidator = new ProducesMethodValidator(elements, types);
     BindsMethodValidator bindsMethodValidator = new BindsMethodValidator(elements, types);
+    MultibindsMethodValidator multibindsMethodValidator =
+        new MultibindsMethodValidator(elements, types);
+    MultibindingsMethodValidator multibindingsMethodValidator =
+        new MultibindingsMethodValidator(elements, types);
 
     Key.Factory keyFactory = new Key.Factory(types, elements);
 
     MultibindingsValidator multibindingsValidator =
-        new MultibindingsValidator(elements, keyFactory, keyFormatter, methodSignatureFormatter);
+        new MultibindingsValidator(
+            elements,
+            keyFactory,
+            keyFormatter,
+            methodSignatureFormatter,
+            multibindingsMethodValidator);
 
-    this.factoryGenerator = new FactoryGenerator(filer, elements, compilerOptions);
-    this.membersInjectorGenerator = new MembersInjectorGenerator(filer, elements);
+    this.factoryGenerator =
+        new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
+    this.membersInjectorGenerator =
+        new MembersInjectorGenerator(filer, elements, injectValidatorWhenGeneratingCode);
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =
@@ -149,6 +164,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements,
             types,
             compilerOptions,
+            injectValidatorWhenGeneratingCode,
             injectBindingRegistry,
             bindingDeclarationFormatter,
             methodSignatureFormatter,
@@ -163,13 +179,14 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new ProductionExecutorModuleProcessingStep(messager, productionExecutorModuleGenerator),
         new MultibindingsProcessingStep(messager, multibindingsValidator),
         new MultibindingAnnotationsProcessingStep(messager),
-        new ModuleProcessingStep(
+        moduleProcessingStep(
             messager,
             moduleValidator,
-            providesMethodValidator,
             provisionBindingFactory,
+            factoryGenerator,
+            providesMethodValidator,
             bindsMethodValidator,
-            factoryGenerator),
+            multibindsMethodValidator),
         new ComponentProcessingStep(
             ComponentDescriptor.Kind.COMPONENT,
             messager,
@@ -181,13 +198,14 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             componentDescriptorFactory,
             bindingGraphFactory,
             componentGenerator),
-        new ProducerModuleProcessingStep(
+        producerModuleProcessingStep(
             messager,
             moduleValidator,
+            productionBindingFactory,
+            producerFactoryGenerator,
             producesMethodValidator,
             bindsMethodValidator,
-            productionBindingFactory,
-            producerFactoryGenerator),
+            multibindsMethodValidator),
         new ComponentProcessingStep(
             ComponentDescriptor.Kind.PRODUCTION_COMPONENT,
             messager,

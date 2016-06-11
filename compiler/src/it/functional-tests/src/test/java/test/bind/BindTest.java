@@ -15,6 +15,7 @@
  */
 package test.bind;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -23,9 +24,16 @@ import static com.google.common.truth.Truth.assertThat;
 
 @RunWith(JUnit4.class)
 public class BindTest {
+
+  private TestComponent component;
+
+  @Before
+  public void setUp() {
+    component = DaggerTestComponent.create();
+  }
+
   @Test
   public void bindDelegates() {
-    TestComponent component = DaggerTestComponent.create();
     assertThat(component.object()).isInstanceOf(FooOfStrings.class);
     assertThat(component.fooOfStrings()).isInstanceOf(FooOfStrings.class);
     assertThat(component.fooOfObjects()).isInstanceOf(FooOfObjects.class);
@@ -34,8 +42,14 @@ public class BindTest {
 
   @Test
   public void bindWithScope() {
-    TestComponent component = DaggerTestComponent.create();
     assertThat(component.qualifiedFooOfStrings())
         .isSameAs(component.qualifiedFooOfStrings());
+  }
+
+  @Test
+  public void multibindings() {
+    assertThat(component.foosOfNumbers()).hasSize(2);
+    assertThat(component.objects()).hasSize(3);
+    assertThat(component.charSequences()).hasSize(5);
   }
 }

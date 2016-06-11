@@ -105,9 +105,8 @@ final class Scope {
    * <p>It's readable source because it has had common package prefixes removed, e.g.
    * {@code @javax.inject.Singleton} is returned as {@code @Singleton}.
    *
-   * <p>Make sure that the scope is actually {@link #isPresent() present} before calling as it will
-   * throw an {@link IllegalStateException} otherwise. This does not return any annotation values
-   * as according to {@link javax.inject.Scope} scope annotations are not supposed to use them.
+   * This does not return any annotation values as according to {@link javax.inject.Scope} scope
+   * annotations are not supposed to use them.
    */
   public String getReadableSource() {
     return stripCommonTypePrefixes("@" + getQualifiedName());
@@ -115,10 +114,6 @@ final class Scope {
 
   /**
    * Returns the fully qualified name of the annotation type.
-   *
-   * <p>Make sure that the scope is actually {@link #isPresent() present} before calling as it will
-   * throw an {@link IllegalStateException} otherwise. This does not return any annotation values
-   * as according to {@link javax.inject.Scope} scope annotations are not supposed to use them.
    */
   public String getQualifiedName() {
     Preconditions.checkState(annotationMirror != null,

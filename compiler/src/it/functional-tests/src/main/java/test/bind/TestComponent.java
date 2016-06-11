@@ -16,6 +16,7 @@
 package test.bind;
 
 import dagger.Component;
+import java.util.Set;
 import javax.inject.Singleton;
 import test.SomeQualifier;
 
@@ -32,4 +33,10 @@ public interface TestComponent {
   Foo<String> qualifiedFooOfStrings();
 
   Foo<Integer> fooOfIntegers();
+
+  Set<Foo<? extends Number>> foosOfNumbers();
+
+  Set<Object> objects();
+
+  Set<CharSequence> charSequences();
 }

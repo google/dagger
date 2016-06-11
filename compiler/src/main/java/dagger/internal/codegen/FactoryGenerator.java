@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -32,13 +31,10 @@ import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.Factory;
 import dagger.internal.MembersInjectors;
 import dagger.internal.Preconditions;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.Element;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
@@ -53,7 +49,6 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.ENUM_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
-import static dagger.internal.codegen.ContributionType.SET;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
@@ -76,10 +71,16 @@ import static javax.lang.model.element.Modifier.STATIC;
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
 
   private final CompilerOptions compilerOptions;
+  private final InjectValidator injectValidator;
 
-  FactoryGenerator(Filer filer, Elements elements, CompilerOptions compilerOptions) {
+  FactoryGenerator(
+      Filer filer,
+      Elements elements,
+      CompilerOptions compilerOptions,
+      InjectValidator injectValidator) {
     super(filer, elements);
     this.compilerOptions = compilerOptions;
+    this.injectValidator = injectValidator;
   }
 
   @Override
@@ -97,11 +98,12 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkState(!binding.unresolved().isPresent());
 
-    TypeMirror keyType =
-        binding.contributionType().equals(ContributionType.MAP)
-            ? MapType.from(binding.key().type()).unwrappedValueType(Provider.class)
-            : binding.key().type();
-    TypeName providedTypeName = TypeName.get(keyType);
+    if (binding.bindingKind().equals(INJECTION)
+        && !injectValidator.isValidType(binding.factoryType())) {
+      return Optional.absent();
+    }
+
+    TypeName providedTypeName = TypeName.get(binding.factoryType());
     ParameterizedTypeName parameterizedFactoryName = factoryOf(providedTypeName);
     Optional<ParameterizedTypeName> factoryOfRawTypeName = Optional.absent();
     TypeSpec.Builder factoryBuilder;
@@ -235,14 +237,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
           ".$L($L)", binding.bindingElement().getSimpleName(), parametersCodeBlock);
       CodeBlock providesMethodInvocation = providesMethodInvocationBuilder.build();
 
-      if (binding.contributionType().equals(SET)) {
-        TypeName paramTypeName = TypeName.get(
-            MoreTypes.asDeclared(keyType).getTypeArguments().get(0));
-        // TODO(cgruber): only be explicit with the parameter if paramType contains wildcards.
-        getMethodBuilder.addStatement(
-            "return $T.<$T>singleton($L)",
-            Collections.class, paramTypeName, providesMethodInvocation);
-      } else if (binding.nullableType().isPresent()
+      if (binding.nullableType().isPresent()
           || compilerOptions.nullableValidationKind().equals(Diagnostic.Kind.WARNING)) {
         if (binding.nullableType().isPresent()) {
           getMethodBuilder.addAnnotation((ClassName) TypeName.get(binding.nullableType().get()));

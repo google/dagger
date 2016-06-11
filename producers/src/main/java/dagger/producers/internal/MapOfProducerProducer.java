@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.Beta;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -55,7 +54,7 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
   }
 
   @Override
-  public ListenableFuture<Map<K, Producer<V>>> compute(ProducerMonitor unusedMonitor) {
+  public ListenableFuture<Map<K, Producer<V>>> compute() {
     return Futures.<Map<K, Producer<V>>>immediateFuture(contributingMap);
   }
 

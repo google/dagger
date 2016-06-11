@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.Set;
 import javax.inject.Provider;
 
@@ -96,7 +95,7 @@ public final class Producers {
     checkNotNull(provider);
     return new AbstractProducer<T>() {
       @Override
-      protected ListenableFuture<T> compute(ProducerMonitor unusedMonitor) {
+      protected ListenableFuture<T> compute() {
         return Futures.immediateFuture(provider.get());
       }
     };

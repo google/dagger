@@ -18,7 +18,13 @@ package test.multipackage.a;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
+import dagger.multibindings.StringKey;
+import java.util.HashSet;
+import java.util.Set;
+import javax.inject.Inject;
 
 @Module
 public final class AModule {
@@ -27,4 +33,28 @@ public final class AModule {
   static String provideString() {
     return "a";
   }
+
+  @Provides
+  @IntoSet
+  static Inaccessible provideInaccessible(Inaccessible inaccessible) {
+    return inaccessible;
+  }
+
+  @Provides
+  @ElementsIntoSet
+  static Set<Inaccessible> provideSetOfInaccessibles() {
+    return new HashSet<>();
+  }
+
+  @Provides
+  @IntoMap
+  @StringKey("inaccessible")
+  static Inaccessible provideInaccessibleToMap(Inaccessible inaccessible) {
+    return inaccessible;
+  }
+
+  static class Inaccessible {
+    @Inject Inaccessible() {}
+  }
+
 }

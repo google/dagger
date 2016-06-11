@@ -170,5 +170,38 @@ final class Util {
         }
       };
 
+      
+  /**
+   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose
+   * {@linkplain AnnotationMirror#getAnnotationType() annotation type} has the same canonical name
+   * as any of that of {@code annotationClasses}.
+   */
+  // TODO(dpb): Move to MoreElements.
+  static boolean isAnyAnnotationPresent(
+      Element element, Iterable<? extends Class<? extends Annotation>> annotationClasses) {
+    for (Class<? extends Annotation> annotation : annotationClasses) {
+      if (isAnnotationPresent(element, annotation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The elements in {@code elements} that are annotated with an annotation of type
+   * {@code annotation}.
+   */
+  static <E extends Element> FluentIterable<E> elementsWithAnnotation(
+      Iterable<E> elements, final Class<? extends Annotation> annotation) {
+    return FluentIterable.from(elements)
+        .filter(
+            new Predicate<Element>() {
+              @Override
+              public boolean apply(Element element) {
+                return MoreElements.isAnnotationPresent(element, annotation);
+              }
+            });
+  }
+
   private Util() {}
 }

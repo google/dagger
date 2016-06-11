@@ -25,10 +25,7 @@ import javax.inject.Provider;
 import test.sub.ContributionsModule;
 
 @Component(
-  modules = {
-    MultibindingModule.class,
-    ContributionsModule.class
-  },
+  modules = {MultibindingModule.class, MultibindsModule.class, ContributionsModule.class},
   dependencies = MultibindingDependency.class
 )
 interface MultibindingComponent {

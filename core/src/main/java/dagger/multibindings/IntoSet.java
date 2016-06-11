@@ -28,7 +28,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * method as parameters. The {@code Set<T>} produced from the accumulation of values will be
  * immutable.
  *
- * @see <a href=google.github.io/dagger/multibindings#set-multibindings>Set multibinding</a>
+ * @see <a href="http://google.github.io/dagger/multibindings#set-multibindings">Set
+ *      multibinding</a>
  */
 @Documented
 @Target(METHOD)

@@ -72,13 +72,14 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
   /**
    * A string representation of the dependency trace, starting with the
    * {@linkplain DependencyPath#currentDependencyRequest() current request} and ending with the
-   * entry point.
+   * entry point, excluding {@linkplain DependencyRequest#isSynthetic() synthetic} requests.
    */
   String toDependencyTrace(DependencyPath dependencyPath) {
     return Joiner.on('\n')
         .join(
             dependencyPath
-                .nonsyntheticRequests()
+                .requests()
+                .filter(Predicates.not(DependencyRequest.IS_SYNTHETIC))
                 .transform(this)
                 .filter(Predicates.not(Predicates.equalTo("")))
                 .toList()

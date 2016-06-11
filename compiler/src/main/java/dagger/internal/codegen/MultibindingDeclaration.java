@@ -23,11 +23,13 @@ import dagger.Module;
 import dagger.Multibindings;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.multibindings.Multibinds;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -93,10 +95,10 @@ abstract class MultibindingDeclaration extends BindingDeclaration
      * Creates multibinding declarations for each method in a
      * {@link Multibindings @Multibindings}-annotated interface.
      */
-    ImmutableSet<MultibindingDeclaration> forDeclaredInterface(TypeElement interfaceElement) {
+    ImmutableSet<MultibindingDeclaration> forMultibindingsInterface(TypeElement interfaceElement) {
       checkArgument(interfaceElement.getKind().equals(INTERFACE));
       checkArgument(isAnnotationPresent(interfaceElement, Multibindings.class));
-      BindingType bindingType = bindingType(interfaceElement);
+      BindingType bindingType = bindingType(interfaceElement.getEnclosingElement());
       DeclaredType interfaceType = MoreTypes.asDeclared(interfaceElement.asType());
 
       ImmutableSet.Builder<MultibindingDeclaration> declarations = ImmutableSet.builder();
@@ -110,15 +112,26 @@ abstract class MultibindingDeclaration extends BindingDeclaration
       return declarations.build();
     }
 
-    private BindingType bindingType(TypeElement interfaceElement) {
-      if (isAnnotationPresent(interfaceElement.getEnclosingElement(), Module.class)) {
+    /** A multibinding declaration for a {@link Multibinds @Multibinds} method. */
+    MultibindingDeclaration forMultibindsMethod(
+        ExecutableElement moduleMethod, TypeElement moduleElement) {
+      checkArgument(isAnnotationPresent(moduleMethod, Multibinds.class));
+      return forDeclaredMethod(
+          bindingType(moduleElement),
+          moduleMethod,
+          MoreTypes.asExecutable(
+              types.asMemberOf(MoreTypes.asDeclared(moduleElement.asType()), moduleMethod)),
+          moduleElement);
+    }
+
+    private BindingType bindingType(Element moduleElement) {
+      if (isAnnotationPresent(moduleElement, Module.class)) {
         return BindingType.PROVISION;
-      } else if (isAnnotationPresent(
-          interfaceElement.getEnclosingElement(), ProducerModule.class)) {
+      } else if (isAnnotationPresent(moduleElement, ProducerModule.class)) {
         return BindingType.PRODUCTION;
       } else {
         throw new IllegalArgumentException(
-            "Expected " + interfaceElement + " to be nested in a @Module or @ProducerModule");
+            "Expected " + moduleElement + " to be a @Module or @ProducerModule");
       }
     }
 
@@ -126,7 +139,7 @@ abstract class MultibindingDeclaration extends BindingDeclaration
         BindingType bindingType,
         ExecutableElement method,
         ExecutableType methodType,
-        TypeElement interfaceElement) {
+        TypeElement contributingType) {
       TypeMirror returnType = methodType.getReturnType();
       checkArgument(
           SetType.isSet(returnType) || MapType.isMap(returnType),
@@ -134,8 +147,8 @@ abstract class MultibindingDeclaration extends BindingDeclaration
           method);
       return new AutoValue_MultibindingDeclaration(
           method,
-          Optional.of(interfaceElement),
-          keyFactory.forMultibindingsMethod(bindingType, methodType, method),
+          Optional.of(contributingType),
+          keyFactory.forMultibindsMethod(bindingType, methodType, method),
           contributionType(returnType),
           bindingType);
     }

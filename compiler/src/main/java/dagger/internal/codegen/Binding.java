@@ -74,10 +74,8 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
    * Returns the name of the package in which this binding must be managed. E.g.: a binding
    * may reference non-public types.
    */
-  abstract Optional<String> bindingPackage();
-
-  protected static Optional<String> findBindingPackage(Key bindingKey) {
-    Set<String> packages = nonPublicPackageUse(bindingKey.type());
+  final Optional<String> bindingPackage() {
+    Set<String> packages = nonPublicPackageUse(key().type());
     switch (packages.size()) {
       case 0:
         return Optional.absent();

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.inject.Provider;
 
-import static dagger.internal.Collections.newLinkedHashMapWithExpectedSize;
+import static dagger.internal.DaggerCollections.newLinkedHashMapWithExpectedSize;
 import static java.util.Collections.unmodifiableMap;
 
 /**

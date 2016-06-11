@@ -33,6 +33,7 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
@@ -1024,5 +1025,60 @@ public class MembersInjectionTest {
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and().generatesSources(expectedMembersInjector);
+  }
+
+  @Test public void privateNestedClassError() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class InnerClass {",
+        "    @Inject int field;",
+        "  }",
+        "}");
+    assertAbout(javaSource())
+        .that(file)
+        .processedWith(new ComponentProcessor()).failsToCompile()
+        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+  }
+
+  @Test public void privateNestedClassWarning() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class InnerClass {",
+        "    @Inject int field;",
+        "  }",
+        "}");
+    assertAbout(javaSource())
+        .that(file)
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+  }
+
+  @Test public void privateSuperclassIsOkIfNotInjectedInto() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static class BaseClass {}",
+        "",
+        "  static final class DerivedClass extends BaseClass {",
+        "    @Inject int field;",
+        "  }",
+        "}");
+    assertAbout(javaSource())
+        .that(file)
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError();
   }
 }

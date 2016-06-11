@@ -14,6 +14,7 @@
 package test;
 
 import com.google.auto.value.AutoAnnotation;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import dagger.multibindings.ClassKey;
 import dagger.multibindings.StringKey;
@@ -21,25 +22,45 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
 import javax.inject.Provider;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import static com.google.common.truth.Truth.assertThat;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MultibindingTest {
-  private MultibindingComponent multibindingComponent;
 
-  @Before public void setUp() {
-    multibindingComponent = DaggerMultibindingComponent.builder()
-        .multibindingDependency(new MultibindingDependency() {
-          @Override public double doubleDependency() {
-            return 0.0;
+  private static final MultibindingDependency MULTIBINDING_DEPENDENCY =
+      new MultibindingDependency() {
+        @Override
+        public double doubleDependency() {
+          return 0.0;
+        }
+      };
+
+  @Parameters(name = "{0}")
+  public static Iterable<Object[]> parameters() {
+    return ImmutableList.copyOf(
+        new Object[][] {
+          {
+            DaggerMultibindingComponent.builder()
+                .multibindingDependency(MULTIBINDING_DEPENDENCY)
+                .build()
+          },
+          {
+            DaggerMultibindingComponentWithMultibindingsInterface.builder()
+                .multibindingDependency(MULTIBINDING_DEPENDENCY)
+                .build()
           }
-        })
-        .build();
+        });
+  }
+
+  private final MultibindingComponent multibindingComponent;
+
+  public MultibindingTest(MultibindingComponent multibindingComponent) {
+    this.multibindingComponent = multibindingComponent;
   }
 
   @Test public void map() {

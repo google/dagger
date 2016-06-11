@@ -37,6 +37,7 @@ public abstract class AbstractProducer<T> implements Producer<T> {
   private final Provider<ProductionComponentMonitor> monitorProvider;
   @Nullable private final ProducerToken token;
   private volatile ListenableFuture<T> instance = null;
+  protected volatile ProducerMonitor monitor = null;
 
   protected AbstractProducer() {
     this(Monitors.noOpProductionComponentMonitorProvider(), null);
@@ -48,8 +49,11 @@ public abstract class AbstractProducer<T> implements Producer<T> {
     this.token = token;
   }
 
-  /** Computes this producer's future, which is then cached in {@link #get}. */
-  protected abstract ListenableFuture<T> compute(ProducerMonitor monitor);
+  /**
+   * Computes this producer's future, which is then cached in {@link #get}. The {@link #monitor}
+   * will be non-null from the point of this call forward.
+   */
+  protected abstract ListenableFuture<T> compute();
 
   @Override
   public final ListenableFuture<T> get() {
@@ -59,9 +63,9 @@ public abstract class AbstractProducer<T> implements Producer<T> {
       synchronized (this) {
         result = instance;
         if (result == null) {
-          ProducerMonitor monitor = monitorProvider.get().producerMonitorFor(token);
+          monitor = monitorProvider.get().producerMonitorFor(token);
           monitor.requested();
-          instance = result = compute(monitor);
+          instance = result = compute();
           if (result == null) {
             throw new NullPointerException("compute returned null");
           }

@@ -104,6 +104,13 @@ abstract class MapType {
   }
 
   /**
+   * {@code true} if {@code key.type()} is a {@link Map} type.
+   */
+  static boolean isMap(Key key) {
+    return isMap(key.type());
+  }
+
+  /**
    * Returns a {@link MapType} for {@code type}.
    *
    * @throws IllegalArgumentException if {@code type} is not a {@link Map} type
@@ -111,5 +118,14 @@ abstract class MapType {
   static MapType from(TypeMirror type) {
     checkArgument(isMap(type), "%s is not a Map", type);
     return new AutoValue_MapType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
+  }
+
+  /**
+   * Returns a {@link MapType} for {@code key}'s {@link Key#type() type}.
+   *
+   * @throws IllegalArgumentException if {@code key.type()} is not a {@link Map} type
+   */
+  static MapType from(Key key) {
+    return from(key.type());
   }
 }

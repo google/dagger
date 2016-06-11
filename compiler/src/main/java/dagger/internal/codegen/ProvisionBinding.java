@@ -18,10 +18,12 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import javax.inject.Inject;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -38,6 +40,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.FIELD;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -121,9 +125,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<TypeElement>absent(),
           key,
           dependencies,
-          findBindingPackage(key),
           Optional.<DeclaredType>absent(),
           membersInjectionRequest,
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.INJECTION,
           hasNonDefaultTypeParameters(bindingTypeElement, key.type(), types)
               ? Optional.of(forInjectConstructor(constructorElement, Optional.<TypeMirror>absent()))
@@ -167,9 +171,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.of(contributedBy),
           key,
           dependencies,
-          findBindingPackage(key),
           ConfigurationAnnotations.getNullableType(providesMethod),
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(providesMethod)),
           Kind.PROVISION,
           Optional.<ProvisionBinding>absent(),
           scope);
@@ -195,9 +199,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<TypeElement>absent(),
           requestForMapOfValues.key(),
           ImmutableSet.of(requestForMapOfProviders),
-          findBindingPackage(requestForMapOfValues.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(requestForMapOfProviders.requestElement())),
           Kind.SYNTHETIC_MAP,
           Optional.<ProvisionBinding>absent(),
           Scope.uniqueScopeOf(requestForMapOfProviders.requestElement()));
@@ -210,16 +214,16 @@ abstract class ProvisionBinding extends ContributionBinding {
      * <p>Note that these could be set multibindings or map multibindings.
      */
     ProvisionBinding syntheticMultibinding(
-        final DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
+        DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
       return new AutoValue_ProvisionBinding(
           ContributionType.UNIQUE,
           request.requestElement(),
           Optional.<TypeElement>absent(),
           request.key(),
           dependencyRequestFactory.forMultibindingContributions(request, multibindingContributions),
-          findBindingPackage(request.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.forMultibindingRequest(request),
           Optional.<ProvisionBinding>absent(),
           Scope.uniqueScopeOf(request.requestElement()));
@@ -233,9 +237,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<TypeElement>absent(),
           keyFactory.forComponent(componentDefinitionType.asType()),
           ImmutableSet.<DependencyRequest>of(),
-          Optional.<String>absent(),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT,
           Optional.<ProvisionBinding>absent(),
           Optional.<Scope>absent());
@@ -252,9 +256,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<TypeElement>absent(),
           keyFactory.forComponentMethod(componentMethod),
           ImmutableSet.<DependencyRequest>of(),
-          Optional.<String>absent(),
           ConfigurationAnnotations.getNullableType(componentMethod),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT_PROVISION,
           Optional.<ProvisionBinding>absent(),
           scope);
@@ -272,9 +276,9 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<TypeElement>absent(),
           keyFactory.forSubcomponentBuilderMethod(subcomponentBuilderMethod, declaredContainer),
           ImmutableSet.<DependencyRequest>of(),
-          Optional.<String>absent(),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.SUBCOMPONENT_BUILDER,
           Optional.<ProvisionBinding>absent(),
           Optional.<Scope>absent());
@@ -283,14 +287,14 @@ abstract class ProvisionBinding extends ContributionBinding {
     ProvisionBinding delegate(
         DelegateDeclaration delegateDeclaration, ProvisionBinding delegate) {
       return new AutoValue_ProvisionBinding(
-          delegate.contributionType(),
+          delegateDeclaration.contributionType(),
           delegateDeclaration.bindingElement(),
           delegateDeclaration.contributingModule(),
           delegateDeclaration.key(),
           ImmutableSet.of(delegateDeclaration.delegateRequest()),
-          findBindingPackage(delegateDeclaration.key()),
           delegate.nullableType(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.SYNTHETIC_DELEGATE_BINDING,
           Optional.<ProvisionBinding>absent(),
           Scope.uniqueScopeOf(delegateDeclaration.bindingElement()));

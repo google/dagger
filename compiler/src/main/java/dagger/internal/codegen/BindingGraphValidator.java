@@ -84,6 +84,7 @@ import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.SU
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_KIND;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionType.indexByContributionType;
@@ -104,11 +105,13 @@ import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-public class BindingGraphValidator {
+/** Reports errors in the shape of the binding graph. */
+final class BindingGraphValidator {
 
   private final Elements elements;
   private final Types types;
   private final CompilerOptions compilerOptions;
+  private final InjectValidator injectValidator;
   private final InjectBindingRegistry injectBindingRegistry;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
@@ -120,6 +123,7 @@ public class BindingGraphValidator {
       Elements elements,
       Types types,
       CompilerOptions compilerOptions,
+      InjectValidator injectValidator,
       InjectBindingRegistry injectBindingRegistry,
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
@@ -129,6 +133,7 @@ public class BindingGraphValidator {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
+    this.injectValidator = injectValidator;
     this.injectBindingRegistry = injectBindingRegistry;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
@@ -139,7 +144,7 @@ public class BindingGraphValidator {
 
   /** A dependency path from an entry point. */
   static final class DependencyPath {
-    final Deque<ResolvedRequest> requestPath = new ArrayDeque<>();
+    private final Deque<ResolvedRequest> requestPath = new ArrayDeque<>();
     private final LinkedHashMultiset<BindingKey> keyPath = LinkedHashMultiset.create();
     private final Set<DependencyRequest> resolvedRequests = new HashSet<>();
 
@@ -220,12 +225,19 @@ public class BindingGraphValidator {
       return requestPath.size();
     }
 
-    /** The nonsynthetic dependency requests in this path, starting with the entry point. */
-    FluentIterable<DependencyRequest> nonsyntheticRequests() {
-      return FluentIterable.from(requestPath)
-          .filter(Predicates.not(new PreviousBindingWasSynthetic()))
-          .transform(REQUEST_FROM_RESOLVED_REQUEST);
+    /** The dependency requests in this path, starting with the entry point. */
+    FluentIterable<DependencyRequest> requests() {
+      return FluentIterable.from(requestPath).transform(REQUEST_FROM_RESOLVED_REQUEST);
     }
+
+    private static final Function<ResolvedRequest, DependencyRequest>
+        REQUEST_FROM_RESOLVED_REQUEST =
+            new Function<ResolvedRequest, DependencyRequest>() {
+              @Override
+              public DependencyRequest apply(ResolvedRequest resolvedRequest) {
+                return resolvedRequest.request();
+              }
+            };
   }
 
   private final class Validation {
@@ -384,6 +396,17 @@ public class BindingGraphValidator {
           if (resolvedBinding.contributionBindings().size() > 1) {
             reportDuplicateBindings(path);
             return;
+          }
+          ContributionBinding binding =
+              Iterables.getOnlyElement(resolvedBinding.contributionBindings());
+          if (binding.bindingKind().equals(INJECTION)) {
+            TypeMirror type = resolvedBinding.bindingKey().key().type();
+            ValidationReport<TypeElement> report =
+                injectValidator.validateType(MoreTypes.asTypeElement(type));
+            if (!report.isClean()) {
+              reportBuilder.addSubreport(report);
+              return;
+            }
           }
           ContributionBinding contributionBinding = resolvedBinding.contributionBinding();
           if (contributionBinding.bindingType().equals(BindingType.PRODUCTION)
@@ -1287,26 +1310,6 @@ public class BindingGraphValidator {
           resolvedBindings == null
               ? ResolvedBindings.noBindings(bindingKey, graph.componentDescriptor())
               : resolvedBindings);
-    }
-  }
-
-  private static final Function<ResolvedRequest, DependencyRequest> REQUEST_FROM_RESOLVED_REQUEST =
-      new Function<ResolvedRequest, DependencyRequest>() {
-        @Override
-        public DependencyRequest apply(ResolvedRequest resolvedRequest) {
-          return resolvedRequest.request();
-        }
-      };
-
-  private static final class PreviousBindingWasSynthetic implements Predicate<ResolvedRequest> {
-    private ResolvedBindings previousBinding;
-
-    @Override
-    public boolean apply(ResolvedRequest resolvedRequest) {
-      boolean previousBindingWasSynthetic =
-          previousBinding != null && previousBinding.isSyntheticContribution();
-      previousBinding = resolvedRequest.binding();
-      return previousBindingWasSynthetic;
     }
   }
 }

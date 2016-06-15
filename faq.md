@@ -73,9 +73,8 @@ final class HttpServletRequestModule {
 }
 ```
 
+<!-- References -->
 
 [`@Binds`]: http://google.github.io/dagger/api/latest/dagger/Binds.html
 [`@Provides`]: http://google.github.io/dagger/api/latest/dagger/Provides.html
-
-
 

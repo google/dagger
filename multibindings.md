@@ -447,8 +447,7 @@ class ChildModule {
 }
 ```
 
-<!-- references & footnotes -->
-
+<!-- References -->
 
 [`@AutoAnnotation`]: https://github.com/google/auto/blob/master/value/src/main/java/com/google/auto/value/AutoAnnotation.java
 [`dagger.mapkeys`]: http://google.github.io/dagger/api/latest/dagger/mapkeys/package-summary.html
@@ -457,6 +456,4 @@ class ChildModule {
 [`@IntoSet`]: http://google.github.io/dagger/api/latest/dagger/multibindings/IntoSet.html
 [`@MapKey`]: http://google.github.io/dagger/api/latest/dagger/MapKey.html
 [`@Multibinds`]: http://google.github.io/dagger/api/latest/dagger/multibindings/Multibinds.html
-
-
 

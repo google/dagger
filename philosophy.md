@@ -32,4 +32,6 @@ should strive to be applicable in any environment in which source is compiled.
       * GWT
       * j2objc
 
+<!-- References -->
+
 [auto-value-generate-api]: https://docs.google.com/document/d/18lJIcrcyv6WFPo-yt6PmlaHbcEswOEEiHmJ4UarYoCE/edit

@@ -529,7 +529,6 @@ limitations under the License.
 
 <!-- References -->
 
-
 [Android Application]: http://developer.android.com/reference/android/app/Application.html
 [Annotation Processor]: http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
@@ -556,7 +555,4 @@ limitations under the License.
 [Subcomponent]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
 [Subcomponent.Builder]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
 [+Gregory Kick]: https://google.com/+GregoryKick/
-
-
-
 

@@ -249,7 +249,8 @@ Then your production configuration will use the real modules, and the testing
 configuration the fake modules, as described
 [above](#separate-component-configurations).
 
-<!-- Reference links -->
+
+<!-- References -->
 
 [cohesive]: https://en.wikipedia.org/wiki/Cohesion_(computer_science)
 [fakes]: http://googletesting.blogspot.com/2013/07/testing-on-toilet-know-your-test-doubles.html

@@ -315,9 +315,10 @@ latency of futures) will be available to export to many endpoints.
 
 While a graph is running, its current state will be able to be dumped.
 
-[Dagger 2]: http://google.github.io/dagger/
+<!-- References -->
 
 [Component]: http://google.github.io/dagger/api/latest/dagger/Component.html
+[Dagger 2]: http://google.github.io/dagger/
 [ListenableFuture]: http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html
 [Module]: http://google.github.io/dagger/api/latest/dagger/Module.html
 [Produced]: http://google.github.io/dagger/api/latest/dagger/producers/Produced.html

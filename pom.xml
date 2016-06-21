@@ -205,6 +205,31 @@
         <configuration>
           <windowtitle>Dagger Dependency Injection ${project.version} API</windowtitle>
           <doctitle>Dagger Dependency Injection ${project.version} API</doctitle>
+          <links>
+            <link>http://docs.oracle.com/javaee/7/api</link>
+          </links>
+          <groups>
+            <group>
+              <title>Dagger Packages</title>
+              <packages>dagger</packages>
+            </group>
+            <group>
+              <title>Dagger Producers</title>
+              <packages>dagger.producers</packages>
+            </group>
+            <group>
+              <title>Intrenal APIs (for Generated Code)</title>
+              <packages>dagger.internal:dagger.producers.internal</packages>
+            </group>
+            <group>
+              <title>Compiler APIs</title>
+              <packages>dagger.internal.codegen*</packages>
+            </group>
+            <group>
+              <title>Examples</title>
+              <packages>coffee*:com.example*</packages>
+            </group>
+          </groups>
         </configuration>
       </plugin>
 
@@ -246,6 +271,24 @@
         <module>examples</module>
         <module>producers</module>
       </modules>
+    </profile>
+    <profile>
+      <id>terse-javadocs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <doctitle>Dagger Dependency Injection ${project.version} Public API</doctitle>
+              <sourceFileIncludes>
+                <sourceFileInclude>dagger/*.java</sourceFileInclude>
+                <sourceFileInclude>dagger/internal/Beta.java</sourceFileInclude>
+                <sourceFileInclude>dagger/producers/*.java</sourceFileInclude>
+              </sourceFileIncludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

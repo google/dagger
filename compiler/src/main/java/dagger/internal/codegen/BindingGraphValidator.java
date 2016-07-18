@@ -82,6 +82,7 @@ import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescrip
 import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.PRODUCTION_SUBCOMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.SUBCOMPONENT;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
+import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_DELEGATE_BINDING;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
@@ -436,6 +437,10 @@ final class BindingGraphValidator {
                 inlineSyntheticNondelegateContributions(resolvedBinding).contributionBindings();
             validateMapKeySet(path, multibindings);
             validateMapKeyAnnotationTypes(path, multibindings);
+          }
+          // Check the root, exposed dependency to make sure it's not marked with @Internal.
+          if (path.size() == 1) {
+            validateExposedDependencyIsNotInternal(resolvedBinding);
           }
           break;
         case MEMBERS_INJECTION:
@@ -944,6 +949,20 @@ final class BindingGraphValidator {
         }
         reportBuilder.addError(
             message.toString(), componentType, subject.componentDescriptor().componentAnnotation());
+      }
+    }
+
+    private void validateExposedDependencyIsNotInternal(ResolvedBindings resolvedBindings) {
+      if (resolvedBindings.bindingKey().kind().equals(BindingKey.Kind.CONTRIBUTION)) {
+        ContributionBinding contributionBinding = (ContributionBinding) resolvedBindings.binding();
+        if (contributionBinding.bindingKind().equals(PROVISION)) {
+          ProvisionBinding provisionBinding = (ProvisionBinding) contributionBinding;
+          if (provisionBinding.internal()) {
+            TypeElement componentType = subject.componentDescriptor().componentDefinitionType();
+            reportBuilder.addError(String.format(ErrorMessages.EXPOSING_INTERNAL_DEPENDNECY,
+                    provisionBinding.bindingElement().toString()), componentType);
+          }
+        }
       }
     }
 

@@ -198,6 +198,9 @@ final class ErrorMessages {
   static final String BINDING_METHOD_WITH_SAME_NAME =
       "Cannot have more than one @%s method with the same name in a single module";
 
+  static final String EXPOSING_INTERNAL_DEPENDNECY =
+      "%s is marked as @Internal and should not be exposed on a component.";
+
   static final String INCOMPATIBLE_MODULE_METHODS =
       "A @%1$s may not contain both non-static @%2$s methods and abstract @Binds or @Multibinds "
           + "declarations";

@@ -22,6 +22,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import dagger.Internal;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -67,6 +68,8 @@ abstract class ProvisionBinding extends ContributionBinding {
 
   @Override
   abstract Optional<Scope> scope();
+
+  abstract boolean internal();
 
   static final class Factory {
     private final Elements elements;
@@ -133,7 +136,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           hasNonDefaultTypeParameters(bindingTypeElement, key.type(), types)
               ? Optional.of(forInjectConstructor(constructorElement, Optional.<TypeMirror>absent()))
               : Optional.<ProvisionBinding>absent(),
-          scope);
+          scope,
+          false);
     }
 
     private static final ImmutableSet<ElementKind> MEMBER_KINDS =
@@ -166,6 +170,9 @@ abstract class ProvisionBinding extends ContributionBinding {
               providesMethod.getParameters(),
               resolvedMethod.getParameterTypes());
       Optional<Scope> scope = Scope.uniqueScopeOf(providesMethod);
+
+      boolean internal = providesMethod.getAnnotation(Internal.class) != null;
+
       return new AutoValue_ProvisionBinding(
           ContributionType.fromBindingMethod(providesMethod),
           providesMethod,
@@ -177,7 +184,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           wrapOptionalInEquivalence(getMapKey(providesMethod)),
           Kind.PROVISION,
           Optional.<ProvisionBinding>absent(),
-          scope);
+          scope,
+          internal);
     }
 
     /**
@@ -205,7 +213,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           wrapOptionalInEquivalence(getMapKey(requestForMapOfProviders.requestElement())),
           Kind.SYNTHETIC_MAP,
           Optional.<ProvisionBinding>absent(),
-          Scope.uniqueScopeOf(requestForMapOfProviders.requestElement()));
+          Scope.uniqueScopeOf(requestForMapOfProviders.requestElement()),
+          false);
     }
 
     /**
@@ -227,7 +236,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.forMultibindingRequest(request),
           Optional.<ProvisionBinding>absent(),
-          Scope.uniqueScopeOf(request.requestElement()));
+          Scope.uniqueScopeOf(request.requestElement()),
+          false);
     }
 
     ProvisionBinding forComponent(TypeElement componentDefinitionType) {
@@ -243,7 +253,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT,
           Optional.<ProvisionBinding>absent(),
-          Optional.<Scope>absent());
+          Optional.<Scope>absent(),
+          false);
     }
 
     ProvisionBinding forComponentMethod(ExecutableElement componentMethod) {
@@ -262,7 +273,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT_PROVISION,
           Optional.<ProvisionBinding>absent(),
-          scope);
+          scope,
+          false);
     }
 
     ProvisionBinding forSubcomponentBuilderMethod(
@@ -282,7 +294,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.SUBCOMPONENT_BUILDER,
           Optional.<ProvisionBinding>absent(),
-          Optional.<Scope>absent());
+          Optional.<Scope>absent(),
+          false);
     }
 
     ProvisionBinding delegate(
@@ -299,7 +312,8 @@ abstract class ProvisionBinding extends ContributionBinding {
           delegateDeclaration.wrappedMapKey(),
           Kind.SYNTHETIC_DELEGATE_BINDING,
           Optional.<ProvisionBinding>absent(),
-          Scope.uniqueScopeOf(delegateDeclaration.bindingElement()));
+          Scope.uniqueScopeOf(delegateDeclaration.bindingElement()),
+          delegate.internal());
     }
   }
 }

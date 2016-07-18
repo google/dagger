@@ -28,6 +28,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.Internal;
 import dagger.internal.Factory;
 import dagger.internal.MembersInjectors;
 import dagger.internal.Preconditions;
@@ -174,6 +175,9 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         if (binding.factoryCreationStrategy() != ENUM_INSTANCE
             || binding.bindingKind() == INJECTION) {
           createMethodBuilder.addTypeVariables(typeParameters);
+        }
+        if (binding.internal()) {
+          createMethodBuilder.addAnnotation(Internal.class);
         }
         List<ParameterSpec> params =
             constructorBuilder.isPresent()

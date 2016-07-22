@@ -62,12 +62,12 @@ provides an `HttpServletRequest` and binds `ServletRequest` might look like:
 final class HttpServletRequestModule {
   @Module
   interface Declarations {
-    @Binds ServletRequest bindServletRequest(HttpServletRequet httpRequest);
+    @Binds ServletRequest bindServletRequest(HttpServletRequest httpRequest);
   }
 
-  private final HttpServletRequet httpRequest;
+  private final HttpServletRequest httpRequest;
 
-  HttpServletRequestModule(HttpServletRequet httpRequest) {
+  HttpServletRequestModule(HttpServletRequest httpRequest) {
     this.httpRequest = httpRequest;
   }
 }

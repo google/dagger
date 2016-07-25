@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -27,9 +28,12 @@ import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleElementVisitor6;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
@@ -53,7 +57,7 @@ final class Util {
     boolean foundInstanceMethod = false;
     for (ExecutableElement method : methods) {
       if (method.getModifiers().contains(ABSTRACT) && !isAnnotationPresent(method, Binds.class)) {
-        /* We found an abstract method that isn't a @Bind method.  That automatically means that
+        /* We found an abstract method that isn't a @Binds method.  That automatically means that
          * a user will have to provide an instance because we don't know which subclass to use. */
         return true;
       } else if (!method.getModifiers().contains(STATIC)
@@ -138,6 +142,65 @@ final class Util {
         return MoreTypes.isTypeOf(annotation, input.getAnnotationType());
       }
     };
+  }
+
+  /** A function that returns the input as a {@link DeclaredType}. */
+  static final Function<TypeElement, DeclaredType> AS_DECLARED_TYPE =
+      new Function<TypeElement, DeclaredType>() {
+        @Override
+        public DeclaredType apply(TypeElement typeElement) {
+          return MoreTypes.asDeclared(typeElement.asType());
+        }
+      };
+
+  /**
+   * A visitor that returns the input or the closest enclosing element that is a
+   * {@link TypeElement}.
+   */
+  static final ElementVisitor<TypeElement, Void> ENCLOSING_TYPE_ELEMENT =
+      new SimpleElementVisitor6<TypeElement, Void>() {
+        @Override
+        protected TypeElement defaultAction(Element e, Void p) {
+          return visit(e.getEnclosingElement());
+        }
+
+        @Override
+        public TypeElement visitType(TypeElement e, Void p) {
+          return e;
+        }
+      };
+
+      
+  /**
+   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose
+   * {@linkplain AnnotationMirror#getAnnotationType() annotation type} has the same canonical name
+   * as any of that of {@code annotationClasses}.
+   */
+  // TODO(dpb): Move to MoreElements.
+  static boolean isAnyAnnotationPresent(
+      Element element, Iterable<? extends Class<? extends Annotation>> annotationClasses) {
+    for (Class<? extends Annotation> annotation : annotationClasses) {
+      if (isAnnotationPresent(element, annotation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The elements in {@code elements} that are annotated with an annotation of type
+   * {@code annotation}.
+   */
+  static <E extends Element> FluentIterable<E> elementsWithAnnotation(
+      Iterable<E> elements, final Class<? extends Annotation> annotation) {
+    return FluentIterable.from(elements)
+        .filter(
+            new Predicate<Element>() {
+              @Override
+              public boolean apply(Element element) {
+                return MoreElements.isAnnotationPresent(element, annotation);
+              }
+            });
   }
 
   private Util() {}

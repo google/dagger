@@ -5,7 +5,7 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_PULL_REQUEST" == "false" ] && \
    [ "$TRAVIS_BRANCH" == "master" ]; then
   echo -e "Publishing javadoc...\n"
-  mvn javadoc:aggregate -P!examples
+  mvn javadoc:aggregate -P!examples -DexcludePackageNames=*.internal
   TARGET="$(pwd)/target"
 
   cd $HOME

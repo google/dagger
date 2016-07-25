@@ -16,5 +16,5 @@
 package test.subcomponent;
 
 class NeedsAnInterface {
-  NeedsAnInterface(AnInterface anInterface) {}
+  NeedsAnInterface(@SuppressWarnings("unused") AnInterface anInterface) {}
 }

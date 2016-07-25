@@ -43,7 +43,11 @@ public class MethodSignatureFormatterTest {
     static class InnerClass {
       @Foo(bar = String.class)
       @Singleton
-      String foo(@SuppressWarnings("unused") int a, ImmutableList<Boolean> blah) { return "foo"; }
+      String foo(
+          @SuppressWarnings("unused") int a,
+          @SuppressWarnings("unused") ImmutableList<Boolean> blah) {
+        return "foo";
+      }
     }
   }
 

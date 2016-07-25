@@ -18,30 +18,29 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
+import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
 import dagger.internal.codegen.ContributionType.HasContributionType;
-import dagger.internal.codegen.Key.HasKey;
-import dagger.internal.codegen.SourceElement.HasSourceElement;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.util.Types;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.ContributionType.UNIQUE;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 
 /**
- * The declaration for a delegate binding established by a {@link Bind} method.
+ * The declaration for a delegate binding established by a {@link Binds} method.
  */
 @AutoValue
-abstract class DelegateDeclaration implements HasKey, HasSourceElement, HasContributionType {
+abstract class DelegateDeclaration extends BindingDeclaration implements HasContributionType {
   abstract DependencyRequest delegateRequest();
 
-  @Override
-  public ContributionType contributionType() {
-    return UNIQUE;
-  }
+  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
 
   static final class Factory {
     private final Types types;
@@ -58,16 +57,20 @@ abstract class DelegateDeclaration implements HasKey, HasSourceElement, HasContr
     DelegateDeclaration create(
         ExecutableElement bindsMethod, TypeElement contributingElement) {
       checkArgument(MoreElements.isAnnotationPresent(bindsMethod, Binds.class));
-      SourceElement sourceElement = SourceElement.forElement(bindsMethod, contributingElement);
       ExecutableType resolvedMethod =
-          MoreTypes.asExecutable(sourceElement.asMemberOfContributingType(types));
+          MoreTypes.asExecutable(
+              types.asMemberOf(MoreTypes.asDeclared(contributingElement.asType()), bindsMethod));
       DependencyRequest delegateRequest =
           dependencyRequestFactory.forRequiredResolvedVariable(
-              MoreTypes.asDeclared(contributingElement.asType()),
               Iterables.getOnlyElement(bindsMethod.getParameters()),
               Iterables.getOnlyElement(resolvedMethod.getParameterTypes()));
       return new AutoValue_DelegateDeclaration(
-          keyFactory.forBindsMethod(sourceElement), sourceElement, delegateRequest);
+          ContributionType.fromBindingMethod(bindsMethod),
+          keyFactory.forBindsMethod(bindsMethod, resolvedMethod),
+          bindsMethod,
+          Optional.of(contributingElement),
+          delegateRequest,
+          wrapOptionalInEquivalence(getMapKey(bindsMethod)));
     }
   }
 }

@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -476,5 +477,46 @@ public class MapKeyProcessorTest {
         .compilesWithoutError()
         .and()
         .generatesSources(generatedComponent);
+  }
+
+  @Test
+  public void mapKeyWithDefaultValue() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.MapModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @BoolKey int provideFalseValue() {",
+            "    return -1;",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @BoolKey(true) int provideTrueValue() {",
+            "    return 1;",
+            "  }",
+            "}");
+    JavaFileObject mapKey =
+        JavaFileObjects.forSourceLines(
+            "test.BoolKey",
+            "package test;",
+            "",
+            "import dagger.MapKey;",
+            "",
+            "@MapKey",
+            "@interface BoolKey {",
+            "  boolean value() default false;",
+            "}");
+    assertThat(module, mapKey)
+        .processedWith(new ComponentProcessor(), new AutoAnnotationProcessor())
+        .compilesWithoutError();
   }
 }

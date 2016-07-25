@@ -13,11 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package test;
 
-import javax.inject.Inject;
+import dagger.Component;
+import dagger.Multibindings;
+import test.sub.ContributionsModule;
 
-final class FooOfStrings implements Foo<String> {
-  @Inject
-  FooOfStrings() {}
-}
+/**
+ * A component used to test multibindings that use {@link Multibindings @Multibindings}-annotated
+ * nested interfaces to declare multibindings.
+ */
+@Component(
+  modules = {
+    MultibindingModule.class,
+    MultibindingsInterfaceModule.class,
+    ContributionsModule.class
+  },
+  dependencies = MultibindingDependency.class
+)
+interface MultibindingComponentWithMultibindingsInterface extends MultibindingComponent {}

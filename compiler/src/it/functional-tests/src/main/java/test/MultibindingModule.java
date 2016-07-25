@@ -16,41 +16,36 @@
 package test;
 
 import dagger.Module;
-import dagger.Multibindings;
 import dagger.Provides;
 import dagger.multibindings.ClassKey;
+import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 import dagger.multibindings.LongKey;
 import dagger.multibindings.StringKey;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import javax.inject.Named;
 import javax.inject.Provider;
-
-import static dagger.Provides.Type.MAP;
-import static dagger.Provides.Type.SET;
-import static dagger.Provides.Type.SET_VALUES;
 
 @Module
 class MultibindingModule {
   @Provides
   @IntoMap
   @StringKey("foo")
-  static String provideFooKey(double doubleDependency) {
+  static String provideFooKey(@SuppressWarnings("unused") double doubleDependency) {
     return "foo value";
   }
 
-  @Provides(type = MAP)
+  @Provides
+  @IntoMap
   @StringKey("foo @Provides(type)")
-  static String provideFooProvidesTypeKey(double doubleDependency) {
+  static String provideFooProvidesTypeKey(@SuppressWarnings("unused") double doubleDependency) {
     return "foo @Provides(type) value";
   }
 
@@ -64,7 +59,7 @@ class MultibindingModule {
   @Provides
   @IntoMap
   @StringKey("foo")
-  static String[] provideFooArrayValue(double doubleDependency) {
+  static String[] provideFooArrayValue(@SuppressWarnings("unused") double doubleDependency) {
     return new String[] {"foo1", "foo2"};
   }
 
@@ -87,12 +82,14 @@ class MultibindingModule {
     return 6;
   }
 
-  @Provides(type = SET)
+  @Provides
+  @IntoSet
   static int provideIntoSetWithProvidesType() {
     return -100;
   }
 
-  @Provides(type = SET_VALUES)
+  @Provides
+  @ElementsIntoSet
   static Set<Integer> provideElementsIntoSetWithProvidesType() {
     Set<Integer> set = new HashSet<>();
     set.add(-101);
@@ -253,30 +250,5 @@ class MultibindingModule {
   @StringKey("key")
   static CharSequence qualifiedMapContribution() {
     return "qualified foo value";
-  }
-
-  interface EmptiesSupertype {
-    Set<Object> emptySet();
-
-    Map<String, Object> emptyMap();
-
-    Set<CharSequence> maybeEmptySet();
-
-    Map<String, CharSequence> maybeEmptyMap();
-  }
-
-  @Multibindings
-  interface Empties extends EmptiesSupertype {
-    @Named("complexQualifier")
-    Set<Object> emptyQualifiedSet();
-
-    @Named("complexQualifier")
-    Map<String, Object> emptyQualifiedMap();
-
-    @Named("complexQualifier")
-    Set<CharSequence> maybeEmptyQualifiedSet();
-
-    @Named("complexQualifier")
-    Map<String, CharSequence> maybeEmptyQualifiedMap();
   }
 }

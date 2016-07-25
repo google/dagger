@@ -26,10 +26,12 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.ErrorMessages.ABSTRACT_INJECT_METHOD;
+import static dagger.internal.codegen.ErrorMessages.CHECKED_EXCEPTIONS_ON_CONSTRUCTORS;
 import static dagger.internal.codegen.ErrorMessages.FINAL_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.GENERIC_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS;
 import static dagger.internal.codegen.ErrorMessages.INJECT_CONSTRUCTOR_ON_INNER_CLASS;
+import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.ErrorMessages.INJECT_ON_PRIVATE_CONSTRUCTOR;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_INJECT_CONSTRUCTORS;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_QUALIFIERS;
@@ -508,6 +510,114 @@ public final class InjectConstructorFactoryGeneratorTest {
         .processedWith(new ComponentProcessor()).failsToCompile()
         .withErrorContaining(QUALIFIER_ON_INJECT_CONSTRUCTOR).in(file).onLine(7)
         .and().withErrorContaining(QUALIFIER_ON_INJECT_CONSTRUCTOR).in(file).onLine(8);
+  }
+
+  @Test public void injectConstructorWithCheckedExceptionsError() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.CheckedExceptionClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class CheckedExceptionClass {",
+        "  @Inject CheckedExceptionClass() throws Exception {}",
+        "}");
+    assertAbout(javaSources()).that(ImmutableList.of(file))
+        .processedWith(new ComponentProcessor()).failsToCompile()
+        .withErrorContaining(CHECKED_EXCEPTIONS_ON_CONSTRUCTORS).in(file).onLine(6);
+  }
+
+  @Test public void injectConstructorWithCheckedExceptionsWarning() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.CheckedExceptionClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class CheckedExceptionClass {",
+        "  @Inject CheckedExceptionClass() throws Exception {}",
+        "}");
+    assertAbout(javaSources()).that(ImmutableList.of(file))
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .withWarningContaining(CHECKED_EXCEPTIONS_ON_CONSTRUCTORS).in(file).onLine(6);
+  }
+
+  @Test public void privateInjectClassError() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class InnerClass {",
+        "    @Inject InnerClass() {}",
+        "  }",
+        "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(file))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(7);
+  }
+
+  @Test public void privateInjectClassWarning() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class InnerClass {",
+        "    @Inject InnerClass() {}",
+        "  }",
+        "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(file))
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(7);
+  }
+
+  @Test public void nestedInPrivateInjectClassError() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class MiddleClass {",
+        "    static final class InnerClass {",
+        "      @Inject InnerClass() {}",
+        "    }",
+        "  }",
+        "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(file))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(8);
+  }
+
+  @Test public void nestedInPrivateInjectClassWarning() {
+    JavaFileObject file = JavaFileObjects.forSourceLines("test.OuterClass",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "final class OuterClass {",
+        "  private static final class MiddleClass {",
+        "    static final class InnerClass {",
+        "      @Inject InnerClass() {}",
+        "    }",
+        "  }",
+        "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(file))
+        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(8);
   }
 
   @Test public void finalInjectField() {

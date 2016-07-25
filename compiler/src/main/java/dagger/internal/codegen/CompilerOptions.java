@@ -34,6 +34,7 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind nullableValidationKind();
   abstract Diagnostic.Kind privateMemberValidationKind();
   abstract Diagnostic.Kind staticMemberValidationKind();
+  abstract boolean ignorePrivateAndStaticInjectionForComponent();
   abstract ValidationType scopeCycleValidationType();
 
   static Builder builder() {
@@ -50,6 +51,9 @@ abstract class CompilerOptions {
             privateMemberValidationType(processingEnv).diagnosticKind().get())
         .staticMemberValidationKind(
             staticMemberValidationType(processingEnv).diagnosticKind().get())
+        .ignorePrivateAndStaticInjectionForComponent(
+            ignorePrivateAndStaticInjectionForComponent(processingEnv)
+                .equals(FeatureStatus.DISABLED))
         .scopeCycleValidationType(scopeValidationType(processingEnv))
         .build();
   }
@@ -61,6 +65,8 @@ abstract class CompilerOptions {
     Builder nullableValidationKind(Diagnostic.Kind kind);
     Builder privateMemberValidationKind(Diagnostic.Kind kind);
     Builder staticMemberValidationKind(Diagnostic.Kind kind);
+    Builder ignorePrivateAndStaticInjectionForComponent(
+        boolean ignorePrivateAndStaticInjectionForComponent);
     Builder scopeCycleValidationType(ValidationType type);
     CompilerOptions build();
   }
@@ -76,12 +82,23 @@ abstract class CompilerOptions {
 
   static final String STATIC_MEMBER_VALIDATION_TYPE_KEY = "dagger.staticMemberValidation";
 
+  /**
+   * If true, Dagger will generate factories and components even if some members-injected types
+   * have private or static {@code @Inject}-annotated members.
+   *
+   * <p>This defaults to false, and should only ever be enabled by the TCK tests. Disabling this
+   * validation could lead to generating code that does not compile.
+   */
+  static final String IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT =
+      "dagger.ignorePrivateAndStaticInjectionForComponent";
+
   static final ImmutableSet<String> SUPPORTED_OPTIONS = ImmutableSet.of(
         WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
         DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
         NULLABLE_VALIDATION_KEY,
         PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
-        STATIC_MEMBER_VALIDATION_TYPE_KEY);
+        STATIC_MEMBER_VALIDATION_TYPE_KEY,
+        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
 
   private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
     return valueOf(
@@ -121,6 +138,15 @@ abstract class CompilerOptions {
         STATIC_MEMBER_VALIDATION_TYPE_KEY,
         ValidationType.ERROR,
         EnumSet.of(ValidationType.ERROR, ValidationType.WARNING));
+  }
+
+  private static FeatureStatus ignorePrivateAndStaticInjectionForComponent(
+      ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
   }
 
   private static <T extends Enum<T>> T valueOf(

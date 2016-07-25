@@ -70,6 +70,6 @@ public final class BadExecutorTest {
 
   @Test
   public void doNotRejectComponentDepMethod() throws Exception {
-    assertThat(component.doubleDep().get()).isEqualTo(42.0);
+    assertThat(component.doubleDep().get()).isWithin(0).of(42.0);
   }
 }

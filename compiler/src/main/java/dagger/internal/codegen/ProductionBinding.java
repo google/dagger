@@ -17,12 +17,15 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.producers.Producer;
 import java.util.Set;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -32,6 +35,8 @@ import javax.lang.model.util.Types;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.MapKeys.getMapKey;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 /**
@@ -90,13 +95,12 @@ abstract class ProductionBinding extends ContributionBinding {
     ProductionBinding forProducesMethod(
         ExecutableElement producesMethod, TypeElement contributedBy) {
       checkArgument(producesMethod.getKind().equals(METHOD));
-      SourceElement sourceElement = SourceElement.forElement(producesMethod, contributedBy);
-      Key key = keyFactory.forProducesMethod(sourceElement);
+      Key key = keyFactory.forProducesMethod(producesMethod, contributedBy);
       ExecutableType resolvedMethod =
-          MoreTypes.asExecutable(sourceElement.asMemberOfContributingType(types));
+          MoreTypes.asExecutable(
+              types.asMemberOf(MoreTypes.asDeclared(contributedBy.asType()), producesMethod));
       ImmutableSet<DependencyRequest> dependencies =
           dependencyRequestFactory.forRequiredResolvedVariables(
-              MoreTypes.asDeclared(contributedBy.asType()),
               producesMethod.getParameters(),
               resolvedMethod.getParameterTypes());
       DependencyRequest executorRequest =
@@ -108,12 +112,13 @@ abstract class ProductionBinding extends ContributionBinding {
           : Kind.IMMEDIATE;
       return new AutoValue_ProductionBinding(
           ContributionType.fromBindingMethod(producesMethod),
-          sourceElement,
+          producesMethod,
+          Optional.of(contributedBy),
           key,
           dependencies,
-          findBindingPackage(key),
           Optional.<DeclaredType>absent(), // TODO(beder): Add nullability checking with Java 8.
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(producesMethod)),
           kind,
           ImmutableList.copyOf(producesMethod.getThrownTypes()),
           Optional.of(executorRequest),
@@ -138,12 +143,13 @@ abstract class ProductionBinding extends ContributionBinding {
               requestForMapOfValuesOrProduced, mapOfProducersKey.get());
       return new AutoValue_ProductionBinding(
           ContributionType.UNIQUE,
-          SourceElement.forElement(requestForMapOfProducers.requestElement()),
+          requestForMapOfProducers.requestElement(),
+          Optional.<TypeElement>absent(),
           requestForMapOfValuesOrProduced.key(),
           ImmutableSet.of(requestForMapOfProducers),
-          findBindingPackage(requestForMapOfValuesOrProduced.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          wrapOptionalInEquivalence(getMapKey(requestForMapOfProducers.requestElement())),
           Kind.SYNTHETIC_MAP,
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),
@@ -157,15 +163,16 @@ abstract class ProductionBinding extends ContributionBinding {
      * <p>Note that these could be set multibindings or map multibindings.
      */
     ProductionBinding syntheticMultibinding(
-        final DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
+        DependencyRequest request, Iterable<ContributionBinding> multibindingContributions) {
       return new AutoValue_ProductionBinding(
           ContributionType.UNIQUE,
-          SourceElement.forElement(request.requestElement()),
+          request.requestElement(),
+          Optional.<TypeElement>absent(),
           request.key(),
           dependencyRequestFactory.forMultibindingContributions(request, multibindingContributions),
-          findBindingPackage(request.key()),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.forMultibindingRequest(request),
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),
@@ -179,12 +186,13 @@ abstract class ProductionBinding extends ContributionBinding {
       checkArgument(MoreTypes.isTypeOf(ListenableFuture.class, componentMethod.getReturnType()));
       return new AutoValue_ProductionBinding(
           ContributionType.UNIQUE,
-          SourceElement.forElement(componentMethod),
+          componentMethod,
+          Optional.<TypeElement>absent(),
           keyFactory.forProductionComponentMethod(componentMethod),
           ImmutableSet.<DependencyRequest>of(),
-          Optional.<String>absent(),
           Optional.<DeclaredType>absent(),
           Optional.<DependencyRequest>absent(),
+          Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           Kind.COMPONENT_PRODUCTION,
           ImmutableList.copyOf(componentMethod.getThrownTypes()),
           Optional.<DependencyRequest>absent(),
@@ -193,14 +201,16 @@ abstract class ProductionBinding extends ContributionBinding {
 
     ProductionBinding delegate(
         DelegateDeclaration delegateDeclaration, ProductionBinding delegateBinding) {
+      Key key = keyFactory.forDelegateBinding(delegateDeclaration, Producer.class);
       return new AutoValue_ProductionBinding(
-          delegateBinding.contributionType(),
-          delegateDeclaration.sourceElement(),
-          delegateDeclaration.key(),
+          delegateDeclaration.contributionType(),
+          delegateDeclaration.bindingElement(),
+          delegateDeclaration.contributingModule(),
+          key,
           ImmutableSet.of(delegateDeclaration.delegateRequest()),
-          findBindingPackage(delegateDeclaration.key()),
           delegateBinding.nullableType(),
           Optional.<DependencyRequest>absent(),
+          delegateDeclaration.wrappedMapKey(),
           Kind.SYNTHETIC_DELEGATE_BINDING,
           ImmutableList.<TypeMirror>of(),
           Optional.<DependencyRequest>absent(),

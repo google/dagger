@@ -81,6 +81,8 @@ public abstract class ProducerMonitor {
    *
    * <p>When multiple monitors are installed, the order that each monitor will call this method is
    * unspecified, but will remain consistent throughout the course of the execution of a component.
+   *
+   * <p>This implementation is a no-op.
    */
   public void requested() {}
 
@@ -89,6 +91,8 @@ public abstract class ProducerMonitor {
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.
+   *
+   * <p>This implementation is a no-op.
    */
   public void methodStarting() {}
 
@@ -98,6 +102,8 @@ public abstract class ProducerMonitor {
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.
+   *
+   * <p>This implementation is a no-op.
    */
   public void methodFinished() {}
 
@@ -106,16 +112,20 @@ public abstract class ProducerMonitor {
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.
+   *
+   * <p>This implementation is a no-op.
    */
-  public void succeeded(Object o) {}
+  public void succeeded(@SuppressWarnings("unused") Object value) {}
 
   /**
    * Called when the producer's future has failed with an exception.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.
+   *
+   * <p>This implementation is a no-op.
    */
-  public void failed(Throwable t) {}
+  public void failed(@SuppressWarnings("unused") Throwable t) {}
 
   /**
    * Adds this monitor's completion methods as a callback to the future. This is only intended to be

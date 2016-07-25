@@ -17,6 +17,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -30,9 +31,14 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static dagger.internal.codegen.Accessibility.isElementAccessibleFromOwnPackage;
 import static dagger.internal.codegen.ErrorMessages.ABSTRACT_INJECT_METHOD;
+import static dagger.internal.codegen.ErrorMessages.CHECKED_EXCEPTIONS_ON_CONSTRUCTORS;
 import static dagger.internal.codegen.ErrorMessages.FINAL_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.GENERIC_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS;
@@ -55,6 +61,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
+import static javax.lang.model.type.TypeKind.DECLARED;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link Inject}-annotated elements and the types
@@ -64,10 +71,34 @@ import static javax.lang.model.element.Modifier.STATIC;
  * @since 2.0
  */
 final class InjectValidator {
-  private CompilerOptions compilerOptions;
+  private final Types types;
+  private final Elements elements;
+  private final CompilerOptions compilerOptions;
+  private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
 
-  InjectValidator(CompilerOptions compilerOptions) {
+  InjectValidator(Types types, Elements elements, CompilerOptions compilerOptions) {
+    this(types, elements, compilerOptions, Optional.<Diagnostic.Kind>absent());
+  }
+
+  private InjectValidator(
+      Types types,
+      Elements elements,
+      CompilerOptions compilerOptions,
+      Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind) {
+    this.types = types;
+    this.elements = elements;
     this.compilerOptions = compilerOptions;
+    this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
+  }
+
+  /**
+   * Returns a new validator that performs the same validation as this one, but is strict about
+   * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support.
+   */
+  InjectValidator whenGeneratingCode() {
+    return compilerOptions.ignorePrivateAndStaticInjectionForComponent()
+        ? new InjectValidator(types, elements, compilerOptions, Optional.of(Diagnostic.Kind.ERROR))
+        : this;
   }
 
   ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
@@ -97,12 +128,22 @@ final class InjectValidator {
       }
     }
 
+    if (throwsCheckedExceptions(constructorElement)) {
+      builder.addItem(
+          CHECKED_EXCEPTIONS_ON_CONSTRUCTORS,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          constructorElement);
+    }
+
     TypeElement enclosingElement =
         MoreElements.asType(constructorElement.getEnclosingElement());
     Set<Modifier> typeModifiers = enclosingElement.getModifiers();
 
-    if (typeModifiers.contains(PRIVATE)) {
-      builder.addError(INJECT_INTO_PRIVATE_CLASS, constructorElement);
+    if (!Accessibility.isElementAccessibleFromOwnPackage(enclosingElement)) {
+      builder.addItem(
+          INJECT_INTO_PRIVATE_CLASS,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          constructorElement);
     }
 
     if (typeModifiers.contains(ABSTRACT)) {
@@ -137,7 +178,7 @@ final class InjectValidator {
     return builder.build();
   }
 
- ValidationReport<VariableElement> validateField(VariableElement fieldElement) {
+  private ValidationReport<VariableElement> validateField(VariableElement fieldElement) {
     ValidationReport.Builder<VariableElement> builder = ValidationReport.about(fieldElement);
     Set<Modifier> modifiers = fieldElement.getModifiers();
     if (modifiers.contains(FINAL)) {
@@ -146,14 +187,18 @@ final class InjectValidator {
 
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
-          PRIVATE_INJECT_FIELD, compilerOptions.privateMemberValidationKind(), fieldElement);
+          PRIVATE_INJECT_FIELD,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          fieldElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
-          STATIC_INJECT_FIELD, compilerOptions.staticMemberValidationKind(), fieldElement);
+          STATIC_INJECT_FIELD,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.staticMemberValidationKind()),
+          fieldElement);
     }
- 
+
     ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(fieldElement);
     if (qualifiers.size() > 1) {
       for (AnnotationMirror qualifier : qualifiers) {
@@ -168,7 +213,7 @@ final class InjectValidator {
     return builder.build();
   }
 
-  ValidationReport<ExecutableElement> validateMethod(ExecutableElement methodElement) {
+  private ValidationReport<ExecutableElement> validateMethod(ExecutableElement methodElement) {
     ValidationReport.Builder<ExecutableElement> builder = ValidationReport.about(methodElement);
     Set<Modifier> modifiers = methodElement.getModifiers();
     if (modifiers.contains(ABSTRACT)) {
@@ -177,12 +222,16 @@ final class InjectValidator {
 
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
-          PRIVATE_INJECT_METHOD, compilerOptions.privateMemberValidationKind(), methodElement);
+          PRIVATE_INJECT_METHOD,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          methodElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
-          STATIC_INJECT_METHOD, compilerOptions.staticMemberValidationKind(), methodElement);
+          STATIC_INJECT_METHOD,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.staticMemberValidationKind()),
+          methodElement);
     }
 
     if (!methodElement.getTypeParameters().isEmpty()) {
@@ -204,12 +253,14 @@ final class InjectValidator {
     return builder.build();
   }
 
-  ValidationReport<TypeElement> validateType(TypeElement typeElement) {
+  ValidationReport<TypeElement> validateMembersInjectionType(TypeElement typeElement) {
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(typeElement);
+    boolean hasInjectedMembers = false;
     for (VariableElement element : ElementFilter.fieldsIn(typeElement.getEnclosedElements())) {
       if (MoreElements.isAnnotationPresent(element, Inject.class)) {
+        hasInjectedMembers = true;
         ValidationReport<VariableElement> report = validateField(element);
         if (!report.isClean()) {
           builder.addSubreport(report);
@@ -218,11 +269,20 @@ final class InjectValidator {
     }
     for (ExecutableElement element : ElementFilter.methodsIn(typeElement.getEnclosedElements())) {
       if (MoreElements.isAnnotationPresent(element, Inject.class)) {
+        hasInjectedMembers = true;
         ValidationReport<ExecutableElement> report = validateMethod(element);
         if (!report.isClean()) {
           builder.addSubreport(report);
         }
       }
+    }
+    // We can't use MembersInjectionBinding.Factory#hasInjectedMembers because that assumes this
+    // binding already validates, so we just check it again here.
+    if (hasInjectedMembers && !isElementAccessibleFromOwnPackage(typeElement)) {
+      builder.addItem(
+          INJECT_INTO_PRIVATE_CLASS,
+          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          typeElement);
     }
     TypeMirror superclass = typeElement.getSuperclass();
     if (!superclass.getKind().equals(TypeKind.NONE)) {
@@ -232,5 +292,45 @@ final class InjectValidator {
       }
     }
     return builder.build();
+  }
+
+  ValidationReport<TypeElement> validateType(TypeElement typeElement) {
+    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(typeElement);
+    ValidationReport<TypeElement> membersInjectionReport =
+        validateMembersInjectionType(typeElement);
+    if (!membersInjectionReport.isClean()) {
+      builder.addSubreport(membersInjectionReport);
+    }
+    for (ExecutableElement element :
+        ElementFilter.constructorsIn(typeElement.getEnclosedElements())) {
+      if (isAnnotationPresent(element, Inject.class)) {
+        ValidationReport<TypeElement> report = validateConstructor(element);
+        if (!report.isClean()) {
+          builder.addSubreport(report);
+        }
+      }
+    }
+    return builder.build();
+  }
+
+  boolean isValidType(TypeMirror type) {
+    if (!type.getKind().equals(DECLARED)) {
+      return true;
+    }
+    return validateType(MoreTypes.asTypeElement(type)).isClean();
+  }
+
+  /** Returns true if the given method element declares a checked exception. */
+  private boolean throwsCheckedExceptions(ExecutableElement methodElement) {
+    TypeMirror runtimeExceptionType =
+        elements.getTypeElement(RuntimeException.class.getCanonicalName()).asType();
+    TypeMirror errorType = elements.getTypeElement(Error.class.getCanonicalName()).asType();
+    for (TypeMirror thrownType : methodElement.getThrownTypes()) {
+      if (!types.isSubtype(thrownType, runtimeExceptionType)
+          && !types.isSubtype(thrownType, errorType)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

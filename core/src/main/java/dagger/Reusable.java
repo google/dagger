@@ -28,8 +28,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>{@code @Reusable} is useful when you want to limit the number of provisions of a type, but
  * there is no specific lifetime over which there must be only one instance.
  *
- * @see <a href="http://google.github.io/dagger/users-guide.html#reusable-scope">Reusable Scope
- * </a>
+ * @see <a href="http://google.github.io/dagger/users-guide.html#reusable-scope">Reusable Scope</a>
  */
 @Documented
 @Beta

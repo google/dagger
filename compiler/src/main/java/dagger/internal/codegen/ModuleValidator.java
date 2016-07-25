@@ -28,6 +28,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
+import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -61,6 +62,7 @@ import static dagger.internal.codegen.ErrorMessages.MODULES_WITH_TYPE_PARAMS_MUS
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_ANOTHER;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
+import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -92,14 +94,11 @@ final class ModuleValidator {
 
     Set<ModuleMethodKind> methodKinds = EnumSet.noneOf(ModuleMethodKind.class);
     for (ExecutableElement moduleMethod : moduleMethods) {
-      if (isAnnotationPresent(moduleMethod, moduleKind.methodAnnotation())) {
+      if (isAnyAnnotationPresent(
+          moduleMethod,
+          ImmutableSet.of(moduleKind.methodAnnotation(), Binds.class, Multibinds.class))) {
         bindingMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
-        methodKinds.add(
-            moduleMethod.getModifiers().contains(STATIC)
-                ? ModuleMethodKind.STATIC_BINDING
-                : ModuleMethodKind.INSTANCE_BINDING);
-      } else if (isAnnotationPresent(moduleMethod, Binds.class)) {
-        methodKinds.add(ModuleMethodKind.ABSTRACT_DECLARATION);
+        methodKinds.add(ModuleMethodKind.ofMethod(moduleMethod));
       }
       allMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
     }
@@ -130,6 +129,17 @@ final class ModuleValidator {
     ABSTRACT_DECLARATION,
     INSTANCE_BINDING,
     STATIC_BINDING,
+    ;
+
+    static ModuleMethodKind ofMethod(ExecutableElement moduleMethod) {
+      if (moduleMethod.getModifiers().contains(STATIC)) {
+        return STATIC_BINDING;
+      } else if (moduleMethod.getModifiers().contains(ABSTRACT)) {
+        return ABSTRACT_DECLARATION;
+      } else {
+        return INSTANCE_BINDING;
+      }
+    }
   }
 
   private void validateModifiers(
@@ -165,7 +175,7 @@ final class ModuleValidator {
     // Validate that all the modules we include are valid for inclusion.
     AnnotationMirror mirror = getAnnotationMirror(subject, moduleKind.moduleAnnotation()).get();
     ImmutableList<TypeMirror> includes = getModuleIncludes(mirror);
-    validateReferencedModules(subject, mirror, builder, includes, ImmutableSet.of(moduleKind));
+    validateReferencedModules(subject, builder, includes, ImmutableSet.of(moduleKind));
   }
 
   private static ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses(
@@ -187,7 +197,6 @@ final class ModuleValidator {
    */
   void validateReferencedModules(
       final TypeElement subject,
-      final AnnotationMirror moduleAnnotation,
       final ValidationReport.Builder<TypeElement> builder,
       ImmutableList<TypeMirror> includes,
       ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {

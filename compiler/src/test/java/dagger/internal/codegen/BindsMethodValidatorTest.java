@@ -16,19 +16,20 @@
 package dagger.internal.codegen;
 
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.producers.ProducerModule;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
+import javax.inject.Qualifier;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
+import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
 @RunWith(Parameterized.class)
 public class BindsMethodValidatorTest {
@@ -37,141 +38,93 @@ public class BindsMethodValidatorTest {
     return ImmutableList.copyOf(new Object[][] {{Module.class}, {ProducerModule.class}});
   }
 
-  private final Class<? extends Annotation> moduleAnnotation;
+  private final String moduleDeclaration;
 
   public BindsMethodValidatorTest(Class<? extends Annotation> moduleAnnotation) {
-    this.moduleAnnotation = moduleAnnotation;
+    moduleDeclaration = "@" + moduleAnnotation.getCanonicalName() + " abstract class %s { %s }";
   }
 
   @Test
   public void nonAbstract() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "",
-            "@" + moduleAnnotation.getCanonicalName(),
-            "abstract class TestModule {",
-            "  @Binds Object bindObject(String impl) { return null; }",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("must be abstract")
-        .in(moduleFile)
-        .onLine(7);
+    assertThatMethod("@Binds Object concrete(String impl) { return null; }")
+        .hasError("must be abstract");
   }
 
   @Test
   public void notAssignable() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "",
-            "@" + moduleAnnotation.getCanonicalName(),
-            "abstract class TestModule {",
-            "  @Binds abstract String bindString(Object impl);",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("assignable")
-        .in(moduleFile)
-        .onLine(7);
+    assertThatMethod("@Binds abstract String notAssignable(Object impl);").hasError("assignable");
   }
-
+  
   @Test
-  public void moreThanOneParamter() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "",
-            "@" + moduleAnnotation.getCanonicalName(),
-            "abstract class TestModule {",
-            "  @Binds abstract Object bindObject(String s1, String s2);",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("one parameter")
-        .in(moduleFile)
-        .onLine(7);
+  public void moreThanOneParameter() {
+    assertThatMethod("@Binds abstract Object tooManyParameters(String s1, String s2);")
+        .hasError("one parameter");
   }
 
   @Test
   public void typeParameters() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "",
-            "@" + moduleAnnotation.getCanonicalName(),
-            "abstract class TestModule {",
-            "  @Binds abstract <S, T extends S> S bindS(T t);",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("type parameters")
-        .in(moduleFile)
-        .onLine(7);
+    assertThatMethod("@Binds abstract <S, T extends S> S generic(T t);")
+        .hasError("type parameters");
   }
 
   @Test
   public void notInModule() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "",
-            "abstract class TestModule {",
-            "  @Binds abstract Object bindObject(String s);",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("within a @Module or @ProducerModule")
-        .in(moduleFile)
-        .onLine(6);
+    assertThatMethodInUnannotatedClass("@Binds abstract Object bindObject(String s);")
+        .hasError("within a @Module or @ProducerModule");
   }
 
   @Test
   public void throwsException() {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "import java.io.IOException;",
-            "",
-            "@" + moduleAnnotation.getCanonicalName(),
-            "abstract class TestModule {",
-            "  @Binds abstract Object bindObject(String s1) throws IOException;",
-            "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("only throw unchecked")
-        .in(moduleFile)
-        .onLine(8);
+    assertThatMethod("@Binds abstract Object throwsException(String s1) throws IOException;")
+        .importing(IOException.class)
+        .hasError("only throw unchecked");
   }
+
+  @Test
+  @Ignore("TODO: @Binds methods do not check explicitly for void")
+  public void returnsVoid() {
+    assertThatMethod("@Binds abstract void returnsVoid(Object impl);").hasError("void");
+  }
+
+  @Test
+  public void tooManyQualifiers() {
+    assertThatMethod(
+            "@Binds @Qualifier1 @Qualifier2 abstract String tooManyQualifiers(String impl);")
+        .importing(Qualifier1.class, Qualifier2.class)
+        .hasError("more than one @Qualifier");
+  }
+
+  @Test
+  public void noParameters() {
+    assertThatMethod("@Binds abstract Object noParameters();").hasError("one parameter");
+  }
+
+  @Test
+  public void setElementsNotAssignable() {
+    assertThatMethod(
+            "@Binds @ElementsIntoSet abstract Set<String> bindSetOfIntegers(Set<Integer> ints);")
+        .hasError("assignable");
+  }
+
+  @Test
+  public void setElements_primitiveArgument() {
+    assertThatMethod("@Binds @ElementsIntoSet abstract Set<Number> bindInt(int integer);")
+        .hasError("assignable");
+  }
+
+  @Test
+  public void elementsIntoSet_withRawSets() {
+    assertThatMethod("@Binds @ElementsIntoSet abstract Set bindRawSet(HashSet hashSet);")
+        .hasError("cannot return a raw Set");
+  }
+
+  private DaggerModuleMethodSubject assertThatMethod(String method) {
+    return assertThatModuleMethod(method).withDeclaration(moduleDeclaration);
+  }
+
+  @Qualifier
+  public @interface Qualifier1 {}
+
+  @Qualifier
+  public @interface Qualifier2 {}
 }

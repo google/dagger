@@ -24,17 +24,17 @@ import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Provider;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -79,7 +79,7 @@ public class AbstractProducerTest {
           int i = 0;
 
           @Override
-          public ListenableFuture<Integer> compute(ProducerMonitor unusedMonitor) {
+          public ListenableFuture<Integer> compute() {
             return Futures.immediateFuture(i++);
           }
         };
@@ -96,7 +96,7 @@ public class AbstractProducerTest {
     ListenableFuture<Integer> future = producer.get();
     assertThat(future.isDone()).isFalse();
     verify(monitor).requested();
-    verify(monitor).addCallbackTo(any(ListenableFuture.class));
+    verify(monitor).addCallbackTo(anyListenableFuture());
     delegateFuture.set(-42);
     assertThat(future.get()).isEqualTo(-42);
     verify(monitor).succeeded(-42);
@@ -111,7 +111,7 @@ public class AbstractProducerTest {
     ListenableFuture<Integer> future = producer.get();
     assertThat(future.isDone()).isFalse();
     verify(monitor).requested();
-    verify(monitor).addCallbackTo(any(ListenableFuture.class));
+    verify(monitor).addCallbackTo(anyListenableFuture());
     Throwable t = new RuntimeException("monkey");
     delegateFuture.setException(t);
     try {
@@ -122,6 +122,10 @@ public class AbstractProducerTest {
     }
     verify(monitor).failed(t);
     verifyNoMoreInteractions(monitor);
+  }
+
+  private ListenableFuture<?> anyListenableFuture() {
+    return any(ListenableFuture.class);
   }
 
   @Test(expected = NullPointerException.class)
@@ -140,7 +144,8 @@ public class AbstractProducerTest {
     }
 
     @Override
-    public ListenableFuture<T> compute(ProducerMonitor unusedMonitor) {
+    public ListenableFuture<T> compute() {
+      assertThat(monitor).isNotNull();
       return delegate;
     }
   }

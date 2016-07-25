@@ -36,13 +36,13 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_KIND;
-import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.unwrapValue;
+import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static javax.lang.model.element.Modifier.STATIC;
 
 /**
@@ -69,16 +69,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   abstract Optional<DeclaredType> nullableType();
 
   /**
-   * If this is a provision request from an {@code @Provides} or {@code @Produces} method, this will
-   * be the element that contributed it. In the case of subclassed modules, this may differ than the
-   * binding's enclosed element, as this will return the subclass whereas the enclosed element will
-   * be the superclass.
-   */
-  Optional<TypeElement> contributedBy() {
-    return sourceElement().contributedBy();
-  }
-
-  /**
    * Returns whether this binding is synthetic, i.e., not explicitly tied to code, but generated
    * implicitly by the framework.
    */
@@ -99,6 +89,12 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
   /** If this provision requires members injection, this will be the corresponding request. */
   abstract Optional<DependencyRequest> membersInjectionRequest();
+
+  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
+
+  final Optional<AnnotationMirror> mapKey() {
+    return unwrapOptionalEquivalence(wrappedMapKey());
+  }
 
   /**
    * The kind of contribution this binding represents. Defines which elements can specify this kind
@@ -125,7 +121,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
     /**
      * A binding (provision or production) that delegates from requests for one key to another.
-     * These are the bindings that satisfy {@code @Bind} declarations.
+     * These are the bindings that satisfy {@code @Binds} declarations.
      */
     SYNTHETIC_DELEGATE_BINDING,
 
@@ -188,9 +184,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
      */
     static Kind forMultibindingRequest(DependencyRequest request) {
       Key key = request.key();
-      if (SetType.isSet(key.type())) {
+      if (SetType.isSet(key)) {
         return SYNTHETIC_MULTIBOUND_SET;
-      } else if (MapType.isMap(key.type())) {
+      } else if (MapType.isMap(key)) {
         return SYNTHETIC_MULTIBOUND_MAP;
       } else {
         throw new IllegalArgumentException(
@@ -241,6 +237,25 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   }
 
   /**
+   * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created
+   * for this binding. Uses the binding's key, V in the came of {@code Map<K, FrameworkClass<V>>>},
+   * and E {@code Set<E>} for {@link dagger.multibindings.IntoSet @IntoSet} methods.
+   */
+  final TypeMirror factoryType() {
+    switch (contributionType()) {
+      case MAP:
+        return MapType.from(key()).unwrappedValueType(frameworkClass());
+      case SET:
+        return SetType.from(key()).elementType();
+      case SET_VALUES:
+      case UNIQUE:
+        return key().type();
+      default:
+        throw new AssertionError();
+    }
+  }
+
+  /**
    * Indexes map-multibindings by map key (the result of calling
    * {@link AnnotationValue#getValue()} on a single member or the whole {@link AnnotationMirror}
    * itself, depending on {@link MapKey#unwrapValue()}).
@@ -253,7 +268,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
             new Function<ContributionBinding, Object>() {
               @Override
               public Object apply(ContributionBinding mapBinding) {
-                AnnotationMirror mapKey = getMapKey(mapBinding.bindingElement()).get();
+                AnnotationMirror mapKey = mapBinding.mapKey().get();
                 Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
                 return unwrappedValue.isPresent() ? unwrappedValue.get().getValue() : mapKey;
               }
@@ -272,7 +287,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
               @Override
               public Equivalence.Wrapper<DeclaredType> apply(ContributionBinding mapBinding) {
                 return MoreTypes.equivalence()
-                    .wrap(getMapKey(mapBinding.bindingElement()).get().getAnnotationType());
+                    .wrap(mapBinding.mapKey().get().getAnnotationType());
               }
             }));
   }

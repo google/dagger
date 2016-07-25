@@ -15,35 +15,25 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Multibindings;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
 import java.util.Collection;
 import java.util.Map;
-import javax.inject.Provider;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
-import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.METHOD_MUST_RETURN_MAP_OR_SET;
 import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.MUST_BE_INTERFACE;
 import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.MUST_BE_IN_MODULE;
 import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.MUST_NOT_HAVE_TYPE_PARAMETERS;
-import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.TOO_MANY_QUALIFIERS;
 import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.tooManyMethodsForKey;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 
 /**
@@ -56,16 +46,19 @@ final class MultibindingsValidator {
   private final KeyFormatter keyFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final TypeElement objectElement;
+  private final MultibindingsMethodValidator multibindingsMethodValidator;
 
   MultibindingsValidator(
       Elements elements,
       Key.Factory keyFactory,
       KeyFormatter keyFormatter,
-      MethodSignatureFormatter methodSignatureFormatter) {
+      MethodSignatureFormatter methodSignatureFormatter,
+      MultibindingsMethodValidator multibindingsMethodValidator) {
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.keyFormatter = keyFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
+    this.multibindingsMethodValidator = multibindingsMethodValidator;
     this.objectElement = elements.getTypeElement(Object.class.getCanonicalName());
   }
 
@@ -93,20 +86,14 @@ final class MultibindingsValidator {
       if (method.getEnclosingElement().equals(objectElement)) {
         continue;
       }
-      if (!isPlainMap(method.getReturnType()) && !isPlainSet(method.getReturnType())) {
-        validation.addError(METHOD_MUST_RETURN_MAP_OR_SET, method);
-        continue;
-      }
-      ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(method);
-      if (qualifiers.size() > 1) {
-        for (AnnotationMirror qualifier : qualifiers) {
-          validation.addError(TOO_MANY_QUALIFIERS, method, qualifier);
-        }
-        continue;
-      }
-      if (bindingType.isPresent()) {
+      
+      ValidationReport<ExecutableElement> methodReport =
+          multibindingsMethodValidator.validate(method);
+      validation.addItems(methodReport.items());
+
+      if (methodReport.isClean() && bindingType.isPresent()) {
         methodsByKey.put(
-            keyFactory.forMultibindingsMethod(
+            keyFactory.forMultibindsMethod(
                 bindingType.get(), asExecutable(method.asType()), method),
             method);
       }
@@ -137,29 +124,5 @@ final class MultibindingsValidator {
     } else {
       return Optional.<BindingType>absent();
     }
-  }
-
-  private boolean isPlainMap(TypeMirror returnType) {
-    if (!MapType.isMap(returnType)) {
-      return false;
-    }
-    MapType mapType = MapType.from(returnType);
-    return !mapType.isRawType()
-        && MoreTypes.isType(mapType.valueType()) // No wildcards.
-        && !mapType.valuesAreTypeOf(Provider.class)
-        && !mapType.valuesAreTypeOf(Producer.class)
-        && !mapType.valuesAreTypeOf(Produced.class);
-  }
-
-  private boolean isPlainSet(TypeMirror returnType) {
-    if (!SetType.isSet(returnType)) {
-      return false;
-    }
-    SetType setType = SetType.from(returnType);
-    return !setType.isRawType()
-        && MoreTypes.isType(setType.elementType()) // No wildcards.
-        && !setType.elementsAreTypeOf(Provider.class)
-        && !setType.elementsAreTypeOf(Producer.class)
-        && !setType.elementsAreTypeOf(Produced.class);
   }
 }

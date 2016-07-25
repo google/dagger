@@ -69,48 +69,57 @@ final class SimpleProducerModule {
 
   @Produces
   @Qual(2)
-  static String strWithArg(int i) {
+  static String strWithArg(@SuppressWarnings("unused") int i) {
     return "str with arg";
   }
 
   @Produces
   @Qual(3)
-  static ListenableFuture<String> futureStrWithArg(int i) {
+  static ListenableFuture<String> futureStrWithArg(@SuppressWarnings("unused") int i) {
     return Futures.immediateFuture("future str with arg");
   }
 
   @Produces
   @Qual(4)
+  @SuppressWarnings("unused") // unthrown exception for test
   static String strThrowingException() throws IOException {
     return "str throwing exception";
   }
 
   @Produces
   @Qual(5)
+  @SuppressWarnings("unused") // unthrown exception for test
   static ListenableFuture<String> futureStrThrowingException() throws IOException {
     return Futures.immediateFuture("future str throwing exception");
   }
 
   @Produces
   @Qual(6)
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static String strWithArgThrowingException(int i) throws IOException {
     return "str with arg throwing exception";
   }
 
   @Produces
   @Qual(7)
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static ListenableFuture<String> futureStrWithArgThrowingException(int i) throws IOException {
     return Futures.immediateFuture("future str with arg throwing exception");
   }
 
   @Produces
   @Qual(8)
-  static String strWithArgs(int i, Produced<Double> b, Producer<Object> c, Provider<Boolean> d) {
+  static String strWithArgs(
+      @SuppressWarnings("unused") int i,
+      @SuppressWarnings("unused") Produced<Double> b,
+      @SuppressWarnings("unused") Producer<Object> c,
+      @SuppressWarnings("unused") Provider<Boolean> d) {
     return "str with args";
   }
 
   @Produces
   @Qual(9)
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameters for test
   static String strWithArgsThrowingException(
       int i, Produced<Double> b, Producer<Object> c, Provider<Boolean> d) throws IOException {
     return "str with args throwing exception";
@@ -119,12 +128,16 @@ final class SimpleProducerModule {
   @Produces
   @Qual(10)
   static ListenableFuture<String> futureStrWithArgs(
-      int i, Produced<Double> b, Producer<Object> c, Provider<Boolean> d) {
+      @SuppressWarnings("unused") int i,
+      @SuppressWarnings("unused") Produced<Double> b,
+      @SuppressWarnings("unused") Producer<Object> c,
+      @SuppressWarnings("unused") Provider<Boolean> d) {
     return Futures.immediateFuture("future str with args");
   }
 
   @Produces
   @Qual(11)
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static ListenableFuture<String> futureStrWithArgsThrowingException(
       int i, Produced<Double> b, Producer<Object> c, Provider<Boolean> d) throws IOException {
     return Futures.immediateFuture("str with args throwing exception");
@@ -133,9 +146,14 @@ final class SimpleProducerModule {
   @Produces
   @Qual(12)
   static String strWithFrameworkTypeArgs(
-      @Qual(1) int i, @Qual(1) Provider<Integer> iProvider, @Qual(1) Lazy<Integer> iLazy,
-      @Qual(2) int j, @Qual(2) Produced<Integer> jProduced, @Qual(2) Producer<Integer> jProducer,
-      @Qual(3) Produced<Integer> kProduced, @Qual(3) Producer<Integer> kProducer) {
+      @SuppressWarnings("unused") @Qual(1) int i,
+      @SuppressWarnings("unused") @Qual(1) Provider<Integer> iProvider,
+      @SuppressWarnings("unused") @Qual(1) Lazy<Integer> iLazy,
+      @SuppressWarnings("unused") @Qual(2) int j,
+      @SuppressWarnings("unused") @Qual(2) Produced<Integer> jProduced,
+      @SuppressWarnings("unused") @Qual(2) Producer<Integer> jProducer,
+      @SuppressWarnings("unused") @Qual(3) Produced<Integer> kProduced,
+      @SuppressWarnings("unused") @Qual(3) Producer<Integer> kProducer) {
     return "str with framework type args";
   }
 
@@ -149,6 +167,7 @@ final class SimpleProducerModule {
 
   @Produces
   @IntoSet
+  @SuppressWarnings("unused") // unthrown exception for test
   static String setOfStrElementThrowingException() throws IOException {
     return "set of str element throwing exception";
   }
@@ -161,30 +180,33 @@ final class SimpleProducerModule {
 
   @Produces
   @IntoSet
+  @SuppressWarnings("unused") // unthrown exception for test
   static ListenableFuture<String> setOfStrFutureElementThrowingException() throws IOException {
     return Futures.immediateFuture("set of str element throwing exception");
   }
 
   @Produces
   @IntoSet
-  static String setOfStrElementWithArg(int i) {
+  static String setOfStrElementWithArg(@SuppressWarnings("unused") int i) {
     return "set of str element with arg";
   }
 
   @Produces
   @IntoSet
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static String setOfStrElementWithArgThrowingException(int i) throws IOException {
     return "set of str element with arg throwing exception";
   }
 
   @Produces
   @IntoSet
-  static ListenableFuture<String> setOfStrFutureElementWithArg(int i) {
+  static ListenableFuture<String> setOfStrFutureElementWithArg(@SuppressWarnings("unused") int i) {
     return Futures.immediateFuture("set of str element with arg");
   }
 
   @Produces
   @IntoSet
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static ListenableFuture<String> setOfStrFutureElementWithArgThrowingException(int i)
       throws IOException {
     return Futures.immediateFuture("set of str element with arg throwing exception");
@@ -198,6 +220,7 @@ final class SimpleProducerModule {
 
   @Produces
   @ElementsIntoSet
+  @SuppressWarnings("unused") // unthrown exception for test
   static Set<String> setOfStrValuesThrowingException() throws IOException {
     return ImmutableSet.of("set of str 1", "set of str 2 throwing exception");
   }
@@ -210,6 +233,7 @@ final class SimpleProducerModule {
 
   @Produces
   @ElementsIntoSet
+  @SuppressWarnings("unused") // unthrown exception for test
   static ListenableFuture<Set<String>> setOfStrFutureValuesThrowingException() throws IOException {
     return Futures.<Set<String>>immediateFuture(
         ImmutableSet.of("set of str 1", "set of str 2 throwing exception"));
@@ -217,25 +241,28 @@ final class SimpleProducerModule {
 
   @Produces
   @ElementsIntoSet
-  static Set<String> setOfStrValuesWithArg(int i) {
+  static Set<String> setOfStrValuesWithArg(@SuppressWarnings("unused") int i) {
     return ImmutableSet.of("set of str with arg 1", "set of str with arg 2");
   }
 
   @Produces
   @ElementsIntoSet
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static Set<String> setOfStrValuesWithArgThrowingException(int i) throws IOException {
     return ImmutableSet.of("set of str with arg 1", "set of str with arg 2 throwing exception");
   }
 
   @Produces
   @ElementsIntoSet
-  static ListenableFuture<Set<String>> setOfStrFutureValuesWithArg(int i) {
+  static ListenableFuture<Set<String>> setOfStrFutureValuesWithArg(
+      @SuppressWarnings("unused") int i) {
     return Futures.<Set<String>>immediateFuture(
         ImmutableSet.of("set of str with arg 1", "set of str with arg 2"));
   }
 
   @Produces
   @ElementsIntoSet
+  @SuppressWarnings("unused") // unthrown exception for test, unused parameter for test
   static ListenableFuture<Set<String>> setOfStrFutureValuesWithArgThrowingException(int i)
       throws IOException {
     return Futures.<Set<String>>immediateFuture(

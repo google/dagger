@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package producerstest.binds;
 
-package test.bind;
-
-import javax.inject.Inject;
-
-final class FooOfObjects implements Foo<Object> {
-  @Inject FooOfObjects() {}
-}
+/**
+ * This is the type that will be bound.  We throw in generics just to complicate the test.
+ */
+interface Foo<T> {}

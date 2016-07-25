@@ -16,7 +16,6 @@
 package dagger.internal.codegen;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import static dagger.internal.codegen.ErrorMessages.INDENT;
@@ -48,14 +47,6 @@ abstract class Formatter<T> implements Function<T, String> {
   @Deprecated
   @Override final public String apply(T object) {
     return format(object);
-  }
-
-  /**
-   * Formats {@code items}, one per line.
-   */
-  public void formatIndentedList(
-      StringBuilder builder, Iterable<? extends T> items, int indentLevel) {
-    formatIndentedList(builder, indentLevel, items, ImmutableList.<T>of());
   }
 
   /**

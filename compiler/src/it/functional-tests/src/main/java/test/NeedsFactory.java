@@ -19,7 +19,8 @@ import com.google.auto.factory.AutoFactory;
 import javax.inject.Inject;
 
 class NeedsFactory {
-  @Inject NeedsFactory(NeedsFactory_SomethingFactory somethingFactory) {}
+  @Inject
+  NeedsFactory(@SuppressWarnings("unused") NeedsFactory_SomethingFactory somethingFactory) {}
 
   @AutoFactory
   static class Something {}

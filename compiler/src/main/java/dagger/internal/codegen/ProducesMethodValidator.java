@@ -16,212 +16,113 @@
 package dagger.internal.codegen;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.multibindings.ElementsIntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.util.Set;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE_MAP_KEY;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
+import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_NULLABLE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
+import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_THROWS;
-import static dagger.internal.codegen.MapKeys.getMapKeys;
-import static dagger.internal.codegen.ProvidesMethodValidator.validateMapKey;
-import static dagger.internal.codegen.ProvidesMethodValidator.validateMultibindingSpecifiers;
-import static dagger.internal.codegen.Validation.validateMethodQualifiers;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.type.TypeKind.ARRAY;
-import static javax.lang.model.type.TypeKind.DECLARED;
-import static javax.lang.model.type.TypeKind.VOID;
 
 /**
- * A {@linkplain ValidationReport validator} for {@link Produces} methods.
+ * A validator for {@link Produces} methods.
  *
  * @author Jesse Beder
  * @since 2.0
  */
 // TODO(beder): Consider unifying this with the ProvidesMethodValidator after Provides.Type and
 // Produces.Type are reconciled.
-final class ProducesMethodValidator {
-  private final Elements elements;
-  private final Types types;
+final class ProducesMethodValidator extends BindingMethodValidator {
 
   ProducesMethodValidator(Elements elements, Types types) {
-    this.elements = checkNotNull(elements);
-    this.types = checkNotNull(types);
+    super(elements, types, Produces.class, ProducerModule.class, MUST_BE_CONCRETE, EXCEPTION);
+  }
+  
+  @Override
+  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkMethod(builder);
+    checkNullable(builder);
+    checkScope(builder);
   }
 
-  private TypeElement getSetElement() {
-    return elements.getTypeElement(Set.class.getCanonicalName());
-  }
-
-  ValidationReport<ExecutableElement> validate(ExecutableElement producesMethodElement) {
-    ValidationReport.Builder<ExecutableElement> builder =
-        ValidationReport.about(producesMethodElement);
-
-    Element enclosingElement = producesMethodElement.getEnclosingElement();
-    if (!isAnnotationPresent(enclosingElement, ProducerModule.class)) {
-      builder.addError(
-          formatModuleErrorMessage(BINDING_METHOD_NOT_IN_MODULE), producesMethodElement);
-    }
-
-    if (!producesMethodElement.getTypeParameters().isEmpty()) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_TYPE_PARAMETER), producesMethodElement);
-    }
-
-    Set<Modifier> modifiers = producesMethodElement.getModifiers();
-    if (modifiers.contains(PRIVATE)) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_PRIVATE), producesMethodElement);
-    }
-    if (modifiers.contains(ABSTRACT)) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_ABSTRACT), producesMethodElement);
-    }
-
-    if (ConfigurationAnnotations.getNullableType(producesMethodElement).isPresent()) {
-      // TODO(beder): Make this an error.
-      builder.addWarning(PRODUCES_METHOD_NULLABLE, producesMethodElement);
-    }
-
-    TypeMirror returnType = producesMethodElement.getReturnType();
-    TypeKind returnTypeKind = returnType.getKind();
-    if (returnTypeKind.equals(VOID)) {
-      builder.addError(
-          formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE), producesMethodElement);
-    }
-
-    if (FrameworkTypes.isFrameworkType(returnType)) {
-      builder.addError(
-          formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES), producesMethodElement);
-    }
-
-    TypeMirror exceptionType = elements.getTypeElement(Exception.class.getCanonicalName()).asType();
-    TypeMirror errorType = elements.getTypeElement(Error.class.getCanonicalName()).asType();
-    for (TypeMirror thrownType : producesMethodElement.getThrownTypes()) {
-      if (!types.isSubtype(thrownType, exceptionType) && !types.isSubtype(thrownType, errorType)) {
-        builder.addError(PRODUCES_METHOD_THROWS, producesMethodElement);
-        break;
-      }
-    }
-
-    ContributionType contributionType = ContributionType.fromBindingMethod(producesMethodElement);
-    validateMapKey(builder, producesMethodElement, contributionType, Produces.class);
-
-    validateMultibindingSpecifiers(builder, producesMethodElement, Produces.class);
-
-    validateMethodQualifiers(builder, producesMethodElement);
-
-    switch (contributionType) {
-      case UNIQUE:
-      case SET:
-        validateSingleReturnType(builder, returnType);
-        break;
-      case MAP:
-        validateSingleReturnType(builder, returnType);
-        ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(producesMethodElement);
-        switch (mapKeys.size()) {
-          case 0:
-            builder.addError(
-                formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY), producesMethodElement);
-            break;
-          case 1:
-            break;
-          default:
-            builder.addError(
-                formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEY), producesMethodElement);
-            break;
-        }
-        break;
-      case SET_VALUES:
-        if (returnTypeKind.equals(DECLARED)
-            && MoreTypes.isTypeOf(ListenableFuture.class, returnType)) {
-          DeclaredType declaredReturnType = MoreTypes.asDeclared(returnType);
-          if (!declaredReturnType.getTypeArguments().isEmpty()) {
-            validateSetType(builder, Iterables.getOnlyElement(
-                declaredReturnType.getTypeArguments()));
-          }
-        } else {
-          validateSetType(builder, returnType);
-        }
-        break;
-      default:
-        throw new AssertionError();
-    }
-
-    return builder.build();
-  }
-
-  private String formatErrorMessage(String msg) {
-    return String.format(msg, Produces.class.getSimpleName());
-  }
-
-  private String formatModuleErrorMessage(String msg) {
-    return String.format(msg, Produces.class.getSimpleName(), ProducerModule.class.getSimpleName());
-  }
-
-  private void validateKeyType(ValidationReport.Builder<? extends Element> reportBuilder,
-      TypeMirror type) {
-    TypeKind kind = type.getKind();
-    if (!(kind.isPrimitive() || kind.equals(DECLARED) || kind.equals(ARRAY))) {
-      reportBuilder.addError(PRODUCES_METHOD_RETURN_TYPE, reportBuilder.getSubject());
+  /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
+  // TODO(beder): Make this an error.
+  private void checkNullable(ValidationReport.Builder<ExecutableElement> builder) {
+    if (ConfigurationAnnotations.getNullableType(builder.getSubject()).isPresent()) {
+      builder.addWarning(PRODUCES_METHOD_NULLABLE);
     }
   }
 
-  private void validateSingleReturnType(ValidationReport.Builder<? extends Element> reportBuilder,
-      TypeMirror type) {
-    if (type.getKind().equals(DECLARED) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
+  /** Adds an error if a {@link Produces @Produces} method has a scope annotation. */
+  private void checkScope(ValidationReport.Builder<ExecutableElement> builder) {
+    if (!Scope.scopesOf(builder.getSubject()).isEmpty()) {
+      builder.addError(PRODUCES_METHOD_SCOPE);
+    }
+  }
+
+  @Override
+  protected String badReturnTypeMessage() {
+    return formatErrorMessage(PRODUCES_METHOD_RETURN_TYPE);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Allows {@code keyType} to be a {@link ListenableFuture} of an otherwise-valid key type.
+   */
+  @Override
+  protected void checkKeyType(
+      ValidationReport.Builder<ExecutableElement> reportBuilder, TypeMirror keyType) {
+    Optional<TypeMirror> typeToCheck = unwrapListenableFuture(reportBuilder, keyType);
+    if (typeToCheck.isPresent()) {
+      super.checkKeyType(reportBuilder, typeToCheck.get());
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Allows an {@link ElementsIntoSet @ElementsIntoSet} or {@code SET_VALUES} method to return a
+   * {@link ListenableFuture} of a {@link Set} as well.
+   */
+  @Override
+  protected void checkSetValuesType(ValidationReport.Builder<ExecutableElement> builder) {
+    Optional<TypeMirror> typeToCheck =
+        unwrapListenableFuture(builder, builder.getSubject().getReturnType());
+    if (typeToCheck.isPresent()) {
+      checkSetValuesType(builder, typeToCheck.get());
+    }
+  }
+
+  @Override
+  protected String badSetValuesTypeMessage() {
+    return PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+  }
+
+  private Optional<TypeMirror> unwrapListenableFuture(
+      ValidationReport.Builder<ExecutableElement> reportBuilder, TypeMirror type) {
+    if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
       DeclaredType declaredType = MoreTypes.asDeclared(type);
       if (declaredType.getTypeArguments().isEmpty()) {
-        reportBuilder.addError(PRODUCES_METHOD_RAW_FUTURE, reportBuilder.getSubject());
+        reportBuilder.addError(PRODUCES_METHOD_RAW_FUTURE);
+        return Optional.absent();
       } else {
-        validateKeyType(reportBuilder, Iterables.getOnlyElement(declaredType.getTypeArguments()));
+        return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));
       }
-    } else {
-      validateKeyType(reportBuilder, type);
     }
-  }
-
-  private void validateSetType(ValidationReport.Builder<? extends Element> reportBuilder,
-      TypeMirror type) {
-    if (!type.getKind().equals(DECLARED)) {
-      reportBuilder.addError(PRODUCES_METHOD_SET_VALUES_RETURN_SET, reportBuilder.getSubject());
-      return;
-    }
-
-    // TODO(gak): should we allow "covariant return" for set values?
-    DeclaredType declaredType = MoreTypes.asDeclared(type);
-    if (!declaredType.asElement().equals(getSetElement())) {
-      reportBuilder.addError(PRODUCES_METHOD_SET_VALUES_RETURN_SET, reportBuilder.getSubject());
-    } else if (declaredType.getTypeArguments().isEmpty()) {
-      reportBuilder.addError(
-          formatErrorMessage(BINDING_METHOD_SET_VALUES_RAW_SET), reportBuilder.getSubject());
-    } else {
-      validateSingleReturnType(reportBuilder,
-          Iterables.getOnlyElement(declaredType.getTypeArguments()));
-    }
+    return Optional.of(type);
   }
 }

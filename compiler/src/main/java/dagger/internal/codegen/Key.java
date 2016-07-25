@@ -20,7 +20,6 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
@@ -30,6 +29,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Binds;
 import dagger.Multibindings;
+import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.Production;
@@ -44,7 +44,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
@@ -61,6 +60,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
+import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
+import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 /**
@@ -97,15 +98,32 @@ abstract class Key {
   abstract Equivalence.Wrapper<TypeMirror> wrappedType();
 
   /**
-   * For multibinding contributions, this is the binding method element. Each multibound map and set
-   * is represented by a
+   * Absent except for multibinding contributions. Each multibound map and set is represented by a
    * {@linkplain ProvisionBinding.Factory#syntheticMultibinding(DependencyRequest, Iterable)
    * synthetic binding} that depends on the specific contributions to that map or set. Each such
    * contribution binding therefore needs a key that identifies the specific binding, and not only
-   * the qualified type that is bound.
+   * the qualified type that is bound. For those bindings, this is the binding method element.
    */
-  abstract Optional<SourceElement> bindingMethod();
+  abstract Optional<BindingMethodIdentifier> bindingMethodIdentifier();
 
+  /** An object that uniquely identifies a multibinding contribution binding. */
+  @AutoValue
+  abstract static class BindingMethodIdentifier {
+    /**
+     * The {@link dagger.Provides} or {@link dagger.producers.Produces} method that contributes to
+     * the multibinding.
+     */
+    abstract ExecutableElement bindingMethod();
+
+    /** The installed module that contains or inherits the {@link #bindingMethod()}. */
+    abstract TypeElement contributingModule();
+
+    static BindingMethodIdentifier create(
+        ExecutableElement bindingMethod, TypeElement contributingModule) {
+      return new AutoValue_Key_BindingMethodIdentifier(bindingMethod, contributingModule);
+    }
+  }
+  
   /**
    * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
    * for the type of this key.
@@ -127,30 +145,32 @@ abstract class Key {
   }
 
   /**
-   * A key whose {@link #qualifier()} and {@link #bindingMethod()} are equivalent to this one's, but
-   * with {@code newType} (normalized) as its {@link #type()}.
+   * A key whose {@link #qualifier()} and {@link #bindingMethodIdentifier()} are equivalent to this
+   * one's, but with {@code newType} (normalized) as its {@link #type()}.
    */
   private Key withType(Types types, TypeMirror newType) {
     return new AutoValue_Key(
         wrappedQualifier(),
         MoreTypes.equivalence().wrap(normalize(types, newType)),
-        bindingMethod());
+        bindingMethodIdentifier());
   }
 
   /**
-   * A key whose {@link #qualifier()} and {@link #type()} are equivalent to this one's, but
-   * with {@code bindingMethod} as its {@link #bindingMethod()}.
+   * A key whose {@link #qualifier()} and {@link #type()} are equivalent to this one's, but with
+   * {@code bindingDeclaration} as its {@link #bindingMethodIdentifier()}.
    */
-  private Key withBindingMethod(SourceElement bindingMethod) {
-    return new AutoValue_Key(wrappedQualifier(), wrappedType(), Optional.of(bindingMethod));
+  private Key withBindingMethodIdentifier(BindingMethodIdentifier bindingMethodIdentifier) {
+    return new AutoValue_Key(
+        wrappedQualifier(), wrappedType(), Optional.of(bindingMethodIdentifier));
   }
 
   /**
    * A key whose {@link #qualifier()} and {@link #type()} are equivalent to this one's, but with an
-   * absent {@link #bindingMethod()}.
+   * absent {@link #bindingMethodIdentifier()}.
    */
-  Key withoutBindingMethod() {
-    return new AutoValue_Key(wrappedQualifier(), wrappedType(), Optional.<SourceElement>absent());
+  Key withoutBindingMethodIdentifier() {
+    return new AutoValue_Key(
+        wrappedQualifier(), wrappedType(), Optional.<BindingMethodIdentifier>absent());
   }
 
   boolean isValidMembersInjectionKey() {
@@ -205,7 +225,7 @@ abstract class Key {
         .omitNullValues()
         .add("qualifier", qualifier().orNull())
         .add("type", type())
-        .add("bindingMethod", bindingMethod().orNull())
+        .add("bindingMethodIdentifier", bindingMethodIdentifier().orNull())
         .toString();
   }
 
@@ -222,27 +242,6 @@ abstract class Key {
                 return hasKey.key();
               }
             }));
-  }
-
-  /**
-   * Wraps an {@link Optional} of a type in an {@code Optional} of a {@link Wrapper} for that type.
-   */
-  private static <T> Optional<Equivalence.Wrapper<T>> wrapOptionalInEquivalence(
-      Equivalence<T> equivalence, Optional<T> optional) {
-    return optional.isPresent()
-        ? Optional.of(equivalence.wrap(optional.get()))
-        : Optional.<Equivalence.Wrapper<T>>absent();
-  }
-
-  /**
-   * Unwraps an {@link Optional} of a {@link Wrapper} into an {@code Optional} of the underlying
-   * type.
-   */
-  private static <T> Optional<T> unwrapOptionalEquivalence(
-      Optional<Equivalence.Wrapper<T>> wrappedOptional) {
-    return wrappedOptional.isPresent()
-        ? Optional.of(wrappedOptional.get().get())
-        : Optional.<T>absent();
   }
 
   static final class Factory {
@@ -271,7 +270,7 @@ abstract class Key {
     }
 
     private TypeElement getClassElement(Class<?> cls) {
-      return elements.getTypeElement(cls.getCanonicalName());
+      return elements.getTypeElement(cls.getName());
     }
 
     Key forComponentMethod(ExecutableElement componentMethod) {
@@ -302,20 +301,20 @@ abstract class Key {
       return forMethod(subcomponentBuilderMethod, returnType);
     }
 
-    Key forProvidesMethod(SourceElement sourceElement) {
-      return forProvidesOrProducesMethod(sourceElement, getProviderElement());
+    Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {
+      return forProvidesOrProducesMethod(method, contributingModule, getProviderElement());
     }
 
-    Key forProducesMethod(SourceElement sourceElement) {
-      return forProvidesOrProducesMethod(sourceElement, getProducerElement());
+    Key forProducesMethod(ExecutableElement method, TypeElement contributingModule) {
+      return forProvidesOrProducesMethod(method, contributingModule, getProducerElement());
     }
 
     private Key forProvidesOrProducesMethod(
-        SourceElement sourceElement, TypeElement frameworkType) {
-      checkArgument(sourceElement.element().getKind().equals(METHOD));
-      ExecutableElement method = MoreElements.asExecutable(sourceElement.element());
+        ExecutableElement method, TypeElement contributingModule, TypeElement frameworkType) {
+      checkArgument(method.getKind().equals(METHOD));
       ExecutableType methodType =
-          MoreTypes.asExecutable(sourceElement.asMemberOfContributingType(types));
+          MoreTypes.asExecutable(
+              types.asMemberOf(MoreTypes.asDeclared(contributingModule.asType()), method));
       ContributionType contributionType = ContributionType.fromBindingMethod(method);
       TypeMirror returnType = normalize(types, methodType.getReturnType());
       if (frameworkType.equals(getProducerElement())
@@ -323,20 +322,22 @@ abstract class Key {
         returnType = Iterables.getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       }
       TypeMirror keyType =
-          providesOrProducesKeyType(returnType, method, contributionType, frameworkType);
+          bindingMethodKeyType(returnType, method, contributionType, Optional.of(frameworkType));
       Key key = forMethod(method, keyType);
       return contributionType.equals(ContributionType.UNIQUE)
           ? key
-          : key.withBindingMethod(sourceElement);
+          : key.withBindingMethodIdentifier(
+              BindingMethodIdentifier.create(method, contributingModule));
     }
 
     /**
-     * Returns the key for a method in a {@link Multibindings @Multibindings} interface.
+     * Returns the key for a {@link Multibinds @Multibinds} method or a method in a
+     * {@link Multibindings @Multibindings} interface.
      *
-     * The key's type is either {@code Set<T>} or {@code Map<K, F<V>>}, where {@code F} is either
+     * <p>The key's type is either {@code Set<T>} or {@code Map<K, F<V>>}, where {@code F} is either
      * {@link Provider} or {@link Producer}, depending on {@code bindingType}.
      */
-    Key forMultibindingsMethod(
+    Key forMultibindsMethod(
         BindingType bindingType, ExecutableType executableType, ExecutableElement method) {
       checkArgument(method.getKind().equals(METHOD), "%s must be a method", method);
       TypeElement factoryType =
@@ -353,38 +354,37 @@ abstract class Key {
     }
 
     /** Returns the key bound by a {@link Binds} method. */
-    Key forBindsMethod(SourceElement bindsMethodElement) {
-      ExecutableElement method = MoreElements.asExecutable(bindsMethodElement.element());
-      ExecutableType methodType =
-          MoreTypes.asExecutable(bindsMethodElement.asMemberOfContributingType(types));
+    Key forBindsMethod(ExecutableElement method, ExecutableType methodType) {
       checkArgument(isAnnotationPresent(method, Binds.class));
+      ContributionType contributionType = ContributionType.fromBindingMethod(method);
       TypeMirror returnType = normalize(types, methodType.getReturnType());
-      return forMethod(method, returnType);
+      TypeMirror keyType =
+          bindingMethodKeyType(
+              returnType, method, contributionType, Optional.<TypeElement>absent());
+      Key key = forMethod(method, keyType);
+      return contributionType.equals(ContributionType.UNIQUE)
+          ? key
+          : key.withBindingMethodIdentifier(
+              BindingMethodIdentifier.create(
+                  method, MoreElements.asType(method.getEnclosingElement())));
     }
 
-    /** Returns the key for the single parameter of a {@link Binds} method. */
-    Key forBindParameter(SourceElement bindsMethodElement) {
-      ExecutableElement method = MoreElements.asExecutable(bindsMethodElement.element());
-      VariableElement parameterElement = Iterables.getOnlyElement(method.getParameters());
-      ExecutableType methodType =
-          MoreTypes.asExecutable(bindsMethodElement.asMemberOfContributingType(types));
-      checkArgument(isAnnotationPresent(method, Binds.class));
-      TypeMirror parameterType = Iterables.getOnlyElement(methodType.getParameterTypes());
-      return forQualifiedType(getQualifier(parameterElement), parameterType);
-    }
-
-    private TypeMirror providesOrProducesKeyType(
+    private TypeMirror bindingMethodKeyType(
         TypeMirror returnType,
         ExecutableElement method,
         ContributionType contributionType,
-        TypeElement frameworkType) {
+        Optional<TypeElement> frameworkType) {
       switch (contributionType) {
         case UNIQUE:
           return returnType;
         case SET:
           return types.getDeclaredType(getSetElement(), returnType);
         case MAP:
-          return mapOfFrameworkType(mapKeyType(method), frameworkType, returnType);
+          if (frameworkType.isPresent()) {
+            return mapOfFrameworkType(mapKeyType(method), frameworkType.get(), returnType);
+          } else {
+            return types.getDeclaredType(getMapElement(), mapKeyType(method), returnType);
+          }
         case SET_VALUES:
           // TODO(gak): do we want to allow people to use "covariant return" here?
           checkArgument(SetType.isSet(returnType));
@@ -392,6 +392,20 @@ abstract class Key {
         default:
           throw new AssertionError();
       }
+    }
+
+    /**
+     * Returns the key for a binding associated with a {@link DelegateDeclaration}.
+     *
+     * If {@code delegateDeclaration} is {@code @IntoMap}, transforms the {@code Map<K, V>} key
+     * from {@link DelegateDeclaration#key()} to {@code Map<K, FrameworkType<V>>}. If {@code
+     * delegateDeclaration} is not a map contribution, its key is returned.
+     */
+    Key forDelegateBinding(
+        DelegateDeclaration delegateDeclaration, Class<?> frameworkType) {
+      return delegateDeclaration.contributionType().equals(ContributionType.MAP)
+          ? wrapMapValue(delegateDeclaration.key(), frameworkType)
+          : delegateDeclaration.key();
     }
 
     /**
@@ -412,37 +426,37 @@ abstract class Key {
 
     private Key forMethod(ExecutableElement method, TypeMirror keyType) {
       return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), getQualifier(method)),
+          wrapOptionalInEquivalence(getQualifier(method)),
           MoreTypes.equivalence().wrap(keyType),
-          Optional.<SourceElement>absent());
+          Optional.<BindingMethodIdentifier>absent());
     }
 
     Key forInjectConstructorWithResolvedType(TypeMirror type) {
       return new AutoValue_Key(
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           MoreTypes.equivalence().wrap(type),
-          Optional.<SourceElement>absent());
+          Optional.<BindingMethodIdentifier>absent());
     }
 
     Key forComponent(TypeMirror type) {
       return new AutoValue_Key(
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           MoreTypes.equivalence().wrap(normalize(types, type)),
-          Optional.<SourceElement>absent());
+          Optional.<BindingMethodIdentifier>absent());
     }
 
     Key forMembersInjectedType(TypeMirror type) {
       return new AutoValue_Key(
           Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
           MoreTypes.equivalence().wrap(normalize(types, type)),
-          Optional.<SourceElement>absent());
+          Optional.<BindingMethodIdentifier>absent());
     }
 
     Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {
       return new AutoValue_Key(
-          wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), qualifier),
+          wrapOptionalInEquivalence(qualifier),
           MoreTypes.equivalence().wrap(normalize(types, type)),
-          Optional.<SourceElement>absent());
+          Optional.<BindingMethodIdentifier>absent());
     }
 
     Key forProductionExecutor() {
@@ -478,14 +492,49 @@ abstract class Key {
     }
 
     /**
+     * Keys for map contributions from {@link dagger.Provides} and {@link dagger.producers.Produces}
+     * are in the form {@code Map<K, Framework<V>>}, but keys for {@link Binds} methods are just
+     * {@code Map<K, V>} since the framework type is not known until graph resolution. This
+     * translates from the {@code @Provides}/{@code @Produces} format into the {@code @Binds}
+     * format. If {@link Key#type() possibleMapKey.type()} is not a {@code Map<K, Framework<V>>},
+     * returns {@code possibleMapKey}.
+     */
+    Key convertToDelegateKey(Key possibleMapKey) {
+      if (!MapType.isMap(possibleMapKey)) {
+        return possibleMapKey;
+      }
+      MapType mapType = MapType.from(possibleMapKey);
+      TypeMirror wrappedValueType;
+      if (mapType.valuesAreTypeOf(Provider.class)) {
+        wrappedValueType = mapType.unwrappedValueType(Provider.class);
+      } else if (mapType.valuesAreTypeOf(Producer.class)) {
+        wrappedValueType = mapType.unwrappedValueType(Producer.class);
+      } else {
+        return possibleMapKey;
+      }
+      return possibleMapKey.withType(
+          types, types.getDeclaredType(getMapElement(), mapType.keyType(), wrappedValueType));
+    }
+
+    /**
+     * Converts a {@link Key} of type {@code Map<K, V>} to {@code Map<K, Provider<V>>}.
+     */
+    private Key wrapMapValue(Key key, Class<?> newWrappingClass) {
+      checkArgument(
+          FrameworkTypes.isFrameworkType(
+              elements.getTypeElement(newWrappingClass.getName()).asType()));
+      return maybeWrapMapValue(key, newWrappingClass).get();
+    }
+
+    /**
      * Returns a key of {@link Map}{@code <K, NewWrappingClass<V>>} if the input key represents a
      * {@code Map<K, CurrentWrappingClass<V>>}.
      */
     private Optional<Key> maybeRewrapMapValue(
         Key possibleMapKey, Class<?> currentWrappingClass, Class<?> newWrappingClass) {
       checkArgument(!currentWrappingClass.equals(newWrappingClass));
-      if (MapType.isMap(possibleMapKey.type())) {
-        MapType mapType = MapType.from(possibleMapKey.type());
+      if (MapType.isMap(possibleMapKey)) {
+        MapType mapType = MapType.from(possibleMapKey);
         if (mapType.valuesAreTypeOf(currentWrappingClass)) {
           TypeElement wrappingElement = getClassElement(newWrappingClass);
           if (wrappingElement == null) {
@@ -509,8 +558,8 @@ abstract class Key {
      * {@code Map<K, V>}.
      */
     private Optional<Key> maybeWrapMapValue(Key possibleMapKey, Class<?> wrappingClass) {
-      if (MapType.isMap(possibleMapKey.type())) {
-        MapType mapType = MapType.from(possibleMapKey.type());
+      if (MapType.isMap(possibleMapKey)) {
+        MapType mapType = MapType.from(possibleMapKey);
         if (!mapType.valuesAreTypeOf(wrappingClass)) {
           TypeElement wrappingElement = getClassElement(wrappingClass);
           if (wrappingElement == null) {
@@ -544,6 +593,14 @@ abstract class Key {
         }
       }
       return Optional.absent();
+    }
+
+    /**
+     * Optionally extract a {@link Key} for a {@code Map<K, Provider<V>>} if the given key is for
+     * {@code Map<K, Producer<V>>}.
+     */
+    Optional<Key> implicitProviderMapKeyFromProducer(Key possibleMapOfProducerKey) {
+      return maybeRewrapMapValue(possibleMapOfProducerKey, Producer.class, Provider.class);
     }
   }
 }

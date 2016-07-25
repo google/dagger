@@ -18,5 +18,6 @@ package test.sub;
 import javax.inject.Inject;
 
 public final class OtherThing {
-  @Inject public OtherThing(int i) {}
+  @Inject
+  public OtherThing(@SuppressWarnings("unused") int i) {}
 }

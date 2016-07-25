@@ -15,14 +15,8 @@
  */
 package producerstest;
 
-import com.google.common.base.Ascii;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
-
-import java.util.List;
 
 @ProducerModule
 final class DependedProducerModule {

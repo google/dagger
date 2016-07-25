@@ -252,7 +252,7 @@ public class ProductionComponentProcessorTest {
             "        DoubleCheck.provider(",
             "            TestClass_SimpleComponent_MonitoringModule_MonitorFactory.create(",
             "                simpleComponentProvider,",
-            "                SetFactory.<ProductionComponentMonitor.Factory>create());",
+            "                SetFactory.<ProductionComponentMonitor.Factory>empty());",
             "    this.bProvider = TestClass_BModule_BFactory.create(",
             "        builder.bModule, TestClass_C_Factory.create());",
             "    this.bProducer = Producers.producerFromProvider(bProvider);",

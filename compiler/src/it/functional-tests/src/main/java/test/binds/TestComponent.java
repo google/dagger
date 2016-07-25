@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package test.binds;
 
 import dagger.Component;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import test.SomeQualifier;
 
@@ -32,4 +35,16 @@ public interface TestComponent {
   Foo<String> qualifiedFooOfStrings();
 
   Foo<Integer> fooOfIntegers();
+
+  Set<Foo<? extends Number>> foosOfNumbers();
+
+  Set<Object> objects();
+
+  Set<CharSequence> charSequences();
+
+  Map<Integer, Object> integerObjectMap();
+
+  Map<Integer, Provider<Object>> integerProviderOfObjectMap();
+
+  @SomeQualifier Map<Integer, Object> qualifiedIntegerObjectMap();
 }

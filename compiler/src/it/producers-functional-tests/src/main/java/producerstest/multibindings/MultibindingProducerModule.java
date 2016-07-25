@@ -18,22 +18,25 @@ package producerstest.multibindings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.Multibindings;
+
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
+import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
-import java.util.Map;
-import java.util.Set;
+
 import producerstest.multibindings.Qualifiers.ObjCount;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingMap;
 import producerstest.multibindings.Qualifiers.PossiblyThrowingSet;
 
+import java.util.Map;
+import java.util.Set;
+
 @ProducerModule
-final class MultibindingProducerModule {
+abstract class MultibindingProducerModule {
   @Produces
   @IntoSet
   static ListenableFuture<String> futureStr() {
@@ -114,12 +117,11 @@ final class MultibindingProducerModule {
     throw new RuntimeException("monkey");
   }
 
-  @Multibindings
-  interface MultiBindings {
-    Set<Object> objs();
+  @Multibinds
+  abstract Set<Object> objs();
 
-    Map<Object, Object> objMap();
-  }
+  @Multibinds
+  abstract Map<Object, Object> objMap();
 
   @Produces
   @ObjCount

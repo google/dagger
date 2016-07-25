@@ -198,7 +198,7 @@ class BuilderValidator {
       Object[] newArgs = new Object[extraArgs.length + 1];
       newArgs[0] = method;
       System.arraycopy(extraArgs, 0, newArgs, 1, extraArgs.length);
-      builder.addError(String.format(inheritedError, newArgs), builder.getSubject());
+      builder.addError(String.format(inheritedError, newArgs));
     }
   }
 }

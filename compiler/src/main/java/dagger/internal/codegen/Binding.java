@@ -21,8 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import dagger.internal.codegen.BindingType.HasBindingType;
-import dagger.internal.codegen.Key.HasKey;
-import dagger.internal.codegen.SourceElement.HasSourceElement;
 import java.util.List;
 import java.util.Set;
 import javax.lang.model.element.Element;
@@ -48,7 +46,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
  * @author Gregory Kick
  * @since 2.0
  */
-abstract class Binding implements HasBindingType, HasKey, HasSourceElement {
+abstract class Binding extends BindingDeclaration implements HasBindingType {
 
   /**
    * Returns the framework class associated with this binding.
@@ -60,16 +58,6 @@ abstract class Binding implements HasBindingType, HasKey, HasSourceElement {
   /** The {@link Key} that is provided by this binding. */
   @Override
   public abstract Key key();
-
-  /** Returns the {@link Element} instance that is responsible for declaring the binding. */
-  Element bindingElement() {
-    return sourceElement().element();
-  }
-
-  /** The type enclosing the binding {@link #bindingElement()}. */
-  TypeElement bindingTypeElement() {
-    return sourceElement().enclosingTypeElement();
-  }
 
   /**
    * The explicit set of {@link DependencyRequest dependencies} required to satisfy this binding.
@@ -86,10 +74,8 @@ abstract class Binding implements HasBindingType, HasKey, HasSourceElement {
    * Returns the name of the package in which this binding must be managed. E.g.: a binding
    * may reference non-public types.
    */
-  abstract Optional<String> bindingPackage();
-
-  protected static Optional<String> findBindingPackage(Key bindingKey) {
-    Set<String> packages = nonPublicPackageUse(bindingKey.type());
+  final Optional<String> bindingPackage() {
+    Set<String> packages = nonPublicPackageUse(key().type());
     switch (packages.size()) {
       case 0:
         return Optional.absent();

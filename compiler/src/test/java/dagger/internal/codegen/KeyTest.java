@@ -23,8 +23,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.testing.compile.CompilationRule;
 import dagger.Module;
 import dagger.Provides;
-import dagger.multibindings.IntoSet;
+import dagger.internal.codegen.Key.BindingMethodIdentifier;
 import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.util.Set;
@@ -75,7 +76,7 @@ public class KeyTest {
             new AutoValue_Key(
                 Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
                 MoreTypes.equivalence().wrap(typeElement.asType()),
-                Optional.<SourceElement>absent()));
+                Optional.<BindingMethodIdentifier>absent()));
   }
 
   static final class InjectedClass {
@@ -89,13 +90,12 @@ public class KeyTest {
         elements.getTypeElement(ProvidesMethodModule.class.getCanonicalName());
     ExecutableElement providesMethod =
         Iterables.getOnlyElement(ElementFilter.methodsIn(moduleElement.getEnclosedElements()));
-    assertThat(
-            keyFactory.forProvidesMethod(SourceElement.forElement(providesMethod, moduleElement)))
+    assertThat(keyFactory.forProvidesMethod(providesMethod, moduleElement))
         .isEqualTo(
             new AutoValue_Key(
                 Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
                 MoreTypes.equivalence().wrap(stringType),
-                Optional.<SourceElement>absent()));
+                Optional.<BindingMethodIdentifier>absent()));
   }
 
   @Module
@@ -113,7 +113,7 @@ public class KeyTest {
         elements.getTypeElement(QualifiedProvidesMethodModule.class.getCanonicalName());
     ExecutableElement providesMethod =
         Iterables.getOnlyElement(ElementFilter.methodsIn(moduleElement.getEnclosedElements()));
-    Key key = keyFactory.forProvidesMethod(SourceElement.forElement(providesMethod, moduleElement));
+    Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
     assertThat(MoreTypes.equivalence().wrap(key.qualifier().get().getAnnotationType()))
         .isEqualTo(MoreTypes.equivalence().wrap(qualifierElement.asType()));
     assertThat(key.wrappedType()).isEqualTo(MoreTypes.equivalence().wrap(stringType));
@@ -124,8 +124,7 @@ public class KeyTest {
         elements.getTypeElement(QualifiedProvidesMethodModule.class.getCanonicalName());
     ExecutableElement providesMethod =
         Iterables.getOnlyElement(ElementFilter.methodsIn(moduleElement.getEnclosedElements()));
-    Key provisionKey =
-        keyFactory.forProvidesMethod(SourceElement.forElement(providesMethod, moduleElement));
+    Key provisionKey = keyFactory.forProvidesMethod(providesMethod, moduleElement);
 
     TypeMirror type = elements.getTypeElement(String.class.getCanonicalName()).asType();
     TypeElement injectableElement =
@@ -166,13 +165,12 @@ public class KeyTest {
         elements.getTypeElement(SetProvidesMethodsModule.class.getCanonicalName());
     for (ExecutableElement providesMethod
         : ElementFilter.methodsIn(moduleElement.getEnclosedElements())) {
-      SourceElement sourceElement = SourceElement.forElement(providesMethod, moduleElement);
-      assertThat(keyFactory.forProvidesMethod(sourceElement))
+      assertThat(keyFactory.forProvidesMethod(providesMethod, moduleElement))
           .isEqualTo(
               new AutoValue_Key(
                   Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
                   MoreTypes.equivalence().wrap(setOfStringsType),
-                  Optional.of(sourceElement)));
+                  Optional.of(BindingMethodIdentifier.create(providesMethod, moduleElement))));
     }
   }
 
@@ -216,10 +214,8 @@ public class KeyTest {
     TypeMirror integerType = integerMethod.getReturnType();
     assertThat(integerType.getKind().isPrimitive()).isFalse();
     assertThat(types.isSameType(intType, integerType)).named("type equality").isFalse();
-
-    Key intKey = keyFactory.forProvidesMethod(SourceElement.forElement(intMethod, primitiveHolder));
-    Key integerKey =
-        keyFactory.forProvidesMethod(SourceElement.forElement(integerMethod, boxedPrimitiveHolder));
+    Key intKey = keyFactory.forProvidesMethod(intMethod, primitiveHolder);
+    Key integerKey = keyFactory.forProvidesMethod(integerMethod, boxedPrimitiveHolder);
     assertThat(intKey).isEqualTo(integerKey);
   }
 
@@ -229,13 +225,12 @@ public class KeyTest {
         elements.getTypeElement(ProducesMethodsModule.class.getCanonicalName());
     for (ExecutableElement producesMethod
         : ElementFilter.methodsIn(moduleElement.getEnclosedElements())) {
-      assertThat(
-              keyFactory.forProducesMethod(SourceElement.forElement(producesMethod, moduleElement)))
+      assertThat(keyFactory.forProducesMethod(producesMethod, moduleElement))
           .isEqualTo(
               new AutoValue_Key(
                   Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
                   MoreTypes.equivalence().wrap(stringType),
-                  Optional.<SourceElement>absent()));
+                  Optional.<BindingMethodIdentifier>absent()));
     }
   }
 
@@ -258,13 +253,12 @@ public class KeyTest {
         elements.getTypeElement(SetProducesMethodsModule.class.getCanonicalName());
     for (ExecutableElement producesMethod
         : ElementFilter.methodsIn(moduleElement.getEnclosedElements())) {
-      SourceElement sourceElement = SourceElement.forElement(producesMethod, moduleElement);
-      assertThat(keyFactory.forProducesMethod(sourceElement))
+      assertThat(keyFactory.forProducesMethod(producesMethod, moduleElement))
           .isEqualTo(
               new AutoValue_Key(
                   Optional.<Equivalence.Wrapper<AnnotationMirror>>absent(),
                   MoreTypes.equivalence().wrap(setOfStringsType),
-                  Optional.of(sourceElement)));
+                  Optional.of(BindingMethodIdentifier.create(producesMethod, moduleElement))));
     }
   }
 

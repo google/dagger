@@ -64,7 +64,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * <p>If {@code unwrapValue} is true, the annotation's single member can be any type except an
  * array.
- *
+ * 
  * <p>See {@link dagger.multibindings} for standard unwrapped map key annotations for keys that are
  * boxed primitives, strings, or classes.
  *
@@ -101,6 +101,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>(Note that there must be a class {@code MyMapKeyImpl} that implements {@code MyMapKey} in
  * order to call {@link Map#get(Object)} on the provided map.)
  *
+ * @see <a href="http://google.github.io/dagger/multibindings#map-multibindings">Map
+ *      multibinding</a>
  */
 @Documented
 @Target(ANNOTATION_TYPE)

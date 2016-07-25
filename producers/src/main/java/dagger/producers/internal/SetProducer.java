@@ -20,10 +20,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.DaggerCollections.hasDuplicates;
+import static dagger.internal.DaggerCollections.presizedList;
 
 /**
  * A {@link Producer} implementation used to implement {@link Set} bindings. This producer returns
@@ -43,40 +47,73 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
       };
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // safe covariant cast
-  public static <T> Producer<Set<T>> create() {
-    return (Producer<Set<T>>) (Producer) EMPTY_PRODUCER;
+  public static <T> Producer<Set<T>> empty() {
+    return (Producer) EMPTY_PRODUCER;
   }
 
   /**
-   * Returns the supplied producer.  If there's just one producer, there's no need to wrap it or its
-   * result.
+   * Constructs a new {@link Builder} for a {@link SetProducer} with {@code individualProducerSize}
+   * individual {@code Producer<T>} and {@code collectionProducerSize} {@code
+   * Producer<Collection<T>>} instances.
    */
-  public static <T> Producer<Set<T>> create(Producer<Set<T>> producer) {
-    return producer;
+  public static <T> Builder<T> builder(int individualProducerSize, int collectionProducerSize) {
+    return new Builder<T>(individualProducerSize, collectionProducerSize);
   }
 
   /**
-   * Returns a new producer that creates {@link Set} futures from the union of the given
-   * {@link Producer} instances.
+   * A builder to accumulate {@code Producer<T>} and {@code Producer<Collection<T>>} instances.
+   * These are only intended to be single-use and from within generated code. Do <em>NOT</em> add
+   * producers after calling {@link #build()}.
    */
-  @SafeVarargs
-  public static <T> Producer<Set<T>> create(Producer<Set<T>>... producers) {
-    return new SetProducer<T>(ImmutableSet.copyOf(producers));
+  public static final class Builder<T> {
+    private final List<Producer<T>> individualProducers;
+    private final List<Producer<Collection<T>>> collectionProducers;
+
+    private Builder(int individualProducerSize, int collectionProducerSize) {
+      individualProducers = presizedList(individualProducerSize);
+      collectionProducers = presizedList(collectionProducerSize);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Builder<T> addProducer(Producer<? extends T> individualProducer) {
+      assert individualProducer != null : "Codegen error? Null producer";
+      individualProducers.add((Producer<T>) individualProducer);
+      return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Builder<T> addCollectionProducer(
+        Producer<? extends Collection<? extends T>> multipleProducer) {
+      assert multipleProducer != null : "Codegen error? Null producer";
+      collectionProducers.add((Producer<Collection<T>>) multipleProducer);
+      return this;
+    }
+
+    public SetProducer<T> build() {
+      assert !hasDuplicates(individualProducers)
+          : "Codegen error?  Duplicates in the producer list";
+      assert !hasDuplicates(collectionProducers)
+          : "Codegen error?  Duplicates in the producer list";
+
+      return new SetProducer<T>(individualProducers, collectionProducers);
+    }
   }
 
-  private final Set<Producer<Set<T>>> contributingProducers;
+  private final List<Producer<T>> individualProducers;
+  private final List<Producer<Collection<T>>> collectionProducers;
 
-  private SetProducer(Set<Producer<Set<T>>> contributingProducers) {
-    super();
-    this.contributingProducers = contributingProducers;
+  private SetProducer(
+      List<Producer<T>> individualProducers, List<Producer<Collection<T>>> collectionProducers) {
+    this.individualProducers = individualProducers;
+    this.collectionProducers = collectionProducers;
   }
 
   /**
    * Returns a future {@link Set} whose iteration order is that of the elements given by each of the
    * producers, which are invoked in the order given at creation.
    *
-   * <p>If any of the delegate sets, or any elements therein, are null, then this future will fail
-   * with a NullPointerException.
+   * <p>If any of the delegate collections, or any elements therein, are null, then this future will
+   * fail with a NullPointerException.
    *
    * <p>Canceling this future will attempt to cancel all of the component futures, and if any of the
    * delegate futures fails or is canceled, this one is, too.
@@ -84,24 +121,32 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
    * @throws NullPointerException if any of the delegate producers return null
    */
   @Override
-  public ListenableFuture<Set<T>> compute(ProducerMonitor unusedMonitor) {
-    List<ListenableFuture<Set<T>>> futureSets =
-        new ArrayList<ListenableFuture<Set<T>>>(contributingProducers.size());
-    for (Producer<Set<T>> producer : contributingProducers) {
-      ListenableFuture<Set<T>> futureSet = producer.get();
-      if (futureSet == null) {
-        throw new NullPointerException(producer + " returned null");
-      }
-      futureSets.add(futureSet);
+  public ListenableFuture<Set<T>> compute() {
+    List<ListenableFuture<T>> individualFutures =
+        new ArrayList<ListenableFuture<T>>(individualProducers.size());
+    for (Producer<T> producer : individualProducers) {
+      individualFutures.add(checkNotNull(producer.get()));
     }
-    return Futures.transform(Futures.allAsList(futureSets), new Function<List<Set<T>>, Set<T>>() {
-      @Override public Set<T> apply(List<Set<T>> sets) {
-        ImmutableSet.Builder<T> builder = ImmutableSet.builder();
-        for (Set<T> set : sets) {
-          builder.addAll(set);
-        }
-        return builder.build();
-      }
-    });
+
+    // Presize the list of collections produced by the amount of collectionProducers, with one more
+    // for the consolidate individualFutures from Futures.allAsList.
+    List<ListenableFuture<? extends Collection<T>>> futureCollections =
+        new ArrayList<ListenableFuture<? extends Collection<T>>>(collectionProducers.size() + 1);
+    futureCollections.add(Futures.allAsList(individualFutures));
+    for (Producer<Collection<T>> producer : collectionProducers) {
+      futureCollections.add(checkNotNull(producer.get()));
+    }
+    return Futures.transform(
+        Futures.allAsList(futureCollections),
+        new Function<List<Collection<T>>, Set<T>>() {
+          @Override
+          public Set<T> apply(List<Collection<T>> sets) {
+            ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+            for (Collection<T> set : sets) {
+              builder.addAll(set);
+            }
+            return builder.build();
+          }
+        });
   }
 }

@@ -28,7 +28,7 @@ import java.util.Set;
 public final class ContributionsModule {
   @Provides
   @IntoSet
-  static int contributeAnInt(double doubleDependency) {
+  static int contributeAnInt(@SuppressWarnings("unused") double doubleDependency) {
     return 1742;
   }
 

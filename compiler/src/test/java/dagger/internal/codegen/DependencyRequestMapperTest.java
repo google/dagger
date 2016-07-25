@@ -130,15 +130,22 @@ public class DependencyRequestMapperTest {
 
   @Module
   static final class ProvidesMethodModule {
-    @Provides String provideString(
-        Integer a, Lazy<Integer> b, Provider<Integer> c, MembersInjector<Y> d) {
+    @Provides
+    static String provideString(
+        @SuppressWarnings("unused") Integer a,
+        @SuppressWarnings("unused") Lazy<Integer> b,
+        @SuppressWarnings("unused") Provider<Integer> c,
+        @SuppressWarnings("unused") MembersInjector<Y> d) {
       throw new UnsupportedOperationException();
     }
   }
 
   @ProducerModule
   static final class ProducesMethodModule {
-    @Produces String produceString(Producer<Integer> a, Produced<Integer> b) {
+    @Produces
+    static String produceString(
+        @SuppressWarnings("unused") Producer<Integer> a,
+        @SuppressWarnings("unused") Produced<Integer> b) {
       return null;
     }
   }

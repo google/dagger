@@ -15,7 +15,6 @@
  */
 package producerstest;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Component;
 
 @Component(modules = DependedModule.class)

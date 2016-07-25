@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
 
-import dagger.Binds;
-import dagger.Module;
+package test.binds;
 
-@Module
-interface InterfaceModule {
-  @Binds Foo<Object> bindFooOfObjects(FooOfObjects impl);
+import javax.inject.Inject;
+
+final class FooOfObjects implements Foo<Object> {
+  @Inject FooOfObjects() {}
 }

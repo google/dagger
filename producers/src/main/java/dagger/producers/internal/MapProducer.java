@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.Beta;
 import dagger.producers.Producer;
-import dagger.producers.monitoring.ProducerMonitor;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
   }
 
   @Override
-  public ListenableFuture<Map<K, V>> compute(ProducerMonitor unusedMonitor) {
+  public ListenableFuture<Map<K, V>> compute() {
     return Futures.transformAsync(
         mapProducerProducer.get(),
         new AsyncFunction<Map<K, Producer<V>>, Map<K, V>>() {
@@ -100,7 +99,6 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
   @SuppressWarnings({"unchecked", "rawtypes"}) // bivariate implementation
   private static <K, V>
       Function<Map.Entry<K, Producer<V>>, ListenableFuture<Map.Entry<K, V>>> entryUnwrapper() {
-    return (Function<Map.Entry<K, Producer<V>>, ListenableFuture<Map.Entry<K, V>>>)
-        (Function) ENTRY_UNWRAPPER;
+    return (Function) ENTRY_UNWRAPPER;
   }
 }

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 import com.google.auto.common.MoreTypes;
 import dagger.Multibindings;
 import dagger.Provides;
+import dagger.multibindings.Multibinds;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.lang.model.element.AnnotationMirror;
@@ -78,6 +79,8 @@ final class ErrorMessages {
       "@Qualifier annotations are not allowed on @Inject constructors.";
   static final String SCOPE_ON_INJECT_CONSTRUCTOR =
       "@Scope annotations are not allowed on @Inject constructors. Annotate the class instead.";
+  static final String CHECKED_EXCEPTIONS_ON_CONSTRUCTORS =
+      "Dagger does not support checked exceptions on @Inject constructors.";
 
   /* fields */
   static final String PRIVATE_INJECT_FIELD =
@@ -122,8 +125,7 @@ final class ErrorMessages {
       "@Reusable cannot be applied to components or subcomponents.";
 
   static final String BINDING_METHOD_RETURN_TYPE =
-      "@%s methods must either return a primitive, an array, a type variable, or a declared"
-          + " type.";
+      "@%s methods must return a primitive, an array, a type variable, or a declared type.";
 
   static final String BINDING_METHOD_THROWS_CHECKED =
       "@%s methods may only throw unchecked exceptions";
@@ -132,8 +134,8 @@ final class ErrorMessages {
       "@Nullable on @Produces methods does not do anything.";
 
   static final String PRODUCES_METHOD_RETURN_TYPE =
-      "@Produces methods must either return a primitive, an array, a type variable, or a declared"
-          + " type, or a ListenableFuture of one of those types.";
+      "@Produces methods must return a primitive, an array, a type variable, or a declared type, "
+          + "or a ListenableFuture of one of those types.";
 
   static final String PRODUCES_METHOD_RAW_FUTURE =
       "@Produces methods cannot return a raw ListenableFuture.";
@@ -141,14 +143,21 @@ final class ErrorMessages {
   static final String BINDING_METHOD_SET_VALUES_RAW_SET =
       "@%s methods of type set values cannot return a raw Set";
 
-  static final String PROVIDES_METHOD_SET_VALUES_RETURN_SET =
-      "@Provides methods of type set values must return a Set";
+  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RAW_SET_PARAMETER =
+      "@Binds @ElementsIntoSet methods cannot take a raw Set parameter";
+
+  static final String BINDING_METHOD_SET_VALUES_RETURN_SET =
+      "@%s methods of type set values must return a Set";
 
   static final String PRODUCES_METHOD_SET_VALUES_RETURN_SET =
       "@Produces methods of type set values must return a Set or ListenableFuture of Set";
 
-  static final String PRODUCES_METHOD_THROWS =
-      "@Produces methods may only throw unchecked exceptions or exceptions subclassing Exception";
+  static final String PRODUCES_METHOD_SCOPE = "@Produces methods may not have scope annotations.";
+
+  static final String BINDING_METHOD_THROWS =
+      "@%s methods may only throw unchecked exceptions or exceptions subclassing Exception";
+
+  static final String BINDING_METHOD_THROWS_ANY = "@%s methods may not throw";
 
   static final String BINDING_METHOD_MUST_RETURN_A_VALUE =
       "@%s methods must return a value (not void).";
@@ -158,18 +167,24 @@ final class ErrorMessages {
 
   static final String BINDING_METHOD_ABSTRACT = "@%s methods cannot be abstract";
 
-  static final String BIND_METHOD_NOT_ABSTRACT = "@Bind methods must be abstract";
+  static final String BINDING_METHOD_NOT_ABSTRACT = "@%s methods must be abstract";
 
   static final String BINDING_METHOD_PRIVATE = "@%s methods cannot be private";
 
   static final String BINDING_METHOD_TYPE_PARAMETER =
       "@%s methods may not have type parameters.";
 
-  static final String BIND_METHOD_ONE_ASSIGNABLE_PARAMETER =
-      "@Bind methods must have only one parameter whose type is assignable to the return type";
+  // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
+  // right-hand-side might not be assignable to the left-hand-side, but still compatible with
+  // Set.addAll(Collection<? extends E>)
+  static final String BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER =
+      "@Binds methods must have only one parameter whose type is assignable to the return type";
 
   static final String BINDING_METHOD_NOT_IN_MODULE =
       "@%s methods can only be present within a @%s";
+
+  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET =
+      "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter";
 
   static final String BINDING_METHOD_NOT_MAP_HAS_MAP_KEY =
       "@%s methods of non map type cannot declare a map key";
@@ -184,14 +199,11 @@ final class ErrorMessages {
       "Cannot have more than one @%s method with the same name in a single module";
 
   static final String INCOMPATIBLE_MODULE_METHODS =
-      "A @%1$s may contain non-static @%2$s methods or @Bind methods,"
-          + " but not both at the same time.  (Static @%2$s may be used with either.)";
+      "A @%1$s may not contain both non-static @%2$s methods and abstract @Binds or @Multibinds "
+          + "declarations";
 
   static final String MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT =
       "Modules with type parameters must be abstract";
-
-  static final String REFERENCED_MODULES_MUST_NOT_BE_ABSTRACT =
-      "%s is listed as a module, but is an abstract class or interface";
 
   static final String REFERENCED_MODULE_NOT_ANNOTATED =
       "%s is listed as a module, but is not annotated with %s";
@@ -253,10 +265,6 @@ final class ErrorMessages {
         MoreTypes.asTypeElement(type).getSimpleName());
   }
 
-  static final String PRODUCTION_COMPONENT_SCOPE =
-      "Production components may not declare any @Scope other than @ProductionScope; they are "
-          + "automatically scoped with @ProductionScope if no scope is applied.";
-
   static final String MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION =
       "This type supports members injection but cannot be implicitly provided.";
 
@@ -267,9 +275,6 @@ final class ErrorMessages {
       "Type parameters must be bounded for members injection. %s required by %s, via:\n%s";
 
   static final String CONTAINS_DEPENDENCY_CYCLE_FORMAT = "%s.%s() contains a dependency cycle:\n%s";
-
-  static final String MALFORMED_MODULE_METHOD_FORMAT =
-      "Cannot generated a graph because method %s on module %s was malformed";
 
   static String nullableToNonNullable(String typeName, String bindingString) {
     return String.format(
@@ -285,8 +290,8 @@ final class ErrorMessages {
       "Cannot return null from a non-@Nullable @Provides method";
 
   /* Multibinding messages */
-  static final String MULTIBINDING_ANNOTATION_NOT_ON_PROVIDES_OR_PRODUCES =
-      "Multibinding annotations may only be on @Provides or @Produces methods";
+  static final String MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD =
+      "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods";
 
   static final String MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD =
       "Multiple multibinding annotations cannot be placed on the same %s method";
@@ -435,7 +440,7 @@ final class ErrorMessages {
     }
   }
 
-  static final class ProductionComponentBuilderMessages extends ComponentBuilderMessages {
+  private static final class ProductionComponentBuilderMessages extends ComponentBuilderMessages {
     @SuppressWarnings("hiding")
     static final ProductionComponentBuilderMessages INSTANCE =
         new ProductionComponentBuilderMessages();
@@ -446,7 +451,8 @@ final class ErrorMessages {
     }
   }
 
-  static final class ProductionSubcomponentBuilderMessages extends ComponentBuilderMessages {
+  private static final class ProductionSubcomponentBuilderMessages
+      extends ComponentBuilderMessages {
     @SuppressWarnings("hiding")
     static final ProductionSubcomponentBuilderMessages INSTANCE =
         new ProductionSubcomponentBuilderMessages();
@@ -455,14 +461,6 @@ final class ErrorMessages {
     protected String process(String s) {
       return s.replaceAll("component", "production subcomponent")
           .replaceAll("Component", "ProductionSubcomponent");
-    }
-
-    String builderMethodRequiresNoArgs() {
-      return "Methods returning a @ProductionSubcomponent.Builder must have no arguments";
-    }
-
-    String moreThanOneRefToSubcomponent() {
-      return "Only one method can create a given production subcomponent. %s is created by: %s";
     }
   }
 
@@ -476,18 +474,27 @@ final class ErrorMessages {
     static final String MUST_BE_IN_MODULE =
         "@Multibindings types must be nested within a @Module or @ProducerModule";
 
-    static final String METHOD_MUST_RETURN_MAP_OR_SET =
-        "@Multibindings methods must return Map<K, V> or Set<T>";
-
-    static final String TOO_MANY_QUALIFIERS =
-        "Cannot use more than one @Qualifier on a method in an @Multibindings type";
-
     static String tooManyMethodsForKey(String formattedKey) {
       return String.format(
           "Too many @Multibindings methods for %s", stripCommonTypePrefixes(formattedKey));
     }
 
     private MultibindingsMessages() {}
+  }
+
+  /**
+   * Error messages related to {@link Multibinds @Multibinds} methods and methods in
+   * {@link Multibindings} interfaces.
+   */
+  static final class MultibindsMessages {
+    static final String METHOD_MUST_RETURN_MAP_OR_SET =
+        "@%s methods must return Map<K, V> or Set<T>";
+
+    static final String NO_MAP_KEY = "@%s methods must not have a @MapKey annotation";
+
+    static final String PARAMETERS = "@%s methods cannot have parameters";
+
+    private MultibindsMessages() {}
   }
 
   /**

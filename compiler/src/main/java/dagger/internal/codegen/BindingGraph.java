@@ -36,6 +36,7 @@ import dagger.Reusable;
 import dagger.Subcomponent;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.Key.HasKey;
 import dagger.producers.ProductionComponent;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -56,8 +57,10 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
+import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.BindingKey.Kind.CONTRIBUTION;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
@@ -70,6 +73,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_MULTIBINDING_KIND;
 import static dagger.internal.codegen.Key.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
 /**
@@ -108,39 +112,33 @@ abstract class BindingGraph {
       };
 
   /**
-   * Returns the set of types necessary to implement the component, but are not part of the injected
-   * graph.  This includes modules and component dependencies.
+   * The types for which the component needs instances.
+   * <ul>
+   * <li>component dependencies
+   * <li>{@linkplain #ownedModules() owned modules} with concrete instance bindings that are used in
+   *     the graph
+   * </ul>
    */
   ImmutableSet<TypeElement> componentRequirements() {
     return SUBGRAPH_TRAVERSER
         .preOrderTraversal(this)
-        .transformAndConcat(
-            new Function<BindingGraph, Iterable<ResolvedBindings>>() {
-              @Override
-              public Iterable<ResolvedBindings> apply(BindingGraph input) {
-                return input.resolvedBindings().values();
-              }
-            })
-        .transformAndConcat(
-            new Function<ResolvedBindings, Set<ContributionBinding>>() {
-              @Override
-              public Set<ContributionBinding> apply(ResolvedBindings input) {
-                return input.contributionBindings();
-              }
-            })
-        .transformAndConcat(
-            new Function<ContributionBinding, Set<TypeElement>>() {
-              @Override
-              public Set<TypeElement> apply(ContributionBinding input) {
-                return input.bindingElement().getModifiers().contains(STATIC)
-                    ? ImmutableSet.<TypeElement>of()
-                    : input.contributedBy().asSet();
-              }
-            })
+        .transformAndConcat(RESOLVED_BINDINGS)
+        .transformAndConcat(ResolvedBindings.CONTRIBUTION_BINDINGS)
+        .filter(not(BindingDeclaration.bindingElementHasModifier(STATIC)))
+        .filter(not(BindingDeclaration.bindingElementHasModifier(ABSTRACT)))
+        .transformAndConcat(BindingDeclaration.CONTRIBUTING_MODULE)
         .filter(in(ownedModuleTypes()))
         .append(componentDescriptor().dependencies())
         .toSet();
   }
+
+  private static final Function<BindingGraph, Iterable<ResolvedBindings>> RESOLVED_BINDINGS =
+      new Function<BindingGraph, Iterable<ResolvedBindings>>() {
+        @Override
+        public Iterable<ResolvedBindings> apply(BindingGraph graph) {
+          return graph.resolvedBindings().values();
+        }
+      };
 
   /**
    * Returns the {@link ComponentDescriptor}s for this component and its subcomponents.
@@ -159,10 +157,10 @@ abstract class BindingGraph {
   }
 
   ImmutableSet<TypeElement> availableDependencies() {
-    return new ImmutableSet.Builder<TypeElement>()
-        .addAll(componentDescriptor().transitiveModuleTypes())
-        .addAll(componentDescriptor().dependencies())
-        .build();
+    return FluentIterable.from(componentDescriptor().transitiveModuleTypes())
+        .filter(not(hasModifiers(ABSTRACT)))
+        .append(componentDescriptor().dependencies())
+        .toSet();
   }
 
   static final class Factory {
@@ -287,6 +285,7 @@ abstract class BindingGraph {
       final ImmutableSetMultimap<Key, ContributionBinding> explicitMultibindings;
       final ImmutableSetMultimap<Key, MultibindingDeclaration> multibindingDeclarations;
       final ImmutableSetMultimap<Key, DelegateDeclaration> delegateDeclarations;
+      final ImmutableSetMultimap<Key, DelegateDeclaration> delegateMultibindingDeclarations;
       final Map<BindingKey, ResolvedBindings> resolvedBindings;
       final Deque<BindingKey> cycleStack = new ArrayDeque<>();
       final Cache<BindingKey, Boolean> dependsOnLocalMultibindingsCache =
@@ -312,15 +311,10 @@ abstract class BindingGraph {
         assert delegateDeclarations != null;
         this.delegateDeclarations = delegateDeclarations;
         this.resolvedBindings = Maps.newLinkedHashMap();
-
-        ImmutableSetMultimap.Builder<Key, ContributionBinding> explicitMultibindingsBuilder =
-            ImmutableSetMultimap.builder();
-        for (ContributionBinding binding : explicitBindingsSet) {
-          if (binding.key().bindingMethod().isPresent()) {
-            explicitMultibindingsBuilder.put(binding.key().withoutBindingMethod(), binding);
-          }
-        }
-        this.explicitMultibindings = explicitMultibindingsBuilder.build();
+        this.explicitMultibindings =
+            multibindingsKeyedWithoutBindingIdentifiers(explicitBindingsSet);
+        this.delegateMultibindingDeclarations =
+            multibindingsKeyedWithoutBindingIdentifiers(delegateDeclarations.values());
       }
 
       /**
@@ -328,15 +322,22 @@ abstract class BindingGraph {
        *
        * <p>For {@link BindingKey.Kind#CONTRIBUTION} requests, returns all of:
        * <ul>
-       * <li>All explicit bindings for the requested key.
-       * <li>All explicit bindings for {@code Set<T>} if the requested key's type is
-       *     {@code Set<Produced<T>>}.
+       * <li>All explicit bindings for:
+       *     <ul>
+       *     <li>the requested key
+       *     <li>{@code Set<T>} if the requested key's type is {@code Set<Produced<T>>}
+       *     <li>{@code Map<K, Provider<V>>} if the requested key's type is
+       *         {@code Map<K, Producer<V>>}.
+       *     </ul>
+       *
        * <li>A synthetic binding that depends on {@code Map<K, Producer<V>>} if the requested key's
        *     type is {@code Map<K, V>} and there are some explicit bindings for
        *     {@code Map<K, Producer<V>>}.
+       *
        * <li>A synthetic binding that depends on {@code Map<K, Provider<V>>} if the requested key's
        *     type is {@code Map<K, V>} and there are some explicit bindings for
        *     {@code Map<K, Provider<V>>} but no explicit bindings for {@code Map<K, Producer<V>>}.
+       *
        * <li>An implicit {@link Inject @Inject}-annotated constructor binding if there is one and
        *     there are no explicit bindings or synthetic bindings.
        * </ul>
@@ -346,61 +347,33 @@ abstract class BindingGraph {
        */
       ResolvedBindings lookUpBindings(DependencyRequest request) {
         BindingKey bindingKey = request.bindingKey();
-        Key key = bindingKey.key();
+        Key requestKey = bindingKey.key();
         switch (bindingKey.kind()) {
           case CONTRIBUTION:
             Set<ContributionBinding> contributionBindings = new LinkedHashSet<>();
-            Set<ContributionBinding> multibindings = new LinkedHashSet<>();
+            ImmutableSet.Builder<ContributionBinding> multibindingsBuilder = ImmutableSet.builder();
             ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarationsBuilder =
                 ImmutableSet.builder();
-            ImmutableSet.Builder<DelegateDeclaration> delegateDeclarationsBuilder =
-                ImmutableSet.builder();
 
-            // Add explicit bindings and declarations (those from modules and components).
-            contributionBindings.addAll(getExplicitBindings(key));
-            multibindings.addAll(getExplicitMultibindings(key));
-            multibindingDeclarationsBuilder.addAll(getMultibindingDeclarations(key));
-            delegateDeclarationsBuilder.addAll(getDelegateDeclarations(key));
+            for (Key key : keysMatchingRequest(requestKey)) {
+              contributionBindings.addAll(getExplicitBindings(key));
+              contributionBindings.addAll(getDelegateBindings(key));
 
-            // If the key is Set<Produced<T>>, then add explicit bindings and declarations for
-            // Set<T>.
-            Optional<Key> implicitSetKey = keyFactory.implicitSetKeyFromProduced(key);
-            contributionBindings.addAll(getExplicitBindings(implicitSetKey));
-            multibindings.addAll(getExplicitMultibindings(implicitSetKey));
-            multibindingDeclarationsBuilder.addAll(getMultibindingDeclarations(implicitSetKey));
-            delegateDeclarationsBuilder.addAll(getDelegateDeclarations(implicitSetKey));
+              multibindingsBuilder.addAll(getExplicitMultibindings(key));
+              multibindingsBuilder.addAll(getDelegateMultibindings(key));
 
-            ImmutableSet<MultibindingDeclaration> multibindingDeclarations =
-                multibindingDeclarationsBuilder.build();
-            ImmutableSet<DelegateDeclaration> delegateDeclarations =
-                delegateDeclarationsBuilder.build();
+              multibindingDeclarationsBuilder.addAll(getMultibindingDeclarations(key));
+            }
 
-            contributionBindings.addAll(delegateBindings(delegateDeclarations));
-
-            // If the key is Map<K, V>, get its map-of-framework-type binding keys, which are either
-            // Map<K, Provider<V>> or Map<K, Producer<V>>, and grab their explicit bindings and
-            // declarations.
-            Optional<Key> implicitMapProviderKey = keyFactory.implicitMapProviderKeyFrom(key);
-            ImmutableSet<ContributionBinding> explicitProviderMapBindings =
-                getExplicitMultibindings(implicitMapProviderKey);
-            ImmutableSet<MultibindingDeclaration> explicitProviderMultibindingDeclarations =
-                getMultibindingDeclarations(implicitMapProviderKey);
-
-            Optional<Key> implicitMapProducerKey = keyFactory.implicitMapProducerKeyFrom(key);
-            ImmutableSet<ContributionBinding> explicitProducerMapBindings =
-                getExplicitMultibindings(implicitMapProducerKey);
-            ImmutableSet<MultibindingDeclaration> explicitProducerMultibindingDeclarations =
-                getMultibindingDeclarations(implicitMapProducerKey);
-
-            if (!explicitProducerMapBindings.isEmpty()
-                || !explicitProducerMultibindingDeclarations.isEmpty()) {
+            if (shouldCreateSyntheticMapOfValuesBinding(
+                keyFactory.implicitMapProducerKeyFrom(requestKey))) {
               /* If the binding key is Map<K, V> or Map<K, Produced<V>> and there are some explicit
                * Map<K, Producer<V>> bindings or multibinding declarations, then add the synthetic
                * binding that depends on Map<K, Producer<V>>. */
               contributionBindings.add(
                   productionBindingFactory.syntheticMapOfValuesOrProducedBinding(request));
-            } else if (!explicitProviderMapBindings.isEmpty()
-                || !explicitProviderMultibindingDeclarations.isEmpty()) {
+            } else if (shouldCreateSyntheticMapOfValuesBinding(
+                keyFactory.implicitMapProviderKeyFrom(requestKey))) {
               /* If the binding key is Map<K, V> and there are some explicit Map<K, Provider<V>>
                * bindings or multibinding declarations but no explicit Map<K, Producer<V>> bindings
                * or multibinding declarations, then add the synthetic binding that depends on
@@ -408,6 +381,10 @@ abstract class BindingGraph {
               contributionBindings.add(
                   provisionBindingFactory.syntheticMapOfValuesBinding(request));
             }
+
+            ImmutableSet<ContributionBinding> multibindings = multibindingsBuilder.build();
+            ImmutableSet<MultibindingDeclaration> multibindingDeclarations =
+                multibindingDeclarationsBuilder.build();
 
             Iterable<? extends HasBindingType> multibindingsAndDeclarations =
                 Iterables.concat(multibindings, multibindingDeclarations);
@@ -425,14 +402,11 @@ abstract class BindingGraph {
                   provisionBindingFactory.syntheticMultibinding(request, multibindings));
             }
 
-            /* If there are no explicit or synthetic bindings, multibinding declarations or delegate
-             * declarations, use an implicit @Inject- constructed binding if there is one. */
-            if (contributionBindings.isEmpty()
-                && multibindings.isEmpty()
-                && multibindingDeclarations.isEmpty()
-                && delegateDeclarations.isEmpty()) {
+            /* If there are still no bindings, look for an implicit @Inject- constructed binding if
+             * there is one. */
+            if (contributionBindings.isEmpty()) {
               contributionBindings.addAll(
-                  injectBindingRegistry.getOrFindProvisionBinding(key).asSet());
+                  injectBindingRegistry.getOrFindProvisionBinding(requestKey).asSet());
             }
 
             return ResolvedBindings.forContributionBindings(
@@ -444,7 +418,7 @@ abstract class BindingGraph {
           case MEMBERS_INJECTION:
             // no explicit deps for members injection, so just look it up
             Optional<MembersInjectionBinding> binding =
-                injectBindingRegistry.getOrFindMembersInjectionBinding(key);
+                injectBindingRegistry.getOrFindMembersInjectionBinding(requestKey);
             return binding.isPresent()
                 ? ResolvedBindings.forMembersInjectionBinding(
                     bindingKey, componentDescriptor, binding.get())
@@ -454,7 +428,34 @@ abstract class BindingGraph {
         }
       }
 
-      private ImmutableSet<ContributionBinding> delegateBindings(
+      private Iterable<Key> keysMatchingRequest(Key requestKey) {
+        return ImmutableSet.<Key>builder()
+            .add(requestKey)
+            .addAll(keyFactory.implicitSetKeyFromProduced(requestKey).asSet())
+            .addAll(keyFactory.implicitProviderMapKeyFromProducer(requestKey).asSet())
+            .build();
+      }
+
+      private boolean shouldCreateSyntheticMapOfValuesBinding(Optional<Key> maybeKey) {
+        if (!maybeKey.isPresent()) {
+          return false;
+        }
+
+        Key key = maybeKey.get();
+        if (!getExplicitMultibindings(key).isEmpty()
+            || !getMultibindingDeclarations(key).isEmpty()) {
+          return true;
+        }
+
+        for (ContributionBinding delegateMultibinding : getDelegateMultibindings(key)) {
+          if (delegateMultibinding.key().withoutBindingMethodIdentifier().equals(key)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      private ImmutableSet<ContributionBinding> createDelegateBindings(
           ImmutableSet<DelegateDeclaration> delegateDeclarations) {
         ImmutableSet.Builder<ContributionBinding> builder = ImmutableSet.builder();
         for (DelegateDeclaration delegateDeclaration : delegateDeclarations) {
@@ -492,20 +493,25 @@ abstract class BindingGraph {
       }
 
       /**
-       * Returns the component that "owns" {@code binding}.
+       * Returns the component that should contain the framework field for {@code binding}.
        *
-       * <p>If {@code binding} is bound in an ancestor component, resolves {@code request} in this
-       * component's parent. Returns the ancestor component in which it is bound, unless
-       * {@code binding} depends on local multibindings, in which case returns this component.
+       * <p>If {@code binding} is either not bound in an ancestor component or depends on
+       * multibinding contributions in this component, returns this component.
        *
-       * <p>If {@code binding} is not bound in an ancestor component, simply returns this component.
+       * <p>Otherwise, resolves {@code request} in this component's parent in order to resolve any
+       * multibinding contributions in the parent, and returns the parent-resolved
+       * {@link ResolvedBindings#owningComponent(ContributionBinding)}.
        */
       private ComponentDescriptor getOwningComponent(
           DependencyRequest request, ContributionBinding binding) {
-        return isResolvedInParent(request, binding)
-                && !new MultibindingDependencies().dependsOnLocalMultibindings(binding)
-            ? getOwningResolver(binding).get().componentDescriptor
-            : componentDescriptor;
+        if (isResolvedInParent(request, binding)
+            && !new MultibindingDependencies().dependsOnLocalMultibindings(binding)) {
+          ResolvedBindings parentResolvedBindings =
+              parentResolver.get().resolvedBindings.get(request.bindingKey());
+          return parentResolvedBindings.owningComponent(binding);
+        } else {
+          return componentDescriptor;
+        }
       }
 
       /**
@@ -579,15 +585,10 @@ abstract class BindingGraph {
         return explicitBindingsForKey.build();
       }
 
-      private ImmutableSet<ContributionBinding> getExplicitBindings(Optional<Key> optionalKey) {
-        return optionalKey.isPresent()
-            ? getExplicitBindings(optionalKey.get())
-            : ImmutableSet.<ContributionBinding>of();
-      }
-
       /**
-       * Returns the explicit multibindings whose key (minus its {@link Key#bindingMethod()})
-       * matches the {@code requestKey} from this and all ancestor resolvers.
+       * Returns the explicit multibindings whose key (minus its
+       * {@link Key#bindingMethodIdentifier()}) matches the {@code requestKey} from this and all
+       * ancestor resolvers.
        */
       private ImmutableSet<ContributionBinding> getExplicitMultibindings(Key requestKey) {
         ImmutableSet.Builder<ContributionBinding> explicitMultibindingsForKey =
@@ -596,13 +597,6 @@ abstract class BindingGraph {
           explicitMultibindingsForKey.addAll(resolver.explicitMultibindings.get(requestKey));
         }
         return explicitMultibindingsForKey.build();
-      }
-
-      private ImmutableSet<ContributionBinding> getExplicitMultibindings(
-          Optional<Key> optionalKey) {
-        return optionalKey.isPresent()
-            ? getExplicitMultibindings(optionalKey.get())
-            : ImmutableSet.<ContributionBinding>of();
       }
 
       /**
@@ -618,27 +612,30 @@ abstract class BindingGraph {
         return multibindingDeclarations.build();
       }
 
-      private ImmutableSet<MultibindingDeclaration> getMultibindingDeclarations(
-          Optional<Key> optionalKey) {
-        return optionalKey.isPresent()
-            ? getMultibindingDeclarations(optionalKey.get())
-            : ImmutableSet.<MultibindingDeclaration>of();
-      }
-
-      private ImmutableSet<DelegateDeclaration> getDelegateDeclarations(Key key) {
-        ImmutableSet.Builder<DelegateDeclaration> delegateDeclarations =
-            ImmutableSet.builder();
+      private ImmutableSet<ContributionBinding> getDelegateBindings(Key requestKey) {
+        Key delegateDeclarationKey = keyFactory.convertToDelegateKey(requestKey);
+        ImmutableSet.Builder<ContributionBinding> delegateBindings = ImmutableSet.builder();
         for (Resolver resolver : getResolverLineage()) {
-          delegateDeclarations.addAll(resolver.delegateDeclarations.get(key));
+          delegateBindings.addAll(
+              createDelegateBindings(resolver.delegateDeclarations.get(delegateDeclarationKey)));
         }
-        return delegateDeclarations.build();
+        return delegateBindings.build();
       }
 
-      private ImmutableSet<DelegateDeclaration> getDelegateDeclarations(
-          Optional<Key> optionalKey) {
-        return optionalKey.isPresent()
-            ? getDelegateDeclarations(optionalKey.get())
-            : ImmutableSet.<DelegateDeclaration>of();
+      private ImmutableSet<ContributionBinding> getDelegateMultibindings(Key requestKey) {
+        if (MapType.isMap(requestKey) && !MapType.from(requestKey).valuesAreFrameworkType()) {
+          // There are no @Binds @IntoMap delegate declarations for Map<K, V> requests. All @IntoMap
+          // requests must be for Map<K, Framework<V>>.
+          return ImmutableSet.of();
+        }
+        Key delegateDeclarationKey = keyFactory.convertToDelegateKey(requestKey);
+        ImmutableSet.Builder<ContributionBinding> delegateMultibindings = ImmutableSet.builder();
+        for (Resolver resolver : getResolverLineage()) {
+          delegateMultibindings.addAll(
+              createDelegateBindings(
+                  resolver.delegateMultibindingDeclarations.get(delegateDeclarationKey)));
+        }
+        return delegateMultibindings.build();
       }
 
       private Optional<ResolvedBindings> getPreviouslyResolvedBindings(
@@ -676,18 +673,19 @@ abstract class BindingGraph {
          * 2. If there are any explicit bindings in this component, they may conflict with those in
          *    the supercomponent, so resolve them here so that conflicts can be caught.
          */
-        if (getPreviouslyResolvedBindings(bindingKey).isPresent()
-            && !new MultibindingDependencies().dependsOnLocalMultibindings(bindingKey)
-            && getExplicitBindings(bindingKey.key()).isEmpty()) {
+        if (getPreviouslyResolvedBindings(bindingKey).isPresent()) {
           /* Resolve in the parent in case there are multibinding contributions or conflicts in some
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(request);
-          /* Cache the inherited parent component's bindings in case resolving at the parent found
-           * bindings in some component between this one and the previously-resolved one. */
-          ResolvedBindings inheritedBindings =
-              getPreviouslyResolvedBindings(bindingKey).get().asInheritedIn(componentDescriptor);
-          resolvedBindings.put(bindingKey, inheritedBindings);
-          return;
+          if (!new MultibindingDependencies().dependsOnLocalMultibindings(bindingKey)
+              && getExplicitBindings(bindingKey.key()).isEmpty()) {
+            /* Cache the inherited parent component's bindings in case resolving at the parent found
+             * bindings in some component between this one and the previously-resolved one. */
+            ResolvedBindings inheritedBindings =
+                getPreviouslyResolvedBindings(bindingKey).get().asInheritedIn(componentDescriptor);
+            resolvedBindings.put(bindingKey, inheritedBindings);
+            return;
+          }
         }
 
         cycleStack.push(bindingKey);
@@ -829,6 +827,22 @@ abstract class BindingGraph {
               && explicitMultibindings.containsKey(resolvedBindings.key());
         }
       }
+    }
+
+    /**
+     * Selects each item in {@code haveKeys} that has a {@link Key#bindingMethodIdentifier()} and
+     * indexes them by its {@link HasKey#key()}, where each key has its {@link
+     * dagger.internal.codegen.Key.BindingMethodIdentifier} removed.
+     */
+    static <T extends HasKey> ImmutableSetMultimap<Key, T>
+        multibindingsKeyedWithoutBindingIdentifiers(Iterable<T> haveKeys) {
+      ImmutableSetMultimap.Builder<Key, T> builder = ImmutableSetMultimap.builder();
+      for (T hasKey : haveKeys) {
+        if (hasKey.key().bindingMethodIdentifier().isPresent()) {
+          builder.put(hasKey.key().withoutBindingMethodIdentifier(), hasKey);
+        }
+      }
+      return builder.build();
     }
   }
 }

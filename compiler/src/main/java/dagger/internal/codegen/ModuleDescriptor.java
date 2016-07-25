@@ -27,6 +27,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Multibindings;
 import dagger.Provides;
+import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
@@ -45,7 +46,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
-import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -60,8 +60,6 @@ abstract class ModuleDescriptor {
       }
     };
   }
-
-  abstract AnnotationMirror moduleAnnotation();
 
   abstract TypeElement moduleElement();
 
@@ -78,13 +76,6 @@ abstract class ModuleDescriptor {
    * The {@link Binds} method declarations that define delegate bindings.
    */
   abstract ImmutableSet<DelegateDeclaration> delegateDeclarations();
-
-  enum DefaultCreationStrategy {
-    PASSED,
-    CONSTRUCTED,
-  }
-
-  abstract DefaultCreationStrategy defaultCreationStrategy();
 
   enum Kind {
     MODULE(
@@ -160,14 +151,14 @@ abstract class ModuleDescriptor {
     }
 
     ModuleDescriptor create(TypeElement moduleElement) {
-      Optional<AnnotationMirror> probableModuleAnnotation = getModuleAnnotation(moduleElement);
-      checkState(probableModuleAnnotation.isPresent(),
+      checkState(getModuleAnnotation(moduleElement).isPresent(),
           "%s did not have an AnnotationMirror for @Module",
           moduleElement.getQualifiedName());
-      AnnotationMirror moduleAnnotation = probableModuleAnnotation.get();
 
       ImmutableSet.Builder<ContributionBinding> bindings = ImmutableSet.builder();
       ImmutableSet.Builder<DelegateDeclaration> delegates = ImmutableSet.builder();
+      ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations =
+          ImmutableSet.builder();
       for (ExecutableElement moduleMethod : methodsIn(elements.getAllMembers(moduleElement))) {
         if (isAnnotationPresent(moduleMethod, Provides.class)) {
           bindings.add(provisionBindingFactory.forProvidesMethod(moduleMethod, moduleElement));
@@ -178,32 +169,26 @@ abstract class ModuleDescriptor {
         if (isAnnotationPresent(moduleMethod, Binds.class)) {
           delegates.add(bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));
         }
-      }
-
-      ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations =
-          ImmutableSet.builder();
-      for (TypeElement memberType : typesIn(elements.getAllMembers(moduleElement))) {
-        if (isAnnotationPresent(memberType, Multibindings.class)) {
-          multibindingDeclarations.addAll(
-              multibindingDeclarationFactory.forDeclaredInterface(memberType));
+        if (isAnnotationPresent(moduleMethod, Multibinds.class)) {
+          multibindingDeclarations.add(
+              multibindingDeclarationFactory.forMultibindsMethod(moduleMethod, moduleElement));
         }
       }
 
-      DefaultCreationStrategy defaultCreationStrategy =
-          (componentCanMakeNewInstances(moduleElement)
-              && moduleElement.getTypeParameters().isEmpty())
-                  ? ModuleDescriptor.DefaultCreationStrategy.CONSTRUCTED
-                  : ModuleDescriptor.DefaultCreationStrategy.PASSED;
+      for (TypeElement memberType : typesIn(elements.getAllMembers(moduleElement))) {
+        if (isAnnotationPresent(memberType, Multibindings.class)) {
+          multibindingDeclarations.addAll(
+              multibindingDeclarationFactory.forMultibindingsInterface(memberType));
+        }
+      }
 
       return new AutoValue_ModuleDescriptor(
-          moduleAnnotation,
           moduleElement,
           ImmutableSet.copyOf(
               collectIncludedModules(new LinkedHashSet<ModuleDescriptor>(), moduleElement)),
           bindings.build(),
           multibindingDeclarations.build(),
-          delegates.build(),
-          defaultCreationStrategy);
+          delegates.build());
     }
 
     private static Optional<AnnotationMirror> getModuleAnnotation(TypeElement moduleElement) {

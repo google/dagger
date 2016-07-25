@@ -15,10 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
-
 /**
  * Formats a {@link Key} into a {@link String} suitable for use in error messages and JSON keys.
  *
@@ -27,26 +23,24 @@ import com.google.common.base.Optional;
  */
 final class KeyFormatter extends Formatter<Key> {
   
-  private final MethodSignatureFormatter methodSignatureFormatter;
+  final MethodSignatureFormatter methodSignatureFormatter;
 
   KeyFormatter(MethodSignatureFormatter methodSignatureFormatter) {
     this.methodSignatureFormatter = methodSignatureFormatter;
   }
 
-  @Override public String format(Key request) {
-    if (request.bindingMethod().isPresent()) {
+  @Override
+  public String format(Key key) {
+    if (key.bindingMethodIdentifier().isPresent()) {
       // If there's a binding method, its signature is enough.
-      SourceElement bindingMethod = request.bindingMethod().get();
-      return methodSignatureFormatter.format(
-          MoreElements.asExecutable(bindingMethod.element()),
-          Optional.of(MoreTypes.asDeclared(bindingMethod.contributedBy().get().asType())));
+      return methodSignatureFormatter.format(key.bindingMethodIdentifier().get());
     }
     StringBuilder builder = new StringBuilder();
-    if (request.qualifier().isPresent()) {
-      builder.append(request.qualifier().get());
+    if (key.qualifier().isPresent()) {
+      builder.append(key.qualifier().get());
       builder.append(' ');
     }
-    builder.append(request.type());
+    builder.append(key.type());
     return builder.toString();
   }
 }

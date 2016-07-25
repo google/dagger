@@ -19,6 +19,8 @@ import dagger.Component;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+// Each nested class's constructor has an intentionally unused parameter.
+@SuppressWarnings("unused")
 final class LongCycle {
   static class Class1 { @Inject Class1(Class2 class2) {} }
   static class Class2 { @Inject Class2(Class3 class3) {} }

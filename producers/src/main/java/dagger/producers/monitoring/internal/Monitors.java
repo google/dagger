@@ -314,7 +314,7 @@ public final class Monitors {
 
   private static final Provider<ProductionComponentMonitor>
       NO_OP_PRODUCTION_COMPONENT_MONITOR_PROVIDER =
-          new Provider() {
+          new Provider<ProductionComponentMonitor>() {
             @Override
             public ProductionComponentMonitor get() {
               return ProductionComponentMonitor.noOp();

@@ -16,8 +16,10 @@
 package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -27,7 +29,8 @@ import com.google.common.collect.Multimap;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.Key.HasKey;
-import dagger.internal.codegen.SourceElement.HasSourceElement;
+import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -97,14 +100,25 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
         throw new AssertionError(bindingKey());
     }
   }
-  
+
   /**
-   * All bindings for {@link #bindingKey()}, indexed by the component in which they were resolved.
+   * Returns the single binding.
+   *
+   * @throws IllegalStateException if there is not exactly one element in {@link #bindings()},
+   *     which will never happen for contributions in valid graphs
    */
-  ImmutableSetMultimap<ComponentDescriptor, Binding> bindingsByComponent() {
-    return new ImmutableSetMultimap.Builder<ComponentDescriptor, Binding>()
-        .putAll(allContributionBindings())
-        .putAll(allMembersInjectionBindings().entrySet())
+  Binding binding() {
+    return getOnlyElement(bindings());
+  }
+
+  /**
+   * All bindings for {@link #bindingKey()}, together with the component in which they were
+   * resolved.
+   */
+  ImmutableList<Map.Entry<ComponentDescriptor, ? extends Binding>> bindingsByComponent() {
+    return new ImmutableList.Builder<Map.Entry<ComponentDescriptor, ? extends Binding>>()
+        .addAll(allContributionBindings().entries())
+        .addAll(allMembersInjectionBindings().entrySet())
         .build();
   }
 
@@ -145,6 +159,16 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    */
   ImmutableSet<ContributionBinding> ownedContributionBindings() {
     return allContributionBindings().get(owningComponent());
+  }
+
+  /** The component that owns {@code binding}. */
+  ComponentDescriptor owningComponent(ContributionBinding binding) {
+    checkArgument(
+        contributionBindings().contains(binding),
+        "binding is not resolved for %s: %s",
+        bindingKey(),
+        binding);
+    return getOnlyElement(allContributionBindings().inverse().get(binding));
   }
 
   /**
@@ -234,14 +258,6 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   }
 
   /**
-   * {@code true} if this is a {@linkplain ContributionBinding#isSyntheticBinding() synthetic}
-   * contribution.
-   */
-  boolean isSyntheticContribution() {
-    return contributionBindings().size() == 1 && contributionBinding().isSyntheticBinding();
-  }
-
-  /**
    * Returns the single contribution binding.
    *
    * @throws IllegalStateException if there is not exactly one element in
@@ -296,9 +312,9 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    * The {@link #contributionBindings()} and {@link #multibindingDeclarations()}, indexed by
    * {@link ContributionType}.
    */
-  ImmutableListMultimap<ContributionType, HasSourceElement>
+  ImmutableListMultimap<ContributionType, BindingDeclaration>
       bindingsAndDeclarationsByContributionType() {
-    return new ImmutableListMultimap.Builder<ContributionType, HasSourceElement>()
+    return new ImmutableListMultimap.Builder<ContributionType, BindingDeclaration>()
         .putAll(indexByContributionType(contributionBindings()))
         .putAll(indexByContributionType(multibindingDeclarations()))
         .build();
@@ -332,4 +348,12 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   Class<?> frameworkClass() {
     return bindingType().frameworkClass();
   }
+
+  static final Function<ResolvedBindings, Set<ContributionBinding>> CONTRIBUTION_BINDINGS =
+      new Function<ResolvedBindings, Set<ContributionBinding>>() {
+        @Override
+        public Set<ContributionBinding> apply(ResolvedBindings resolvedBindings) {
+          return resolvedBindings.contributionBindings();
+        }
+      };
 }

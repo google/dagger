@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package test.bind;
+package producerstest.multibindings;
 
-import dagger.Binds;
+import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
-import javax.inject.Singleton;
-import test.SomeQualifier;
+import dagger.multibindings.ElementsIntoSet;
+import dagger.multibindings.IntKey;
+import dagger.multibindings.IntoMap;
+import dagger.multibindings.IntoSet;
+import java.util.Set;
 
-@Module(includes = InterfaceModule.class)
-abstract class SimpleBindingModule {
-  @Binds
-  abstract Object bindObject(FooOfStrings impl);
-
-  @Binds
-  abstract Foo<String> bindFooOfStrings(FooOfStrings impl);
-
-  @Binds
-  abstract Foo<? extends Number> bindFooOfNumbers(Foo<Integer> fooOfIntegers);
-
-  @Binds
-  @Singleton
-  @SomeQualifier
-  abstract Foo<String> bindQualifiedFooOfStrings(FooOfStrings impl);
+@Module
+final class MultibindingModule {
+  @Provides
+  @IntoSet
+  static String providedStr() {
+    return "providedStr";
+  }
 
   @Provides
-  static Foo<Integer> provideFooOfIntegers() {
-    return new Foo<Integer>() {};
+  @ElementsIntoSet
+  static Set<String> providedStrs() {
+    return ImmutableSet.of("providedStr1", "providedStr2");
+  }
+
+  @Provides
+  @IntoMap
+  @IntKey(3)
+  static String providedValueFor3() {
+    return "provided three";
   }
 }

@@ -203,7 +203,7 @@ final class InjectBindingRegistry {
      */
     warnIfNotAlreadyGenerated =
         warnIfNotAlreadyGenerated
-            && (!injectedConstructors(binding.bindingElement()).isEmpty()
+            && (!injectedConstructors(binding.membersInjectedType()).isEmpty()
                 ? !binding.injectionSites().isEmpty()
                 : binding.hasLocalInjectionSites());
     membersInjectionBindings.tryRegisterBinding(binding, warnIfNotAlreadyGenerated);
@@ -262,7 +262,8 @@ final class InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report = injectValidator.validateType(typeElement);
+    ValidationReport<TypeElement> report =
+        injectValidator.validateMembersInjectionType(typeElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       MembersInjectionBinding binding =

@@ -45,7 +45,7 @@ public class BuilderTest {
     assertThat(component.s()).isEqualTo("sam");
     assertThat(component.i()).isEqualTo(1);
     assertThat(component.d()).isWithin(0).of(4.2d);
-    assertThat(component.f()).isEqualTo(5.5f);
+    assertThat(component.f()).isWithin(0).of(5.5f);
     assertThat(component.l()).isEqualTo(6L);
   }
 
@@ -69,7 +69,7 @@ public class BuilderTest {
     assertThat(component.s()).isEqualTo("sam");
     assertThat(component.i()).isEqualTo(1);
     assertThat(component.d()).isWithin(0).of(4.2d);
-    assertThat(component.f()).isEqualTo(5.5f);
+    assertThat(component.f()).isWithin(0).of(5.5f);
     assertThat(component.l()).isEqualTo(6L);
   }
 
@@ -93,7 +93,7 @@ public class BuilderTest {
     assertThat(component.s()).isEqualTo("sam");
     assertThat(component.i()).isEqualTo(1);
     assertThat(component.d()).isWithin(0).of(4.2d);
-    assertThat(component.f()).isEqualTo(5.5f);
+    assertThat(component.f()).isWithin(0).of(5.5f);
     assertThat(component.l()).isEqualTo(6L);
   }
 
@@ -117,7 +117,7 @@ public class BuilderTest {
     assertThat(component.s()).isEqualTo("sam");
     assertThat(component.i()).isEqualTo(1);
     assertThat(component.d()).isWithin(0).of(4.2d);
-    assertThat(component.f()).isEqualTo(5.5f);
+    assertThat(component.f()).isWithin(0).of(5.5f);
     assertThat(component.l()).isEqualTo(6L);
   }
   
@@ -137,7 +137,7 @@ public class BuilderTest {
     assertThat(child1.s()).isEqualTo("sam");
     assertThat(child1.i()).isEqualTo(1);
     assertThat(child1.d()).isWithin(0).of(4.2d);
-    assertThat(child1.f()).isEqualTo(5.5f);
+    assertThat(child1.f()).isWithin(0).of(5.5f);
     assertThat(child1.l()).isEqualTo(6L);
     assertThat(child1.b()).isEqualTo((byte)7);
   }
@@ -159,7 +159,7 @@ public class BuilderTest {
     assertThat(child2.s()).isEqualTo("tara");
     assertThat(child2.i()).isEqualTo(10);
     assertThat(child2.d()).isWithin(0).of(4.2d);
-    assertThat(child2.f()).isEqualTo(5.5f);
+    assertThat(child2.f()).isWithin(0).of(5.5f);
     assertThat(child2.l()).isEqualTo(6L);
     assertThat(child2.b()).isEqualTo((byte)70);
   }

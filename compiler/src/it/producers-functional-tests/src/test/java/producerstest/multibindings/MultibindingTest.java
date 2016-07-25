@@ -36,8 +36,17 @@ public class MultibindingTest {
   public void setBinding() throws Exception {
     MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     assertThat(multibindingComponent.strs().get())
-        .containsExactly("foo", "foo1", "foo2", "bar", "bar1", "bar2");
-    assertThat(multibindingComponent.strCount().get()).isEqualTo(6);
+        .containsExactly(
+            "foo",
+            "foo1",
+            "foo2",
+            "bar",
+            "bar1",
+            "bar2",
+            "providedStr",
+            "providedStr1",
+            "providedStr2");
+    assertThat(multibindingComponent.strCount().get()).isEqualTo(9);
   }
 
   @Test
@@ -50,7 +59,10 @@ public class MultibindingTest {
             Produced.successful("foo2"),
             Produced.successful("bar"),
             Produced.successful("bar1"),
-            Produced.successful("bar2"));
+            Produced.successful("bar2"),
+            Produced.successful("providedStr"),
+            Produced.successful("providedStr1"),
+            Produced.successful("providedStr2"));
   }
 
   @Test
@@ -75,31 +87,36 @@ public class MultibindingTest {
   public void mapBinding() throws Exception {
     MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, String> map = multibindingComponent.map().get();
-    assertThat(map).hasSize(2);
+    assertThat(map).hasSize(3);
     assertThat(map).containsEntry(15, "fifteen");
     assertThat(map).containsEntry(42, "forty two");
+    assertThat(map).containsEntry(3, "provided three");
   }
 
   @Test
   public void mapOfProducerBinding() throws Exception {
     MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Producer<String>> map = multibindingComponent.mapOfProducer().get();
-    assertThat(map).hasSize(2);
+    assertThat(map).hasSize(3);
     assertThat(map).containsKey(15);
     assertThat(map.get(15).get().get()).isEqualTo("fifteen");
     assertThat(map).containsKey(42);
     assertThat(map.get(42).get().get()).isEqualTo("forty two");
+    assertThat(map).containsKey(3);
+    assertThat(map.get(3).get().get()).isEqualTo("provided three");
   }
 
   @Test
   public void mapOfProducedBinding() throws Exception {
     MultibindingComponent multibindingComponent = DaggerMultibindingComponent.create();
     Map<Integer, Produced<String>> map = multibindingComponent.mapOfProduced().get();
-    assertThat(map).hasSize(2);
+    assertThat(map).hasSize(3);
     assertThat(map).containsKey(15);
     assertThat(map.get(15).get()).isEqualTo("fifteen");
     assertThat(map).containsKey(42);
     assertThat(map.get(42).get()).isEqualTo("forty two");
+    assertThat(map).containsKey(3);
+    assertThat(map.get(3).get()).isEqualTo("provided three");
   }
 
   @Test

@@ -66,7 +66,7 @@ public abstract class ProductionComponentMonitor {
     /** Creates a component-specific monitor when the component is created. */
     public abstract ProductionComponentMonitor create(Object component);
 
-    private static final Factory NO_OP =
+    private static final Factory NO_OP_FACTORY =
         new Factory() {
           @Override
           public ProductionComponentMonitor create(Object component) {
@@ -76,7 +76,7 @@ public abstract class ProductionComponentMonitor {
 
     /** Returns a factory that returns no-op monitors. */
     public static Factory noOp() {
-      return NO_OP;
+      return NO_OP_FACTORY;
     }
   }
 }

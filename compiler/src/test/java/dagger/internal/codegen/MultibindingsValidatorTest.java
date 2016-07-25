@@ -16,6 +16,7 @@
 package dagger.internal.codegen;
 
 import com.google.testing.compile.JavaFileObjects;
+import javax.inject.Qualifier;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,6 +24,7 @@ import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMultibindingsMethod;
 import static java.util.Arrays.asList;
 
 @RunWith(JUnit4.class)
@@ -47,7 +49,7 @@ public class MultibindingsValidatorTest {
           "",
           "@Qualifier",
           "@interface OtherQualifier {}");
-
+  
   @Test
   public void abstractClass() {
     JavaFileObject testModule =
@@ -198,103 +200,99 @@ public class MultibindingsValidatorTest {
         .in(testModule)
         .onLine(9);
   }
+  
+  @Test
+  public void voidMethod() {
+    assertThatMultibindingsMethod("void voidMethod();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
 
   @Test
-  public void badMethods() {
-    JavaFileObject testModule =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Multibindings;",
-            "import dagger.producers.Produced;",
-            "import dagger.producers.Producer;",
-            "import java.util.Map;",
-            "import java.util.Set;",
-            "import javax.inject.Provider;",
-            "",
-            "@Module",
-            "class TestModule {",
-            "  @Multibindings",
-            "  interface Empties {",
-            "    void voidMethod();",
-            "    int primitive();",
-            "    Map rawMap();",
-            "    Map<?, ?> wildcardMap();",
-            "    Map<String, Provider<Object>> providerMap();",
-            "    Map<String, Producer<Object>> producerMap();",
-            "    Map<String, Produced<Object>> producedMap();",
-            "    Set rawSet();",
-            "    Set<?> wildcardSet();",
-            "    Set<Provider<Object>> providerSet();",
-            "    Set<Producer<Object>> producerSet();",
-            "    Set<Produced<Object>> producedSet();",
-            "    @SomeQualifier @OtherQualifier Set<Object> tooManyQualifiersSet();",
-            "    @SomeQualifier @OtherQualifier Map<String, Object> tooManyQualifiersMap();",
-            "  }",
-            "}");
-    assertAbout(javaSources())
-        .that(asList(testModule, SOME_QUALIFIER, OTHER_QUALIFIER))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(15)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(16)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(17)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(18)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(19)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(20)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(21)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(22)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(23)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(24)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(25)
-        .and()
-        .withErrorContaining("@Multibindings methods must return Map<K, V> or Set<T>")
-        .in(testModule)
-        .onLine(26)
-        .and()
-        .withErrorContaining(
-            "Cannot use more than one @Qualifier on a method in an @Multibindings type")
-        .in(testModule)
-        .onLine(27)
-        .and()
-        .withErrorContaining(
-            "Cannot use more than one @Qualifier on a method in an @Multibindings type")
-        .in(testModule)
-        .onLine(28);
+  public void primitiveMethod() {
+    assertThatMultibindingsMethod("int primitive();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void rawMap() {
+    assertThatMultibindingsMethod("Map rawMap();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void wildcardMap() {
+    assertThatMultibindingsMethod("Map<?, ?> wildcardMap();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void providerMap() {
+    assertThatMultibindingsMethod("Map<String, Provider<Object>> providerMap();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void producerMap() {
+    assertThatMultibindingsMethod("Map<String, Producer<Object>> producerMap();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void producedMap() {
+    assertThatMultibindingsMethod("Map<String, Produced<Object>> producedMap();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void rawSet() {
+    assertThatMultibindingsMethod("Set rawSet();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void wildcardSet() {
+    assertThatMultibindingsMethod("Set<?> wildcardSet();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void providerSet() {
+    assertThatMultibindingsMethod("Set<Provider<Object>> providerSet();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void producerSet() {
+    assertThatMultibindingsMethod("Set<Producer<Object>> producerSet();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void producedSet() {
+    assertThatMultibindingsMethod("Set<Produced<Object>> producedSet();")
+        .hasError("@Multibindings methods must return Map<K, V> or Set<T>");
+  }
+
+  @Test
+  public void overqualifiedSet() {
+    assertThatMultibindingsMethod(
+            "@SomeQualifier @OtherQualifier Set<Object> tooManyQualifiersSet();")
+        .importing(SomeQualifier.class, OtherQualifier.class)
+        .hasError("Cannot use more than one @Qualifier");
+  }
+
+  @Test
+  public void overqualifiedMap() {
+    assertThatMultibindingsMethod(
+            "@SomeQualifier @OtherQualifier Map<String, Object> tooManyQualifiersMap();")
+        .importing(SomeQualifier.class, OtherQualifier.class)
+        .hasError("Cannot use more than one @Qualifier");
+  }
+
+  @Test
+  public void hasParameters() {
+    assertThatMultibindingsMethod("Set<String> parameters(Object param);")
+        .hasError("@Multibindings methods cannot have parameters");
   }
 
   @Test
@@ -392,33 +390,9 @@ public class MultibindingsValidatorTest {
         .onLine(29);
   }
 
-  @Test
-  public void attemptToInjectWildcardGenerics() {
-    JavaFileObject testComponent =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "import dagger.Lazy;",
-            "import javax.inject.Provider;",
-            "",
-            "@Component",
-            "interface TestComponent {",
-            "  Lazy<? extends Number> qualifiedNumberLazy();",
-            "  Provider<? super Number> qualifiedNumberProvider();",
-            "}");
-    assertAbout(javaSources())
-        .that(asList(testComponent))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("wildcard type")
-        .in(testComponent)
-        .onLine(9)
-        .and()
-        .withErrorContaining("wildcard type")
-        .in(testComponent)
-        .onLine(10);
-  }
+  @Qualifier
+  public @interface SomeQualifier {}
 
+  @Qualifier
+  public @interface OtherQualifier {}
 }

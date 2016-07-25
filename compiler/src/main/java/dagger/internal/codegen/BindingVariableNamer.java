@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.common.base.Function;
 import java.util.Iterator;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -25,42 +24,54 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 
 /**
- * Suggests a variable name for a type based on a {@link Key}. Prefer
+ * Suggests a variable name for a type based on a {@link Binding}. Prefer
  * {@link DependencyVariableNamer} for cases where a specific {@link DependencyRequest} is present.
  *
  * @author Gregory Kick
  * @since 2.0
  */
-enum KeyVariableNamer implements Function<Key, String> {
-  INSTANCE;
+final class BindingVariableNamer {
 
-  @Override
-  public String apply(Key key) {
+  private BindingVariableNamer() {}
+
+  static String name(Binding binding) {
     StringBuilder builder = new StringBuilder();
 
+    Key key = binding.key();
     if (key.qualifier().isPresent()) {
       // TODO(gak): Use a better name for fields with qualifiers with members.
       builder.append(key.qualifier().get().getAnnotationType().asElement().getSimpleName());
     }
 
-    key.type().accept(new SimpleTypeVisitor6<Void, StringBuilder>() {
-      @Override
-      public Void visitDeclared(DeclaredType t, StringBuilder builder) {
-        builder.append(t.asElement().getSimpleName());
-        Iterator<? extends TypeMirror> argumentIterator = t.getTypeArguments().iterator();
-        if (argumentIterator.hasNext()) {
-          builder.append("Of");
-          TypeMirror first = argumentIterator.next();
-          first.accept(this, builder);
-          while (argumentIterator.hasNext()) {
-            builder.append("And");
-            argumentIterator.next().accept(this, builder);
+    TypeMirror type = typeToName(binding);
+    type.accept(
+        new SimpleTypeVisitor6<Void, StringBuilder>() {
+          @Override
+          public Void visitDeclared(DeclaredType t, StringBuilder builder) {
+            builder.append(t.asElement().getSimpleName());
+            Iterator<? extends TypeMirror> argumentIterator = t.getTypeArguments().iterator();
+            if (argumentIterator.hasNext()) {
+              builder.append("Of");
+              TypeMirror first = argumentIterator.next();
+              first.accept(this, builder);
+              while (argumentIterator.hasNext()) {
+                builder.append("And");
+                argumentIterator.next().accept(this, builder);
+              }
+            }
+            return null;
           }
-        }
-        return null;
-      }
-    }, builder);
+        },
+        builder);
 
     return UPPER_CAMEL.to(LOWER_CAMEL, builder.toString());
+  }
+
+  private static TypeMirror typeToName(Binding binding) {
+    if (binding instanceof ContributionBinding
+        && ((ContributionBinding) binding).contributionType().equals(ContributionType.SET)) {
+      return SetType.from(binding.key().type()).elementType();
+    }
+    return binding.key().type();
   }
 }

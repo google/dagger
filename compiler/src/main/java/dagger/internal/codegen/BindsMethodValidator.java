@@ -15,113 +15,152 @@
  */
 package dagger.internal.codegen;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Iterables;
+import com.google.auto.common.MoreElements;
+import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.Module;
+import dagger.multibindings.IntoMap;
 import dagger.producers.ProducerModule;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import javax.lang.model.element.Element;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
-import static dagger.internal.codegen.ErrorMessages.BIND_METHOD_NOT_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.BIND_METHOD_ONE_ASSIGNABLE_PARAMETER;
-import static dagger.internal.codegen.Validation.validateMethodQualifiers;
-import static dagger.internal.codegen.Validation.validateReturnType;
-import static dagger.internal.codegen.Validation.validateUncheckedThrows;
-import static javax.lang.model.element.Modifier.ABSTRACT;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
+import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
+import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_MAP_HAS_MAP_KEY;
+import static dagger.internal.codegen.ErrorMessages.BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER;
+import static dagger.internal.codegen.MapKeys.getMapKeys;
 
 /**
- * A {@linkplain ValidationReport validator} for {@link Bind} methods.
+ * A validator for {@link Binds} methods.
  */
-final class BindsMethodValidator {
-  private final Elements elements;
+final class BindsMethodValidator extends BindingMethodValidator {
   private final Types types;
-  private final LoadingCache<ExecutableElement, ValidationReport<ExecutableElement>>
-      validationCache;
+  private final Elements elements;
 
   BindsMethodValidator(Elements elements, Types types) {
-    this.elements = checkNotNull(elements);
-    this.types = checkNotNull(types);
-    this.validationCache = CacheBuilder.newBuilder().build(new ValidationLoader());
+    super(
+        elements,
+        types,
+        Binds.class,
+        ImmutableSet.of(Module.class, ProducerModule.class),
+        MUST_BE_ABSTRACT,
+        RUNTIME_EXCEPTION);
+    this.types = types;
+    this.elements = elements;
   }
 
-  private final class ValidationLoader
-      extends CacheLoader<ExecutableElement, ValidationReport<ExecutableElement>> {
-    @Override
-    public ValidationReport<ExecutableElement> load(ExecutableElement bindsMethodElement) {
-      ValidationReport.Builder<ExecutableElement> builder =
-          ValidationReport.about(bindsMethodElement);
+  @Override
+  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkMethod(builder);
+    checkParameters(builder);
+  }
 
-      checkArgument(isAnnotationPresent(bindsMethodElement, Binds.class));
-
-      Element enclosingElement = bindsMethodElement.getEnclosingElement();
-      if (!isAnnotationPresent(enclosingElement, Module.class)
-          && !isAnnotationPresent(enclosingElement, ProducerModule.class)) {
-        builder.addError(
-            formatErrorMessage(
-                BINDING_METHOD_NOT_IN_MODULE,
-                String.format(
-                    // the first @ is in the format string
-                    "%s or @%s",
-                    Module.class.getSimpleName(),
-                    ProducerModule.class.getSimpleName())),
-            bindsMethodElement);
+  @Override // TODO(dpb, ronshapiro): When @Binds methods support @IntoMap, stop overriding.
+  protected void checkMapKeys(ValidationReport.Builder<ExecutableElement> builder) {
+    if (!isAnnotationPresent(builder.getSubject(), IntoMap.class)) {
+      for (AnnotationMirror mapKey : getMapKeys(builder.getSubject())) {
+        builder.addError(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY, builder.getSubject(), mapKey);
       }
-
-      if (!bindsMethodElement.getTypeParameters().isEmpty()) {
-        builder.addError(formatErrorMessage(BINDING_METHOD_TYPE_PARAMETER), bindsMethodElement);
-      }
-
-      Set<Modifier> modifiers = bindsMethodElement.getModifiers();
-      if (!modifiers.contains(ABSTRACT)) {
-        builder.addError(formatErrorMessage(BIND_METHOD_NOT_ABSTRACT), bindsMethodElement);
-      }
-      TypeMirror returnType = bindsMethodElement.getReturnType();
-      validateReturnType(Binds.class, builder, returnType);
-
-      List<? extends VariableElement> parameters = bindsMethodElement.getParameters();
-      if (parameters.size() == 1) {
-        VariableElement parameter = Iterables.getOnlyElement(parameters);
-        if (!types.isAssignable(parameter.asType(), returnType)) {
-          builder.addError(
-              formatErrorMessage(BIND_METHOD_ONE_ASSIGNABLE_PARAMETER), bindsMethodElement);
-        }
-      } else {
-        builder.addError(
-            formatErrorMessage(BIND_METHOD_ONE_ASSIGNABLE_PARAMETER), bindsMethodElement);
-      }
-
-      validateUncheckedThrows(elements, types, bindsMethodElement, Binds.class, builder);
-
-      validateMethodQualifiers(builder, bindsMethodElement);
-
-      return builder.build();
     }
   }
 
-  ValidationReport<ExecutableElement> validate(ExecutableElement bindsMethodElement) {
-    return validationCache.getUnchecked(bindsMethodElement);
+  private void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
+    ExecutableElement method = builder.getSubject();
+    List<? extends VariableElement> parameters = method.getParameters();
+    if (parameters.size() == 1) {
+      VariableElement parameter = getOnlyElement(parameters);
+      TypeMirror leftHandSide = method.getReturnType();
+      TypeMirror rightHandSide = parameter.asType();
+      ContributionType contributionType = ContributionType.fromBindingMethod(method);
+      switch (contributionType) {
+        case SET_VALUES:
+          if (!SetType.isSet(leftHandSide)) {
+            builder.addError(BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET);
+          } else {
+            validateTypesAreAssignable(
+                builder,
+                rightHandSide,
+                methodParameterType(MoreTypes.asDeclared(leftHandSide), "addAll"));
+          }
+          break;
+        case SET:
+          DeclaredType parameterizedSetType = types.getDeclaredType(setElement(), leftHandSide);
+          validateTypesAreAssignable(
+              builder,
+              rightHandSide,
+              methodParameterType(parameterizedSetType, "add"));
+          break;
+        case MAP:
+          DeclaredType parameterizedMapType =
+              types.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);
+          validateTypesAreAssignable(
+              builder,
+              rightHandSide,
+              methodParameterTypes(parameterizedMapType, "put").get(1));
+          break;
+        case UNIQUE:
+          validateTypesAreAssignable(builder, rightHandSide, leftHandSide);
+          break;
+        default:
+          throw new AssertionError(
+              String.format(
+                  "Unknown contribution type (%s) for method: %s", contributionType, method));
+      }
+    } else {
+      builder.addError(BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER);
+    }
   }
 
-  private String formatErrorMessage(String msg) {
-    return String.format(msg, Binds.class.getSimpleName());
+  private ImmutableList<TypeMirror> methodParameterTypes(DeclaredType type, String methodName) {
+    ImmutableList.Builder<ExecutableElement> methodsForName = ImmutableList.builder();
+    for (ExecutableElement method :
+        ElementFilter.methodsIn(MoreElements.asType(type.asElement()).getEnclosedElements())) {
+      if (method.getSimpleName().contentEquals(methodName)) {
+        methodsForName.add(method);
+      }
+    }
+    ExecutableElement method = getOnlyElement(methodsForName.build());
+    return ImmutableList.<TypeMirror>copyOf(
+        MoreTypes.asExecutable(types.asMemberOf(type, method)).getParameterTypes());
   }
 
-  private String formatErrorMessage(String msg, String parameter) {
-    return String.format(msg, Binds.class.getSimpleName(), parameter);
+  private TypeMirror methodParameterType(DeclaredType type, String methodName) {
+    return getOnlyElement(methodParameterTypes(type, methodName));
+  }
+
+  private void validateTypesAreAssignable(
+      ValidationReport.Builder<ExecutableElement> builder,
+      TypeMirror rightHandSide,
+      TypeMirror leftHandSide) {
+    if (!types.isAssignable(rightHandSide, leftHandSide)) {
+      builder.addError(BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER);
+    }
+  }
+
+  private TypeElement setElement() {
+    return elements.getTypeElement(Set.class.getName());
+  }
+
+  private TypeElement mapElement() {
+    return elements.getTypeElement(Map.class.getName());
+  }
+
+  private TypeMirror unboundedWildcard() {
+    return types.getWildcardType(null, null);
   }
 }

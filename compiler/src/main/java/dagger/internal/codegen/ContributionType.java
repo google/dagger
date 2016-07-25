@@ -26,7 +26,6 @@ import dagger.producers.Produces;
 import javax.lang.model.element.ExecutableElement;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Whether a binding or declaration is for a unique contribution or a map or set multibinding.
@@ -95,9 +94,6 @@ enum ContributionType {
    * ProvidesMethodValidator} and {@link ProducesMethodValidator} validate correctness on their own.
    */
   static ContributionType fromBindingMethod(ExecutableElement method) {
-    checkArgument(
-        isAnnotationPresent(method, Provides.class)
-            || isAnnotationPresent(method, Produces.class));
     if (isAnnotationPresent(method, IntoMap.class)) {
       return ContributionType.MAP;
     } else if (isAnnotationPresent(method, IntoSet.class)) {
@@ -111,7 +107,7 @@ enum ContributionType {
     } else if (isAnnotationPresent(method, Produces.class)) {
       return forProductionType(method.getAnnotation(Produces.class).type());
     } else {
-      throw new AssertionError();
+      return ContributionType.UNIQUE;
     }
   }
 

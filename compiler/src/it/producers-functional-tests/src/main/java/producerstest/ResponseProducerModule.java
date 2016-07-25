@@ -40,11 +40,11 @@ final class ResponseProducerModule {
   static ListenableFuture<String> intermediateGreeting(
       // TODO(beder): Allow Producer and Provider of the same type (which would force the binding
       // to be a provision binding), and add validation for that.
-      String greeting,
+      @SuppressWarnings("unused") String greeting,
       Producer<String> greetingProducer,
-      Produced<String> greetingProduced,
-      Provider<Integer> requestNumberProvider,
-      Lazy<Integer> requestNumberLazy) {
+      @SuppressWarnings("unused") Produced<String> greetingProduced,
+      @SuppressWarnings("unused") Provider<Integer> requestNumberProvider,
+      @SuppressWarnings("unused") Lazy<Integer> requestNumberLazy) {
     return greetingProducer.get();
   }
 

@@ -29,7 +29,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.Iterator;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
@@ -88,9 +87,9 @@ class SourceFiles {
     for (FrameworkDependency frameworkDependency : frameworkDependenciesForBinding(binding)) {
       bindingFields.put(
           frameworkDependency.bindingKey(),
-          FrameworkField.createWithTypeFromKey(
-              frameworkDependency.frameworkClass(),
-              frameworkDependency.bindingKey().key(),
+          FrameworkField.create(
+              ClassName.get(frameworkDependency.frameworkClass()),
+              TypeName.get(frameworkDependency.bindingKey().key().type()),
               fieldNameForDependency(frameworkDependency)));
     }
     return bindingFields.build();
@@ -168,7 +167,8 @@ class SourceFiles {
         }
 
       case MEMBERS_INJECTION:
-        return membersInjectorNameForType(binding.bindingTypeElement());
+        return membersInjectorNameForType(
+            ((MembersInjectionBinding) binding).membersInjectedType());
 
       default:
         throw new AssertionError();
@@ -267,7 +267,7 @@ class SourceFiles {
       case IMMEDIATE:
       case FUTURE_PRODUCTION:
         return CaseFormat.LOWER_CAMEL.to(
-            UPPER_CAMEL, ((ExecutableElement) binding.bindingElement()).getSimpleName().toString());
+            UPPER_CAMEL, binding.bindingElement().getSimpleName().toString());
 
       default:
         throw new IllegalArgumentException();

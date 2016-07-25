@@ -240,7 +240,7 @@ final class ComponentValidator {
         getAnnotationMirror(subject, componentKind.annotationType()).get();
     ImmutableList<TypeMirror> moduleTypes = getComponentModules(componentMirror);
     moduleValidator.validateReferencedModules(
-        subject, componentMirror, builder, moduleTypes, componentKind.moduleKinds());
+        subject, builder, moduleTypes, componentKind.moduleKinds());
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.

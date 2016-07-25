@@ -832,31 +832,44 @@ public class ComponentBuilderTest {
 
   @Test
   public void testExtraSettersFails() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "import javax.inject.Provider;",
-        "",
-        "@Component",
-        "abstract class SimpleComponent {",
-        "  @Component.Builder",
-        "  interface Builder {",
-        "    SimpleComponent build();",
-        "    void set1(String s);",
-        "    void set2(Integer s);",
-        "  }",
-        "}");
-    assertAbout(javaSource()).that(componentFile)
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = AbstractModule.class)",
+            "abstract class SimpleComponent {",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    SimpleComponent build();",
+            "    void abstractModule(AbstractModule abstractModule);",
+            "    void other(String s);",
+            "  }",
+            "}");
+    JavaFileObject abstractModule =
+        JavaFileObjects.forSourceLines(
+            "test.AbstractModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "abstract class AbstractModule {}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(componentFile, abstractModule))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.extraSetters(),
-                  "[void test.SimpleComponent.Builder.set1(String),"
-                  + " void test.SimpleComponent.Builder.set2(Integer)]"))
-            .in(componentFile).onLine(10);
-
+            String.format(
+                MSGS.extraSetters(),
+                "[void test.SimpleComponent.Builder.abstractModule(test.AbstractModule), "
+                    + "void test.SimpleComponent.Builder.other(String)]"))
+        .in(componentFile)
+        .onLine(10);
   }
 
   @Test

@@ -15,7 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Optional;
@@ -30,44 +29,63 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor6;
 
 /**
- * A value object that represents a field used by Dagger-generated code.
+ * A value object that represents a field in the generated Component class.
+ *
+ * <p>Examples:
+ * <ul>
+ *   <li>{@code Provider<String>}
+ *   <li>{@code Producer<Widget>}
+ *   <li>{@code Provider<Map<SomeMapKey, MapValue>>}.
+ * </ul>
  *
  * @author Jesse Beder
  * @since 2.0
  */
 @AutoValue
-// TODO(gak): Reexamine the this class and how consistently we're using it and its creation methods.
 abstract class FrameworkField {
-  static FrameworkField createWithTypeFromKey(Class<?> frameworkClass, Key key, String name) {
-    String suffix = frameworkClass.getSimpleName();
-    ParameterizedTypeName frameworkType =
-        ParameterizedTypeName.get(ClassName.get(frameworkClass), TypeName.get(key.type()));
+
+  /**
+   * Creates a framework field.
+   * 
+   * @param frameworkClassName the name of the framework class (e.g., {@link javax.inject.Provider})
+   * @param valueTypeName the name of the type parameter of the framework class (e.g., {@code Foo}
+   *     for {@code Provider<Foo>}
+   * @param fieldName the name of the field
+   */
+  static FrameworkField create(
+      ClassName frameworkClassName, TypeName valueTypeName, String fieldName) {
+    String suffix = frameworkClassName.simpleName();
     return new AutoValue_FrameworkField(
-        frameworkType, name.endsWith(suffix) ? name : name + suffix);
+        ParameterizedTypeName.get(frameworkClassName, valueTypeName),
+        fieldName.endsWith(suffix) ? fieldName : fieldName + suffix);
   }
 
-  private static FrameworkField createForMapBindingContribution(Key key, String name) {
-    TypeMirror type = MapType.from(key.type()).valueType();
-    String suffix = MoreTypes.asDeclared(type).asElement().getSimpleName().toString();
-    return new AutoValue_FrameworkField(
-        (ParameterizedTypeName) TypeName.get(type),
-        name.endsWith(suffix) ? name : name + suffix);
+  /**
+   * A framework field for a {@link ResolvedBindings}.
+   * 
+   * @param frameworkClass if present, the field will use this framework class instead of the normal
+   *     one for the bindings
+   */
+  static FrameworkField forResolvedBindings(
+      ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
+    return create(frameworkClass.or(ClassName.get(resolvedBindings.frameworkClass())),
+        TypeName.get(fieldValueType(resolvedBindings)),
+        frameworkFieldName(resolvedBindings));
   }
 
-  static FrameworkField createForResolvedBindings(
-      ResolvedBindings resolvedBindings, Optional<BindingType> bindingType) {
-    if (resolvedBindings.isMultibindingContribution()
-        && resolvedBindings.contributionType().equals(ContributionType.MAP)) {
-      return createForMapBindingContribution(
-          resolvedBindings.key(), frameworkFieldName(resolvedBindings));
-    } else {
-      return createWithTypeFromKey(
-          bindingType.isPresent()
-              ? bindingType.get().frameworkClass()
-              : resolvedBindings.frameworkClass(),
-          resolvedBindings.key(),
-          frameworkFieldName(resolvedBindings));
+  private static TypeMirror fieldValueType(ResolvedBindings resolvedBindings) {
+    if (resolvedBindings.isMultibindingContribution()) {
+      switch (resolvedBindings.contributionType()) {
+        case MAP:
+          return MapType.from(resolvedBindings.key())
+              .unwrappedValueType(resolvedBindings.frameworkClass());
+        case SET:
+          return SetType.from(resolvedBindings.key()).elementType();
+        default:
+          // do nothing
+      }
     }
+    return resolvedBindings.key().type();
   }
 
   private static String frameworkFieldName(ResolvedBindings resolvedBindings) {
@@ -77,7 +95,7 @@ abstract class FrameworkField {
         return BINDING_ELEMENT_NAME.visit(binding.bindingElement(), binding);
       }
     }
-    return KeyVariableNamer.INSTANCE.apply(resolvedBindings.key());
+    return BindingVariableNamer.name(resolvedBindings.binding());
   }
 
   private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =
@@ -104,6 +122,6 @@ abstract class FrameworkField {
         }
       };
 
-  abstract ParameterizedTypeName frameworkType();
+  abstract ParameterizedTypeName type();
   abstract String name();
 }

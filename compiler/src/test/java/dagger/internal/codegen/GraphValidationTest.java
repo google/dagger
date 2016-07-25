@@ -31,9 +31,9 @@ import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 
 @RunWith(JUnit4.class)
 public class GraphValidationTest {
-  private final JavaFileObject NULLABLE = JavaFileObjects.forSourceLines("test.Nullable",
-      "package test;",
-      "public @interface Nullable {}");
+  private static final JavaFileObject NULLABLE =
+      JavaFileObjects.forSourceLines(
+          "test.Nullable", "package test;", "public @interface Nullable {}");
 
   @Test public void componentOnConcreteClass() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.MyComponent",
@@ -592,6 +592,7 @@ public class GraphValidationTest {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
         "",
+        "import dagger.Binds;",
         "import dagger.Component;",
         "import dagger.MapKey;",
         "import dagger.Module;",
@@ -603,6 +604,7 @@ public class GraphValidationTest {
         "import java.util.HashSet;",
         "import java.util.Map;",
         "import java.util.Set;",
+        "import javax.inject.Qualifier;",
         "",
         "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
         "final class Outer {",
@@ -611,13 +613,21 @@ public class GraphValidationTest {
         "    String value();",
         "  }",
         "",
+        "  @Qualifier @interface SomeQualifier {}",
+        "",
         "  @Module",
-        "  static class TestModule1 {",
+        "  abstract static class TestModule1 {",
         "    @Provides @IntoMap",
         "    @StringKey(\"foo\")",
-        "    String stringMapEntry() { return \"\"; }",
+        "    static String stringMapEntry() { return \"\"; }",
         "",
-        "    @Provides @IntoSet String stringSetElement() { return \"\"; }",
+        "    @Binds @IntoMap @StringKey(\"bar\")",
+        "    abstract String bindStringMapEntry(@SomeQualifier String value);",
+        "",
+        "    @Provides @IntoSet static String stringSetElement() { return \"\"; }",
+        "    @Binds @IntoSet abstract String bindStringSetElement(@SomeQualifier String value);",
+        "",
+        "    @Provides @SomeQualifier static String provideSomeQualifiedString() { return \"\"; }",
         "  }",
         "",
         "  @Module",
@@ -641,6 +651,8 @@ public class GraphValidationTest {
             + "      Set bindings and declarations:\n"
             + "          @Provides @dagger.multibindings.IntoSet String "
             + "test.Outer.TestModule1.stringSetElement()\n"
+            + "          @Binds @dagger.multibindings.IntoSet String "
+            + "test.Outer.TestModule1.bindStringSetElement(@test.Outer.SomeQualifier String)\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
 
@@ -651,6 +663,9 @@ public class GraphValidationTest {
             + "          @Provides @dagger.multibindings.IntoMap "
             + "@test.Outer.StringKey(\"foo\") String"
             + " test.Outer.TestModule1.stringMapEntry()\n"
+            + "          @Binds @dagger.multibindings.IntoMap "
+            + "@test.Outer.StringKey(\"bar\") String"
+            + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier String)\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
 
@@ -660,11 +675,11 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedSetError)
         .in(component)
-        .onLine(42)
+        .onLine(52)
         .and()
         .withErrorContaining(expectedMapError)
         .in(component)
-        .onLine(43);
+        .onLine(53);
   }
 
   @Test
@@ -930,6 +945,56 @@ public class GraphValidationTest {
         .withErrorContaining(secondError)
         .in(component)
         .onLine(39);
+  }
+
+  @Test
+  public void bindsMethodAppearsInTrace() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "TestComponent",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  TestInterface testInterface();",
+            "}");
+    JavaFileObject interfaceFile =
+        JavaFileObjects.forSourceLines("TestInterface", "interface TestInterface {}");
+    JavaFileObject implementationFile =
+        JavaFileObjects.forSourceLines(
+            "TestImplementation",
+            "import javax.inject.Inject;",
+            "",
+            "final class TestImplementation implements TestInterface {",
+            "  @Inject TestImplementation(String missingBinding) {}",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "TestModule",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Binds abstract TestInterface bindTestInterface(TestImplementation implementation);",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(component, module, interfaceFile, implementationFile))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            Joiner.on("\n      ")
+                .join(
+                    "java.lang.String cannot be provided without an @Inject constructor or from "
+                        + "an @Provides-annotated method.",
+                    "java.lang.String is injected at",
+                    "    TestImplementation.<init>(missingBinding)",
+                    "TestImplementation is injected at",
+                    "    TestModule.bindTestInterface(implementation)",
+                    "TestInterface is provided at",
+                    "    TestComponent.testInterface()"))
+        .in(component)
+        .onLine(5);
   }
 
   @Test public void resolvedParametersInDependencyTrace() {
@@ -1558,6 +1623,80 @@ public class GraphValidationTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("[Child.needsString()] java.lang.String cannot be provided")
+        .in(parent)
+        .onLine(4);
+  }
+  
+  @Test
+  public void multibindingContributionBetweenAncestorComponentAndEntrypointComponent() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "Parent",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "Child",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}");
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "Grandchild",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Grandchild {",
+            "  Object object();",
+            "}");
+
+    JavaFileObject parentModule =
+        JavaFileObjects.forSourceLines(
+            "ParentModule",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class ParentModule {",
+            "  @Provides static Object dependsOnSet(Set<String> strings) {",
+            "    return \"needs strings: \" + strings;",
+            "  }",
+            "",
+            "  @Provides @IntoSet static String contributesToSet() {",
+            "    return \"parent string\";",
+            "  }",
+            "",
+            "  @Provides int missingDependency(double dub) {",
+            "    return 4;",
+            "  }",
+            "}");
+    JavaFileObject childModule =
+        JavaFileObjects.forSourceLines(
+            "ChildModule",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "  @Provides @IntoSet static String contributesToSet(int i) {",
+            "    return \"\" + i;",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parent, parentModule, child, childModule, grandchild))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining("[Grandchild.object()] java.lang.Double cannot be provided")
         .in(parent)
         .onLine(4);
   }

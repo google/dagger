@@ -61,6 +61,7 @@ limitations under the License.
           <compilerArgs>
             <arg>-Adagger.privateMemberValidation=warning</arg>
             <arg>-Adagger.staticMemberValidation=warning</arg>
+            <arg>-Adagger.ignorePrivateAndStaticInjectionForComponent=enabled</arg>
           </compilerArgs>
         </configuration>
       </plugin>

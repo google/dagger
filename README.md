@@ -115,6 +115,8 @@ dependencies {
 }
 ```
 
+_Note: for kotlin use kapt instead of apt_
+
 ### Download
 
   * 2.x (google/dagger)

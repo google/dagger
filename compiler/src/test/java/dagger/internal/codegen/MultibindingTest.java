@@ -33,12 +33,12 @@ public class MultibindingTest {
             "test.MultibindingModule",
             "package test;",
             "",
+            "import static dagger.Provides.Type.SET;",
+            "import static dagger.Provides.Type.UNIQUE;",
+            "",
             "import dagger.Module;",
             "import dagger.Provides;",
             "import dagger.multibindings.IntoSet;",
-            "",
-            "import static dagger.Provides.Type.SET;",
-            "import static dagger.Provides.Type.UNIQUE;",
             "",
             "@Module",
             "class MultibindingModule {",
@@ -97,11 +97,11 @@ public class MultibindingTest {
             "test.MultibindingModule",
             "package test;",
             "",
+            "import static dagger.producers.Produces.Type.SET;",
+            "",
             "import dagger.producers.ProducerModule;",
             "import dagger.producers.Produces;",
             "import dagger.multibindings.IntoSet;",
-            "",
-            "import static dagger.producers.Produces.Type.SET;",
             "",
             "@ProducerModule",
             "class MultibindingModule {",
@@ -127,7 +127,6 @@ public class MultibindingTest {
             "",
             "import java.util.Set;",
             "import java.util.Map;",
-            "",
             "import dagger.Component;",
             "import dagger.multibindings.IntoSet;",
             "import dagger.multibindings.ElementsIntoSet;",
@@ -145,16 +144,16 @@ public class MultibindingTest {
         .withErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
+        .onLine(11)
+        .and()
+        .withErrorContaining(
+            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
+        .in(component)
         .onLine(12)
         .and()
         .withErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
-        .onLine(13)
-        .and()
-        .withErrorContaining(
-            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .in(component)
-        .onLine(14);
+        .onLine(13);
   }
 }

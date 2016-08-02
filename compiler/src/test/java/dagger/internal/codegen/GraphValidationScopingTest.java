@@ -348,7 +348,7 @@ public class GraphValidationScopingTest {
         .failsToCompile()
         .withErrorContaining(errorMessage);
   }
-  
+
   @Test
   public void reusableNotAllowedOnComponent() {
     JavaFileObject someComponent =

@@ -50,7 +50,7 @@ public class MultibindingsValidatorTest {
           "",
           "@Qualifier",
           "@interface OtherQualifier {}");
-  
+
   @Test
   public void abstractClass() {
     JavaFileObject testModule =
@@ -201,7 +201,7 @@ public class MultibindingsValidatorTest {
         .in(testModule)
         .onLine(9);
   }
-  
+
   @Test
   public void voidMethod() {
     assertThatMultibindingsMethod("void voidMethod();")

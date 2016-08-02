@@ -347,7 +347,7 @@ public class ProductionGraphValidationTest {
         .in(component)
         .onLine(37);
   }
-  
+
   @Test
   public void cycleNotBrokenByMap() {
     JavaFileObject component =

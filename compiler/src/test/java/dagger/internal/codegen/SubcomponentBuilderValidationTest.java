@@ -30,23 +30,22 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link dagger.Subcomponent.Builder} validation. */
 @RunWith(JUnit4.class)
 public class SubcomponentBuilderValidationTest {
-  
+
   private static final ErrorMessages.SubcomponentBuilderMessages MSGS =
       new ErrorMessages.SubcomponentBuilderMessages();
-  
+
   @Test
   public void testRefSubcomponentAndSubBuilderFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
         "  ChildComponent child();",
-        "  ChildComponent.Builder builder();",        
+        "  ChildComponent.Builder builder();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -67,20 +66,19 @@ public class SubcomponentBuilderValidationTest {
             "test.ChildComponent", "[child(), builder()]"))
         .in(componentFile);
   }
-  
+
   @Test
   public void testRefSubBuilderTwiceFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
         "  ChildComponent.Builder builder1();",
-        "  ChildComponent.Builder builder2();",        
+        "  ChildComponent.Builder builder2();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -101,19 +99,18 @@ public class SubcomponentBuilderValidationTest {
             "test.ChildComponent", "[builder1(), builder2()]"))
         .in(componentFile);
   }
-  
+
   @Test
   public void testMoreThanOneBuilderFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
-        "  ChildComponent.Builder1 build();",        
+        "  ChildComponent.Builder1 build();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -139,19 +136,18 @@ public class SubcomponentBuilderValidationTest {
             "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]"))
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderGenericsFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
-        "  ChildComponent.Builder1 build();",        
+        "  ChildComponent.Builder1 build();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -163,7 +159,7 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder<T> {",
         "     ChildComponent build();",
-        "  }",           
+        "  }",
         "}");
     assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
         .processedWith(new ComponentProcessor())
@@ -171,7 +167,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.generics())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderNotInComponentFails() {
     JavaFileObject builder = JavaFileObjects.forSourceLines("test.Builder",
@@ -187,19 +183,18 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.mustBeInComponent())
         .in(builder);
   }
-  
+
   @Test
   public void testBuilderMissingBuildMethodFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
-        "  ChildComponent.Builder1 build();",        
+        "  ChildComponent.Builder1 build();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -217,7 +212,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.missingBuildMethod())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testPrivateBuilderFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -236,7 +231,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.isPrivate())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testNonStaticBuilderFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -255,7 +250,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.mustBeStatic())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testNonAbstractBuilderFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -274,7 +269,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.mustBeAbstract())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderOneCxtorWithArgsFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -295,7 +290,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderMoreThanOneCxtorFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -317,7 +312,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderEnumFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -336,7 +331,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.mustBeClassOrInterface())
         .in(childComponentFile);
   }
-  
+
   @Test
   public void testBuilderBuildReturnsWrongTypeFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -357,7 +352,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.buildMustReturnComponentType())
             .in(childComponentFile).onLine(9);
   }
-  
+
   @Test
   public void testInheritedBuilderBuildReturnsWrongTypeFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -381,7 +376,7 @@ public class SubcomponentBuilderValidationTest {
             String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
             .in(childComponentFile).onLine(12);
   }
-  
+
   @Test
   public void testTwoBuildMethodsFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -403,7 +398,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
             .in(childComponentFile).onLine(10);
   }
-  
+
   @Test
   public void testInheritedTwoBuildMethodsFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -428,7 +423,7 @@ public class SubcomponentBuilderValidationTest {
             String.format(MSGS.inheritedTwoBuildMethods(), "create()", "build()"))
             .in(childComponentFile).onLine(13);
   }
-  
+
   @Test
   public void testMoreThanOneArgFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -453,7 +448,7 @@ public class SubcomponentBuilderValidationTest {
         .and().withErrorContaining(MSGS.methodsMustTakeOneArg())
             .in(childComponentFile).onLine(11);
   }
-  
+
   @Test
   public void testInheritedMoreThanOneArgFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -479,7 +474,7 @@ public class SubcomponentBuilderValidationTest {
                 "set1(java.lang.String,java.lang.Integer)"))
             .in(childComponentFile).onLine(13);
   }
-  
+
   @Test
   public void testSetterReturningNonVoidOrBuilderFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -501,7 +496,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
             .in(childComponentFile).onLine(10);
   }
-  
+
   @Test
   public void testInheritedSetterReturningNonVoidOrBuilderFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -525,9 +520,9 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(
             String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(),
                 "set(java.lang.Integer)"))
-            .in(childComponentFile).onLine(13);    
+            .in(childComponentFile).onLine(13);
   }
-  
+
   @Test
   public void testGenericsOnSetterMethodFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -549,7 +544,7 @@ public class SubcomponentBuilderValidationTest {
         .withErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
             .in(childComponentFile).onLine(10);
   }
-  
+
   @Test
   public void testGenericsOnInheritedSetterMethodFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -572,9 +567,9 @@ public class SubcomponentBuilderValidationTest {
         .failsToCompile()
         .withErrorContaining(
             String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-            .in(childComponentFile).onLine(13);    
+            .in(childComponentFile).onLine(13);
   }
-  
+
   @Test
   public void testMultipleSettersPerTypeFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -599,7 +594,7 @@ public class SubcomponentBuilderValidationTest {
                   "java.lang.String", "[set1(java.lang.String), set2(java.lang.String)]"))
             .in(childComponentFile).onLine(8);
   }
-  
+
   @Test
   public void testMultipleSettersPerTypeIncludingResolvedGenericsFails() {
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
@@ -627,19 +622,18 @@ public class SubcomponentBuilderValidationTest {
                   "java.lang.String", "[set1(T), set2(java.lang.String)]"))
             .in(childComponentFile).onLine(12);
   }
-  
+
   @Test
   public void testExtraSettersFails() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
-        "  ChildComponent.Builder build();",        
+        "  ChildComponent.Builder build();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",
@@ -663,9 +657,8 @@ public class SubcomponentBuilderValidationTest {
                   "[void test.ChildComponent.Builder.set1(String),"
                   + " void test.ChildComponent.Builder.set2(Integer)]"))
             .in(childComponentFile).onLine(8);
-    
   }
-  
+
   @Test
   public void testMissingSettersFail() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
@@ -704,12 +697,11 @@ public class SubcomponentBuilderValidationTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
         "interface ParentComponent {",
-        "  ChildComponent.Builder build();",        
+        "  ChildComponent.Builder build();",
         "}");
     JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
         "package test;",

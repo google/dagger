@@ -49,7 +49,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -303,7 +302,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -332,7 +330,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -371,7 +368,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -392,7 +388,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -413,7 +408,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -434,7 +428,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -454,7 +447,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -477,7 +469,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -501,7 +492,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -522,7 +512,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -536,7 +525,7 @@ public class ComponentBuilderTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(MSGS.buildMustReturnComponentType())
-            .in(componentFile).onLine(11);
+            .in(componentFile).onLine(10);
   }
 
   @Test
@@ -545,7 +534,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -562,7 +550,7 @@ public class ComponentBuilderTest {
         .failsToCompile()
         .withErrorContaining(
             String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
-            .in(componentFile).onLine(14);
+            .in(componentFile).onLine(13);
   }
 
   @Test
@@ -571,7 +559,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -586,7 +573,7 @@ public class ComponentBuilderTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
-            .in(componentFile).onLine(12);
+            .in(componentFile).onLine(11);
   }
 
   @Test
@@ -595,7 +582,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -613,7 +599,7 @@ public class ComponentBuilderTest {
         .failsToCompile()
         .withErrorContaining(
             String.format(MSGS.inheritedTwoBuildMethods(), "create()", "build()"))
-            .in(componentFile).onLine(15);
+            .in(componentFile).onLine(14);
   }
 
   @Test
@@ -622,7 +608,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -638,9 +623,9 @@ public class ComponentBuilderTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(MSGS.methodsMustTakeOneArg())
-            .in(componentFile).onLine(12)
+            .in(componentFile).onLine(11)
         .and().withErrorContaining(MSGS.methodsMustTakeOneArg())
-            .in(componentFile).onLine(13);
+            .in(componentFile).onLine(12);
   }
 
   @Test
@@ -649,7 +634,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -668,7 +652,7 @@ public class ComponentBuilderTest {
         .withErrorContaining(
             String.format(MSGS.inheritedMethodsMustTakeOneArg(),
                 "set1(java.lang.String,java.lang.Integer)"))
-            .in(componentFile).onLine(15);
+            .in(componentFile).onLine(14);
   }
 
   @Test
@@ -677,7 +661,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -692,7 +675,7 @@ public class ComponentBuilderTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
-            .in(componentFile).onLine(12);
+            .in(componentFile).onLine(11);
   }
 
   @Test
@@ -701,7 +684,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -720,7 +702,7 @@ public class ComponentBuilderTest {
         .withErrorContaining(
             String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(),
                 "set(java.lang.Integer)"))
-            .in(componentFile).onLine(15);
+            .in(componentFile).onLine(14);
   }
 
   @Test
@@ -729,7 +711,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -744,7 +725,7 @@ public class ComponentBuilderTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-            .in(componentFile).onLine(12);
+            .in(componentFile).onLine(11);
   }
 
   @Test
@@ -753,7 +734,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -771,7 +751,7 @@ public class ComponentBuilderTest {
         .failsToCompile()
         .withErrorContaining(
             String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-            .in(componentFile).onLine(15);
+            .in(componentFile).onLine(14);
   }
 
   @Test
@@ -780,7 +760,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -798,7 +777,7 @@ public class ComponentBuilderTest {
         .withErrorContaining(
             String.format(MSGS.manyMethodsForType(),
                   "java.lang.String", "[set1(java.lang.String), set2(java.lang.String)]"))
-            .in(componentFile).onLine(10);
+            .in(componentFile).onLine(9);
   }
 
   @Test
@@ -807,7 +786,6 @@ public class ComponentBuilderTest {
         "package test;",
         "",
         "import dagger.Component;",
-        "",
         "import javax.inject.Provider;",
         "",
         "@Component",
@@ -828,7 +806,7 @@ public class ComponentBuilderTest {
         .withErrorContaining(
             String.format(MSGS.manyMethodsForType(),
                   "java.lang.String", "[set1(T), set2(java.lang.String)]"))
-            .in(componentFile).onLine(14);
+            .in(componentFile).onLine(13);
   }
 
   @Test

@@ -588,7 +588,7 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedError).in(component).onLine(24);
   }
-  
+
   @Test
   public void duplicateExplicitBindings_ProvidesVsBinds() {
     JavaFileObject component =
@@ -638,7 +638,7 @@ public class GraphValidationTest {
         .in(component)
         .onLine(28);
   }
-  
+
   @Test public void duplicateExplicitBindings_MultipleProvisionTypes() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -740,6 +740,8 @@ public class GraphValidationTest {
             "test.Outer",
             "package test;",
             "",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
             "import dagger.Component;",
             "import dagger.Module;",
             "import dagger.Multibindings;",
@@ -748,8 +750,6 @@ public class GraphValidationTest {
             "import java.util.HashSet;",
             "import java.util.Map;",
             "import java.util.Set;",
-            "",
-            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
             "",
             "final class Outer {",
             "  @Module",
@@ -804,7 +804,7 @@ public class GraphValidationTest {
         .in(component)
         .onLine(36);
   }
-  
+
   @Test public void duplicateBindings_TruncateAfterLimit() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -1410,7 +1410,7 @@ public class GraphValidationTest {
         .and()
         .withErrorContaining(shortErrorMessage).in(shortLifetime);
   }
-  
+
   @Test
   public void subcomponentBindingConflictsWithParent() {
     JavaFileObject parentChildConflict =
@@ -1437,7 +1437,7 @@ public class GraphValidationTest {
             "import javax.inject.Qualifier;",
             "",
             "@Qualifier @interface ChildGrandchildConflict {}");
-    
+
     /* Some annotation processor implementations do not report more than one error per element. So
      * separate parents for testing parent-conflicts-with-child and
      * parent-conflicts-with-grandchild.
@@ -1640,7 +1640,7 @@ public class GraphValidationTest {
         .in(parentConflictsWithChild)
         .onLine(9);
   }
-  
+
   @Test
   public void bindingUsedOnlyInSubcomponentDependsOnBindingOnlyInSubcomponent() {
     JavaFileObject parent =
@@ -1694,7 +1694,7 @@ public class GraphValidationTest {
         .in(parent)
         .onLine(4);
   }
-  
+
   @Test
   public void multibindingContributionBetweenAncestorComponentAndEntrypointComponent() {
     JavaFileObject parent =

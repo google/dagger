@@ -327,7 +327,6 @@ class CashRegisterModule {
   }
 }
 
-  
 @Reusable // DON'T DO THIS! You really do want a new filter each time, so this
           // should be unscoped.
 class CoffeeFilter {
@@ -335,6 +334,7 @@ class CoffeeFilter {
 }
 
 ```
+
 
 ### Lazy injections
 
@@ -529,7 +529,6 @@ limitations under the License.
 
 <!-- References -->
 
-
 [Android Application]: http://developer.android.com/reference/android/app/Application.html
 [Annotation Processor]: http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
@@ -541,6 +540,7 @@ limitations under the License.
 [DI]: http://en.wikipedia.org/wiki/Dependency_injection
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [Factory Pattern]: https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
+[+Gregory Kick]: https://google.com/+GregoryKick/
 [JSR 330]: https://jcp.org/en/jsr/detail?id=330
 [`javax.inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/package-summary.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
@@ -555,8 +555,5 @@ limitations under the License.
 [Singleton]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
 [Subcomponent]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
 [Subcomponent.Builder]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
-[+Gregory Kick]: https://google.com/+GregoryKick/
-
-
-
+[`WeakReference`]: https://docs.oracle.com/javase/7/docs/api/java/lang/ref/WeakReference.html
 

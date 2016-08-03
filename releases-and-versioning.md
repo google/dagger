@@ -58,4 +58,6 @@ As of March 2016, the Dagger team is aiming to produce a versioned release every
 2 weeks.  This is not a strict schedule, but a goal to ensure that changes made
 at `HEAD` are available within approximately 2 weeks.
 
+<!-- References -->
+
 [Guava]: https://github.com/google/guava

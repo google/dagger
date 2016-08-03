@@ -43,9 +43,6 @@ Dagger.
 
 [android-performance]: http://developer.android.com/training/best-performance.html
 
-
 [effective-java]: https://books.google.com/books?id=ka2VUBqHiWkC
 [ProGuard]: http://proguard.sourceforge.net/
-
-
 

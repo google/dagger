@@ -27,6 +27,8 @@ plagued reflection-based solutions. More details can be found in
 * Ask it on Stack Overflow with the [dagger-2][stack-overflow] tag
 * Send an email to [dagger-discuss@googlegroups.com][dagger-discuss]
 
+<!-- References -->
+
 [api-docs]: http://google.github.io/dagger/api/latest/
 [DI]: http://en.wikipedia.org/wiki/Dependency_injection
 [dagger-talk-video]: https://www.youtube.com/watch?v=oK_XtfXPkqw

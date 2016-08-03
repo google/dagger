@@ -389,7 +389,6 @@ DaggerComponentOne.create().componentThreeBuilder()
 
 <!-- References -->
 
-
 [`@Component`]: http://google.github.io/dagger/api/latest/dagger/Component.html
 [component builders]: http://google.github.io/dagger/api/latest/dagger/Component.Builder.html
 [component-methods]: http://google.github.io/dagger/api/latest/dagger/Component.html#component-methods
@@ -400,6 +399,4 @@ DaggerComponentOne.create().componentThreeBuilder()
 [`@Scope`]: http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [`@Singleton`]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
 [`@Subcomponent`]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
-
-
 

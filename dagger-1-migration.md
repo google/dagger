@@ -185,6 +185,8 @@ have to annotate injection sites and provides methods with the `@Nullable` of
 their choice. Any mismatch in nullability will be reported as a compile-time
 error.
 
+<!-- References -->
+
 [Component]: api/latest/dagger/Component.html
 [Component-modules]: api/latest/dagger/Component.html#modules()
 [component-relationships]: api/latest/dagger/Component.html#component-relationships

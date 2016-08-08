@@ -51,6 +51,7 @@ import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -451,10 +451,15 @@ abstract class ComponentDescriptor {
           ImmutableMap.builder();
 
       for (TypeElement componentDependency : componentDependencyTypes) {
-        List<ExecutableElement> dependencyMethods =
-            ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
+        Set<ExecutableElement> dependencyMethods =
+            MoreElements.getLocalAndInheritedMethods(componentDependency, elements);
+        Set<MethodSignatureWithReturnType> methodSignatures = new HashSet<>();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
-          if (isComponentContributionMethod(elements, dependencyMethod)) {
+          MethodSignatureWithReturnType methodSignature =
+              MethodSignatureWithReturnType.fromExecutableElement(dependencyMethod);
+          if (!methodSignatures.contains(methodSignature)
+              && isComponentContributionMethod(elements, dependencyMethod)) {
+            methodSignatures.add(methodSignature);
             dependencyMethodIndex.put(dependencyMethod, componentDependency);
           }
         }

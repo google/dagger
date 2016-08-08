@@ -393,4 +393,207 @@ public class GraphValidationScopingTest {
         .in(someSubcomponent)
         .onLine(6);
   }
+
+
+  @Test public void componentDependencyExtendsMultipleInterfacesWithSameMethod() {
+    // Unit test to verify we don't see "duplicate binding" error in the following scenario: when a component depends on
+    // an interface that extends two other interfaces with the same method. See original bug:
+    // https://github.com/williamlian/daggerbug.
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {}");
+    JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentA {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentB {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleComponent {",
+        "  SimpleType theType();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC extends test.ComponentA, test.ComponentB { }");
+    assertAbout(javaSources())
+        .that(
+                asList(type, simpleComponent, componentA, componentB, componentC))
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError();
+  }
+
+  @Test public void componentDependencyExtendsInterfacesThatAlsoExtendsInterface() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {}");
+    JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentA {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentB extends ComponentA {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleComponent {",
+        "  SimpleType theType();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC extends test.ComponentB { }");
+    assertAbout(javaSources())
+            .that(
+                    asList(type, simpleComponent, componentA, componentB, componentC))
+            .processedWith(new ComponentProcessor())
+            .compilesWithoutError();
+  }
+
+  @Test public void componentContainsSameTypeTwice() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleComponent {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC {",
+        "  SimpleType type();",
+        "  SimpleType sameType();",
+        "}");
+    String error = "test.SimpleType is bound multiple times";
+    assertAbout(javaSources())
+        .that(
+                asList(type, simpleComponent, componentC))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(error);
+  }
+
+  @Test public void componentDependenciesContainsSameKey() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = {ComponentC.class, ComponentB.class})",
+        "interface SimpleComponent {",
+        "  SimpleType theType();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC {",
+        "  SimpleType type();",
+        "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentB {",
+        "  SimpleType type();",
+        "}");
+    String error = "test.SimpleType is bound multiple times";
+    assertAbout(javaSources())
+        .that(
+                asList(type, simpleComponent, componentB, componentC))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(error);
+  }
+
+  @Test public void componentDependenciesHavePolymorphicReturnTypesMustBuild() {
+    JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
+        "interface A {",
+        "  Object method();",
+        "}");
+    JavaFileObject b = JavaFileObjects.forSourceLines("test.B",
+        "interface B {",
+        "  String method();",
+        "}");
+    JavaFileObject ab = JavaFileObjects.forSourceLines("test.AB",
+        "interface AB extends A, B {}");
+    JavaFileObject ba = JavaFileObjects.forSourceLines("test.BA",
+        "interface BA extends B, A {}");
+    JavaFileObject componentAB = JavaFileObjects.forSourceLines("test.ComponentAB",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = AB.class)",
+        "interface ComponentAB {",
+        "  String method();",
+        "}");
+    JavaFileObject componentBA = JavaFileObjects.forSourceLines("test.ComponentBA",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = BA.class)",
+        "interface ComponentBA {",
+        "  String method();",
+        "}");
+    assertAbout(javaSources())
+            .that(
+                    asList(a, b, ab, ba, componentAB, componentBA))
+            .processedWith(new ComponentProcessor())
+            .compilesWithoutError();
+  }
 }

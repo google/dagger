@@ -39,12 +39,14 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.VerifyException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -55,6 +57,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.sun.tools.javac.code.Symbol;
+
 import dagger.Component;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -78,6 +82,7 @@ import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
@@ -210,14 +215,26 @@ abstract class BindingGraph {
         explicitBindingsBuilder.add(provisionBindingFactory.forComponent(componentDependency));
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
+        HashMultimap<Key, Equivalence.Wrapper<TypeMirror>> componentMethodType = HashMultimap.create();
         for (ExecutableElement method : dependencyMethods) {
           // MembersInjection methods aren't "provided" explicitly, so ignore them.
           if (isComponentContributionMethod(elements, method)) {
-            explicitBindingsBuilder.add(
-                componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
-                        && isComponentProductionMethod(elements, method)
+            ContributionBinding element = componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
+                    && isComponentProductionMethod(elements, method)
                     ? productionBindingFactory.forComponentMethod(method)
-                    : provisionBindingFactory.forComponentMethod(method));
+                    : provisionBindingFactory.forComponentMethod(method);
+            // If a component dependency extends from two interfaces that both contain the same method key, then ignore
+            // the second instance. This is harmless.
+            if (method instanceof Symbol.MethodSymbol) {
+              Set<Equivalence.Wrapper<TypeMirror>> parentsOfPreviousKeys = componentMethodType.get(element.key());
+              Equivalence.Wrapper<TypeMirror> parentOfCurrentKey =
+                      MoreTypes.equivalence().wrap((TypeMirror) ((Symbol.MethodSymbol) method).location().type);
+              if (!parentsOfPreviousKeys.isEmpty() && !parentsOfPreviousKeys.contains(parentOfCurrentKey)) {
+                continue;
+              }
+              componentMethodType.put(element.key(), parentOfCurrentKey);
+            }
+            explicitBindingsBuilder.add(element);
           }
         }
       }

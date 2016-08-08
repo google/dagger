@@ -392,4 +392,162 @@ public class GraphValidationScopingTest {
         .in(someSubcomponent)
         .onLine(6);
   }
+
+
+  @Test public void componentDependencyExtendsMultipleInterfacesWithSameMethod() {
+    // Unit test to verify we don't see "duplicate binding" error in the following scenario: when a component depends on
+    // an interface that extends two other interfaces with the same method. See original bug:
+    // https://github.com/williamlian/daggerbug.
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {",
+        "  @Inject SimpleType() {}",
+        "  static class A { @Inject A() {} }",
+        "}");
+    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
+        "package test;",
+        "",
+        "import javax.inject.Scope;",
+        "",
+        "@Scope @interface SimpleScope {}");
+    JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentA {",
+        "  SimpleType.A type();",
+        "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentB {",
+        "  SimpleType.A type();",
+        "}");
+    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@SimpleScope",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleScopedComponent {",
+        "  SimpleType.A type();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC extends test.ComponentA, test.ComponentB { }");
+
+    assert_().about(javaSources())
+        .that(
+                asList(type, simpleScope, simpleScoped, componentA, componentB, componentC))
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError();
+  }
+
+  @Test public void componentContainsSameTypeTwice() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {",
+        "  @Inject SimpleType() {}",
+        "  static class A { @Inject A() {} }",
+        "}");
+    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
+        "package test;",
+        "",
+        "import javax.inject.Scope;",
+        "",
+        "@Scope @interface SimpleScope {}");
+    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@SimpleScope",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleScopedComponent {",
+        "  SimpleType.A type();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC {",
+        "  SimpleType.A type();",
+        "  SimpleType.A sameType();",
+        "}");
+    String error = "test.SimpleType.A is bound multiple times";
+    assert_().about(javaSources())
+        .that(
+                asList(type, simpleScope, simpleScoped, componentC))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(error);
+  }
+
+  @Test public void componentDependencyHasMethodsWithSameTypeButDifferentKey() {
+    JavaFileObject simpleQualifier = JavaFileObjects.forSourceLines("test.SimpleQualifier",
+        "package test;",
+        "",
+        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+        "import java.lang.annotation.Retention;",
+        "import javax.inject.Qualifier;",
+        "",
+        "@Qualifier @Retention(RUNTIME)",
+        "public @interface SimpleQualifier {",
+        "};");
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {",
+        "  @Inject SimpleType() {}",
+        "  @SimpleQualifier",
+        "  static class A { @Inject A() {} }",
+        "}");
+    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
+        "package test;",
+        "",
+        "import javax.inject.Scope;",
+        "",
+        "@Scope @interface SimpleScope {}");
+    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@SimpleScope",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleScopedComponent {",
+        "  SimpleType.A type();",
+        "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC {",
+        "  @SimpleQualifier",
+        "  SimpleType.A type();",
+        "  SimpleType.A sameType();",
+        "}");
+    assert_().about(javaSources())
+        .that(
+                asList(type, simpleScope, simpleScoped, componentC, simpleQualifier))
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError();
+  }
 }

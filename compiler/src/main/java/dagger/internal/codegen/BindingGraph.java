@@ -26,7 +26,6 @@ import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
-import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
@@ -75,7 +74,6 @@ import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
 /**
@@ -190,18 +188,14 @@ abstract class BindingGraph {
           : ImmutableSet.<TypeElement>of();
       for (TypeElement componentDependency : componentDependencyTypes) {
         explicitBindingsBuilder.add(provisionBindingFactory.forComponent(componentDependency));
-        List<ExecutableElement> dependencyMethods =
-            ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        for (ExecutableElement method : dependencyMethods) {
-          // MembersInjection methods aren't "provided" explicitly, so ignore them.
-          if (isComponentContributionMethod(elements, method)) {
-            explicitBindingsBuilder.add(
+      }
+      ImmutableSet<ExecutableElement> dependencyMethods = componentDescriptor.dependencyMethodIndex().keySet();
+      for (ExecutableElement dependencyMethod : dependencyMethods) {
+        explicitBindingsBuilder.add(
                 componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
-                        && isComponentProductionMethod(elements, method)
-                    ? productionBindingFactory.forComponentMethod(method)
-                    : provisionBindingFactory.forComponentMethod(method));
-          }
-        }
+                        && isComponentProductionMethod(elements, dependencyMethod)
+                    ? productionBindingFactory.forComponentMethod(dependencyMethod)
+                    : provisionBindingFactory.forComponentMethod(dependencyMethod));
       }
 
       for (Map.Entry<ComponentMethodDescriptor, ComponentDescriptor>

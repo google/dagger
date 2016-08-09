@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 import javax.inject.Provider;
 
 /**
- * An abstract {@link Producer} implementation that memoizes the result of its compute method.
+ * An abstract {@link Producer} implementation that memorizes the result of its compute method.
  *
  * @author Jesse Beder
  * @since 2.0

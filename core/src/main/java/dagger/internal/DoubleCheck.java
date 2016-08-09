@@ -79,7 +79,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
     if (provider instanceof Lazy) {
       @SuppressWarnings("unchecked")
       final Lazy<T> lazy = (Lazy<T>) provider;
-      // Avoids memoizing a value that is already memoized.
+      // Avoids memorizing a value that is already memorized.
       // NOTE: There is a pathological case where Provider<P> may implement Lazy<L>, but P and L
       // are different types using covariant return on get(). Right now this is used with
       // DoubleCheck<T> exclusively, which is implemented such that P and L are always

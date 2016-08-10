@@ -25,7 +25,7 @@ class MyModuleA {
 String d = "D";
   @Provides @IntoSet
   static String provideOneString(DepA depA, DepB depB) {
-    return depA.getA() + new Obj(depB).getB() + "C" + d;
+    return depA.getA() + new Obj(depB).getB() + "C" + depA.getD(d);
   }
 }
 ```

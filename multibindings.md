@@ -22,9 +22,10 @@ In order to contribute one element to an injectable multibound set, add an
 ```java
 @Module
 class MyModuleA {
+String d = "D";
   @Provides @IntoSet
   static String provideOneString(DepA depA, DepB depB) {
-    return "ABC";
+    return depA.getA() + new Obj(depB).getB() + "C" + d;
   }
 }
 ```
@@ -37,7 +38,7 @@ that returns a subset and is annotated with [`@ElementsIntoSet`]:
 class MyModuleB {
   @Provides @ElementsIntoSet
   static Set<String> provideSomeStrings(DepA depA, DepB depB) {
-    return new HashSet<String>(Arrays.asList("DEF", "GHI"));
+    return new HashSet<String>(Arrays.asList(depA.getABC(), depB.getDEF()));
   }
 }
 ```
@@ -49,7 +50,6 @@ class Bar {
   @Inject Bar(Set<String> strings) {
     assert strings.contains("ABC");
     assert strings.contains("DEF");
-    assert strings.contains("GHI");
   }
 }
 ```
@@ -64,7 +64,7 @@ interface MyComponent {
 
 @Test void testMyComponent() {
   MyComponent myComponent = DaggerMyComponent.create();
-  assertThat(myComponent.strings()).containsExactly("ABC", "DEF", "GHI");
+  assertThat(myComponent.strings()).containsExactly("ABC", "DEF");
 }
 ```
 

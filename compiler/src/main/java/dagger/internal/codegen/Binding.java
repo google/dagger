@@ -129,7 +129,7 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
   }
 
   /**
-   * if this binding's key's type parameters are different from those of the
+   * If this binding's key's type parameters are different from those of the
    * {@link #bindingTypeElement()}, this is the binding for the {@link #bindingTypeElement()}'s
    * unresolved type.
    */

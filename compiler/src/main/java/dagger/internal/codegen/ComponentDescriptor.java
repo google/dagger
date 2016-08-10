@@ -31,10 +31,12 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -410,9 +412,27 @@ abstract class ComponentDescriptor {
       for (TypeElement componentDependency : componentDependencyTypes) {
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
+        HashMultimap<MethodNameAndReturnType, Equivalence.Wrapper<TypeMirror>> componentMethodType
+                = HashMultimap.create();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
           if (isComponentContributionMethod(elements, dependencyMethod)) {
-            dependencyMethodIndex.put(dependencyMethod, componentDependency);
+            if (dependencyMethod.getParameters().isEmpty()) {
+              // If a component dependency extends from two interfaces that both contain the same named method, then
+              // ignore the method instance. They are both equivalent anyway. We don't have to worry about the
+              // possibility that one of them contains a default implementation since such a thing can't compile.
+              MethodNameAndReturnType methodNameAndReturnType
+                  = MethodNameAndReturnType.fromExecutableElement(dependencyMethod);
+              Set<Equivalence.Wrapper<TypeMirror>> enclosingTypeForPriorMethod
+                  = componentMethodType.get(methodNameAndReturnType);
+              Equivalence.Wrapper<TypeMirror> currentEnclosingType
+                  = MoreTypes.equivalence().wrap(dependencyMethod.getEnclosingElement().asType());
+              if (enclosingTypeForPriorMethod.isEmpty() || enclosingTypeForPriorMethod.contains(currentEnclosingType)) {
+                dependencyMethodIndex.put(dependencyMethod, componentDependency);
+              }
+              componentMethodType.put(methodNameAndReturnType, currentEnclosingType);
+            } else {
+              dependencyMethodIndex.put(dependencyMethod, componentDependency);
+            }
           }
         }
       }

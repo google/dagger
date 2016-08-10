@@ -407,12 +407,6 @@ public class GraphValidationScopingTest {
         "  @Inject SimpleType() {}",
         "  static class A { @Inject A() {} }",
         "}");
-    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
-        "package test;",
-        "",
-        "import javax.inject.Scope;",
-        "",
-        "@Scope @interface SimpleScope {}");
     JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
         "package test;",
         "",
@@ -429,14 +423,13 @@ public class GraphValidationScopingTest {
         "interface ComponentB {",
         "  SimpleType.A type();",
         "}");
-    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
         "",
-        "@SimpleScope",
         "@Component(dependencies = ComponentC.class)",
-        "interface SimpleScopedComponent {",
+        "interface SimpleComponent {",
         "  SimpleType.A type();",
         "}");
     JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
@@ -448,7 +441,7 @@ public class GraphValidationScopingTest {
 
     assert_().about(javaSources())
         .that(
-                asList(type, simpleScope, simpleScoped, componentA, componentB, componentC))
+                asList(type, simpleComponent, componentA, componentB, componentC))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError();
   }
@@ -463,20 +456,13 @@ public class GraphValidationScopingTest {
         "  @Inject SimpleType() {}",
         "  static class A { @Inject A() {} }",
         "}");
-    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
-        "package test;",
-        "",
-        "import javax.inject.Scope;",
-        "",
-        "@Scope @interface SimpleScope {}");
-    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
         "",
-        "@SimpleScope",
         "@Component(dependencies = ComponentC.class)",
-        "interface SimpleScopedComponent {",
+        "interface SimpleComponent {",
         "  SimpleType.A type();",
         "}");
     JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
@@ -491,10 +477,54 @@ public class GraphValidationScopingTest {
     String error = "test.SimpleType.A is bound multiple times";
     assert_().about(javaSources())
         .that(
-                asList(type, simpleScope, simpleScoped, componentC))
+                asList(type, simpleComponent, componentC))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(error);
+  }
+
+  @Test public void componentDependenciesContainsSameKey() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class SimpleType {",
+            "  @Inject SimpleType() {}",
+            "  static class A { @Inject A() {} }",
+            "}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = {ComponentC.class, ComponentB.class})",
+            "interface SimpleComponent {",
+            "  SimpleType.A type();",
+            "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "interface ComponentC {",
+            "  SimpleType.A type();",
+            "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "interface ComponentB {",
+            "  SimpleType.A type();",
+            "}");
+    String error = "test.SimpleType.A is bound multiple times";
+    assert_().about(javaSources())
+            .that(
+                    asList(type, simpleComponent, componentB, componentC))
+            .processedWith(new ComponentProcessor())
+            .failsToCompile()
+            .withErrorContaining(error);
   }
 
   @Test public void componentDependencyHasMethodsWithSameTypeButDifferentKey() {
@@ -518,20 +548,13 @@ public class GraphValidationScopingTest {
         "  @SimpleQualifier",
         "  static class A { @Inject A() {} }",
         "}");
-    JavaFileObject simpleScope = JavaFileObjects.forSourceLines("test.SimpleScope",
-        "package test;",
-        "",
-        "import javax.inject.Scope;",
-        "",
-        "@Scope @interface SimpleScope {}");
-    JavaFileObject simpleScoped = JavaFileObjects.forSourceLines("test.SimpleScopedComponent",
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
         "",
-        "@SimpleScope",
         "@Component(dependencies = ComponentC.class)",
-        "interface SimpleScopedComponent {",
+        "interface SimpleComponent {",
         "  SimpleType.A type();",
         "}");
     JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
@@ -541,12 +564,12 @@ public class GraphValidationScopingTest {
         "",
         "interface ComponentC {",
         "  @SimpleQualifier",
+        "  SimpleType.A typeQualified();",
         "  SimpleType.A type();",
-        "  SimpleType.A sameType();",
         "}");
     assert_().about(javaSources())
         .that(
-                asList(type, simpleScope, simpleScoped, componentC, simpleQualifier))
+                asList(type, simpleComponent, componentC, simpleQualifier))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError();
   }

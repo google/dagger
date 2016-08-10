@@ -412,7 +412,7 @@ abstract class ComponentDescriptor {
       for (TypeElement componentDependency : componentDependencyTypes) {
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        HashMultimap<MethodNameAndReturnType, Equivalence.Wrapper<TypeMirror>> componentMethodType
+        HashMultimap<QualifiedMethodNameAndType, Equivalence.Wrapper<TypeMirror>> componentMethodType
                 = HashMultimap.create();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
           if (isComponentContributionMethod(elements, dependencyMethod)) {
@@ -420,16 +420,16 @@ abstract class ComponentDescriptor {
               // If a component dependency extends from two interfaces that both contain the same named method, then
               // ignore the method instance. They are both equivalent anyway. We don't have to worry about the
               // possibility that one of them contains a default implementation since such a thing can't compile.
-              MethodNameAndReturnType methodNameAndReturnType
-                  = MethodNameAndReturnType.fromExecutableElement(dependencyMethod);
+              QualifiedMethodNameAndType qualifiedMethodNameAndType
+                  = QualifiedMethodNameAndType.fromExecutableElement(dependencyMethod);
               Set<Equivalence.Wrapper<TypeMirror>> enclosingTypeForPriorMethod
-                  = componentMethodType.get(methodNameAndReturnType);
+                  = componentMethodType.get(qualifiedMethodNameAndType);
               Equivalence.Wrapper<TypeMirror> currentEnclosingType
                   = MoreTypes.equivalence().wrap(dependencyMethod.getEnclosingElement().asType());
               if (enclosingTypeForPriorMethod.isEmpty() || enclosingTypeForPriorMethod.contains(currentEnclosingType)) {
                 dependencyMethodIndex.put(dependencyMethod, componentDependency);
               }
-              componentMethodType.put(methodNameAndReturnType, currentEnclosingType);
+              componentMethodType.put(qualifiedMethodNameAndType, currentEnclosingType);
             } else {
               dependencyMethodIndex.put(dependencyMethod, componentDependency);
             }

@@ -209,16 +209,15 @@ abstract class BindingGraph {
       for (TypeElement componentDependency : componentDependencyTypes) {
         explicitBindingsBuilder.add(provisionBindingFactory.forComponent(componentDependency));
       }
-      ImmutableSet<ExecutableElement> dependenciesMethods
-          = componentDescriptor.dependencyMethodIndex().keySet();
-      for (ExecutableElement method : dependenciesMethods) {
+      ImmutableSet<ExecutableElement> dependencyMethods = componentDescriptor.dependencyMethodIndex().keySet();
+      for (ExecutableElement dependencyMethod : dependencyMethods) {
         // MembersInjection methods aren't "provided" explicitly, so ignore them.
-        if (isComponentContributionMethod(elements, method)) {
+        if (isComponentContributionMethod(elements, dependencyMethod)) {
           explicitBindingsBuilder.add(
               componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
-                  && isComponentProductionMethod(elements, method)
-                  ? productionBindingFactory.forComponentMethod(method)
-                  : provisionBindingFactory.forComponentMethod(method));
+                      && isComponentProductionMethod(elements, dependencyMethod)
+                  ? productionBindingFactory.forComponentMethod(dependencyMethod)
+                  : provisionBindingFactory.forComponentMethod(dependencyMethod));
         }
       }
 

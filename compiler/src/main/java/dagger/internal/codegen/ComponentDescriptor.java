@@ -40,6 +40,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -412,7 +413,7 @@ abstract class ComponentDescriptor {
       for (TypeElement componentDependency : componentDependencyTypes) {
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        HashMultimap<QualifiedMethodNameAndType, Equivalence.Wrapper<TypeMirror>> componentMethodType
+        SetMultimap<QualifiedMethodNameAndType, Equivalence.Wrapper<TypeMirror>> componentMethodType
                 = HashMultimap.create();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
           if (isComponentContributionMethod(elements, dependencyMethod)) {

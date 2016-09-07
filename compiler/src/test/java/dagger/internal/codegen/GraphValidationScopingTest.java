@@ -444,42 +444,42 @@ public class GraphValidationScopingTest {
 
   @Test public void componentDependencyExtendsInterfacesThatAlsoExtendsInterface() {
     JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
-            "package test;",
-            "",
-            "import javax.inject.Inject;",
-            "",
-            "class SimpleType {}");
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class SimpleType {}");
     JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "interface ComponentA {",
-            "  SimpleType type();",
-            "}");
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentA {",
+        "  SimpleType type();",
+        "}");
     JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "interface ComponentB extends ComponentA {",
-            "  SimpleType type();",
-            "}");
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentB extends ComponentA {",
+        "  SimpleType type();",
+        "}");
     JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "@Component(dependencies = ComponentC.class)",
-            "interface SimpleComponent {",
-            "  SimpleType theType();",
-            "}");
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = ComponentC.class)",
+        "interface SimpleComponent {",
+        "  SimpleType theType();",
+        "}");
     JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "interface ComponentC extends test.ComponentB { }");
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "interface ComponentC extends test.ComponentB { }");
     assert_().about(javaSources())
             .that(
                     asList(type, simpleComponent, componentA, componentB, componentC))

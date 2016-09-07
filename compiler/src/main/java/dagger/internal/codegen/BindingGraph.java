@@ -29,7 +29,6 @@ import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescrip
 import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.PRODUCTION_SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
-import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_MULTIBINDING_KIND;
@@ -211,14 +210,11 @@ abstract class BindingGraph {
       }
       ImmutableSet<ExecutableElement> dependencyMethods = componentDescriptor.dependencyMethodIndex().keySet();
       for (ExecutableElement dependencyMethod : dependencyMethods) {
-        // MembersInjection methods aren't "provided" explicitly, so ignore them.
-        if (isComponentContributionMethod(elements, dependencyMethod)) {
-          explicitBindingsBuilder.add(
-              componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
-                      && isComponentProductionMethod(elements, dependencyMethod)
-                  ? productionBindingFactory.forComponentMethod(dependencyMethod)
-                  : provisionBindingFactory.forComponentMethod(dependencyMethod));
-        }
+        explicitBindingsBuilder.add(
+                componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
+                        && isComponentProductionMethod(elements, dependencyMethod)
+                    ? productionBindingFactory.forComponentMethod(dependencyMethod)
+                    : provisionBindingFactory.forComponentMethod(dependencyMethod));
       }
 
       // Bindings for subcomponent builders.

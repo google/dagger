@@ -13,6 +13,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 
+/**
+ * A method's name, return type and return type qualifier.
+ */
 @AutoValue
 abstract class QualifiedMethodNameAndType {
   abstract String name();

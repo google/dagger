@@ -442,6 +442,51 @@ public class GraphValidationScopingTest {
         .compilesWithoutError();
   }
 
+  @Test public void componentDependencyExtendsInterfacesThatAlsoExtendsInterface() {
+    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class SimpleType {}");
+    JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "interface ComponentA {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "interface ComponentB extends ComponentA {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = ComponentC.class)",
+            "interface SimpleComponent {",
+            "  SimpleType theType();",
+            "}");
+    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "interface ComponentC extends test.ComponentB { }");
+    assert_().about(javaSources())
+            .that(
+                    asList(type, simpleComponent, componentA, componentB, componentC))
+            .processedWith(new ComponentProcessor())
+            .compilesWithoutError();
+  }
+
   @Test public void componentContainsSameTypeTwice() {
     JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
         "package test;",
@@ -569,5 +614,39 @@ public class GraphValidationScopingTest {
                 asList(type, simpleQualifier, simpleComponent, componentA, componentB, componentC))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError();
+  }
+
+  @Test public void componentDependenciesHavePolymorphicReturnTypesMustBuild() {
+    JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
+        "interface A {",
+        "  Object method();",
+        "}");
+    JavaFileObject b = JavaFileObjects.forSourceLines("test.B",
+        "interface B {",
+        "  String method();",
+        "}");
+    JavaFileObject ab = JavaFileObjects.forSourceLines("test.AB",
+        "interface AB extends A, B {}");
+    JavaFileObject ba = JavaFileObjects.forSourceLines("test.BA",
+        "interface BA extends B, A {}");
+    JavaFileObject componentAB = JavaFileObjects.forSourceLines("test.ComponentAB",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = AB.class)",
+        "interface ComponentAB {",
+        "  String method();",
+        "}");
+    JavaFileObject componentBA = JavaFileObjects.forSourceLines("test.ComponentBA",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = BA.class)",
+        "interface ComponentBA {",
+        "  String method();",
+        "}");
+    assert_().about(javaSources())
+            .that(
+                    asList(a, b, ab, ba, componentAB, componentBA))
+            .processedWith(new ComponentProcessor())
+            .compilesWithoutError();
   }
 }

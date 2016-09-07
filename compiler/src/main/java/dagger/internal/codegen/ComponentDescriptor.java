@@ -31,16 +31,13 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -54,6 +51,7 @@ import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -413,24 +411,19 @@ abstract class ComponentDescriptor {
       for (TypeElement componentDependency : componentDependencyTypes) {
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        SetMultimap<QualifiedMethodNameAndType, Equivalence.Wrapper<TypeMirror>> componentMethodType
-                = HashMultimap.create();
+        Set<QualifiedMethodNameAndType> componentMethodType = new HashSet<>();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
           if (isComponentContributionMethod(elements, dependencyMethod)) {
             if (dependencyMethod.getParameters().isEmpty()) {
               // If a component dependency extends from two interfaces that both contain the same named method, then
-              // ignore the method instance. They are both equivalent anyway. We don't have to worry about the
+              // ignore the second instance. They are both equivalent anyway. We don't have to worry about the
               // possibility that one of them contains a default implementation since such a thing can't compile.
               QualifiedMethodNameAndType qualifiedMethodNameAndType
                   = QualifiedMethodNameAndType.fromExecutableElement(dependencyMethod);
-              Set<Equivalence.Wrapper<TypeMirror>> enclosingTypeForPriorMethod
-                  = componentMethodType.get(qualifiedMethodNameAndType);
-              Equivalence.Wrapper<TypeMirror> currentEnclosingType
-                  = MoreTypes.equivalence().wrap(dependencyMethod.getEnclosingElement().asType());
-              if (enclosingTypeForPriorMethod.isEmpty() || enclosingTypeForPriorMethod.contains(currentEnclosingType)) {
+              if (!componentMethodType.contains(qualifiedMethodNameAndType)) {
                 dependencyMethodIndex.put(dependencyMethod, componentDependency);
               }
-              componentMethodType.put(qualifiedMethodNameAndType, currentEnclosingType);
+              componentMethodType.add(qualifiedMethodNameAndType);
             } else {
               dependencyMethodIndex.put(dependencyMethod, componentDependency);
             }

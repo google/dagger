@@ -415,7 +415,8 @@ abstract class ComponentDescriptor {
         for (ExecutableElement dependencyMethod : dependencyMethods) {
           MethodSignatureWithReturnType methodSignature =
               MethodSignatureWithReturnType.fromExecutableElement(dependencyMethod);
-          if (!methodSignatures.contains(methodSignature)) {
+          if (!methodSignatures.contains(methodSignature)
+              && isComponentContributionMethod(elements, dependencyMethod)) {
             methodSignatures.add(methodSignature);
             dependencyMethodIndex.put(dependencyMethod, componentDependency);
           }

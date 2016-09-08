@@ -409,24 +409,15 @@ abstract class ComponentDescriptor {
           ImmutableMap.builder();
 
       for (TypeElement componentDependency : componentDependencyTypes) {
-        List<ExecutableElement> dependencyMethods =
-            ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        Set<QualifiedMethodNameAndType> componentMethodType = new HashSet<>();
+        Set<ExecutableElement> dependencyMethods =
+            MoreElements.getLocalAndInheritedMethods(componentDependency, elements);
+        Set<MethodSignatureWithReturnType> methodSignatures = new HashSet<>();
         for (ExecutableElement dependencyMethod : dependencyMethods) {
-          if (isComponentContributionMethod(elements, dependencyMethod)) {
-            if (dependencyMethod.getParameters().isEmpty()) {
-              // If a component dependency extends from two interfaces that both contain the same named method, then
-              // ignore the second instance. They are both equivalent anyway. We don't have to worry about the
-              // possibility that one of them contains a default implementation since such a thing can't compile.
-              QualifiedMethodNameAndType qualifiedMethodNameAndType
-                  = QualifiedMethodNameAndType.fromExecutableElement(dependencyMethod);
-              if (!componentMethodType.contains(qualifiedMethodNameAndType)) {
-                dependencyMethodIndex.put(dependencyMethod, componentDependency);
-              }
-              componentMethodType.add(qualifiedMethodNameAndType);
-            } else {
-              dependencyMethodIndex.put(dependencyMethod, componentDependency);
-            }
+          MethodSignatureWithReturnType methodSignature =
+              MethodSignatureWithReturnType.fromExecutableElement(dependencyMethod);
+          if (!methodSignatures.contains(methodSignature)) {
+            methodSignatures.add(methodSignature);
+            dependencyMethodIndex.put(dependencyMethod, componentDependency);
           }
         }
       }

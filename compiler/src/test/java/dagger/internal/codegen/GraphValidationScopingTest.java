@@ -562,60 +562,6 @@ public class GraphValidationScopingTest {
         .withErrorContaining(error);
   }
 
-  @Test public void componentDependencyExtendsMultipleInterfacesWithSameMethodButDifferentQualifier() {
-    JavaFileObject simpleQualifier = JavaFileObjects.forSourceLines("test.SimpleQualifier",
-        "package test;",
-        "",
-        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "import java.lang.annotation.Retention;",
-        "import javax.inject.Qualifier;",
-        "",
-        "@Qualifier @Retention(RUNTIME)",
-        "public @interface SimpleQualifier {",
-        "};");
-    JavaFileObject type = JavaFileObjects.forSourceLines("test.SimpleType",
-        "package test;",
-        "",
-        "class SimpleType {}");
-    JavaFileObject simpleComponent = JavaFileObjects.forSourceLines("test.SimpleComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(dependencies = ComponentC.class)",
-        "interface SimpleComponent {",
-        "  SimpleType type();",
-        "  @SimpleQualifier SimpleType type2();",
-        "}");
-    JavaFileObject componentA = JavaFileObjects.forSourceLines("test.ComponentA",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "interface ComponentA {",
-        "  @SimpleQualifier SimpleType type();",
-        "}");
-    JavaFileObject componentB = JavaFileObjects.forSourceLines("test.ComponentB",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "interface ComponentB {",
-        "  SimpleType type();",
-        "}");
-    JavaFileObject componentC = JavaFileObjects.forSourceLines("test.ComponentC",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "interface ComponentC extends test.ComponentA, test.ComponentB { }");
-    assert_().about(javaSources())
-        .that(
-                asList(type, simpleQualifier, simpleComponent, componentA, componentB, componentC))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
-  }
-
   @Test public void componentDependenciesHavePolymorphicReturnTypesMustBuild() {
     JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
         "interface A {",

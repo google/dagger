@@ -22,7 +22,6 @@ import dagger.internal.Beta;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Target;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Qualifier;
 
 /**
@@ -60,9 +59,16 @@ import javax.inject.Qualifier;
  * <li>{@code Optional<Provider<Lazy<Foo>>>}
  * </ul>
  *
- * or a {@link Provider}, {@link Lazy}, or {@link Provider} of {@link Lazy} of any of the above.
- *
  * <p>Explicit bindings for any of the above will conflict with a {@code @BindsOptionalOf} binding.
+ *
+ * <p>If the binding for {@code Foo} is a {@code @Produces} binding, then another {@code @Produces}
+ * binding can depend on any of:
+ *
+ * <ul>
+ * <li>{@code Optional<Foo>}
+ * <li>{@code Optional<Producer<Foo>>}
+ * <li>{@code Optional<Produced<Foo>>}
+ * </ul>
  */
 @Documented
 @Beta

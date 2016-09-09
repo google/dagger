@@ -24,6 +24,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
+import static dagger.internal.codegen.TypeNames.lazyOf;
+import static dagger.internal.codegen.TypeNames.listenableFutureOf;
+import static dagger.internal.codegen.TypeNames.producedOf;
+import static dagger.internal.codegen.TypeNames.producerOf;
+import static dagger.internal.codegen.TypeNames.providerOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -33,6 +38,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Provides;
@@ -127,6 +133,35 @@ abstract class DependencyRequest {
     /** Returns a {@link KindAndType} with this kind and {@code type} type. */
     KindAndType ofType(TypeMirror type) {
       return new AutoValue_DependencyRequest_KindAndType(this, type);
+    }
+
+    /** Returns the type of a request of this kind for a key with a given type. */
+    TypeName typeName(TypeName keyType) {
+      switch (this) {
+        case INSTANCE:
+          return keyType;
+
+        case PROVIDER:
+          return providerOf(keyType);
+
+        case LAZY:
+          return lazyOf(keyType);
+
+        case PROVIDER_OF_LAZY:
+          return providerOf(lazyOf(keyType));
+
+        case PRODUCER:
+          return producerOf(keyType);
+
+        case PRODUCED:
+          return producedOf(keyType);
+
+        case FUTURE:
+          return listenableFutureOf(keyType);
+
+        default:
+          throw new AssertionError(this);
+      }
     }
   }
 

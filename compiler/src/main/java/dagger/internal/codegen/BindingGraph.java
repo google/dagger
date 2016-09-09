@@ -23,8 +23,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.isEmpty;
+import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.BindingType.isOfType;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
@@ -589,20 +589,26 @@ abstract class BindingGraph {
       /**
        * Returns a synthetic binding for {@code @Qualifier Optional<Type>} if there are any {@code
        * optionalBindingDeclarations}.
+       *
+       * <p>If there are no bindings for the underlying key (the key for dependency requests for
+       * {@code Type}), returns a provision binding that always returns {@link Optional#absent()}.
+       *
+       * <p>If there are any production bindings for the underlying key, returns a production
+       * binding. Otherwise returns a provision binding.
        */
       private Optional<? extends ContributionBinding> syntheticOptionalBinding(
           Key key, ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations) {
         if (optionalBindingDeclarations.isEmpty()) {
           return Optional.absent();
         }
-        ContributionBinding syntheticPresentBinding =
-            provisionBindingFactory.syntheticPresentBinding(key);
-        ResolvedBindings bindings =
-            lookUpBindings(getOnlyElement(syntheticPresentBinding.dependencies()).bindingKey());
-        if (bindings.isEmpty()) {
+        ResolvedBindings underlyingKeyBindings =
+            lookUpBindings(contribution(keyFactory.unwrapOptional(key).get()));
+        if (underlyingKeyBindings.isEmpty()) {
           return Optional.of(provisionBindingFactory.syntheticAbsentBinding(key));
-        } else { // TODO(dpb): Support producers.
-          return Optional.of(syntheticPresentBinding);
+        } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)) {
+          return Optional.of(productionBindingFactory.syntheticPresentBinding(key));
+        } else {
+          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key));
         }
       }
 

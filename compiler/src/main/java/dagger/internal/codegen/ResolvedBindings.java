@@ -302,10 +302,14 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
       // Only multibinding declarations, so assume provision.
       return BindingType.PROVISION;
     }
-    ImmutableSet<BindingType> bindingTypes =
-        FluentIterable.from(bindings()).transform(BindingType.BINDING_TYPE).toSet();
+    ImmutableSet<BindingType> bindingTypes = bindingTypes();
     checkState(bindingTypes.size() == 1, "conflicting binding types: %s", bindings());
     return getOnlyElement(bindingTypes);
+  }
+
+  /** The binding types for {@link #bindings()}. */
+  ImmutableSet<BindingType> bindingTypes() {
+    return FluentIterable.from(bindings()).transform(BindingType.BINDING_TYPE).toSet();
   }
 
   /**

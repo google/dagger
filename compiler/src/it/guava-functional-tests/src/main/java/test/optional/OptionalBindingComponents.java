@@ -32,8 +32,9 @@ import javax.inject.Provider;
 import javax.inject.Qualifier;
 
 /**
- * Classes to support {@link OptionalBindingComponentsTest} and
- * {@link test.optional.a.OptionalBindingComponentsWithInaccessibleTypesTest}.
+ * Classes to support {@link OptionalBindingComponentsPresentTest}, {@link
+ * OptionalBindingComponentsAbsentTest} and {@link
+ * test.optional.a.OptionalBindingComponentsWithInaccessibleTypesTest}.
  */
 public final class OptionalBindingComponents {
 

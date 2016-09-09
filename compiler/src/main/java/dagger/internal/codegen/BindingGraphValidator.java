@@ -41,7 +41,6 @@ import static dagger.internal.codegen.ContributionType.indexByContributionType;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_INJECT_WILDCARD_TYPE;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.DOUBLE_INDENT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
@@ -981,29 +980,12 @@ final class BindingGraphValidator {
       } else {
         FluentIterable<ContributionBinding> dependentProvisions =
             provisionsDependingOnLatestRequest(path);
-        if (dependentProvisions
-            .transform(ContributionBinding.KIND)
-            .contains(SYNTHETIC_OPTIONAL_BINDING)) {
-          // TODO(dpb): Implement @BindsOptionalOf for producers.
-          errorMessage
-              .append("Using optional bindings with @Produces bindings is not yet supported.\n")
-              .append(INDENT)
-              .append(formatCurrentDependencyRequestKey(path))
-              .append(" is produced at\n")
-              .append(DOUBLE_INDENT)
-              .append(
-                  bindingDeclarationFormatter.format(
-                      path.currentResolvedBindings().contributionBinding()))
-              .append('\n')
-              .append(dependencyRequestFormatter.toDependencyTrace(path));
-        } else {
-          // TODO(beder): Consider displaying all dependent provisions in the error message. If we
-          // do that, should we display all productions that depend on them also?
-          new Formatter(errorMessage)
-              .format(
-                  PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT,
-                  dependentProvisions.iterator().next().key());
-        }
+        // TODO(beder): Consider displaying all dependent provisions in the error message. If we
+        // do that, should we display all productions that depend on them also?
+        new Formatter(errorMessage)
+            .format(
+                PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT,
+                dependentProvisions.iterator().next().key());
       }
       reportBuilder.addError(errorMessage.toString(), path.entryPointElement());
     }

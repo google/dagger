@@ -21,6 +21,9 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import dagger.MembersInjector;
 import dagger.producers.Producer;
 import javax.inject.Provider;
@@ -59,13 +62,18 @@ enum BindingType {
     return frameworkClass;
   }
 
+  /** Returns the {@link #frameworkClass()} parameterized with a type. */
+  ParameterizedTypeName frameworkClassOf(TypeName valueType) {
+    return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
+  }
+
   /** A predicate that passes for {@link HasBindingType}s with a given type. */
   static Predicate<HasBindingType> isOfType(BindingType type) {
     return Predicates.compose(Predicates.equalTo(type), BINDING_TYPE);
   }
 
   /** A function that returns {@link HasBindingType#bindingType()}. */
-  static Function<HasBindingType, BindingType> BINDING_TYPE =
+  static final Function<HasBindingType, BindingType> BINDING_TYPE =
       new Function<HasBindingType, BindingType>() {
         @Override
         public BindingType apply(HasBindingType hasBindingType) {

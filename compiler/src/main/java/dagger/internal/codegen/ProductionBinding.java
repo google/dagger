@@ -213,5 +213,20 @@ abstract class ProductionBinding extends ContributionBinding {
           .bindingKind(Kind.SYNTHETIC_DELEGATE_BINDING)
           .build();
     }
+
+    /**
+     * Returns a synthetic binding for an {@linkplain dagger.BindsOptionalOf optional binding} in a
+     * component with a binding for the underlying key.
+     */
+    ProductionBinding syntheticPresentBinding(Key key) {
+      return ProductionBinding.builder()
+          .contributionType(ContributionType.UNIQUE)
+          .key(key)
+          .bindingKind(Kind.SYNTHETIC_OPTIONAL_BINDING)
+          .dependencies(
+              dependencyRequestFactory.forSyntheticPresentOptionalBinding(
+                  key, DependencyRequest.Kind.PRODUCER))
+          .build();
+    }
   }
 }

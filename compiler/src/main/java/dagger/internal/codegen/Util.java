@@ -19,16 +19,15 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -39,7 +38,6 @@ import java.lang.annotation.Annotation;
 import java.util.Comparator;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -137,25 +135,9 @@ final class Util {
         .toSet();
   }
 
-  // TODO(ronshapiro): add into auto/common/AnnotationMirrors.java
-  static Predicate<AnnotationMirror> hasAnnotationType(
-      final Class<? extends Annotation> annotation) {
-    return new Predicate<AnnotationMirror>() {
-      @Override
-      public boolean apply(AnnotationMirror input) {
-        return MoreTypes.isTypeOf(annotation, input.getAnnotationType());
-      }
-    };
-  }
-
   /** A function that returns the input as a {@link DeclaredType}. */
   static final Function<TypeElement, DeclaredType> AS_DECLARED_TYPE =
-      new Function<TypeElement, DeclaredType>() {
-        @Override
-        public DeclaredType apply(TypeElement typeElement) {
-          return MoreTypes.asDeclared(typeElement.asType());
-        }
-      };
+      typeElement -> asDeclared(typeElement.asType());
 
   /**
    * A visitor that returns the input or the closest enclosing element that is a
@@ -206,53 +188,20 @@ final class Util {
   static <E extends Element> FluentIterable<E> elementsWithAnnotation(
       Iterable<E> elements, final Class<? extends Annotation> annotation) {
     return FluentIterable.from(elements)
-        .filter(
-            new Predicate<Element>() {
-              @Override
-              public boolean apply(Element element) {
-                return MoreElements.isAnnotationPresent(element, annotation);
-              }
-            });
+        .filter(element -> MoreElements.isAnnotationPresent(element, annotation));
   }
 
   /** A function that returns the simple name of an element. */
   static final Function<Element, String> ELEMENT_SIMPLE_NAME =
-      new Function<Element, String>() {
-        @Override
-        public String apply(Element element) {
-          return element.getSimpleName().toString();
-        }
-      };
-
-  /** A function that returns the kind of an element. */
-  static final Function<Element, ElementKind> ELEMENT_KIND =
-      new Function<Element, ElementKind>() {
-        @Override
-        public ElementKind apply(Element element) {
-          return element.getKind();
-        }
-      };
-
-  @SuppressWarnings("rawtypes")
-  private static final Comparator OPTIONAL_COMPARATOR =
-      new Comparator<Optional<Comparable>>() {
-        @SuppressWarnings("unchecked") // Only used as a Comparator<Optional<SomeType>>.
-        @Override
-        public int compare(Optional<Comparable> o1, Optional<Comparable> o2) {
-          if (o1.isPresent() && o2.isPresent()) {
-            return o1.get().compareTo(o2.get());
-          }
-          return o1.isPresent() ? -1 : 1;
-        }
-      };
+      element -> element.getSimpleName().toString();
 
   /**
    * A {@link Comparator} that puts absent {@link Optional}s before present ones, and compares
    * present {@link Optional}s by their values.
    */
-  @SuppressWarnings("unchecked") // Fully covariant.
   static <C extends Comparable<C>> Comparator<Optional<C>> optionalComparator() {
-    return OPTIONAL_COMPARATOR;
+    return Comparator.comparing((Optional<C> optional) -> optional.isPresent())
+        .thenComparing(Optional::get);
   }
 
   private Util() {}

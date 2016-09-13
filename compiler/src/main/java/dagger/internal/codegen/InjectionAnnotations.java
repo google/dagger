@@ -22,7 +22,6 @@ import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import javax.inject.Inject;
@@ -65,13 +64,7 @@ final class InjectionAnnotations {
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */
   static ImmutableSet<ExecutableElement> injectedConstructors(TypeElement type) {
     return FluentIterable.from(constructorsIn(type.getEnclosedElements()))
-        .filter(
-            new Predicate<ExecutableElement>() {
-              @Override
-              public boolean apply(ExecutableElement constructor) {
-                return isAnnotationPresent(constructor, Inject.class);
-              }
-            })
+        .filter(constructor -> isAnnotationPresent(constructor, Inject.class))
         .toSet();
   }
 

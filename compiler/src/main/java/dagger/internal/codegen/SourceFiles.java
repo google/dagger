@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.FrameworkDependency.frameworkDependenciesForBinding;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
-import static dagger.internal.codegen.Util.ELEMENT_KIND;
 import static dagger.internal.codegen.Util.ELEMENT_SIMPLE_NAME;
 
 import com.google.common.base.CaseFormat;
@@ -38,6 +37,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.Iterator;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -64,8 +64,8 @@ class SourceFiles {
           return ComparisonChain.start()
               // put fields before parameters
               .compare(
-                  left.requestElement().transform(ELEMENT_KIND),
-                  right.requestElement().transform(ELEMENT_KIND),
+                  left.requestElement().transform(Element::getKind),
+                  right.requestElement().transform(Element::getKind),
                   Util.<ElementKind>optionalComparator())
               // order by dependency kind
               .compare(left.kind(), right.kind())

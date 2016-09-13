@@ -2397,14 +2397,10 @@ public class ComponentProcessorTest {
         .processedWith(
             new ElementFilteringComponentProcessor(
                 Predicates.not(
-                    new Predicate<Element>() {
-                      @Override
-                      public boolean apply(Element element) {
-                        return MoreElements.getPackage(element)
+                    element ->
+                        MoreElements.getPackage(element)
                             .getQualifiedName()
-                            .contentEquals("test.inject");
-                      }
-                    })))
+                            .contentEquals("test.inject"))))
         .compilesWithoutWarnings()
         .withNoteContaining(
             "Generating a MembersInjector for "

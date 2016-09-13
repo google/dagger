@@ -936,7 +936,7 @@ abstract class AbstractComponentWriter {
 
     for (BindingKey dependencyKey :
         FluentIterable.from(binding.implicitDependencies())
-            .transform(DependencyRequest.BINDING_KEY_FUNCTION)
+            .transform(DependencyRequest::bindingKey)
             .toSet()) {
       if (!getMemberSelect(dependencyKey).staticMember()
           && getInitializationState(dependencyKey).equals(UNINITIALIZED)) {

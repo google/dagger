@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -34,7 +33,6 @@ import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.Key.HasKey;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The collection of bindings that have been resolved for a binding key. For valid graphs, contains
@@ -309,7 +307,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
 
   /** The binding types for {@link #bindings()}. */
   ImmutableSet<BindingType> bindingTypes() {
-    return FluentIterable.from(bindings()).transform(BindingType.BINDING_TYPE).toSet();
+    return FluentIterable.from(bindings()).transform(HasBindingType::bindingType).toSet();
   }
 
   /**
@@ -360,12 +358,4 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   Optional<Scope> scope() {
     return getOnlyElement(bindings()).scope();
   }
-
-  static final Function<ResolvedBindings, Set<ContributionBinding>> CONTRIBUTION_BINDINGS =
-      new Function<ResolvedBindings, Set<ContributionBinding>>() {
-        @Override
-        public Set<ContributionBinding> apply(ResolvedBindings resolvedBindings) {
-          return resolvedBindings.contributionBindings();
-        }
-      };
 }

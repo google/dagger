@@ -1304,7 +1304,7 @@ abstract class AbstractComponentWriter {
           binding.bindingType().equals(BindingType.PROVISION),
           "Absent optional bindings should be provisions: %s",
           binding);
-      return optionalFactories.absentOptionalProvider();
+      return optionalFactories.absentOptionalProvider(binding);
     } else {
       return optionalFactories.presentOptionalFactory(
           binding, getOnlyElement(getDependencyArguments(binding)));

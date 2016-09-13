@@ -22,26 +22,69 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
+import com.google.common.base.Optional;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import javax.lang.model.element.Name;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor7;
+import javax.lang.model.type.TypeVisitor;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Information about an {@code Optional} {@link TypeMirror}.
  *
- * <p>Only {@link com.google.common.base.Optional} is supported.
+ * <p>{@link com.google.common.base.Optional} and {@link java.util.Optional} are supported.
  */
-// TODO(dpb): Support java.util.Optional.
 @AutoValue
 abstract class OptionalType {
 
-  private static final String OPTIONAL_TYPE = "com.google.common.base.Optional";
+  /** A variant of {@code Optional}. */
+  enum OptionalKind {
+    /** {@link com.google.common.base.Optional}. */
+    GUAVA_OPTIONAL(com.google.common.base.Optional.class, "absent"),
 
-  private static final SimpleTypeVisitor7<Boolean, Void> IS_OPTIONAL =
-      new SimpleTypeVisitor7<Boolean, Void>(false) {
+    /** {@link java.util.Optional}. */
+    JDK_OPTIONAL(java.util.Optional.class, "empty"),
+    ;
+
+    private final Class<?> clazz;
+    private final String absentFactoryMethodName;
+
+    OptionalKind(Class<?> clazz, String absentFactoryMethodName) {
+      this.clazz = clazz;
+      this.absentFactoryMethodName = absentFactoryMethodName;
+    }
+
+    /** Returns {@code valueType} wrapped in the correct class. */
+    ParameterizedTypeName of(TypeName valueType) {
+      return ParameterizedTypeName.get(ClassName.get(clazz), valueType);
+    }
+
+    /** Returns an expression for the absent/empty value. */
+    CodeBlock absentValueExpression() {
+      return CodeBlock.of("$T.$L()", clazz, absentFactoryMethodName);
+    }
+
+    /** Returns an expression for the present {@code value}. */
+    CodeBlock presentExpression(CodeBlock value) {
+      return CodeBlock.of("$T.of($L)", clazz, value);
+    }
+  }
+
+  private static final TypeVisitor<Optional<OptionalKind>, Void> OPTIONAL_KIND =
+      new SimpleTypeVisitor8<Optional<OptionalKind>, Void>(Optional.absent()) {
         @Override
-        public Boolean visitDeclared(DeclaredType t, Void p) {
-          return MoreElements.asType(t.asElement()).getQualifiedName().contentEquals(OPTIONAL_TYPE);
+        public Optional<OptionalKind> visitDeclared(DeclaredType t, Void p) {
+          for (OptionalKind optionalKind : OptionalKind.values()) {
+            Name qualifiedName = MoreElements.asType(t.asElement()).getQualifiedName();
+            if (qualifiedName.contentEquals(optionalKind.clazz.getCanonicalName())) {
+              return Optional.of(optionalKind);
+            }
+          }
+          return Optional.absent();
         }
       };
 
@@ -58,6 +101,11 @@ abstract class OptionalType {
   DeclaredType declaredOptionalType() {
     return wrappedDeclaredOptionalType().get();
   }
+  
+  /** Which {@code Optional} type is used. */
+  OptionalKind kind() {
+    return declaredOptionalType().accept(OPTIONAL_KIND, null).get();
+  }
 
   /** The value type. */
   TypeMirror valueType() {
@@ -66,7 +114,7 @@ abstract class OptionalType {
 
   /** Returns {@code true} if {@code type} is an {@code Optional} type. */
   static boolean isOptional(TypeMirror type) {
-    return type.accept(IS_OPTIONAL, null);
+    return type.accept(OPTIONAL_KIND, null).isPresent();
   }
 
   /** Returns {@code true} if {@code key.type()} is an {@code Optional} type. */

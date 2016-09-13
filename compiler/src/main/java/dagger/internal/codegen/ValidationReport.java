@@ -132,7 +132,7 @@ abstract class ValidationReport<T extends Element> {
   }
 
   static <T extends Element> Builder<T> about(T subject) {
-    return new Builder<T>(subject);
+    return new Builder<>(subject);
   }
 
   @CanIgnoreReturnValue
@@ -212,7 +212,7 @@ abstract class ValidationReport<T extends Element> {
 
     @CheckReturnValue
     ValidationReport<T> build() {
-      return new AutoValue_ValidationReport<T>(subject, items.build(), subreports.build());
+      return new AutoValue_ValidationReport<>(subject, items.build(), subreports.build());
     }
   }
 }

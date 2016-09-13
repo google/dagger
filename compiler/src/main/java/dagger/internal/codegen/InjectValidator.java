@@ -38,6 +38,7 @@ import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.getScopes;
+import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -47,8 +48,6 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import javax.inject.Inject;
@@ -157,13 +156,7 @@ final class InjectValidator {
     }
 
     // This is computationally expensive, but probably preferable to a giant index
-    FluentIterable<ExecutableElement> injectConstructors = FluentIterable.from(
-        ElementFilter.constructorsIn(enclosingElement.getEnclosedElements()))
-            .filter(new Predicate<ExecutableElement>() {
-              @Override public boolean apply(ExecutableElement input) {
-                return isAnnotationPresent(input, Inject.class);
-              }
-            });
+    ImmutableSet<ExecutableElement> injectConstructors = injectedConstructors(enclosingElement);
 
     if (injectConstructors.size() > 1) {
       builder.addError(MULTIPLE_INJECT_CONSTRUCTORS, constructorElement);

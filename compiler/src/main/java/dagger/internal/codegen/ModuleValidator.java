@@ -36,15 +36,14 @@ import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_AN
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
+import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -54,6 +53,7 @@ import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.internal.codegen.ModuleDescriptor.Kind;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionSubcomponent;
@@ -243,16 +243,7 @@ final class ModuleValidator {
 
   private static ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses(
       ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {
-    return FluentIterable.from(validModuleKinds)
-        .transformAndConcat(
-            new Function<ModuleDescriptor.Kind, Set<? extends Class<? extends Annotation>>>() {
-              @Override
-              public Set<? extends Class<? extends Annotation>> apply(
-                  ModuleDescriptor.Kind moduleKind) {
-                return moduleKind.includesTypes();
-              }
-            })
-        .toSet();
+    return FluentIterable.from(validModuleKinds).transformAndConcat(Kind::includesTypes).toSet();
   }
 
   /**
@@ -287,29 +278,16 @@ final class ModuleValidator {
               boolean isIncludedModule =
                   any(
                       includedModuleClasses,
-                      new Predicate<Class<? extends Annotation>>() {
-                        @Override
-                        public boolean apply(Class<? extends Annotation> otherClass) {
-                          return MoreElements.isAnnotationPresent(element, otherClass);
-                        }
-                      });
+                      otherClass -> MoreElements.isAnnotationPresent(element, otherClass));
               if (!isIncludedModule) {
                 builder.addError(
                     String.format(
                         REFERENCED_MODULE_NOT_ANNOTATED,
                         element.getQualifiedName(),
                         (includedModuleClasses.size() > 1 ? "one of " : "")
-                            + Joiner.on(", ")
-                                .join(
-                                    FluentIterable.from(includedModuleClasses)
-                                        .transform(
-                                            new Function<Class<? extends Annotation>, String>() {
-                                              @Override
-                                              public String apply(
-                                                  Class<? extends Annotation> otherClass) {
-                                                return "@" + otherClass.getSimpleName();
-                                              }
-                                            }))),
+                            + includedModuleClasses.stream()
+                                .map(otherClass -> "@" + otherClass.getSimpleName())
+                                .collect(joining(", "))),
                     subject);
               }
               return null;
@@ -406,20 +384,8 @@ final class ModuleValidator {
               FluentIterable.from(
                       getModuleIncludes(
                           getAnnotationMirror(moduleElement, moduleKind.moduleAnnotation()).get()))
-                  .transform(
-                      new Function<TypeMirror, Element>() {
-                        @Override
-                        public Element apply(TypeMirror input) {
-                          return types.asElement(input);
-                        }
-                      })
-                  .filter(
-                      new Predicate<Element>() {
-                        @Override
-                        public boolean apply(Element input) {
-                          return effectiveVisibilityOfElement(input).compareTo(PUBLIC) < 0;
-                        }
-                      })
+                  .transform(types::asElement)
+                  .filter(element -> effectiveVisibilityOfElement(element).compareTo(PUBLIC) < 0)
                   .toSet();
           if (!nonPublicModules.isEmpty()) {
             reportBuilder.addError(

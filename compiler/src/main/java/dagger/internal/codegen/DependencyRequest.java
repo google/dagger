@@ -32,7 +32,6 @@ import static dagger.internal.codegen.TypeNames.providerOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -69,12 +68,6 @@ import javax.lang.model.util.SimpleTypeVisitor7;
 // TODO(gak): Set bindings and the permutations thereof need to be addressed
 @AutoValue
 abstract class DependencyRequest {
-  static final Function<DependencyRequest, BindingKey> BINDING_KEY_FUNCTION =
-      new Function<DependencyRequest, BindingKey>() {
-        @Override public BindingKey apply(DependencyRequest request) {
-          return request.bindingKey();
-        }
-      };
 
   enum Kind {
     /** A default request for an instance.  E.g.: {@code Blah} */

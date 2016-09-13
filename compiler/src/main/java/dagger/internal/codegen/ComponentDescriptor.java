@@ -33,9 +33,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
@@ -188,30 +186,6 @@ abstract class ComponentDescriptor {
           throw new AssertionError();
       }
     }
-
-    private static final Function<Kind, Class<? extends Annotation>> TO_ANNOTATION_TYPE =
-        new Function<Kind, Class<? extends Annotation>>() {
-          @Override
-          public Class<? extends Annotation> apply(Kind kind) {
-            return kind.annotationType();
-          }
-        };
-
-    static Function<Kind, Class<? extends Annotation>> toAnnotationType() {
-      return TO_ANNOTATION_TYPE;
-    }
-
-    private static final Function<Kind, Class<? extends Annotation>> TO_BUILDER_ANNOTATION_TYPE =
-        new Function<Kind, Class<? extends Annotation>>() {
-          @Override
-          public Class<? extends Annotation> apply(Kind kind) {
-            return kind.builderAnnotationType();
-          }
-        };
-
-    static Function<Kind, Class<? extends Annotation>> toBuilderAnnotationType() {
-      return TO_BUILDER_ANNOTATION_TYPE;
-    }
   }
 
   abstract Kind kind();
@@ -247,7 +221,7 @@ abstract class ComponentDescriptor {
 
   ImmutableSet<TypeElement> transitiveModuleTypes() {
     return FluentIterable.from(transitiveModules())
-        .transform(ModuleDescriptor.getModuleElement())
+        .transform(ModuleDescriptor::moduleElement)
         .toSet();
   }
 
@@ -355,24 +329,12 @@ abstract class ComponentDescriptor {
   // interaction between the spec & generation
   abstract Optional<BuilderSpec> builderSpec();
 
+  /** A function that returns all {@link #scopes()} of its input. */
   @AutoValue
   abstract static class ComponentMethodDescriptor {
     abstract ComponentMethodKind kind();
     abstract Optional<DependencyRequest> dependencyRequest();
     abstract ExecutableElement methodElement();
-
-    /**
-     * A predicate that passes for {@link ComponentMethodDescriptor}s of one of the given kinds.
-     */
-    static Predicate<ComponentMethodDescriptor> isOfKind(ComponentMethodKind... kinds) {
-      final ImmutableSet<ComponentMethodKind> kindSet = ImmutableSet.copyOf(kinds);
-      return new Predicate<ComponentMethodDescriptor>() {
-        @Override
-        public boolean apply(ComponentMethodDescriptor descriptor) {
-          return kindSet.contains(descriptor.kind());
-        }
-      };
-    }
 
     static ComponentMethodDescriptor create(
         ComponentMethodKind kind,

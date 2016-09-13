@@ -24,9 +24,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableListMultimap;
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -87,12 +84,8 @@ final class ComponentWriter extends AbstractComponentWriter {
       componentDescriptorsBySimpleName =
           Multimaps.index(
               graph.componentDescriptors(),
-              new Function<ComponentDescriptor, String>() {
-                @Override
-                public String apply(ComponentDescriptor componentDescriptor) {
-                  return componentDescriptor.componentDefinitionType().getSimpleName().toString();
-                }
-              });
+              componentDescriptor ->
+                  componentDescriptor.componentDefinitionType().getSimpleName().toString());
       componentQualifiedNamePieces = qualifiedNames(graph.componentDescriptors());
     }
 
@@ -197,12 +190,6 @@ final class ComponentWriter extends AbstractComponentWriter {
   /** {@code true} if all of the graph's required dependencies can be automatically constructed. */
   private boolean canInstantiateAllRequirements() {
     return !Iterables.any(
-        graph.componentRequirements(),
-        new Predicate<TypeElement>() {
-          @Override
-          public boolean apply(TypeElement dependency) {
-            return requiresAPassedInstance(elements, dependency);
-          }
-        });
+        graph.componentRequirements(), dependency -> requiresAPassedInstance(elements, dependency));
   }
 }

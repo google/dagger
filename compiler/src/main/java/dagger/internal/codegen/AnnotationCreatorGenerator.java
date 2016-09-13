@@ -149,7 +149,7 @@ class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
    * should be written.
    */
   protected Set<TypeElement> annotationsToCreate(TypeElement annotationElement) {
-    return nestedAnnotationElements(annotationElement, new LinkedHashSet<TypeElement>());
+    return nestedAnnotationElements(annotationElement, new LinkedHashSet<>());
   }
 
   @CanIgnoreReturnValue

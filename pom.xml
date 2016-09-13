@@ -44,7 +44,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <java.version>1.7</java.version>
     <javax.inject.version>1</javax.inject.version>
     <javax.annotation.version>3.0.1</javax.annotation.version>
     <auto.common.version>0.7</auto.common.version>
@@ -184,8 +183,8 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <source>1.7</source>
+          <target>1.7</target>
           <compilerArgument>-Xlint:all</compilerArgument>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>

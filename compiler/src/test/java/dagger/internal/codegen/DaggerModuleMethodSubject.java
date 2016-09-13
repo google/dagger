@@ -19,10 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.truth.FailureStrategy;
 import com.google.common.truth.Subject;
 import com.google.common.truth.SubjectFactory;
@@ -34,6 +32,7 @@ import dagger.producers.ProducerModule;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 import javax.tools.JavaFileObject;
 
 /** A {@link Truth} subject for testing Dagger module methods. */
@@ -108,7 +107,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
    * </ul>
    */
   DaggerModuleMethodSubject importing(Class<?>... imports) {
-    return importing(FluentIterable.from(Arrays.asList(imports)));
+    return importing(Arrays.asList(imports));
   }
 
   /**
@@ -121,8 +120,10 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
    * <li>{@code javax.inject.*}
    * </ul>
    */
-  DaggerModuleMethodSubject importing(Iterable<? extends Class<?>> imports) {
-    this.imports.addAll(Iterables.transform(imports, IMPORT));
+  DaggerModuleMethodSubject importing(List<? extends Class<?>> imports) {
+    imports.stream()
+        .map(clazz -> String.format("import %s;", clazz.getCanonicalName()))
+        .forEachOrdered(this.imports::add);
     return this;
   }
 
@@ -183,11 +184,4 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
     return stringWriter.toString();
   }
 
-  private static final Function<Class<?>, String> IMPORT =
-      new Function<Class<?>, String>() {
-        @Override
-        public String apply(Class<?> clazz) {
-          return String.format("import %s;", clazz.getCanonicalName());
-        }
-      };
 }

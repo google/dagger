@@ -36,7 +36,6 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
@@ -295,15 +294,7 @@ abstract class Key {
    * Indexes {@code haveKeys} by {@link HasKey#key()}.
    */
   static <T extends HasKey> ImmutableSetMultimap<Key, T> indexByKey(Iterable<T> haveKeys) {
-    return ImmutableSetMultimap.copyOf(
-        Multimaps.index(
-            haveKeys,
-            new Function<HasKey, Key>() {
-              @Override
-              public Key apply(HasKey hasKey) {
-                return hasKey.key();
-              }
-            }));
+    return ImmutableSetMultimap.copyOf(Multimaps.index(haveKeys, HasKey::key));
   }
 
   static final class Factory {

@@ -22,7 +22,6 @@ import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
 
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import dagger.producers.Producer;
@@ -82,13 +81,8 @@ enum BindingTypeMapper {
    * of the same key.
    */
   BindingType getBindingType(Iterable<DependencyRequest> requests) {
-    ImmutableSet<BindingType> classes = FluentIterable.from(requests)
-        .transform(new Function<DependencyRequest, BindingType>() {
-          @Override public BindingType apply(DependencyRequest request) {
-            return getBindingType(request.kind());
-          }
-        })
-        .toSet();
+    ImmutableSet<BindingType> classes =
+        FluentIterable.from(requests).transform(request -> getBindingType(request.kind())).toSet();
     if (classes.size() == 1) {
       return getOnlyElement(classes);
     } else if (classes.equals(CONTRIBUTION_TYPES)) {

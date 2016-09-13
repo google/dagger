@@ -25,7 +25,6 @@ import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -186,15 +185,7 @@ final class ConfigurationAnnotations {
         @Override
         public ImmutableList<TypeMirror> visitArray(
             List<? extends AnnotationValue> vals, String elementName) {
-          return FluentIterable.from(vals)
-              .transform(
-                  new Function<AnnotationValue, TypeMirror>() {
-                    @Override
-                    public TypeMirror apply(AnnotationValue typeValue) {
-                      return TO_TYPE.visit(typeValue);
-                    }
-                  })
-              .toList();
+          return FluentIterable.from(vals).transform(TO_TYPE::visit).toList();
         }
 
         @Override

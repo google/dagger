@@ -109,9 +109,7 @@ abstract class FrameworkDependency {
       frameworkDependencies.add(
           new AutoValue_FrameworkDependency(
               getOnlyElement(
-                  FluentIterable.from(requests)
-                      .transform(DependencyRequest.BINDING_KEY_FUNCTION)
-                      .toSet()),
+                  FluentIterable.from(requests).transform(DependencyRequest::bindingKey).toSet()),
               bindingTypeMapper.getBindingType(requests),
               ImmutableSet.copyOf(requests)));
     }

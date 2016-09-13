@@ -25,12 +25,11 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.BindingKey.contribution;
-import static dagger.internal.codegen.BindingType.isOfType;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ContributionBinding.Kind.IS_SYNTHETIC_MULTIBINDING_KIND;
+import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.Key.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
@@ -38,9 +37,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.base.VerifyException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -72,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -104,9 +100,7 @@ abstract class BindingGraph {
   abstract ImmutableSet<ModuleDescriptor> ownedModules();
 
   ImmutableSet<TypeElement> ownedModuleTypes() {
-    return FluentIterable.from(ownedModules())
-        .transform(ModuleDescriptor.getModuleElement())
-        .toSet();
+    return FluentIterable.from(ownedModules()).transform(ModuleDescriptor::moduleElement).toSet();
   }
 
   private static final TreeTraverser<BindingGraph> SUBGRAPH_TRAVERSER =
@@ -128,37 +122,23 @@ abstract class BindingGraph {
   ImmutableSet<TypeElement> componentRequirements() {
     return SUBGRAPH_TRAVERSER
         .preOrderTraversal(this)
-        .transformAndConcat(RESOLVED_BINDINGS)
-        .transformAndConcat(ResolvedBindings.CONTRIBUTION_BINDINGS)
-        .filter(ContributionBinding.REQUIRES_MODULE_INSTANCE)
-        .transformAndConcat(BindingDeclaration.CONTRIBUTING_MODULE)
+        .transformAndConcat(graph -> graph.resolvedBindings().values())
+        .transformAndConcat(ResolvedBindings::contributionBindings)
+        .filter(ContributionBinding::requiresModuleInstance)
+        .transformAndConcat(bindingDeclaration -> bindingDeclaration.contributingModule().asSet())
         .filter(in(ownedModuleTypes()))
         .append(componentDescriptor().dependencies())
         .toSet();
   }
-
-  private static final Function<BindingGraph, Iterable<ResolvedBindings>> RESOLVED_BINDINGS =
-      new Function<BindingGraph, Iterable<ResolvedBindings>>() {
-        @Override
-        public Iterable<ResolvedBindings> apply(BindingGraph graph) {
-          return graph.resolvedBindings().values();
-        }
-      };
-
   /**
    * Returns the {@link ComponentDescriptor}s for this component and its subcomponents.
    */
   ImmutableSet<ComponentDescriptor> componentDescriptors() {
-    return SUBGRAPH_TRAVERSER.preOrderTraversal(this).transform(COMPONENT_DESCRIPTOR).toSet();
+    return SUBGRAPH_TRAVERSER
+        .preOrderTraversal(this)
+        .transform(BindingGraph::componentDescriptor)
+        .toSet();
   }
-
-  static final Function<BindingGraph, ComponentDescriptor> COMPONENT_DESCRIPTOR =
-      new Function<BindingGraph, ComponentDescriptor>() {
-        @Override
-        public ComponentDescriptor apply(BindingGraph graph) {
-          return graph.componentDescriptor();
-        }
-      };
 
   ImmutableSet<TypeElement> availableDependencies() {
     return FluentIterable.from(componentDescriptor().transitiveModuleTypes())
@@ -479,19 +459,16 @@ abstract class BindingGraph {
                 multibindingContributionsForValueMap(key),
                 multibindingDeclarationsForValueMap(key))
             .transform(
-                new Function<ContributionBinding, ContributionBinding>() {
-                  @Override
-                  public ContributionBinding apply(ContributionBinding syntheticMultibinding) {
-                    switch (syntheticMultibinding.bindingType()) {
-                      case PROVISION:
-                        return provisionBindingFactory.syntheticMapOfValuesBinding(key);
+                syntheticMultibinding -> {
+                  switch (syntheticMultibinding.bindingType()) {
+                    case PROVISION:
+                      return provisionBindingFactory.syntheticMapOfValuesBinding(key);
 
-                      case PRODUCTION:
-                        return productionBindingFactory.syntheticMapOfValuesOrProducedBinding(key);
+                    case PRODUCTION:
+                      return productionBindingFactory.syntheticMapOfValuesOrProducedBinding(key);
 
-                      default:
-                        throw new VerifyException(syntheticMultibinding.toString());
-                    }
+                    default:
+                      throw new VerifyException(syntheticMultibinding.toString());
                   }
                 });
       }
@@ -505,13 +482,7 @@ abstract class BindingGraph {
           Key requestKey) {
         return keyFactory
             .implicitFrameworkMapKeys(requestKey)
-            .transformAndConcat(
-                new Function<Key, Iterable<ContributionBinding>>() {
-                  @Override
-                  public Iterable<ContributionBinding> apply(Key key) {
-                    return getExplicitMultibindings(key);
-                  }
-                });
+            .transformAndConcat(this::getExplicitMultibindings);
       }
 
       /**
@@ -523,13 +494,7 @@ abstract class BindingGraph {
           Key requestKey) {
         return keyFactory
             .implicitFrameworkMapKeys(requestKey)
-            .transformAndConcat(
-                new Function<Key, Iterable<MultibindingDeclaration>>() {
-                  @Override
-                  public Iterable<MultibindingDeclaration> apply(Key key) {
-                    return getMultibindingDeclarations(key);
-                  }
-                });
+            .transformAndConcat(this::getMultibindingDeclarations);
       }
 
       /**
@@ -575,7 +540,8 @@ abstract class BindingGraph {
             && SetType.from(requestKey).elementsAreTypeOf(Produced.class)) {
           return true;
         }
-        return Iterables.any(multibindingContributions, isOfType(BindingType.PRODUCTION));
+        return Iterables.any(multibindingContributions,
+            hasBindingType -> hasBindingType.bindingType().equals(BindingType.PRODUCTION));
       }
 
       private Optional<ProvisionBinding> syntheticSubcomponentBuilderBinding(
@@ -956,14 +922,10 @@ abstract class BindingGraph {
       private boolean hasLocallyPresentOptionalBinding(BindingKey bindingKey) {
         return Iterables.any(
             getPreviouslyResolvedBindings(bindingKey).get().contributionBindings(),
-            new Predicate<ContributionBinding>() {
-              @Override
-              public boolean apply(ContributionBinding binding) {
-                return binding.bindingKind().equals(SYNTHETIC_OPTIONAL_BINDING)
+            binding ->
+                binding.bindingKind().equals(SYNTHETIC_OPTIONAL_BINDING)
                     && !getLocalExplicitBindings(keyFactory.unwrapOptional(binding.key()).get())
-                        .isEmpty();
-              }
-            });
+                        .isEmpty());
       }
 
       private final class MultibindingDependencies {
@@ -994,22 +956,19 @@ abstract class BindingGraph {
           try {
             return dependsOnLocalMultibindingsCache.get(
                 bindingKey,
-                new Callable<Boolean>() {
-                  @Override
-                  public Boolean call() {
-                    ResolvedBindings previouslyResolvedBindings =
-                        getPreviouslyResolvedBindings(bindingKey).get();
-                    if (isMultibindingsWithLocalContributions(previouslyResolvedBindings)) {
+                () -> {
+                  ResolvedBindings previouslyResolvedBindings =
+                      getPreviouslyResolvedBindings(bindingKey).get();
+                  if (isMultibindingsWithLocalContributions(previouslyResolvedBindings)) {
+                    return true;
+                  }
+
+                  for (Binding binding : previouslyResolvedBindings.bindings()) {
+                    if (dependsOnLocalMultibindings(binding)) {
                       return true;
                     }
-
-                    for (Binding binding : previouslyResolvedBindings.bindings()) {
-                      if (dependsOnLocalMultibindings(binding)) {
-                        return true;
-                      }
-                    }
-                    return false;
                   }
+                  return false;
                 });
           } catch (ExecutionException e) {
             throw new AssertionError(e);
@@ -1032,21 +991,18 @@ abstract class BindingGraph {
           try {
             return bindingDependsOnLocalMultibindingsCache.get(
                 binding,
-                new Callable<Boolean>() {
-                  @Override
-                  public Boolean call() {
-                    if ((!binding.scope().isPresent()
-                            || binding.scope().get().equals(reusableScope(elements)))
-                        // TODO(beder): Figure out what happens with production subcomponents.
-                        && !binding.bindingType().equals(BindingType.PRODUCTION)) {
-                      for (DependencyRequest dependency : binding.implicitDependencies()) {
-                        if (dependsOnLocalMultibindings(dependency.bindingKey())) {
-                          return true;
-                        }
+                () -> {
+                  if ((!binding.scope().isPresent()
+                          || binding.scope().get().equals(reusableScope(elements)))
+                      // TODO(beder): Figure out what happens with production subcomponents.
+                      && !binding.bindingType().equals(BindingType.PRODUCTION)) {
+                    for (DependencyRequest dependency : binding.implicitDependencies()) {
+                      if (dependsOnLocalMultibindings(dependency.bindingKey())) {
+                        return true;
                       }
                     }
-                    return false;
                   }
+                  return false;
                 });
           } catch (ExecutionException e) {
             throw new AssertionError(e);
@@ -1055,11 +1011,12 @@ abstract class BindingGraph {
 
         private boolean isMultibindingsWithLocalContributions(ResolvedBindings resolvedBindings) {
           Key key = resolvedBindings.key();
-          return FluentIterable.from(resolvedBindings.contributionBindings())
-                  .transform(ContributionBinding.KIND)
-                  .anyMatch(IS_SYNTHETIC_MULTIBINDING_KIND)
+          return resolvedBindings.contributionBindings()
+              .stream()
+              .map(ContributionBinding::bindingKind)
+              .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
               && !getExplicitMultibindings(key)
-                  .equals(parentResolver.get().getExplicitMultibindings(key));
+              .equals(parentResolver.get().getExplicitMultibindings(key));
         }
       }
     }

@@ -16,9 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
@@ -41,6 +38,10 @@ enum BindingType {
   /** A binding with this type is a {@link ProductionBinding}. */
   PRODUCTION(Producer.class),
   ;
+
+  boolean isOfType(HasBindingType hasBindingType) {
+    return this.equals(hasBindingType.bindingType());
+  }
 
   static final ImmutableSet<BindingType> CONTRIBUTION_TYPES =
       Sets.immutableEnumSet(PROVISION, PRODUCTION);
@@ -66,18 +67,4 @@ enum BindingType {
   ParameterizedTypeName frameworkClassOf(TypeName valueType) {
     return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
   }
-
-  /** A predicate that passes for {@link HasBindingType}s with a given type. */
-  static Predicate<HasBindingType> isOfType(BindingType type) {
-    return Predicates.compose(Predicates.equalTo(type), BINDING_TYPE);
-  }
-
-  /** A function that returns {@link HasBindingType#bindingType()}. */
-  static final Function<HasBindingType, BindingType> BINDING_TYPE =
-      new Function<HasBindingType, BindingType>() {
-        @Override
-        public BindingType apply(HasBindingType hasBindingType) {
-          return hasBindingType.bindingType();
-        }
-      };
 }

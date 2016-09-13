@@ -26,10 +26,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -106,12 +103,8 @@ abstract class MembersInjectionBinding extends Binding {
   boolean hasLocalInjectionSites() {
     return FluentIterable.from(injectionSites())
         .anyMatch(
-            new Predicate<InjectionSite>() {
-              @Override
-              public boolean apply(InjectionSite injectionSite) {
-                return injectionSite.element().getEnclosingElement().equals(membersInjectedType());
-              }
-            });
+            injectionSite ->
+                injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
   }
 
   @AutoValue
@@ -127,7 +120,7 @@ abstract class MembersInjectionBinding extends Binding {
 
     abstract ImmutableSet<DependencyRequest> dependencies();
     
-    protected int indexAmongSiblingMembers(InjectionSite injectionSite) {
+    static int indexAmongSiblingMembers(InjectionSite injectionSite) {
       return injectionSite
           .element()
           .getEnclosingElement()
@@ -202,24 +195,12 @@ abstract class MembersInjectionBinding extends Binding {
       ImmutableSortedSet<InjectionSite> injectionSites = getInjectionSites(declaredType);
       ImmutableSet<DependencyRequest> dependencies =
           FluentIterable.from(injectionSites)
-              .transformAndConcat(
-                  new Function<InjectionSite, Set<DependencyRequest>>() {
-                    @Override
-                    public Set<DependencyRequest> apply(InjectionSite input) {
-                      return input.dependencies();
-                    }
-                  })
+              .transformAndConcat(InjectionSite::dependencies)
               .toSet();
 
       Optional<Key> parentKey =
           MoreTypes.nonObjectSuperclass(types, elements, declaredType)
-              .transform(
-                  new Function<DeclaredType, Key>() {
-                    @Override
-                    public Key apply(DeclaredType superclass) {
-                      return keyFactory.forMembersInjectedType(superclass);
-                    }
-                  });
+              .transform(keyFactory::forMembersInjectedType);
 
       Key key = keyFactory.forMembersInjectedType(declaredType);
       TypeElement typeElement = MoreElements.asType(declaredType.asElement());
@@ -263,23 +244,16 @@ abstract class MembersInjectionBinding extends Binding {
         }
       }
       return ImmutableSortedSet.copyOf(
-          new Comparator<InjectionSite>() {
-            @Override
-            public int compare(InjectionSite left, InjectionSite right) {
-              return ComparisonChain.start()
-                  // supertypes before subtypes
-                  .compare(
-                      ancestors.indexOf(right.element().getEnclosingElement()),
-                      ancestors.indexOf(left.element().getEnclosingElement()))
-                  // fields before methods
-                  .compare(left.element().getKind(), right.element().getKind())
-                  // then sort by whichever element comes first in the parent
-                  // this isn't necessary, but makes the processor nice and predictable
-                  .compare(
-                      left.indexAmongSiblingMembers(left), right.indexAmongSiblingMembers(right))
-                  .result();
-            }
-          },
+          // supertypes before subtypes
+          Comparator.comparing(
+                  (InjectionSite injectionSite) ->
+                      ancestors.indexOf(injectionSite.element().getEnclosingElement()))
+              .reversed()
+              // fields before methods
+              .thenComparing(injectionSite -> injectionSite.element().getKind())
+              // then sort by whichever element comes first in the parent
+              // this isn't necessary, but makes the processor nice and predictable
+              .thenComparing(InjectionSite::indexAmongSiblingMembers),
           injectionSites);
     }
 
@@ -311,8 +285,7 @@ abstract class MembersInjectionBinding extends Binding {
     }
 
     private final ElementVisitor<Optional<InjectionSite>, DeclaredType> injectionSiteVisitor =
-        new ElementKindVisitor6<Optional<InjectionSite>, DeclaredType>(
-            Optional.<InjectionSite>absent()) {
+        new ElementKindVisitor6<Optional<InjectionSite>, DeclaredType>(Optional.absent()) {
           @Override
           public Optional<InjectionSite> visitExecutableAsMethod(
               ExecutableElement e, DeclaredType type) {
@@ -326,7 +299,7 @@ abstract class MembersInjectionBinding extends Binding {
                     && !e.getModifiers().contains(PRIVATE)
                     && !e.getModifiers().contains(STATIC))
                 ? Optional.of(injectionSiteForInjectField(e, type))
-                : Optional.<InjectionSite>absent();
+                : Optional.absent();
           }
         };
   }

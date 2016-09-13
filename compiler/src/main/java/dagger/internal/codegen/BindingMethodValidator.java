@@ -46,7 +46,6 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -192,13 +191,7 @@ abstract class BindingMethodValidator {
           formatErrorMessage(
               BINDING_METHOD_NOT_IN_MODULE,
               FluentIterable.from(enclosingElementAnnotations)
-                  .transform(
-                      new Function<Class<?>, String>() {
-                        @Override
-                        public String apply(Class<?> clazz) {
-                          return clazz.getSimpleName();
-                        }
-                      })
+                  .transform(Class::getSimpleName)
                   .join(Joiner.on(" or @"))));
     }
   }

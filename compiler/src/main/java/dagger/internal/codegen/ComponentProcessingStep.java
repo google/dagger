@@ -103,7 +103,7 @@ final class ComponentProcessingStep implements ProcessingStep {
         getElementsFromAnnotations(
             elementsByAnnotation,
             FluentIterable.from(componentKind.subcomponentKinds())
-                .transform(ComponentDescriptor.Kind.toBuilderAnnotationType())
+                .transform(ComponentDescriptor.Kind::builderAnnotationType)
                 .toSet());
     Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent =
         processBuilders(subcomponentBuilderElements);
@@ -111,7 +111,7 @@ final class ComponentProcessingStep implements ProcessingStep {
         getElementsFromAnnotations(
             elementsByAnnotation,
             FluentIterable.from(componentKind.subcomponentKinds())
-                .transform(ComponentDescriptor.Kind.toAnnotationType())
+                .transform(ComponentDescriptor.Kind::annotationType)
                 .toSet());
     Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent =
         processSubcomponents(subcomponentElements, subcomponentBuilderElements);
@@ -156,7 +156,7 @@ final class ComponentProcessingStep implements ProcessingStep {
 
   private ImmutableSet<Element> getElementsFromAnnotations(
       final SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation,
-      ImmutableSet<Class<? extends Annotation>> annotations) {
+      ImmutableSet<? extends Class<? extends Annotation>> annotations) {
     return ImmutableSet.copyOf(
         Multimaps.filterKeys(elementsByAnnotation, Predicates.in(annotations)).values());
   }

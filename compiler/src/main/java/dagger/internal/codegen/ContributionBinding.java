@@ -28,10 +28,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -62,17 +60,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
   /** Returns the type that specifies this' nullability, absent if not nullable. */
   abstract Optional<DeclaredType> nullableType();
-
-  /**
-   * A function that returns the kind of a binding.
-   */
-  static final Function<ContributionBinding, Kind> KIND =
-      new Function<ContributionBinding, Kind>() {
-        @Override
-        public Kind apply(ContributionBinding binding) {
-          return binding.bindingKind();
-        }
-      };
 
   abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
 
@@ -152,11 +139,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     COMPONENT_PRODUCTION,
     ;
 
-    /**
-     * A predicate that tests whether a kind is for synthetic multibindings.
-     */
-    static final Predicate<Kind> IS_SYNTHETIC_MULTIBINDING_KIND =
-        Predicates.in(immutableEnumSet(SYNTHETIC_MULTIBOUND_SET, SYNTHETIC_MULTIBOUND_MAP));
+    static final ImmutableSet<Kind> SYNTHETIC_MULTIBOUND_KINDS =
+        immutableEnumSet(SYNTHETIC_MULTIBOUND_SET, SYNTHETIC_MULTIBOUND_MAP);
 
     /**
      * {@link #SYNTHETIC_MULTIBOUND_SET} or {@link #SYNTHETIC_MULTIBOUND_MAP}, depending on the key.
@@ -188,18 +172,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     Set<Modifier> modifiers = bindingElement().get().getModifiers();
     return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
   }
-
-  /**
-   * A predicate that passes for binding declarations for which {@link #requiresModuleInstance()} is
-   * {@code true}.
-   */
-  static final Predicate<ContributionBinding> REQUIRES_MODULE_INSTANCE =
-      new Predicate<ContributionBinding>() {
-        @Override
-        public boolean apply(ContributionBinding bindingDeclaration) {
-          return bindingDeclaration.requiresModuleInstance();
-        }
-      };
 
   /**
    * The strategy for getting an instance of a factory for a {@link ContributionBinding}.
@@ -269,13 +241,10 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     return ImmutableSetMultimap.copyOf(
         Multimaps.index(
             mapBindings,
-            new Function<ContributionBinding, Object>() {
-              @Override
-              public Object apply(ContributionBinding mapBinding) {
-                AnnotationMirror mapKey = mapBinding.mapKey().get();
-                Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
-                return unwrappedValue.isPresent() ? unwrappedValue.get().getValue() : mapKey;
-              }
+            mapBinding -> {
+              AnnotationMirror mapKey = mapBinding.mapKey().get();
+              Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
+              return unwrappedValue.isPresent() ? unwrappedValue.get().getValue() : mapKey;
             }));
   }
 
@@ -287,13 +256,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     return ImmutableSetMultimap.copyOf(
         Multimaps.index(
             mapBindings,
-            new Function<ContributionBinding, Equivalence.Wrapper<DeclaredType>>() {
-              @Override
-              public Equivalence.Wrapper<DeclaredType> apply(ContributionBinding mapBinding) {
-                return MoreTypes.equivalence()
-                    .wrap(mapBinding.mapKey().get().getAnnotationType());
-              }
-            }));
+            mapBinding ->
+                MoreTypes.equivalence().wrap(mapBinding.mapKey().get().getAnnotationType())));
   }
 
   /**

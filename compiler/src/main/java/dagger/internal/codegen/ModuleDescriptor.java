@@ -30,7 +30,6 @@ import static javax.lang.model.util.ElementFilter.typesIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -55,13 +54,6 @@ import javax.lang.model.util.Elements;
 
 @AutoValue
 abstract class ModuleDescriptor {
-  static final Function<ModuleDescriptor, TypeElement> getModuleElement() {
-    return new Function<ModuleDescriptor, TypeElement>() {
-      @Override public TypeElement apply(ModuleDescriptor input) {
-        return input.moduleElement();
-      }
-    };
-  }
 
   abstract TypeElement moduleElement();
 
@@ -201,8 +193,7 @@ abstract class ModuleDescriptor {
 
       return new AutoValue_ModuleDescriptor(
           moduleElement,
-          ImmutableSet.copyOf(
-              collectIncludedModules(new LinkedHashSet<ModuleDescriptor>(), moduleElement)),
+          ImmutableSet.copyOf(collectIncludedModules(new LinkedHashSet<>(), moduleElement)),
           bindings.build(),
           multibindingDeclarations.build(),
           subcomponentDeclarationFactory.forModule(moduleElement),
@@ -223,9 +214,11 @@ abstract class ModuleDescriptor {
       }
       Optional<AnnotationMirror> moduleAnnotation = getModuleAnnotation(moduleElement);
       if (moduleAnnotation.isPresent()) {
-        for (TypeMirror moduleIncludesType : getModuleIncludes(moduleAnnotation.get())) {
-          includedModules.add(create(MoreTypes.asTypeElement(moduleIncludesType)));
-        }
+        getModuleIncludes(moduleAnnotation.get())
+            .stream()
+            .map(MoreTypes::asTypeElement)
+            .map(this::create)
+            .forEach(includedModules::add);
       }
       return includedModules;
     }

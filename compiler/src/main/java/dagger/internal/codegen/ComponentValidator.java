@@ -41,6 +41,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
+import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -172,13 +173,13 @@ final class ComponentValidator {
             checkForAnnotations(
                 returnType,
                 FluentIterable.from(componentKind.subcomponentKinds())
-                    .transform(ComponentDescriptor.Kind.toAnnotationType())
+                    .transform(Kind::annotationType)
                     .toSet());
         Optional<AnnotationMirror> subcomponentBuilderAnnotation =
             checkForAnnotations(
                 returnType,
                 FluentIterable.from(componentKind.subcomponentKinds())
-                    .transform(ComponentDescriptor.Kind.toBuilderAnnotationType())
+                    .transform(Kind::builderAnnotationType)
                     .toSet());
         if (subcomponentAnnotation.isPresent()) {
           referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
@@ -359,7 +360,7 @@ final class ComponentValidator {
   }
 
   private Optional<AnnotationMirror> checkForAnnotations(
-      TypeMirror type, final Set<Class<? extends Annotation>> annotations) {
+      TypeMirror type, final Set<? extends Class<? extends Annotation>> annotations) {
     return type.accept(
         new SimpleTypeVisitor6<Optional<AnnotationMirror>, Void>() {
           @Override

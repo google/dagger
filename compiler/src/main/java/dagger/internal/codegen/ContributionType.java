@@ -18,9 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Multimaps;
 import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
@@ -110,19 +107,5 @@ enum ContributionType {
     } else {
       return ContributionType.UNIQUE;
     }
-  }
-
-  /** Indexes objects by their contribution type. */
-  static <T extends HasContributionType>
-      ImmutableListMultimap<ContributionType, T> indexByContributionType(
-          Iterable<T> haveContributionTypes) {
-    return Multimaps.index(
-        haveContributionTypes,
-        new Function<HasContributionType, ContributionType>() {
-          @Override
-          public ContributionType apply(HasContributionType hasContributionType) {
-            return hasContributionType.contributionType();
-          }
-        });
   }
 }

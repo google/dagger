@@ -25,8 +25,8 @@ import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 /**
- * Annotates methods that declare bindings for {@code com.google.common.base.Optional} containers of
- * values from bindings that may or may not be present in the component.
+ * Annotates methods that declare bindings for {@code Optional} containers of values from bindings
+ * that may or may not be present in the component.
  *
  * <p>If a module contains a method declaration like this:
  *
@@ -69,6 +69,8 @@ import javax.inject.Qualifier;
  * <li>{@code Optional<Producer<Foo>>}
  * <li>{@code Optional<Produced<Foo>>}
  * </ul>
+ *
+ * <p>You can inject either {@code com.google.common.base.Optional} or {@code java.util.Optional}.
  */
 @Documented
 @Beta

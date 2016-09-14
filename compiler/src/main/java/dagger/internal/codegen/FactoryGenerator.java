@@ -205,7 +205,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
                 "return new $T($L)",
                 parameterizedGeneratedTypeNameForBinding(binding),
                 makeParametersCodeBlock(
-                    Lists.transform(params, CodeBlocks.PARAMETER_NAME)));
+                    Lists.transform(params, input -> CodeBlock.of("$N", input))));
             break;
           default:
             throw new AssertionError();

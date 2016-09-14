@@ -936,7 +936,7 @@ abstract class AbstractComponentWriter {
 
     for (BindingKey dependencyKey :
         FluentIterable.from(binding.implicitDependencies())
-            .transform(DependencyRequest.BINDING_KEY_FUNCTION)
+            .transform(DependencyRequest::bindingKey)
             .toSet()) {
       if (!getMemberSelect(dependencyKey).staticMember()
           && getInitializationState(dependencyKey).equals(UNINITIALIZED)) {
@@ -1304,7 +1304,7 @@ abstract class AbstractComponentWriter {
           binding.bindingType().equals(BindingType.PROVISION),
           "Absent optional bindings should be provisions: %s",
           binding);
-      return optionalFactories.absentOptionalProvider();
+      return optionalFactories.absentOptionalProvider(binding);
     } else {
       return optionalFactories.presentOptionalFactory(
           binding, getOnlyElement(getDependencyArguments(binding)));

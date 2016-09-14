@@ -21,7 +21,6 @@ import static dagger.internal.codegen.ErrorMessages.DOUBLE_INDENT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -31,7 +30,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Lazy;
 import dagger.Provides;
 import dagger.internal.codegen.BindingGraphValidator.DependencyPath;
-import dagger.internal.codegen.BindingGraphValidator.ResolvedRequest;
 import dagger.producers.Produces;
 import java.util.List;
 import javax.inject.Inject;
@@ -90,15 +88,12 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
             dependencyPath
                 .resolvedRequests()
                 .transform(
-                    new Function<ResolvedRequest, String>() {
-                      @Override
-                      public String apply(ResolvedRequest resolvedRequest) {
-                        ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
-                            resolvedRequest.dependentOptionalBindingDeclarations();
-                        return optionalBindingDeclarations.isEmpty()
-                            ? format(resolvedRequest.dependencyRequest())
-                            : formatSyntheticOptionalBindingDependency(optionalBindingDeclarations);
-                      }
+                    resolvedRequest -> {
+                      ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
+                          resolvedRequest.dependentOptionalBindingDeclarations();
+                      return optionalBindingDeclarations.isEmpty()
+                          ? format(resolvedRequest.dependencyRequest())
+                          : formatSyntheticOptionalBindingDependency(optionalBindingDeclarations);
                     })
                 .filter(Predicates.not(Predicates.equalTo("")))
                 .toList()

@@ -35,15 +35,14 @@ import static dagger.internal.codegen.TypeNames.abstractProducerOf;
 import static dagger.internal.codegen.TypeNames.listOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
+import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -225,16 +224,12 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             FrameworkDependency.frameworkDependenciesForBinding(binding));
     return FluentIterable.from(binding.implicitDependencies())
         .filter(
-            new Predicate<DependencyRequest>() {
-              @Override
-              public boolean apply(DependencyRequest dependency) {
-                return isAsyncDependency(dependency)
+            dependency ->
+                isAsyncDependency(dependency)
                     && frameworkDependencies
                         .get(dependency)
                         .frameworkClass()
-                        .equals(Producer.class);
-              }
-            })
+                        .equals(Producer.class))
         .toList();
   }
 
@@ -393,15 +388,10 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
           "$T.<$T>allAsList($L)",
           FUTURES,
           OBJECT,
-          makeParametersCodeBlock(
-              FluentIterable.from(asyncDependencies)
-                  .transform(
-                      new Function<DependencyRequest, CodeBlock>() {
-                        @Override
-                        public CodeBlock apply(DependencyRequest dependency) {
-                          return CodeBlock.of("$L", dependencyFutureName(dependency));
-                        }
-                      })));
+          asyncDependencies
+              .stream()
+              .map(ProducerFactoryGenerator::dependencyFutureName)
+              .collect(joining(", ")));
     }
 
     @Override
@@ -518,13 +508,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
    */
   private FluentIterable<? extends TypeName> getThrownTypeNames(
       Iterable<? extends TypeMirror> thrownTypes) {
-    return FluentIterable.from(thrownTypes)
-        .transform(
-            new Function<TypeMirror, TypeName>() {
-              @Override
-              public TypeName apply(TypeMirror type) {
-                return TypeName.get(type);
-              }
-            });
+    return FluentIterable.from(thrownTypes).transform(TypeName::get);
   }
 }

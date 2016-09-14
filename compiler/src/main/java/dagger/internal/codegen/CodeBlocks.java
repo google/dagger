@@ -16,10 +16,8 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.ParameterSpec;
 import java.util.Iterator;
 import javax.lang.model.type.TypeMirror;
 
@@ -57,28 +55,12 @@ final class CodeBlocks {
   }
 
   static FluentIterable<CodeBlock> toCodeBlocks(Iterable<? extends TypeMirror> typeMirrors) {
-    return FluentIterable.from(typeMirrors).transform(TYPE_MIRROR_TO_CODE_BLOCK);
+    return FluentIterable.from(typeMirrors).transform(typeMirror -> CodeBlock.of("$T", typeMirror));
   }
 
   static CodeBlock stringLiteral(String toWrap) {
     return CodeBlock.of("$S", toWrap);
   }
-
-  private static final Function<TypeMirror, CodeBlock> TYPE_MIRROR_TO_CODE_BLOCK =
-      new Function<TypeMirror, CodeBlock>() {
-        @Override
-        public CodeBlock apply(TypeMirror typeMirror) {
-          return CodeBlock.of("$T", typeMirror);
-        }
-      };
-
-  static final Function<ParameterSpec, CodeBlock> PARAMETER_NAME =
-      new Function<ParameterSpec, CodeBlock>() {
-        @Override
-        public CodeBlock apply(ParameterSpec input) {
-          return CodeBlock.of("$N", input);
-        }
-      };
 
   private CodeBlocks() {}
 }

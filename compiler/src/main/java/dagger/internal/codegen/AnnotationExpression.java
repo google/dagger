@@ -17,21 +17,18 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
-import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import java.util.List;
-import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -77,14 +74,11 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
         AnnotationCreatorGenerator.createMethodName(
             MoreElements.asType(annotation.getAnnotationType().asElement())),
         makeParametersCodeBlock(
-            transform(
-                getAnnotationValuesWithDefaults(annotation).entrySet(),
-                new Function<Map.Entry<ExecutableElement, AnnotationValue>, CodeBlock>() {
-                  @Override
-                  public CodeBlock apply(Map.Entry<ExecutableElement, AnnotationValue> entry) {
-                    return getValueExpression(entry.getKey().getReturnType(), entry.getValue());
-                  }
-                })));
+            getAnnotationValuesWithDefaults(annotation)
+                .entrySet()
+                .stream()
+                .map(entry -> getValueExpression(entry.getKey().getReturnType(), entry.getValue()))
+                .collect(toList())));
   }
 
   /**

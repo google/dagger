@@ -25,7 +25,6 @@ import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -69,15 +68,7 @@ abstract class Scope {
 
   /** Returns all of the associated scopes for a source code element. */
   static ImmutableSet<Scope> scopesOf(Element element) {
-    return FluentIterable.from(getScopes(element))
-        .transform(
-            new Function<AnnotationMirror, Scope>() {
-              @Override
-              public Scope apply(AnnotationMirror annotationMirror) {
-                return scope(annotationMirror);
-              }
-            })
-        .toSet();
+    return FluentIterable.from(getScopes(element)).transform(Scope::scope).toSet();
   }
 
   /**

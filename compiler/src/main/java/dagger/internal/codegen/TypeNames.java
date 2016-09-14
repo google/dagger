@@ -78,6 +78,8 @@ final class TypeNames {
   static final ClassName PRODUCED = ClassName.get(Produced.class);
   static final ClassName PRODUCER = ClassName.get(Producer.class);
   static final ClassName PRODUCERS = ClassName.get(Producers.class);
+  static final ClassName PRODUCTION_COMPONENT_MONITOR_FACTORY =
+      ClassName.get(ProductionComponentMonitor.Factory.class);
   static final ClassName PROVIDER = ClassName.get(Provider.class);
   static final ClassName PROVIDER_OF_LAZY = ClassName.get(ProviderOfLazy.class);
 
@@ -96,9 +98,6 @@ final class TypeNames {
    * Void}.
    */
   static final ClassName VOID_CLASS = ClassName.get(Void.class);
-
-  static final TypeName SET_OF_FACTORIES =
-      ParameterizedTypeName.get(Set.class, ProductionComponentMonitor.Factory.class);
 
   static ParameterizedTypeName abstractProducerOf(TypeName typeName) {
     return ParameterizedTypeName.get(ABSTRACT_PRODUCER, typeName);

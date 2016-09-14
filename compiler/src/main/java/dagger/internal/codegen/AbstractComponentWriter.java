@@ -494,9 +494,7 @@ abstract class AbstractComponentWriter {
   }
 
   private void addFrameworkFields() {
-    for (ResolvedBindings resolvedBindings : graph.resolvedBindings().values()) {
-      addField(resolvedBindings);
-    }
+    graph.resolvedBindings().values().forEach(this::addField);
   }
 
   private void addField(ResolvedBindings resolvedBindings) {

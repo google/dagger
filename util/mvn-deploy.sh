@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -eu
+
 if [ $# -lt 2 ]; then
   echo "usage $0 <ssl-key> <version-name> [<param> ...]"
   exit 1;
@@ -32,3 +35,15 @@ fi
 mvn "$@" -P '!examples' -P sonatype-oss-release \
     -Dgpg.skip=false -Dgpg.keyname=${key} \
     clean site:jar deploy
+
+# Publish javadocs to gh-pages
+mvn javadoc:aggregate -P!examples -DexcludePackageNames=*.internal
+git clone --quiet --branch gh-pages \
+    https://git@github.com/google/dagger gh-pages > /dev/null
+cd gh-pages
+cp -r ../target/site/apidocs api/$version_name
+git add api/$version_name
+git commit -m "$version_name docs"
+git push origin gh-pages
+cd ..
+rm -rf gh-pages

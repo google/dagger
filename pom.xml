@@ -42,24 +42,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <!-- Compilation -->
-    <javax.inject.version>1</javax.inject.version>
-    <javax.annotation.version>3.0.1</javax.annotation.version>
-    <auto.common.version>0.7</auto.common.version>
-    <auto.factory.version>1.0-beta3</auto.factory.version>
-    <auto.service.version>1.0-rc2</auto.service.version>
-    <auto.value.version>1.3</auto.value.version>
-    <errorprone.version>2.0.12</errorprone.version>
-    <guava.version>19.0</guava.version>
-    <google.java.format.version>1.0</google.java.format.version>
-
-
-    <!-- Test Dependencies -->
-    <compile-testing.version>0.9</compile-testing.version>
-    <junit.version>4.11</junit.version>
-    <mockito.version>1.9.5</mockito.version>
-    <truth.version>0.30</truth.version>
   </properties>
 
   <scm>
@@ -91,72 +73,82 @@
       <dependency>
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject</artifactId>
-        <version>${javax.inject.version}</version>
+        <version>1</version>
       </dependency>
-       <dependency>
+      <dependency>
         <groupId>javax.inject</groupId>
         <artifactId>javax.inject-tck</artifactId>
-        <version>${javax.inject.version}</version>
+        <version>1</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
-        <version>${javax.annotation.version}</version>
+        <version>3.0.1</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>${guava.version}</version>
+        <version>19.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava-testlib</artifactId>
-        <version>${guava.version}</version>
+        <version>19.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.googlejavaformat</groupId>
         <artifactId>google-java-format</artifactId>
-        <version>${google.java.format.version}</version>
+        <version>1.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto</groupId>
         <artifactId>auto-common</artifactId>
-        <version>${auto.common.version}</version>
+        <version>0.7</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.auto.factory</groupId>
+        <artifactId>auto-factory</artifactId>
+        <version>1.0-beta3</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
-        <version>${auto.service.version}</version>
+        <version>1.0-rc2</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto.value</groupId>
         <artifactId>auto-value</artifactId>
-        <version>${auto.value.version}</version>
+        <version>1.3</version>
       </dependency>
       <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
-        <version>${errorprone.version}</version>
+        <version>2.0.12</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
+        <version>4.11</version>
       </dependency>
       <dependency>
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
-        <version>${compile-testing.version}</version>
+        <version>0.9</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
+        <version>1.9.5</version>
       </dependency>
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>${truth.version}</version>
+        <version>0.30</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup</groupId>
+        <artifactId>javapoet</artifactId>
+        <version>1.7.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -199,12 +199,16 @@ public final class SubcomponentValidationTest {
         "interface ChildComponent {",
         "  String getString();",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "java.lang.Integer cannot be provided without an @Inject constructor or from an "
-                + "@Provides-annotated method");
+            "[test.ChildComponent.getString()] "
+                + "java.lang.Integer cannot be provided without an @Inject constructor or from an "
+                + "@Provides-annotated method")
+        .in(componentFile)
+        .onLine(6);
   }
 
   @Test public void subcomponentOnConcreteType() {

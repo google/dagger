@@ -30,15 +30,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google.dagger</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>dagger</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.dagger</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>dagger</artifactId>
-      <version>${project.version}</version>
       <classifier>sources</classifier>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

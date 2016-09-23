@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
@@ -31,8 +30,6 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.MembersInjector;
-import dagger.internal.MapProviderFactory;
-import dagger.producers.internal.MapOfProducerProducer;
 import java.util.List;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;
@@ -116,24 +113,31 @@ abstract class MemberSelect {
         MEMBERS_INJECTOR);
   }
 
-  /**
+   /**
    * A {@link MemberSelect} for an empty map of framework types.
    *
-   * @param frameworkMapFactoryClass either {@link MapProviderFactory}
-   *     or {@link MapOfProducerProducer}
+   * @param bindingType the type of the binding of the empty map
    */
   static MemberSelect emptyFrameworkMapFactory(
-      ClassName frameworkMapFactoryClass, TypeMirror keyType, TypeMirror unwrappedValueType) {
-    checkArgument(
-        frameworkMapFactoryClass.equals(MAP_PROVIDER_FACTORY)
-            || frameworkMapFactoryClass.equals(MAP_OF_PRODUCER_PRODUCER),
-        "frameworkMapFactoryClass must be MapProviderFactory or MapOfProducerProducer: %s",
-        frameworkMapFactoryClass);
+      BindingType bindingType, TypeMirror keyType, TypeMirror unwrappedValueType) {
+    final ClassName frameworkMapFactoryClass;
+    switch (bindingType) {
+      case PROVISION:
+        frameworkMapFactoryClass = MAP_PROVIDER_FACTORY;
+        break;
+      case PRODUCTION:
+        frameworkMapFactoryClass = MAP_OF_PRODUCER_PRODUCER;
+        break;
+      case MEMBERS_INJECTION:
+        throw new IllegalArgumentException();
+      default:
+        throw new AssertionError();
+    }
     return new ParameterizedStaticMethod(
         frameworkMapFactoryClass,
         ImmutableList.of(keyType, unwrappedValueType),
         CodeBlock.of("empty()"),
-        frameworkMapFactoryClass);
+        ClassName.get(bindingType.frameworkClass()));
   }
 
   /**

@@ -55,18 +55,18 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   abstract ComponentDescriptor owningComponent();
 
   /**
-   * The contribution bindings for {@link #bindingKey()} that were resolved in
-   * {@link #owningComponent()} or its ancestor components, keyed by the component in which the
-   * binding was resolved. If {@link #bindingKey()}'s kind is not
-   * {@link BindingKey.Kind#CONTRIBUTION}, this is empty.
+   * The contribution bindings for {@link #bindingKey()} that were resolved in {@link
+   * #owningComponent()} or its ancestor components, indexed by the component in which the binding
+   * was resolved. If {@link #bindingKey()}'s kind is not {@link BindingKey.Kind#CONTRIBUTION}, this
+   * is empty.
    */
   abstract ImmutableSetMultimap<ComponentDescriptor, ContributionBinding> allContributionBindings();
 
   /**
-   * The members-injection bindings for {@link #bindingKey()} that were resolved in
-   * {@link #owningComponent()} or its ancestor components, keyed by the component in which the
-   * binding was resolved. If {@link #bindingKey()}'s kind is not
-   * {@link BindingKey.Kind#MEMBERS_INJECTION}, this is empty.
+   * The members-injection bindings for {@link #bindingKey()} that were resolved in {@link
+   * #owningComponent()} or its ancestor components, indexed by the component in which the binding
+   * was resolved. If {@link #bindingKey()}'s kind is not {@link BindingKey.Kind#MEMBERS_INJECTION},
+   * this is empty.
    */
   abstract ImmutableMap<ComponentDescriptor, MembersInjectionBinding> allMembersInjectionBindings();
 
@@ -94,19 +94,27 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
 
   /**
-   * All bindings for {@link #bindingKey()}, regardless of in which component they were resolved.
+   * All bindings for {@link #bindingKey()}, indexed by the component in which the binding was
+   * resolved.
    */
-  ImmutableSet<? extends Binding> bindings() {
+  ImmutableSetMultimap<ComponentDescriptor, ? extends Binding> allBindings() {
     switch (bindingKey().kind()) {
       case CONTRIBUTION:
-        return contributionBindings();
+        return allContributionBindings();
 
       case MEMBERS_INJECTION:
-        return ImmutableSet.copyOf(membersInjectionBinding().asSet());
+        return allMembersInjectionBindings().asMultimap();
 
       default:
         throw new AssertionError(bindingKey());
     }
+  }
+  
+  /**
+   * All bindings for {@link #bindingKey()}, regardless of in which component they were resolved.
+   */
+  ImmutableSet<? extends Binding> bindings() {
+    return ImmutableSet.copyOf(allBindings().values());
   }
 
   /**

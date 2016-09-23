@@ -18,6 +18,7 @@ package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.newLinkedHashMapWithExpectedSize;
+import static dagger.producers.internal.Producers.producerFromProvider;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -25,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.Beta;
 import dagger.producers.Producer;
 import java.util.Map;
+import javax.inject.Provider;
 
 /**
  * A {@link Producer} implementation used to implement {@link Map} bindings. This factory returns an
@@ -74,11 +76,19 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
       return new MapOfProducerProducer<K, V>(ImmutableMap.copyOf(mapBuilder));
     }
 
-    /** Associates k with producerOfValue in {@code Builder}. */
+    /** Associates key with producerOfValue in {@code Builder}. */
     public Builder<K, V> put(K key, Producer<V> producerOfValue) {
       checkNotNull(key, "key");
       checkNotNull(producerOfValue, "producer of value");
       mapBuilder.put(key, producerOfValue);
+      return this;
+    }
+
+    /** Associates key with providerOfValue in {@code Builder}. */
+    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
+      checkNotNull(key, "key");
+      checkNotNull(providerOfValue, "provider of value");
+      mapBuilder.put(key, producerFromProvider(providerOfValue));
       return this;
     }
   }

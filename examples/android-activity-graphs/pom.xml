@@ -36,13 +36,10 @@
     <dependency>
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger-compiler</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
 

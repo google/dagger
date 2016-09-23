@@ -42,14 +42,12 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <version>${auto.value.version}</version>
-      <scope>provided</scope> <!-- to leave out of the all-deps jar -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.auto.factory</groupId>
       <artifactId>auto-factory</artifactId>
-      <version>${auto.factory.version}</version>
-      <scope>provided</scope> <!-- to leave out of the all-deps jar -->
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

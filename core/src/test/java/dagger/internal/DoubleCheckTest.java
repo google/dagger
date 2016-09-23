@@ -181,4 +181,10 @@ public class DoubleCheckTest {
       fail();
     } catch (IllegalStateException expected) {}
   }
+
+  @Test
+  public void instanceFactoryAsLazyDoesNotWrap() {
+    Factory<Object> factory = InstanceFactory.create(new Object());
+    assertThat(DoubleCheck.lazy(factory)).isSameAs(factory);
+  }
 }

@@ -65,14 +65,13 @@
     <dependency>
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
-      <scope>provided</scope> <!-- to leave out of the all-deps jar -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <scope>provided</scope> <!-- to leave out of the all-deps jar -->
+      <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -81,9 +80,9 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>dagger</artifactId>
+      <classifier>tests</classifier>
       <version>${project.version}</version>
       <scope>test</scope>
-      <classifier>tests</classifier>
     </dependency>
     <dependency>
       <groupId>com.google.testing.compile</groupId>
@@ -98,7 +97,6 @@
     <dependency>
       <groupId>com.squareup</groupId>
       <artifactId>javapoet</artifactId>
-      <version>1.7.0</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -158,10 +156,6 @@
             <pomInclude>*/pom.xml</pomInclude>
           </pomIncludes>
           <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
-          <filterProperties>
-            <dagger.version>${project.version}</dagger.version>
-            <dagger.groupId>${project.groupId}</dagger.groupId>
-          </filterProperties>
           <streamLogs>true</streamLogs>
         </configuration>
         <executions>

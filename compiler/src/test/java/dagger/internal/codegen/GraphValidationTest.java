@@ -238,7 +238,7 @@ public class GraphValidationTest {
     String expectedError =
         Joiner.on('\n')
             .join(
-                "test.Outer.CComponent.getC() contains a dependency cycle:",
+                "Found a dependency cycle:",
                 "      test.Outer.C is injected at",
                 "          test.Outer.A.<init>(cParam)",
                 "      test.Outer.A is injected at",
@@ -291,7 +291,7 @@ public class GraphValidationTest {
     String expectedError =
         Joiner.on('\n')
             .join(
-                "test.Outer.DComponent.getD() contains a dependency cycle:",
+                "Found a dependency cycle:",
                 "      test.Outer.C is injected at",
                 "          test.Outer.A.<init>(cParam)",
                 "      test.Outer.A is injected at",
@@ -363,7 +363,7 @@ public class GraphValidationTest {
     String expectedError =
         Joiner.on('\n')
             .join(
-                "test.Outer.CComponent.getC() contains a dependency cycle:",
+                "Found a dependency cycle:",
                 "      test.Outer.C is injected at",
                 "          test.Outer.CModule.c(c)",
                 "      java.util.Map<java.lang.String,test.Outer.C> is injected at",
@@ -428,7 +428,7 @@ public class GraphValidationTest {
     String expectedError =
         Joiner.on('\n')
             .join(
-                "test.Outer.CComponent.getC() contains a dependency cycle:",
+                "Found a dependency cycle:",
                 "      test.Outer.C is injected at",
                 "          test.Outer.CModule.c(c)",
                 "      java.util.Set<test.Outer.C> is injected at",
@@ -488,7 +488,7 @@ public class GraphValidationTest {
     String expectedError =
         Joiner.on('\n')
             .join(
-                "test.Outer.DComponent.getD() contains a dependency cycle:",
+                "Found a dependency cycle:",
                 "      test.Outer.C is injected at",
                 "          test.Outer.A.<init>(cParam)",
                 "      test.Outer.A is injected at",
@@ -507,6 +507,90 @@ public class GraphValidationTest {
         .withErrorContaining(expectedError)
         .in(component)
         .onLine(28);
+  }
+
+  @Test
+  public void cyclicDependencyInSubcomponents() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}");
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  String entry();",
+            "}");
+    JavaFileObject childModule =
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class ChildModule {",
+            "  @Provides static Object object(String string) {",
+            "    return string;",
+            "  }",
+            "}");
+    JavaFileObject grandchildModule =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class GrandchildModule {",
+            "  @Provides static String string(Object object) {",
+            "    return object.toString();",
+            "  }",
+            "}");
+
+    String expectedError =
+        Joiner.on('\n')
+            .join(
+                "[test.Grandchild.entry()] Found a dependency cycle:",
+                "      java.lang.String is injected at",
+                "          test.ChildModule.object(string)",
+                "      java.lang.Object is injected at",
+                "          test.GrandchildModule.string(object)",
+                "      java.lang.String is provided at",
+                "          test.Grandchild.entry()");
+
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parent, child, grandchild, childModule, grandchildModule))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(expectedError)
+        .in(child)
+        .onLine(6);
   }
 
   @Test
@@ -549,7 +633,7 @@ public class GraphValidationTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "test.TestComponent.unqualified() contains a dependency cycle:\n"
+            "Found a dependency cycle:\n"
                 + "      java.lang.Object is injected at\n"
                 + "          test.TestModule.bindQualified(unqualified)\n"
                 + "      @test.SomeQualifier java.lang.Object is injected at\n"
@@ -560,7 +644,7 @@ public class GraphValidationTest {
         .onLine(7)
         .and()
         .withErrorContaining(
-            "test.TestComponent.qualified() contains a dependency cycle:\n"
+            "Found a dependency cycle:\n"
                 + "      @test.SomeQualifier java.lang.Object is injected at\n"
                 + "          test.TestModule.bindUnqualified(qualified)\n"
                 + "      java.lang.Object is injected at\n"
@@ -603,7 +687,7 @@ public class GraphValidationTest {
         .withErrorContaining(
             // TODO(gak): cl/126230644 produces a better error message in this case. Here it isn't
             // unclear what is going wrong.
-            "test.TestComponent.selfReferential() contains a dependency cycle:\n"
+            "Found a dependency cycle:\n"
                 + "      java.lang.Object is injected at\n"
                 + "          test.TestModule.bindToSelf(sameKey)\n"
                 + "      java.lang.Object is provided at\n"

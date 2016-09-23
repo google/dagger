@@ -38,13 +38,7 @@ import javax.inject.Provider;
  * @since 2.0
  */
 public final class SetFactory<T> implements Factory<Set<T>> {
-  private static final Factory<Set<Object>> EMPTY_FACTORY =
-      new Factory<Set<Object>>() {
-        @Override
-        public Set<Object> get() {
-          return emptySet();
-        }
-      };
+  private static final Factory<Set<Object>> EMPTY_FACTORY = InstanceFactory.create(emptySet());
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // safe covariant cast
   public static <T> Factory<Set<T>> empty() {

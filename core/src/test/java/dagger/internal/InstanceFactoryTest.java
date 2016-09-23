@@ -17,17 +17,14 @@
 package dagger.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class InstanceFactoryTest {
-  @Rule public final ExpectedException thrown = ExpectedException.none();
-
   @Test public void instanceFactory() {
     Object instance = new Object();
     Factory<Object> factory = InstanceFactory.create(instance);
@@ -37,7 +34,10 @@ public final class InstanceFactoryTest {
   }
 
   @Test public void create_throwsNullPointerException() {
-    thrown.expect(NullPointerException.class);
-    InstanceFactory.create(null);
+    try {
+      InstanceFactory.create(null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
   }
 }

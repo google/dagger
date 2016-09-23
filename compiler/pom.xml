@@ -48,6 +48,7 @@
     <dependency>
       <groupId>com.google.errorprone</groupId>
       <artifactId>error_prone_annotations</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -190,6 +191,9 @@
                 <excludes>
                   <!-- guava which has a consistent API and whose public types we vend in producers -->
                   <exclude>com.google.guava</exclude>
+                  <!-- annotations only, stable APIs, no need to shade them -->
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
+                  <exclude>com.google.errorprone:error_prone_annotations</exclude>
                   <!-- annotation processors dagger uses to be built, not to operate -->
                   <exclude>com.google.auto.service</exclude>
                   <exclude>com.google.auto.value</exclude>
@@ -204,6 +208,23 @@
                   <pattern>com.google.auto.common</pattern>
                   <shadedPattern>dagger.shaded.auto.common</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>com.squareup.javapoet</pattern>
+                  <shadedPattern>dagger.shaded.javapoet</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.googlejavaformat</pattern>
+                  <shadedPattern>dagger.shaded.googlejavaformat</shadedPattern>
+                </relocation>
+                <!-- Brought in by google-java-format -->
+                <relocation>
+                  <pattern>org.eclipse.</pattern>
+                  <shadedPattern>dagger.shaded.eclipse.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.osgi.</pattern>
+                  <shadedPattern>dagger.shaded.osgi.</shadedPattern>
+                </relocation>
               </relocations>
               <filters>
                 <filter>
@@ -212,6 +233,8 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <!-- Brought in by eclipse JDT through google-java-format -->
+                    <exclude>META-INF/services/org.osgi.framework.launch.FrameworkFactory</exclude>
                   </excludes>
                 </filter>
               </filters>

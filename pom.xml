@@ -117,6 +117,13 @@
         <groupId>com.google.googlejavaformat</groupId>
         <artifactId>google-java-format</artifactId>
         <version>${google.java.format.version}</version>
+        <exclusions>
+          <!-- jcommander is used for CLI argument processing, not needed by Dagger -->
+          <exclusion>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.auto</groupId>

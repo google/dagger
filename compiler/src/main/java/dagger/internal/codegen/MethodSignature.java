@@ -1,7 +1,5 @@
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
@@ -11,6 +9,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @AutoValue
 abstract class MethodSignature {

@@ -17,26 +17,53 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.Util.AS_DECLARED_TYPE;
+import static javax.lang.model.type.TypeKind.DECLARED;
+import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
  * Formats a {@link BindingDeclaration} into a {@link String} suitable for use in error messages.
  */
 final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
-  private final MethodSignatureFormatter methodSignatureFormatter;
+  private static final ImmutableSet<TypeKind> FORMATTABLE_ELEMENT_TYPE_KINDS =
+      immutableEnumSet(EXECUTABLE, DECLARED);
 
-  BindingDeclarationFormatter(MethodSignatureFormatter methodSignatureFormatter) {
+  private final MethodSignatureFormatter methodSignatureFormatter;
+  private final KeyFormatter keyFormatter;
+
+  BindingDeclarationFormatter(
+      MethodSignatureFormatter methodSignatureFormatter, KeyFormatter keyFormatter) {
     this.methodSignatureFormatter = methodSignatureFormatter;
+    this.keyFormatter = keyFormatter;
+  }
+
+  /**
+   * Returns {@code true} for declarations that this formatter can format. Specifically:
+   *
+   * <ul>
+   * <li>Those with {@linkplain BindingDeclaration#bindingElement() binding elements} that are
+   *     methods, constructors, or types.
+   * </ul>
+   */
+  boolean canFormat(BindingDeclaration bindingDeclaration) {
+    if (bindingDeclaration.bindingElement().isPresent()) {
+      return FORMATTABLE_ELEMENT_TYPE_KINDS.contains(
+          bindingDeclaration.bindingElement().get().asType().getKind());
+    }
+    return false;
   }
 
   @Override

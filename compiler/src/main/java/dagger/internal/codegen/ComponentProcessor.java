@@ -65,12 +65,12 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
 
+    KeyFormatter keyFormatter = new KeyFormatter();
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
-        new BindingDeclarationFormatter(methodSignatureFormatter);
+        new BindingDeclarationFormatter(methodSignatureFormatter, keyFormatter);
     DependencyRequestFormatter dependencyRequestFormatter =
         new DependencyRequestFormatter(types, elements);
-    KeyFormatter keyFormatter = new KeyFormatter();
 
     InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
     InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();

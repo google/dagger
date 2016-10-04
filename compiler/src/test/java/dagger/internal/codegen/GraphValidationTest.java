@@ -2226,4 +2226,8 @@ public class GraphValidationTest {
         .in(parent)
         .onLine(4);
   }
+
+  private String error(String... lines) {
+    return Joiner.on("\n      ").join(lines);
+  }
 }

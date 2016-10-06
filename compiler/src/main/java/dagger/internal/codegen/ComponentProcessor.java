@@ -22,6 +22,7 @@ import static dagger.internal.codegen.ModuleProcessingStep.producerModuleProcess
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
+import com.google.googlejavaformat.java.filer.FormattingFiler;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -61,7 +62,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     Messager messager = processingEnv.getMessager();
     Types types = processingEnv.getTypeUtils();
     Elements elements = processingEnv.getElementUtils();
-    Filer filer = processingEnv.getFiler();
+    Filer filer = new FormattingFiler(processingEnv.getFiler());
 
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
 

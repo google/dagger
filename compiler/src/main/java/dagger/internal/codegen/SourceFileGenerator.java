@@ -20,23 +20,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.io.CharSink;
-import com.google.common.io.CharSource;
-import com.google.googlejavaformat.java.Formatter;
-import com.google.googlejavaformat.java.FormatterException;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
-import java.io.IOException;
-import java.io.Writer;
 import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
-import javax.tools.JavaFileObject;
 
 /**
  * A template class that provides a framework for properly handling IO while generating source files
@@ -77,28 +69,12 @@ abstract class SourceFileGenerator<T> {
   /** Generates a source file to be compiled for {@code T}. */
   void generate(T input) throws SourceFileGenerationException {
     ClassName generatedTypeName = nameGeneratedType(input);
+    Optional<TypeSpec.Builder> type = write(generatedTypeName, input);
+    if (!type.isPresent()) {
+      return;
+    }
     try {
-      Optional<TypeSpec.Builder> type = write(generatedTypeName, input);
-      if (!type.isPresent()) {
-        return;
-      }
-      JavaFile javaFile = buildJavaFile(generatedTypeName, type.get());
-
-      final JavaFileObject sourceFile = filer.createSourceFile(
-          generatedTypeName.toString(),
-          Iterables.toArray(javaFile.typeSpec.originatingElements, Element.class));
-      try {
-        new Formatter().formatSource(
-            CharSource.wrap(javaFile.toString()),
-            new CharSink() {
-              @Override public Writer openStream() throws IOException {
-                return sourceFile.openWriter();
-              }
-            });
-      } catch (FormatterException e) {
-        throw new SourceFileGenerationException(
-            Optional.of(generatedTypeName), e, getElementForErrorReporting(input));
-      }
+      buildJavaFile(generatedTypeName, type.get()).writeTo(filer);
     } catch (Exception e) {
       // if the code above threw a SFGE, use that
       Throwables.propagateIfPossible(e, SourceFileGenerationException.class);

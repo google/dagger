@@ -73,12 +73,11 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.TypeName;
 import dagger.Component;
@@ -445,80 +444,52 @@ final class BindingGraphValidator {
     }
 
     /**
-     * Returns an object that contains all the same bindings as {@code resolvedBindings}, except
-     * that any {@link ContributionBinding}s without {@linkplain Binding#bindingElement() binding
-     * elements} are replaced by the contribution bindings and multibinding declarations of their
-     * dependencies.
+     * Returns the binding declarations that can be reported for {@code resolvedBindings}, indexed
+     * by the component that owns each declaration.
      *
-     * <p>For example, if:
+     * <p>Contains all {@link MultibindingDeclaration}s, {@link SubcomponentDeclaration}s, and
+     * {@link OptionalBindingDeclaration}s within {@code resolvedBindings}, as well as all {@link
+     * ContributionBinding}s with present {@linkplain BindingDeclaration#bindingElement() binding
+     * elements}.
      *
-     * <ul>
-     * <li>The bindings for {@code key1} are {@code A} and {@code B}, with multibinding declaration
-     *     {@code X}.
-     * <li>{@code B} is a binding without a binding element that has a dependency on {@code key2}.
-     * <li>The bindings for {@code key2} are {@code C} and {@code D}, with multibinding declaration
-     *     {@code Y}.
-     * </ul>
      *
-     * then {@code inlineContributionsWithoutBindingElements(bindingsForKey1)} has bindings {@code
-     * A}, {@code C}, and {@code D}, with multibinding declarations {@code X} and {@code Y}.
-     *
-     * <p>The replacement is repeated until all of the bindings have elements.
+     * <p>For other bindings without binding elements, such as the {@link
+     * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_KINDS}, includes the conflicting declarations
+     * in their resolved dependencies.
      */
-    private ResolvedBindings inlineContributionsWithoutBindingElements(
-        ResolvedBindings resolvedBinding) {
-      if (Iterables.all(resolvedBinding.bindings(),
-          bindingDeclaration -> bindingDeclaration.bindingElement().isPresent())) {
-        return resolvedBinding;
-      }
-
-      ImmutableSetMultimap.Builder<ComponentDescriptor, ContributionBinding> contributions =
+    private ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration> reportableDeclarations(
+        ResolvedBindings resolvedBindings) {
+      ImmutableSetMultimap.Builder<ComponentDescriptor, BindingDeclaration> declarations =
           ImmutableSetMultimap.builder();
-      ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations =
-          ImmutableSet.builder();
-      ImmutableSet.Builder<SubcomponentDeclaration> subcomponentDeclarations =
-          ImmutableSet.builder();
-      ImmutableSet.Builder<OptionalBindingDeclaration> optionalBindingDeclarations =
-          ImmutableSet.builder();
 
       Queue<ResolvedBindings> queue = new ArrayDeque<>();
-      queue.add(resolvedBinding);
+      queue.add(resolvedBindings);
 
-      for (ResolvedBindings queued = queue.poll(); queued != null; queued = queue.poll()) {
-        multibindingDeclarations.addAll(queued.multibindingDeclarations());
-        subcomponentDeclarations.addAll(queued.subcomponentDeclarations());
-        optionalBindingDeclarations.addAll(queued.optionalBindingDeclarations());
-        for (Map.Entry<ComponentDescriptor, ContributionBinding> bindingEntry :
-            queued.allContributionBindings().entries()) {
-          BindingGraph owningGraph = validationForComponent(bindingEntry.getKey()).subject;
-          ContributionBinding binding = bindingEntry.getValue();
-          if (binding.bindingElement().isPresent()) {
-            contributions.put(bindingEntry);
-          } else {
-            for (DependencyRequest dependency : binding.explicitDependencies()) {
-              queue.add(owningGraph.resolvedBindings().get(dependency.bindingKey()));
-            }
-          }
-        }
+      while (!queue.isEmpty()) {
+        ResolvedBindings queued = queue.remove();
+        declarations
+            .putAll(queued.owningComponent(), queued.multibindingDeclarations())
+            .putAll(queued.owningComponent(), queued.subcomponentDeclarations())
+            .putAll(queued.owningComponent(), queued.optionalBindingDeclarations());
+        queued
+            .allContributionBindings()
+            .asMap()
+            .forEach(
+                (owningComponent, bindings) -> {
+                  BindingGraph owningGraph = validationForComponent(owningComponent).subject;
+                  for (ContributionBinding binding : bindings) {
+                    if (bindingDeclarationFormatter.canFormat(binding)) {
+                      declarations.put(owningComponent, binding);
+                    } else {
+                      for (DependencyRequest dependency : binding.dependencies()) {
+                        queue.add(owningGraph.resolvedBindings().get(dependency.bindingKey()));
+                      }
+                    }
+                  }
+                });
       }
-      return ResolvedBindings.forContributionBindings(
-          resolvedBinding.bindingKey(),
-          resolvedBinding.owningComponent(),
-          contributions.build(),
-          multibindingDeclarations.build(),
-          subcomponentDeclarations.build(),
-          optionalBindingDeclarations.build());
-    }
 
-    private ImmutableListMultimap<ContributionType, BindingDeclaration> declarationsByType(
-        ResolvedBindings resolvedBinding) {
-      ResolvedBindings inlined = inlineContributionsWithoutBindingElements(resolvedBinding);
-      return new ImmutableListMultimap.Builder<ContributionType, BindingDeclaration>()
-          .putAll(Multimaps
-              .index(inlined.contributionBindings(), HasContributionType::contributionType))
-          .putAll(Multimaps
-              .index(inlined.multibindingDeclarations(), HasContributionType::contributionType))
-          .build();
+      return declarations.build();
     }
 
     /**
@@ -1054,13 +1025,12 @@ final class BindingGraphValidator {
       StringBuilder builder = new StringBuilder();
       new Formatter(builder)
           .format(DUPLICATE_BINDINGS_FOR_KEY_FORMAT, formatCurrentDependencyRequestKey(path));
-      ResolvedBindings inlined = inlineContributionsWithoutBindingElements(resolvedBindings);
-      ImmutableSet<ContributionBinding> duplicateBindings = inlined.contributionBindings();
-      Set<BindingDeclaration> conflictingDeclarations =
-          Sets.union(duplicateBindings, inlined.subcomponentDeclarations());
+      ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration> duplicateDeclarations =
+          reportableDeclarations(resolvedBindings);
       bindingDeclarationFormatter.formatIndentedList(
-          builder, conflictingDeclarations, 1, DUPLICATE_SIZE_LIMIT);
-      owningReportBuilder(duplicateBindings).addError(builder.toString(), path.entryPointElement());
+          builder, duplicateDeclarations.values(), 1, DUPLICATE_SIZE_LIMIT);
+      owningReportBuilder(duplicateDeclarations.keySet())
+          .addError(builder.toString(), path.entryPointElement());
     }
 
     /**
@@ -1076,13 +1046,17 @@ final class BindingGraphValidator {
         owningComponentsBuilder.addAll(
             resolvedBindings.allContributionBindings().inverse().get(binding));
       }
-      ImmutableSet<ComponentDescriptor> owningComponents = owningComponentsBuilder.build();
+      return owningReportBuilder(owningComponentsBuilder.build());
+    }
+
+    private ValidationReport.Builder<TypeElement> owningReportBuilder(
+        Collection<ComponentDescriptor> owningComponents) {
       for (Validation validation : validationPath()) {
         if (owningComponents.contains(validation.subject.componentDescriptor())) {
           return validation.reportBuilder;
         }
       }
-      throw new AssertionError("cannot find owning component for bindings: " + bindings);
+      throw new AssertionError("cannot find component: " + owningComponents);
     }
 
     /**
@@ -1104,24 +1078,31 @@ final class BindingGraphValidator {
       new Formatter(builder)
           .format(
               MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT, formatCurrentDependencyRequestKey(path));
-      ResolvedBindings resolvedBindings = path.current().resolvedBindings();
-      ImmutableListMultimap<ContributionType, BindingDeclaration> declarationsByType =
-          declarationsByType(resolvedBindings);
+      ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration> duplicateDeclarations =
+          reportableDeclarations(path.current().resolvedBindings());
+      ImmutableListMultimap<ContributionType, BindingDeclaration> duplicateDeclarationsByType =
+          FluentIterable.from(duplicateDeclarations.values())
+              .index(
+                  declaration ->
+                      declaration instanceof HasContributionType
+                          ? ((HasContributionType) declaration).contributionType()
+                          : ContributionType.UNIQUE);
       verify(
-          declarationsByType.keySet().size() > 1,
+          duplicateDeclarationsByType.keySet().size() > 1,
           "expected multiple contribution types for %s: %s",
-          resolvedBindings.bindingKey(),
-          declarationsByType);
-      for (ContributionType contributionType :
-          Ordering.natural().immutableSortedCopy(declarationsByType.keySet())) {
-        builder.append(INDENT);
-        builder.append(formatContributionType(contributionType));
-        builder.append(" bindings and declarations:");
-        bindingDeclarationFormatter.formatIndentedList(
-            builder, declarationsByType.get(contributionType), 2, DUPLICATE_SIZE_LIMIT);
-        builder.append('\n');
-      }
-      owningReportBuilder(resolvedBindings.contributionBindings())
+          path.current().dependencyRequest().bindingKey(),
+          duplicateDeclarationsByType);
+      ImmutableSortedMap.copyOf(duplicateDeclarationsByType.asMap())
+          .forEach(
+              (contributionType, declarations) -> {
+                builder.append(INDENT);
+                builder.append(formatContributionType(contributionType));
+                builder.append(" bindings and declarations:");
+                bindingDeclarationFormatter.formatIndentedList(
+                    builder, declarations, 2, DUPLICATE_SIZE_LIMIT);
+                builder.append('\n');
+              });
+      owningReportBuilder(duplicateDeclarations.keySet())
           .addError(builder.toString(), path.entryPointElement());
     }
 

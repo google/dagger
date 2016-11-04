@@ -42,6 +42,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <android.support.version>24.2.0</android.support.version>
   </properties>
 
   <scm>
@@ -150,6 +151,23 @@
         <artifactId>javapoet</artifactId>
         <version>1.7.0</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.google.android</groupId>
+        <artifactId>android</artifactId>
+        <version>4.1.1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>com.android.support</groupId>
+        <artifactId>support-v4</artifactId>
+        <version>${android.support.version}</version>
+        <type>aar</type>
+      </dependency>
+      <dependency>
+        <groupId>com.android.support</groupId>
+        <artifactId>support-annotations</artifactId>
+        <version>${android.support.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -167,6 +185,11 @@
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>2.5</version>
+        </plugin>
+        <plugin>
+          <groupId>com.simpligility.maven.plugins</groupId>
+          <artifactId>android-maven-plugin</artifactId>
+          <version>4.4.3</version>
         </plugin>
       </plugins>
     </pluginManagement>

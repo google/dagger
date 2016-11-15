@@ -11,8 +11,6 @@ android:
     - android-25
     - platform-tools
     - extra-android-m2repository
-  licenses:
-    - android-sdk-license-5be876d5
 
 before_install:
   - sudo rm -f /etc/mavenrc
@@ -42,3 +40,7 @@ branches:
   only:
     - master
     - /^release.*$/
+
+cache:
+  directories:
+    - $HOME/.m2

@@ -69,7 +69,7 @@
         <extensions>true</extensions>
         <configuration>
           <sdk>
-            <platform>24</platform>
+            <platform>25</platform>
             <path>${env.ANDROID_HOME}</path>
           </sdk>
         </configuration>

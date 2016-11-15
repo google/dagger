@@ -156,6 +156,16 @@ final class TypeNames {
   static ParameterizedTypeName setOf(TypeName elementType) {
     return ParameterizedTypeName.get(SET, elementType);
   }
-  
+
+  /**
+   * Returns the {@link TypeName} for the raw type of the given type name. If the argument isn't a
+   * parameterized type, it returns the argument unchanged.
+   */
+  static TypeName rawTypeName(TypeName typeName) {
+    return (typeName instanceof ParameterizedTypeName)
+        ? ((ParameterizedTypeName) typeName).rawType
+        : typeName;
+  }
+
   private TypeNames() {}
 }

@@ -27,6 +27,8 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
+import static dagger.internal.codegen.Proxies.createProxy;
+import static dagger.internal.codegen.Proxies.shouldGenerateProxy;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
@@ -38,6 +40,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -60,6 +63,7 @@ import java.util.Map;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
@@ -270,8 +274,24 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       factoryBuilder.addMethod(createMethod.get());
     }
 
-    // TODO(gak): write a sensible toString
+    proxyMethodFor(binding).asSet().forEach(factoryBuilder::addMethod);
+
     return Optional.of(factoryBuilder);
+  }
+
+  /**
+   * Returns a method to proxy access to the binding's {@link Binding#bindingElement()}, which
+   * behaves according to the description in {@link Proxies}. Use here is further restricted by
+   * whether or not members injection is required, since that is not yet implemented for proxy
+   * methods, but will be added.
+   */
+  // TODO(gak): support accessibility proxies for types with injected members as well
+  private static Optional<MethodSpec> proxyMethodFor(ProvisionBinding binding) {
+    ExecutableElement executableElement = MoreElements.asExecutable(binding.bindingElement().get());
+    if (binding.membersInjectionRequest().isPresent() || !shouldGenerateProxy(executableElement)) {
+      return Optional.absent();
+    }
+    return Optional.of(createProxy(executableElement));
   }
 
   @CanIgnoreReturnValue

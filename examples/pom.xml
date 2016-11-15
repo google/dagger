@@ -77,7 +77,7 @@
           <version>4.3.0</version>
           <configuration>
             <sdk>
-              <platform>23</platform>
+              <platform>25</platform>
               <path>${env.ANDROID_HOME}</path>
             </sdk>
           </configuration>

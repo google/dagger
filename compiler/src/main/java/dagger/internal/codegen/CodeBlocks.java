@@ -18,14 +18,16 @@ package dagger.internal.codegen;
 
 import com.google.common.collect.FluentIterable;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 import java.util.Iterator;
+import java.util.Spliterator;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
 final class CodeBlocks {
 
-  /**
-   * Returns a comma-separated version of {@code codeBlocks} as one unified {@link CodeBlock}.
-   */
+  /** Returns a comma-separated version of {@code codeBlocks} as one unified {@link CodeBlock}. */
   static CodeBlock makeParametersCodeBlock(Iterable<CodeBlock> codeBlocks) {
     return join(codeBlocks, ", ");
   }
@@ -60,6 +62,38 @@ final class CodeBlocks {
 
   static CodeBlock stringLiteral(String toWrap) {
     return CodeBlock.of("$S", toWrap);
+  }
+
+  /** Returns a javadoc {@literal @link} tag that poins to the given {@link ExecutableElement}. */
+  static CodeBlock javadocLinkTo(ExecutableElement executableElement) {
+    CodeBlock.Builder builder =
+        CodeBlock.builder().add("{@link $T#", executableElement.getEnclosingElement());
+    switch (executableElement.getKind()) {
+      case METHOD:
+        builder.add("$L", executableElement.getSimpleName());
+        break;
+      case CONSTRUCTOR:
+        builder.add("$L", executableElement.getEnclosingElement().getSimpleName());
+        break;
+      case STATIC_INIT:
+      case INSTANCE_INIT:
+        throw new IllegalArgumentException(
+            "cannot create a javadoc link to an initializer: " + executableElement);
+      default:
+        throw new AssertionError(executableElement.toString());
+    }
+    builder.add("(");
+    Spliterator<TypeName> rawTypesSpliterator =
+        executableElement
+            .getParameters()
+            .stream()
+            .map(VariableElement::asType)
+            .map(TypeName::get)
+            .map(TypeNames::rawTypeName)
+            .spliterator();
+    rawTypesSpliterator.tryAdvance(first -> builder.add("$T", first));
+    rawTypesSpliterator.forEachRemaining(remaining -> builder.add(", $T", remaining));
+    return builder.add(")}").build();
   }
 
   private CodeBlocks() {}

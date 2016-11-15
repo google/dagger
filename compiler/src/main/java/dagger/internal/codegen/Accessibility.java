@@ -22,6 +22,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreElements;
+import com.google.common.base.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -36,9 +37,11 @@ import javax.lang.model.type.NullType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
+import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.SimpleElementVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Utility methods for determining whether a {@linkplain TypeMirror type} or an {@linkplain Element
@@ -56,17 +59,35 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  * preferable for {@code javac}.
  */
 final class Accessibility {
+
   /**
    * Returns true if the given type can be referenced from code in the given package.
    */
   static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
-    return type.accept(new TypeAccessiblityVisitor(packageName), null);
+    return type.accept(new TypeAccessibilityVisitor(packageName), null);
   }
 
-  private static final class TypeAccessiblityVisitor extends SimpleTypeVisitor6<Boolean, Void> {
-    final String packageName;
+  /** Returns true if the given type can be referenced from any package. */
+  static boolean isTypePubliclyAccessible(TypeMirror type) {
+    return type.accept(new TypeAccessibilityVisitor(), null);
+  }
 
-    TypeAccessiblityVisitor(String packageName) {
+  private static boolean isTypeAccessibleFrom(TypeMirror type, Optional<String> packageName) {
+    return type.accept(new TypeAccessibilityVisitor(packageName), null);
+  }
+
+  private static final class TypeAccessibilityVisitor extends SimpleTypeVisitor6<Boolean, Void> {
+    final Optional<String> packageName;
+
+    TypeAccessibilityVisitor() {
+      this(Optional.absent());
+    }
+
+    TypeAccessibilityVisitor(String packageName) {
+      this(Optional.of(packageName));
+    }
+
+    TypeAccessibilityVisitor(Optional<String> packageName) {
       this.packageName = packageName;
     }
 
@@ -135,11 +156,18 @@ final class Accessibility {
     }
   }
 
-  /**
-   * Returns true if the given element can be referenced from code in the given package.
-   */
+  /** Returns true if the given element can be referenced from code in the given package. */
   //TODO(gak): account for protected
-  static boolean isElementAccessibleFrom(Element element, final String packageName) {
+  static boolean isElementAccessibleFrom(Element element, String packageName) {
+    return element.accept(new ElementAccessibilityVisitor(packageName), null);
+  }
+
+  /** Returns true if the given element can be referenced from any package. */
+  static boolean isElementPubliclyAccessible(Element element) {
+    return element.accept(new ElementAccessibilityVisitor(), null);
+  }
+
+  private static boolean isElementAccessibleFrom(Element element, Optional<String> packageName) {
     return element.accept(new ElementAccessibilityVisitor(packageName), null);
   }
 
@@ -151,9 +179,17 @@ final class Accessibility {
 
   private static final class ElementAccessibilityVisitor
       extends SimpleElementVisitor6<Boolean, Void> {
-    final String packageName;
+    final Optional<String> packageName;
+
+    ElementAccessibilityVisitor() {
+      this(Optional.absent());
+    }
 
     ElementAccessibilityVisitor(String packageName) {
+      this(Optional.of(packageName));
+    }
+
+    ElementAccessibilityVisitor(Optional<String> packageName) {
       this.packageName = packageName;
     }
 
@@ -189,7 +225,8 @@ final class Accessibility {
         return true;
       } else if (element.getModifiers().contains(PRIVATE)) {
         return false;
-      } else if (getPackage(element).getQualifiedName().contentEquals(packageName)) {
+      } else if (packageName.isPresent()
+          && getPackage(element).getQualifiedName().contentEquals(packageName.get())) {
         return true;
       } else {
         return false;
@@ -213,6 +250,29 @@ final class Accessibility {
       checkArgument(kind.isField(), "checking a variable that isn't a field: %s", kind);
       return accessibleMember(element);
     }
+  }
+
+  private static final TypeVisitor<Boolean, Optional<String>> RAW_TYPE_ACCESSIBILITY_VISITOR =
+      new SimpleTypeVisitor8<Boolean, Optional<String>>() {
+        @Override
+        protected Boolean defaultAction(TypeMirror e, Optional<String> requestingPackage) {
+          return isTypeAccessibleFrom(e, requestingPackage);
+        }
+
+        @Override
+        public Boolean visitDeclared(DeclaredType t, Optional<String> requestingPackage) {
+          return isElementAccessibleFrom(t.asElement(), requestingPackage);
+        }
+      };
+
+  /** Returns true if the raw type of {@code type} is accessible from the given package. */
+  static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
+    return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.of(requestingPackage));
+  }
+
+  /** Returns true if the raw type of {@code type} is accessible from any package. */
+  static boolean isRawTypePubliclyAccessible(TypeMirror type) {
+    return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.absent());
   }
 
   private Accessibility() {}

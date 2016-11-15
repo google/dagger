@@ -19,20 +19,22 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.Proxies.proxyName;
+import static dagger.internal.codegen.Proxies.requiresProxyAccess;
+import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.TypeNames.rawTypeName;
+import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.util.concurrent.Futures;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * A request fulfillment implementation that invokes methods or constructors directly to fulfill
@@ -64,69 +66,38 @@ final class SimpleMethodRequestFulfillment extends RequestFulfillment {
 
   @Override
   CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
-    String requestingPackage = requestingClass.packageName();
-    /* This is where we do some checking to make sure we honor and/or dodge accessibility
-     * restrictions:
-     *
-     * 1. Check to make sure that the method/constructor that we're trying to invoke is accessible.
-     * 2. Check that the *raw type* of each parameter is accessible.  If something is only
-     *    inaccessible due to a type variable, we do a raw type cast just like we do for framework
-     *    types.
-     */
-    // TODO(gak): the accessibility limitation here needs to be addressed
-    if (!isElementAccessibleFrom(provisionBinding.bindingElement().get(), requestingPackage)
-        || provisionBinding
-            .dependencies()
-            .stream()
-            .anyMatch(
-                dependencyRequest ->
-                    !isRawTypeAccessible(dependencyRequest.key().type(), requestingPackage))) {
-      return providerDelegate.getSnippetForDependencyRequest(request, requestingClass);
-    }
     switch (request.kind()) {
       case INSTANCE:
-        return invokeMethod(requestingClass);
+        return invokeMethodOrProxy(requestingClass);
       case FUTURE:
-        return CodeBlock.of("$T.immediateFuture($L)", Futures.class, invokeMethod(requestingClass));
+        return CodeBlock.of(
+            "$T.immediateFuture($L)", Futures.class, invokeMethodOrProxy(requestingClass));
       default:
         return providerDelegate.getSnippetForDependencyRequest(request, requestingClass);
     }
   }
 
-  public static final SimpleTypeVisitor8<Boolean, String> RAW_TYPE_ACCESSIBILITY_VISITOR =
-      new SimpleTypeVisitor8<Boolean, String>() {
-        @Override
-        protected Boolean defaultAction(TypeMirror e, String requestingPackage) {
-          return isTypeAccessibleFrom(e, requestingPackage);
-        }
-
-        @Override
-        public Boolean visitDeclared(DeclaredType t, String requestingPackage) {
-          return isElementAccessibleFrom(t.asElement(), requestingPackage);
-        }
-      };
-
-  private static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
-    return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, requestingPackage);
+  private CodeBlock invokeMethodOrProxy(ClassName requestingClass) {
+    ExecutableElement bindingElement = asExecutable(provisionBinding.bindingElement().get());
+    return requiresProxyAccess(bindingElement, requestingClass.packageName())
+        ? invokeProxyMethod(requestingClass)
+        : invokeMethod(requestingClass);
   }
 
   private CodeBlock invokeMethod(ClassName requestingClass) {
     CodeBlock parametersCodeBlock =
-        CodeBlocks.makeParametersCodeBlock(
+        makeParametersCodeBlock(
             provisionBinding
                 .explicitDependencies()
                 .stream()
                 .map(
                     request -> {
-                      CodeBlock snippet =
-                          registry
-                              .getRequestFulfillment(request.bindingKey())
-                              .getSnippetForDependencyRequest(request, requestingClass);
-                      return isTypeAccessibleFrom(
-                              request.key().type(), requestingClass.packageName())
+                      CodeBlock snippet = getDependencySnippet(requestingClass, request);
+                      TypeMirror requestElementType = request.requestElement().get().asType();
+                      return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
                           ? snippet
                           : CodeBlock.of(
-                              "($T) $L", rawTypeName(TypeName.get(request.key().type())), snippet);
+                              "($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
                     })
                 .collect(toList()));
     // we use the type from the key to ensure we get the right generics
@@ -147,9 +118,21 @@ final class SimpleMethodRequestFulfillment extends RequestFulfillment {
     }
   }
 
-  private static TypeName rawTypeName(TypeName typeName) {
-    return (typeName instanceof ParameterizedTypeName)
-        ? ((ParameterizedTypeName) typeName).rawType
-        : typeName;
+  private CodeBlock invokeProxyMethod(ClassName requestingClass) {
+    return CodeBlock.of(
+        "$T.$L($L)",
+        generatedClassNameForBinding(provisionBinding),
+        proxyName(asExecutable(provisionBinding.bindingElement().get())),
+        provisionBinding
+            .explicitDependencies()
+            .stream()
+            .map(request -> getDependencySnippet(requestingClass, request))
+            .collect(collectingAndThen(toList(), CodeBlocks::makeParametersCodeBlock)));
+  }
+
+  private CodeBlock getDependencySnippet(ClassName requestingClass, DependencyRequest request) {
+    return registry
+        .getRequestFulfillment(request.bindingKey())
+        .getSnippetForDependencyRequest(request, requestingClass);
   }
 }

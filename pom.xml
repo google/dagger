@@ -33,6 +33,7 @@
   <url>https://github.com/square/dagger</url>
 
   <modules>
+    <module>android</module>
     <module>compiler</module>
     <module>core</module>
     <module>gwt</module>
@@ -240,6 +241,7 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
+        <module>android</module>
         <module>core</module>
         <module>compiler</module>
         <module>gwt</module>

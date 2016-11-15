@@ -5,8 +5,12 @@ jdk:
 
 android:
   components:
-    - build-tools-24.0.0
-    - android-24
+    - tools
+    - tools # Duplicated as per https://guides.codepath.com/android/Setting-up-Travis-CI
+    - build-tools-25.0.0
+    - android-25
+    - platform-tools
+    - extra-android-m2repository
   licenses:
     - android-sdk-license-5be876d5
 

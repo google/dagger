@@ -40,6 +40,8 @@ import javax.inject.Inject;
  *       manager.onTrimMemory(level);
  *     }
  *   }</pre>
+ *
+ * @since 2.8
  */
 @Beta
 @GwtIncompatible

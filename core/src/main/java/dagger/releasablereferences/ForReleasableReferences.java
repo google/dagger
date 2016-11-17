@@ -70,7 +70,7 @@ import javax.inject.Qualifier;
  *
  * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
  *     references</a>
- * @since 2.NEXT
+ * @since 2.8
  */
 @Beta
 @Documented

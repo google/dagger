@@ -22,7 +22,7 @@
  * <p><b>Note:</b>Releasable references uses Java's {@link java.lang.ref.WeakReference}, and so is
  * not compatible with <a href="http://www.gwtproject.org/">GWT</a>.
  *
- * @since 2.NEXT
+ * @since 2.8
  */
 
 package dagger.releasablereferences;

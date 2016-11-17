@@ -33,6 +33,8 @@ import java.lang.annotation.Retention;
 /**
  * Annotates an integer element to indicate that its value should be one of the constants defined in
  * {@link ComponentCallbacks2}.
+ *
+ * @since 2.8
  */
 @Documented
 @Retention(SOURCE)

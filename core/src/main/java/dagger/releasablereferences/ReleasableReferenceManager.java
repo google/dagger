@@ -67,7 +67,7 @@ import javax.inject.Provider;
  *
  * <p>This interface is implemented by Dagger.
  *
- * @since 2.NEXT
+ * @since 2.8
  */
 @Beta
 @GwtIncompatible

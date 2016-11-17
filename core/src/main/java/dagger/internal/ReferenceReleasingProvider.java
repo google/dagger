@@ -56,7 +56,6 @@ import javax.inject.Provider;
  *
  * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
  *     references</a>
- * @since 2.NEXT
  */
 @GwtIncompatible
 public final class ReferenceReleasingProvider<T> implements Provider<T> {

@@ -44,6 +44,8 @@ import java.lang.annotation.Target;
  * <p>In order to release references in low-memory conditions, inject an {@link
  * AndroidMemorySensitiveReferenceManager} into your {@link android.app.Application} and delegate
  * {@link android.app.Application#onTrimMemory(int)} to it.
+ *
+ * @since 2.8
  */
 @Beta
 @Documented

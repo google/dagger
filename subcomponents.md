@@ -45,7 +45,7 @@ interface RequestComponent {
 
 To add a subcomponent to a parent component, add the subcomponent class to the
 [`subcomponents`][subcomponents-attribute] attribute of a `@Module` that the
-parent component installs Then the subcomponent's `builder can be requested from
+parent component installs. Then the subcomponent's builder can be requested from
 within the parent.
 
 ```java
@@ -360,5 +360,5 @@ DaggerComponentOne.create().componentThreeBuilder()
 [`@Singleton`]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
 [`@Subcomponent`]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
 [`@Subcomponent.Builder`]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
-[`subcomponents-attribute`]: http://google.github.io/dagger/api/latest/dagger/Module.html#subcomponents()
+[subcomponents-attribute]: http://google.github.io/dagger/api/latest/dagger/Module.html#subcomponents()
 

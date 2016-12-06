@@ -26,7 +26,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -42,6 +41,9 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
    */
   @Override
   public abstract Key key();
+
+  @Override
+  abstract Optional<? extends ExecutableElement> bindingElement();
 
   /**
    * The type element that defines the {@link dagger.Subcomponent} or {@link
@@ -67,10 +69,10 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
           MoreTypes.asTypeElements(getModuleSubcomponents(moduleAnnotation))) {
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
-                Optional.<Element>of(subcomponentAttribute),
                 Optional.of(module),
                 keyFactory.forSubcomponentBuilder(
                     getSubcomponentBuilder(subcomponent).get().asType()),
+                Optional.of(subcomponentAttribute),
                 subcomponent,
                 moduleAnnotation));
       }

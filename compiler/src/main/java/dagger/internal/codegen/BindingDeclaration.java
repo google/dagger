@@ -30,7 +30,7 @@ abstract class BindingDeclaration implements HasKey {
    * The {@link Element} that declares the binding. Absent for bindings without identifying
    * declarations.
    */
-  abstract Optional<Element> bindingElement();
+  abstract Optional<? extends Element> bindingElement();
 
   /**
    * The type enclosing the {@link #bindingElement()}, or {@link Optional#absent()} if {@link

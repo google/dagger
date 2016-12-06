@@ -61,7 +61,7 @@ import javax.lang.model.util.Types;
 @AutoValue
 abstract class MembersInjectionBinding extends Binding {
   @Override
-  Optional<Element> bindingElement() {
+  Optional<? extends Element> bindingElement() {
     return Optional.of(membersInjectedType());
   }
 

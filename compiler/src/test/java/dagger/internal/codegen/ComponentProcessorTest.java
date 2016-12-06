@@ -2612,6 +2612,35 @@ public class ComponentProcessorTest {
     assertThat(compilation).hadErrorContaining("int is not a valid module type");
   }
 
+  @Test
+  public void moduleInDependencies() {
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides String s() { return null; }",
+            "}");
+    JavaFileObject testComponent =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = TestModule.class)",
+            "interface TestComponent {}");
+    Compilation compilation = daggerCompiler().compile(testModule, testComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("test.TestModule is a module, which cannot be a component dependency");
+  }
+
   private static Compiler daggerCompiler(Processor... extraProcessors) {
     return javac().withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors));
   }

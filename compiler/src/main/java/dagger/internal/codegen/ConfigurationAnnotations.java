@@ -159,6 +159,12 @@ final class ConfigurationAnnotations {
   static <T extends Element> void validateComponentDependencies(
       ValidationReport.Builder<T> report, Iterable<TypeMirror> types) {
     validateTypesAreDeclared(report, types, "component dependency");
+    for (TypeMirror type : types) {
+      if (getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
+        report.addError(
+            String.format("%s is a module, which cannot be a component dependency", type));
+      }
+    }
   }
 
   private static <T extends Element> void validateTypesAreDeclared(

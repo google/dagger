@@ -68,6 +68,9 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
    * </ul>
    */
   boolean canFormat(BindingDeclaration bindingDeclaration) {
+    if (bindingDeclaration instanceof SubcomponentDeclaration) {
+      return true;
+    }
     if (bindingDeclaration.bindingElement().isPresent()) {
       return FORMATTABLE_ELEMENT_TYPE_KINDS.contains(
           bindingDeclaration.bindingElement().get().asType().getKind());

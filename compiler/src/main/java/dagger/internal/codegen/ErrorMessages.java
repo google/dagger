@@ -317,6 +317,8 @@ final class ErrorMessages {
   static final String MULTIBINDING_ANNOTATION_CONFLICTS_WITH_BINDING_ANNOTATION_ENUM =
       "@%s.type cannot be used with multibinding annotations";
 
+  /* BindsInstance messages. */
+
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {
       case COMPONENT:

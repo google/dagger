@@ -16,11 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.BindingKey.contribution;
@@ -54,6 +51,7 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
 import dagger.Reusable;
 import dagger.Subcomponent;
+import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Key.HasKey;
@@ -69,6 +67,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -135,27 +135,43 @@ abstract class BindingGraph {
 
   /**
    * The types for which the component needs instances.
+   *
    * <ul>
-   * <li>component dependencies
-   * <li>{@linkplain #ownedModules() owned modules} with concrete instance bindings that are used in
-   *     the graph
+   *   <li>component dependencies
+   *   <li>{@linkplain #ownedModules() owned modules} with concrete instance bindings that are used
+   *       in the graph
+   *   <li>bound instances
    * </ul>
    */
   @Memoized
-  ImmutableSet<TypeElement> componentRequirements() {
-    return SUBGRAPH_TRAVERSER
-        .preOrderTraversal(this)
-        .transformAndConcat(graph -> graph.resolvedBindings().values())
-        .transformAndConcat(ResolvedBindings::contributionBindings)
+  ImmutableSet<ComponentRequirement> componentRequirements() {
+    ImmutableSet.Builder<ComponentRequirement> requirements = ImmutableSet.builder();
+    StreamSupport.stream(SUBGRAPH_TRAVERSER.preOrderTraversal(this).spliterator(), false)
+        .flatMap(graph -> graph.resolvedBindings().values().stream())
+        .flatMap(bindings -> bindings.contributionBindings().stream())
         .filter(ContributionBinding::requiresModuleInstance)
-        .transformAndConcat(bindingDeclaration -> bindingDeclaration.contributingModule().asSet())
-        .filter(in(ownedModuleTypes()))
-        .append(componentDescriptor().dependencies())
-        .toSet();
+        .flatMap(bindingDeclaration -> bindingDeclaration.contributingModule().asSet().stream())
+        .filter(module -> ownedModuleTypes().contains(module))
+        .map(module -> ComponentRequirement.forModule(module.asType()))
+        .forEach(requirements::add);
+    componentDescriptor()
+        .dependencies()
+        .stream()
+        .map(dep -> ComponentRequirement.forDependency(dep.asType()))
+        .forEach(requirements::add);
+    if (componentDescriptor().builderSpec().isPresent()) {
+      componentDescriptor()
+          .builderSpec()
+          .get()
+          .requirementMethods()
+          .stream()
+          .map(BuilderRequirementMethod::requirement)
+          .filter(req -> req.kind().equals(ComponentRequirement.Kind.BINDING))
+          .forEach(requirements::add);
+    }
+    return requirements.build();
   }
-  /**
-   * Returns the {@link ComponentDescriptor}s for this component and its subcomponents.
-   */
+  /** Returns the {@link ComponentDescriptor}s for this component and its subcomponents. */
   ImmutableSet<ComponentDescriptor> componentDescriptors() {
     return SUBGRAPH_TRAVERSER
         .preOrderTraversal(this)
@@ -163,11 +179,18 @@ abstract class BindingGraph {
         .toSet();
   }
 
-  ImmutableSet<TypeElement> availableDependencies() {
-    return FluentIterable.from(componentDescriptor().transitiveModuleTypes())
-        .filter(not(hasModifiers(ABSTRACT)))
-        .append(componentDescriptor().dependencies())
-        .toSet();
+  ImmutableSet<ComponentRequirement> availableDependencies() {
+    return Stream.concat(
+            componentDescriptor()
+                .transitiveModuleTypes()
+                .stream()
+                .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
+                .map(module -> ComponentRequirement.forModule(module.asType())),
+            componentDescriptor()
+                .dependencies()
+                .stream()
+                .map(dep -> ComponentRequirement.forDependency(dep.asType())))
+        .collect(toImmutableSet());
   }
 
   static final class Factory {
@@ -217,6 +240,16 @@ abstract class BindingGraph {
                         && isComponentProductionMethod(elements, method)
                     ? productionBindingFactory.forComponentMethod(method)
                     : provisionBindingFactory.forComponentMethod(method));
+          }
+        }
+      }
+
+      // Collect bindings on the builder.
+      if (componentDescriptor.builderSpec().isPresent()) {
+        for (BuilderRequirementMethod method :
+            componentDescriptor.builderSpec().get().requirementMethods()) {
+          if (method.requirement().kind().equals(ComponentRequirement.Kind.BINDING)) {
+            explicitBindingsBuilder.add(provisionBindingFactory.forBuilderBinding(method));
           }
         }
       }

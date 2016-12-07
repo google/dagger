@@ -49,7 +49,6 @@ import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.FACTORY;
-import static dagger.internal.codegen.TypeNames.ILLEGAL_STATE_EXCEPTION;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.TypeNames.LISTENABLE_FUTURE;
 import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
@@ -66,13 +65,9 @@ import static dagger.internal.codegen.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
-import static dagger.internal.codegen.TypeNames.STRING;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
-import static dagger.internal.codegen.TypeNames.UNSUPPORTED_OPERATION_EXCEPTION;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
-import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
-import static dagger.internal.codegen.Util.requiresAPassedInstance;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -102,11 +97,13 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.DelegateFactory;
+import dagger.internal.InstanceFactory;
 import dagger.internal.MapFactory;
 import dagger.internal.MapProviderFactory;
 import dagger.internal.Preconditions;
 import dagger.internal.SetFactory;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
+import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.producers.Produced;
@@ -170,7 +167,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    * For each component requirement, the builder field. This map is empty for subcomponents that do
    * not use a builder.
    */
-  private ImmutableMap<TypeElement, FieldSpec> builderFields = ImmutableMap.of();
+  private ImmutableMap<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.of();
 
   /**
    * For each component requirement, the member select for the component field that holds it.
@@ -178,7 +175,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    * <p>Fields are written for all requirements for subcomponents that do not use a builder, and for
    * any requirement that is reused from a subcomponent of this component.
    */
-  protected final Map<TypeElement, MemberSelect> componentContributionFields = Maps.newHashMap();
+  protected final Map<ComponentRequirement, MemberSelect> componentContributionFields =
+      Maps.newHashMap();
 
   /**
    * The member-selects for {@link dagger.internal.ReferenceReleasingProviderManager} fields,
@@ -226,40 +224,43 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   }
 
   /**
-   * Returns an expression that evaluates to an instance of the contribution, looking for either a
+   * Returns an expression that evaluates to an instance of the requirement, looking for either a
    * builder field or a component field.
    */
-  private CodeBlock getComponentContributionExpression(TypeElement contributionType) {
-    if (builderFields.containsKey(contributionType)) {
-      return CodeBlock.of("builder.$N", builderFields.get(contributionType));
+  private CodeBlock getComponentContributionExpression(ComponentRequirement componentRequirement) {
+    if (builderFields.containsKey(componentRequirement)) {
+      return CodeBlock.of("builder.$N", builderFields.get(componentRequirement));
     } else {
       Optional<CodeBlock> codeBlock =
-          getOrCreateComponentContributionFieldExpression(contributionType);
-      checkState(codeBlock.isPresent(), "no builder or component field for %s", contributionType);
+          getOrCreateComponentRequirementFieldExpression(componentRequirement);
+      checkState(
+          codeBlock.isPresent(), "no builder or component field for %s", componentRequirement);
       return codeBlock.get();
     }
   }
 
   /**
-   * Returns an expression for a component contribution field. Adds a field the first time one is
-   * requested for a contribution type if this component's builder has a field for it.
+   * Returns an expression for a component requirement field. Adds a field the first time one is
+   * requested for a requirement if this component's builder has a field for it.
    */
-  protected Optional<CodeBlock> getOrCreateComponentContributionFieldExpression(
-      TypeElement contributionType) {
-    MemberSelect fieldSelect = componentContributionFields.get(contributionType);
+  protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
+      ComponentRequirement componentRequirement) {
+    MemberSelect fieldSelect = componentContributionFields.get(componentRequirement);
     if (fieldSelect == null) {
-      if (!builderFields.containsKey(contributionType)) {
+      if (!builderFields.containsKey(componentRequirement)) {
         return Optional.absent();
       }
       FieldSpec componentField =
-          componentField(ClassName.get(contributionType), simpleVariableName(contributionType))
+          componentField(
+                  TypeName.get(componentRequirement.type()),
+                  simpleVariableName(componentRequirement.typeElement()))
               .addModifiers(PRIVATE, FINAL)
               .build();
       component.addField(componentField);
       constructor.addCode(
-          "this.$N = builder.$N;", componentField, builderFields.get(contributionType));
+          "this.$N = builder.$N;", componentField, builderFields.get(componentRequirement));
       fieldSelect = localField(name, componentField.name);
-      componentContributionFields.put(contributionType, fieldSelect);
+      componentContributionFields.put(componentRequirement, fieldSelect);
     }
     return Optional.of(fieldSelect.getExpressionFor(name));
   }
@@ -367,16 +368,18 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    * Adds fields for each of the {@linkplain BindingGraph#componentRequirements component
    * requirements}. Regardless of builder spec, there is always one field per requirement.
    */
-  private ImmutableMap<TypeElement, FieldSpec> addBuilderFields(TypeSpec.Builder componentBuilder) {
+  private ImmutableMap<ComponentRequirement, FieldSpec> addBuilderFields(
+      TypeSpec.Builder componentBuilder) {
     UniqueNameSet builderFieldNames = new UniqueNameSet();
-    ImmutableMap.Builder<TypeElement, FieldSpec> builderFields = ImmutableMap.builder();
-    for (TypeElement contributionElement : graph.componentRequirements()) {
+    ImmutableMap.Builder<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.builder();
+    for (ComponentRequirement componentRequirement : graph.componentRequirements()) {
       String contributionName =
-          builderFieldNames.getUniqueName(simpleVariableName(contributionElement));
+          builderFieldNames.getUniqueName(simpleVariableName(componentRequirement.typeElement()));
       FieldSpec builderField =
-          FieldSpec.builder(ClassName.get(contributionElement), contributionName, PRIVATE).build();
+          FieldSpec.builder(TypeName.get(componentRequirement.type()), contributionName, PRIVATE)
+              .build();
       componentBuilder.addField(builderField);
-      builderFields.put(contributionElement, builderField);
+      builderFields.put(componentRequirement, builderField);
     }
     return builderFields.build();
   }
@@ -397,18 +400,25 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     }
     buildMethod.returns(componentDefinitionTypeName()).addModifiers(PUBLIC);
 
-    for (Map.Entry<TypeElement, FieldSpec> builderFieldEntry : builderFields.entrySet()) {
+    for (Map.Entry<ComponentRequirement, FieldSpec> builderFieldEntry : builderFields.entrySet()) {
       FieldSpec builderField = builderFieldEntry.getValue();
-      if (componentCanMakeNewInstances(builderFieldEntry.getKey())) {
-        buildMethod.addCode(
-            "if ($1N == null) { this.$1N = new $2T(); }", builderField, builderField.type);
-      } else if (requiresAPassedInstance(elements, types, builderFieldEntry.getKey())) {
-        buildMethod.addCode(
-            "if ($N == null) { throw new $T($T.class.getCanonicalName() + $S); }",
-            builderField,
-            ILLEGAL_STATE_EXCEPTION,
-            builderField.type,
-            " must be set");
+      switch (builderFieldEntry.getKey().nullPolicy(elements, types)) {
+        case NEW:
+          buildMethod.addCode(
+              "if ($1N == null) { this.$1N = new $2T(); }", builderField, builderField.type);
+          break;
+        case THROW:
+          buildMethod.addCode(
+              "if ($N == null) { throw new $T($T.class.getCanonicalName() + $S); }",
+              builderField,
+              IllegalStateException.class,
+              TypeNames.rawTypeName(builderField.type),
+              " must be set");
+          break;
+        case ALLOW:
+          break;
+        default:
+          throw new AssertionError(builderFieldEntry.getKey());
       }
     }
     buildMethod.addStatement("return new $T(this)", name);
@@ -421,27 +431,36 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    */
   private void addBuilderMethods(
       TypeSpec.Builder componentBuilder, Optional<BuilderSpec> builderSpec) {
-    ImmutableSet<TypeElement> componentRequirements = graph.componentRequirements();
+    ImmutableSet<ComponentRequirement> componentRequirements = graph.componentRequirements();
     if (builderSpec.isPresent()) {
       UniqueNameSet parameterNames = new UniqueNameSet();
-      for (Map.Entry<TypeElement, ExecutableElement> builderMethodEntry :
-          builderSpec.get().methodMap().entrySet()) {
-        TypeElement builderMethodType = builderMethodEntry.getKey();
-        ExecutableElement specMethod = builderMethodEntry.getValue();
+      for (BuilderRequirementMethod requirementMethod : builderSpec.get().requirementMethods()) {
+        ComponentRequirement builderRequirement = requirementMethod.requirement();
+        ExecutableElement specMethod = requirementMethod.method();
         MethodSpec.Builder builderMethod = addBuilderMethodFromSpec(specMethod);
-        String parameterName =
-            parameterNames.getUniqueName(
-                Iterables.getOnlyElement(specMethod.getParameters()).getSimpleName());
-        builderMethod.addParameter(ClassName.get(builderMethodType), parameterName);
-        if (componentRequirements.contains(builderMethodType)) {
+        VariableElement parameterElement = Iterables.getOnlyElement(specMethod.getParameters());
+        String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
+
+        TypeName argType =
+            parameterElement.asType().getKind().isPrimitive()
+                // Primitives need to use the original (unresolved) type to avoid boxing.
+                ? TypeName.get(parameterElement.asType())
+                // Otherwise we use the full resolved type.
+                : TypeName.get(builderRequirement.type());
+
+        builderMethod.addParameter(argType, parameterName);
+        if (componentRequirements.contains(builderRequirement)) {
           // required type
           builderMethod.addStatement(
-              "this.$N = $T.checkNotNull($L)",
-              builderFields.get(builderMethodType),
-              Preconditions.class,
-              parameterName);
+              "this.$N = $L",
+              builderFields.get(builderRequirement),
+              builderRequirement
+                      .nullPolicy(elements, types)
+                      .equals(ComponentRequirement.NullPolicy.ALLOW)
+                  ? parameterName
+                  : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
           addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
-        } else if (graph.ownedModuleTypes().contains(builderMethodType)) {
+        } else if (graph.ownedModuleTypes().contains(builderRequirement.typeElement())) {
           // owned, but not required
           builderMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
           addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
@@ -449,21 +468,21 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           // neither owned nor required, so it must be an inherited module
           builderMethod.addStatement(
               "throw new $T($T.format($S, $T.class.getCanonicalName()))",
-              UNSUPPORTED_OPERATION_EXCEPTION,
-              STRING,
+              UnsupportedOperationException.class,
+              String.class,
               "%s cannot be set because it is inherited from the enclosing component",
-              ClassName.get(builderMethodType));
+              TypeNames.rawTypeName(TypeName.get(builderRequirement.type())));
         }
         componentBuilder.addMethod(builderMethod.build());
       }
     } else {
-      for (TypeElement componentRequirement : graph.availableDependencies()) {
-        String componentRequirementName = simpleVariableName(componentRequirement);
+      for (ComponentRequirement componentRequirement : graph.availableDependencies()) {
+        String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
         MethodSpec.Builder builderMethod =
             methodBuilder(componentRequirementName)
                 .returns(builderName.get())
                 .addModifiers(PUBLIC)
-                .addParameter(ClassName.get(componentRequirement), componentRequirementName);
+                .addParameter(ClassName.get(componentRequirement.type()), componentRequirementName);
         if (componentRequirements.contains(componentRequirement)) {
           builderMethod.addStatement(
               "this.$N = $T.checkNotNull($L)",
@@ -1081,7 +1100,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
             bindingKeyTypeName.equals(componentDefinitionTypeName())
                 ? "this"
                 : getComponentContributionExpression(
-                    MoreTypes.asTypeElement(binding.key().type())));
+                    ComponentRequirement.forDependency(binding.key().type())));
 
       case COMPONENT_PROVISION:
         {
@@ -1100,7 +1119,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
               binding.nullableType().isPresent()
                       || compilerOptions.nullableValidationKind().equals(Diagnostic.Kind.WARNING)
                   ? CodeBlock.of("return $L;", callFactoryMethod)
-                  : CodeBlock.of("return $T.checkNotNull($L, $S);",
+                  : CodeBlock.of(
+                      "return $T.checkNotNull($L, $S);",
                       Preconditions.class,
                       callFactoryMethod,
                       CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
@@ -1115,7 +1135,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                       "}"),
               /* 1 */ FACTORY,
               /* 2 */ bindingKeyTypeName,
-              /* 3 */ getComponentContributionExpression(dependencyType),
+              /* 3 */ getComponentContributionExpression(
+                  ComponentRequirement.forDependency(dependencyType.asType())),
               /* 4 */ nullableAnnotation(binding.nullableType()),
               /* 5 */ TypeName.get(dependencyType.asType()),
               /* 6 */ dependencyVariable,
@@ -1140,13 +1161,22 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
             /* 2 */ bindingKeyTypeName,
             /* 3 */ subcomponentName);
 
+      case BUILDER_BINDING:
+        return CodeBlock.of(
+            "$T.$L($L)",
+            InstanceFactory.class,
+            binding.nullableType().isPresent() ? "createNullable" : "create",
+            getComponentContributionExpression(ComponentRequirement.forBinding(binding)));
+
       case INJECTION:
       case PROVISION:
         {
           List<CodeBlock> arguments =
               Lists.newArrayListWithCapacity(binding.explicitDependencies().size() + 1);
           if (binding.requiresModuleInstance()) {
-            arguments.add(getComponentContributionExpression(binding.contributingModule().get()));
+            arguments.add(
+                getComponentContributionExpression(
+                    ComponentRequirement.forModule(binding.contributingModule().get().asType())));
           }
           arguments.addAll(getDependencyArguments(binding));
 
@@ -1175,7 +1205,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
               /* 1 */ PRODUCER,
               /* 2 */ TypeName.get(binding.key().type()),
               /* 3 */ LISTENABLE_FUTURE,
-              /* 4 */ getComponentContributionExpression(dependencyType),
+              /* 4 */ getComponentContributionExpression(
+                  ComponentRequirement.forDependency(dependencyType.asType())),
               /* 5 */ binding.bindingElement().get().getSimpleName(),
               /* 6 */ TypeName.get(dependencyType.asType()),
               /* 7 */ simpleVariableName(dependencyType));
@@ -1186,7 +1217,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           List<CodeBlock> arguments =
               Lists.newArrayListWithCapacity(binding.dependencies().size() + 2);
           if (binding.requiresModuleInstance()) {
-            arguments.add(getComponentContributionExpression(binding.contributingModule().get()));
+            arguments.add(
+                getComponentContributionExpression(
+                    ComponentRequirement.forModule(binding.contributingModule().get().asType())));
           }
           arguments.addAll(getDependencyArguments(binding));
 

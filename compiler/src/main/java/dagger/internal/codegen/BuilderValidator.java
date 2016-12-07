@@ -25,14 +25,8 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Equivalence;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -108,8 +102,6 @@ class BuilderValidator {
     }
 
     ExecutableElement buildMethod = null;
-    Multimap<Equivalence.Wrapper<TypeMirror>, ExecutableElement> methodsPerParam =
-        LinkedHashMultimap.create();
     for (ExecutableElement method : getUnimplementedMethods(elements, types, subject)) {
       ExecutableType resolvedMethodType =
           MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
@@ -134,18 +126,16 @@ class BuilderValidator {
       } else if (returnType.getKind() != TypeKind.VOID
           && !types.isSubtype(subject.asType(), returnType)) {
         // If this correctly had one arg, make sure the return types are valid.
-        error(builder, method, msgs.methodsMustReturnVoidOrBuilder(),
+        error(
+            builder,
+            method,
+            msgs.methodsMustReturnVoidOrBuilder(),
             msgs.inheritedMethodsMustReturnVoidOrBuilder());
-      } else {
-        // If the return types are valid, record the method.
-        methodsPerParam.put(
-            MoreTypes.equivalence().<TypeMirror>wrap(
-                Iterables.getOnlyElement(resolvedMethodType.getParameterTypes())),
-            method);
-      }
-
-      if (!method.getTypeParameters().isEmpty()) {
-        error(builder, method, msgs.methodsMayNotHaveTypeParameters(),
+      } else if (!method.getTypeParameters().isEmpty()) {
+        error(
+            builder,
+            method,
+            msgs.methodsMayNotHaveTypeParameters(),
             msgs.inheritedMethodsMayNotHaveTypeParameters());
       }
     }
@@ -154,18 +144,9 @@ class BuilderValidator {
       builder.addError(msgs.missingBuildMethod(), subject);
     }
 
-    // Go back through each recorded method per param type.  If we had more than one method
-    // for a given param, fail.
-    for (Map.Entry<Equivalence.Wrapper<TypeMirror>, Collection<ExecutableElement>> entry :
-        methodsPerParam.asMap().entrySet()) {
-      if (entry.getValue().size() > 1) {
-        TypeMirror type = entry.getKey().get();
-        builder.addError(String.format(msgs.manyMethodsForType(), type, entry.getValue()), subject);
-      }
-    }
-
-    // Note: there's more validation in BindingGraphValidator,
-    // specifically to make sure the setter methods mirror the deps.
+    // Note: there's more validation in BindingGraphValidator:
+    // - to make sure the setter methods mirror the deps
+    // - to make sure each type or key is set by only one method
 
     return builder.build();
   }

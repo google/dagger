@@ -85,10 +85,10 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected Optional<CodeBlock> getOrCreateComponentContributionFieldExpression(
-      TypeElement contributionType) {
-    return super.getOrCreateComponentContributionFieldExpression(contributionType)
-        .or(parent.getOrCreateComponentContributionFieldExpression(contributionType));
+  protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
+      ComponentRequirement componentRequirement) {
+    return super.getOrCreateComponentRequirementFieldExpression(componentRequirement)
+        .or(parent.getOrCreateComponentRequirementFieldExpression(componentRequirement));
   }
 
   @Override
@@ -177,9 +177,11 @@ final class SubcomponentWriter extends AbstractComponentWriter {
     for (int i = 0; i < params.size(); i++) {
       VariableElement moduleVariable = params.get(i);
       TypeElement moduleTypeElement = MoreTypes.asTypeElement(paramTypes.get(i));
+      ComponentRequirement componentRequirement =
+          ComponentRequirement.forModule(moduleTypeElement.asType());
       TypeName moduleType = TypeName.get(paramTypes.get(i));
       componentMethod.addParameter(moduleType, moduleVariable.getSimpleName().toString());
-      if (!componentContributionFields.containsKey(moduleTypeElement)) {
+      if (!componentContributionFields.containsKey(componentRequirement)) {
         String preferredModuleName =
             CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL, moduleTypeElement.getSimpleName().toString());
         FieldSpec contributionField =
@@ -197,16 +199,18 @@ final class SubcomponentWriter extends AbstractComponentWriter {
                 Preconditions.class);
 
         MemberSelect moduleSelect = localField(name, actualModuleName);
-        componentContributionFields.put(moduleTypeElement, moduleSelect);
+        componentContributionFields.put(componentRequirement, moduleSelect);
         subcomponentConstructorParameters.add(
             CodeBlock.of("$L", moduleVariable.getSimpleName()));
       }
     }
 
-    Set<TypeElement> uninitializedModules =
+    Set<ComponentRequirement> uninitializedModules =
         difference(graph.componentRequirements(), componentContributionFields.keySet());
 
-    for (TypeElement moduleType : uninitializedModules) {
+    for (ComponentRequirement componentRequirement : uninitializedModules) {
+      checkState(componentRequirement.kind().equals(ComponentRequirement.Kind.MODULE));
+      TypeElement moduleType = componentRequirement.typeElement();
       String preferredModuleName =
           CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL, moduleType.getSimpleName().toString());
       FieldSpec contributionField =
@@ -218,7 +222,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
       constructor.addStatement(
           "this.$L = new $T()", actualModuleName, ClassName.get(moduleType));
       MemberSelect moduleSelect = localField(name, actualModuleName);
-      componentContributionFields.put(moduleType, moduleSelect);
+      componentContributionFields.put(componentRequirement, moduleSelect);
     }
 
     componentMethod.addStatement("return new $T($L)",

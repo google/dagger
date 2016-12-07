@@ -572,55 +572,115 @@ public class SubcomponentBuilderValidationTest {
 
   @Test
   public void testMultipleSettersPerTypeFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent",
-        "abstract class ChildComponent {",
-        "  @Subcomponent.Builder",
-        "  interface Builder {",
-        "    ChildComponent build();",
-        "    void set1(String s);",
-        "    void set2(String s);",
-        "  }",
-        "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides String s() { return \"\"; }",
+            "}");
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface ParentComponent {",
+            "  ChildComponent.Builder childComponentBuilder();",
+            "}");
+    JavaFileObject childComponentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = TestModule.class)",
+            "abstract class ChildComponent {",
+            "  abstract String s();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    ChildComponent build();",
+            "    void set1(TestModule s);",
+            "    void set2(TestModule s);",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.manyMethodsForType(),
-                  "java.lang.String", "[set1(java.lang.String), set2(java.lang.String)]"))
-            .in(childComponentFile).onLine(8);
+            String.format(
+                MSGS.manyMethodsForType(),
+                "test.TestModule",
+                "[set1(test.TestModule), set2(test.TestModule)]"))
+        .in(childComponentFile)
+        .onLine(10);
   }
 
   @Test
   public void testMultipleSettersPerTypeIncludingResolvedGenericsFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent",
-        "abstract class ChildComponent {",
-        "  interface Parent<T> {",
-        "    void set1(T t);",
-        "  }",
-        "",
-        "  @Subcomponent.Builder",
-        "  interface Builder extends Parent<String> {",
-        "    ChildComponent build();",
-        "    void set2(String s);",
-        "  }",
-        "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides String s() { return \"\"; }",
+            "}");
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface ParentComponent {",
+            "  ChildComponent.Builder childComponentBuilder();",
+            "}");
+    JavaFileObject childComponentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = TestModule.class)",
+            "abstract class ChildComponent {",
+            "  abstract String s();",
+            "",
+            "  interface Parent<T> {",
+            "    void set1(T t);",
+            "  }",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder extends Parent<TestModule> {",
+            "    ChildComponent build();",
+            "    void set2(TestModule s);",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.manyMethodsForType(),
-                  "java.lang.String", "[set1(T), set2(java.lang.String)]"))
-            .in(childComponentFile).onLine(12);
+            String.format(
+                MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
+        .in(childComponentFile)
+        .onLine(14);
   }
 
   @Test

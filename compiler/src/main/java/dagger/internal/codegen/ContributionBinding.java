@@ -134,6 +134,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
      */
     SUBCOMPONENT_BUILDER,
 
+    /** A builder binding method. */
+    BUILDER_BINDING,
+
     // Production kinds
 
     /** A {@link Produces}-annotated method. */

@@ -64,14 +64,16 @@ import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.isAnnotationPresent;
 import static dagger.internal.codegen.Util.toImmutableSet;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -79,7 +81,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
@@ -89,7 +90,10 @@ import dagger.BindsOptionalOf;
 import dagger.Component;
 import dagger.Lazy;
 import dagger.MapKey;
+import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
+import dagger.internal.codegen.ComponentTreeTraverser.BindingGraphTraverser;
+import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -210,8 +214,11 @@ final class BindingGraphValidator {
               .stream()
               .filter(
                   componentRequirement ->
-                      !subgraphFactoryMethodParameters(parent, factoryMethod)
-                          .contains(componentRequirement))
+                      componentRequirement.kind().equals(ComponentRequirement.Kind.MODULE))
+              .map(ComponentRequirement::typeElement)
+              .filter(
+                  moduleType ->
+                      !subgraphFactoryMethodParameters(parent, factoryMethod).contains(moduleType))
               .filter(moduleType -> !componentCanMakeNewInstances(moduleType))
               .collect(toSet());
       if (!missingModules.isEmpty()) {
@@ -346,18 +353,34 @@ final class BindingGraphValidator {
         return;
       }
 
-      Set<TypeElement> availableDependencies = graph.availableDependencies();
-      Set<TypeElement> requiredDependencies =
-          Sets.filter(availableDependencies, input -> !componentCanMakeNewInstances(input));
+      Set<ComponentRequirement> availableDependencies = graph.availableDependencies();
+      Set<ComponentRequirement> requiredDependencies =
+          Sets.filter(
+              availableDependencies, input -> !componentCanMakeNewInstances(input.typeElement()));
       final BuilderSpec spec = componentDesc.builderSpec().get();
-      Map<TypeElement, ExecutableElement> allSetters = spec.methodMap();
+      ImmutableSet<BuilderRequirementMethod> declaredSetters =
+          spec.requirementMethods()
+              .stream()
+              .filter(
+                  method -> !method.requirement().kind().equals(ComponentRequirement.Kind.BINDING))
+              .collect(toImmutableSet());
+      ImmutableSet<ComponentRequirement> declaredRequirements =
+          declaredSetters
+              .stream()
+              .map(BuilderRequirementMethod::requirement)
+              .collect(toImmutableSet());
 
       ErrorMessages.ComponentBuilderMessages msgs =
           ErrorMessages.builderMsgsFor(graph.componentDescriptor().kind());
-      Set<TypeElement> extraSetters = Sets.difference(allSetters.keySet(), availableDependencies);
+      Set<ComponentRequirement> extraSetters =
+          Sets.difference(declaredRequirements, availableDependencies);
       if (!extraSetters.isEmpty()) {
-        Collection<ExecutableElement> excessMethods =
-            Maps.filterKeys(allSetters, Predicates.in(extraSetters)).values();
+        List<ExecutableElement> excessMethods =
+            declaredSetters
+                .stream()
+                .filter(method -> extraSetters.contains(method.requirement()))
+                .map(BuilderRequirementMethod::method)
+                .collect(toList());
         Optional<DeclaredType> container =
             Optional.of(MoreTypes.asDeclared(spec.builderDefinitionType().asType()));
         String formatted =
@@ -369,11 +392,36 @@ final class BindingGraphValidator {
             .addError(String.format(msgs.extraSetters(), formatted), spec.builderDefinitionType());
       }
 
-      Set<TypeElement> missingSetters = Sets.difference(requiredDependencies, allSetters.keySet());
+      Set<ComponentRequirement> missingSetters =
+          Sets.difference(requiredDependencies, declaredRequirements);
       if (!missingSetters.isEmpty()) {
         report(graph)
             .addError(
-                String.format(msgs.missingSetters(), missingSetters), spec.builderDefinitionType());
+                String.format(
+                    msgs.missingSetters(),
+                    missingSetters.stream().map(ComponentRequirement::type).collect(toList())),
+                spec.builderDefinitionType());
+      }
+
+      // Validate that declared builder requirements (modules, dependencies) have unique types.
+      Map<Equivalence.Wrapper<TypeMirror>, List<ExecutableElement>> declaredRequirementsByType =
+          spec.requirementMethods()
+              .stream()
+              .filter(
+                  method -> !method.requirement().kind().equals(ComponentRequirement.Kind.BINDING))
+              .collect(
+                  groupingBy(
+                      method -> method.requirement().wrappedType(),
+                      mapping(method -> method.method(), toList())));
+      for (Map.Entry<Equivalence.Wrapper<TypeMirror>, List<ExecutableElement>> entry :
+          declaredRequirementsByType.entrySet()) {
+        if (entry.getValue().size() > 1) {
+          TypeMirror type = entry.getKey().get();
+          report(graph)
+              .addError(
+                  String.format(msgs.manyMethodsForType(), type, entry.getValue()),
+                  spec.builderDefinitionType());
+        }
       }
     }
 

@@ -33,8 +33,10 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import java.util.Set;
 import javax.annotation.CheckReturnValue;
 import javax.inject.Inject;
@@ -43,6 +45,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
@@ -260,6 +263,22 @@ abstract class ProvisionBinding extends ContributionBinding {
           .nullableType(ConfigurationAnnotations.getNullableType(componentMethod))
           .bindingKind(Kind.COMPONENT_PROVISION)
           .scope(Scope.uniqueScopeOf(componentMethod))
+          .build();
+    }
+
+    ProvisionBinding forBuilderBinding(BuilderRequirementMethod method) {
+      ExecutableElement builderMethod = method.method();
+
+      checkNotNull(builderMethod);
+      checkArgument(builderMethod.getKind().equals(METHOD));
+      checkArgument(builderMethod.getParameters().size() == 1);
+      VariableElement parameterElement = Iterables.getOnlyElement(builderMethod.getParameters());
+      return ProvisionBinding.builder()
+          .contributionType(ContributionType.UNIQUE)
+          .bindingElement(builderMethod)
+          .key(method.requirement().key().get())
+          .nullableType(ConfigurationAnnotations.getNullableType(parameterElement))
+          .bindingKind(Kind.BUILDER_BINDING)
           .build();
     }
 

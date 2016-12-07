@@ -58,7 +58,6 @@ import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -103,7 +102,7 @@ abstract class ComponentDescriptor {
     static Optional<Kind> forAnnotatedElement(TypeElement element) {
       Set<Kind> kinds = EnumSet.noneOf(Kind.class);
       for (Kind kind : values()) {
-        if (MoreElements.isAnnotationPresent(element, kind.annotationType())) {
+        if (isAnnotationPresent(element, kind.annotationType())) {
           kinds.add(kind);
         }
       }
@@ -122,7 +121,7 @@ abstract class ComponentDescriptor {
     static Optional<Kind> forAnnotatedBuilderElement(TypeElement element) {
       Set<Kind> kinds = EnumSet.noneOf(Kind.class);
       for (Kind kind : values()) {
-        if (MoreElements.isAnnotationPresent(element, kind.builderAnnotationType())) {
+        if (isAnnotationPresent(element, kind.builderAnnotationType())) {
           kinds.add(kind);
         }
       }
@@ -429,9 +428,16 @@ abstract class ComponentDescriptor {
   }
 
   @AutoValue
+  abstract static class BuilderRequirementMethod {
+    abstract ExecutableElement method();
+
+    abstract ComponentRequirement requirement();
+  }
+
+  @AutoValue
   abstract static class BuilderSpec {
     abstract TypeElement builderDefinitionType();
-    abstract Map<TypeElement, ExecutableElement> methodMap();
+    abstract ImmutableSet<BuilderRequirementMethod> requirementMethods();
     abstract ExecutableElement buildMethod();
     abstract TypeMirror componentType();
   }
@@ -661,7 +667,7 @@ abstract class ComponentDescriptor {
       }
       TypeElement element = MoreTypes.asTypeElement(builderType.get());
       ImmutableSet<ExecutableElement> methods = getUnimplementedMethods(elements, types, element);
-      ImmutableMap.Builder<TypeElement, ExecutableElement> map = ImmutableMap.builder();
+      ImmutableSet.Builder<BuilderRequirementMethod> requirementMethods = ImmutableSet.builder();
       ExecutableElement buildMethod = null;
       for (ExecutableElement method : methods) {
         if (method.getParameters().isEmpty()) {
@@ -669,12 +675,28 @@ abstract class ComponentDescriptor {
         } else {
           ExecutableType resolved =
               MoreTypes.asExecutable(types.asMemberOf(builderType.get(), method));
-          map.put(MoreTypes.asTypeElement(getOnlyElement(resolved.getParameterTypes())), method);
+          requirementMethods.add(
+              new AutoValue_ComponentDescriptor_BuilderRequirementMethod(
+                  method, requirementForBuilderMethod(method, resolved)));
         }
       }
       verify(buildMethod != null); // validation should have ensured this.
-      return Optional.<BuilderSpec>of(new AutoValue_ComponentDescriptor_BuilderSpec(element,
-          map.build(), buildMethod, element.getEnclosingElement().asType()));
+      return Optional.of(
+          new AutoValue_ComponentDescriptor_BuilderSpec(
+              element,
+              requirementMethods.build(),
+              buildMethod,
+              element.getEnclosingElement().asType()));
+    }
+
+    private ComponentRequirement requirementForBuilderMethod(
+        ExecutableElement method, ExecutableType resolvedType) {
+      checkArgument(method.getParameters().size() == 1);
+
+      TypeMirror type = getOnlyElement(resolvedType.getParameterTypes());
+      return ConfigurationAnnotations.getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()
+          ? ComponentRequirement.forModule(type)
+          : ComponentRequirement.forDependency(type);
     }
 
     /**

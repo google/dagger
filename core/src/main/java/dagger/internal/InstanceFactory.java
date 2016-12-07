@@ -37,6 +37,20 @@ public final class InstanceFactory<T> implements Factory<T>, Lazy<T> {
     return new InstanceFactory<T>(checkNotNull(instance, "instance cannot be null"));
   }
 
+  public static <T> Factory<T> createNullable(T instance) {
+    return instance == null
+        ? InstanceFactory.<T>nullInstanceFactory()
+        : new InstanceFactory<T>(instance);
+  }
+
+  @SuppressWarnings("unchecked") // bivariant implementation
+  private static <T> InstanceFactory<T> nullInstanceFactory() {
+    return (InstanceFactory<T>) NULL_INSTANCE_FACTORY;
+  }
+
+  private static final InstanceFactory<Object> NULL_INSTANCE_FACTORY =
+      new InstanceFactory<Object>(null);
+
   private final T instance;
 
   private InstanceFactory(T instance) {

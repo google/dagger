@@ -757,57 +757,95 @@ public class ComponentBuilderTest {
 
   @Test
   public void testMultipleSettersPerTypeFails() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component",
-        "abstract class SimpleComponent {",
-        "  @Component.Builder",
-        "  interface Builder {",
-        "    SimpleComponent build();",
-        "    void set1(String s);",
-        "    void set2(String s);",
-        "  }",
-        "}");
-    assertAbout(javaSource()).that(componentFile)
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides String s() { return \"\"; }",
+            "}");
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "abstract class SimpleComponent {",
+            "  abstract String s();",
+            "",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    SimpleComponent build();",
+            "    void set1(TestModule s);",
+            "    void set2(TestModule s);",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.manyMethodsForType(),
-                  "java.lang.String", "[set1(java.lang.String), set2(java.lang.String)]"))
-            .in(componentFile).onLine(9);
+            String.format(
+                MSGS.manyMethodsForType(),
+                "test.TestModule",
+                "[set1(test.TestModule), set2(test.TestModule)]"))
+        .in(componentFile)
+        .onLine(11);
   }
 
   @Test
   public void testMultipleSettersPerTypeIncludingResolvedGenericsFails() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component",
-        "abstract class SimpleComponent {",
-        "  interface Parent<T> {",
-        "    void set1(T t);",
-        "  }",
-        "",
-        "  @Component.Builder",
-        "  interface Builder extends Parent<String> {",
-        "    SimpleComponent build();",
-        "    void set2(String s);",
-        "  }",
-        "}");
-    assertAbout(javaSource()).that(componentFile)
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides String s() { return \"\"; }",
+            "}");
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "abstract class SimpleComponent {",
+            "  abstract String s();",
+            "",
+            "  interface Parent<T> {",
+            "    void set1(T t);",
+            "  }",
+            "",
+            "  @Component.Builder",
+            "  interface Builder extends Parent<TestModule> {",
+            "    SimpleComponent build();",
+            "    void set2(TestModule s);",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.manyMethodsForType(),
-                  "java.lang.String", "[set1(T), set2(java.lang.String)]"))
-            .in(componentFile).onLine(13);
+            String.format(
+                MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
+        .in(componentFile)
+        .onLine(15);
   }
 
   @Test

@@ -16,11 +16,18 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
+import static dagger.internal.codegen.MoreAnnotationValues.asType;
+import static dagger.internal.codegen.Util.toImmutableList;
+
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Name;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A utility class for working with {@link AnnotationMirror} instances, similar to {@link
@@ -54,5 +61,27 @@ final class MoreAnnotationMirrors {
 
   static Name simpleName(AnnotationMirror annotationMirror) {
     return annotationMirror.getAnnotationType().asElement().getSimpleName();
+  }
+
+  /**
+   * Returns the value named {@code name} from {@code annotation}.
+   *
+   * @throws IllegalArgumentException unless that member represents a single type
+   */
+  static TypeMirror getTypeValue(AnnotationMirror annotation, String name) {
+    return asType(getAnnotationValue(annotation, name));
+  }
+
+  /**
+   * Returns the list of types that is the value named {@code name} from {@code annotationMirror}.
+   *
+   * @throws IllegalArgumentException unless that member represents an array of types
+   */
+  static ImmutableList<TypeMirror> getTypeListValue(
+      AnnotationMirror annotationMirror, String name) {
+    return asAnnotationValues(getAnnotationValue(annotationMirror, name))
+        .stream()
+        .map(MoreAnnotationValues::asType)
+        .collect(toImmutableList());
   }
 }

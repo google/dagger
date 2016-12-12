@@ -109,6 +109,38 @@ public class ComponentProcessorTest {
     assertThat(compilation).hadErrorContaining("is not annotated with @Module");
   }
 
+  @Test
+  public void componentWithInvalidModule() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.BadModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "abstract class BadModule {",
+            "  @Binds abstract Object noParameters();",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.BadComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = BadModule.class)",
+            "interface BadComponent {",
+            "  Object object();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation)
+        .hadErrorContaining("test.BadModule has errors")
+        .inFile(component)
+        .onLine(5);
+  }
+
   @Test public void doubleBindingFromResolvedModules() {
     JavaFileObject parent = JavaFileObjects.forSourceLines("test.ParentModule",
         "package test;",

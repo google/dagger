@@ -30,7 +30,6 @@ import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ConfigurationAnnotations.typeValue;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
@@ -59,6 +58,7 @@ import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetad
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
+import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
@@ -931,7 +931,7 @@ final class BindingGraphValidator {
         }
 
         Scope scope =
-            Scope.scope(MoreTypes.asTypeElement(typeValue(key.qualifier().get(), "value")));
+            Scope.scope(MoreTypes.asTypeElement(getTypeValue(key.qualifier().get(), "value")));
         String missingRequestKey = formatCurrentDependencyRequestKey();
         if (!rootGraph.componentDescriptor().releasableReferencesScopes().contains(scope)) {
           reportErrorAtEntryPoint(

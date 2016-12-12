@@ -33,6 +33,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
@@ -74,16 +75,11 @@ abstract class ModuleDescriptor {
   abstract ImmutableSet<OptionalBindingDeclaration> optionalDeclarations();
 
   enum Kind {
-    MODULE(
-        Module.class, Provides.class, ImmutableSet.of(Module.class)),
-    PRODUCER_MODULE(
-        ProducerModule.class,
-        Produces.class,
-        ImmutableSet.of(Module.class, ProducerModule.class));
+    MODULE(Module.class, Provides.class),
+    PRODUCER_MODULE(ProducerModule.class, Produces.class);
 
     private final Class<? extends Annotation> moduleAnnotation;
     private final Class<? extends Annotation> methodAnnotation;
-    private final ImmutableSet<? extends Class<? extends Annotation>> includesTypes;
 
     /**
      * Returns the kind of an annotated element if it is annotated with one of the
@@ -106,11 +102,9 @@ abstract class ModuleDescriptor {
 
     Kind(
         Class<? extends Annotation> moduleAnnotation,
-        Class<? extends Annotation> methodAnnotation,
-        ImmutableSet<? extends Class<? extends Annotation>> includesTypes) {
+        Class<? extends Annotation> methodAnnotation) {
       this.moduleAnnotation = moduleAnnotation;
       this.methodAnnotation = methodAnnotation;
-      this.includesTypes = includesTypes;
     }
 
     Optional<AnnotationMirror> getModuleAnnotationMirror(TypeElement element) {
@@ -125,8 +119,15 @@ abstract class ModuleDescriptor {
       return methodAnnotation;
     }
 
-    ImmutableSet<? extends Class<? extends Annotation>> includesTypes() {
-      return includesTypes;
+    ImmutableSet<Kind> includesKinds() {
+      switch (this) {
+        case MODULE:
+          return Sets.immutableEnumSet(MODULE);
+        case PRODUCER_MODULE:
+          return Sets.immutableEnumSet(MODULE, PRODUCER_MODULE);
+        default:
+          throw new AssertionError(this);
+      }
     }
   }
 

@@ -33,7 +33,6 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.ConfigurationAnnotations.typeValue;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
@@ -42,6 +41,7 @@ import static dagger.internal.codegen.MemberSelect.emptySetProvider;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.MemberSelect.noOpMembersInjector;
 import static dagger.internal.codegen.MemberSelect.staticMethod;
+import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -1511,7 +1511,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     checkArgument(
         MoreTypes.isTypeOf(ForReleasableReferences.class, annotation.getAnnotationType()));
     return Scope.scope(
-        MoreElements.asType(MoreTypes.asDeclared(typeValue(annotation, "value")).asElement()));
+        MoreElements.asType(MoreTypes.asDeclared(getTypeValue(annotation, "value")).asElement()));
   }
 
   /**

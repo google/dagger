@@ -27,35 +27,30 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.SimpleElementVisitor6;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
-/**
- * A collection of items describing contractual issues with the code as presented to an annotation
- * processor.  A "clean" report (i.e. with no issues) is a report with no {@linkplain Item items}
- * and clean subreports. Callers will typically print the results of the report to a
- * {@link Messager} instance using {@link #printMessagesTo}.
- *
- * <p>A report describes a subject {@link Element}.  Callers may choose to add report items about
- * other elements that are contained within or related to the subject. Since {@link Diagnostic}
- * reporting is expected to be associated with elements that are currently being compiled,
- * {@link #printMessagesTo(Messager)} will only associate messages with non-subject elements if they
- * are contained within the subject. Otherwise, they will be associated with the subject and contain
- * a reference to the item's element in the message string. It is the responsibility of the caller
- * to choose subjects that are part of the compilation.
- *
- * @author Gregory Kick
- * @since 2.0
- */
+/** A collection of issues to report for source code. */
 @AutoValue
 abstract class ValidationReport<T extends Element> {
+
+  /**
+   * The subject of the report. Should be an element within a compilation unit being processed by
+   * this compilation task.
+   */
   abstract T subject();
+
+  /** The items to report for the {@linkplain #subject() subject}. */
   abstract ImmutableSet<Item> items();
+
+  /** Other reports associated with this one. */
   abstract ImmutableSet<ValidationReport<?>> subreports();
 
+  /** Returns {@code true} if there are no errors in this report or any subreports. */
   boolean isClean() {
     for (Item item : items()) {
       switch (item.kind()) {
@@ -73,22 +68,35 @@ abstract class ValidationReport<T extends Element> {
     return true;
   }
 
+  /**
+   * Prints all {@linkplain #items() messages} to {@code messager} (and recurs for subreports). If a
+   * message's {@linkplain Item#element() element} is contained within the report's {@linkplain
+   * #subject() subject}, associates the message with the message's element. Otherwise, since
+   * {@link Diagnostic} reporting is expected to be associated with elements that are currently
+   * being compiled, associates the message with the subject itself and prepends a reference to the
+   * item's element.
+   */
   void printMessagesTo(Messager messager) {
     for (Item item : items()) {
       if (isEnclosedIn(subject(), item.element())) {
         if (item.annotation().isPresent()) {
-          messager.printMessage(
-              item.kind(), item.message(), item.element(), item.annotation().get());
+          if (item.annotationValue().isPresent()) {
+            messager.printMessage(
+                item.kind(),
+                item.message(),
+                item.element(),
+                item.annotation().get(),
+                item.annotationValue().get());
+          } else {
+            messager.printMessage(
+                item.kind(), item.message(), item.element(), item.annotation().get());
+          }
         } else {
           messager.printMessage(item.kind(), item.message(), item.element());
         }
       } else {
         String message = String.format("[%s] %s", elementString(item.element()), item.message());
-        if (item.annotation().isPresent()) {
-          messager.printMessage(item.kind(), message, subject(), item.annotation().get());
-        } else {
-          messager.printMessage(item.kind(), message, subject());
-        }
+        messager.printMessage(item.kind(), message, subject());
       }
     }
     for (ValidationReport<?> subreport : subreports()) {
@@ -129,6 +137,7 @@ abstract class ValidationReport<T extends Element> {
     abstract Kind kind();
     abstract Element element();
     abstract Optional<AnnotationMirror> annotation();
+    abstract Optional<AnnotationValue> annotationValue();
   }
 
   static <T extends Element> Builder<T> about(T subject) {
@@ -156,52 +165,90 @@ abstract class ValidationReport<T extends Element> {
     }
 
     Builder<T> addError(String message) {
-      return addItem(message, ERROR, subject, Optional.<AnnotationMirror>absent());
+      return addError(message, subject);
     }
 
     Builder<T> addError(String message, Element element) {
-      return addItem(message, ERROR, element, Optional.<AnnotationMirror>absent());
+      return addItem(message, ERROR, element);
     }
 
     Builder<T> addError(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, ERROR, element, Optional.of(annotation));
+      return addItem(message, ERROR, element, annotation);
+    }
+
+    Builder<T> addError(
+        String message,
+        Element element,
+        AnnotationMirror annotation,
+        AnnotationValue annotationValue) {
+      return addItem(message, ERROR, element, annotation, annotationValue);
     }
 
     Builder<T> addWarning(String message) {
-      return addItem(message, WARNING, subject, Optional.<AnnotationMirror>absent());
+      return addWarning(message, subject);
     }
 
     Builder<T> addWarning(String message, Element element) {
-      return addItem(message, WARNING, element, Optional.<AnnotationMirror>absent());
+      return addItem(message, WARNING, element);
     }
 
     Builder<T> addWarning(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, WARNING, element, Optional.of(annotation));
+      return addItem(message, WARNING, element, annotation);
+    }
+
+    Builder<T> addWarning(
+        String message,
+        Element element,
+        AnnotationMirror annotation,
+        AnnotationValue annotationValue) {
+      return addItem(message, WARNING, element, annotation, annotationValue);
     }
 
     Builder<T> addNote(String message) {
-      return addItem(message, NOTE, subject, Optional.<AnnotationMirror>absent());
+      return addNote(message, subject);
     }
 
     Builder<T> addNote(String message, Element element) {
-      return addItem(message, NOTE, element, Optional.<AnnotationMirror>absent());
+      return addItem(message, NOTE, element);
     }
 
     Builder<T> addNote(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, NOTE, element, Optional.of(annotation));
+      return addItem(message, NOTE, element, annotation);
+    }
+
+    Builder<T> addNote(
+        String message,
+        Element element,
+        AnnotationMirror annotation,
+        AnnotationValue annotationValue) {
+      return addItem(message, NOTE, element, annotation, annotationValue);
     }
 
     Builder<T> addItem(String message, Kind kind, Element element) {
-      return addItem(message, kind, element, Optional.<AnnotationMirror>absent());
+      return addItem(message, kind, element, Optional.absent(), Optional.absent());
     }
 
     Builder<T> addItem(String message, Kind kind, Element element, AnnotationMirror annotation) {
-      return addItem(message, kind, element, Optional.of(annotation));
+      return addItem(message, kind, element, Optional.of(annotation), Optional.absent());
     }
 
-    private Builder<T> addItem(String message, Kind kind, Element element,
-        Optional<AnnotationMirror> annotation) {
-      items.add(new AutoValue_ValidationReport_Item(message, kind, element, annotation));
+    Builder<T> addItem(
+        String message,
+        Kind kind,
+        Element element,
+        AnnotationMirror annotation,
+        AnnotationValue annotationValue) {
+      return addItem(message, kind, element, Optional.of(annotation), Optional.of(annotationValue));
+    }
+
+    private Builder<T> addItem(
+        String message,
+        Kind kind,
+        Element element,
+        Optional<AnnotationMirror> annotation,
+        Optional<AnnotationValue> annotationValue) {
+      items.add(
+          new AutoValue_ValidationReport_Item(message, kind, element, annotation, annotationValue));
       return this;
     }
 

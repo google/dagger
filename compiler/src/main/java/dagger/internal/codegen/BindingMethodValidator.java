@@ -47,9 +47,6 @@ import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.common.base.Joiner;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -59,8 +56,9 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
-import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -78,18 +76,7 @@ abstract class BindingMethodValidator {
   private final ImmutableSet<? extends Class<? extends Annotation>> enclosingElementAnnotations;
   private final Abstractness abstractness;
   private final ExceptionSuperclass exceptionSuperclass;
-  private final LoadingCache<ExecutableElement, ValidationReport<ExecutableElement>> cache =
-      CacheBuilder.newBuilder()
-          .build(
-              new CacheLoader<ExecutableElement, ValidationReport<ExecutableElement>>() {
-                @Override
-                public ValidationReport<ExecutableElement> load(ExecutableElement method) {
-                  ValidationReport.Builder<ExecutableElement> builder =
-                      ValidationReport.about(method);
-                  checkMethod(builder);
-                  return builder.build();
-                }
-              });
+  private final Map<ExecutableElement, ValidationReport<ExecutableElement>> cache = new HashMap<>();
   private final AllowsMultibindings allowsMultibindings;
 
   /**
@@ -148,21 +135,13 @@ abstract class BindingMethodValidator {
 
   /** Returns a {@link ValidationReport} for {@code method}. */
   final ValidationReport<ExecutableElement> validate(ExecutableElement method) {
-    return cache.getUnchecked(method);
+    return cache.computeIfAbsent(method, this::validateUncached);
   }
 
-  /** Prints validation reports to {@code messager}, and returns valid methods. */
-  final ImmutableSet<ExecutableElement> validate(
-      Messager messager, Iterable<? extends ExecutableElement> methods) {
-    ImmutableSet.Builder<ExecutableElement> validMethods = ImmutableSet.builder();
-    for (ExecutableElement method : methods) {
-      ValidationReport<ExecutableElement> report = validate(method);
-      report.printMessagesTo(messager);
-      if (report.isClean()) {
-        validMethods.add(method);
-      }
-    }
-    return validMethods.build();
+  private ValidationReport<ExecutableElement> validateUncached(ExecutableElement m) {
+    ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(m);
+    checkMethod(report);
+    return report.build();
   }
 
   /** Checks the method for validity. Adds errors to {@code builder}. */

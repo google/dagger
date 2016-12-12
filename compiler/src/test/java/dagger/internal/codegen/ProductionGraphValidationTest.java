@@ -17,9 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -437,5 +440,45 @@ public class ProductionGraphValidationTest {
         .withErrorContaining("cycle")
         .in(component)
         .onLine(8);
+  }
+  
+  @Test
+  public void componentWithBadModule() {
+    JavaFileObject badModule =
+        JavaFileObjects.forSourceLines(
+            "test.BadModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.multibindings.Multibinds;",
+            "import dagger.Module;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "abstract class BadModule {",
+            "  @Multibinds",
+            "  @BindsOptionalOf",
+            "  abstract Set<String> strings();",
+            "}");
+    JavaFileObject badComponent =
+        JavaFileObjects.forSourceLines(
+            "test.BadComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Optional;",
+            "import java.util.Set;",
+            "",
+            "@Component(modules = BadModule.class)",
+            "interface BadComponent {",
+            "  Set<String> strings();",
+            "  Optional<Set<String>> optionalStrings();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(badModule, badComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("test.BadModule has errors")
+        .inFile(badComponent)
+        .onLine(7);
   }
 }

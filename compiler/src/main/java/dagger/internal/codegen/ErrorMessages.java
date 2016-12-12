@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
@@ -27,9 +28,12 @@ import dagger.Provides;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
+import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -387,6 +391,20 @@ final class ErrorMessages {
     return String.format(
         "There is no binding for %s because %s is not annotated with @%s.",
         formattedKey, scope.getQualifiedName(), metadataType);
+  }
+
+  /**
+   * Returns an error message for a method that has more than one binding method annotation.
+   *
+   * @param methodAnnotations the valid method annotations, only one of which may annotate the
+   *     method
+   */
+  static String tooManyBindingMethodAnnotations(
+      ExecutableElement method, Collection<Class<? extends Annotation>> methodAnnotations) {
+    return String.format(
+        "%s is annotated with more than one of (%s)",
+        method.getSimpleName(),
+        methodAnnotations.stream().map(Class::getCanonicalName).collect(joining(", ")));
   }
 
   static class ComponentBuilderMessages {

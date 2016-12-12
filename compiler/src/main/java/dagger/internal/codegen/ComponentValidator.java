@@ -247,9 +247,9 @@ final class ComponentValidator {
     if (componentKind.isTopLevel()) {
       validateComponentDependencies(builder, getComponentDependencies(componentMirror));
     }
-    ImmutableList<TypeMirror> moduleTypes = getComponentModules(componentMirror);
-    moduleValidator.validateReferencedModules(
-        subject, builder, moduleTypes, componentKind.moduleKinds());
+    builder.addSubreport(
+        moduleValidator.validateReferencedModules(
+            subject, componentMirror, componentKind.moduleKinds()));
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.

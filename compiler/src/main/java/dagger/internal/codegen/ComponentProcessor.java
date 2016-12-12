@@ -74,16 +74,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
     InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
     InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();
-    ModuleValidator moduleValidator =
-        new ModuleValidator(types, elements, methodSignatureFormatter);
-    BuilderValidator builderValidator = new BuilderValidator(elements, types);
-    ComponentValidator subcomponentValidator =
-        ComponentValidator.createForSubcomponent(
-            elements, types, moduleValidator, builderValidator);
-    ComponentValidator componentValidator =
-        ComponentValidator.createForComponent(
-            elements, types, moduleValidator, subcomponentValidator, builderValidator);
-    MapKeyValidator mapKeyValidator = new MapKeyValidator();
     ProvidesMethodValidator providesMethodValidator = new ProvidesMethodValidator(elements, types);
     ProducesMethodValidator producesMethodValidator = new ProducesMethodValidator(elements, types);
     BindsMethodValidator bindsMethodValidator = new BindsMethodValidator(elements, types);
@@ -93,6 +83,23 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new MultibindingsMethodValidator(elements, types);
     BindsOptionalOfMethodValidator bindsOptionalOfMethodValidator =
         new BindsOptionalOfMethodValidator(elements, types);
+    AnyBindingMethodValidator anyBindingMethodValidator =
+        new AnyBindingMethodValidator(
+            providesMethodValidator,
+            producesMethodValidator,
+            bindsMethodValidator,
+            multibindsMethodValidator,
+            bindsOptionalOfMethodValidator);
+    ModuleValidator moduleValidator =
+        new ModuleValidator(types, elements, anyBindingMethodValidator, methodSignatureFormatter);
+    BuilderValidator builderValidator = new BuilderValidator(elements, types);
+    ComponentValidator subcomponentValidator =
+        ComponentValidator.createForSubcomponent(
+            elements, types, moduleValidator, builderValidator);
+    ComponentValidator componentValidator =
+        ComponentValidator.createForComponent(
+            elements, types, moduleValidator, subcomponentValidator, builderValidator);
+    MapKeyValidator mapKeyValidator = new MapKeyValidator();
 
     Key.Factory keyFactory = new Key.Factory(types, elements);
 
@@ -200,15 +207,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new ProductionExecutorModuleProcessingStep(messager, productionExecutorModuleGenerator),
         new MultibindingsProcessingStep(messager, multibindingsValidator),
         new MultibindingAnnotationsProcessingStep(messager),
-        moduleProcessingStep(
-            messager,
-            moduleValidator,
-            provisionBindingFactory,
-            factoryGenerator,
-            providesMethodValidator,
-            bindsMethodValidator,
-            multibindsMethodValidator,
-            bindsOptionalOfMethodValidator),
+        moduleProcessingStep(messager, moduleValidator, provisionBindingFactory, factoryGenerator),
         new ComponentProcessingStep(
             ComponentDescriptor.Kind.COMPONENT,
             messager,
@@ -225,13 +224,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             moduleValidator,
             provisionBindingFactory,
             factoryGenerator,
-            providesMethodValidator,
             productionBindingFactory,
-            producerFactoryGenerator,
-            producesMethodValidator,
-            bindsMethodValidator,
-            multibindsMethodValidator,
-            bindsOptionalOfMethodValidator),
+            producerFactoryGenerator),
         new ComponentProcessingStep(
             ComponentDescriptor.Kind.PRODUCTION_COMPONENT,
             messager,
@@ -242,7 +236,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindingGraphValidator,
             componentDescriptorFactory,
             bindingGraphFactory,
-            componentGenerator));
+            componentGenerator),
+        new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
   }
 
   @Override

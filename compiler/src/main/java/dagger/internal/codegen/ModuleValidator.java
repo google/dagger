@@ -21,9 +21,9 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
-import static com.google.common.collect.Iterables.any;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
+import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
 import static dagger.internal.codegen.ErrorMessages.INCOMPATIBLE_MODULE_METHODS;
@@ -35,10 +35,14 @@ import static dagger.internal.codegen.ErrorMessages.ModuleMessages.moduleSubcomp
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_ANOTHER;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
+import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
+import static dagger.internal.codegen.Util.toImmutableSet;
+import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -46,24 +50,26 @@ import com.google.auto.common.Visibility;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
-import dagger.internal.codegen.ModuleDescriptor.Kind;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -73,6 +79,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
 
 /**
@@ -89,25 +96,53 @@ final class ModuleValidator {
 
   private final Types types;
   private final Elements elements;
+  private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
+  private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
+  private final Set<TypeElement> knownModules = new HashSet<>();
 
   ModuleValidator(
-      Types types, Elements elements, MethodSignatureFormatter methodSignatureFormatter) {
+      Types types,
+      Elements elements,
+      AnyBindingMethodValidator anyBindingMethodValidator,
+      MethodSignatureFormatter methodSignatureFormatter) {
     this.types = types;
     this.elements = elements;
+    this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
   }
 
-  ValidationReport<TypeElement> validate(final TypeElement subject) {
-    final ValidationReport.Builder<TypeElement> builder = ValidationReport.about(subject);
-    ModuleDescriptor.Kind moduleKind = ModuleDescriptor.Kind.forAnnotatedElement(subject).get();
+  /**
+   * Adds {@code modules} to the set of module types that will be validated during this compilation
+   * step. If a component or module includes a module that is not in this set, that included module
+   * is assumed to be valid because it was processed in a previous compilation step. If it were
+   * invalid, that previous compilation step would have failed and blocked this one.
+   *
+   * <p>This logic depends on this method being called before {@linkplain #validate(TypeElement)
+   * validating} any module or {@linkplain #validateReferencedModules(TypeElement, AnnotationMirror,
+   * ImmutableSet) component}.
+   */
+  void addKnownModules(Collection<TypeElement> modules) {
+    knownModules.addAll(modules);
+  }
 
-    List<ExecutableElement> moduleMethods = ElementFilter.methodsIn(subject.getEnclosedElements());
+  /** Returns a validation report for a module type. */
+  ValidationReport<TypeElement> validate(TypeElement module) {
+    return cache.computeIfAbsent(module, this::validateUncached);
+  }
+
+  private ValidationReport<TypeElement> validateUncached(TypeElement module) {
+    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(module);
+    ModuleDescriptor.Kind moduleKind = ModuleDescriptor.Kind.forAnnotatedElement(module).get();
+
     ListMultimap<String, ExecutableElement> allMethodsByName = ArrayListMultimap.create();
     ListMultimap<String, ExecutableElement> bindingMethodsByName = ArrayListMultimap.create();
 
-    Set<ModuleMethodKind> methodKinds = EnumSet.noneOf(ModuleMethodKind.class);
-    for (ExecutableElement moduleMethod : moduleMethods) {
+    Set<ModuleMethodKind> methodKinds = noneOf(ModuleMethodKind.class);
+    for (ExecutableElement moduleMethod : methodsIn(module.getEnclosedElements())) {
+      if (anyBindingMethodValidator.isBindingMethod(moduleMethod)) {
+        builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
+      }
       if (isAnyAnnotationPresent(
           moduleMethod,
           ImmutableSet.of(moduleKind.methodAnnotation(), Binds.class, Multibinds.class))) {
@@ -126,17 +161,16 @@ final class ModuleValidator {
               moduleKind.methodAnnotation().getSimpleName()));
     }
 
-    validateModuleVisibility(subject, moduleKind, builder);
+    validateModuleVisibility(module, moduleKind, builder);
     validateMethodsWithSameName(moduleKind, builder, bindingMethodsByName);
-    if (subject.getKind() != ElementKind.INTERFACE) {
+    if (module.getKind() != ElementKind.INTERFACE) {
       validateProvidesOverrides(
-          subject, moduleKind, builder, allMethodsByName, bindingMethodsByName);
+          module, moduleKind, builder, allMethodsByName, bindingMethodsByName);
     }
-    validateModifiers(subject, builder);
-    validateReferencedModules(subject, moduleKind, builder);
-    validateReferencedSubcomponents(subject, moduleKind, builder);
+    validateModifiers(module, builder);
+    validateReferencedModules(module, moduleKind, builder);
+    validateReferencedSubcomponents(module, moduleKind, builder);
 
-    // TODO(gak): port the dagger 1 module validation?
     return builder.build();
   }
 
@@ -148,7 +182,7 @@ final class ModuleValidator {
     // TODO(ronshapiro): use validateTypesAreDeclared when it is checked in
     for (TypeMirror subcomponentAttribute : getModuleSubcomponents(moduleAnnotation)) {
       subcomponentAttribute.accept(
-          new SimpleTypeVisitor6<Void, Void>(){
+          new SimpleTypeVisitor6<Void, Void>() {
             @Override
             protected Void defaultAction(TypeMirror e, Void aVoid) {
               builder.addError(e + " is not a valid subcomponent type", subject, moduleAnnotation);
@@ -165,17 +199,18 @@ final class ModuleValidator {
                     isAnyAnnotationPresent(attributeType, SUBCOMPONENT_BUILDER_TYPES)
                         ? moduleSubcomponentsIncludesBuilder(attributeType)
                         : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
-                    attributeType,
+                    subject,
                     moduleAnnotation);
               }
 
               return null;
             }
-          }, null);
+          },
+          null);
     }
   }
 
-  private void validateSubcomponentHasBuilder(
+  private static void validateSubcomponentHasBuilder(
       TypeElement subcomponentAttribute,
       AnnotationMirror moduleAnnotation,
       ValidationReport.Builder<TypeElement> builder) {
@@ -184,7 +219,7 @@ final class ModuleValidator {
     }
     builder.addError(
         moduleSubcomponentsDoesntHaveBuilder(subcomponentAttribute, moduleAnnotation),
-        subcomponentAttribute,
+        builder.getSubject(),
         moduleAnnotation);
   }
 
@@ -237,64 +272,75 @@ final class ModuleValidator {
       ValidationReport.Builder<TypeElement> builder) {
     // Validate that all the modules we include are valid for inclusion.
     AnnotationMirror mirror = moduleKind.getModuleAnnotationMirror(subject).get();
-    ImmutableList<TypeMirror> includes = getModuleIncludes(mirror);
-    validateReferencedModules(subject, builder, includes, ImmutableSet.of(moduleKind));
-  }
-
-  private static ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses(
-      ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {
-    return FluentIterable.from(validModuleKinds).transformAndConcat(Kind::includesTypes).toSet();
+    builder.addSubreport(validateReferencedModules(subject, mirror, moduleKind.includesKinds()));
   }
 
   /**
-   * Used by {@link ModuleValidator} and {@link ComponentValidator} to validate referenced modules.
+   * Validates modules included in a given module or installed in a given component.
+   *
+   * <p>Checks that the referenced modules are non-generic types annotated with {@code @Module} or
+   * {@code @ProducerModule}.
+   *
+   * <p>If the referenced module is in the {@linkplain #addKnownModules(Collection) known modules
+   * set} and has errors, reports an error at that module's inclusion.
+   *
+   * @param annotatedType the annotated module or component
+   * @param annotation the annotation specifying the referenced modules ({@code @Component},
+   *     {@code @ProductionComponent}, {@code @Subcomponent}, {@code @ProductionSubcomponent},
+   *     {@code @Module}, or {@code @ProducerModule})
+   * @param validModuleKinds the module kinds that the annotated type is permitted to include
    */
-  void validateReferencedModules(
-      final TypeElement subject,
-      final ValidationReport.Builder<TypeElement> builder,
-      ImmutableList<TypeMirror> includes,
+  ValidationReport<TypeElement> validateReferencedModules(
+      TypeElement annotatedType,
+      AnnotationMirror annotation,
       ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {
-    final ImmutableSet<? extends Class<? extends Annotation>> includedModuleClasses =
-        includedModuleClasses(validModuleKinds);
+    ValidationReport.Builder<TypeElement> subreport = ValidationReport.about(annotatedType);
+    ImmutableSet<? extends Class<? extends Annotation>> validModuleAnnotations =
+        validModuleKinds
+            .stream()
+            .map(ModuleDescriptor.Kind::moduleAnnotation)
+            .collect(toImmutableSet());
 
-    for (TypeMirror includesType : includes) {
-      includesType.accept(
-          new SimpleTypeVisitor6<Void, Void>() {
-            @Override
-            protected Void defaultAction(TypeMirror mirror, Void p) {
-              builder.addError(mirror + " is not a valid module type.", subject);
-              return null;
-            }
+    for (AnnotationValue includedModule : getModules(annotatedType, annotation)) {
+      asType(includedModule)
+          .accept(
+              new SimpleTypeVisitor8<Void, Void>() {
+                @Override
+                protected Void defaultAction(TypeMirror mirror, Void p) {
+                  reportError("%s is not a valid module type.", mirror);
+                  return null;
+                }
 
-            @Override
-            public Void visitDeclared(DeclaredType t, Void p) {
-              final TypeElement element = MoreElements.asType(t.asElement());
-              if (!t.getTypeArguments().isEmpty()) {
-                builder.addError(
-                    String.format(
-                        REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS, element.getQualifiedName()),
-                    subject);
-              }
-              boolean isIncludedModule =
-                  any(
-                      includedModuleClasses,
-                      otherClass -> MoreElements.isAnnotationPresent(element, otherClass));
-              if (!isIncludedModule) {
-                builder.addError(
-                    String.format(
+                @Override
+                public Void visitDeclared(DeclaredType t, Void p) {
+                  TypeElement module = MoreElements.asType(t.asElement());
+                  if (!t.getTypeArguments().isEmpty()) {
+                    reportError(
+                        REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS, module.getQualifiedName());
+                  }
+                  if (!isAnyAnnotationPresent(module, validModuleAnnotations)) {
+                    reportError(
                         REFERENCED_MODULE_NOT_ANNOTATED,
-                        element.getQualifiedName(),
-                        (includedModuleClasses.size() > 1 ? "one of " : "")
-                            + includedModuleClasses.stream()
+                        module.getQualifiedName(),
+                        (validModuleAnnotations.size() > 1 ? "one of " : "")
+                            + validModuleAnnotations
+                                .stream()
                                 .map(otherClass -> "@" + otherClass.getSimpleName())
-                                .collect(joining(", "))),
-                    subject);
-              }
-              return null;
-            }
-          },
-          null);
+                                .collect(joining(", ")));
+                  } else if (knownModules.contains(module) && !validate(module).isClean()) {
+                    reportError("%s has errors", module.getQualifiedName());
+                  }
+                  return null;
+                }
+
+                private void reportError(String format, Object... args) {
+                  subreport.addError(
+                      String.format(format, args), annotatedType, annotation, includedModule);
+                }
+              },
+              null);
     }
+    return subreport.build();
   }
 
   private void validateProvidesOverrides(

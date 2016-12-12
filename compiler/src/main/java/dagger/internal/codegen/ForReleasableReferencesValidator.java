@@ -19,9 +19,9 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.ConfigurationAnnotations.typeValue;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueCannotReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueNotAScope;
+import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.isScope;
 import static dagger.internal.codegen.Scope.scope;
 
@@ -51,7 +51,7 @@ final class ForReleasableReferencesValidator implements ProcessingStep {
     ValidationReport.Builder<Element> report = ValidationReport.about(annotatedElement);
     AnnotationMirror annotation =
         getAnnotationMirror(annotatedElement, ForReleasableReferences.class).get();
-    TypeElement scopeType = MoreTypes.asTypeElement(typeValue(annotation, "value"));
+    TypeElement scopeType = MoreTypes.asTypeElement(getTypeValue(annotation, "value"));
     if (!isScope(scopeType)) {
       report.addError(
           forReleasableReferencesValueNotAScope(scopeType), annotatedElement, annotation);

@@ -16,7 +16,10 @@
 
 package dagger.internal.codegen;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
 import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
@@ -238,6 +241,42 @@ public final class ModuleValidatorTest {
         .failsToCompile()
         .withErrorContaining("int is not a valid subcomponent type")
         .in(module)
+        .onLine(5);
+  }
+  
+  @Test
+  public void tooManyAnnotations() {
+    assertThatModuleMethod(
+            "@BindsOptionalOf @Multibinds abstract Set<Object> tooManyAnnotations();")
+        .hasError("is annotated with more than one of");
+  }
+
+  @Test
+  public void invalidIncludedModule() {
+    JavaFileObject badModule =
+        JavaFileObjects.forSourceLines(
+            "test.BadModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "abstract class BadModule {",
+            "  @Binds abstract Object noParameters();",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.IncludesBadModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module(includes = BadModule.class)",
+            "abstract class IncludesBadModule {}");
+    assertThat(daggerCompiler().compile(badModule, module))
+        .hadErrorContaining("test.BadModule has errors")
+        .inFile(module)
         .onLine(5);
   }
 }

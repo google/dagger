@@ -33,10 +33,8 @@ method can only have a single parameter whose type is assignable to the return
 type.  Separating those specifications makes it easier to reason about
 correctness because the annotation determines the constraints.
 
-<!-- This is an h2 tag instead of ## because there is no way to have a header
-     that spans multiple lines in markdown -->
-<h2>Why can't I put [`@Binds`] methods and instance [`@Provides`] methods in
-    the same module?</h2>
+
+### Why can't `@Binds` and instance `@Provides` methods go in the same module?
 
 Because `@Binds` methods are _just_ a method _declaration_, they are expressed
 as `abstract` methods — no implementation is ever created and nothing is never

@@ -80,6 +80,19 @@ public abstract class ProducerMonitor {
    * <p>Note that if a method depends on {@code Producer<T>}, then this does not count as requesting
    * {@code T}; that is only triggered by calling {@link Producer#get()}.
    *
+   * <p>Depending on how this producer is requested, the following threading constraints are
+   * guaranteed:
+   *
+   * <ol>
+   *   <li>If the producer is requested directly by a method on a component, then {@code requested}
+   *       will be called on the same thread as the component method call.
+   *   <li>If the producer is requested by value from another producer (i.e., injected as {@code T}
+   *       or {@code Produced<T>}), then {@code requested} will be called from the same thread as
+   *       the other producer's {@code requested}.
+   *   <li>If the producer is requested by calling {@link Producer#get()}, then {@code requested}
+   *       will be called from the same thread as that {@code get()} call.
+   * </ol>
+   *
    * <p>When multiple monitors are installed, the order that each monitor will call this method is
    * unspecified, but will remain consistent throughout the course of the execution of a component.
    *
@@ -88,7 +101,8 @@ public abstract class ProducerMonitor {
   public void requested() {}
 
   /**
-   * Called when the producer method is about to start executing.
+   * Called when the producer method is about to start executing. This will be called from the same
+   * thread as the producer method itself.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.
@@ -99,7 +113,7 @@ public abstract class ProducerMonitor {
 
   /**
    * Called when the producer method has finished executing. This will be called from the same
-   * thread as {@link #methodStarting()}.
+   * thread as {@link #methodStarting()} and the producer method itself.
    *
    * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
    * calls to {@link #requested()}.

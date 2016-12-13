@@ -512,6 +512,7 @@ subcomponent if the subcomponent includes a binding for the underlying type.
 You can use either Guava's [`Optional`][guava-optional] or Java 8's
 [`Optional`][jdk-optional].
 
+
 ### Compile-time Validation
 
 The Dagger [annotation processor][Annotation Processor] is strict and will cause

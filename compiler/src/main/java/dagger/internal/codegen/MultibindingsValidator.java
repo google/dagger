@@ -32,6 +32,7 @@ import dagger.Module;
 import dagger.Multibindings;
 import dagger.producers.ProducerModule;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -50,6 +51,7 @@ final class MultibindingsValidator {
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final TypeElement objectElement;
   private final MultibindingsMethodValidator multibindingsMethodValidator;
+  private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
 
   MultibindingsValidator(
       Elements elements,
@@ -66,12 +68,24 @@ final class MultibindingsValidator {
     this.multibindingsMethodValidator = multibindingsMethodValidator;
     this.objectElement = elements.getTypeElement(Object.class.getCanonicalName());
   }
-
+  
   /**
-   * Returns a report containing validation errors for a
-   * {@link Multibindings @Multibindings}-annotated type.
+   * Returns a report containing validation errors for a {@link
+   * Multibindings @Multibindings}-annotated type.
    */
   public ValidationReport<TypeElement> validate(TypeElement multibindingsType) {
+    return reports.computeIfAbsent(multibindingsType, this::validateUncached);
+  }
+
+  /**
+   * Returns {@code true} if {@code multibindingsType} was already {@linkplain
+   * #validate(TypeElement) validated}.
+   */
+  boolean wasAlreadyValidated(TypeElement multibindingsType) {
+    return reports.containsKey(multibindingsType);
+  }
+
+  private ValidationReport<TypeElement> validateUncached(TypeElement multibindingsType) {
     ValidationReport.Builder<TypeElement> validation = ValidationReport.about(multibindingsType);
     if (!multibindingsType.getKind().equals(INTERFACE)) {
       validation.addError(MUST_BE_INTERFACE, multibindingsType);

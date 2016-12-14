@@ -35,7 +35,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public final class ModuleValidatorTest {
 
-  @Parameterized.Parameters
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
     return Arrays.asList(new Object[][] {{ModuleType.MODULE}, {ModuleType.PRODUCER_MODULE}});
   }
@@ -277,6 +277,42 @@ public final class ModuleValidatorTest {
     assertThat(daggerCompiler().compile(badModule, module))
         .hadErrorContaining("test.BadModule has errors")
         .inFile(module)
+        .onLine(5);
+  }
+
+  @Test
+  public void invalidNestedMultibindingsType() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.IncludesBadMultibindings",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Multibindings;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class IncludesBadMultibindings {",
+            "  @Provides static String string() { return \"a string\"; }",
+            "",
+            "  @Multibindings interface BadMultibindings {",
+            "    String notASetOrMap();",
+            "  }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = IncludesBadMultibindings.class)",
+            "interface TestComponent {",
+            "  String aString();",
+            "}");
+    assertThat(daggerCompiler().compile(module, component))
+        .hadErrorContaining("test.IncludesBadMultibindings has errors")
+        .inFile(component)
         .onLine(5);
   }
 }

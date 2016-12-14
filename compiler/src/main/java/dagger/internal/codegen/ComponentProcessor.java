@@ -72,6 +72,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     DependencyRequestFormatter dependencyRequestFormatter =
         new DependencyRequestFormatter(types, elements);
 
+    Key.Factory keyFactory = new Key.Factory(types, elements);
+
     InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
     InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();
     ProvidesMethodValidator providesMethodValidator = new ProvidesMethodValidator(elements, types);
@@ -90,19 +92,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindsMethodValidator,
             multibindsMethodValidator,
             bindsOptionalOfMethodValidator);
-    ModuleValidator moduleValidator =
-        new ModuleValidator(types, elements, anyBindingMethodValidator, methodSignatureFormatter);
-    BuilderValidator builderValidator = new BuilderValidator(elements, types);
-    ComponentValidator subcomponentValidator =
-        ComponentValidator.createForSubcomponent(
-            elements, types, moduleValidator, builderValidator);
-    ComponentValidator componentValidator =
-        ComponentValidator.createForComponent(
-            elements, types, moduleValidator, subcomponentValidator, builderValidator);
-    MapKeyValidator mapKeyValidator = new MapKeyValidator();
-
-    Key.Factory keyFactory = new Key.Factory(types, elements);
-
     MultibindingsValidator multibindingsValidator =
         new MultibindingsValidator(
             elements,
@@ -111,6 +100,21 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             keyFormatter,
             methodSignatureFormatter,
             multibindingsMethodValidator);
+    ModuleValidator moduleValidator =
+        new ModuleValidator(
+            types,
+            elements,
+            anyBindingMethodValidator,
+            multibindingsValidator,
+            methodSignatureFormatter);
+    BuilderValidator builderValidator = new BuilderValidator(elements, types);
+    ComponentValidator subcomponentValidator =
+        ComponentValidator.createForSubcomponent(
+            elements, types, moduleValidator, builderValidator);
+    ComponentValidator componentValidator =
+        ComponentValidator.createForComponent(
+            elements, types, moduleValidator, subcomponentValidator, builderValidator);
+    MapKeyValidator mapKeyValidator = new MapKeyValidator();
 
     this.factoryGenerator =
         new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
@@ -205,7 +209,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new InjectProcessingStep(injectBindingRegistry),
         new MonitoringModuleProcessingStep(messager, monitoringModuleGenerator),
         new ProductionExecutorModuleProcessingStep(messager, productionExecutorModuleGenerator),
-        new MultibindingsProcessingStep(messager, multibindingsValidator),
         new MultibindingAnnotationsProcessingStep(messager),
         moduleProcessingStep(messager, moduleValidator, provisionBindingFactory, factoryGenerator),
         new ComponentProcessingStep(
@@ -237,6 +240,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             componentDescriptorFactory,
             bindingGraphFactory,
             componentGenerator),
+        new MultibindingsProcessingStep(messager, multibindingsValidator),
         new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
   }
 

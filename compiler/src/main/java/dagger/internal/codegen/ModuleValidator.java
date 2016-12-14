@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
+import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -55,6 +56,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
+import dagger.Multibindings;
 import dagger.Subcomponent;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
@@ -97,6 +99,7 @@ final class ModuleValidator {
   private final Types types;
   private final Elements elements;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
+  private final MultibindingsValidator multibindingsValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
@@ -105,10 +108,12 @@ final class ModuleValidator {
       Types types,
       Elements elements,
       AnyBindingMethodValidator anyBindingMethodValidator,
+      MultibindingsValidator multibindingsValidator,
       MethodSignatureFormatter methodSignatureFormatter) {
     this.types = types;
     this.elements = elements;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
+    this.multibindingsValidator = multibindingsValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
   }
 
@@ -170,8 +175,18 @@ final class ModuleValidator {
     validateModifiers(module, builder);
     validateReferencedModules(module, moduleKind, builder);
     validateReferencedSubcomponents(module, moduleKind, builder);
+    validateNestedMultibindingsTypes(module, builder);
 
     return builder.build();
+  }
+
+  private void validateNestedMultibindingsTypes(
+      TypeElement module, ValidationReport.Builder<TypeElement> builder) {
+    for (TypeElement nestedType : typesIn(elements.getAllMembers(module))) {
+      if (isAnnotationPresent(nestedType, Multibindings.class)) {
+        builder.addSubreport(multibindingsValidator.validate(nestedType));
+      }
+    }
   }
 
   private void validateReferencedSubcomponents(

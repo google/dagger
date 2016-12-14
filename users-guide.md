@@ -512,6 +512,57 @@ subcomponent if the subcomponent includes a binding for the underlying type.
 You can use either Guava's [`Optional`][guava-optional] or Java 8's
 [`Optional`][jdk-optional].
 
+### Binding Instances
+
+Often you have data available at the time you're building the component. For
+example, suppose you have an application that uses command-line args; you might
+want to bind those args in your component.
+
+Perhaps your app takes a single argument representing the user's name that you'd
+like to inject as `@UserName String`. You can add a method annotated
+[`@BindsInstance`][BindsInstance] to the component builder to allow that
+instance to be injected in the component.
+
+```java
+@Component(modules = AppModule.class)
+interface AppComponent {
+  App app();
+
+  @Component.Builder
+  interface Builder {
+    @BindsInstance Builder userName(@UserName String userName);
+    AppComponent build();
+  }
+}
+```
+
+Your app then might look like
+
+```java
+public static void main(String[] args) {
+  if (args.length > 1) { exit(1); }
+  App app = DaggerAppComponent
+      .builder()
+      .userName(args[0])
+      .build()
+      .app();
+  app.run();
+}
+```
+
+In the above example, injecting `@UserName String` in the component will use the
+instance provided to the `Builder` when calling this method. Before building the
+component, all `@BindsInstance` methods must be called, passing a non-null value
+(with the exception of `@Nullable` bindings below).
+
+If the parameter to a `@BindsInstance` method is marked `@Nullable`, then the
+binding will be considered "nullable" in the same way as a `@Provides` method is
+nullable: injection sites must also mark it `@Nullable`, and `null` is an
+acceptable value for the binding. Moreover, users of the `Builder` may omit
+calling the method, and the component will treat the instance as `null`.
+
+`@BindsInstance` methods should be preferred to writing a `@Module` with
+constructor arguments and immediately providing those values.
 
 ### Compile-time Validation
 

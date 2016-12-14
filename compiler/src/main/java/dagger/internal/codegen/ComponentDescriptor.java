@@ -46,6 +46,7 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
+import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Lazy;
 import dagger.MembersInjector;
@@ -692,6 +693,13 @@ abstract class ComponentDescriptor {
     private ComponentRequirement requirementForBuilderMethod(
         ExecutableElement method, ExecutableType resolvedType) {
       checkArgument(method.getParameters().size() == 1);
+      if (isAnnotationPresent(method, BindsInstance.class)) {
+        DependencyRequest request =
+            dependencyRequestFactory.forRequiredResolvedVariable(
+                getOnlyElement(method.getParameters()),
+                getOnlyElement(resolvedType.getParameterTypes()));
+        return ComponentRequirement.forBinding(request.key(), request.isNullable());
+      }
 
       TypeMirror type = getOnlyElement(resolvedType.getParameterTypes());
       return ConfigurationAnnotations.getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()

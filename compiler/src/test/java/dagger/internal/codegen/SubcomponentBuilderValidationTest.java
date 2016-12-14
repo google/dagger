@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -681,6 +682,52 @@ public class SubcomponentBuilderValidationTest {
                 MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
         .in(childComponentFile)
         .onLine(14);
+  }
+
+  @Test
+  public void testMultipleSettersPerBoundInstanceTypeFails() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface ParentComponent {",
+            "  ChildComponent.Builder childComponentBuilder();",
+            "}");
+    JavaFileObject childComponentFile =
+        JavaFileObjects.forSourceLines(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface ChildComponent {",
+            "  String s();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    ChildComponent build();",
+            "    @BindsInstance void set1(String s);",
+            "    @BindsInstance void set2(String s);",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(componentFile, childComponentFile))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            Joiner.on("\n      ")
+                .join(
+                    "java.lang.String is bound multiple times:",
+                    "@BindsInstance void test.ChildComponent.Builder.set1(String)",
+                    "@BindsInstance void test.ChildComponent.Builder.set2(String)"))
+        .in(childComponentFile)
+        .onLine(8);
   }
 
   @Test

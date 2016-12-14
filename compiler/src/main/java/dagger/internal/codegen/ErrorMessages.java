@@ -322,6 +322,8 @@ final class ErrorMessages {
       "@%s.type cannot be used with multibinding annotations";
 
   /* BindsInstance messages. */
+  static final String BINDS_INSTANCE_NOT_IN_BUILDER =
+      "@BindsInstance must annotate a method in a component builder";
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {

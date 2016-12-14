@@ -2673,6 +2673,47 @@ public class ComponentProcessorTest {
         .hadErrorContaining("test.TestModule is a module, which cannot be a component dependency");
   }
 
+  @Test
+  public void bindsInstanceInModule() {
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @BindsInstance String s() { return null; }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(testModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@BindsInstance must annotate a method in a component builder");
+  }
+
+  @Test
+  public void bindsInstanceInComponent() {
+    JavaFileObject testComponent =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @BindsInstance String s();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(testComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@BindsInstance must annotate a method in a component builder");
+  }
+
   private static Compiler daggerCompiler(Processor... extraProcessors) {
     return javac().withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors));
   }

@@ -27,9 +27,11 @@ import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.TypeNames.ASYNC_FUNCTION;
+import static dagger.internal.codegen.TypeNames.EXECUTOR;
 import static dagger.internal.codegen.TypeNames.FUTURES;
 import static dagger.internal.codegen.TypeNames.PRODUCERS;
 import static dagger.internal.codegen.TypeNames.PRODUCER_TOKEN;
+import static dagger.internal.codegen.TypeNames.RUNNABLE;
 import static dagger.internal.codegen.TypeNames.VOID_CLASS;
 import static dagger.internal.codegen.TypeNames.abstractProducerOf;
 import static dagger.internal.codegen.TypeNames.listOf;
@@ -160,13 +162,15 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     FutureTransform futureTransform = FutureTransform.create(fields, binding, asyncDependencies);
 
     computeMethodBuilder.addStatement(
-        "return $T.transformAsync($L, this, executorProvider.get())",
+        "return $T.transformAsync($L, this, this)",
         FUTURES,
         futureTransform.futureCodeBlock());
 
-    factoryBuilder.addSuperinterface(
-        ParameterizedTypeName.get(
-            ASYNC_FUNCTION, futureTransform.applyArgType(), providedTypeName));
+    factoryBuilder
+        .addSuperinterface(
+            ParameterizedTypeName.get(
+                ASYNC_FUNCTION, futureTransform.applyArgType(), providedTypeName))
+        .addSuperinterface(EXECUTOR);
 
     MethodSpec.Builder applyMethodBuilder =
         methodBuilder("apply")
@@ -191,9 +195,24 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       applyMethodBuilder.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
     }
 
+    MethodSpec.Builder executeMethodBuilder =
+        methodBuilder("execute")
+            .addModifiers(PUBLIC)
+            .addJavadoc("@deprecated this may only be called from the internal {@link #compute()}")
+            .addAnnotation(Deprecated.class)
+            .addAnnotation(Override.class)
+            .addParameter(RUNNABLE, "runnable")
+            .addStatement(
+                "assert monitor != null : $S",
+                "execute() may only be called internally from compute(); "
+                    + "if it's called explicitly, the monitor might be null")
+            .addStatement("monitor.ready()")
+            .addStatement("executorProvider.get().execute(runnable)");
+
     factoryBuilder.addMethod(constructorBuilder.build());
     factoryBuilder.addMethod(computeMethodBuilder.build());
     factoryBuilder.addMethod(applyMethodBuilder.build());
+    factoryBuilder.addMethod(executeMethodBuilder.build());
 
     // TODO(gak): write a sensible toString
     return Optional.of(factoryBuilder);

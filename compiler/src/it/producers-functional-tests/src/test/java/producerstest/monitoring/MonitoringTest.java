@@ -89,15 +89,18 @@ public final class MonitoringTest {
     inOrder.verify(callServer2Monitor).requested();
     inOrder.verify(callServer1Monitor).requested();
     inOrder.verify(requestDataMonitor).requested();
+    inOrder.verify(requestDataMonitor).ready();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");
+    inOrder.verify(callServer1Monitor).ready();
     inOrder.verify(callServer1Monitor).methodStarting();
     inOrder.verify(callServer1Monitor).methodFinished();
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
 
     server1Future.set("server 1 response");
     inOrder.verify(callServer1Monitor).succeeded("server 1 response");
+    inOrder.verify(callServer2Monitor).ready();
     inOrder.verify(callServer2Monitor).methodStarting();
     inOrder.verify(callServer2Monitor).methodFinished();
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
@@ -131,9 +134,11 @@ public final class MonitoringTest {
     inOrder.verify(callServer2Monitor).requested();
     inOrder.verify(callServer1Monitor).requested();
     inOrder.verify(requestDataMonitor).requested();
+    inOrder.verify(requestDataMonitor).ready();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");
+    inOrder.verify(callServer1Monitor).ready();
     inOrder.verify(callServer1Monitor).methodStarting();
     inOrder.verify(callServer1Monitor).methodFinished();
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
@@ -141,6 +146,7 @@ public final class MonitoringTest {
     RuntimeException cause = new RuntimeException("monkey");
     server1Future.setException(cause);
     inOrder.verify(callServer1Monitor).failed(cause);
+    inOrder.verify(callServer2Monitor).ready();
     inOrder.verify(callServer2Monitor).failed(any(Throwable.class));
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
     try {

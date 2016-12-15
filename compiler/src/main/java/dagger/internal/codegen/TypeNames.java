@@ -53,6 +53,7 @@ import dagger.releasablereferences.ReleasableReferenceManager;
 import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import javax.inject.Provider;
 
 /**
@@ -64,6 +65,7 @@ final class TypeNames {
   static final ClassName ASYNC_FUNCTION = ClassName.get(AsyncFunction.class);
   static final ClassName DELEGATE_FACTORY = ClassName.get(DelegateFactory.class);
   static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
+  static final ClassName EXECUTOR = ClassName.get(Executor.class);
   static final ClassName FACTORY = ClassName.get(Factory.class);
   static final ClassName FUTURES = ClassName.get(Futures.class);
   static final ClassName ILLEGAL_STATE_EXCEPTION = ClassName.get(IllegalStateException.class);
@@ -87,6 +89,7 @@ final class TypeNames {
       ClassName.get(ProductionComponentMonitor.Factory.class);
   static final ClassName PROVIDER = ClassName.get(Provider.class);
   static final ClassName PROVIDER_OF_LAZY = ClassName.get(ProviderOfLazy.class);
+  static final ClassName RUNNABLE = ClassName.get(Runnable.class);
   static final ClassName REFERENCE_RELEASING_PROVIDER =
       ClassName.get(ReferenceReleasingProvider.class);
   static final ClassName REFERENCE_RELEASING_PROVIDER_MANAGER =

@@ -101,6 +101,19 @@ public abstract class ProducerMonitor {
   public void requested() {}
 
   /**
+   * Called when all of the producer's inputs are available. This is called regardless of whether
+   * the inputs have succeeded or not; when the inputs have succeeded, this is called prior to
+   * scheduling the method on the executor, and if an input has failed and the producer will be
+   * skipped, this method will be called before {@link #failed(Throwable)} is called.
+   *
+   * <p>When multiple monitors are installed, the order that each monitor will call this method is
+   * unspecified, but will remain consistent throughout the course of the execution of a component.
+   *
+   * <p>This implementation is a no-op.
+   */
+  public void ready() {}
+
+  /**
    * Called when the producer method is about to start executing. This will be called from the same
    * thread as the producer method itself.
    *

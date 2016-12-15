@@ -16,6 +16,7 @@
 
 package producerstest.monitoring;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
@@ -34,7 +35,7 @@ final class ThreadModule {
 
   @Produces
   @Required
-  Object required(@Deferred Producer<Object> o, ThreadAccumulator acc) {
+  ListenableFuture<Object> required(@Deferred Producer<Object> o, ThreadAccumulator acc) {
     acc.markThread("required");
     return o.get();
   }

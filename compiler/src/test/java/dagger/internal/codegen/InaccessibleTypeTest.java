@@ -140,16 +140,22 @@ public class InaccessibleTypeTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(
-            noDepClassFile,
-            publicClassFile,
-            nonPublicClass1File,
-            nonPublicClass2File,
-            componentFile))
-        .withCompilerOptions("-Xlint:-processing", "-Xlint:rawtypes", "-Xlint:unchecked", "-Werror")
+        .that(
+            ImmutableList.of(
+                noDepClassFile,
+                publicClassFile,
+                nonPublicClass1File,
+                nonPublicClass2File,
+                componentFile))
+        .withCompilerOptions(
+            "-Xlint:-processing",
+            "-Xlint:rawtypes",
+            "-Xlint:unchecked",
+            "-Werror")
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(generatedComponent);
+        .and()
+        .generatesSources(generatedComponent);
   }
 
   @Test public void memberInjectedType() {
@@ -253,16 +259,17 @@ public class InaccessibleTypeTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(
-            noDepClassFile,
-            aClassFile,
-            bClassFile,
-            cClassFile,
-            dClassFile,
-            componentFile))
-        .withCompilerOptions("-Xlint:-processing", "-Xlint:rawtypes", "-Xlint:unchecked", "-Werror")
+        .that(
+            ImmutableList.of(
+                noDepClassFile, aClassFile, bClassFile, cClassFile, dClassFile, componentFile))
+        .withCompilerOptions(
+            "-Xlint:-processing",
+            "-Xlint:rawtypes",
+            "-Xlint:unchecked",
+            "-Werror")
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(generatedComponent);
+        .and()
+        .generatesSources(generatedComponent);
   }
 }

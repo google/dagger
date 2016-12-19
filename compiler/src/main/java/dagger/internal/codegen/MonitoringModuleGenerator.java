@@ -62,7 +62,7 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement componentElement) {
     return Optional.of(
         classBuilder(generatedTypeName)
-.addAnnotation(Module.class)
+            .addAnnotation(Module.class)
             .addModifiers(ABSTRACT)
             .addMethod(privateConstructor())
             .addMethod(setOfFactories())

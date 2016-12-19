@@ -608,10 +608,10 @@ Dagger for your component.
 
 ### Gradle Users
 
-You will need to include the `dagger-{{site.dagger.version}}.jar` in your
-application's runtime.  In order to activate code generation you will need to
-include `dagger-compiler-{{site.dagger.version}}.jar` in your build at compile
-time.
+You will need to include the `dagger-2.X.jar` in your application's runtime.  In
+order to activate code generation you will need to include
+`dagger-compiler-2.X.jar` in your build at compile time. See
+the [README][gradle-installation] for more information.
 
 In a Maven project, one would include the runtime in the dependencies section of
 your `pom.xml`, and the `dagger-compiler` artifact as a dependency of the
@@ -622,12 +622,12 @@ compiler plugin:
   <dependency>
     <groupId>{{site.dagger.groupId}}</groupId>
     <artifactId>dagger</artifactId>
-    <version>{{site.dagger.version}}</version>
+    <version>2.X</version>
   </dependency>
   <dependency>
     <groupId>{{site.dagger.groupId}}</groupId>
     <artifactId>dagger-compiler</artifactId>
-    <version>{{site.dagger.version}}</version>
+    <version>2.X</version>
     <optional>true</optional>
   </dependency>
 </dependencies>
@@ -666,6 +666,7 @@ limitations under the License.
 [DI]: http://en.wikipedia.org/wiki/Dependency_injection
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [Factory Pattern]: https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
+[gradle-installation]: https://github.com/google/dagger/blob/master/README.md#installation
 [+Gregory Kick]: https://google.com/+GregoryKick/
 [guava-optional]: https://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html

@@ -102,6 +102,19 @@ dependencies {
 If you're using a version of the Android gradle plugin below `2.2`, see
 https://bitbucket.org/hvisser/android-apt.
 
+If you're using the [Android Databinding library][databinding], you may want to
+increase the number of errors that `javac` will print. When Dagger prints an
+error, databinding compilation will halt and sometimes print more than 100
+errors, which is the default amount for `javac`. For more information, see #306.
+
+```groovy
+gradle.projectsEvaluated {
+  tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xmaxerrs" << "500" // or whatever number you want
+  }
+}
+```
+
 ### Download
 
   * 2.x (google/dagger)
@@ -143,17 +156,17 @@ the GitHub project's master branch.
     limitations under the License.
 
 
-
- [mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.google.dagger%22
- [mavenbadge]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger
- [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
- [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
- [website]: http://google.github.io/dagger
- [latestapi]: http://google.github.io/dagger/api/latest/
- [20api]: http://google.github.io/dagger/api/2.0/
- [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
- [proposal]: https://github.com/square/dagger/issues/366
- [project]: http://github.com/google/dagger/
- [community]: https://plus.google.com/communities/111933036769103367883
- [square]: http://github.com/square/dagger/
- [squarecommunity]: https://plus.google.com/communities/109244258569782858265
+[20api]: http://google.github.io/dagger/api/2.0/
+[community]: https://plus.google.com/communities/111933036769103367883
+[dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
+[databinding]: https://developer.android.com/topic/libraries/data-binding/index.html
+[gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
+[latestapi]: http://google.github.io/dagger/api/latest/
+[mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
+[mavenbadge]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger
+[mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.google.dagger%22
+[project]: http://github.com/google/dagger/
+[proposal]: https://github.com/square/dagger/issues/366
+[square]: http://github.com/square/dagger/
+[squarecommunity]: https://plus.google.com/communities/109244258569782858265
+[website]: http://google.github.io/dagger

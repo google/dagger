@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Maps.uniqueIndex;
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.ErrorMessages.tooManyBindingMethodAnnotations;
-import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.Arrays.asList;
 

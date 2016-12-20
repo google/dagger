@@ -107,23 +107,23 @@ abstract class ComponentRequirement {
     return new AutoValue_ComponentRequirement(
         Kind.DEPENDENCY,
         MoreTypes.equivalence().wrap(checkNotNull(type)),
-        Optional.<NullPolicy>empty(),
-        Optional.<Key>empty());
+        Optional.empty(),
+        Optional.empty());
   }
 
   static ComponentRequirement forModule(TypeMirror type) {
     return new AutoValue_ComponentRequirement(
         Kind.MODULE,
         MoreTypes.equivalence().wrap(checkNotNull(type)),
-        Optional.<NullPolicy>empty(),
-        Optional.<Key>empty());
+        Optional.empty(),
+        Optional.empty());
   }
 
   static ComponentRequirement forBinding(Key key, boolean nullable) {
     return new AutoValue_ComponentRequirement(
         Kind.BINDING,
         key.wrappedType(),
-        nullable ? Optional.of(NullPolicy.ALLOW) : Optional.<NullPolicy>empty(),
+        nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key));
   }
 

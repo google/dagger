@@ -78,7 +78,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -122,6 +121,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -159,7 +159,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   private final Map<BindingKey, MemberSelect> producerFromProviderMemberSelects = new HashMap<>();
   private final RequestFulfillmentRegistry requestFulfillmentRegistry;
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
-  protected Optional<ClassName> builderName = Optional.absent();
+  protected Optional<ClassName> builderName = Optional.empty();
   private final OptionalFactories optionalFactories;
   private boolean done;
 
@@ -248,7 +248,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     MemberSelect fieldSelect = componentContributionFields.get(componentRequirement);
     if (fieldSelect == null) {
       if (!builderFields.containsKey(componentRequirement)) {
-        return Optional.absent();
+        return Optional.empty();
       }
       FieldSpec componentField =
           componentField(
@@ -630,7 +630,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
 
     // TODO(gak): get rid of the field for unscoped delegated bindings
 
-    FieldSpec frameworkField = addFrameworkField(resolvedBindings, Optional.<ClassName>absent());
+    FieldSpec frameworkField = addFrameworkField(resolvedBindings, Optional.empty());
     memberSelects.put(bindingKey, localField(name, frameworkField.name));
   }
 
@@ -678,7 +678,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    * this method returns the static member select that returns the factory or no-op members
    * injector.
    */
-  private Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
+  private static Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
     BindingKey bindingKey = resolvedBindings.bindingKey();
     switch (bindingKey.kind()) {
       case CONTRIBUTION:
@@ -734,7 +734,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
       default:
         throw new AssertionError();
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   /**
@@ -885,7 +885,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
               .inverse()
               .get(subgraph.componentDescriptor());
       SubcomponentWriter subcomponent =
-          new SubcomponentWriter(this, Optional.fromNullable(componentMethodDescriptor), subgraph);
+          new SubcomponentWriter(this, Optional.ofNullable(componentMethodDescriptor), subgraph);
       component.addType(subcomponent.write().build());
     }
   }
@@ -895,7 +895,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   private void initializeFrameworkTypes() {
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     for (BindingKey bindingKey : graph.resolvedBindings().keySet()) {
-      codeBlocks.addAll(initializeFrameworkType(bindingKey).asSet());
+      initializeFrameworkType(bindingKey).ifPresent(codeBlocks::add);
     }
     List<List<CodeBlock>> partitions =
         Lists.partition(codeBlocks.build(), INITIALIZATIONS_PER_INITIALIZE_METHOD);
@@ -934,7 +934,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     // If the field is inherited or the member select is static, don't initialize.
     MemberSelect memberSelect = getMemberSelect(bindingKey);
     if (memberSelect.staticMember() || !memberSelect.owningClass().equals(name)) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     switch (bindingKey.kind()) {
@@ -973,7 +973,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                             : delegatingCodeBlock))));
       case SINGLETON_INSTANCE:
         if (!binding.scope().isPresent()) {
-          return Optional.absent();
+          return Optional.empty();
         }
         // fall through
       case CLASS_CONSTRUCTOR:
@@ -993,7 +993,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         graph.resolvedBindings().get(bindingKey).membersInjectionBinding().get();
 
     if (binding.injectionSites().isEmpty()) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     return Optional.of(

@@ -35,7 +35,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.Optional;
 import com.google.common.base.VerifyException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -64,6 +63,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -150,7 +150,9 @@ abstract class BindingGraph {
         .flatMap(graph -> graph.resolvedBindings().values().stream())
         .flatMap(bindings -> bindings.contributionBindings().stream())
         .filter(ContributionBinding::requiresModuleInstance)
-        .flatMap(bindingDeclaration -> bindingDeclaration.contributingModule().asSet().stream())
+        .map(bindingDeclaration -> bindingDeclaration.contributingModule())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
         .filter(module -> ownedModuleTypes().contains(module))
         .map(module -> ComponentRequirement.forModule(module.asType()))
         .forEach(requirements::add);
@@ -214,7 +216,7 @@ abstract class BindingGraph {
     }
 
     BindingGraph create(ComponentDescriptor componentDescriptor) {
-      return create(Optional.<Resolver>absent(), componentDescriptor);
+      return create(Optional.empty(), componentDescriptor);
     }
 
     private BindingGraph create(
@@ -455,26 +457,36 @@ abstract class BindingGraph {
             ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
                 optionalBindingDeclarationsBuilder.build();
 
-            contributionBindings.addAll(syntheticMapOfValuesBinding(requestKey).asSet());
-            contributionBindings.addAll(
+            ImmutableSet.Builder<Optional<ContributionBinding>> maybeContributionBindings =
+                ImmutableSet.builder();
+            maybeContributionBindings.add(syntheticMapOfValuesBinding(requestKey));
+            maybeContributionBindings.add(
                 syntheticMultibinding(
-                        requestKey, multibindingContributions, multibindingDeclarations)
-                    .asSet());
-            Optional<ProvisionBinding> subcomponentBuilderBinding =
-                syntheticSubcomponentBuilderBinding(subcomponentDeclarations);
-            if (subcomponentBuilderBinding.isPresent()) {
-              contributionBindings.add(subcomponentBuilderBinding.get());
-              addSubcomponentToOwningResolver(subcomponentBuilderBinding.get());
-            }
-            contributionBindings.addAll(
-                syntheticOptionalBinding(requestKey, optionalBindingDeclarations).asSet());
+                    requestKey, multibindingContributions, multibindingDeclarations));
+            syntheticSubcomponentBuilderBinding(subcomponentDeclarations)
+                .ifPresent(
+                    binding -> {
+                      contributionBindings.add(binding);
+                      addSubcomponentToOwningResolver(binding);
+                    });
+            maybeContributionBindings.add(
+                syntheticOptionalBinding(requestKey, optionalBindingDeclarations));
 
             /* If there are no bindings, add the implicit @Inject-constructed binding if there is
              * one. */
             if (contributionBindings.isEmpty()) {
-              contributionBindings.addAll(
-                  injectBindingRegistry.getOrFindProvisionBinding(requestKey).asSet());
+              maybeContributionBindings.add(
+                  injectBindingRegistry
+                      .getOrFindProvisionBinding(requestKey)
+                      .map((ContributionBinding b) -> b));
             }
+
+            maybeContributionBindings
+                .build()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(contributionBindings::add);
 
             return ResolvedBindings.forContributionBindings(
                 bindingKey,
@@ -514,12 +526,12 @@ abstract class BindingGraph {
       }
 
       private Iterable<Key> keysMatchingRequest(Key requestKey) {
-        return ImmutableSet.<Key>builder()
-            .add(requestKey)
-            .addAll(keyFactory.unwrapSetKey(requestKey, Produced.class).asSet())
-            .addAll(keyFactory.rewrapMapKey(requestKey, Producer.class, Provider.class).asSet())
-            .addAll(keyFactory.rewrapMapKey(requestKey, Provider.class, Producer.class).asSet())
-            .build();
+        ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
+        keys.add(requestKey);
+        keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);
+        keyFactory.rewrapMapKey(requestKey, Producer.class, Provider.class).ifPresent(keys::add);
+        keyFactory.rewrapMapKey(requestKey, Provider.class, Producer.class).ifPresent(keys::add);
+        return keys.build();
       }
 
       /**
@@ -536,7 +548,7 @@ abstract class BindingGraph {
                 key,
                 multibindingContributionsForValueMap(key),
                 multibindingDeclarationsForValueMap(key))
-            .transform(
+            .map(
                 syntheticMultibinding -> {
                   switch (syntheticMultibinding.bindingType()) {
                     case PROVISION:
@@ -556,10 +568,12 @@ abstract class BindingGraph {
        * multibinding contributions whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
        * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
        */
-      private FluentIterable<ContributionBinding> multibindingContributionsForValueMap(Key key) {
+      private ImmutableSet<ContributionBinding> multibindingContributionsForValueMap(Key key) {
         return keyFactory
             .implicitFrameworkMapKeys(key)
-            .transformAndConcat(this::getExplicitMultibindings);
+            .stream()
+            .flatMap(mapKey -> getExplicitMultibindings(mapKey).stream())
+            .collect(toImmutableSet());
       }
 
       /**
@@ -567,35 +581,37 @@ abstract class BindingGraph {
        * multibinding declarations whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
        * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
        */
-      private FluentIterable<MultibindingDeclaration> multibindingDeclarationsForValueMap(Key key) {
+      private ImmutableSet<MultibindingDeclaration> multibindingDeclarationsForValueMap(Key key) {
         return keyFactory
             .implicitFrameworkMapKeys(key)
-            .transformAndConcat(this::getMultibindingDeclarations);
+            .stream()
+            .flatMap(mapKey -> getMultibindingDeclarations(mapKey).stream())
+            .collect(toImmutableSet());
       }
 
       /**
        * Returns a synthetic binding that depends on individual multibinding contributions.
        *
        * <p>If there are no {@code multibindingContributions} or {@code multibindingDeclarations},
-       * returns {@link Optional#absent()}.
+       * returns {@link Optional#empty()}.
        *
        * <p>If there are production {@code multibindingContributions} or the request is for any of
        * the following types, returns a {@link ProductionBinding}.
        *
        * <ul>
-       * <li>{@code Set<Produced<T>>}
-       * <li>{@code Map<K, Producer<V>>}
-       * <li>{@code Map<K, Produced<V>>}
+       *   <li>{@code Set<Produced<T>>}
+       *   <li>{@code Map<K, Producer<V>>}
+       *   <li>{@code Map<K, Produced<V>>}
        * </ul>
        *
        * Otherwise, returns a {@link ProvisionBinding}.
        */
-      private Optional<? extends ContributionBinding> syntheticMultibinding(
+      private Optional<ContributionBinding> syntheticMultibinding(
           Key key,
           Iterable<ContributionBinding> multibindingContributions,
           Iterable<MultibindingDeclaration> multibindingDeclarations) {
         if (isEmpty(multibindingContributions) && isEmpty(multibindingDeclarations)) {
-          return Optional.absent();
+          return Optional.empty();
         } else if (multibindingsRequireProduction(multibindingContributions, key)) {
           return Optional.of(
               productionBindingFactory.syntheticMultibinding(key, multibindingContributions));
@@ -622,9 +638,9 @@ abstract class BindingGraph {
       private Optional<ProvisionBinding> syntheticSubcomponentBuilderBinding(
           ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations) {
         return subcomponentDeclarations.isEmpty()
-            ? Optional.<ProvisionBinding>absent()
+            ? Optional.empty()
             : Optional.of(
-            provisionBindingFactory.syntheticSubcomponentBuilder(subcomponentDeclarations));
+                provisionBindingFactory.syntheticSubcomponentBuilder(subcomponentDeclarations));
       }
 
       /**
@@ -632,15 +648,15 @@ abstract class BindingGraph {
        * optionalBindingDeclarations}.
        *
        * <p>If there are no bindings for the underlying key (the key for dependency requests for
-       * {@code Type}), returns a provision binding that always returns {@link Optional#absent()}.
+       * {@code Type}), returns a provision binding that always returns {@link Optional#empty()}.
        *
        * <p>If there are any production bindings for the underlying key, returns a production
        * binding. Otherwise returns a provision binding.
        */
-      private Optional<? extends ContributionBinding> syntheticOptionalBinding(
+      private Optional<ContributionBinding> syntheticOptionalBinding(
           Key key, ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations) {
         if (optionalBindingDeclarations.isEmpty()) {
-          return Optional.absent();
+          return Optional.empty();
         }
         ResolvedBindings underlyingKeyBindings =
             lookUpBindings(contribution(keyFactory.unwrapOptional(key).get()));
@@ -771,7 +787,7 @@ abstract class BindingGraph {
             }
           }
           // If a @Reusable binding was not resolved in any ancestor, resolve it here.
-          return Optional.absent();
+          return Optional.empty();
         }
 
         for (Resolver requestResolver : getResolverLineage().reverse()) {
@@ -791,7 +807,7 @@ abstract class BindingGraph {
             }
           }
         }
-        return Optional.absent();
+        return Optional.empty();
       }
 
       /** Returns the resolver lineage from parent to child. */
@@ -902,13 +918,13 @@ abstract class BindingGraph {
 
       private Optional<ResolvedBindings> getPreviouslyResolvedBindings(
           final BindingKey bindingKey) {
-        Optional<ResolvedBindings> result = Optional.fromNullable(resolvedBindings.get(bindingKey));
+        Optional<ResolvedBindings> result = Optional.ofNullable(resolvedBindings.get(bindingKey));
         if (result.isPresent()) {
           return result;
         } else if (parentResolver.isPresent()) {
           return parentResolver.get().getPreviouslyResolvedBindings(bindingKey);
         } else {
-          return Optional.absent();
+          return Optional.empty();
         }
       }
 
@@ -1008,7 +1024,7 @@ abstract class BindingGraph {
          * from subcomponents.
          *
          * @throws IllegalArgumentException if {@link #getPreviouslyResolvedBindings(BindingKey)} is
-         *     absent
+         *     empty
          */
         boolean dependsOnLocalBindings(BindingKey bindingKey) {
           checkArgument(

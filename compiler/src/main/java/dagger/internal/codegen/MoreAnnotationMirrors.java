@@ -18,13 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
-import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.toImmutableList;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Name;
 import javax.lang.model.type.TypeMirror;
@@ -43,9 +42,7 @@ final class MoreAnnotationMirrors {
    */
   static Optional<Equivalence.Wrapper<AnnotationMirror>> wrapOptionalInEquivalence(
       Optional<AnnotationMirror> optional) {
-    return optional.isPresent()
-        ? Optional.of(AnnotationMirrors.equivalence().wrap(optional.get()))
-        : Optional.<Equivalence.Wrapper<AnnotationMirror>>absent();
+    return optional.map(AnnotationMirrors.equivalence()::wrap);
   }
 
   /**
@@ -54,9 +51,7 @@ final class MoreAnnotationMirrors {
    */
   static Optional<AnnotationMirror> unwrapOptionalEquivalence(
       Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedOptional) {
-    return wrappedOptional.isPresent()
-        ? Optional.of(wrappedOptional.get().get())
-        : Optional.<AnnotationMirror>absent();
+    return wrappedOptional.map(Equivalence.Wrapper::get);
   }
 
   static Name simpleName(AnnotationMirror annotationMirror) {
@@ -69,7 +64,7 @@ final class MoreAnnotationMirrors {
    * @throws IllegalArgumentException unless that member represents a single type
    */
   static TypeMirror getTypeValue(AnnotationMirror annotation, String name) {
-    return asType(getAnnotationValue(annotation, name));
+    return MoreAnnotationValues.asType(getAnnotationValue(annotation, name));
   }
 
   /**

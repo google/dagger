@@ -17,9 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
-import static com.google.auto.common.MoreElements.hasModifiers;
-import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.common.collect.Lists.asList;
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
@@ -28,27 +26,16 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.Provides;
 import dagger.producers.Produces;
-import java.lang.annotation.Annotation;
-import java.util.Comparator;
 import java.util.stream.Collector;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleElementVisitor6;
 import javax.lang.model.util.Types;
 
 /**
@@ -132,94 +119,6 @@ final class Util {
         throw new AssertionError(
             "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
     }
-  }
-
-  static ImmutableSet<ExecutableElement> getUnimplementedMethods(
-      Elements elements, Types types, TypeElement type) {
-    return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))
-        .filter(hasModifiers(ABSTRACT))
-        .toSet();
-  }
-
-  /** A function that returns the input as a {@link DeclaredType}. */
-  static final Function<TypeElement, DeclaredType> AS_DECLARED_TYPE =
-      typeElement -> asDeclared(typeElement.asType());
-
-  /**
-   * A visitor that returns the input or the closest enclosing element that is a
-   * {@link TypeElement}.
-   */
-  static final ElementVisitor<TypeElement, Void> ENCLOSING_TYPE_ELEMENT =
-      new SimpleElementVisitor6<TypeElement, Void>() {
-        @Override
-        protected TypeElement defaultAction(Element e, Void p) {
-          return visit(e.getEnclosingElement());
-        }
-
-        @Override
-        public TypeElement visitType(TypeElement e, Void p) {
-          return e;
-        }
-      };
-
-  /**
-   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose
-   * {@linkplain AnnotationMirror#getAnnotationType() annotation type} has the same canonical name
-   * as any of that of {@code annotationClasses}.
-   */
-  // TODO(dpb): Move to MoreElements.
-  static boolean isAnyAnnotationPresent(
-      Element element, Iterable<? extends Class<? extends Annotation>> annotationClasses) {
-    for (Class<? extends Annotation> annotation : annotationClasses) {
-      if (MoreElements.isAnnotationPresent(element, annotation)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @SafeVarargs
-  static boolean isAnyAnnotationPresent(
-      Element element,
-      Class<? extends Annotation> first,
-      Class<? extends Annotation>... otherAnnotations) {
-    return isAnyAnnotationPresent(element, asList(first, otherAnnotations));
-  }
-
-  /**
-   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose {@linkplain
-   * AnnotationMirror#getAnnotationType() annotation type} is equivalent to {@code annotationType}.
-   */
-  // TODO(dpb): Move to MoreElements.
-  static boolean isAnnotationPresent(Element element, TypeMirror annotationType) {
-    return element
-        .getAnnotationMirrors()
-        .stream()
-        .map(AnnotationMirror::getAnnotationType)
-        .anyMatch(candidate -> MoreTypes.equivalence().equivalent(candidate, annotationType));
-  }
-
-  /**
-   * The elements in {@code elements} that are annotated with an annotation of type
-   * {@code annotation}.
-   */
-  static <E extends Element> FluentIterable<E> elementsWithAnnotation(
-      Iterable<E> elements, final Class<? extends Annotation> annotation) {
-    return FluentIterable.from(elements)
-        .filter(element -> MoreElements.isAnnotationPresent(element, annotation));
-  }
-
-  /** A function that returns the simple name of an element. */
-  static final Function<Element, String> ELEMENT_SIMPLE_NAME =
-      element -> element.getSimpleName().toString();
-
-  /**
-   * A {@link Comparator} that puts absent {@link Optional}s before present ones, and compares
-   * present {@link Optional}s by their values.
-   */
-  static <C extends Comparable<C>> Comparator<Optional<C>> optionalComparator() {
-    return Comparator.comparing((Optional<C> optional) -> optional.isPresent())
-        .thenComparing(Optional::get);
   }
 
   /**

@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Util.getUnimplementedMethods;
+import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;

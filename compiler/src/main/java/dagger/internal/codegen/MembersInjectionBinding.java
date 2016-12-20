@@ -17,17 +17,16 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.auto.common.MoreTypes.nonObjectSuperclass;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.DaggerTypes.nonObjectSuperclass;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -37,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -72,7 +72,7 @@ abstract class MembersInjectionBinding extends Binding {
 
   @Override
   Optional<TypeElement> contributingModule() {
-    return Optional.absent();
+    return Optional.empty();
   }
 
   /** The set of individual sites where {@link Inject} is applied. */
@@ -193,7 +193,7 @@ abstract class MembersInjectionBinding extends Binding {
 
       Optional<Key> parentKey =
           nonObjectSuperclass(types, elements, declaredType)
-              .transform(keyFactory::forMembersInjectedType);
+              .map(keyFactory::forMembersInjectedType);
 
       Key key = keyFactory.forMembersInjectedType(declaredType);
       TypeElement typeElement = MoreElements.asType(declaredType.asElement());
@@ -203,8 +203,8 @@ abstract class MembersInjectionBinding extends Binding {
           typeElement,
           hasNonDefaultTypeParameters(typeElement, key.type(), types)
               ? Optional.of(
-                  forInjectedType(MoreTypes.asDeclared(typeElement.asType()), Optional.absent()))
-              : Optional.absent(),
+                  forInjectedType(MoreTypes.asDeclared(typeElement.asType()), Optional.empty()))
+              : Optional.empty(),
           injectionSites,
           parentKey);
     }
@@ -277,7 +277,7 @@ abstract class MembersInjectionBinding extends Binding {
     }
 
     private final ElementVisitor<Optional<InjectionSite>, DeclaredType> injectionSiteVisitor =
-        new ElementKindVisitor6<Optional<InjectionSite>, DeclaredType>(Optional.absent()) {
+        new ElementKindVisitor6<Optional<InjectionSite>, DeclaredType>(Optional.empty()) {
           @Override
           public Optional<InjectionSite> visitExecutableAsMethod(
               ExecutableElement e, DeclaredType type) {
@@ -291,7 +291,7 @@ abstract class MembersInjectionBinding extends Binding {
                     && !e.getModifiers().contains(PRIVATE)
                     && !e.getModifiers().contains(STATIC))
                 ? Optional.of(injectionSiteForInjectField(e, type))
-                : Optional.absent();
+                : Optional.empty();
           }
         };
   }

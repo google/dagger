@@ -27,7 +27,6 @@ import static dagger.internal.codegen.Key.isValidImplicitProvisionKey;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsOptionalOf;
 import dagger.Module;
@@ -65,7 +64,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
       ValidationReport.Builder<ExecutableElement> builder, TypeMirror keyType) {
     super.checkKeyType(builder, keyType);
     if (isValidImplicitProvisionKey(
-            FluentIterable.from(getQualifiers(builder.getSubject())).first(), keyType, types)
+            getQualifiers(builder.getSubject()).stream().findFirst(), keyType, types)
         && !injectedConstructors(MoreElements.asType(MoreTypes.asDeclared(keyType).asElement()))
             .isEmpty()) {
       builder.addError(BINDS_OPTIONAL_OF_METHOD_RETURNS_IMPLICITLY_PROVIDED_TYPE);

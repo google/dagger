@@ -29,7 +29,6 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoAnnotation;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
@@ -38,6 +37,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;

@@ -23,7 +23,6 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASA
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
-import static dagger.internal.codegen.Util.AS_DECLARED_TYPE;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
@@ -114,7 +113,9 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
       case EXECUTABLE:
         return methodSignatureFormatter.format(
             MoreElements.asExecutable(bindingElement),
-            bindingDeclaration.contributingModule().transform(AS_DECLARED_TYPE));
+            bindingDeclaration
+                .contributingModule()
+                .map(module -> MoreTypes.asDeclared(module.asType())));
       case DECLARED:
         return stripCommonTypePrefixes(bindingElement.asType().toString());
       default:

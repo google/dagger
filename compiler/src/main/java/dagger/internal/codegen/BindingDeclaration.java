@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.Util.ENCLOSING_TYPE_ELEMENT;
+import static dagger.internal.codegen.DaggerElements.ENCLOSING_TYPE_ELEMENT;
 
-import com.google.common.base.Optional;
 import dagger.internal.codegen.Key.HasKey;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -33,17 +33,17 @@ abstract class BindingDeclaration implements HasKey {
   abstract Optional<? extends Element> bindingElement();
 
   /**
-   * The type enclosing the {@link #bindingElement()}, or {@link Optional#absent()} if {@link
-   * #bindingElement()} is absent.
+   * The type enclosing the {@link #bindingElement()}, or {@link Optional#empty()} if {@link
+   * #bindingElement()} is empty.
    */
   Optional<TypeElement> bindingTypeElement() {
-    return bindingElement().transform(element -> element.accept(ENCLOSING_TYPE_ELEMENT, null));
+    return bindingElement().map(element -> element.accept(ENCLOSING_TYPE_ELEMENT, null));
   }
   
   /**
    * The installed module class that contributed the {@link #bindingElement()}. May be a subclass of
    * the class that contains {@link #bindingElement()}. Absent if {@link #bindingElement()} is
-   * absent.
+   * empty.
    */
   abstract Optional<TypeElement> contributingModule();
 }

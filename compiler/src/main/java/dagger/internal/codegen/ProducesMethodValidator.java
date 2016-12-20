@@ -27,11 +27,11 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
@@ -121,13 +121,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
     return PRODUCES_METHOD_SET_VALUES_RETURN_SET;
   }
 
-  private Optional<TypeMirror> unwrapListenableFuture(
+  private static Optional<TypeMirror> unwrapListenableFuture(
       ValidationReport.Builder<ExecutableElement> reportBuilder, TypeMirror type) {
     if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
       DeclaredType declaredType = MoreTypes.asDeclared(type);
       if (declaredType.getTypeArguments().isEmpty()) {
         reportBuilder.addError(PRODUCES_METHOD_RAW_FUTURE);
-        return Optional.absent();
+        return Optional.empty();
       } else {
         return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));
       }

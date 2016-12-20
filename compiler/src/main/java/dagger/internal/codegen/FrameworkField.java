@@ -18,10 +18,10 @@ package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Optional;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
@@ -69,7 +69,8 @@ abstract class FrameworkField {
    */
   static FrameworkField forResolvedBindings(
       ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
-    return create(frameworkClass.or(ClassName.get(resolvedBindings.frameworkClass())),
+    return create(
+        frameworkClass.orElse(ClassName.get(resolvedBindings.frameworkClass())),
         TypeName.get(fieldValueType(resolvedBindings)),
         frameworkFieldName(resolvedBindings));
   }

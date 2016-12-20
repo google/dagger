@@ -20,17 +20,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.producers.Producer;
-import java.util.Set;
+import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.CheckReturnValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -55,15 +56,15 @@ abstract class ProductionBinding extends ContributionBinding {
 
   @Override
   Optional<ProductionBinding> unresolved() {
-    return Optional.absent();
+    return Optional.empty();
   }
 
   @Override
-  Set<DependencyRequest> implicitDependencies() {
-    return new ImmutableSet.Builder<DependencyRequest>()
-        .addAll(executorRequest().asSet())
-        .addAll(monitorRequest().asSet())
-        .build();
+  ImmutableSet<DependencyRequest> implicitDependencies() {
+    return Stream.of(executorRequest(), monitorRequest())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(toImmutableSet());
   }
 
   /** What kind of object this produces method returns. */

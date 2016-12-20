@@ -41,7 +41,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -61,6 +60,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Provider;
@@ -95,10 +95,10 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, MembersInjectionBinding binding) {
     // Empty members injection bindings are special and don't need source files.
     if (binding.injectionSites().isEmpty()) {
-      return Optional.absent();
+      return Optional.empty();
     }
     if (!injectValidator.isValidType(binding.key().type())) {
-      return Optional.absent();
+      return Optional.empty();
     }
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkState(

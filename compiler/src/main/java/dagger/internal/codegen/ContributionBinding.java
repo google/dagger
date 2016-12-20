@@ -28,7 +28,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
@@ -39,6 +38,7 @@ import dagger.MapKey;
 import dagger.Provides;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.producers.Produces;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -255,8 +255,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
             mapBindings,
             mapBinding -> {
               AnnotationMirror mapKey = mapBinding.mapKey().get();
-              Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
-              return unwrappedValue.isPresent() ? unwrappedValue.get().getValue() : mapKey;
+              return unwrapValue(mapKey).map(AnnotationValue::getValue).orElse(mapKey);
             }));
   }
 

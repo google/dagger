@@ -47,8 +47,8 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -77,7 +77,7 @@ final class InjectValidator {
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
 
   InjectValidator(Types types, Elements elements, CompilerOptions compilerOptions) {
-    this(types, elements, compilerOptions, Optional.<Diagnostic.Kind>absent());
+    this(types, elements, compilerOptions, Optional.empty());
   }
 
   private InjectValidator(
@@ -131,7 +131,8 @@ final class InjectValidator {
     if (throwsCheckedExceptions(constructorElement)) {
       builder.addItem(
           CHECKED_EXCEPTIONS_ON_CONSTRUCTORS,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.privateMemberValidationKind()),
           constructorElement);
     }
 
@@ -142,7 +143,8 @@ final class InjectValidator {
     if (!Accessibility.isElementAccessibleFromOwnPackage(enclosingElement)) {
       builder.addItem(
           INJECT_INTO_PRIVATE_CLASS,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.privateMemberValidationKind()),
           constructorElement);
     }
 
@@ -182,14 +184,16 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           PRIVATE_INJECT_FIELD,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.privateMemberValidationKind()),
           fieldElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           STATIC_INJECT_FIELD,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.staticMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.staticMemberValidationKind()),
           fieldElement);
     }
 
@@ -217,14 +221,16 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           PRIVATE_INJECT_METHOD,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.privateMemberValidationKind()),
           methodElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           STATIC_INJECT_METHOD,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.staticMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.staticMemberValidationKind()),
           methodElement);
     }
 
@@ -275,7 +281,8 @@ final class InjectValidator {
     if (hasInjectedMembers && !isElementAccessibleFromOwnPackage(typeElement)) {
       builder.addItem(
           INJECT_INTO_PRIVATE_CLASS,
-          privateAndStaticInjectionDiagnosticKind.or(compilerOptions.privateMemberValidationKind()),
+          privateAndStaticInjectionDiagnosticKind.orElse(
+              compilerOptions.privateMemberValidationKind()),
           typeElement);
     }
     TypeMirror superclass = typeElement.getSuperclass();

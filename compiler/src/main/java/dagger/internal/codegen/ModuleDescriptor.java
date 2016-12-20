@@ -16,12 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -30,9 +30,7 @@ import static javax.lang.model.util.ElementFilter.typesIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Binds;
@@ -46,6 +44,7 @@ import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -97,7 +96,7 @@ abstract class ModuleDescriptor {
       }
       checkArgument(
           kinds.size() <= 1, "%s cannot be annotated with more than one of %s", element, kinds);
-      return Optional.fromNullable(Iterables.getOnlyElement(kinds, null));
+      return kinds.stream().findFirst();
     }
 
     Kind(

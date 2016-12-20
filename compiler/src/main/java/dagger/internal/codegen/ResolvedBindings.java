@@ -19,9 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -31,6 +31,8 @@ import com.google.common.collect.Multimap;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.Key.HasKey;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * The collection of bindings that have been resolved for a binding key. For valid graphs, contains
@@ -144,7 +146,9 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
         return ownedContributionBindings();
 
       case MEMBERS_INJECTION:
-        return ImmutableSet.copyOf(ownedMembersInjectionBinding().asSet());
+        return ownedMembersInjectionBinding().isPresent()
+            ? ImmutableSet.of(ownedMembersInjectionBinding().get())
+            : ImmutableSet.of();
 
       default:
         throw new AssertionError(bindingKey());
@@ -185,7 +189,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
     ImmutableSet<MembersInjectionBinding> membersInjectionBindings =
         FluentIterable.from(allMembersInjectionBindings().values()).toSet();
     return membersInjectionBindings.isEmpty()
-        ? Optional.<MembersInjectionBinding>absent()
+        ? Optional.empty()
         : Optional.of(Iterables.getOnlyElement(membersInjectionBindings));
   }
 
@@ -194,7 +198,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    * are contribution bindings.
    */
   Optional<MembersInjectionBinding> ownedMembersInjectionBinding() {
-    return Optional.fromNullable(allMembersInjectionBindings().get(owningComponent()));
+    return Optional.ofNullable(allMembersInjectionBindings().get(owningComponent()));
   }
 
   /** Creates a {@link ResolvedBindings} for contribution bindings. */
@@ -323,19 +327,15 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    * @throws IllegalArgumentException if the bindings must be managed in more than one package
    */
   Optional<String> bindingPackage() {
-    ImmutableSet.Builder<String> bindingPackagesBuilder = ImmutableSet.builder();
-    for (Binding binding : bindings()) {
-      bindingPackagesBuilder.addAll(binding.bindingPackage().asSet());
-    }
-    ImmutableSet<String> bindingPackages = bindingPackagesBuilder.build();
-    switch (bindingPackages.size()) {
-      case 0:
-        return Optional.absent();
-      case 1:
-        return Optional.of(bindingPackages.iterator().next());
-      default:
-        throw new IllegalArgumentException();
-    }
+    Set<String> bindingPackages =
+        bindings()
+            .stream()
+            .map(Binding::bindingPackage)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(toSet());
+    checkArgument(bindingPackages.size() <= 1);
+    return bindingPackages.stream().findFirst();
   }
 
   /**

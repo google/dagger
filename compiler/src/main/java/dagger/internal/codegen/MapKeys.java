@@ -23,11 +23,11 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.MapKey;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -54,7 +54,7 @@ final class MapKeys {
   static Optional<AnnotationMirror> getMapKey(Element bindingElement) {
     ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(bindingElement);
     return mapKeys.isEmpty()
-        ? Optional.<AnnotationMirror>absent()
+        ? Optional.empty()
         : Optional.<AnnotationMirror>of(getOnlyElement(mapKeys));
   }
 
@@ -78,7 +78,7 @@ final class MapKeys {
         mapKeyAnnotation != null, "%s is not annotated with @MapKey", mapKey.getAnnotationType());
     return mapKeyAnnotation.unwrapValue()
         ? Optional.of(getOnlyElement(getAnnotationValuesWithDefaults(mapKey).values()))
-        : Optional.<AnnotationValue>absent();
+        : Optional.empty();
   }
 
   /**

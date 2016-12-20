@@ -23,7 +23,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +35,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
@@ -223,7 +223,7 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
     Set<String> packages = nonPublicPackageUse(key().type());
     switch (packages.size()) {
       case 0:
-        return Optional.absent();
+        return Optional.empty();
       case 1:
         return Optional.of(packages.iterator().next());
       default:
@@ -283,7 +283,7 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
    * The scope of this binding.
    */
   Optional<Scope> scope() {
-    return Optional.absent();
+    return Optional.empty();
   }
 
   // TODO(sameb): Remove the TypeElement parameter and pull it from the TypeMirror.

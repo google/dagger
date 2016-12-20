@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
@@ -26,8 +25,9 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
-import static dagger.internal.codegen.Util.getUnimplementedMethods;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -36,7 +36,6 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +58,7 @@ import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -109,7 +109,7 @@ abstract class ComponentDescriptor {
       }
       checkArgument(
           kinds.size() <= 1, "%s cannot be annotated with more than one of %s", element, kinds);
-      return Optional.fromNullable(getOnlyElement(kinds, null));
+      return Optional.ofNullable(getOnlyElement(kinds, null));
     }
 
     /**
@@ -128,7 +128,7 @@ abstract class ComponentDescriptor {
       }
       checkArgument(
           kinds.size() <= 1, "%s cannot be annotated with more than one of %s", element, kinds);
-      return Optional.fromNullable(getOnlyElement(kinds, null));
+      return Optional.ofNullable(getOnlyElement(kinds, null));
     }
 
     Kind(
@@ -386,7 +386,7 @@ abstract class ComponentDescriptor {
 
     static ComponentMethodDescriptor forSubcomponent(
         ComponentMethodKind kind, ExecutableElement methodElement) {
-      return create(kind, Optional.<DependencyRequest>absent(), methodElement);
+      return create(kind, Optional.empty(), methodElement);
     }
 
     static ComponentMethodDescriptor forSubcomponentBuilder(
@@ -470,7 +470,7 @@ abstract class ComponentDescriptor {
           kind.isPresent() && kind.get().isTopLevel(),
           "%s must be annotated with @Component or @ProductionComponent",
           componentDefinitionType);
-      return create(componentDefinitionType, kind.get(), Optional.<Kind>absent());
+      return create(componentDefinitionType, kind.get(), Optional.empty());
     }
 
     private ComponentDescriptor create(
@@ -564,7 +564,7 @@ abstract class ComponentDescriptor {
           ? ImmutableList.<DeclaredType>of()
           : enclosedBuilders(componentDefinitionType, kind.builderAnnotationType());
       Optional<DeclaredType> builderType =
-          Optional.fromNullable(getOnlyElement(enclosedBuilders, null));
+          Optional.ofNullable(getOnlyElement(enclosedBuilders, null));
       Optional<BuilderSpec> builderSpec = createBuilderSpec(builderType);
 
       ImmutableSet<Scope> scopes = Scope.scopesOf(componentDefinitionType);
@@ -664,7 +664,7 @@ abstract class ComponentDescriptor {
 
     private Optional<BuilderSpec> createBuilderSpec(Optional<DeclaredType> builderType) {
       if (!builderType.isPresent()) {
-        return Optional.absent();
+        return Optional.empty();
       }
       TypeElement element = MoreTypes.asTypeElement(builderType.get());
       ImmutableSet<ExecutableElement> methods = getUnimplementedMethods(elements, types, element);

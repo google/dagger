@@ -20,7 +20,6 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
-import static com.google.common.base.Optional.presentInstances;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -29,6 +28,8 @@ import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.internal.codegen.Optionals.firstPresent;
+import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -38,10 +39,8 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -58,8 +57,10 @@ import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
 import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 import javax.inject.Provider;
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
@@ -226,9 +227,7 @@ abstract class Key {
    * a {@link #multibindingContributionIdentifier()}.
    */
   Key withoutMultibindingContributionIdentifier() {
-    return toBuilder()
-        .multibindingContributionIdentifier(Optional.<MultibindingContributionIdentifier>absent())
-        .build();
+    return toBuilder().multibindingContributionIdentifier(Optional.empty()).build();
   }
 
   boolean isValidMembersInjectionKey() {
@@ -296,7 +295,7 @@ abstract class Key {
   public String toString() {
     return Joiner.on(' ')
         .skipNulls()
-        .join(qualifier().orNull(), type(), multibindingContributionIdentifier().orNull());
+        .join(qualifier().orElse(null), type(), multibindingContributionIdentifier().orElse(null));
   }
 
   /**
@@ -383,13 +382,13 @@ abstract class Key {
     /** Returns the key bound by a {@link Binds} method. */
     Key forBindsMethod(ExecutableElement method, TypeElement contributingModule) {
       checkArgument(isAnnotationPresent(method, Binds.class));
-      return forBindingMethod(method, contributingModule, Optional.<TypeElement>absent());
+      return forBindingMethod(method, contributingModule, Optional.empty());
     }
 
     /** Returns the base key bound by a {@link BindsOptionalOf} method. */
     Key forBindsOptionalOfMethod(ExecutableElement method, TypeElement contributingModule) {
       checkArgument(isAnnotationPresent(method, BindsOptionalOf.class));
-      return forBindingMethod(method, contributingModule, Optional.<TypeElement>absent());
+      return forBindingMethod(method, contributingModule, Optional.empty());
     }
 
     private Key forBindingMethod(
@@ -539,11 +538,12 @@ abstract class Key {
      * for {@code Map<K, Provider<V>>} and {@code Map<K, Producer<V>>} (if Dagger-Producers is on
      * the classpath).
      */
-    FluentIterable<Key> implicitFrameworkMapKeys(Key requestKey) {
-      return FluentIterable.from(
-          presentInstances(
-              ImmutableList.of(
-                  implicitMapProviderKeyFrom(requestKey), implicitMapProducerKeyFrom(requestKey))));
+    ImmutableSet<Key> implicitFrameworkMapKeys(Key requestKey) {
+      return Stream.of(
+              implicitMapProviderKeyFrom(requestKey), implicitMapProducerKeyFrom(requestKey))
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(toImmutableSet());
     }
 
     /**
@@ -562,8 +562,9 @@ abstract class Key {
      * {@code Map<K, Producer<V>>} will be returned.
      */
     Optional<Key> implicitMapProducerKeyFrom(Key possibleMapKey) {
-      return rewrapMapKey(possibleMapKey, Produced.class, Producer.class)
-          .or(wrapMapKey(possibleMapKey, Producer.class));
+      return firstPresent(
+          rewrapMapKey(possibleMapKey, Produced.class, Producer.class),
+          wrapMapKey(possibleMapKey, Producer.class));
     }
 
     /**
@@ -603,9 +604,9 @@ abstract class Key {
     /**
      * If {@code key}'s type is {@code Map<K, CurrentWrappingClass<Bar>>}, returns a key with type
      * {@code Map<K, NewWrappingClass<Bar>>} with the same qualifier. Otherwise returns {@link
-     * Optional#absent()}.
+     * Optional#empty()}.
      *
-     * <p>Returns {@link Optional#absent()} if {@code newWrappingClass} is not in the classpath.
+     * <p>Returns {@link Optional#empty()} if {@code newWrappingClass} is not in the classpath.
      *
      * @throws IllegalArgumentException if {@code newWrappingClass} is the same as {@code
      *     currentWrappingClass}
@@ -620,7 +621,7 @@ abstract class Key {
           if (wrappingElement == null) {
             // This target might not be compiled with Producers, so wrappingClass might not have an
             // associated element.
-            return Optional.absent();
+            return Optional.empty();
           }
           DeclaredType wrappedValueType =
               types.getDeclaredType(
@@ -629,15 +630,15 @@ abstract class Key {
               possibleMapKey.toBuilder().type(mapOf(mapType.keyType(), wrappedValueType)).build());
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
 
     /**
      * If {@code key}'s type is {@code Map<K, Foo>} and {@code Foo} is not {@code WrappingClass
      * <Bar>}, returns a key with type {@code Map<K, WrappingClass<Foo>>} with the same qualifier.
-     * Otherwise returns {@link Optional#absent()}.
+     * Otherwise returns {@link Optional#empty()}.
      *
-     * <p>Returns {@link Optional#absent()} if {@code WrappingClass} is not in the classpath.
+     * <p>Returns {@link Optional#empty()} if {@code WrappingClass} is not in the classpath.
      */
     private Optional<Key> wrapMapKey(Key possibleMapKey, Class<?> wrappingClass) {
       if (MapType.isMap(possibleMapKey)) {
@@ -647,7 +648,7 @@ abstract class Key {
           if (wrappingElement == null) {
             // This target might not be compiled with Producers, so wrappingClass might not have an
             // associated element.
-            return Optional.absent();
+            return Optional.empty();
           }
           DeclaredType wrappedValueType =
               types.getDeclaredType(wrappingElement, mapType.valueType());
@@ -655,12 +656,12 @@ abstract class Key {
               possibleMapKey.toBuilder().type(mapOf(mapType.keyType(), wrappedValueType)).build());
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
 
     /**
      * If {@code key}'s type is {@code Set<WrappingClass<Bar>>}, returns a key with type {@code Set
-     * <Bar>} with the same qualifier. Otherwise returns {@link Optional#absent()}.
+     * <Bar>} with the same qualifier. Otherwise returns {@link Optional#empty()}.
      */
     Optional<Key> unwrapSetKey(Key key, Class<?> wrappingClass) {
       if (SetType.isSet(key)) {
@@ -670,7 +671,7 @@ abstract class Key {
               key.toBuilder().type(setOf(setType.unwrappedElementType(wrappingClass))).build());
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
 
     /**
@@ -680,7 +681,7 @@ abstract class Key {
      */
     Optional<Key> unwrapOptional(Key key) {
       if (!OptionalType.isOptional(key)) {
-        return Optional.absent();
+        return Optional.empty();
       }
       TypeMirror underlyingType =
           DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).type();
@@ -712,8 +713,7 @@ abstract class Key {
     /** Returns a key for a {@code Set<TypedReleasableReferenceManager<metadataType>}. */
     Key forSetOfTypedReleasableReferenceManagers(DeclaredType metadataType) {
       return forQualifiedType(
-          Optional.<AnnotationMirror>absent(),
-          setOf(typedReleasableReferenceManagerOf(metadataType)));
+          Optional.empty(), setOf(typedReleasableReferenceManagerOf(metadataType)));
     }
 
     private AnnotationMirror forReleasableReferencesAnnotationMirror(Scope scope) {

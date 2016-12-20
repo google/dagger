@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
@@ -36,6 +35,8 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_INJECT_WILDCARD_TYPE;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
@@ -62,7 +63,6 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
-import static dagger.internal.codegen.Util.isAnnotationPresent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -73,7 +73,6 @@ import static java.util.stream.Collectors.toSet;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -92,8 +91,6 @@ import dagger.Lazy;
 import dagger.MapKey;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
-import dagger.internal.codegen.ComponentTreeTraverser.BindingGraphTraverser;
-import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -106,6 +103,7 @@ import java.util.Formatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -458,21 +456,25 @@ final class BindingGraphValidator {
         scopedDependencyStack.pop();
       } else {
         // TODO(beder): transitively check scopes of production components too.
-        Optional<AnnotationMirror> componentAnnotation =
-            getAnnotationMirror(dependency, Component.class);
-        if (componentAnnotation.isPresent()) {
-          ImmutableSet<TypeElement> scopedDependencies = scopedTypesIn(
-              MoreTypes.asTypeElements(getComponentDependencies(componentAnnotation.get())));
-          if (scopedDependencies.size() == 1) {
-            // empty can be ignored (base-case), and > 1 is a different error reported separately.
-            scopeStack.push(scopes);
-            scopedDependencyStack.push(dependency);
-            validateDependencyScopeHierarchy(
-                graph, getOnlyElement(scopedDependencies), scopeStack, scopedDependencyStack);
-            scopedDependencyStack.pop();
-            scopeStack.pop();
-          }
-        } // else: we skip component dependencies which are not components
+        getAnnotationMirror(dependency, Component.class)
+            .ifPresent(
+                componentAnnotation -> {
+                  ImmutableSet<TypeElement> scopedDependencies =
+                      scopedTypesIn(
+                          MoreTypes.asTypeElements(getComponentDependencies(componentAnnotation)));
+                  if (scopedDependencies.size() == 1) {
+                    // empty can be ignored (base-case), and > 1 is a separately-reported error.
+                    scopeStack.push(scopes);
+                    scopedDependencyStack.push(dependency);
+                    validateDependencyScopeHierarchy(
+                        graph,
+                        getOnlyElement(scopedDependencies),
+                        scopeStack,
+                        scopedDependencyStack);
+                    scopedDependencyStack.pop();
+                    scopeStack.pop();
+                  }
+                }); // else: we skip component dependencies which are not components
       }
     }
 
@@ -917,7 +919,7 @@ final class BindingGraphValidator {
 
         Optional<DeclaredType> metadataType;
         if (isTypeOf(ReleasableReferenceManager.class, key.type())) {
-          metadataType = Optional.absent();
+          metadataType = Optional.empty();
         } else if (isTypeOf(TypedReleasableReferenceManager.class, key.type())) {
           List<? extends TypeMirror> typeArguments =
               MoreTypes.asDeclared(key.type()).getTypeArguments();

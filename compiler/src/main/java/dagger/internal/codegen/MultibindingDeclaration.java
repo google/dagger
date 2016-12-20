@@ -23,7 +23,6 @@ import static javax.lang.model.element.ElementKind.INTERFACE;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Multibindings;
@@ -33,6 +32,7 @@ import dagger.multibindings.Multibinds;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Provider;
 import javax.lang.model.element.Element;

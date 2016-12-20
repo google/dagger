@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueCannotReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueNotAScope;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;

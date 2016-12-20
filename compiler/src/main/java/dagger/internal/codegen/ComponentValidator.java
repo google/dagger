@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
@@ -24,6 +23,8 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.validateComponentDependencies;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.ErrorMessages.COMPONENT_ANNOTATED_REUSABLE;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
@@ -33,7 +34,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -48,6 +48,7 @@ import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -301,7 +302,7 @@ final class ComponentValidator {
               new SimpleTypeVisitor6<Optional<TypeElement>, Void>() {
                 @Override
                 protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
-                  return Optional.absent();
+                  return Optional.empty();
                 }
 
                 @Override
@@ -312,7 +313,7 @@ final class ComponentValidator {
                       return Optional.of(MoreTypes.asTypeElement(t));
                     }
                   }
-                  return Optional.absent();
+                  return Optional.empty();
                 }
               },
               null);
@@ -367,25 +368,13 @@ final class ComponentValidator {
     }
   }
 
-  private Optional<AnnotationMirror> checkForAnnotations(
+  private static Optional<AnnotationMirror> checkForAnnotations(
       TypeMirror type, final Set<? extends Class<? extends Annotation>> annotations) {
     return type.accept(
-        new SimpleTypeVisitor6<Optional<AnnotationMirror>, Void>() {
-          @Override
-          protected Optional<AnnotationMirror> defaultAction(TypeMirror e, Void p) {
-            return Optional.absent();
-          }
-
+        new SimpleTypeVisitor6<Optional<AnnotationMirror>, Void>(Optional.empty()) {
           @Override
           public Optional<AnnotationMirror> visitDeclared(DeclaredType t, Void p) {
-            for (Class<? extends Annotation> annotation : annotations) {
-              Optional<AnnotationMirror> mirror =
-                  MoreElements.getAnnotationMirror(t.asElement(), annotation);
-              if (mirror.isPresent()) {
-                return mirror;
-              }
-            }
-            return Optional.absent();
+            return getAnyAnnotation(t.asElement(), annotations);
           }
         },
         null);

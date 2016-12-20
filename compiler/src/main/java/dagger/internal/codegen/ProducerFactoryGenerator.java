@@ -44,7 +44,6 @@ import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,6 +57,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.producers.Producer;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
@@ -112,7 +112,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                     constructorBuilder,
                     uniqueFieldNames.getUniqueName("module"),
                     TypeName.get(binding.bindingTypeElement().get().asType())))
-            : Optional.<FieldSpec>absent();
+            : Optional.empty();
 
     for (Map.Entry<BindingKey, FrameworkField> entry :
         generateBindingFieldsForDependencies(binding).entrySet()) {

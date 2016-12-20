@@ -17,17 +17,16 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
-import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -41,6 +40,7 @@ import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
@@ -63,13 +63,11 @@ import javax.lang.model.util.Types;
 final class ConfigurationAnnotations {
 
   static Optional<AnnotationMirror> getComponentAnnotation(TypeElement component) {
-    return getAnnotationMirror(component, Component.class)
-        .or(getAnnotationMirror(component, ProductionComponent.class));
+    return getAnyAnnotation(component, Component.class, ProductionComponent.class);
   }
 
   static Optional<AnnotationMirror> getSubcomponentAnnotation(TypeElement subcomponent) {
-    return getAnnotationMirror(subcomponent, Subcomponent.class)
-        .or(getAnnotationMirror(subcomponent, ProductionSubcomponent.class));
+    return getAnyAnnotation(subcomponent, Subcomponent.class, ProductionSubcomponent.class);
   }
 
   static boolean isSubcomponent(Element element) {
@@ -83,7 +81,7 @@ final class ConfigurationAnnotations {
         return Optional.of(nestedType);
       }
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   static boolean isSubcomponentBuilder(Element element) {
@@ -124,8 +122,7 @@ final class ConfigurationAnnotations {
   }
 
   static Optional<AnnotationMirror> getModuleAnnotation(TypeElement moduleElement) {
-    return getAnnotationMirror(moduleElement, Module.class)
-        .or(getAnnotationMirror(moduleElement, ProducerModule.class));
+    return getAnyAnnotation(moduleElement, Module.class, ProducerModule.class);
   }
 
   private static final String INCLUDES_ATTRIBUTE = "includes";
@@ -149,7 +146,7 @@ final class ConfigurationAnnotations {
     return getTypeListValue(moduleAnnotation, INJECTS_ATTRIBUTE);
   }
 
-  /** Returns the first type that specifies this' nullability, or absent if none. */
+  /** Returns the first type that specifies this' nullability, or empty if none. */
   static Optional<DeclaredType> getNullableType(Element element) {
     List<? extends AnnotationMirror> mirrors = element.getAnnotationMirrors();
     for (AnnotationMirror mirror : mirrors) {
@@ -157,7 +154,7 @@ final class ConfigurationAnnotations {
         return Optional.of(mirror.getAnnotationType());
       }
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   static <T extends Element> void validateComponentDependencies(
@@ -248,10 +245,11 @@ final class ConfigurationAnnotations {
     while (!types.isSameType(objectType, superclass)
         && superclass.getKind().equals(TypeKind.DECLARED)) {
       element = MoreElements.asType(types.asElement(superclass));
-      Optional<AnnotationMirror> moduleMirror = getModuleAnnotation(element);
-      if (moduleMirror.isPresent()) {
-        builder.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleMirror.get())));
-      }
+      getModuleAnnotation(element)
+          .ifPresent(
+              moduleMirror -> {
+                builder.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleMirror)));
+              });
       superclass = element.getSuperclass();
     }
   }

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.Util.ELEMENT_SIMPLE_NAME;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
@@ -48,7 +47,7 @@ final class SimpleAnnotationMirror implements AnnotationMirror {
         annotationType);
     checkArgument(
         FluentIterable.from(methodsIn(annotationType.getEnclosedElements()))
-            .transform(ELEMENT_SIMPLE_NAME)
+            .transform(element -> element.getSimpleName().toString())
             .toSet()
             .equals(namedValues.keySet()),
         "namedValues must have values for exactly the members in %s: %s",
@@ -59,7 +58,8 @@ final class SimpleAnnotationMirror implements AnnotationMirror {
     this.elementValues =
         Maps.toMap(
             methodsIn(annotationType.getEnclosedElements()),
-            Functions.compose(Functions.forMap(namedValues), ELEMENT_SIMPLE_NAME));
+            Functions.compose(
+                Functions.forMap(namedValues), element -> element.getSimpleName().toString()));
   }
 
   @Override

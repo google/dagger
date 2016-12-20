@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -52,6 +51,7 @@ import dagger.producers.monitoring.ProductionComponentMonitor;
 import dagger.releasablereferences.ReleasableReferenceManager;
 import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.inject.Provider;

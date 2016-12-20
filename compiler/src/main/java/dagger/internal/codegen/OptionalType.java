@@ -22,11 +22,11 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Optional;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import java.util.Optional;
 import javax.lang.model.element.Name;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -75,7 +75,7 @@ abstract class OptionalType {
   }
 
   private static final TypeVisitor<Optional<OptionalKind>, Void> OPTIONAL_KIND =
-      new SimpleTypeVisitor8<Optional<OptionalKind>, Void>(Optional.absent()) {
+      new SimpleTypeVisitor8<Optional<OptionalKind>, Void>(Optional.empty()) {
         @Override
         public Optional<OptionalKind> visitDeclared(DeclaredType t, Void p) {
           for (OptionalKind optionalKind : OptionalKind.values()) {
@@ -84,7 +84,7 @@ abstract class OptionalType {
               return Optional.of(optionalKind);
             }
           }
-          return Optional.absent();
+          return Optional.empty();
         }
       };
 

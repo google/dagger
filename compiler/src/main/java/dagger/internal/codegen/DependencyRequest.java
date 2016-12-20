@@ -24,6 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
+import static dagger.internal.codegen.Optionals.firstPresent;
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
@@ -32,7 +33,6 @@ import static dagger.internal.codegen.TypeNames.providerOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,6 +44,7 @@ import dagger.Provides;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.CheckReturnValue;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -105,7 +106,7 @@ abstract class DependencyRequest {
     }
 
     Kind() {
-      this.frameworkClass = Optional.absent();
+      this.frameworkClass = Optional.empty();
     }
 
     /**
@@ -116,11 +117,11 @@ abstract class DependencyRequest {
       if (frameworkClass.isPresent() && isType(type) && isTypeOf(frameworkClass.get(), type)) {
         List<? extends TypeMirror> typeArguments = asDeclared(type).getTypeArguments();
         if (typeArguments.isEmpty()) {
-          return Optional.absent();
+          return Optional.empty();
         }
         return Optional.of(this.ofType(getOnlyElement(typeArguments)));
       }
-      return Optional.<KindAndType>absent();
+      return Optional.empty();
     }
 
     /** Returns a {@link KindAndType} with this kind and {@code type} type. */
@@ -185,7 +186,7 @@ abstract class DependencyRequest {
   abstract boolean isNullable();
 
   /**
-   * An optional name for this request when it's referred to in generated code. If absent, it will
+   * An optional name for this request when it's referred to in generated code. If empty, it will
    * use a name derived from {@link #requestElement}.
    */
   abstract Optional<String> overriddenVariableName();
@@ -217,7 +218,7 @@ abstract class DependencyRequest {
 
           @Override
           public KindAndType visitDeclared(DeclaredType declaredType, Void p) {
-            return KindAndType.from(declaredType).or(defaultAction(declaredType, p));
+            return KindAndType.from(declaredType).orElse(defaultAction(declaredType, p));
           }
 
           @Override
@@ -238,10 +239,10 @@ abstract class DependencyRequest {
       for (Kind kind : Kind.values()) {
         Optional<KindAndType> kindAndType = kind.from(type);
         if (kindAndType.isPresent()) {
-          return kindAndType.get().maybeProviderOfLazy().or(kindAndType);
+          return firstPresent(kindAndType.get().maybeProviderOfLazy(), kindAndType);
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
 
     /**
@@ -255,7 +256,7 @@ abstract class DependencyRequest {
           return Optional.of(Kind.PROVIDER_OF_LAZY.ofType(providedKindAndType.get().type()));
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -358,7 +359,7 @@ abstract class DependencyRequest {
     }
 
     DependencyRequest forRequiredVariable(VariableElement variableElement) {
-      return forRequiredVariable(variableElement, Optional.<String>absent());
+      return forRequiredVariable(variableElement, Optional.empty());
     }
 
     DependencyRequest forRequiredVariable(VariableElement variableElement, Optional<String> name) {
@@ -373,8 +374,7 @@ abstract class DependencyRequest {
       checkNotNull(variableElement);
       checkNotNull(resolvedType);
       Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(variableElement);
-      return newDependencyRequest(
-          variableElement, resolvedType, qualifier, Optional.<String>absent());
+      return newDependencyRequest(variableElement, resolvedType, qualifier, Optional.empty());
     }
 
     DependencyRequest forComponentProvisionMethod(ExecutableElement provisionMethod,
@@ -387,10 +387,7 @@ abstract class DependencyRequest {
           provisionMethod);
       Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(provisionMethod);
       return newDependencyRequest(
-          provisionMethod,
-          provisionMethodType.getReturnType(),
-          qualifier,
-          Optional.<String>absent());
+          provisionMethod, provisionMethodType.getReturnType(), qualifier, Optional.empty());
     }
 
     DependencyRequest forComponentProductionMethod(ExecutableElement productionMethod,
@@ -411,7 +408,7 @@ abstract class DependencyRequest {
             .requestElement(productionMethod)
             .build();
       } else {
-        return newDependencyRequest(productionMethod, type, qualifier, Optional.<String>absent());
+        return newDependencyRequest(productionMethod, type, qualifier, Optional.empty());
       }
     }
 
@@ -474,7 +471,7 @@ abstract class DependencyRequest {
           .isNullable(
               allowsNull(
                   extractKindAndType(OptionalType.from(requestKey).valueType()).kind(),
-                  Optional.<DeclaredType>absent()))
+                  Optional.empty()))
           .build();
     }
 

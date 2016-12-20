@@ -26,7 +26,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.common.base.Optional;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -36,6 +35,7 @@ import dagger.multibindings.Multibinds;
 import dagger.producers.ProductionScope;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import dagger.producers.monitoring.internal.Monitors;
+import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;

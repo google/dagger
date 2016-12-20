@@ -17,10 +17,10 @@ package dagger.internal.codegen;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
-import static dagger.internal.codegen.Util.ELEMENT_SIMPLE_NAME;
-import static dagger.internal.codegen.Util.optionalComparator;
+import static java.util.Comparator.comparing;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
@@ -56,14 +56,15 @@ class SourceFiles {
    */
   static final Comparator<DependencyRequest> DEPENDENCY_ORDERING =
       // put fields before parameters
-      Comparator.comparing(
-              (DependencyRequest request) -> request.requestElement().transform(Element::getKind),
+      comparing(
+              (DependencyRequest request) -> request.requestElement().map(Element::getKind),
               optionalComparator())
           // order by dependency kind
           .thenComparing(DependencyRequest::kind)
           // then sort by name
           .thenComparing(
-              request -> request.requestElement().transform(ELEMENT_SIMPLE_NAME),
+              request ->
+                  request.requestElement().map(element -> element.getSimpleName().toString()),
               optionalComparator());
 
   /**

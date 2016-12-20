@@ -22,7 +22,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Optional;
+import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -80,7 +80,7 @@ final class Accessibility {
     final Optional<String> packageName;
 
     TypeAccessibilityVisitor() {
-      this(Optional.absent());
+      this(Optional.empty());
     }
 
     TypeAccessibilityVisitor(String packageName) {
@@ -182,7 +182,7 @@ final class Accessibility {
     final Optional<String> packageName;
 
     ElementAccessibilityVisitor() {
-      this(Optional.absent());
+      this(Optional.empty());
     }
 
     ElementAccessibilityVisitor(String packageName) {
@@ -272,7 +272,7 @@ final class Accessibility {
 
   /** Returns true if the raw type of {@code type} is accessible from any package. */
   static boolean isRawTypePubliclyAccessible(TypeMirror type) {
-    return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.absent());
+    return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.empty());
   }
 
   private Accessibility() {}

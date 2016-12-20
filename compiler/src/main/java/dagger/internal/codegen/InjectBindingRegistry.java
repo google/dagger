@@ -24,7 +24,6 @@ import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -36,6 +35,7 @@ import dagger.Provides;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
@@ -212,7 +212,7 @@ final class InjectBindingRegistry {
 
   @CanIgnoreReturnValue
   Optional<ProvisionBinding> tryRegisterConstructor(ExecutableElement constructorElement) {
-    return tryRegisterConstructor(constructorElement, Optional.<TypeMirror>absent(), false);
+    return tryRegisterConstructor(constructorElement, Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue
@@ -239,12 +239,12 @@ final class InjectBindingRegistry {
       }
       return Optional.of(binding);
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   @CanIgnoreReturnValue
   Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(TypeElement typeElement) {
-    return tryRegisterMembersInjectedType(typeElement, Optional.<TypeMirror>absent(), false);
+    return tryRegisterMembersInjectedType(typeElement, Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue
@@ -271,14 +271,14 @@ final class InjectBindingRegistry {
       }
       return Optional.of(binding);
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   @CanIgnoreReturnValue
   Optional<ProvisionBinding> getOrFindProvisionBinding(Key key) {
     checkNotNull(key);
     if (!key.isValidImplicitProvisionKey(types)) {
-      return Optional.absent();
+      return Optional.empty();
     }
     ProvisionBinding binding = provisionBindings.getBinding(key);
     if (binding != null) {
@@ -291,7 +291,7 @@ final class InjectBindingRegistry {
     switch (injectConstructors.size()) {
       case 0:
         // No constructor found.
-        return Optional.absent();
+        return Optional.empty();
       case 1:
         return tryRegisterConstructor(
             Iterables.getOnlyElement(injectConstructors), Optional.of(key.type()), true);

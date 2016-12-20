@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.getAllAnnotations;
 
 import com.google.common.collect.ImmutableSet;
 import dagger.multibindings.ElementsIntoSet;
@@ -31,10 +31,6 @@ import javax.lang.model.element.ExecutableElement;
  */
 final class MultibindingAnnotations {
   static ImmutableSet<AnnotationMirror> forMethod(ExecutableElement method) {
-    return ImmutableSet.<AnnotationMirror>builder()
-        .addAll(getAnnotationMirror(method, IntoSet.class).asSet())
-        .addAll(getAnnotationMirror(method, ElementsIntoSet.class).asSet())
-        .addAll(getAnnotationMirror(method, IntoMap.class).asSet())
-        .build();
+    return getAllAnnotations(method, IntoSet.class, ElementsIntoSet.class, IntoMap.class);
   }
 }

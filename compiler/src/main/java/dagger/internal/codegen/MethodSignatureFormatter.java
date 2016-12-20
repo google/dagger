@@ -18,12 +18,13 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
+import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -47,7 +48,7 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
   }
 
   @Override public String format(ExecutableElement method) {
-    return format(method, Optional.<DeclaredType>absent());
+    return format(method, Optional.empty());
   }
 
   /**
@@ -96,10 +97,11 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
 
   private static void appendParameter(StringBuilder builder, VariableElement parameter,
       TypeMirror type) {
-    Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(parameter);
-    if (qualifier.isPresent()) {
-      builder.append(ErrorMessages.format(qualifier.get())).append(' ');
-    }
+    getQualifier(parameter)
+        .ifPresent(
+            qualifier -> {
+              builder.append(ErrorMessages.format(qualifier)).append(' ');
+            });
     builder.append(nameOfType(type));
   }
 

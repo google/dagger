@@ -16,8 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_NOT_IN_BUILDER;
-import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;

@@ -32,7 +32,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -43,6 +42,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -57,7 +57,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   private final AbstractComponentWriter parent;
 
   /**
-   * The parent's factory method to create this subcomponent, or {@link Optional#absent()} if the
+   * The parent's factory method to create this subcomponent, or {@link Optional#empty()} if the
    * subcomponent was added via {@link dagger.Module#subcomponents()}.
    */
   private final Optional<ComponentMethodDescriptor> subcomponentFactoryMethod;
@@ -87,8 +87,11 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   @Override
   protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
       ComponentRequirement componentRequirement) {
-    return super.getOrCreateComponentRequirementFieldExpression(componentRequirement)
-        .or(parent.getOrCreateComponentRequirementFieldExpression(componentRequirement));
+    Optional<CodeBlock> expression =
+        super.getOrCreateComponentRequirementFieldExpression(componentRequirement);
+    return expression.isPresent()
+        ? expression
+        : parent.getOrCreateComponentRequirementFieldExpression(componentRequirement);
   }
 
   @Override

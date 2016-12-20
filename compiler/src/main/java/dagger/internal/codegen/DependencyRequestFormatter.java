@@ -23,7 +23,6 @@ import static dagger.internal.codegen.Util.toImmutableList;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -32,6 +31,7 @@ import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
 import dagger.producers.Produces;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.inject.Provider;

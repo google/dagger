@@ -31,13 +31,12 @@ import static javax.lang.model.element.ElementKind.METHOD;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import java.util.Set;
+import java.util.Optional;
 import javax.annotation.CheckReturnValue;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -63,8 +62,10 @@ import javax.lang.model.util.Types;
 abstract class ProvisionBinding extends ContributionBinding {
 
   @Override
-  Set<DependencyRequest> implicitDependencies() {
-    return membersInjectionRequest().asSet();
+  ImmutableSet<DependencyRequest> implicitDependencies() {
+    return membersInjectionRequest().isPresent()
+        ? ImmutableSet.of(membersInjectionRequest().get())
+        : ImmutableSet.of();
   }
 
   /** If this provision requires members injection, this will be the corresponding request. */
@@ -163,7 +164,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       TypeElement bindingTypeElement =
           MoreElements.asType(constructorElement.getEnclosingElement());
       if (hasNonDefaultTypeParameters(bindingTypeElement, key.type(), types)) {
-        builder.unresolved(forInjectConstructor(constructorElement, Optional.<TypeMirror>absent()));
+        builder.unresolved(forInjectConstructor(constructorElement, Optional.empty()));
       }
       return builder.build();
     }
@@ -183,7 +184,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           return Optional.of(dependencyRequestFactory.forMembersInjectedType(type));
         }
       }
-      return Optional.absent();
+      return Optional.empty();
     }
 
     ProvisionBinding forProvidesMethod(

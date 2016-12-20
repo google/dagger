@@ -17,11 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.ErrorMessages.CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import com.google.common.base.Optional;
 import dagger.releasablereferences.CanReleaseReferences;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -45,13 +44,16 @@ final class CanReleaseReferencesValidator {
 
   private void checkNoSourceRetention(
       TypeElement annotatedElement, ValidationReport.Builder<TypeElement> report) {
-    Optional<AnnotationMirror> retention = getAnnotationMirror(annotatedElement, Retention.class);
-    if (retention.isPresent() && getRetentionPolicy(retention.get()).equals(SOURCE)) {
-      report.addError(
-          CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION,
-          report.getSubject(),
-          retention.get());
-    }
+    getAnnotationMirror(annotatedElement, Retention.class)
+        .ifPresent(
+            retention -> {
+              if (getRetentionPolicy(retention).equals(SOURCE)) {
+                report.addError(
+                    CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION,
+                    report.getSubject(),
+                    retention);
+              }
+            });
   }
 
   // TODO(dpb): Move the ability to get an annotation type's retention policy somewhere common.

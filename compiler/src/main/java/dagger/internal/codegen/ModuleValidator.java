@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
@@ -25,6 +24,8 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
+import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
 import static dagger.internal.codegen.ErrorMessages.INCOMPATIBLE_MODULE_METHODS;
 import static dagger.internal.codegen.ErrorMessages.METHOD_OVERRIDES_PROVIDES_METHOD;
@@ -36,7 +37,6 @@ import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_AN
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
-import static dagger.internal.codegen.Util.isAnyAnnotationPresent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;

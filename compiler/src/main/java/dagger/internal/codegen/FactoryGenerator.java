@@ -41,7 +41,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -60,6 +59,7 @@ import dagger.internal.MembersInjectors;
 import dagger.internal.Preconditions;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -107,7 +107,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
 
     if (binding.bindingKind().equals(INJECTION)
         && !injectValidator.isValidType(binding.contributedType())) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     TypeName providedTypeName = TypeName.get(binding.contributedType());
@@ -121,7 +121,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     if (factoryHasTypeParameters) {
       factoryBuilder.addTypeVariables(typeParameters);
     }
-    Optional<MethodSpec.Builder> constructorBuilder = Optional.absent();
+    Optional<MethodSpec.Builder> constructorBuilder = Optional.empty();
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     ImmutableMap.Builder<BindingKey, FieldSpec> fieldsBuilder = ImmutableMap.builder();
 
@@ -161,7 +161,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         }
         break;
       case DELEGATE:
-        return Optional.absent();
+        return Optional.empty();
       default:
         throw new AssertionError();
     }
@@ -213,7 +213,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         createMethod = Optional.of(createMethodBuilder.build());
         break;
       default:
-        createMethod = Optional.absent();
+        createMethod = Optional.empty();
     }
 
     if (constructorBuilder.isPresent()) {
@@ -274,7 +274,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       factoryBuilder.addMethod(createMethod.get());
     }
 
-    proxyMethodFor(binding).asSet().forEach(factoryBuilder::addMethod);
+    proxyMethodFor(binding).ifPresent(factoryBuilder::addMethod);
 
     return Optional.of(factoryBuilder);
   }
@@ -289,7 +289,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private static Optional<MethodSpec> proxyMethodFor(ProvisionBinding binding) {
     ExecutableElement executableElement = MoreElements.asExecutable(binding.bindingElement().get());
     if (binding.membersInjectionRequest().isPresent() || !shouldGenerateProxy(executableElement)) {
-      return Optional.absent();
+      return Optional.empty();
     }
     return Optional.of(createProxy(executableElement));
   }

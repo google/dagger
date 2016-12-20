@@ -21,7 +21,6 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.common.base.Optional;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterSpec;
@@ -31,6 +30,7 @@ import dagger.Provides;
 import dagger.producers.Production;
 import dagger.producers.ProductionScope;
 import dagger.producers.internal.ProductionImplementation;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;

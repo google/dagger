@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import javax.tools.Diagnostic;
 
 /**
@@ -35,7 +35,7 @@ enum ValidationType {
       case WARNING:
         return Optional.of(Diagnostic.Kind.WARNING);
       default:
-        return Optional.absent();
+        return Optional.empty();
     }
   }
 }

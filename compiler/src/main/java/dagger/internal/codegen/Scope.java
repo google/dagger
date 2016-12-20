@@ -27,7 +27,6 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -35,6 +34,7 @@ import dagger.Reusable;
 import dagger.producers.ProductionScope;
 import dagger.releasablereferences.CanReleaseReferences;
 import java.lang.annotation.Annotation;
+import java.util.Optional;
 import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -92,7 +92,7 @@ abstract class Scope {
   static Optional<Scope> uniqueScopeOf(Element element) {
     ImmutableSet<? extends AnnotationMirror> scopeAnnotations = getScopes(element);
     if (scopeAnnotations.isEmpty()) {
-      return Optional.absent();
+      return Optional.empty();
     }
     return Optional.of(scope(Iterables.getOnlyElement(scopeAnnotations)));
   }
@@ -146,7 +146,7 @@ abstract class Scope {
         return Optional.of(metadata);
       }
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   /**

@@ -26,7 +26,6 @@ import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.MUST_N
 import static dagger.internal.codegen.ErrorMessages.MultibindingsMessages.tooManyMethodsForKey;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableListMultimap;
 import dagger.Module;
 import dagger.Multibindings;
@@ -34,6 +33,7 @@ import dagger.producers.ProducerModule;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -136,13 +136,13 @@ final class MultibindingsValidator {
     return builder.toString();
   }
 
-  private Optional<BindingType> bindingType(TypeElement multibindingsType) {
+  private static Optional<BindingType> bindingType(TypeElement multibindingsType) {
     if (isAnnotationPresent(multibindingsType.getEnclosingElement(), Module.class)) {
       return Optional.of(BindingType.PROVISION);
     } else if (isAnnotationPresent(multibindingsType.getEnclosingElement(), ProducerModule.class)) {
       return Optional.of(BindingType.PRODUCTION);
     } else {
-      return Optional.<BindingType>absent();
+      return Optional.empty();
     }
   }
 }

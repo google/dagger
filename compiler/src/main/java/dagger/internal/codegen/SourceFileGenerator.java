@@ -18,12 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import java.util.Optional;
 import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -80,7 +80,7 @@ abstract class SourceFileGenerator<T> {
       Throwables.propagateIfPossible(e, SourceFileGenerationException.class);
       // otherwise, throw a new one
       throw new SourceFileGenerationException(
-          Optional.<ClassName>absent(), e, getElementForErrorReporting(input));
+          Optional.empty(), e, getElementForErrorReporting(input));
     }
   }
 
@@ -112,7 +112,7 @@ abstract class SourceFileGenerator<T> {
 
   /**
    * Returns a {@link TypeSpec.Builder type} to be generated for {@code T}, or {@link
-   * Optional#absent()} if no file should be generated.
+   * Optional#empty()} if no file should be generated.
    */
   // TODO(ronshapiro): write() makes more sense in JavaWriter where all writers are mutable.
   // consider renaming to something like typeBuilder() which conveys the mutability of the result

@@ -21,9 +21,9 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.Optional;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
@@ -225,11 +225,11 @@ abstract class ValidationReport<T extends Element> {
     }
 
     Builder<T> addItem(String message, Kind kind, Element element) {
-      return addItem(message, kind, element, Optional.absent(), Optional.absent());
+      return addItem(message, kind, element, Optional.empty(), Optional.empty());
     }
 
     Builder<T> addItem(String message, Kind kind, Element element, AnnotationMirror annotation) {
-      return addItem(message, kind, element, Optional.of(annotation), Optional.absent());
+      return addItem(message, kind, element, Optional.of(annotation), Optional.empty());
     }
 
     Builder<T> addItem(

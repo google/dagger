@@ -21,9 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.auto.common.AnnotationMirrors;
-import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.inject.Scope;
@@ -44,7 +44,7 @@ final class InjectionAnnotations {
     ImmutableSet<? extends AnnotationMirror> qualifierAnnotations = getQualifiers(e);
     switch (qualifierAnnotations.size()) {
       case 0:
-        return Optional.absent();
+        return Optional.empty();
       case 1:
         return Optional.<AnnotationMirror>of(qualifierAnnotations.iterator().next());
       default:

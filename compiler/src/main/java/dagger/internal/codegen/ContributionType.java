@@ -77,8 +77,6 @@ enum ContributionType {
         return SET;
       case SET_VALUES:
         return SET_VALUES;
-      case MAP:
-        return MAP;
       case UNIQUE:
         return UNIQUE;
       default:

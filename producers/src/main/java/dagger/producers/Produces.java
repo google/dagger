@@ -60,15 +60,7 @@ public @interface Produces {
      * is to provide a default empty set binding, which is otherwise not possible using
      * {@link #SET}.
      */
-    SET_VALUES,
-
-    /**
-     * The method's return type forms the type argument for the value of a
-     * {@code Map<K, Producer<V>>}, and the combination of the annotated key and the returned value
-     * is contributed to the map as a key/value pair. The {@code Map<K, Producer<V>>} produced from
-     * the accumulation of values will be immutable.
-     */
-    MAP;
+    SET_VALUES;
   }
 
   /**

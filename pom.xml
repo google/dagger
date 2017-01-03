@@ -30,7 +30,7 @@
   <version>HEAD-SNAPSHOT</version>
   <name>Dagger (Parent)</name>
   <description>A fast dependency injector for Android and Java.</description>
-  <url>https://github.com/square/dagger</url>
+  <url>https://github.com/google/dagger</url>
 
   <modules>
     <module>android</module>

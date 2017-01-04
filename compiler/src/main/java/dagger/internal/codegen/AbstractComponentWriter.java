@@ -46,6 +46,7 @@ import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.FACTORY;
@@ -1529,10 +1530,6 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
       return optionalFactories.presentOptionalFactory(
           binding, getOnlyElement(getDependencyArguments(binding)));
     }
-  }
-
-  private static String simpleVariableName(TypeElement typeElement) {
-    return UPPER_CAMEL.to(LOWER_CAMEL, typeElement.getSimpleName().toString());
   }
 
   /**

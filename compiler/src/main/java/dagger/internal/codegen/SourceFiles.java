@@ -14,13 +14,16 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
 import static java.util.Comparator.comparing;
+import static javax.lang.model.SourceVersion.isName;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
@@ -36,6 +39,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.Comparator;
 import java.util.Iterator;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -234,6 +238,48 @@ class SourceFiles {
       builder.add(TypeVariableName.get(typeParameter));
     }
     return builder.build();
+  }
+
+  /**
+   * Returns a name to be used for variables of the given {@linkplain TypeElement type}. Prefer
+   * semantically meaningful variable names, but if none can be derived, this will produce something
+   * readable.
+   */
+  // TODO(gak): maybe this should be a function of TypeMirrors instead of Elements?
+  static String simpleVariableName(TypeElement typeElement) {
+    String candidateName = UPPER_CAMEL.to(LOWER_CAMEL, typeElement.getSimpleName().toString());
+    String variableName = protectAgainstKeywords(candidateName);
+    verify(isName(variableName), "'%s' was expected to be a valid variable name");
+    return variableName;
+  }
+
+  private static String protectAgainstKeywords(String candidateName) {
+    switch (candidateName) {
+      case "package":
+        return "pkg";
+      case "boolean":
+        return "b";
+      case "double":
+        return "d";
+      case "byte":
+        return "b";
+      case "int":
+        return "i";
+      case "short":
+        return "s";
+      case "char":
+        return "c";
+      case "void":
+        return "v";
+      case "class":
+        return "clazz";
+      case "float":
+        return "f";
+      case "long":
+        return "l";
+      default:
+        return SourceVersion.isKeyword(candidateName) ? candidateName + '_' : candidateName;
+    }
   }
 
   private SourceFiles() {}

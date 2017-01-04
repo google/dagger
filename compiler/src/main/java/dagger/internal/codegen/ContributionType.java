@@ -22,7 +22,6 @@ import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
-import dagger.producers.Produces;
 import javax.lang.model.element.ExecutableElement;
 
 /**
@@ -71,19 +70,6 @@ enum ContributionType {
     }
   }
 
-  private static ContributionType forProductionType(Produces.Type productionType) {
-    switch (productionType) {
-      case SET:
-        return SET;
-      case SET_VALUES:
-        return SET_VALUES;
-      case UNIQUE:
-        return UNIQUE;
-      default:
-        throw new AssertionError("Unknown production type: " + productionType);
-    }
-  }
-
   /**
    * The contribution type from a binding method annotations. Presumes a well-formed binding method
    * (only one of @IntoSet, @IntoMap, @ElementsIntoSet, @Provides.type or @Produces.type. {@link
@@ -100,8 +86,6 @@ enum ContributionType {
 
     if (isAnnotationPresent(method, Provides.class)) {
       return forProvisionType(method.getAnnotation(Provides.class).type());
-    } else if (isAnnotationPresent(method, Produces.class)) {
-      return forProductionType(method.getAnnotation(Produces.class).type());
     } else {
       return ContributionType.UNIQUE;
     }

@@ -37,35 +37,4 @@ import java.lang.annotation.Target;
 @Target(METHOD)
 @Retention(RUNTIME)
 @Beta
-public @interface Produces {
-  /** The type of binding into which the return type of the annotated method contributes. */
-  @Deprecated
-  enum Type {
-    /**
-     * The method is the only one which can produce the value for the specified type. This is the
-     * default behavior.
-     */
-    UNIQUE,
-
-    /**
-     * The method's resulting type forms the generic type argument of a {@code Set<T>}, and the
-     * returned value or future is contributed to the set. The {@code Set<T>} produced from the
-     * accumulation of values will be immutable.
-     */
-    SET,
-
-    /**
-     * Like {@link #SET}, except the method's return type is either {@code Set<T>} or
-     * {@code Set<ListenableFuture<T>>}, where any values are contributed to the set. An example use
-     * is to provide a default empty set binding, which is otherwise not possible using
-     * {@link #SET}.
-     */
-    SET_VALUES;
-  }
-
-  /**
-   * @deprecated Use the multibinding annotations in {@link dagger.multibindings}.
-   */
-  @Deprecated
-  Type type() default Type.UNIQUE;
-}
+public @interface Produces {}

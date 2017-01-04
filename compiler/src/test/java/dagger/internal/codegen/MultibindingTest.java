@@ -91,34 +91,6 @@ public class MultibindingTest {
   }
 
   @Test
-  public void producesTypeAndAnnotationOnSameMethod_failsToCompile() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.MultibindingModule",
-            "package test;",
-            "",
-            "import static dagger.producers.Produces.Type.SET;",
-            "",
-            "import dagger.producers.ProducerModule;",
-            "import dagger.producers.Produces;",
-            "import dagger.multibindings.IntoSet;",
-            "",
-            "@ProducerModule",
-            "class MultibindingModule {",
-            "  @Produces(type = SET) @IntoSet Integer produceInt() { ",
-            "    return 1;",
-            "  }",
-            "}");
-
-    assertThat(module)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Produces.type cannot be used with multibinding annotations")
-        .in(module)
-        .onLine(11);
-  }
-
-  @Test
   public void appliedOnInvalidMethods_failsToCompile() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(

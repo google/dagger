@@ -1,0 +1,23 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+    }
+}
+
+ext {
+    defaultCompileSdkVersion = 25
+    defaultMinSdkVersion = 16
+    defaultTargetSdkVersion = 25
+    defaultBuildToolsVersion = "25.0.2"
+    defaultSupportLibVersion = "25.1.0"
+    dagger_version = "2.8"
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}

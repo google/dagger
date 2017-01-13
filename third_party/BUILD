@@ -104,6 +104,7 @@ java_library(
 
 java_plugin(
     name = "auto_factory_processor",
+    generates_api = 1,
     processor_class = "com.google.auto.factory.processor.AutoFactoryProcessor",
     visibility = ["//visibility:private"],
     deps = [

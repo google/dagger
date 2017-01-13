@@ -29,3 +29,11 @@ obj
 dependency-reduced-pom.xml
 
 gen-external-apklibs
+
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-testlogs
+bazel-dagger
+
+*.pyc

@@ -1,5 +1,20 @@
 language: android
 
+os: linux
+dist: precise
+sudo: required
+addons:
+  apt:
+    sources:
+      # https://github.com/bazelbuild/bazel/issues/1821#issuecomment-262870638
+      - sourceline: "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8"
+        key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
+      - ubuntu-toolchain-r-test
+    packages:
+      - oracle-java8-installer
+      - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
+      - bazel=0.4.3
+
 jdk:
   - &jdk_for_publishing oraclejdk8
 
@@ -13,6 +28,7 @@ android:
     - extra-android-m2repository
 
 before_install:
+  - echo "ANDROID_HOME = \"$ANDROID_HOME\"" > WORKSPACE.user.bzl
   - sudo rm -f /etc/mavenrc
   - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
   - tar -zxvf apache-maven-3.1.1-bin.tar.gz
@@ -21,9 +37,13 @@ before_install:
   - export PATH=$M2_HOME/bin:$PATH
   - mvn --version
 
-install: mvn -B -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
+install:
+  - bazel build //...
+  - mvn -B -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
 
-script: mvn -B -P!standard-with-extra-repos -U verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
+script:
+  - bazel test //...
+  - mvn -B -P!standard-with-extra-repos -U verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
 
 env:
   global:

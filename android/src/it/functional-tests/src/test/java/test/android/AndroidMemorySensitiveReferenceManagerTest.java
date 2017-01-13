@@ -25,14 +25,14 @@ import static test.android.AndroidMemorySensitiveReferenceManagerTest.AllWeakRef
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.GcFinalization;
 import com.google.common.testing.GcFinalization.FinalizationPredicate;
+import org.robolectric.RobolectricTestRunner;
 import java.lang.ref.WeakReference;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /** Functional tests of {@link dagger.android.AndroidMemorySensitiveReferenceManager}. */
-@RunWith(JUnit4.class)
+@RunWith(RobolectricTestRunner.class)
 public final class AndroidMemorySensitiveReferenceManagerTest {
 
   private TestModule testModule;

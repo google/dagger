@@ -208,6 +208,13 @@
                     <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
+                <!-- https://github.com/google/google-java-format/issues/114 -->
+                <filter>
+                  <artifact>com.google.errorprone:javac</artifact>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                </filter>
               </filters>
             </configuration>
           </execution>

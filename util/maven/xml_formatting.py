@@ -21,8 +21,7 @@ DEP_BLOCK = """
 """.strip()
 
 def maven_dependency_xml(artifact_string):
-  group, artifact = artifact_string.split(':')[0:2]
-  version = artifact_string.split(':')[-1]
+  group, artifact, version = artifact_string.split(':')
   formatted = DEP_BLOCK % (group, artifact, version)
   return '\n'.join(['    %s' %x for x in formatted.split('\n')])
 
@@ -51,7 +50,7 @@ POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
     <version>7</version>
   </parent>
 
-  <groupId>com.google.dagger</groupId>
+  <groupId>{group}</groupId>
   <artifactId>{artifact}</artifactId>
   <name>{name}</name>
   <version>{version}</version>
@@ -90,13 +89,12 @@ POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 def generate_pom(artifact_string, metadata, deps, version):
-  artifact = artifact_string.split(':')[1]
-  # accounts for classifiers in artifact string
-  version = artifact_string.split(':')[-1]
+  group, artifact, version = artifact_string.split(':')
 
   return POM_OUTLINE.format(
-      artifact = artifact,
-      name = metadata['name'],
-      version = version,
-      packaging = metadata.get('packaging', 'jar'),
-      deps = '\n'.join(map(maven_dependency_xml, deps)))
+      group=group,
+      artifact=artifact,
+      name=metadata['name'],
+      version=version,
+      packaging=metadata.get('packaging', 'jar'),
+      deps='\n'.join(map(maven_dependency_xml, deps)))

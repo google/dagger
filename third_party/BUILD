@@ -142,7 +142,11 @@ java_library(
 
 java_library(
     name = "google_java_format",
-    exports = ["@com_google_googlejavaformat_google_java_format//jar"],
+    exports = [
+        ":guava",
+        "@com_google_errorprone_javac//jar",
+        "@com_google_googlejavaformat_google_java_format//jar",
+    ],
 )
 
 java_library(

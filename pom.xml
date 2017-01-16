@@ -80,6 +80,12 @@
       </dependency>
       <dependency>
         <groupId>javax.inject</groupId>
+        <artifactId>javax.inject</artifactId>
+        <classifier>sources</classifier>
+        <version>1</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.inject</groupId>
         <artifactId>javax.inject-tck</artifactId>
         <version>1</version>
       </dependency>

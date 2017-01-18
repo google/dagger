@@ -40,39 +40,10 @@
       <classifier>sources</classifier>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <classifier>sources</classifier>
+    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <!--
-        Include JSR 330 sources in dagger-gwt to avoid implicit
-        compilation warnings in downstream projects.
-      -->
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.10</version>
-        <executions>
-          <execution>
-            <id>unpack-jsr330-sources</id>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>javax.inject</groupId>
-                  <artifactId>javax.inject</artifactId>
-                  <version>${javax.inject.version}</version>
-                  <type>java-source</type>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.outputDirectory}/dagger/super/</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
 </project>

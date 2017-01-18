@@ -2682,16 +2682,16 @@ public class ComponentProcessorTest {
             "",
             "import dagger.BindsInstance;",
             "import dagger.Module;",
-            "import dagger.Provides;",
             "",
             "@Module",
-            "final class TestModule {",
-            "  @BindsInstance String s() { return null; }",
+            "abstract class TestModule {",
+            "  @BindsInstance abstract void str(String string);",
             "}");
     Compilation compilation = daggerCompiler().compile(testModule);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@BindsInstance must annotate a method in a component builder");
+        .hadErrorContaining(
+            "@BindsInstance methods should not be included in @Modules. Did you mean @Binds");
   }
 
   @Test
@@ -2706,12 +2706,105 @@ public class ComponentProcessorTest {
             "",
             "@Component",
             "interface TestComponent {",
-            "  @BindsInstance String s();",
+            "  @BindsInstance String s(String s);",
             "}");
     Compilation compilation = daggerCompiler().compile(testComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@BindsInstance must annotate a method in a component builder");
+        .hadErrorContaining(
+            "@BindsInstance methods should not be included in @Components. "
+                + "Did you mean to put it in a @Component.Builder?");
+  }
+
+  @Test
+  public void bindsInstanceNotAbstract() {
+    JavaFileObject notAbstract =
+        JavaFileObjects.forSourceLines(
+            "test.BindsInstanceNotAbstract",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "class BindsInstanceNotAbstract {",
+            "  @BindsInstance BindsInstanceNotAbstract bind(int unused) { return this; }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(notAbstract);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@BindsInstance methods must be abstract")
+        .inFile(notAbstract)
+        .onLine(7);
+  }
+
+  @Test
+  public void bindsInstanceNoParameters() {
+    JavaFileObject notAbstract =
+        JavaFileObjects.forSourceLines(
+            "test.BindsInstanceNoParameters",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "",
+            "interface BindsInstanceNoParameters {",
+            "  @BindsInstance void noParams();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(notAbstract);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@BindsInstance methods should have exactly one parameter for the bound type")
+        .inFile(notAbstract)
+        .onLine(6);
+  }
+
+  @Test
+  public void bindsInstanceManyParameters() {
+    JavaFileObject notAbstract =
+        JavaFileObjects.forSourceLines(
+            "test.BindsInstanceNoParameter",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "",
+            "interface BindsInstanceManyParameters {",
+            "  @BindsInstance void manyParams(int i, long l);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(notAbstract);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@BindsInstance methods should have exactly one parameter for the bound type")
+        .inFile(notAbstract)
+        .onLine(6);
+  }
+
+  @Test
+  public void bindsInstanceFrameworkType() {
+    JavaFileObject bindsFrameworkType =
+        JavaFileObjects.forSourceLines(
+            "test.BindsInstanceFrameworkType",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.producers.Producer;",
+            "import javax.inject.Provider;",
+            "",
+            "interface BindsInstanceFrameworkType {",
+            "  @BindsInstance void bindsProvider(Provider<Object> objectProvider);",
+            "  @BindsInstance void bindsProducer(Producer<Object> objectProducer);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(bindsFrameworkType);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@BindsInstance parameters may not be framework types")
+        .inFile(bindsFrameworkType)
+        .onLine(8);
+
+    assertThat(compilation)
+        .hadErrorContaining("@BindsInstance parameters may not be framework types")
+        .inFile(bindsFrameworkType)
+        .onLine(9);
   }
 
   private static Compiler daggerCompiler(Processor... extraProcessors) {

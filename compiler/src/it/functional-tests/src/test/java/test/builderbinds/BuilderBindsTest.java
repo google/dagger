@@ -24,20 +24,22 @@ import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import test.builderbinds.TestComponent.Builder;
 
 @RunWith(JUnit4.class)
 public final class BuilderBindsTest {
 
   @Test
   public void builderBinds() {
-    TestComponent component =
+    TestComponent.Builder builder =
         DaggerTestComponent.builder()
             .count(5)
             .l(10L)
             .input("foo")
             .nullableInput("bar")
-            .listOfString(Arrays.asList("x", "y", "z"))
-            .build();
+            .listOfString(Arrays.asList("x", "y", "z"));
+    builder.boundInSubtype(20);
+    TestComponent component = builder.build();
     assertThat(component.count()).isEqualTo(5);
     assertThat(component.input()).isEqualTo("foo");
     assertThat(component.nullableInput()).isEqualTo("bar");
@@ -46,14 +48,16 @@ public final class BuilderBindsTest {
 
   @Test
   public void builderBindsNullableWithNull() {
-    TestComponent component =
+    Builder builder =
         DaggerTestComponent.builder()
             .count(5)
             .l(10L)
             .input("foo")
             .nullableInput(null)
-            .listOfString(Collections.<String>emptyList())
-            .build();
+            .listOfString(Collections.<String>emptyList());
+    builder.boundInSubtype(20);
+    TestComponent component = builder.build();
+
     assertThat(component.count()).isEqualTo(5);
     assertThat(component.input()).isEqualTo("foo");
     assertThat(component.nullableInput()).isNull();
@@ -72,12 +76,14 @@ public final class BuilderBindsTest {
   @Test
   public void builderBindsPrimitiveNotSet() {
     try {
-      DaggerTestComponent.builder()
-          .l(10L)
-          .input("foo")
-          .nullableInput("bar")
-          .listOfString(Collections.<String>emptyList())
-          .build();
+      TestComponent.Builder builder =
+          DaggerTestComponent.builder()
+              .l(10L)
+              .input("foo")
+              .nullableInput("bar")
+              .listOfString(Collections.<String>emptyList());
+      builder.boundInSubtype(20);
+      builder.build();
       fail("expected IllegalStateException");
     } catch (IllegalStateException expected) {
     }
@@ -86,12 +92,14 @@ public final class BuilderBindsTest {
   @Test
   public void builderBindsNonNullableNotSet() {
     try {
-      DaggerTestComponent.builder()
-          .count(5)
-          .l(10L)
-          .nullableInput("foo")
-          .listOfString(Collections.<String>emptyList())
-          .build();
+      TestComponent.Builder builder =
+          DaggerTestComponent.builder()
+              .count(5)
+              .l(10L)
+              .nullableInput("foo")
+              .listOfString(Collections.<String>emptyList());
+      builder.boundInSubtype(20);
+      builder.build();
       fail("expected IllegalStateException");
     } catch (IllegalStateException expected) {
     }
@@ -99,13 +107,14 @@ public final class BuilderBindsTest {
 
   @Test
   public void builderBindsNullableNotSet() {
-    TestComponent component =
+    Builder builder =
         DaggerTestComponent.builder()
             .count(5)
             .l(10L)
             .input("foo")
-            .listOfString(Collections.<String>emptyList())
-            .build();
+            .listOfString(Collections.<String>emptyList());
+    builder.boundInSubtype(20);
+    TestComponent component = builder.build();
     assertThat(component.count()).isEqualTo(5);
     assertThat(component.input()).isEqualTo("foo");
     assertThat(component.nullableInput()).isNull();

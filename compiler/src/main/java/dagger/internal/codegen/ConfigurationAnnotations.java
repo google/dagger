@@ -70,6 +70,14 @@ final class ConfigurationAnnotations {
     return getAnyAnnotation(subcomponent, Subcomponent.class, ProductionSubcomponent.class);
   }
 
+  static Optional<AnnotationMirror> getComponentOrSubcomponentAnnotation(TypeElement type) {
+    Optional<AnnotationMirror> componentAnnotation = getComponentAnnotation(type);
+    if (componentAnnotation.isPresent()) {
+      return componentAnnotation;
+    }
+    return getSubcomponentAnnotation(type);
+  }
+
   static boolean isSubcomponent(Element element) {
     return isAnyAnnotationPresent(element, Subcomponent.class, ProductionSubcomponent.class);
   }

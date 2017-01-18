@@ -322,8 +322,15 @@ final class ErrorMessages {
       "@%s.type cannot be used with multibinding annotations";
 
   /* BindsInstance messages. */
-  static final String BINDS_INSTANCE_NOT_IN_BUILDER =
-      "@BindsInstance must annotate a method in a component builder";
+  static final String BINDS_INSTANCE_IN_MODULE =
+      "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?";
+
+  static final String BINDS_INSTANCE_IN_INVALID_COMPONENT =
+      "@BindsInstance methods should not be included in @%1$ss. "
+          + "Did you mean to put it in a @%1$s.Builder?";
+
+  static final String BINDS_INSTANCE_ONE_PARAMETER =
+      "@BindsInstance methods should have exactly one parameter for the bound type";
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {

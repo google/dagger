@@ -16,11 +16,19 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ConfigurationAnnotations.getComponentOrSubcomponentAnnotation;
+import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
-import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_NOT_IN_BUILDER;
+import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_IN_INVALID_COMPONENT;
+import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_IN_MODULE;
+import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_ONE_PARAMETER;
+import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.Util.toImmutableSet;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.BindsInstance;
@@ -28,8 +36,11 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.processing.Messager;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.tools.Diagnostic.Kind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 /**
  * Processing step that validates that the {@code BindsInstance} annotation is applied to the
@@ -37,9 +48,13 @@ import javax.tools.Diagnostic.Kind;
  */
 final class BindsInstanceProcessingStep implements ProcessingStep {
 
-  private static final ImmutableSet<Class<? extends Annotation>> VALID_CONTAINING_ANNOTATIONS =
+  private static final ImmutableSet<Class<? extends Annotation>> COMPONENT_ANNOTATIONS =
       Stream.of(ComponentDescriptor.Kind.values())
-          .map(ComponentDescriptor.Kind::builderAnnotationType)
+          .map(ComponentDescriptor.Kind::annotationType)
+          .collect(toImmutableSet());
+  private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
+      Stream.of(ModuleDescriptor.Kind.values())
+          .map(ModuleDescriptor.Kind::moduleAnnotation)
           .collect(toImmutableSet());
 
   private final Messager messager;
@@ -57,9 +72,32 @@ final class BindsInstanceProcessingStep implements ProcessingStep {
   public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     for (Element element : elementsByAnnotation.get(BindsInstance.class)) {
-      if (!isAnyAnnotationPresent(element.getEnclosingElement(), VALID_CONTAINING_ANNOTATIONS)) {
-        messager.printMessage(Kind.ERROR, BINDS_INSTANCE_NOT_IN_BUILDER, element);
+      ExecutableElement method = MoreElements.asExecutable(element);
+      ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(method);
+      if (!method.getModifiers().contains(ABSTRACT)) {
+        report.addError("@BindsInstance methods must be abstract");
       }
+      if (method.getParameters().size() != 1) {
+        report.addError(BINDS_INSTANCE_ONE_PARAMETER);
+      } else {
+        VariableElement parameter = getOnlyElement(method.getParameters());
+        if (FrameworkTypes.isFrameworkType(parameter.asType())) {
+          report.addError("@BindsInstance parameters may not be framework types", parameter);
+        }
+      }
+      TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
+      if (isAnyAnnotationPresent(enclosingType, MODULE_ANNOTATIONS)) {
+        report.addError(
+            String.format(
+                BINDS_INSTANCE_IN_MODULE, simpleName(getModuleAnnotation(enclosingType).get())));
+      }
+      if (isAnyAnnotationPresent(enclosingType, COMPONENT_ANNOTATIONS)) {
+        AnnotationMirror componentAnnotation =
+            getComponentOrSubcomponentAnnotation(enclosingType).get();
+        report.addError(
+            String.format(BINDS_INSTANCE_IN_INVALID_COMPONENT, simpleName(componentAnnotation)));
+      }
+      report.build().printMessagesTo(messager);
     }
     return ImmutableSet.of();
   }

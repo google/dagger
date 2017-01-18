@@ -36,8 +36,11 @@ interface TestComponent {
 
   List<String> listOfString();
 
+  @Named("subtype")
+  int boundInSubtype();
+
   @Component.Builder
-  interface Builder {
+  interface Builder extends BuilderSupertype {
     @BindsInstance
     Builder count(int count);
 

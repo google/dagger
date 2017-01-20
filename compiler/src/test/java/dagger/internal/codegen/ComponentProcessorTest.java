@@ -2613,6 +2613,9 @@ public class ComponentProcessorTest {
         .hasSourceEquivalentTo(generated);
   }
 
+  // TODO(b/34107586): Fix and enable test.
+  @Test
+  @Ignore
   public void invalidComponentDependencies() {
     JavaFileObject testComponent =
         JavaFileObjects.forSourceLines(

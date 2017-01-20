@@ -39,13 +39,12 @@ java_library(
         "//third_party:jsr330_inject",
     ],
     deps = [
+        "//core",
         "//third_party:guava",
         "//third_party:jsr305_annotations",
         "//third_party:jsr330_inject",
-        "//core",
     ],
 )
-
 
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -56,9 +55,9 @@ GenJavaTests(
     deps = [
         ":producers",
         "//third_party:guava",
+        "//third_party:guava_testlib",
         "//third_party:junit",
         "//third_party:mockito",
         "//third_party:truth",
-        "//third_party:guava_testlib",
     ],
 )

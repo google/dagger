@@ -29,11 +29,11 @@ GenRobolectricTests(
     srcs = glob(["*.java"]),
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX,
     deps = [
+        "//android/src/it/functional-tests/src/main/java/test/android",
         "//third_party:guava",
         "//third_party:guava_testlib",
         "//third_party:junit",
         "//third_party:truth",
-        "//android/src/it/functional-tests/src/main/java/test/android",
     ],
 )
 

@@ -30,8 +30,8 @@ android_library(
     srcs = glob(["*.java"]),
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "@androidsdk//com.android.support:support-annotations-24.2.0",
-        "//third_party:auto_value",
         "//:dagger_with_compiler",
+        "//third_party:auto_value",
+        "@androidsdk//com.android.support:support-annotations-24.2.0",
     ],
 )

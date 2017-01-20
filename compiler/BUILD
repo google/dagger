@@ -47,10 +47,9 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = COMPILER_PLUGINS,
     deps = COMPILER_SHARED_DEPS + [
-        "//third_party:guava"
+        "//third_party:guava",
     ],
 )
-
 
 java_plugin(
     name = "component-codegen",
@@ -68,17 +67,17 @@ GenJavaTests(
     plugins = [":component-codegen"],
     deps = [
         ":compiler",
+        "//core",
+        "//producers",
         "//third_party:auto_common",
         "//third_party:auto_value",
         "//third_party:compile_testing",
+        "//third_party:guava",
         "//third_party:javapoet",
         "//third_party:jsr330_inject",
         "//third_party:junit",
         "//third_party:mockito",
         "//third_party:truth",
-        "//core",
-        "//producers",
-        "//third_party:guava",
     ],
 )
 

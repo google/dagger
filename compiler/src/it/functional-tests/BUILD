@@ -35,14 +35,13 @@ java_library(
     # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
     # used without a Guava and jsr305 deps.
     deps = [
+        "//:dagger_with_compiler",
         "//third_party:auto_factory",
         "//third_party:auto_value",
-        "//:dagger_with_compiler",
         "//third_party:jsr330_inject",
         "//third_party:junit",
     ],
 )
-
 
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -54,15 +53,14 @@ GenJavaTests(
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         ":code_under_test",
-        "//third_party:guava_testlib",
-        "//third_party:guava",
-        "//third_party:auto_value",
         "//:dagger_with_compiler",
+        "//third_party:auto_value",
+        "//third_party:guava",
+        "//third_party:guava_testlib",
         "//third_party:jsr330_inject",
         "//third_party:junit",
         "//third_party:truth",
     ],
 )
-
 
 test_suite(name = "AllTests")

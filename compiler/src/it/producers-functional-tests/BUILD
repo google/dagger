@@ -31,9 +31,9 @@ java_library(
     srcs = glob(["src/main/java/**/*.java"]),
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_7_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//third_party:guava",
-        "//third_party:auto_value",
         "//:producers_with_compiler",
+        "//third_party:auto_value",
+        "//third_party:guava",
         "//third_party:jsr330_inject",
     ],
 )
@@ -46,8 +46,8 @@ GenJavaTests(
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_7_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         ":code_under_test",
-        "//third_party:guava",
         "//:producers_with_compiler",
+        "//third_party:guava",
         "//third_party:jsr330_inject",
         "//third_party:junit",
         "//third_party:mockito",

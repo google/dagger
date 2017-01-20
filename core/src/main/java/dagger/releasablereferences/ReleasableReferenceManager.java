@@ -56,7 +56,7 @@ import javax.inject.Provider;
  * <p>{@link #releaseStrongReferences()} transitions all providers within {@link #scope()} that are
  * in <b>strong-reference</b> state to <b>weak-reference</b> state.
  *
- * <p>{@link #restoreStrongReference()} transitions all providers within {@link #scope()} that are
+ * <p>{@link #restoreStrongReferences()} transitions all providers within {@link #scope()} that are
  * in <b>weak-reference</b> state to <b>strong-reference</b> state.
  *
  * <p>If garbage collection clears the {@link WeakReference} for any provider within {@link

@@ -24,9 +24,7 @@ import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 import javax.lang.model.element.ExecutableElement;
 
-/**
- * Whether a binding or declaration is for a unique contribution or a map or set multibinding.
- */
+/** Whether a binding or declaration is for a unique contribution or a map or set multibinding. */
 enum ContributionType {
   /** Represents map bindings. */
   MAP,
@@ -38,41 +36,21 @@ enum ContributionType {
   UNIQUE,
   ;
 
-  /**
-   * An object that is associated with a {@link ContributionType}.
-   */
+  /** An object that is associated with a {@link ContributionType}. */
   interface HasContributionType {
 
     /** The contribution type of this object. */
     ContributionType contributionType();
   }
 
-  /**
-   * {@code true} if this is for a multibinding.
-   */
+  /** {@code true} if this is for a multibinding. */
   boolean isMultibinding() {
     return !this.equals(UNIQUE);
   }
 
-  /** The contribution type for a given provision type. */
-  private static ContributionType forProvisionType(Provides.Type provisionType) {
-    switch (provisionType) {
-      case SET:
-        return SET;
-      case SET_VALUES:
-        return SET_VALUES;
-      case MAP:
-        return MAP;
-      case UNIQUE:
-        return UNIQUE;
-      default:
-        throw new AssertionError("Unknown provision type: " + provisionType);
-    }
-  }
-
   /**
    * The contribution type from a binding method annotations. Presumes a well-formed binding method
-   * (only one of @IntoSet, @IntoMap, @ElementsIntoSet, @Provides.type or @Produces.type. {@link
+   * (at most one of @IntoSet, @IntoMap, @ElementsIntoSet and @Provides.type). {@link
    * ProvidesMethodValidator} and {@link ProducesMethodValidator} validate correctness on their own.
    */
   static ContributionType fromBindingMethod(ExecutableElement method) {
@@ -83,11 +61,6 @@ enum ContributionType {
     } else if (isAnnotationPresent(method, ElementsIntoSet.class)) {
       return ContributionType.SET_VALUES;
     }
-
-    if (isAnnotationPresent(method, Provides.class)) {
-      return forProvisionType(method.getAnnotation(Provides.class).type());
-    } else {
-      return ContributionType.UNIQUE;
-    }
+    return ContributionType.UNIQUE;
   }
 }

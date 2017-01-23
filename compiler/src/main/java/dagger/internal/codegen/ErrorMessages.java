@@ -24,7 +24,6 @@ import static java.util.stream.Collectors.toList;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import dagger.Multibindings;
-import dagger.Provides;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -655,9 +654,6 @@ final class ErrorMessages {
    *     through this method.
    */
   static String stripCommonTypePrefixes(String type) {
-    // Special case this enum's constants since they will be incredibly common.
-    type = type.replace(Provides.Type.class.getCanonicalName() + ".", "");
-
     // Do regex magic to remove common packages we care to shorten.
     Matcher matcher = COMMON_PACKAGE_PATTERN.matcher(type);
     StringBuilder result = new StringBuilder();

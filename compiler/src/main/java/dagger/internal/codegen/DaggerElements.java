@@ -161,4 +161,12 @@ final class DaggerElements {
         annotationClassNames.contains(
             MoreTypes.asTypeElement(annotation.getAnnotationType()).getQualifiedName().toString());
   }
+
+  static ImmutableSet<String> suppressedWarnings(Element element) {
+    SuppressWarnings suppressedWarnings = element.getAnnotation(SuppressWarnings.class);
+    if (suppressedWarnings == null) {
+      return ImmutableSet.of();
+    }
+    return ImmutableSet.copyOf(suppressedWarnings.value());
+  }
 }

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 
 import com.google.testing.compile.JavaFileObjects;
@@ -26,41 +27,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class MultibindingTest {
-  @Test
-  public void providesTypeAndAnnotationOnSameMethod_failsToCompile() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.MultibindingModule",
-            "package test;",
-            "",
-            "import static dagger.Provides.Type.SET;",
-            "import static dagger.Provides.Type.UNIQUE;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "import dagger.multibindings.IntoSet;",
-            "",
-            "@Module",
-            "class MultibindingModule {",
-            "  @Provides(type = SET) @IntoSet Integer provideInt() { ",
-            "    return 1;",
-            "  }",
-            "  @Provides(type = UNIQUE) @IntoSet Integer provideConflictingMultibindingTypes() { ",
-            "    return 2;",
-            "  }",
-            "}");
-
-    assertThat(module)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Provides.type cannot be used with multibinding annotations")
-        .in(module)
-        .onLine(12)
-        .and()
-        .withErrorContaining("@Provides.type cannot be used with multibinding annotations")
-        .in(module)
-        .onLine(15);
-  }
 
   @Test
   public void providesWithTwoMultibindingAnnotations_failsToCompile() {

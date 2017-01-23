@@ -1183,8 +1183,6 @@ public class ComponentProcessorTest {
     JavaFileObject emptySetModuleFile = JavaFileObjects.forSourceLines("test.EmptySetModule",
         "package test;",
         "",
-        "import static dagger.Provides.Type.SET_VALUES;",
-        "",
         "import dagger.Module;",
         "import dagger.Provides;",
         "import dagger.multibindings.ElementsIntoSet;",

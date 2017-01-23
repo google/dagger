@@ -45,8 +45,6 @@ import javax.lang.model.util.Types;
  * @author Jesse Beder
  * @since 2.0
  */
-// TODO(beder): Consider unifying this with the ProvidesMethodValidator after Provides.Type and
-// Produces.Type are reconciled.
 final class ProducesMethodValidator extends BindingMethodValidator {
 
   ProducesMethodValidator(Elements elements, Types types) {

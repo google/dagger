@@ -45,13 +45,6 @@ class MultibindingModule {
 
   @Provides
   @IntoMap
-  @StringKey("foo @Provides(type)")
-  static String provideFooProvidesTypeKey(@SuppressWarnings("unused") double doubleDependency) {
-    return "foo @Provides(type) value";
-  }
-
-  @Provides
-  @IntoMap
   @StringKey("bar")
   static String provideBarKey() {
     return "bar value";
@@ -84,14 +77,8 @@ class MultibindingModule {
   }
 
   @Provides
-  @IntoSet
-  static int provideIntoSetWithProvidesType() {
-    return -100;
-  }
-
-  @Provides
   @ElementsIntoSet
-  static Set<Integer> provideElementsIntoSetWithProvidesType() {
+  static Set<Integer> provideElementsIntoSet() {
     Set<Integer> set = new HashSet<>();
     set.add(-101);
     set.add(-102);

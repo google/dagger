@@ -148,8 +148,6 @@ public class MapKeyProcessorTest {
     JavaFileObject mapModuleTwoFile =JavaFileObjects.forSourceLines("test.MapModuleTwo",
         "package test;",
         "",
-        "import static dagger.Provides.Type.MAP;",
-        "",
         "import dagger.Module;",
         "import dagger.Provides;",
         "import dagger.multibindings.IntoMap;",

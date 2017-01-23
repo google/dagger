@@ -65,10 +65,9 @@ public class MultibindingTest {
 
   @Test public void map() {
     Map<String, String> map = multibindingComponent.map();
-    assertThat(map).hasSize(3);
+    assertThat(map).hasSize(2);
     assertThat(map).containsEntry("foo", "foo value");
     assertThat(map).containsEntry("bar", "bar value");
-    assertThat(map).containsEntry("foo @Provides(type)", "foo @Provides(type) value");
   }
 
   @Test public void mapOfArrays() {
@@ -82,18 +81,16 @@ public class MultibindingTest {
 
   @Test public void mapOfProviders() {
     Map<String, Provider<String>> mapOfProviders = multibindingComponent.mapOfProviders();
-    assertThat(mapOfProviders).hasSize(3);
+    assertThat(mapOfProviders).hasSize(2);
     assertThat(mapOfProviders.get("foo").get()).isEqualTo("foo value");
     assertThat(mapOfProviders.get("bar").get()).isEqualTo("bar value");
-    assertThat(mapOfProviders.get("foo @Provides(type)").get())
-        .isEqualTo("foo @Provides(type) value");
   }
 
   @Test public void mapKeysAndValues() {
     assertThat(multibindingComponent.mapKeys())
-        .containsExactly("foo", "bar", "foo @Provides(type)");
+        .containsExactly("foo", "bar");
     assertThat(multibindingComponent.mapValues())
-        .containsExactly("foo value", "bar value", "foo @Provides(type) value");
+        .containsExactly("foo value", "bar value");
   }
 
   @Test public void nestedKeyMap() {
@@ -164,7 +161,7 @@ public class MultibindingTest {
 
   @Test public void setBindings() {
     assertThat(multibindingComponent.set())
-        .containsExactly(-90, -17, -1, 5, 6, 832, 1742, -100, -101, -102);
+        .containsExactly(-90, -17, -1, 5, 6, 832, 1742, -101, -102);
   }
 
   @Test

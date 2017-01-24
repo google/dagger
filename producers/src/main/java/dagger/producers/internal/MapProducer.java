@@ -16,6 +16,9 @@
 
 package dagger.producers.internal;
 
+import static com.google.common.util.concurrent.Futures.transform;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -65,7 +68,7 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
           @Override
           public ListenableFuture<Map<K, V>> apply(final Map<K, Producer<V>> map) {
             // TODO(beder): Use Futures.whenAllComplete when Guava 20 is released.
-            return Futures.transform(
+            return transform(
                 Futures.allAsList(
                     Iterables.transform(map.entrySet(), MapProducer.<K, V>entryUnwrapper())),
                 new Function<List<Map.Entry<K, V>>, Map<K, V>>() {
@@ -73,7 +76,8 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
                   public Map<K, V> apply(List<Map.Entry<K, V>> entries) {
                     return ImmutableMap.copyOf(entries);
                   }
-                });
+                },
+                directExecutor());
           }
         });
   }
@@ -86,14 +90,15 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
             @Override
             public ListenableFuture<Map.Entry<Object, Object>> apply(
                 final Map.Entry<Object, Producer<Object>> entry) {
-              return Futures.transform(
+              return transform(
                   entry.getValue().get(),
                   new Function<Object, Map.Entry<Object, Object>>() {
                     @Override
                     public Map.Entry<Object, Object> apply(Object value) {
                       return Maps.immutableEntry(entry.getKey(), value);
                     }
-                  });
+                  },
+                  directExecutor());
             }
           };
 

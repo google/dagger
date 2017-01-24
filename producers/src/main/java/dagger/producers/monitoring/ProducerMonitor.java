@@ -16,8 +16,10 @@
 
 package dagger.producers.monitoring;
 
+import static com.google.common.util.concurrent.Futures.addCallback;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Producer;
 import dagger.producers.Produces;
@@ -160,7 +162,7 @@ public abstract class ProducerMonitor {
    * overridden in the framework!
    */
   public <T> void addCallbackTo(ListenableFuture<T> future) {
-    Futures.addCallback(
+    addCallback(
         future,
         new FutureCallback<T>() {
           @Override
@@ -172,7 +174,8 @@ public abstract class ProducerMonitor {
           public void onFailure(Throwable t) {
             failed(t);
           }
-        });
+        },
+        directExecutor());
   }
 
   private static final ProducerMonitor NO_OP =

@@ -16,6 +16,9 @@
 
 package dagger.producers.internal;
 
+import static com.google.common.util.concurrent.Futures.transform;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -69,7 +72,7 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
           @Override
           public ListenableFuture<Map<K, Produced<V>>> apply(final Map<K, Producer<V>> map) {
             // TODO(beder): Use Futures.whenAllComplete when Guava 20 is released.
-            return Futures.transform(
+            return transform(
                 Futures.allAsList(
                     Iterables.transform(
                         map.entrySet(), MapOfProducedProducer.<K, V>entryUnwrapper())),
@@ -78,7 +81,8 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
                   public Map<K, Produced<V>> apply(List<Map.Entry<K, Produced<V>>> entries) {
                     return ImmutableMap.copyOf(entries);
                   }
-                });
+                },
+                directExecutor());
           }
         });
   }
@@ -93,14 +97,15 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
             @Override
             public ListenableFuture<Map.Entry<Object, Produced<Object>>> apply(
                 final Map.Entry<Object, Producer<Object>> entry) {
-              return Futures.transform(
+              return transform(
                   Producers.createFutureProduced(entry.getValue().get()),
                   new Function<Produced<Object>, Map.Entry<Object, Produced<Object>>>() {
                     @Override
                     public Map.Entry<Object, Produced<Object>> apply(Produced<Object> value) {
                       return Maps.immutableEntry(entry.getKey(), value);
                     }
-                  });
+                  },
+                  directExecutor());
             }
           };
 

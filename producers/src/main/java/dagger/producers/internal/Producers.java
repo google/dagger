@@ -17,6 +17,9 @@
 package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.util.concurrent.Futures.catchingAsync;
+import static com.google.common.util.concurrent.Futures.transform;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
@@ -49,17 +52,19 @@ public final class Producers {
   // TODO(beder): Document what happens with an InterruptedException after you figure out how to
   // trigger one in a test.
   public static <T> ListenableFuture<Produced<T>> createFutureProduced(ListenableFuture<T> future) {
-    return Futures.catchingAsync(
-        Futures.transform(
+    return catchingAsync(
+        transform(
             future,
             new Function<T, Produced<T>>() {
               @Override
               public Produced<T> apply(final T value) {
                 return Produced.successful(value);
               }
-            }),
+            },
+            directExecutor()),
         Throwable.class,
-        Producers.<T>futureFallbackForProduced());
+        Producers.<T>futureFallbackForProduced(),
+        directExecutor());
 
   }
 
@@ -82,11 +87,15 @@ public final class Producers {
    * future.
    */
   public static <T> ListenableFuture<Set<T>> createFutureSingletonSet(ListenableFuture<T> future) {
-    return Futures.transform(future, new Function<T, Set<T>>() {
-      @Override public Set<T> apply(T value) {
-        return ImmutableSet.of(value);
-      }
-    });
+    return transform(
+        future,
+        new Function<T, Set<T>>() {
+          @Override
+          public Set<T> apply(T value) {
+            return ImmutableSet.of(value);
+          }
+        },
+        directExecutor());
   }
 
   /**
@@ -97,14 +106,15 @@ public final class Producers {
    */
   public static <T> ListenableFuture<Set<T>> allAsSet(
       Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return Futures.transform(
+    return transform(
         Futures.allAsList(futures),
         new Function<List<T>, Set<T>>() {
           @Override
           public Set<T> apply(List<T> values) {
             return ImmutableSet.copyOf(values);
           }
-        });
+        },
+        directExecutor());
   }
 
   /**

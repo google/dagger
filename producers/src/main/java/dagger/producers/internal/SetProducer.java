@@ -17,6 +17,8 @@
 package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.util.concurrent.Futures.transform;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static dagger.internal.DaggerCollections.hasDuplicates;
 import static dagger.internal.DaggerCollections.presizedList;
 
@@ -137,7 +139,7 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
     for (Producer<Collection<T>> producer : collectionProducers) {
       futureCollections.add(checkNotNull(producer.get()));
     }
-    return Futures.transform(
+    return transform(
         Futures.allAsList(futureCollections),
         new Function<List<Collection<T>>, Set<T>>() {
           @Override
@@ -148,6 +150,7 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
             }
             return builder.build();
           }
-        });
+        },
+        directExecutor());
   }
 }

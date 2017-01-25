@@ -63,6 +63,7 @@ final class InjectBindingRegistry {
   private final Key.Factory keyFactory;
   private final ProvisionBinding.Factory provisionBindingFactory;
   private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
+  private final CompilerOptions compilerOptions;
 
   final class BindingsCollection<B extends Binding> {
     private final BindingType bindingType;
@@ -105,7 +106,8 @@ final class InjectBindingRegistry {
     void tryToGenerateBinding(B binding, boolean warnIfNotAlreadyGenerated) {
       if (shouldGenerateBinding(binding, generatedClassNameForBinding(binding))) {
         bindingsRequiringGeneration.offer(binding);
-        if (warnIfNotAlreadyGenerated) {
+        if (compilerOptions.warnIfInjectionFactoryNotGeneratedUpstream()
+            && warnIfNotAlreadyGenerated) {
           messager.printMessage(
               Kind.NOTE,
               String.format(
@@ -152,7 +154,8 @@ final class InjectBindingRegistry {
       InjectValidator injectValidator,
       Key.Factory keyFactory,
       ProvisionBinding.Factory provisionBindingFactory,
-      MembersInjectionBinding.Factory membersInjectionBindingFactory) {
+      MembersInjectionBinding.Factory membersInjectionBindingFactory,
+      CompilerOptions compilerOptions) {
     this.elements = elements;
     this.types = types;
     this.messager = messager;
@@ -160,6 +163,7 @@ final class InjectBindingRegistry {
     this.keyFactory = keyFactory;
     this.provisionBindingFactory = provisionBindingFactory;
     this.membersInjectionBindingFactory = membersInjectionBindingFactory;
+    this.compilerOptions = compilerOptions;
   }
 
   /**

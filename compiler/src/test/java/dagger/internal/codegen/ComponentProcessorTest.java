@@ -2354,7 +2354,9 @@ public class ComponentProcessorTest {
   public void unprocessedMembersInjectorNotes() {
     Compilation compilation =
         javac()
-            .withOptions("-Xlint:-processing")
+            .withOptions(
+                "-Xlint:-processing",
+                 "-Adagger.warnIfInjectionFactoryNotGeneratedUpstream=enabled")
             .withProcessors(
                 new ElementFilteringComponentProcessor(
                     Predicates.not(
@@ -2840,6 +2842,11 @@ public class ComponentProcessorTest {
     @Override
     public SourceVersion getSupportedSourceVersion() {
       return componentProcessor.getSupportedSourceVersion();
+    }
+
+    @Override
+    public Set<String> getSupportedOptions() {
+      return componentProcessor.getSupportedOptions();
     }
 
     @Override

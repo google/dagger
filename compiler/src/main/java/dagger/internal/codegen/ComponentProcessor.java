@@ -156,7 +156,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             injectValidator,
             keyFactory,
             provisionBindingFactory,
-            membersInjectionBindingFactory);
+            membersInjectionBindingFactory,
+            compilerOptions);
 
     ModuleDescriptor.Factory moduleDescriptorFactory =
         new ModuleDescriptor.Factory(

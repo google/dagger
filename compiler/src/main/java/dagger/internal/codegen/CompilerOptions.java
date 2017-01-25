@@ -37,6 +37,7 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind staticMemberValidationKind();
   abstract boolean ignorePrivateAndStaticInjectionForComponent();
   abstract ValidationType scopeCycleValidationType();
+  abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
 
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder();
@@ -56,6 +57,8 @@ abstract class CompilerOptions {
             ignorePrivateAndStaticInjectionForComponent(processingEnv)
                 .equals(FeatureStatus.DISABLED))
         .scopeCycleValidationType(scopeValidationType(processingEnv))
+        .warnIfInjectionFactoryNotGeneratedUpstream(
+            warnIfInjectionFactoryNotGeneratedUpstream(processingEnv).equals(FeatureStatus.ENABLED))
         .build();
   }
 
@@ -69,6 +72,8 @@ abstract class CompilerOptions {
     Builder ignorePrivateAndStaticInjectionForComponent(
         boolean ignorePrivateAndStaticInjectionForComponent);
     Builder scopeCycleValidationType(ValidationType type);
+    Builder warnIfInjectionFactoryNotGeneratedUpstream(
+        boolean warnIfInjectionFactoryNotGeneratedUpstream);
     CompilerOptions build();
   }
 
@@ -82,6 +87,9 @@ abstract class CompilerOptions {
   static final String PRIVATE_MEMBER_VALIDATION_TYPE_KEY = "dagger.privateMemberValidation";
 
   static final String STATIC_MEMBER_VALIDATION_TYPE_KEY = "dagger.staticMemberValidation";
+
+  static final String WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY =
+      "dagger.warnIfInjectionFactoryNotGeneratedUpstream";
 
   /**
    * If true, Dagger will generate factories and components even if some members-injected types
@@ -99,6 +107,7 @@ abstract class CompilerOptions {
         NULLABLE_VALIDATION_KEY,
         PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
         STATIC_MEMBER_VALIDATION_TYPE_KEY,
+        WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
         IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
 
   private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
@@ -146,6 +155,15 @@ abstract class CompilerOptions {
     return valueOf(
         processingEnv,
         IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
+
+  private static FeatureStatus warnIfInjectionFactoryNotGeneratedUpstream(
+      ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
         FeatureStatus.DISABLED,
         EnumSet.allOf(FeatureStatus.class));
   }

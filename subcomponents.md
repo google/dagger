@@ -201,7 +201,7 @@ class DatabaseModule {
 
 @Module
 class DatabaseImplModule {
-  DatabaseModule(int concurrencyLevel) {}
+  DatabaseImplModule(int concurrencyLevel) {}
   @Provides DatabaseConnectionPool provideDatabaseConnectionPool() {}
   @Provides DatabaseSchema provideDatabaseSchema() {}
 }

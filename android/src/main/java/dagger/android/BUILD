@@ -32,6 +32,6 @@ android_library(
     deps = [
         "//:dagger_with_compiler",
         "//third_party:auto_value",
-        "@androidsdk//com.android.support:support-annotations-24.2.0",
+        "@androidsdk//com.android.support:support-annotations-25.0.0",
     ],
 )

@@ -34,6 +34,6 @@ android_library(
     # used without a Guava and jsr305 deps.
     deps = [
         "//:dagger_with_compiler",
-        "//android",
+        "//java/dagger/android",
     ],
 )

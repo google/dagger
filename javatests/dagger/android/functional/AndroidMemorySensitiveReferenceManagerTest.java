@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package test.android;
+package dagger.android.functional;
 
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
 import static com.google.common.truth.Truth.assertThat;
-import static test.android.AndroidMemorySensitiveReferenceManagerTest.AllWeakReferencesCleared.allWeakReferencesCleared;
+import static dagger.android.functional.AndroidMemorySensitiveReferenceManagerTest.AllWeakReferencesCleared.allWeakReferencesCleared;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.GcFinalization;

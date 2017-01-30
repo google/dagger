@@ -24,17 +24,31 @@ load(
 )
 load("//:test_defs.bzl", "GenRobolectricTests")
 
-GenRobolectricTests(
-    name = "android_tests",
-    srcs = glob(["*.java"]),
+# Sample code to be tested in functional tests.
+android_library(
+    name = "code_under_test",
+    srcs = glob(
+        ["*.java"],
+        exclude = ["*Test.java"],
+    ),
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//android/src/it/functional-tests/src/main/java/test/android",
+        # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
+        # used without a Guava and jsr305 deps.
+        "//:dagger_with_compiler",
+        "//java/dagger/android",
+    ],
+)
+
+GenRobolectricTests(
+    name = "android_functional_tests",
+    srcs = glob(["*Test.java"]),
+    javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX,
+    deps = [
+        ":code_under_test",
         "//third_party:guava",
         "//third_party:guava_testlib",
         "//third_party:junit",
         "//third_party:truth",
     ],
 )
-
-test_suite(name = "AllTests")

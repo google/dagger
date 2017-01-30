@@ -14,29 +14,12 @@
  * limitations under the License.
  */
 
-package test.android;
+package dagger.android.functional;
 
-import dagger.Module;
-import dagger.Provides;
+import java.lang.annotation.Annotation;
+import javax.inject.Qualifier;
 
-@Module
-class TestModule {
-  int releasedWhenUiHiddenCalls;
-  int releasedWhenModerateCalls;
-
-  @Provides
-  @ReleaseWhenUiHidden
-  @InScope(ReleaseWhenUiHidden.class)
-  Object releasedWhenUiHidden() {
-    ++releasedWhenUiHiddenCalls;
-    return new Object();
-  }
-
-  @Provides
-  @ReleaseWhenModerate
-  @InScope(ReleaseWhenModerate.class)
-  Object releasedWhenModerate() {
-    ++releasedWhenModerateCalls;
-    return new Object();
-  }
+@Qualifier
+@interface InScope {
+  Class<? extends Annotation> value();
 }

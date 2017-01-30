@@ -23,9 +23,15 @@ import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
+import dagger.internal.codegen.ValidationReport.Builder;
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.lang.model.element.Element;
@@ -45,6 +51,7 @@ import javax.lang.model.util.Types;
  * @author sameb@google.com (Sam Berlin)
  */
 class BuilderValidator {
+
   private final Elements elements;
   private final Types types;
 
@@ -102,20 +109,34 @@ class BuilderValidator {
     }
 
     ExecutableElement buildMethod = null;
-    for (ExecutableElement method : getUnimplementedMethods(elements, types, subject)) {
+    for (ExecutableElement method : getUnimplementedMethods(subject, types, elements)) {
       ExecutableType resolvedMethodType =
           MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
       TypeMirror returnType = resolvedMethodType.getReturnType();
       if (method.getParameters().size() == 0) {
         // If this is potentially a build() method, validate it returns the correct type.
-        if (types.isSameType(returnType, componentElement.asType())) {
+        if (types.isSubtype(componentElement.asType(), returnType)) {
+          validateBuildMethodReturnType(
+              builder,
+              // since types.isSubtype() passed, componentElement cannot be a PackageElement
+              MoreElements.asType(componentElement),
+              msgs,
+              method,
+              returnType);
           if (buildMethod != null) {
             // If we found more than one build-like method, fail.
-            error(builder, method, msgs.twoBuildMethods(), msgs.inheritedTwoBuildMethods(),
+            error(
+                builder,
+                method,
+                msgs.twoBuildMethods(),
+                msgs.inheritedTwoBuildMethods(),
                 buildMethod);
           }
         } else {
-          error(builder, method, msgs.buildMustReturnComponentType(),
+          error(
+              builder,
+              method,
+              msgs.buildMustReturnComponentType(),
               msgs.inheritedBuildMustReturnComponentType());
         }
         // We set the buildMethod regardless of the return type to reduce error spam.
@@ -151,6 +172,25 @@ class BuilderValidator {
     return builder.build();
   }
 
+  private void validateBuildMethodReturnType(
+      ValidationReport.Builder<TypeElement> builder,
+      TypeElement componentElement,
+      ComponentBuilderMessages msgs,
+      ExecutableElement method,
+      TypeMirror returnType) {
+    if (types.isSameType(componentElement.asType(), returnType)) {
+      return;
+    }
+    ImmutableSet<ExecutableElement> methodsOnlyInComponent =
+        methodsOnlyInComponent(componentElement);
+    if (!methodsOnlyInComponent.isEmpty()) {
+      builder.addWarning(
+          msgs.buildMethodReturnsSupertypeWithMissingMethods(
+              componentElement, builder.getSubject(), returnType, method, methodsOnlyInComponent),
+          method);
+    }
+  }
+
   /**
    * Generates one of two error messages. If the method is enclosed in the subject, we target the
    * error to the method itself. Otherwise we target the error to the subject and list the method as
@@ -169,7 +209,7 @@ class BuilderValidator {
    * This check is a little more strict than necessary -- ideally we'd check if method's enclosing
    * class was included in this compile run.  But that's hard, and this is close enough.
    */
-  private void error(
+  private static void error(
       ValidationReport.Builder<TypeElement> builder,
       ExecutableElement method,
       String enclosedError,
@@ -178,10 +218,37 @@ class BuilderValidator {
     if (method.getEnclosingElement().equals(builder.getSubject())) {
       builder.addError(String.format(enclosedError, extraArgs), method);
     } else {
-      Object[] newArgs = new Object[extraArgs.length + 1];
-      newArgs[0] = method;
-      System.arraycopy(extraArgs, 0, newArgs, 1, extraArgs.length);
-      builder.addError(String.format(inheritedError, newArgs));
+      builder.addError(String.format(inheritedError, append(extraArgs, method)));
     }
+  }
+
+  /** @see #error(Builder, ExecutableElement, String, String, Object...) */
+  private static void warning(
+      ValidationReport.Builder<TypeElement> builder,
+      ExecutableElement method,
+      String enclosedWarning,
+      String inheritedWarning,
+      Object... extraArgs) {
+    if (method.getEnclosingElement().equals(builder.getSubject())) {
+      builder.addWarning(String.format(enclosedWarning, extraArgs), method);
+    } else {
+      builder.addWarning(String.format(inheritedWarning, append(extraArgs, method)), method);
+    }
+  }
+
+  private static Object[] append(Object[] initial, Object additional) {
+    Object[] newArray = Arrays.copyOf(initial, initial.length + 1);
+    newArray[initial.length] = additional;
+    return newArray;
+  }
+
+  /**
+   * Returns all methods defind in {@code componentType} which are not inherited from a supertype.
+   */
+  private ImmutableSet<ExecutableElement> methodsOnlyInComponent(TypeElement componentType) {
+    // TODO(ronshapiro): Ideally this shouldn't return methods which are redeclared from a
+    // supertype, but do not change the return type. We don't have a good/simple way of checking
+    // that, and it doesn't seem likely, so the warning won't be too bad.
+    return ImmutableSet.copyOf(methodsIn(componentType.getEnclosedElements()));
   }
 }

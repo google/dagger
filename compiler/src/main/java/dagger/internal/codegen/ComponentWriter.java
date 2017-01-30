@@ -182,7 +182,7 @@ final class ComponentWriter extends AbstractComponentWriter {
           methodBuilder("create")
               .returns(componentDefinitionTypeName())
               .addModifiers(PUBLIC, STATIC)
-              .addStatement("return builder().$L()", buildMethodName)
+              .addStatement("return new Builder().$L()", buildMethodName)
               .build());
     }
   }

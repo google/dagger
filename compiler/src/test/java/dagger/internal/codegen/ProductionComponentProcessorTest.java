@@ -236,7 +236,7 @@ public class ProductionComponentProcessorTest {
             "  }",
             "",
             "  public static TestClass.SimpleComponent create() {",
-            "    return builder().build()",
+            "    return new Builder().build()",
             "  }",
             "",
             "  @SuppressWarnings(\"unchecked\")",

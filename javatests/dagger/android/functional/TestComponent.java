@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package test.android;
+package dagger.android.functional;
 
-import java.lang.annotation.Annotation;
-import javax.inject.Qualifier;
+import dagger.Component;
+import dagger.android.AndroidMemorySensitiveReferenceManager;
+import javax.inject.Singleton;
 
-@Qualifier
-@interface InScope {
-  Class<? extends Annotation> value();
+@Singleton
+@ReleaseWhenUiHidden
+@ReleaseWhenModerate
+@Component(modules = TestModule.class)
+interface TestComponent {
+  AndroidMemorySensitiveReferenceManager manager();
+
+  @InScope(ReleaseWhenUiHidden.class)
+  Object releasedWhenUiHidden();
+
+  @InScope(ReleaseWhenModerate.class)
+  Object releasedWhenModerate();
 }

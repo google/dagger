@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package test.android;
+package dagger.android.functional;
 
-import dagger.Component;
-import dagger.android.AndroidMemorySensitiveReferenceManager;
-import javax.inject.Singleton;
+import dagger.Module;
+import dagger.Provides;
 
-@Singleton
-@ReleaseWhenUiHidden
-@ReleaseWhenModerate
-@Component(modules = TestModule.class)
-interface TestComponent {
-  AndroidMemorySensitiveReferenceManager manager();
+@Module
+class TestModule {
+  int releasedWhenUiHiddenCalls;
+  int releasedWhenModerateCalls;
 
+  @Provides
+  @ReleaseWhenUiHidden
   @InScope(ReleaseWhenUiHidden.class)
-  Object releasedWhenUiHidden();
+  Object releasedWhenUiHidden() {
+    ++releasedWhenUiHiddenCalls;
+    return new Object();
+  }
 
+  @Provides
+  @ReleaseWhenModerate
   @InScope(ReleaseWhenModerate.class)
-  Object releasedWhenModerate();
+  Object releasedWhenModerate() {
+    ++releasedWhenModerateCalls;
+    return new Object();
+  }
 }

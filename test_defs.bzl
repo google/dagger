@@ -44,7 +44,10 @@ def _GenTests(
 
   for test_file in test_files:
     test_name = test_file.replace(".java", "")
-    test_class = (PACKAGE_NAME + "/" + test_name).rpartition("src/test/java/")[2].replace("/",".")
+    prefix_path = "src/test/java/"
+    if PACKAGE_NAME.find("javatests/") != -1:
+      prefix_path = "javatests/"
+    test_class = (PACKAGE_NAME + "/" + test_name).rpartition(prefix_path)[2].replace("/",".")
     test_rule_type(
         name = test_name,
         deps = test_deps,

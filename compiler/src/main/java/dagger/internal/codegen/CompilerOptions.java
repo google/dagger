@@ -37,6 +37,7 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind staticMemberValidationKind();
   abstract boolean ignorePrivateAndStaticInjectionForComponent();
   abstract ValidationType scopeCycleValidationType();
+  abstract boolean useFormattingFiler();
 
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder();
@@ -56,6 +57,7 @@ abstract class CompilerOptions {
             ignorePrivateAndStaticInjectionForComponent(processingEnv)
                 .equals(FeatureStatus.DISABLED))
         .scopeCycleValidationType(scopeValidationType(processingEnv))
+        .useFormattingFiler(useFormattingFiler(processingEnv).equals(FeatureStatus.ENABLED))
         .build();
   }
 
@@ -69,10 +71,18 @@ abstract class CompilerOptions {
     Builder ignorePrivateAndStaticInjectionForComponent(
         boolean ignorePrivateAndStaticInjectionForComponent);
     Builder scopeCycleValidationType(ValidationType type);
+    Builder useFormattingFiler(boolean useFormattingFiler);
     CompilerOptions build();
   }
 
   static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
+
+  /**
+   * If true, Dagger will format generated code using a FormattingFiler.
+   *
+   * <p>This defaults to true, but can be useful for reducing compile times.
+   */
+  static final String USE_FORMATTING_FILER = "dagger.useFormattingFiler";
 
   static final String DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY =
       "dagger.disableInterComponentScopeValidation";
@@ -99,7 +109,8 @@ abstract class CompilerOptions {
         NULLABLE_VALIDATION_KEY,
         PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
         STATIC_MEMBER_VALIDATION_TYPE_KEY,
-        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
+        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
+        USE_FORMATTING_FILER);
 
   private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
     return valueOf(
@@ -115,6 +126,14 @@ abstract class CompilerOptions {
         DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
         ValidationType.ERROR,
         EnumSet.allOf(ValidationType.class));
+  }
+
+  private static FeatureStatus useFormattingFiler(ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        USE_FORMATTING_FILER,
+        FeatureStatus.ENABLED,
+        EnumSet.allOf(FeatureStatus.class));
   }
 
   private static ValidationType nullableValidationType(ProcessingEnvironment processingEnv) {

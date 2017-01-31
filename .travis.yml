@@ -38,7 +38,6 @@ before_install:
   - mvn --version
 
 install:
-  - bazel build //...
   - mvn -B -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
 
 script:

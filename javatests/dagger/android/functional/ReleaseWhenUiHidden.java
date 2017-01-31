@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package test.android;
+package dagger.android.functional;
 
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_MODERATE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -30,6 +30,6 @@ import javax.inject.Scope;
 @Documented
 @Retention(RUNTIME)
 @Target({TYPE, METHOD})
-@ReleaseReferencesAt(TRIM_MEMORY_MODERATE)
+@ReleaseReferencesAt(TRIM_MEMORY_UI_HIDDEN)
 @Scope
-@interface ReleaseWhenModerate {}
+@interface ReleaseWhenUiHidden {}

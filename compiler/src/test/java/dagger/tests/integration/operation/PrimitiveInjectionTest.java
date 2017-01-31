@@ -93,7 +93,7 @@ public final class PrimitiveInjectionTest {
           "  }",
           "",
           "  public static PrimitiveComponent create() {",
-          "    return builder().build();",
+          "    return new Builder().build();",
           "  }",
           "",
           "  @SuppressWarnings(\"unchecked\")",

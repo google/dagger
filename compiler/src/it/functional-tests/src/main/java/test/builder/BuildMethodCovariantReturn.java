@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package test.android;
+package test.builder;
 
 import dagger.Component;
-import dagger.android.AndroidMemorySensitiveReferenceManager;
-import javax.inject.Singleton;
 
-@Singleton
-@ReleaseWhenUiHidden
-@ReleaseWhenModerate
-@Component(modules = TestModule.class)
-interface TestComponent {
-  AndroidMemorySensitiveReferenceManager manager();
+@Component
+interface BuildMethodCovariantReturn {
 
-  @InScope(ReleaseWhenUiHidden.class)
-  Object releasedWhenUiHidden();
-
-  @InScope(ReleaseWhenModerate.class)
-  Object releasedWhenModerate();
+  @Component.Builder
+  interface Builder {
+    Object build();
+  }
 }

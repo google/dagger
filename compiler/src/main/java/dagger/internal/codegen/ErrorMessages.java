@@ -23,12 +23,14 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Joiner;
 import dagger.Multibindings;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.lang.model.element.AnnotationMirror;
@@ -486,13 +488,12 @@ final class ErrorMessages {
 
     final String buildMustReturnComponentType() {
       return process(
-          "@Component.Builder methods that have no arguments must return the @Component type");
+          "@Component.Builder methods that have no arguments must return the @Component type or a "
+              + "supertype of the @Component");
     }
 
     final String inheritedBuildMustReturnComponentType() {
-      return process(
-          "@Component.Builder methods that have no arguments must return the @Component type"
-          + " Inherited method: %s");
+      return process(buildMustReturnComponentType() + ". Inherited method: %s");
     }
 
     final String methodsMustTakeOneArg() {
@@ -521,6 +522,23 @@ final class ErrorMessages {
     final String inheritedMethodsMayNotHaveTypeParameters() {
       return process(
           "@Component.Builder methods must not have type parameters. Inherited method: %s");
+    }
+
+    final String buildMethodReturnsSupertypeWithMissingMethods(
+        TypeElement component,
+        TypeElement componentBuilder,
+        TypeMirror returnType,
+        ExecutableElement buildMethod,
+        Set<ExecutableElement> additionalMethods) {
+      return String.format(
+          "%1$s.%2$s() returns %3$s, but %4$s declares additional component method(s): %5$s. In "
+              + "order to provide type-safe access to these methods, override %2$s() to return "
+              + "%4$s",
+          componentBuilder.getQualifiedName(),
+          buildMethod.getSimpleName(),
+          returnType,
+          component.getQualifiedName(),
+          Joiner.on(", ").join(additionalMethods));
     }
   }
 

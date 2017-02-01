@@ -11,29 +11,42 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
 # Description:
-#   Public Dagger API for Android
+#   Functional test code for Dagger-Android
 
 package(default_visibility = ["//:src"])
 
-load(
-    "//:build_defs.bzl",
-    "DOCLINT_HTML_AND_SYNTAX",
-    "DOCLINT_REFERENCES",
-    "JAVA_6_SOURCE_LEVEL",
-    "PRE_JAVA_8_INFERENCE_OPTS",
-)
-
 android_library(
-    name = "android",
-    srcs = glob(["*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    name = "functional",
+    srcs = glob(
+        ["*.java"],
+        exclude = ["*Test.java"],
+    ),
     manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:auto_value",
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
+        "//java/dagger/android",
+        "//java/dagger/android/support",
+        "//third_party:guava",
+        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
+        "@androidsdk//com.android.support:support-v4-25.0.0",
+    ],
+)
+
+load("//:test_defs.bzl", "GenRobolectricTests")
+
+GenRobolectricTests(
+    name = "functional_tests",
+    srcs = glob(["*Test.java"]),
+    deps = [
+        ":functional",
+        "//:dagger_with_compiler",
+        "//java/dagger/android",
+        "//java/dagger/android/support",
+        "//third_party:junit",
+        "//third_party:truth",
         "@androidsdk//com.android.support:support-v4-25.0.0",
     ],
 )

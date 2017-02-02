@@ -73,7 +73,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
     List<? extends VariableElement> parameters = method.getParameters();
     if (parameters.size() == 1) {
       VariableElement parameter = getOnlyElement(parameters);
-      TypeMirror leftHandSide = method.getReturnType();
+      TypeMirror leftHandSide = boxIfNecessary(method.getReturnType());
       TypeMirror rightHandSide = parameter.asType();
       ContributionType contributionType = ContributionType.fromBindingMethod(method);
       switch (contributionType) {
@@ -151,5 +151,12 @@ final class BindsMethodValidator extends BindingMethodValidator {
 
   private TypeMirror unboundedWildcard() {
     return types.getWildcardType(null, null);
+  }
+
+  private TypeMirror boxIfNecessary(TypeMirror maybePrimitive) {
+    if (maybePrimitive.getKind().isPrimitive()) {
+      return types.boxedClass(MoreTypes.asPrimitiveType(maybePrimitive)).asType();
+    }
+    return maybePrimitive;
   }
 }

@@ -63,5 +63,8 @@ public class BindsTest {
     assertThat(component.integerProviderOfObjectMap().get(789).get()).isEqualTo("789-string");
 
     assertThat(component.qualifiedIntegerObjectMap()).hasSize(1);
+
+    assertThat(component.primitiveSet()).containsExactly(100);
+    assertThat(component.primitiveValueMap()).containsExactly(10, 100);
   }
 }

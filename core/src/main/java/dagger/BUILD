@@ -31,3 +31,18 @@ java_library(
     exports = ["//third_party:jsr330_inject"],
     deps = ["//third_party:jsr330_inject"],
 )
+
+filegroup(
+    name = "javadoc-srcs",
+    srcs = glob(["**/*"]),
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+javadoc_library(
+    name = "core-javadoc",
+    srcs = [":javadoc-srcs"],
+    exclude_packages = ["dagger.internal"],
+    root_packages = ["dagger"],
+    deps = ["//third_party:jsr330_inject"],
+)

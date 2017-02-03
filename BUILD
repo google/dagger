@@ -21,7 +21,7 @@ package_group(
 
 py_test(
     name = "maven_sha1_test",
-    srcs = ["tools/maven_sha1_test.py"],
+    srcs = ["//tools:maven_sha1_tester"],
     data = [":WORKSPACE"],
 )
 
@@ -35,6 +35,32 @@ java_library(
     name = "producers_with_compiler",
     exports = [
         ":dagger_with_compiler",
+        "//producers",
+    ],
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+# coalesced javadocs used for the gh-pages site
+javadoc_library(
+    name = "user-docs",
+    srcs = [
+        "//core/src/main/java/dagger:javadoc-srcs",
+        "//java/dagger/android:android-srcs",
+        "//producers:producers-srcs",
+    ],
+    android_api_level = 25,
+    # TODO(ronshapiro): figure out how to specify the version number for release builds
+    doctitle = "Dagger Dependency Injection API",
+    exclude_packages = [
+        "dagger.internal",
+        "dagger.producers.internal",
+        "dagger.producers.monitoring.internal",
+    ],
+    root_packages = ["dagger"],
+    deps = [
+        "//core/src/main/java/dagger:core",
+        "//java/dagger/android",
         "//producers",
     ],
 )

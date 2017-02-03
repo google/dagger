@@ -26,9 +26,14 @@ load(
     "PRE_JAVA_8_INFERENCE_OPTS",
 )
 
+filegroup(
+    name = "producers-srcs",
+    srcs = glob(["src/main/java/**/*.java"]),
+)
+
 java_library(
     name = "producers",
-    srcs = glob(["src/main/java/**/*.java"]),
+    srcs = [":producers-srcs"],
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = [
         # TODO(cgruber): Enable Beta checker.
@@ -44,6 +49,19 @@ java_library(
         "//third_party:jsr305_annotations",
         "//third_party:jsr330_inject",
     ],
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+javadoc_library(
+    name = "producers-javadoc",
+    srcs = [":producers-srcs"],
+    exclude_packages = [
+        "dagger.producers.internal",
+        "dagger.producers.monitoring.internal",
+    ],
+    root_packages = ["dagger.producers"],
+    deps = [":producers"],
 )
 
 load("//:test_defs.bzl", "GenJavaTests")

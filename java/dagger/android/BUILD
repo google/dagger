@@ -25,9 +25,14 @@ load(
     "PRE_JAVA_8_INFERENCE_OPTS",
 )
 
+filegroup(
+    name = "android-srcs",
+    srcs = glob(["*.java"]),
+)
+
 android_library(
     name = "android",
-    srcs = glob(["*.java"]),
+    srcs = [":android-srcs"],
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     deps = [
@@ -36,4 +41,14 @@ android_library(
         "@androidsdk//com.android.support:support-annotations-25.0.0",
         "@androidsdk//com.android.support:support-v4-25.0.0",
     ],
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+javadoc_library(
+    name = "android-javadoc",
+    srcs = [":android-srcs"],
+    android_api_level = 25,
+    root_packages = ["dagger.android"],
+    deps = [":android"],
 )

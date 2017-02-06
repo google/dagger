@@ -38,14 +38,14 @@ public final class AndroidSupportInjection {
    *
    * <ol>
    *   <li>Walks the parent-fragment hierarchy to find the a fragment that implements {@link
-   *       HasDispatchingFragmentInjector}, and if none do
+   *       HasDispatchingSupportFragmentInjector}, and if none do
    *   <li>Uses the {@code fragment}'s {@link Fragment#getActivity() activity} if it implements
-   *       {@link HasDispatchingFragmentInjector}, and if not
+   *       {@link HasDispatchingSupportFragmentInjector}, and if not
    *   <li>Uses the {@link android.app.Application} if it implements {@link
-   *       HasDispatchingFragmentInjector}.
+   *       HasDispatchingSupportFragmentInjector}.
    * </ol>
    *
-   * If none of them implement {@link HasDispatchingFragmentInjector}, a {@link
+   * If none of them implement {@link HasDispatchingSupportFragmentInjector}, a {@link
    * IllegalArgumentException} is thrown.
    *
    * @throws IllegalArgumentException if no {@code AndroidInjector.Factory<Fragment, ?>} is bound
@@ -53,38 +53,38 @@ public final class AndroidSupportInjection {
    */
   public static void inject(Fragment fragment) {
     checkNotNull(fragment, "fragment");
-    HasDispatchingFragmentInjector hasDispatchingFragmentInjector =
+    HasDispatchingSupportFragmentInjector hasDispatchingSupportFragmentInjector =
         findHasFragmentInjector(fragment);
     Log.d(
         TAG,
         String.format(
             "An injector for %s was found in %s",
             fragment.getClass().getCanonicalName(),
-            hasDispatchingFragmentInjector.getClass().getCanonicalName()));
+            hasDispatchingSupportFragmentInjector.getClass().getCanonicalName()));
 
     DispatchingAndroidInjector<Fragment> fragmentInjector =
-        hasDispatchingFragmentInjector.fragmentInjector();
+        hasDispatchingSupportFragmentInjector.supportFragmentInjector();
     checkNotNull(
         fragmentInjector,
-        "%s.fragmentInjector() returned null",
-        hasDispatchingFragmentInjector.getClass().getCanonicalName());
+        "%s.supportFragmentInjector() returned null",
+        hasDispatchingSupportFragmentInjector.getClass().getCanonicalName());
 
     fragmentInjector.inject(fragment);
   }
 
-  private static HasDispatchingFragmentInjector findHasFragmentInjector(Fragment fragment) {
+  private static HasDispatchingSupportFragmentInjector findHasFragmentInjector(Fragment fragment) {
     Fragment parentFragment = fragment;
     while ((parentFragment = parentFragment.getParentFragment()) != null) {
-      if (parentFragment instanceof HasDispatchingFragmentInjector) {
-        return (HasDispatchingFragmentInjector) parentFragment;
+      if (parentFragment instanceof HasDispatchingSupportFragmentInjector) {
+        return (HasDispatchingSupportFragmentInjector) parentFragment;
       }
     }
     Activity activity = fragment.getActivity();
-    if (activity instanceof HasDispatchingFragmentInjector) {
-      return (HasDispatchingFragmentInjector) activity;
+    if (activity instanceof HasDispatchingSupportFragmentInjector) {
+      return (HasDispatchingSupportFragmentInjector) activity;
     }
-    if (activity.getApplication() instanceof HasDispatchingFragmentInjector) {
-      return (HasDispatchingFragmentInjector) activity.getApplication();
+    if (activity.getApplication() instanceof HasDispatchingSupportFragmentInjector) {
+      return (HasDispatchingSupportFragmentInjector) activity.getApplication();
     }
     throw new IllegalArgumentException(
         String.format("No injector was found for %s", fragment.getClass().getCanonicalName()));

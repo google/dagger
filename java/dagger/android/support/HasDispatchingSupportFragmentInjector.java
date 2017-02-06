@@ -22,8 +22,8 @@ import dagger.internal.Beta;
 
 /** Provides a {@link DispatchingAndroidInjector} of {@link Fragment}s. */
 @Beta
-public interface HasDispatchingFragmentInjector {
+public interface HasDispatchingSupportFragmentInjector {
 
   /** Returns a {@link DispatchingAndroidInjector} of {@link Fragment}s. */
-  DispatchingAndroidInjector<Fragment> fragmentInjector();
+  DispatchingAndroidInjector<Fragment> supportFragmentInjector();
 }

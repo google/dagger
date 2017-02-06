@@ -28,6 +28,7 @@ import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasDispatchingActivityInjector;
+import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.FragmentKey;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
@@ -48,7 +49,9 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
     return activityInjector;
   }
 
-  @Component(modules = ApplicationComponent.ApplicationModule.class)
+  @Component(
+    modules = {ApplicationComponent.ApplicationModule.class, AndroidSupportInjectionModule.class}
+  )
   interface ApplicationComponent {
     void inject(AllControllersAreDirectChildrenOfApplication application);
 

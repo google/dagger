@@ -16,9 +16,9 @@
 
 package dagger.android.support;
 
-import android.app.Activity;
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import dagger.Module;
+import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.internal.Beta;
 import dagger.multibindings.Multibinds;
@@ -30,15 +30,11 @@ import java.util.Map;
  * component which will use these types.
  */
 @Beta
-@Module
+@Module(includes = AndroidInjectionModule.class)
 public abstract class AndroidSupportInjectionModule {
   @Multibinds
-  abstract Map<Class<? extends Activity>, AndroidInjector.Factory<Activity, ?>>
-      activityInjectorFactories();
-
-  @Multibinds
   abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<Fragment, ?>>
-      fragmentInjectorFactories();
+      supportFragmentInjectorFactories();
 
   private AndroidSupportInjectionModule() {}
 }

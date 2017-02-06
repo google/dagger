@@ -45,9 +45,9 @@ public final class AndroidSupportInjectionTest {
   }
 
   private static class ApplicationReturnsNull extends Application
-      implements HasDispatchingFragmentInjector {
+      implements HasDispatchingSupportFragmentInjector {
     @Override
-    public DispatchingAndroidInjector<Fragment> fragmentInjector() {
+    public DispatchingAndroidInjector<Fragment> supportFragmentInjector() {
       return null;
     }
   }
@@ -62,7 +62,7 @@ public final class AndroidSupportInjectionTest {
       AndroidSupportInjection.inject(fragment);
       fail();
     } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("fragmentInjector() returned null");
+      assertThat(e).hasMessageThat().contains("supportFragmentInjector() returned null");
     }
   }
 

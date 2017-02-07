@@ -46,9 +46,9 @@ public final class AndroidInjectionTest {
         ImmutableMap.of(
             InjectableFragment.class,
             () ->
-                new Factory<Fragment, InjectableFragment>() {
+                new Factory<InjectableFragment>() {
                   @Override
-                  public AndroidInjector<InjectableFragment> create(Fragment fragment) {
+                  public AndroidInjector<InjectableFragment> create(InjectableFragment fragment) {
                     return f -> f.tag = tag;
                   }
                 }));

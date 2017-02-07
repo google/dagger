@@ -40,27 +40,25 @@ public interface AndroidInjector<T> {
   /**
    * Creates {@link AndroidInjector}s for a concrete subtype of a core Android type.
    *
-   * @param <A> a core Android type
-   * @param <T> the concrete subtype of {@code I} to be injected
+   * @param <T> the concrete type to be injected
    */
-  interface Factory<A, T extends A> {
+  interface Factory<T> {
     /**
      * Creates an {@link AndroidInjector} for {@code instance}. This should be the same instance
      * that will be passed to {@link #inject(Object)}.
      */
-    AndroidInjector<T> create(A instance);
+    AndroidInjector<T> create(T instance);
   }
 
   /**
    * An adapter that lets the common {@link dagger.Subcomponent.Builder} pattern implement {@link
    * Factory}.
    *
-   * @param <A> a core Android type
-   * @param <T> the concrete subtype of {@code I} to be injected
+   * @param <T> the concrete type to be injected
    */
-  abstract class Builder<A, T extends A> implements AndroidInjector.Factory<A, T> {
+  abstract class Builder<T> implements AndroidInjector.Factory<T> {
     @Override
-    public final AndroidInjector<T> create(A instance) {
+    public final AndroidInjector<T> create(T instance) {
       seedInstance(instance);
       return build();
     }
@@ -73,7 +71,7 @@ public interface AndroidInjector<T> {
      * <p>This should be the same instance that will be passed to {@link #inject(Object)}.
      */
     @BindsInstance
-    public abstract void seedInstance(A instance);
+    public abstract void seedInstance(T instance);
 
     /** Returns a newly-constructed {@link AndroidInjector}. */
     public abstract AndroidInjector<T> build();

@@ -38,7 +38,7 @@ public final class DispatchingAndroidInjectorTest {
 
   @Before
   public void setup() {
-    Map<Class<? extends Activity>, Provider<AndroidInjector.Factory<Activity, ?>>>
+    Map<Class<? extends Activity>, Provider<AndroidInjector.Factory<? extends Activity>>>
         injectorFactories = new HashMap<>();
     injectorFactories.put(FooActivity.class, FooInjector.Factory::new);
     injectorFactories.put(ReturnsNullActivity.class, () -> null);
@@ -92,9 +92,9 @@ public final class DispatchingAndroidInjectorTest {
     @Override
     public void inject(FooActivity instance) {}
 
-    static class Factory implements AndroidInjector.Factory<Activity, FooActivity> {
+    static class Factory implements AndroidInjector.Factory<FooActivity> {
       @Override
-      public AndroidInjector<FooActivity> create(Activity activity) {
+      public AndroidInjector<FooActivity> create(FooActivity activity) {
         return new FooInjector();
       }
     }

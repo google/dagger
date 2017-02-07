@@ -46,11 +46,12 @@ public final class DispatchingAndroidInjector<T> {
       "No injector factory bound for Class<%1$s>. Injector factories were bound for supertypes "
           + "of %1$s: %2$s. Did you mean to bind an injector factory for the subtype?";
 
-  private final Map<Class<? extends T>, Provider<AndroidInjector.Factory<T, ?>>> injectorFactories;
+  private final Map<Class<? extends T>, Provider<AndroidInjector.Factory<? extends T>>>
+      injectorFactories;
 
   @Inject
   DispatchingAndroidInjector(
-      Map<Class<? extends T>, Provider<AndroidInjector.Factory<T, ?>>> injectorFactories) {
+      Map<Class<? extends T>, Provider<AndroidInjector.Factory<? extends T>>> injectorFactories) {
     this.injectorFactories = injectorFactories;
   }
 
@@ -62,29 +63,28 @@ public final class DispatchingAndroidInjector<T> {
    *     inject instances of that class
    */
   public boolean maybeInject(T instance) {
-    Provider<AndroidInjector.Factory<T, ?>> factoryProvider =
+    Provider<AndroidInjector.Factory<? extends T>> factoryProvider =
         injectorFactories.get(instance.getClass());
     if (factoryProvider == null) {
       return false;
     }
 
-    AndroidInjector.Factory<T, ?> factory = factoryProvider.get();
-    AndroidInjector<?> wildcardInjector =
-        checkNotNull(
-            factory.create(instance),
-            "%s.create(I) should not return null.",
-            factory.getClass().getCanonicalName());
     @SuppressWarnings("unchecked")
-    AndroidInjector<T> injector = (AndroidInjector<T>) wildcardInjector;
-
+    AndroidInjector.Factory<T> factory = (AndroidInjector.Factory<T>) factoryProvider.get();
     try {
+      AndroidInjector<T> injector =
+          checkNotNull(
+              factory.create(instance),
+              "%s.create(I) should not return null.",
+              factory.getClass().getCanonicalName());
+
       injector.inject(instance);
       return true;
     } catch (ClassCastException e) {
       throw new InvalidInjectorBindingException(
           String.format(
-              "%s does not implement AndroidInjector<%s>",
-              injector.getClass().getCanonicalName(), instance.getClass().getCanonicalName()),
+              "%s does not implement AndroidInjector.Factory<%s>",
+              factory.getClass().getCanonicalName(), instance.getClass().getCanonicalName()),
           e);
     }
   }

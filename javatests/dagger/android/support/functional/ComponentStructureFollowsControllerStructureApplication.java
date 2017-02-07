@@ -67,7 +67,7 @@ public final class ComponentStructureFollowsControllerStructureApplication exten
       @Binds
       @IntoMap
       @ActivityKey(TestActivity.class)
-      abstract AndroidInjector.Factory<Activity, ?> bindFactoryForTestActivity(
+      abstract AndroidInjector.Factory<? extends Activity> bindFactoryForTestActivity(
           ActivitySubcomponent.Builder builder);
     }
 
@@ -84,12 +84,12 @@ public final class ComponentStructureFollowsControllerStructureApplication exten
         @Binds
         @IntoMap
         @FragmentKey(TestParentFragment.class)
-        abstract AndroidInjector.Factory<Fragment, ?> bindFactoryForParentFragment(
+        abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForParentFragment(
             ParentFragmentSubcomponent.Builder builder);
       }
 
       @Subcomponent.Builder
-      abstract class Builder extends AndroidInjector.Builder<Activity, TestActivity> {}
+      abstract class Builder extends AndroidInjector.Builder<TestActivity> {}
 
       @Subcomponent(modules = ParentFragmentSubcomponent.ParentFragmentModule.class)
       interface ParentFragmentSubcomponent extends AndroidInjector<TestParentFragment> {
@@ -104,12 +104,12 @@ public final class ComponentStructureFollowsControllerStructureApplication exten
           @Binds
           @IntoMap
           @FragmentKey(TestChildFragment.class)
-          abstract AndroidInjector.Factory<Fragment, ?> bindFactoryForChildFragment(
+          abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForChildFragment(
               ChildFragmentSubcomponent.Builder builder);
         }
 
         @Subcomponent.Builder
-        abstract class Builder extends AndroidInjector.Builder<Fragment, TestParentFragment> {}
+        abstract class Builder extends AndroidInjector.Builder<TestParentFragment> {}
 
         @Subcomponent(modules = ChildFragmentSubcomponent.ChildFragmentModule.class)
         interface ChildFragmentSubcomponent extends AndroidInjector<TestChildFragment> {
@@ -123,7 +123,7 @@ public final class ComponentStructureFollowsControllerStructureApplication exten
           }
 
           @Subcomponent.Builder
-          abstract class Builder extends AndroidInjector.Builder<Fragment, TestChildFragment> {}
+          abstract class Builder extends AndroidInjector.Builder<TestChildFragment> {}
         }
       }
     }

@@ -25,7 +25,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
@@ -52,9 +52,9 @@ import javax.tools.Diagnostic.Kind;
  */
 final class AndroidMapKeyValidator implements ProcessingStep {
 
-  private static final ImmutableMap<Class<? extends Annotation>, String>
+  private static final ImmutableBiMap<Class<? extends Annotation>, String>
       ANNOTATIONS_AND_FRAMEWORK_TYPES =
-          ImmutableMap.of(
+          ImmutableBiMap.of(
               ActivityKey.class, "android.app.Activity",
               FragmentKey.class, "android.app.Fragment",
               dagger.android.support.FragmentKey.class, "android.support.v4.app.Fragment");
@@ -94,9 +94,8 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       return;
     }
 
-    TypeMirror androidBaseType = androidTypeForMapKey(annotation);
     DeclaredType intendedReturnType =
-        injectorFactoryOf(androidBaseType, types.getWildcardType(null, null));
+        injectorFactoryOf(types.getWildcardType(androidTypeForMapKey(annotation), null));
     if (!MoreTypes.equivalence().equivalent(returnType, intendedReturnType)) {
       messager.printMessage(
           Kind.ERROR,
@@ -109,7 +108,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
     // @Binds methods should only have one parameter, but we can't guarantee the order of Processors
     // in javac, so do a basic check for valid form
     if (isAnnotationPresent(method, Binds.class) && method.getParameters().size() == 1) {
-      validateMapKeyMatchesBindsParameter(annotation, method, androidBaseType);
+      validateMapKeyMatchesBindsParameter(annotation, method);
     }
   }
 
@@ -123,40 +122,32 @@ final class AndroidMapKeyValidator implements ProcessingStep {
    * {@literal @Binds}
    * {@literal @IntoMap}
    * {@literal @ActivityKey(GreenActivity.class)}
-   * abstract AndroidInjector.Factory<Activity, ?> bindBlueActivity(
+   * abstract AndroidInjector.Factory<? extends Activity> bindBlueActivity(
    *     BlueActivityComponent.Builder builder);
    * }</pre>
    */
   private void validateMapKeyMatchesBindsParameter(
-      Class<? extends Annotation> annotation,
-      ExecutableElement method,
-      TypeMirror androidBaseType) {
+      Class<? extends Annotation> annotation, ExecutableElement method) {
     TypeMirror parameterType = getOnlyElement(method.getParameters()).asType();
     AnnotationMirror annotationMirror = getAnnotationMirror(method, annotation).get();
     TypeMirror mapKeyValue = (TypeMirror) getAnnotationValue(annotationMirror, "value").getValue();
-    if (!types.isAssignable(parameterType, injectorFactoryOf(androidBaseType, mapKeyValue))) {
+    if (!types.isAssignable(parameterType, injectorFactoryOf(mapKeyValue))) {
       messager.printMessage(
           Kind.ERROR,
-          String.format(
-              "%s does not implement AndroidInjector<%s, %s>",
-              parameterType, androidBaseType, mapKeyValue),
+          String.format("%s does not implement AndroidInjector<%s>", parameterType, mapKeyValue),
           method,
           annotationMirror);
     }
   }
 
-  private TypeMirror androidTypeForMapKey(Class<? extends Annotation> annotation) {
-
-    return elements.getTypeElement(ANNOTATIONS_AND_FRAMEWORK_TYPES.get(annotation)).asType();
+  private DeclaredType androidTypeForMapKey(Class<? extends Annotation> annotation) {
+    return types.getDeclaredType(
+        elements.getTypeElement(ANNOTATIONS_AND_FRAMEWORK_TYPES.get(annotation)));
   }
 
-  /**
-   * Returns a {@link DeclaredType} for {@code AndroidInjector<androidBaseType,
-   * implementationType>}.
-   */
-  private DeclaredType injectorFactoryOf(
-      TypeMirror androidBaseType, TypeMirror implementationType) {
-    return types.getDeclaredType(factoryElement(), androidBaseType, implementationType);
+  /** Returns a {@link DeclaredType} for {@code AndroidInjector.Factory<implementationType>}. */
+  private DeclaredType injectorFactoryOf(TypeMirror implementationType) {
+    return types.getDeclaredType(factoryElement(), implementationType);
   }
 
   private TypeElement factoryElement() {

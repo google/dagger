@@ -32,11 +32,11 @@ import java.util.Map;
 @Module
 public abstract class AndroidInjectionModule {
   @Multibinds
-  abstract Map<Class<? extends Activity>, AndroidInjector.Factory<Activity, ?>>
+  abstract Map<Class<? extends Activity>, AndroidInjector.Factory<? extends Activity>>
       activityInjectorFactories();
 
   @Multibinds
-  abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<Fragment, ?>>
+  abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
       fragmentInjectorFactories();
 
   private AndroidInjectionModule() {}

@@ -33,7 +33,7 @@ import java.util.Map;
 @Module(includes = AndroidInjectionModule.class)
 public abstract class AndroidSupportInjectionModule {
   @Multibinds
-  abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<Fragment, ?>>
+  abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
       supportFragmentInjectorFactories();
 
   private AndroidSupportInjectionModule() {}

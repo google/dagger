@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Every user should create a WORKSPACE.user.bzl file and declare the path to their $ANDROID_HOME
-# directory. If you don't want to compile //android, you can remove the android related targets in
-# the WORKSPACE
-load("/WORKSPACE.user", "ANDROID_HOME")
-
 android_sdk_repository(
     name = "androidsdk",
     api_level = 25,
     build_tools_version = "25.0.2",
-    path = ANDROID_HOME,
 )
 
 bind(

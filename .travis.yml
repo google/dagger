@@ -13,7 +13,7 @@ addons:
     packages:
       - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
-      - bazel=0.4.3
+      - bazel=0.4.4
 
 jdk:
   - &jdk_for_publishing oraclejdk8
@@ -28,7 +28,6 @@ android:
     - extra-android-m2repository
 
 before_install:
-  - echo "ANDROID_HOME = \"$ANDROID_HOME\"" > WORKSPACE.user.bzl
   - sudo rm -f /etc/mavenrc
   - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
   - tar -zxvf apache-maven-3.1.1-bin.tar.gz

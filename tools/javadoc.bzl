@@ -55,16 +55,12 @@ def javadoc_library(
 
   bootclasspath_option = ""
   if android_api_level:
-    native.genrule(
-        name = deploy_jar_name + "_generate_manifest",
-        outs = [name + "/AndroidManifest.xml"],
-        cmd = """echo '<manifest package="dummy" />' > $@""",
-    )
     native.android_binary(
         name = deploy_jar_name,
         deps = deps,
-        manifest = ":%s/AndroidManifest.xml" % name,
+        manifest = "//tools:AndroidManifest.xml",
         custom_package = "dummy",
+        tags = ["manual"],
     )
     android_jar = "@androidsdk//:platforms/android-%s/android.jar" % android_api_level
     genrule_srcs.append(android_jar)
@@ -74,6 +70,7 @@ def javadoc_library(
         name = deploy_jar_name,
         runtime_deps = deps,
         main_class = "dummy",
+        tags = ["manual"],
     )
 
   doctitle_option = ""

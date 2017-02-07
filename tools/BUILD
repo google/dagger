@@ -26,3 +26,5 @@ py_library(
     name = "maven_sha1_tester",
     srcs = ["maven_sha1_test.py"],
 )
+
+exports_files(["AndroidManifest.xml"])

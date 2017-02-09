@@ -76,7 +76,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   }
 
   @Override
-  public Set<? extends Element> process(
+  public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     elementsByAnnotation.forEach(
         (annotation, element) -> validateMethod(annotation, MoreElements.asExecutable(element)));

@@ -23,14 +23,22 @@ load(
     "DOCLINT_REFERENCES",
 )
 
+# https://github.com/bazelbuild/bazel/issues/2517
+java_import(
+    name = "dagger_android_import_hack",
+    jars = [
+        "//java/dagger/android:libandroid.jar",
+        "//java/dagger/android/support:libsupport.jar",
+    ],
+)
+
 java_library(
     name = "processor",
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
+        ":dagger_android_import_hack",
         "//core",
-        "//java/dagger/android",
-        "//java/dagger/android/support",
         "//third_party:auto_common",
         "//third_party:auto_service",
         "//third_party:auto_value",

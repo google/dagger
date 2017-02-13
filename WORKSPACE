@@ -67,8 +67,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_googlejavaformat_google_java_format",
-    artifact = "com.google.googlejavaformat:google-java-format:1.2",
-    sha1 = "c897dff7c217667d797bc9bf9d54416e776e9917",
+    artifact = "com.google.googlejavaformat:google-java-format:1.3",
+    sha1 = "949e85e75b3160ce1446aa99d806d5b509631b02",
 )
 
 maven_jar(

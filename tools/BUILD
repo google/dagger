@@ -22,9 +22,50 @@ sh_library(
     srcs = ["javadoc_library_impl.sh"],
 )
 
-py_library(
-    name = "maven_sha1_tester",
-    srcs = ["maven_sha1_test.py"],
+sh_binary(
+    name = "jarjar_library_impl",
+    srcs = ["jarjar_library_impl.sh"],
+)
+
+sh_test(
+    name = "jarjar_library_impl_test",
+    srcs = ["jarjar_library_impl_test.sh"],
+    args = ["$(JAVABASE)"],
+    data = [
+        ":jarjar_deploy.jar",
+        ":jarjar_library_impl",
+        "//tools/testdata:bar",
+        "//tools/testdata:bar_with_dupe_file",
+        "//tools/testdata:foo",
+        "//tools/testdata:foo_with_dupe_file",
+        "@local_jdk//:bin/jar",
+        "@local_jdk//:bin/java",
+        "@local_jdk//:jre",
+    ],
+)
+
+java_binary(
+    name = "jarjar",
+    main_class = "org.pantsbuild.jarjar.Main",
+    runtime_deps = [
+        "@javax_annotation_jsr250_api//jar",
+        "@javax_enterprise_cdi_api//jar",
+        "@javax_inject_javax_inject//jar",
+        "@org_apache_ant_ant//jar",
+        "@org_apache_ant_ant_launcher//jar",
+        "@org_apache_maven_maven_artifact//jar",
+        "@org_apache_maven_maven_model//jar",
+        "@org_apache_maven_maven_plugin_api//jar",
+        "@org_codehaus_plexus_plexus_classworlds//jar",
+        "@org_codehaus_plexus_plexus_component_annotations//jar",
+        "@org_codehaus_plexus_plexus_utils//jar",
+        "@org_eclipse_sisu_org_eclipse_sisu_inject//jar",
+        "@org_eclipse_sisu_org_eclipse_sisu_plexus//jar",
+        "@org_ow2_asm_asm//jar",
+        "@org_ow2_asm_asm_commons//jar",
+        "@org_ow2_asm_asm_tree//jar",
+        "@org_pantsbuild_jarjar//jar",
+    ],
 )
 
 exports_files(["AndroidManifest.xml"])

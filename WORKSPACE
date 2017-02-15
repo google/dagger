@@ -24,7 +24,7 @@ bind(
 )
 
 maven_jar(
-    name = "javax_annotations_jsr250_api",
+    name = "javax_annotation_jsr250_api",
     artifact = "javax.annotation:jsr250-api:1.0",
     sha1 = "5025422767732a1ab45d93abfea846513d742dcf",
 )
@@ -148,3 +148,7 @@ maven_jar(
     artifact = "com.squareup:javapoet:1.7.0",
     sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",
 )
+
+load("//tools:jarjar.bzl", "jarjar_deps")
+
+jarjar_deps()

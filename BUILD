@@ -21,8 +21,8 @@ package_group(
 
 py_test(
     name = "maven_sha1_test",
-    srcs = ["//tools:maven_sha1_tester"],
-    data = [":WORKSPACE"],
+    srcs = ["maven_sha1_test.py"],
+    data = ["WORKSPACE"],
 )
 
 java_library(
@@ -36,6 +36,23 @@ java_library(
     exports = [
         ":dagger_with_compiler",
         "//producers",
+    ],
+)
+
+load("//tools:jarjar.bzl", "jarjar_library")
+
+genrule(
+    name = "rules_file",
+    outs = ["rules_file.txt"],
+    cmd = "echo \"rule com.google.auto.common.** dagger.shaded.auto.common.@1\" > $@",
+)
+
+jarjar_library(
+    name = "shaded_compiler",
+    rules_file = ":rules_file.txt",
+    deps = [
+        "//compiler",
+        "@com_google_auto_auto_common//jar",
     ],
 )
 

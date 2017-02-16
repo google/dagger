@@ -64,6 +64,7 @@ javadoc_library(
     srcs = [
         "//core/src/main/java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
+        "//java/dagger/android/support:support-srcs",
         "//producers:producers-srcs",
     ],
     android_api_level = 25,

@@ -39,7 +39,6 @@ android_library(
         "//:dagger_with_compiler",
         "//third_party:auto_value",
         "@androidsdk//com.android.support:support-annotations-25.0.0",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
     ],
 )
 

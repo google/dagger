@@ -6,7 +6,10 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_BRANCH" == "master" ]; then
   echo -e "Publishing maven snapshot...\n"
 
-  mvn clean source:jar deploy --settings="util/settings.xml" -DskipTests=true -Dinvoker.skip=true -Dmaven.javadoc.skip=true
+  sh $(dirname $0)/execute-deploy.sh \
+    "HEAD-SNAPSHOT" \
+    "sonatype-nexus-snapshots" \
+    "https://oss.sonatype.org/content/repositories/snapshots"
 
   echo -e "Published maven snapshot"
 else

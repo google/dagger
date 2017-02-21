@@ -13,10 +13,12 @@
 # limitations under the License.
 
 import os
+import re
 from subprocess import check_output
 import sys
 from workspace_parser import maven_artifacts
 from xml_formatting import generate_pom
+
 
 def _shell(command):
   output = check_output(command,
@@ -62,10 +64,14 @@ METADATA = {
         'name': 'Dagger Producers',
         'artifact': 'dagger-producers',
     },
-    '//android/src/main/java/dagger/android:android': {
+    '//java/dagger/android:android': {
         'name': 'Dagger Android',
         'artifact': 'dagger-android',
-        'alias': '//android:android',
+        'packaging': 'aar',
+    },
+    '//java/dagger/android/support:support': {
+        'name': 'Dagger Android Support',
+        'artifact': 'dagger-android-support',
         'packaging': 'aar',
     },
 }
@@ -73,15 +79,15 @@ METADATA = {
 class UnknownDependencyException(Exception): pass
 
 def main():
-  if len(sys.argv) <= 3:
+  if len(sys.argv) < 3:
     print 'Usage: %s <version> <target_for_pom>...' % sys.argv[0]
     sys.exit(1)
 
   version = sys.argv[1]
   artifacts = maven_artifacts()
-  artifacts['@androidsdk//com.android.support:support-annotations-24.2.0'] = (
-      'com.android.support:support-annotations:24.2.0'
-  )
+
+  android_sdk_pattern = re.compile(
+      r'@androidsdk//([a-z.-]*):([a-z0-9-]*)-([0-9.]*)')
 
   for label, metadata in METADATA.iteritems():
     artifacts[label] = (
@@ -93,6 +99,9 @@ def main():
   def artifact_for_dep(label):
     if label in artifacts:
       return artifacts[label]
+    match = android_sdk_pattern.match(label)
+    if match:
+      return ':'.join(match.groups())
     raise UnknownDependencyException('No artifact found for %s' % label)
 
   for arg in sys.argv[2:]:

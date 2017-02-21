@@ -15,13 +15,6 @@ if [[ ! $version_name =~ ^2\. ]]; then
   exit 2
 fi
 
-# Rename snapshot version and sanity check that it doesn't exist in any poms
-sed -i s/HEAD-SNAPSHOT/$version_name/g `find . -name pom.xml`
-if [[ $(git grep HEAD-SNAPSHOT -- '*pom.xml') ]]; then
-  echo "Snapshots found in poms!"
-  exit 3
-fi
-
 #validate key
 keystatus=$(gpg --list-keys | grep ${key} | awk '{print $1}')
 if [ "${keystatus}" != "pub" ]; then
@@ -32,16 +25,18 @@ if [ "${keystatus}" != "pub" ]; then
   exit 64
 fi
 
-mvn "$@" -P '!examples' -P sonatype-oss-release \
-    -Dgpg.skip=false -Dgpg.keyname=${key} \
-    clean clean site:jar deploy
+sh $(dirname $0)/execute-deploy.sh \
+  "$version_name" \
+  "sonatype-nexus-staging" \
+  "https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+  "-Dgpg.keyname=${key}"
 
 # Publish javadocs to gh-pages
-mvn javadoc:aggregate -P!examples -DexcludePackageNames=*.internal
+bazel build //:user-docs.jar
 git clone --quiet --branch gh-pages \
     https://github.com/google/dagger gh-pages > /dev/null
 cd gh-pages
-cp -r ../target/site/apidocs api/$version_name
+unzip ../bazel-genfiles/user-docs.jar -d api/$version_name
 git add api/$version_name
 git commit -m "$version_name docs"
 git push origin gh-pages

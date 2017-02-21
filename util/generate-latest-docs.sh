@@ -1,5 +1,7 @@
 # see http://benlimmer.com/2013/12/26/automatically-publish-javadoc-to-gh-pages-with-travis-ci/ for details
 
+set -eu
+
 if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_JDK_VERSION" == "$JDK_FOR_PUBLISHING" ] && \
    [ "$TRAVIS_PULL_REQUEST" == "false" ] && \

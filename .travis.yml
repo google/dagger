@@ -62,4 +62,3 @@ branches:
 cache:
   directories:
     - $HOME/.m2
-    - $HOME/.cache/bazel

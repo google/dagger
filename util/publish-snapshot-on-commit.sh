@@ -1,5 +1,7 @@
 # see https://coderwall.com/p/9b_lfq
 
+set -eu
+
 if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_JDK_VERSION" == "$JDK_FOR_PUBLISHING" ] && \
    [ "$TRAVIS_PULL_REQUEST" == "false" ] && \
@@ -9,7 +11,8 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
   sh $(dirname $0)/execute-deploy.sh \
     "HEAD-SNAPSHOT" \
     "sonatype-nexus-snapshots" \
-    "https://oss.sonatype.org/content/repositories/snapshots"
+    "https://oss.sonatype.org/content/repositories/snapshots" \
+    "--settings=util/settings.xml"
 
   echo -e "Published maven snapshot"
 else

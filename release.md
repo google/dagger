@@ -48,74 +48,11 @@ to do the release work (to avoid clobbering anything on the master branch):
 git clone git@github.com:google/dagger.git dagger_release
 cd dagger_release
 git checkout -b prepare_release_2_1
-mvn verify
+bazel test //...
 ```
 
 This generates a new branch, and does a full build to ensure that what is
 currently at the tip of the branch is sound.
-
-### Update versions
-
-#### Increment SNAPSHOT dependency versions
-
-Do a quick check of the dependency versions to ensure that dagger is not
-relying on -SNAPSHOT dependencies. Since dagger manages versions in
-properties in the parent pom, the following is a useful tool:
-
-```shell
-mvn -N versions:display-property-updates
-```
-
-Version properties will be generated and look like this:
-
-```
-...
-[INFO] ------------------------------------------------------------------------
-[INFO] Building Dagger (Parent) 2.1-SNAPSHOT
-[INFO] ------------------------------------------------------------------------
-[INFO]
-[INFO] --- versions-maven-plugin:2.1:display-property-updates (default-cli) @ dagger-parent ---
-[INFO]
-[INFO] The following version properties are referencing the newest available version:
-[INFO]   ${google.java.format.version} ............................. 0.1-alpha
-[INFO]   ${auto.service.version} ..................................... 1.0-rc2
-[INFO]   ${compile-testing.version} ...................................... 0.8
-[INFO]   ${auto.common.version} .......................................... 0.5
-[INFO]   ${javax.inject.version} ........................................... 1
-[INFO]   ${guava.version} ...................................... 19.0-SNAPSHOT
-[INFO] The following version property updates are available:
-[INFO]   ${javax.annotation.version} .......................... 2.0.1 -> 3.0.1
-[INFO]   ${auto.value.version} .................................... 1.0 -> 1.1
-[INFO]   ${junit.version} ....................................... 4.11 -> 4.12
-[INFO]   ${mockito.version} ............................. 1.9.5 -> 2.0.40-beta
-[INFO]   ${truth.version} ....................................... 0.26 -> 0.28
-[INFO]   ${javawriter.version} ................................ 2.5.0 -> 2.5.1
-...
-```
-
-For release avoid updating older verisions at the last minute, as this requires
-more testing and investigation than one typically does at release.  But
-releases are gated on any -SNAPSHOT dependencies, so these should be
-incremented.
-
-> ***Note:*** *If any dependencies are altered, file a bug to update the
-> dependencies in the project proper.*
-
-> ***Note:*** *If there is enough dependency lag, the release should be abandoned
-> and dependencies should be incremented as a normal part of development.*
-
-> *TODO(cgruber) Hash out a project policy for whether -SNAPSHOT dependencies
-> should gate even beginning the release process and instead these instructions
-> can be migrated to maintenance documentation.*
-
-#### Update the project's version.
-
-Update the versions of the project, like so (changing version numbers):
-
-```shell
-mvn versions:set versions:commit -DnewVersion=2.1
-git commit
-```
 
 Make sure to also update any not-yet-released version numbers in Javadoc to
 the the upcoming version.
@@ -123,14 +60,6 @@ the the upcoming version.
 ```shell
 sed -i s/"@since 2.NEXT"/"@since 2.<new version>"/g $(find . | grep \\\\.java)
 ```
-
-This will set all versions of projects connected in <module> sections from
-the parent pom - in short, all the parts of dagger will be set to be (and
-depend on) `2.1`.
-
-> *TODO(cgruber) fix up the integration tests to properly use filters to use
-> the current dagger version, so these will properly depend on the version
-> being built, not the version in the parent pom.xml*
 
 ### Tag the release
 
@@ -142,11 +71,8 @@ git tag dagger-2.1
 
 ### Build and deploy the release to sonatype
 
-A convenience script exists to properly run a standard `mvn deploy` run
-(which pushes built artifacts to the staging repository).  It also activates
-the release profile which ensures that the GnuPG plugin is run, signing the
-binaries per Sonatype's requriements, adds in the generation of -javadoc and
--sources jars, etc.
+A convenience script exists to build the codebase with Bazel and deploy the
+signed artifacts to Maven Central. 
 
 It's parameter is the label for your GnuPG key which can be seen by running
 `gpg --list-keys` which supplies output similar to the following:
@@ -161,7 +87,7 @@ uid                  Christian Edward Gruber (Maven Deployments) <cgruber@google
 Given the above example, you would then run:
 
 ```shell
-util/mvn-deploy.sh D4906B68
+util/deploy-to-maven-central.sh D4906B68
 ```
 
 ... and the script will kick off the maven job, pausing when it first needs to

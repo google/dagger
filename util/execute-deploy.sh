@@ -12,23 +12,27 @@ python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger/android:android \
   //java/dagger/android/support:support
 
-deploy_library() {
-  if [[ $1 == "--shaded" ]]; then
-    library=$2
-    library_output=bazel-genfiles/$library
-    srcjar=$3
-    shift 3
-  else
-    library=$1
-    library_output=bazel-bin/$library
-    srcjar="${library%.jar}-src.jar"
-    shift 1
+library_output_file() {
+  library=$1
+  library_output=bazel-bin/$library
+  if [[ ! -e $library_output ]]; then
+     library_output=bazel-genfiles/$library
   fi
-  javadoc=$1
-  pomfile=$2
+  if [[ ! -e $library_output ]]; then
+    echo "Could not find bazel output file for $library"
+    exit 1
+  fi
+  echo -n $library_output
+}
+
+deploy_library() {
+  library=$1
+  srcjar=$2
+  javadoc=$3
+  pomfile=$4
   bazel build $library $srcjar $javadoc
   mvn gpg:sign-and-deploy-file \
-    -Dfile=$library_output \
+    -Dfile=$(library_output_file $library) \
     -DrepositoryId=$REPOSITORY_ID \
     -Durl=$REPOSITORY_URL \
     -Djavadoc=bazel-genfiles/$javadoc \
@@ -39,25 +43,30 @@ deploy_library() {
 
 deploy_library \
   core/src/main/java/dagger/libcore.jar \
+  core/src/main/java/dagger/libcore-src.jar \
   core/src/main/java/dagger/core-javadoc.jar \
   dagger.pom.xml
 
 deploy_library \
-  --shaded shaded_compiler.jar compiler/libcompiler-src.jar \
+  shaded_compiler.jar \
+  compiler/libcompiler-src.jar \
   compiler/compiler-javadoc.jar \
   dagger-compiler.pom.xml
 
 deploy_library \
   producers/libproducers.jar \
+  producers/libproducers-src.jar \
   producers/producers-javadoc.jar \
   dagger-producers.pom.xml
 
 deploy_library \
-  java/dagger/android/libandroid.jar \
+  java/dagger/android/android.aar \
+  java/dagger/android/libandroid-src.jar \
   java/dagger/android/android-javadoc.jar \
   dagger-android.pom.xml
 
 deploy_library \
-  java/dagger/android/support/libsupport.jar \
+  java/dagger/android/support/support.aar \
+  java/dagger/android/support/libsupport-src.jar \
   java/dagger/android/support/support-javadoc.jar \
   dagger-android-support.pom.xml

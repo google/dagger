@@ -21,7 +21,7 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "JAVA_6_SOURCE_LEVEL",
+    "SOURCE_7_TARGET_7",
     "JAVA_7_SOURCE_LEVEL",
     "PRE_JAVA_8_INFERENCE_OPTS",
 )
@@ -34,7 +34,7 @@ filegroup(
 java_library(
     name = "producers",
     srcs = [":producers-srcs"],
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = [
         # TODO(cgruber): Enable Beta checker.
     ],

@@ -20,14 +20,14 @@ package(default_visibility = ["//:src"])
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
-    "JAVA_6_SOURCE_LEVEL",
     "PRE_JAVA_8_INFERENCE_OPTS",
+    "SOURCE_7_TARGET_7",
 )
 
 java_library(
     name = "core",
     srcs = glob(["**/*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX,
+    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
     exports = ["//third_party:jsr330_inject"],
     deps = ["//third_party:jsr330_inject"],
 )

@@ -21,7 +21,7 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "JAVA_6_SOURCE_LEVEL",
+    "SOURCE_7_TARGET_7",
     "PRE_JAVA_8_INFERENCE_OPTS",
 )
 
@@ -33,7 +33,7 @@ filegroup(
 android_library(
     name = "android",
     srcs = [":android-srcs"],
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_6_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     deps = [
         "//:dagger_with_compiler",

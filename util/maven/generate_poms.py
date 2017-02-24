@@ -43,6 +43,8 @@ def pom_deps(label):
         accumulated_deps.add(export)
         accumulated_deps.update(pom_deps(export))
     else:
+      if ':lib' in dep and dep.endswith('.jar'):
+        dep = dep[:-4].replace(':lib', ':')
       accumulated_deps.add(dep)
 
   return accumulated_deps
@@ -73,6 +75,10 @@ METADATA = {
         'name': 'Dagger Android Support',
         'artifact': 'dagger-android-support',
         'packaging': 'aar',
+    },
+    '//java/dagger/android/processor:processor': {
+        'name': 'Dagger Android Processor',
+        'artifact': 'dagger-android-processor',
     },
 }
 

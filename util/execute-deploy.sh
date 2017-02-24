@@ -70,3 +70,9 @@ deploy_library \
   java/dagger/android/support/libsupport-src.jar \
   java/dagger/android/support/support-javadoc.jar \
   dagger-android-support.pom.xml
+
+deploy_library \
+  java/dagger/android/processor/libprocessor.jar \
+  java/dagger/android/processor/libprocessor-src.jar \
+  java/dagger/android/processor/processor-javadoc.jar \
+  dagger-android-processor.pom.xml

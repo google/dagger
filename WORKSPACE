@@ -127,8 +127,8 @@ maven_jar(
 
 maven_jar(
     name = "org_hamcrest_hamcrest_core",
-    artifact = "org.hamcrest:hamcrest-core:1.1",
-    sha1 = "860340562250678d1a344907ac75754e259cdb14",
+    artifact = "org.hamcrest:hamcrest-core:1.3",
+    sha1 = "42a25dc3219429f0e5d060061f71acb49bf010a0",
 )
 
 maven_jar(

@@ -42,11 +42,16 @@ java_library(
 
 java_library(
     name = "junit",
-    exports = ["@junit_junit//jar"],
+    testonly = 1,
+    exports = [
+        "@junit_junit//jar",
+        "@org_hamcrest_hamcrest_core//jar",
+    ],
 )
 
 java_library(
     name = "truth",
+    testonly = 1,
     exports = ["@com_google_truth_truth//jar"],
 )
 
@@ -57,6 +62,7 @@ java_library(
 
 java_library(
     name = "guava_testlib",
+    testonly = 1,
     exports = ["@com_google_guava_guava_testlib//jar"],
 )
 

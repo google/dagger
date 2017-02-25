@@ -421,6 +421,70 @@ public class ComponentBuilderTest {
   }
 
   @Test
+  public void testBuilderBindsInstanceNoCreateGenerated() {
+    JavaFileObject componentFile =
+            JavaFileObjects.forSourceLines(
+                    "test.SimpleComponent",
+                    "package test;",
+                    "",
+                    "import dagger.BindsInstance;",
+                    "import dagger.Component;",
+                    "import javax.inject.Provider;",
+                    "",
+                    "@Component",
+                    "interface SimpleComponent {",
+                    "  @Component.Builder",
+                    "  interface Builder {",
+                    "    @BindsInstance Builder object(Object object);",
+                    "    SimpleComponent build();",
+                    "  }",
+                    "}");
+
+    JavaFileObject generatedComponent =
+            JavaFileObjects.forSourceLines(
+                    "test.DaggerSimpleComponent",
+                    "package test;",
+                    "",
+                    "import dagger.internal.Preconditions;",
+                    "import javax.annotation.Generated;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerSimpleComponent implements SimpleComponent {",
+                    "  private DaggerSimpleComponent(Builder builder) {",
+                    "    assert builder != null;",
+                    "  }",
+                    "",
+                    "  public static SimpleComponent.Builder builder() {",
+                    "    return new Builder();",
+                    "  }",
+                    "",
+                    "  private static final class Builder implements SimpleComponent.Builder {",
+                    "    private Object object;",
+                    "",
+                    "    @Override",
+                    "    public SimpleComponent build() {",
+                    "      if (object == null) {",
+                    "        throw new IllegalStateException(Object.class.getCanonicalName() + \" must be set\")",
+                    "      }",
+                    "      return new DaggerSimpleComponent(this);",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Builder object(Object object) {",
+                    "      this.object = Preconditions.checkNotNull(object);",
+                    "      return this;",
+                    "    }",
+                    "  }",
+                    "}");
+    assertAbout(javaSource())
+            .that(componentFile)
+            .processedWith(new ComponentProcessor())
+            .compilesWithoutError()
+            .and()
+            .generatesSources(generatedComponent);
+  }
+
+  @Test
   public void testPrivateBuilderFails() {
     JavaFileObject componentFile =
         JavaFileObjects.forSourceLines(

@@ -16,7 +16,7 @@ package(default_visibility = ["//visibility:public"])
 
 java_library(
     name = "jsr_250",
-    exports = ["@javax_annotations_jsr250_api//jar"],
+    exports = ["@javax_annotation_jsr250_api//jar"],
 )
 
 java_library(
@@ -42,11 +42,16 @@ java_library(
 
 java_library(
     name = "junit",
-    exports = ["@junit_junit//jar"],
+    testonly = 1,
+    exports = [
+        "@junit_junit//jar",
+        "@org_hamcrest_hamcrest_core//jar",
+    ],
 )
 
 java_library(
     name = "truth",
+    testonly = 1,
     exports = ["@com_google_truth_truth//jar"],
 )
 
@@ -57,6 +62,7 @@ java_library(
 
 java_library(
     name = "guava_testlib",
+    testonly = 1,
     exports = ["@com_google_guava_guava_testlib//jar"],
 )
 

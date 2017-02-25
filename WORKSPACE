@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Every user should create a WORKSPACE.user.bzl file and declare the path to their $ANDROID_HOME
-# directory. If you don't want to compile //android, you can remove the android related targets in
-# the WORKSPACE
-load("/WORKSPACE.user", "ANDROID_HOME")
-
 android_sdk_repository(
     name = "androidsdk",
     api_level = 25,
     build_tools_version = "25.0.2",
-    path = ANDROID_HOME,
 )
 
 bind(
@@ -30,7 +24,7 @@ bind(
 )
 
 maven_jar(
-    name = "javax_annotations_jsr250_api",
+    name = "javax_annotation_jsr250_api",
     artifact = "javax.annotation:jsr250-api:1.0",
     sha1 = "5025422767732a1ab45d93abfea846513d742dcf",
 )
@@ -73,8 +67,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_googlejavaformat_google_java_format",
-    artifact = "com.google.googlejavaformat:google-java-format:1.2",
-    sha1 = "c897dff7c217667d797bc9bf9d54416e776e9917",
+    artifact = "com.google.googlejavaformat:google-java-format:1.3",
+    sha1 = "949e85e75b3160ce1446aa99d806d5b509631b02",
 )
 
 maven_jar(
@@ -133,8 +127,8 @@ maven_jar(
 
 maven_jar(
     name = "org_hamcrest_hamcrest_core",
-    artifact = "org.hamcrest:hamcrest-core:1.1",
-    sha1 = "860340562250678d1a344907ac75754e259cdb14",
+    artifact = "org.hamcrest:hamcrest-core:1.3",
+    sha1 = "42a25dc3219429f0e5d060061f71acb49bf010a0",
 )
 
 maven_jar(
@@ -154,3 +148,7 @@ maven_jar(
     artifact = "com.squareup:javapoet:1.7.0",
     sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",
 )
+
+load("//tools:jarjar.bzl", "jarjar_deps")
+
+jarjar_deps()

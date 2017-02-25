@@ -16,9 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static java.util.stream.StreamSupport.stream;
 
+import com.google.auto.common.MoreElements;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.CodeBlock.Builder;
 import com.squareup.javapoet.TypeName;
@@ -141,7 +144,11 @@ final class CodeBlocks {
   /** Returns a javadoc {@literal @link} tag that poins to the given {@link ExecutableElement}. */
   static CodeBlock javadocLinkTo(ExecutableElement executableElement) {
     CodeBlock.Builder builder =
-        CodeBlock.builder().add("{@link $T#", executableElement.getEnclosingElement());
+        CodeBlock.builder()
+            .add(
+                "{@link $T#",
+                rawTypeName(
+                    ClassName.get(MoreElements.asType(executableElement.getEnclosingElement()))));
     switch (executableElement.getKind()) {
       case METHOD:
         builder.add("$L", executableElement.getSimpleName());

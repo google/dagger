@@ -1,0 +1,4 @@
+<!-- A dummy AndroidManifest.xml to be used for generating Javadoc when Android sources are used -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dummy">
+  <uses-sdk android:minSdkVersion="14" />
+</manifest>

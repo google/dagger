@@ -521,7 +521,7 @@ abstract class ComponentDescriptor {
         }
       }
       ImmutableSet<ExecutableElement> unimplementedMethods =
-          getUnimplementedMethods(elements, types, componentDefinitionType);
+          getUnimplementedMethods(componentDefinitionType, types, elements);
 
       ImmutableSet.Builder<ComponentMethodDescriptor> componentMethodsBuilder =
           ImmutableSet.builder();
@@ -667,7 +667,7 @@ abstract class ComponentDescriptor {
         return Optional.empty();
       }
       TypeElement element = MoreTypes.asTypeElement(builderType.get());
-      ImmutableSet<ExecutableElement> methods = getUnimplementedMethods(elements, types, element);
+      ImmutableSet<ExecutableElement> methods = getUnimplementedMethods(element, types, elements);
       ImmutableSet.Builder<BuilderRequirementMethod> requirementMethods = ImmutableSet.builder();
       ExecutableElement buildMethod = null;
       for (ExecutableElement method : methods) {

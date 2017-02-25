@@ -21,8 +21,8 @@ package_group(
 
 py_test(
     name = "maven_sha1_test",
-    srcs = ["tools/maven_sha1_test.py"],
-    data = [":WORKSPACE"],
+    srcs = ["maven_sha1_test.py"],
+    data = ["WORKSPACE"],
 )
 
 java_library(
@@ -35,6 +35,50 @@ java_library(
     name = "producers_with_compiler",
     exports = [
         ":dagger_with_compiler",
+        "//producers",
+    ],
+)
+
+load("//tools:jarjar.bzl", "jarjar_library")
+
+genrule(
+    name = "rules_file",
+    outs = ["rules_file.txt"],
+    cmd = "echo \"rule com.google.auto.common.** dagger.shaded.auto.common.@1\" > $@",
+)
+
+jarjar_library(
+    name = "shaded_compiler",
+    rules_file = ":rules_file.txt",
+    deps = [
+        "//compiler",
+        "@com_google_auto_auto_common//jar",
+    ],
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+# coalesced javadocs used for the gh-pages site
+javadoc_library(
+    name = "user-docs",
+    srcs = [
+        "//core/src/main/java/dagger:javadoc-srcs",
+        "//java/dagger/android:android-srcs",
+        "//java/dagger/android/support:support-srcs",
+        "//producers:producers-srcs",
+    ],
+    android_api_level = 25,
+    # TODO(ronshapiro): figure out how to specify the version number for release builds
+    doctitle = "Dagger Dependency Injection API",
+    exclude_packages = [
+        "dagger.internal",
+        "dagger.producers.internal",
+        "dagger.producers.monitoring.internal",
+    ],
+    root_packages = ["dagger"],
+    deps = [
+        "//core/src/main/java/dagger:core",
+        "//java/dagger/android",
         "//producers",
     ],
 )

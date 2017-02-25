@@ -49,7 +49,6 @@ import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
-import static dagger.internal.codegen.TypeNames.FACTORY;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.TypeNames.LISTENABLE_FUTURE;
 import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
@@ -1128,13 +1127,16 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           return CodeBlock.of(
               Joiner.on('\n')
                   .join(
-                      "new $1T<$2T>() {",
+                      "new $1L<$2T>() {",
                       "  private final $5T $6L = $3L;",
                       "  $4L@Override public $2T get() {",
                       "    $7L",
                       "  }",
                       "}"),
-              /* 1 */ FACTORY,
+              // TODO(ronshapiro): Until we remove Factory, fully qualify the import so it doesn't
+              // conflict with anyone that has Factory as an inner type of a component (like
+              // AndroidInjector.Factory
+              /* 1 */ "dagger.internal.Factory",
               /* 2 */ bindingKeyTypeName,
               /* 3 */ getComponentContributionExpression(
                   ComponentRequirement.forDependency(dependencyType.asType())),
@@ -1153,12 +1155,14 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         return CodeBlock.of(
             Joiner.on('\n')
                 .join(
-                    "new $1T<$2T>() {",
+                    "new $1L<$2T>() {",
                     "  @Override public $2T get() {",
                     "    return new $3LBuilder();",
                     "  }",
                     "}"),
-            /* 1 */ FACTORY,
+            // TODO(ronshapiro): Until we remove Factory, fully qualify the import so it doesn't
+            // conflict with dagger.android.ActivityInjector.Factory
+            /* 1 */ "dagger.internal.Factory",
             /* 2 */ bindingKeyTypeName,
             /* 3 */ subcomponentName);
 

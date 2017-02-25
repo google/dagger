@@ -125,6 +125,24 @@ abstract class SimpleBindingModule {
   }
 
   @Binds
+  @SomeQualifier
+  abstract int primitiveToPrimitive(int intValue);
+
+  @Binds
+  @IntoSet
+  abstract int intValueIntoSet(int intValue);
+
+  @Binds
+  @IntoMap
+  @IntKey(10)
+  abstract int intValueIntoMap(int intValue);
+
+  @Provides
+  static int intValue() {
+    return 100;
+  }
+
+  @Binds
   @IntoMap
   @IntKey(123)
   @SomeQualifier

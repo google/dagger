@@ -51,4 +51,10 @@ public interface TestComponent {
   Map<Integer, Provider<Object>> integerProviderOfObjectMap();
 
   @SomeQualifier Map<Integer, Object> qualifiedIntegerObjectMap();
+
+  @SomeQualifier int uniquePrimitive();
+
+  Set<Integer> primitiveSet();
+
+  Map<Integer, Integer> primitiveValueMap();
 }

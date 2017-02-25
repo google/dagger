@@ -51,7 +51,8 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
           Object currentInstance = instance;
           if (currentInstance != UNINITIALIZED && currentInstance != result) {
             throw new IllegalStateException("Scoped provider was invoked recursively returning "
-                + "different results: " + currentInstance + " & " + result);
+                + "different results: " + currentInstance + " & " + result + ". This is likely "
+                + "due to a circular dependency.");
           }
           instance = result;
           /* Null out the reference to the provider. We are never going to need it again, so we

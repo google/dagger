@@ -1,12 +1,18 @@
 # see https://coderwall.com/p/9b_lfq
 
+set -eu
+
 if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_JDK_VERSION" == "$JDK_FOR_PUBLISHING" ] && \
    [ "$TRAVIS_PULL_REQUEST" == "false" ] && \
    [ "$TRAVIS_BRANCH" == "master" ]; then
   echo -e "Publishing maven snapshot...\n"
 
-  mvn clean source:jar deploy --settings="util/settings.xml" -DskipTests=true -Dinvoker.skip=true -Dmaven.javadoc.skip=true
+  sh $(dirname $0)/execute-deploy.sh \
+    "HEAD-SNAPSHOT" \
+    "sonatype-nexus-snapshots" \
+    "https://oss.sonatype.org/content/repositories/snapshots" \
+    "--settings=util/settings.xml"
 
   echo -e "Published maven snapshot"
 else

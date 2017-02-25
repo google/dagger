@@ -17,11 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -421,7 +424,7 @@ public class SubcomponentBuilderValidationTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            String.format(MSGS.inheritedTwoBuildMethods(), "create()", "build()"))
+            String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
             .in(childComponentFile).onLine(13);
   }
 
@@ -838,5 +841,170 @@ public class SubcomponentBuilderValidationTest {
             // TODO(sameb): Ignore Test3Module because it's not used within transitive dependencies.
             String.format(MSGS.missingSetters(), "[test.TestModule, test.Test3Module]"))
             .in(childComponentFile).onLine(11);
+  }
+
+  @Test
+  public void covariantBuildMethodReturnType() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "test.Supertype",
+            "package test;",
+            "",
+            "interface Supertype {",
+            "  Foo foo();",
+            "}");
+
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.HasSupertype",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface HasSupertype extends Supertype {",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Supertype build();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(foo, supertype, subcomponent);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void covariantBuildMethodReturnType_hasNewMethod() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "test.Supertype",
+            "package test;",
+            "",
+            "interface Supertype {",
+            "  Foo foo();",
+            "}");
+
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.HasSupertype",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface HasSupertype extends Supertype {",
+            "  Bar bar();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Supertype build();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(foo, bar, supertype, subcomponent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining(
+            "test.HasSupertype.Builder.build() returns test.Supertype, but test.HasSupertype "
+                + "declares additional component method(s): bar(). In order to provide type-safe "
+                + "access to these methods, override build() to return test.HasSupertype")
+        .inFile(subcomponent)
+        .onLine(11);
+  }
+
+  @Test
+  public void covariantBuildMethodReturnType_hasNewMethod_buildMethodInherited() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "test.Supertype",
+            "package test;",
+            "",
+            "interface Supertype {",
+            "  Foo foo();",
+            "}");
+
+    JavaFileObject builderSupertype =
+        JavaFileObjects.forSourceLines(
+            "test.BuilderSupertype",
+            "package test;",
+            "",
+            "interface BuilderSupertype {",
+            "  Supertype build();",
+            "}");
+
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.HasSupertype",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface HasSupertype extends Supertype {",
+            "  Bar bar();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder extends BuilderSupertype {}",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(foo, bar, supertype, builderSupertype, subcomponent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining(
+            "[test.BuilderSupertype.build()] test.HasSupertype.Builder.build() returns "
+                + "test.Supertype, but test.HasSupertype declares additional component method(s): "
+                + "bar(). In order to provide type-safe access to these methods, override build() "
+                + "to return test.HasSupertype");
   }
 }

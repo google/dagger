@@ -32,7 +32,6 @@
   <url>https://github.com/google/dagger</url>
 
   <modules>
-    <module>android</module>
     <module>compiler</module>
     <module>core</module>
     <module>gwt</module>
@@ -106,7 +105,7 @@
       <dependency>
         <groupId>com.google.googlejavaformat</groupId>
         <artifactId>google-java-format</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
       </dependency>
       <dependency>
         <groupId>com.google.auto</groupId>
@@ -157,23 +156,6 @@
         <groupId>com.squareup</groupId>
         <artifactId>javapoet</artifactId>
         <version>1.7.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.google.android</groupId>
-        <artifactId>android</artifactId>
-        <version>4.1.1.4</version>
-      </dependency>
-      <dependency>
-        <groupId>com.android.support</groupId>
-        <artifactId>support-v4</artifactId>
-        <version>${android.support.version}</version>
-        <type>aar</type>
-      </dependency>
-      <dependency>
-        <groupId>com.android.support</groupId>
-        <artifactId>support-annotations</artifactId>
-        <version>${android.support.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -226,12 +208,6 @@
           <additionalparam>-Xdoclint:html,reference,syntax</additionalparam>
         </configuration>
       </plugin>
-
-      <plugin>
-        <groupId>com.simpligility.maven.plugins</groupId>
-        <artifactId>android-maven-plugin</artifactId>
-        <version>4.4.3</version>
-      </plugin>
     </plugins>
   </build>
 
@@ -247,7 +223,6 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
-        <module>android</module>
         <module>core</module>
         <module>compiler</module>
         <module>gwt</module>

@@ -49,7 +49,7 @@ import javax.lang.model.util.Types;
 final class DaggerElements {
 
   static ImmutableSet<ExecutableElement> getUnimplementedMethods(
-      Elements elements, Types types, TypeElement type) {
+      TypeElement type, Types types, Elements elements) {
     return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))
         .filter(hasModifiers(ABSTRACT))
         .toSet();

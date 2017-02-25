@@ -51,6 +51,15 @@ java_library(
     ],
 )
 
+load("//tools:javadoc.bzl", "javadoc_library")
+
+javadoc_library(
+    name = "compiler-javadoc",
+    srcs = COMPILER_SRCS,
+    root_packages = ["dagger.internal.codegen"],
+    deps = [":compiler"],
+)
+
 java_plugin(
     name = "component-codegen",
     generates_api = 1,

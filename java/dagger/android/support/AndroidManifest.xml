@@ -15,8 +15,5 @@
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="dagger.android.support">
-
-  <uses-sdk
-    android:minSdkVersion="14"
-    android:targetSdkVersion="24"/>
+  <uses-sdk android:minSdkVersion="14" />
 </manifest>

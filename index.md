@@ -10,7 +10,7 @@ both Java and Android. It is an adaptation of an earlier version
 
 Dagger aims to address many of the development and performance issues that have
 plagued reflection-based solutions. More details can be found in
-[this talk][dagger-talk-video]([slides][dagger-talk-slides]) by
+[this talk][dagger-talk-video] ([slides][dagger-talk-slides]) by
 [+Gregory Kick].
 
 ## Where are the docs?

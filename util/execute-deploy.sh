@@ -10,7 +10,8 @@ python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //compiler:compiler \
   //producers:producers \
   //java/dagger/android:android \
-  //java/dagger/android/support:support
+  //java/dagger/android/support:support \
+  //java/dagger/android/processor:processor
 
 library_output_file() {
   library=$1

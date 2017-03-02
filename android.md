@@ -137,13 +137,14 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     ```
 
 5. Finally, in your `Activity.onCreate()` method, call
-   [`AndroidInjection.inject(this)`][AndroidInjection.inject(Activity)]:
+   [`AndroidInjection.inject(this)`][AndroidInjection.inject(Activity)] *before*
+   calling `super.onCreate();`:
 
     ```java
     public class YourActivity extends Activity {
       public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         AndroidInjection.inject(this);
+        super.onCreate(savedInstanceState);
       }
     }
     ```
@@ -185,8 +186,8 @@ public class YourActivity extends Activity
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
     AndroidInjection.inject(this);
+    super.onCreate(savedInstanceState);
     // ...
   }
 
@@ -201,8 +202,8 @@ public class YourFragment extends Fragment {
 
   @Override
   public void onAttach(Activity activity) {
-    super.onAttach(activity);
     AndroidInjection.inject(this);
+    super.onAttach(activity);
     // ...
   }
 }
@@ -255,9 +256,16 @@ Constructor injection is preferred whenever possible because `javac` will ensure
 that no field is referenced before it has been set, which helps avoid
 `NullPointerException`s. When members injection is required (as discussed
 above), prefer to inject as early as possible. For this reason, `DaggerActivity`
-calls `AndroidInjection.inject()` directly after `super.onCreate()`, and
-`DaggerFragment` does the same in `super.onAttach()`, which also prevents
+calls `AndroidInjection.inject()` immediately in `onCreate()`, before calling `super.onCreate()`, and
+`DaggerFragment` does the same in `onAttach()`, which also prevents
 inconsistencies if the `Fragment` is reattached.
+
+It is crucial to call `AndroidInjection.inject()` before `super.onCreate()` in
+an `Activity`, since the call to `super` attaches `Fragment`s from the previous
+activity instance during configuration change, which in turn injects the
+`Fragment`s. In order for the `Fragment` injection to succeed, the `Activity`
+must already be injected. For users of [ErrorProne], it is a
+compiler error to call `AndroidInjection.inject()` after `super.onCreate()`.
 
 <!-- References -->
 
@@ -270,6 +278,7 @@ inconsistencies if the `Fragment` is reattached.
 [DaggerFragment]: https://google.github.io/dagger/api/latest/dagger/android/DaggerFragment.html
 [DispatchingAndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/DispatchingAndroidInjector.html
 [effective-java]: https://books.google.com/books?id=ka2VUBqHiWkC
+[ErrorProne]: https://github.com/google/error-prone
 [`HasDispatchingActivityInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasDispatchingActivityInjector.html
 [`HasDispatchingFragmentInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasDispatchingFragmentInjector.html
 [ProGuard]: http://proguard.sourceforge.net/

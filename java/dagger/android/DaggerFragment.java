@@ -33,8 +33,8 @@ public abstract class DaggerFragment extends Fragment implements HasDispatchingF
 
   @Override
   public void onAttach(Context context) {
-    super.onAttach(context);
     AndroidInjection.inject(this);
+    super.onAttach(context);
   }
 
   @Override

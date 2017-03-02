@@ -35,8 +35,8 @@ public abstract class DaggerFragment extends Fragment implements
 
   @Override
   public void onAttach(Context context) {
-    super.onAttach(context);
     AndroidSupportInjection.inject(this);
+    super.onAttach(context);
   }
 
   @Override

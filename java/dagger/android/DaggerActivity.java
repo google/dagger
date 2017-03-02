@@ -33,8 +33,8 @@ public abstract class DaggerActivity extends Activity implements HasDispatchingF
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
     AndroidInjection.inject(this);
+    super.onCreate(savedInstanceState);
   }
 
   @Override

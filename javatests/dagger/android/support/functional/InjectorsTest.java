@@ -18,11 +18,13 @@ package dagger.android.support.functional;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.res.Configuration;
 import org.robolectric.RobolectricTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
@@ -30,13 +32,16 @@ public class InjectorsTest {
   private static final String MANIFEST =
       "//javatests/dagger/android/support/functional"
           + ":functional/AndroidManifest.xml";
+
+  private ActivityController<TestActivity> activityController;
   private TestActivity activity;
   private TestParentFragment parentFragment;
   private TestChildFragment childFragment;
 
   @Before
   public void setUp() {
-    activity = Robolectric.setupActivity(TestActivity.class);
+    activityController = Robolectric.buildActivity(TestActivity.class);
+    activity = activityController.setup().get();
     parentFragment =
         (TestParentFragment)
             activity.getSupportFragmentManager().findFragmentByTag("parent-fragment");
@@ -72,6 +77,8 @@ public class InjectorsTest {
                 .ActivitySubcomponent.ParentFragmentSubcomponent.class,
             ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
                 .ActivitySubcomponent.ParentFragmentSubcomponent.ChildFragmentSubcomponent.class);
+
+    changeConfiguration();
   }
 
   @Test
@@ -92,5 +99,18 @@ public class InjectorsTest {
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent
                 .ChildFragmentSubcomponent.class);
+
+    changeConfiguration();
+  }
+
+  // https://github.com/google/dagger/issues/598
+  private void changeConfiguration() {
+    Configuration oldConfiguration = activity.getResources().getConfiguration();
+    Configuration newConfiguration = new Configuration(oldConfiguration);
+    newConfiguration.orientation =
+        oldConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            ? Configuration.ORIENTATION_PORTRAIT
+            : Configuration.ORIENTATION_LANDSCAPE;
+    activityController.configurationChange(newConfiguration);
   }
 }

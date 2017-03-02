@@ -56,16 +56,8 @@ final class CodeBlocks {
    * use as type parameters or javadoc method arguments.
    */
   static Collector<TypeName, ?, CodeBlock> toTypeNamesCodeBlock() {
-    return typeNamesIntoCodeBlock(CodeBlock.builder());
-  }
-
-  /**
-   * Adds {@link TypeName} instances to the given {@link CodeBlock.Builder} in a comma-separated
-   * list for use as type parameters or javadoc method arguments.
-   */
-  static Collector<TypeName, ?, CodeBlock> typeNamesIntoCodeBlock(CodeBlock.Builder builder) {
     return Collector.of(
-        () -> new CodeBlockJoiner(", ", builder),
+        () -> new CodeBlockJoiner(", ", CodeBlock.builder()),
         CodeBlockJoiner::addTypeName,
         CodeBlockJoiner::merge,
         CodeBlockJoiner::join);
@@ -164,13 +156,14 @@ final class CodeBlocks {
         throw new AssertionError(executableElement.toString());
     }
     builder.add("(");
-    executableElement
-        .getParameters()
-        .stream()
-        .map(VariableElement::asType)
-        .map(TypeName::get)
-        .map(TypeNames::rawTypeName)
-        .collect(typeNamesIntoCodeBlock(builder));
+    builder.add(
+        executableElement
+            .getParameters()
+            .stream()
+            .map(VariableElement::asType)
+            .map(TypeName::get)
+            .map(TypeNames::rawTypeName)
+            .collect(toTypeNamesCodeBlock()));
     return builder.add(")}").build();
   }
 

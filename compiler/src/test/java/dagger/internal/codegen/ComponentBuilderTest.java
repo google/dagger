@@ -434,6 +434,7 @@ public class ComponentBuilderTest {
                     "@Component",
                     "interface SimpleComponent {",
                     "  Object object();",
+                    "",
                     "  @Component.Builder",
                     "  interface Builder {",
                     "    @BindsInstance Builder object(Object object);",

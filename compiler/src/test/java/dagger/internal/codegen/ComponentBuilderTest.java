@@ -472,7 +472,7 @@ public class ComponentBuilderTest {
                     "",
                     "  @Override",
                     "  public Object object() {",
-                    "  return objectProvider.get();",
+                    "    return objectProvider.get();",
                     "  }",
                     "",
                     "  private static final class Builder implements SimpleComponent.Builder {",

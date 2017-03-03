@@ -467,7 +467,6 @@ public class ComponentBuilderTest {
                     "",
                     "  @SuppressWarnings(\"unchecked\")",
                     "  private void initialize(final Builder builder) {",
-                    "",
                     "    this.objectProvider = InstanceFactory.create(builder.object);",
                     "  }",
                     "",

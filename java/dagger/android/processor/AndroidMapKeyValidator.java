@@ -36,6 +36,7 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
+import javax.inject.Scope;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -94,8 +95,22 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       return;
     }
 
-    DeclaredType intendedReturnType =
-        injectorFactoryOf(types.getWildcardType(androidTypeForMapKey(annotation), null));
+    DeclaredType mapKeyValue = androidTypeForMapKey(annotation);
+    if (!getAnnotatedAnnotations(method, Scope.class).isEmpty()) {
+      SuppressWarnings suppressedWarnings = method.getAnnotation(SuppressWarnings.class);
+      if (suppressedWarnings == null
+          || !ImmutableSet.copyOf(suppressedWarnings.value())
+              .contains("dagger.android.ScopedInjectorFactory")) {
+        messager.printMessage(
+            Kind.ERROR,
+            String.format(
+                "%s bindings should not be scoped. Scoping this method may leak instances of %s. ",
+                AndroidInjector.Factory.class.getCanonicalName(), mapKeyValue),
+            method);
+      }
+    }
+
+    DeclaredType intendedReturnType = injectorFactoryOf(types.getWildcardType(mapKeyValue, null));
     if (!MoreTypes.equivalence().equivalent(returnType, intendedReturnType)) {
       messager.printMessage(
           Kind.ERROR,

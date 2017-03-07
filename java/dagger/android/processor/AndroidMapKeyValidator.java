@@ -21,19 +21,22 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.util.stream.Collectors.toMap;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
-import dagger.android.ActivityKey;
+import dagger.MapKey;
 import dagger.android.AndroidInjector;
-import dagger.android.FragmentKey;
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
 import javax.inject.Scope;
@@ -48,32 +51,59 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
 /**
- * Validates the correctness of {@link ActivityKey}, {@link FragmentKey} and {@link
- * dagger.android.support.FragmentKey} methods.
+ * Validates the correctness of {@link dagger.MapKey}s in {@code dagger.android} and {@code
+ * dagger.android.support} methods.
  */
 final class AndroidMapKeyValidator implements ProcessingStep {
-
-  private static final ImmutableBiMap<Class<? extends Annotation>, String>
-      ANNOTATIONS_AND_FRAMEWORK_TYPES =
-          ImmutableBiMap.of(
-              ActivityKey.class, "android.app.Activity",
-              FragmentKey.class, "android.app.Fragment",
-              dagger.android.support.FragmentKey.class, "android.support.v4.app.Fragment");
   private static final String LINK_TO_DOCS = "google.github.io/dagger/android";
 
   private final Elements elements;
   private final Types types;
   private final Messager messager;
+  private final ImmutableMap<Class<? extends Annotation>, TypeMirror> annotationsAndFrameworkTypes;
 
   AndroidMapKeyValidator(Elements elements, Types types, Messager messager) {
     this.elements = elements;
     this.types = types;
     this.messager = messager;
+    this.annotationsAndFrameworkTypes = annotationsAndFrameworkTypes(elements);
+  }
+
+  private ImmutableMap<Class<? extends Annotation>, TypeMirror> annotationsAndFrameworkTypes(
+      Elements elements) {
+    return ImmutableMap.copyOf(
+        Stream.of(
+                elements.getPackageElement("dagger.android"),
+                elements.getPackageElement("dagger.android.support"))
+            .filter(element -> element != null)
+            .flatMap(element -> element.getEnclosedElements().stream())
+            .filter(element -> isAnnotationPresent(element, MapKey.class))
+            .filter(element -> element.getAnnotation(MapKey.class).unwrapValue())
+            .flatMap(AndroidMapKeyValidator::classForAnnotationElement)
+            .collect(toMap(key -> key, key -> mapKeyValue(key, elements))));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Stream<Class<? extends Annotation>> classForAnnotationElement(Element element) {
+    try {
+      return Stream.of((Class<? extends Annotation>)
+          Class.forName(MoreElements.asType(element).getQualifiedName().toString()));
+    } catch (ClassNotFoundException e) {
+      return Stream.of();
+    }
+  }
+
+  private static TypeMirror mapKeyValue(Class<? extends Annotation> annotation, Elements elements) {
+    List<ExecutableElement> mapKeyMethods =
+        methodsIn(elements.getTypeElement(annotation.getCanonicalName()).getEnclosedElements());
+    TypeMirror returnType = getOnlyElement(mapKeyMethods).getReturnType();
+    return MoreTypes.asWildcard(getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments()))
+        .getExtendsBound();
   }
 
   @Override
   public Set<? extends Class<? extends Annotation>> annotations() {
-    return ANNOTATIONS_AND_FRAMEWORK_TYPES.keySet();
+    return annotationsAndFrameworkTypes.keySet();
   }
 
   @Override
@@ -95,7 +125,8 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       return;
     }
 
-    DeclaredType mapKeyValue = androidTypeForMapKey(annotation);
+    TypeMirror frameworkType = annotationsAndFrameworkTypes.get(annotation);
+
     if (!getAnnotatedAnnotations(method, Scope.class).isEmpty()) {
       SuppressWarnings suppressedWarnings = method.getAnnotation(SuppressWarnings.class);
       if (suppressedWarnings == null
@@ -105,12 +136,12 @@ final class AndroidMapKeyValidator implements ProcessingStep {
             Kind.ERROR,
             String.format(
                 "%s bindings should not be scoped. Scoping this method may leak instances of %s. ",
-                AndroidInjector.Factory.class.getCanonicalName(), mapKeyValue),
+                AndroidInjector.Factory.class.getCanonicalName(), frameworkType),
             method);
       }
     }
 
-    DeclaredType intendedReturnType = injectorFactoryOf(types.getWildcardType(mapKeyValue, null));
+    DeclaredType intendedReturnType = injectorFactoryOf(types.getWildcardType(frameworkType, null));
     if (!MoreTypes.equivalence().equivalent(returnType, intendedReturnType)) {
       messager.printMessage(
           Kind.ERROR,
@@ -153,11 +184,6 @@ final class AndroidMapKeyValidator implements ProcessingStep {
           method,
           annotationMirror);
     }
-  }
-
-  private DeclaredType androidTypeForMapKey(Class<? extends Annotation> annotation) {
-    return types.getDeclaredType(
-        elements.getTypeElement(ANNOTATIONS_AND_FRAMEWORK_TYPES.get(annotation)));
   }
 
   /** Returns a {@link DeclaredType} for {@code AndroidInjector.Factory<implementationType>}. */

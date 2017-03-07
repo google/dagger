@@ -18,6 +18,8 @@ package dagger.android;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import dagger.Module;
 import dagger.internal.Beta;
 import dagger.multibindings.Multibinds;
@@ -38,6 +40,15 @@ public abstract class AndroidInjectionModule {
   @Multibinds
   abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
       fragmentInjectorFactories();
+
+  @Multibinds
+  abstract Map<Class<? extends Service>, AndroidInjector.Factory<? extends Service>>
+      serviceInjectorFactories();
+
+  @Multibinds
+  abstract Map<
+          Class<? extends BroadcastReceiver>, AndroidInjector.Factory<? extends BroadcastReceiver>>
+      broadcastReceiverInjectorFactories();
 
   private AndroidInjectionModule() {}
 }

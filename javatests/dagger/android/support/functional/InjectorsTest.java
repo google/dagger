@@ -18,12 +18,14 @@ package dagger.android.support.functional;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import org.robolectric.RobolectricTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -37,6 +39,9 @@ public class InjectorsTest {
   private TestActivity activity;
   private TestParentFragment parentFragment;
   private TestChildFragment childFragment;
+  private TestService service;
+  private TestIntentService intentService;
+  private TestBroadcastReceiver broadcastReceiver;
 
   @Before
   public void setUp() {
@@ -48,6 +53,12 @@ public class InjectorsTest {
     childFragment =
         (TestChildFragment)
             parentFragment.getChildFragmentManager().findFragmentByTag("child-fragment");
+
+    service = Robolectric.buildService(TestService.class).create().get();
+    intentService = Robolectric.buildIntentService(TestIntentService.class).create().get();
+
+    broadcastReceiver = new TestBroadcastReceiver();
+    broadcastReceiver.onReceive(RuntimeEnvironment.application, new Intent());
   }
 
   @Test
@@ -78,6 +89,23 @@ public class InjectorsTest {
             ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
                 .ActivitySubcomponent.ParentFragmentSubcomponent.ChildFragmentSubcomponent.class);
 
+    assertThat(service.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .ServiceSubcomponent.class);
+    assertThat(intentService.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .IntentServiceSubcomponent.class);
+
+    assertThat(broadcastReceiver.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .BroadcastReceiverSubcomponent.class);
+
     changeConfiguration();
   }
 
@@ -99,6 +127,23 @@ public class InjectorsTest {
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent
                 .ChildFragmentSubcomponent.class);
+
+    assertThat(service.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .ServiceSubcomponent.class);
+    assertThat(intentService.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .IntentServiceSubcomponent.class);
+
+    assertThat(broadcastReceiver.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .BroadcastReceiverSubcomponent.class);
 
     changeConfiguration();
   }

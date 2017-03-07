@@ -18,6 +18,8 @@ package dagger.android.support.functional;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.support.v4.app.Fragment;
 import dagger.Binds;
 import dagger.Component;
@@ -26,17 +28,28 @@ import dagger.Provides;
 import dagger.Subcomponent;
 import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
+import dagger.android.BroadcastReceiverKey;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasDispatchingActivityInjector;
+import dagger.android.HasDispatchingBroadcastReceiverInjector;
+import dagger.android.HasDispatchingServiceInjector;
+import dagger.android.ServiceKey;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.FragmentKey;
+import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.BroadcastReceiverSubcomponent.BroadcastReceiverModule;
+import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.IntentServiceSubcomponent.IntentServiceModule;
+import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.ServiceSubcomponent.ServiceModule;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 import javax.inject.Inject;
 
 public final class AllControllersAreDirectChildrenOfApplication extends Application
-    implements HasDispatchingActivityInjector {
+    implements HasDispatchingActivityInjector,
+        HasDispatchingServiceInjector,
+        HasDispatchingBroadcastReceiverInjector {
   @Inject DispatchingAndroidInjector<Activity> activityInjector;
+  @Inject DispatchingAndroidInjector<Service> serviceInjector;
+  @Inject DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector;
 
   @Override
   public void onCreate() {
@@ -49,6 +62,16 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
     return activityInjector;
   }
 
+  @Override
+  public DispatchingAndroidInjector<Service> serviceInjector() {
+    return serviceInjector;
+  }
+
+  @Override
+  public DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector() {
+    return broadcastReceiverInjector;
+  }
+
   @Component(
     modules = {ApplicationComponent.ApplicationModule.class, AndroidSupportInjectionModule.class}
   )
@@ -59,7 +82,10 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
       subcomponents = {
         ActivitySubcomponent.class,
         ParentFragmentSubcomponent.class,
-        ChildFragmentSubcomponent.class
+        ChildFragmentSubcomponent.class,
+        ServiceSubcomponent.class,
+        IntentServiceSubcomponent.class,
+        BroadcastReceiverSubcomponent.class,
       }
     )
     abstract class ApplicationModule {
@@ -86,6 +112,24 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
       @FragmentKey(TestChildFragment.class)
       abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForChildFragment(
           ChildFragmentSubcomponent.Builder builder);
+
+      @Binds
+      @IntoMap
+      @ServiceKey(TestService.class)
+      abstract AndroidInjector.Factory<? extends Service> bindFactoryForService(
+          ServiceSubcomponent.Builder b);
+
+      @Binds
+      @IntoMap
+      @ServiceKey(TestIntentService.class)
+      abstract AndroidInjector.Factory<? extends Service> bindFactoryForIntentService(
+          IntentServiceSubcomponent.Builder b);
+
+      @Binds
+      @IntoMap
+      @BroadcastReceiverKey(TestBroadcastReceiver.class)
+      abstract AndroidInjector.Factory<? extends BroadcastReceiver> bindFactoryForBroadcastReceiver(
+          BroadcastReceiverSubcomponent.Builder b);
     }
 
     @Subcomponent(modules = ActivitySubcomponent.ActivityModule.class)
@@ -131,6 +175,51 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
 
       @Subcomponent.Builder
       abstract class Builder extends AndroidInjector.Builder<TestChildFragment> {}
+    }
+
+    @Subcomponent(modules = ServiceModule.class)
+    interface ServiceSubcomponent extends AndroidInjector<TestService> {
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<TestService> {}
+
+      @Module
+      abstract class ServiceModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return ServiceSubcomponent.class;
+        }
+      }
+    }
+
+    @Subcomponent(modules = IntentServiceModule.class)
+    interface IntentServiceSubcomponent extends AndroidInjector<TestIntentService> {
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<TestIntentService> {}
+
+      @Module
+      abstract class IntentServiceModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return IntentServiceSubcomponent.class;
+        }
+      }
+    }
+
+    @Subcomponent(modules = BroadcastReceiverModule.class)
+    interface BroadcastReceiverSubcomponent extends AndroidInjector<TestBroadcastReceiver> {
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<TestBroadcastReceiver> {}
+
+      @Module
+      abstract class BroadcastReceiverModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return BroadcastReceiverSubcomponent.class;
+        }
+      }
     }
   }
 }

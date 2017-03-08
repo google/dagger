@@ -79,7 +79,8 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
                 },
                 directExecutor());
           }
-        });
+        },
+        directExecutor());
   }
 
   private static final Function<

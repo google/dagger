@@ -84,7 +84,8 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
                 },
                 directExecutor());
           }
-        });
+        },
+        directExecutor());
   }
 
   private static final Function<

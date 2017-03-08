@@ -17,6 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static dagger.internal.DaggerCollections.hasDuplicates;
 import static dagger.internal.DaggerCollections.presizedList;
 
@@ -169,6 +170,7 @@ public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produce
             }
             return builder.build();
           }
-        });
+        },
+        directExecutor());
   }
 }

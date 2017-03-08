@@ -36,6 +36,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -53,6 +54,7 @@ import dagger.producers.internal.Producers;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Executor;
 import javax.inject.Provider;
 
 /** The nested class and static methods required by the component to implement optional bindings. */
@@ -324,15 +326,16 @@ final class OptionalFactories {
   }
 
   /**
-   * An expression that uses {@link Futures#transform(ListenableFuture, Function)} to transform a
-   * {@code ListenableFuture<inputType>} into a {@code ListenableFuture<Optional<inputType>>}.
+   * An expression that uses {@link Futures#transform(ListenableFuture, Function, Executor)} to
+   * transform a {@code ListenableFuture<inputType>} into a {@code
+   * ListenableFuture<Optional<inputType>>}.
    *
    * @param inputFuture an expression of type {@code ListenableFuture<inputType>}
    */
   private static CodeBlock transformFutureToOptional(
       OptionalKind optionalKind, TypeName inputType, CodeBlock inputFuture) {
     return CodeBlock.of(
-        "$T.transform($L, $L)",
+        "$T.transform($L, $L, $T.directExecutor())",
         Futures.class,
         inputFuture,
         anonymousClassBuilder("")
@@ -347,7 +350,8 @@ final class OptionalFactories {
                     .addParameter(inputType, "input")
                     .addCode("return $L;", optionalKind.presentExpression(CodeBlock.of("input")))
                     .build())
-            .build());
+            .build(),
+        MoreExecutors.class);
   }
 
   /**

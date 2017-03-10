@@ -18,6 +18,7 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
   git rm -rf api/latest
   mkdir -p api
   unzip ../bazel-genfiles/user-docs.jar -d api/latest
+  rm -rf api/latest/META-INF/
   git add -f api/latest
   git commit -m "Lastest javadoc on successful travis build $TRAVIS_BUILD_NUMBER auto-pushed to gh-pages"
   git push -fq origin gh-pages > /dev/null

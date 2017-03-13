@@ -20,6 +20,7 @@ import static dagger.internal.Preconditions.checkNotNull;
 
 import android.app.Activity;
 import android.app.Fragment;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.Beta;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +63,7 @@ public final class DispatchingAndroidInjector<T> {
    * @throws InvalidInjectorBindingException if the injector factory bound for a class does not
    *     inject instances of that class
    */
+  @CanIgnoreReturnValue
   public boolean maybeInject(T instance) {
     Provider<AndroidInjector.Factory<? extends T>> factoryProvider =
         injectorFactories.get(instance.getClass());

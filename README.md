@@ -155,11 +155,10 @@ the GitHub project's master branch.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-
 [20api]: http://google.github.io/dagger/api/2.0/
 [community]: https://plus.google.com/communities/111933036769103367883
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
-[databinding]: https://developer.android.com/topic/libraries/data-binding/index.html
+[databinding]: https://developer.android.com/topic/libraries/data-binding/
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
 [latestapi]: http://google.github.io/dagger/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg

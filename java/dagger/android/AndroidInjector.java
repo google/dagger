@@ -21,8 +21,8 @@ import dagger.internal.Beta;
 
 /**
  * Performs members-injection for a concrete subtype of a <a
- * href="https://developer.android.com/guide/components/index.html">core Android type</a> (e.g.,
- * {@link android.app.Activity} or {@link android.app.Fragment}).
+ * href="https://developer.android.com/guide/components/">core Android type</a> (e.g., {@link
+ * android.app.Activity} or {@link android.app.Fragment}).
  *
  * <p>Commonly implemented by {@link dagger.Subcomponent}-annotated types whose {@link
  * dagger.Subcomponent.Builder} extends {@link Builder}.

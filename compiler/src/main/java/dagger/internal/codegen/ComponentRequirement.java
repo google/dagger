@@ -93,7 +93,7 @@ abstract class ComponentRequirement {
       case MODULE:
         return componentCanMakeNewInstances(typeElement())
             ? NullPolicy.NEW
-            : requiresAPassedInstance(elements, types, typeElement())
+            : requiresAPassedInstance(elements, types, this)
                 ? NullPolicy.THROW
                 : NullPolicy.ALLOW;
       case BINDING:

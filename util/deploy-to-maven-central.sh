@@ -10,9 +10,14 @@ key=$1
 version_name=$2
 shift 2
 
-if [[ ! $version_name =~ ^2\. ]]; then
+if [[ ! "$version_name" =~ ^2\. ]]; then
   echo 'Version name must begin with "2."'
   exit 2
+fi
+
+if [[ "$version_name" =~ " " ]]; then
+  echo "Version name must not have any spaces"
+  exit 3
 fi
 
 #validate key

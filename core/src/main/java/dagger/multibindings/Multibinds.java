@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  *   }</code></pre>
  *
  * <p>A given set or map multibinding can be declared any number of times without error. Dagger
- * never implements calls any {@code @Multibinds} methods.
+ * never implements or calls any {@code @Multibinds} methods.
  *
  * @see <a href="http://google.github.io/dagger/multibindings">Multibindings</a>
  */

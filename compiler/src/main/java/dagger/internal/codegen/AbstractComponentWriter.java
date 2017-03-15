@@ -71,6 +71,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -1106,9 +1107,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         {
           TypeElement dependencyType = dependencyTypeForBinding(binding);
           String dependencyVariable = simpleVariableName(dependencyType);
+          String componentMethod = binding.bindingElement().get().getSimpleName().toString();
           CodeBlock callFactoryMethod =
-              CodeBlock.of(
-                  "$L.$L()", dependencyVariable, binding.bindingElement().get().getSimpleName());
+              CodeBlock.of("$L.$L()", dependencyVariable, componentMethod);
           // TODO(sameb): This throws a very vague NPE right now.  The stack trace doesn't
           // help to figure out what the method or return type is.  If we include a string
           // of the return type or method name in the error message, that can defeat obfuscation.
@@ -1124,26 +1125,36 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                       Preconditions.class,
                       callFactoryMethod,
                       CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
+          ClassName dependencyClassName = ClassName.get(dependencyType);
+          String factoryName =
+              dependencyClassName.toString().replaceAll("\\.", "_") + "_" + componentMethod;
+          MethodSpec.Builder getMethod =
+              methodBuilder("get")
+                  .addAnnotation(Override.class)
+                  .addModifiers(PUBLIC)
+                  .returns(bindingKeyTypeName)
+                  .addCode(getMethodBody);
+          if (binding.nullableType().isPresent()) {
+            getMethod.addAnnotation(
+                ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));
+          }
+          component.addType(
+              TypeSpec.classBuilder(factoryName)
+                  .addSuperinterface(providerOf(bindingKeyTypeName))
+                  .addModifiers(PRIVATE, STATIC)
+                  .addField(dependencyClassName, dependencyVariable, PRIVATE, FINAL)
+                  .addMethod(
+                      constructorBuilder()
+                          .addParameter(dependencyClassName, dependencyVariable)
+                          .addStatement("this.$1L = $1L", dependencyVariable)
+                          .build())
+                  .addMethod(getMethod.build())
+                  .build());
           return CodeBlock.of(
-              Joiner.on('\n')
-                  .join(
-                      "new $1L<$2T>() {",
-                      "  private final $5T $6L = $3L;",
-                      "  $4L@Override public $2T get() {",
-                      "    $7L",
-                      "  }",
-                      "}"),
-              // TODO(ronshapiro): Until we remove Factory, fully qualify the import so it doesn't
-              // conflict with anyone that has Factory as an inner type of a component (like
-              // AndroidInjector.Factory
-              /* 1 */ "dagger.internal.Factory",
-              /* 2 */ bindingKeyTypeName,
-              /* 3 */ getComponentContributionExpression(
-                  ComponentRequirement.forDependency(dependencyType.asType())),
-              /* 4 */ nullableAnnotation(binding.nullableType()),
-              /* 5 */ TypeName.get(dependencyType.asType()),
-              /* 6 */ dependencyVariable,
-              /* 7 */ getMethodBody);
+              "new $L($L)",
+              factoryName,
+              getComponentContributionExpression(
+                  ComponentRequirement.forDependency(dependencyType.asType())));
         }
 
       case SUBCOMPONENT_BUILDER:
@@ -1280,12 +1291,6 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           scope.equals(reusableScope(elements)) ? SINGLE_CHECK : DOUBLE_CHECK,
           factoryCreate);
     }
-  }
-
-  private CodeBlock nullableAnnotation(Optional<DeclaredType> nullableType) {
-    return nullableType.isPresent()
-        ? CodeBlock.of("@$T ", TypeName.get(nullableType.get()))
-        : CodeBlock.of("");
   }
 
   private CodeBlock initializeMembersInjectorForBinding(MembersInjectionBinding binding) {

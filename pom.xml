@@ -95,12 +95,12 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>20.0-rc1</version>
+        <version>20.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava-testlib</artifactId>
-        <version>20.0-rc1</version>
+        <version>20.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.googlejavaformat</groupId>

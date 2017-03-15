@@ -43,10 +43,17 @@ import javax.lang.model.util.Types;
  */
 final class Util {
   /**
-   * Returns true if the passed {@link TypeElement} requires a passed instance in order to be used
-   * within a component.
+   * Returns true if the passed {@link ComponentRequirement} requires a passed instance in order
+   * to be used within a component.
    */
-  static boolean requiresAPassedInstance(Elements elements, Types types, TypeElement typeElement) {
+  static boolean requiresAPassedInstance(
+      Elements elements, Types types, ComponentRequirement componentRequirement) {
+    if (componentRequirement.kind() == ComponentRequirement.Kind.BINDING) {
+      // A user has explicitly defined in their component builder they will provide an instance.
+      return true;
+    }
+
+    TypeElement typeElement = componentRequirement.typeElement();
     ImmutableSet<ExecutableElement> methods =
         getLocalAndInheritedMethods(typeElement, types, elements);
     boolean foundInstanceMethod = false;

@@ -421,6 +421,88 @@ public class ComponentBuilderTest {
   }
 
   @Test
+  public void testBuilderBindsInstanceNoCreateGenerated() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface SimpleComponent {",
+            "  Object object();",
+            "",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    @BindsInstance Builder object(Object object);",
+            "    SimpleComponent build();",
+            "  }",
+            "}");
+
+    JavaFileObject generatedComponent =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerSimpleComponent",
+            "package test;",
+            "",
+            "import dagger.internal.InstanceFactory;",
+            "import dagger.internal.Preconditions;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerSimpleComponent implements SimpleComponent {",
+            "  private Provider<Object> objectProvider;",
+            "",
+            "  private DaggerSimpleComponent(Builder builder) {",
+            "    assert builder != null;",
+            "    initialize(builder);",
+            "  }",
+            "",
+            "  public static SimpleComponent.Builder builder() {",
+            "    return new Builder();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.objectProvider = InstanceFactory.create(builder.object);",
+            "  }",
+            "",
+            "  @Override",
+            "  public Object object() {",
+            "    return objectProvider.get();",
+            "  }",
+            "",
+            "  private static final class Builder implements SimpleComponent.Builder {",
+            "    private Object object;",
+            "",
+            "    @Override",
+            "    public SimpleComponent build() {",
+            "      if (object == null) {",
+            "        throw new IllegalStateException(",
+            "            Object.class.getCanonicalName() + \" must be set\")",
+            "      }",
+            "      return new DaggerSimpleComponent(this);",
+            "    }",
+            "",
+            "    @Override",
+            "    public Builder object(Object object) {",
+            "      this.object = Preconditions.checkNotNull(object);",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+    assertAbout(javaSource())
+        .that(componentFile)
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(generatedComponent);
+  }
+
+  @Test
   public void testPrivateBuilderFails() {
     JavaFileObject componentFile =
         JavaFileObjects.forSourceLines(

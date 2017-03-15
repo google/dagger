@@ -19,6 +19,7 @@ package test;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static test.ReleasableReferencesComponents.Thing.thing;
 
+import com.google.auto.value.AutoValue;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
@@ -82,10 +83,7 @@ final class ReleasableReferencesComponents {
     Child child();
   }
 
-  // TODO(ronshapiro): investigate the maven-compiler-plugin bug that is blocking javac from
-  // recognizing @AutoValue when it is imported instead of fully-qualified
-  // http://bugs.java.com/view_bug.do?bug_id=7101822
-  @com.google.auto.value.AutoValue
+  @AutoValue
   abstract static class Thing {
     abstract int count();
 

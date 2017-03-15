@@ -36,12 +36,7 @@ before_install:
   - export PATH=$M2_HOME/bin:$PATH
   - mvn --version
 
-install:
-  - mvn -B -P!standard-with-extra-repos -U install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
-
-script:
-  - bazel test --test_output errors //...
-  - mvn -B -P!standard-with-extra-repos -U verify --fail-at-end -Dsource.skip=true -Dmaven.javadoc.skip=true
+script: bazel test --test_output errors //...
 
 env:
   global:
@@ -61,4 +56,4 @@ branches:
 
 cache:
   directories:
-    - $HOME/.m2
+    - $HOME/.cache/bazel

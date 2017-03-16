@@ -25,7 +25,6 @@ import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
-import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -36,7 +35,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Module;
-import dagger.Multibindings;
 import dagger.Provides;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
@@ -181,13 +179,6 @@ abstract class ModuleDescriptor {
         if (isAnnotationPresent(moduleMethod, BindsOptionalOf.class)) {
           optionalDeclarations.add(
               optionalBindingDeclarationFactory.forMethod(moduleMethod, moduleElement));
-        }
-      }
-
-      for (TypeElement memberType : typesIn(elements.getAllMembers(moduleElement))) {
-        if (isAnnotationPresent(memberType, Multibindings.class)) {
-          multibindingDeclarations.addAll(
-              multibindingDeclarationFactory.forMultibindingsInterface(memberType));
         }
       }
 

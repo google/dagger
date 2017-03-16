@@ -46,7 +46,6 @@ import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
-import dagger.Multibindings;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -429,8 +428,7 @@ abstract class Key {
     }
 
     /**
-     * Returns the key for a {@link Multibinds @Multibinds} method or a method in a
-     * {@link Multibindings @Multibindings} interface.
+     * Returns the key for a {@link Multibinds @Multibinds} method.
      *
      * <p>The key's type is either {@code Set<T>} or {@code Map<K, F<V>>}, where {@code F} is either
      * {@link Provider} or {@link Producer}, depending on {@code bindingType}.

@@ -27,7 +27,6 @@ import com.google.common.truth.SubjectFactory;
 import com.google.common.truth.Truth;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
-import dagger.Multibindings;
 import dagger.producers.ProducerModule;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -53,13 +52,6 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
       return assertAbout(daggerModuleMethod())
           .that(method)
           .withDeclaration("@ProducerModule abstract class %s { %s }");
-    }
-
-    /** Starts a clause testing a Dagger {@link Multibindings @Multibindings} interface method. */
-    static DaggerModuleMethodSubject assertThatMultibindingsMethod(String method) {
-      return assertAbout(daggerModuleMethod())
-          .that(method)
-          .withDeclaration("@Module abstract class %s { @Multibindings interface Empties { %s }}");
     }
 
     /** Starts a clause testing a method in an unannotated class. */

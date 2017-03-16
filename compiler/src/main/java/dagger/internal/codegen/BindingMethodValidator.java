@@ -162,8 +162,7 @@ abstract class BindingMethodValidator {
    * Adds an error if the method is not declared in a class or interface annotated with one of the
    * {@link #enclosingElementAnnotations}.
    */
-  // TODO(b/28861722): Make private once @Multibindings is deleted.
-  protected void checkEnclosingElement(ValidationReport.Builder<ExecutableElement> builder) {
+  private void checkEnclosingElement(ValidationReport.Builder<ExecutableElement> builder) {
     if (!isAnyAnnotationPresent(
         builder.getSubject().getEnclosingElement(), enclosingElementAnnotations)) {
       builder.addError(

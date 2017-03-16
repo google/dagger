@@ -24,7 +24,6 @@ import static java.util.stream.Collectors.toList;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
-import dagger.Multibindings;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -583,28 +582,7 @@ final class ErrorMessages {
     }
   }
 
-  /** Error messages related to {@link Multibindings @Multibindings}. */
-  static final class MultibindingsMessages {
-    static final String MUST_BE_INTERFACE = "@Multibindings can be applied only to interfaces";
-
-    static final String MUST_NOT_HAVE_TYPE_PARAMETERS =
-        "@Multibindings types must not have type parameters";
-
-    static final String MUST_BE_IN_MODULE =
-        "@Multibindings types must be nested within a @Module or @ProducerModule";
-
-    static String tooManyMethodsForKey(String formattedKey) {
-      return String.format(
-          "Too many @Multibindings methods for %s", stripCommonTypePrefixes(formattedKey));
-    }
-
-    private MultibindingsMessages() {}
-  }
-
-  /**
-   * Error messages related to {@link Multibinds @Multibinds} methods and methods in
-   * {@link Multibindings} interfaces.
-   */
+  /** Error messages related to {@link Multibinds @Multibinds} methods. */
   static final class MultibindsMessages {
     static final String METHOD_MUST_RETURN_MAP_OR_SET =
         "@%s methods must return Map<K, V> or Set<T>";

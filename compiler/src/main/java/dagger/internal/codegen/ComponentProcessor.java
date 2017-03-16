@@ -81,8 +81,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     BindsMethodValidator bindsMethodValidator = new BindsMethodValidator(elements, types);
     MultibindsMethodValidator multibindsMethodValidator =
         new MultibindsMethodValidator(elements, types);
-    MultibindingsMethodValidator multibindingsMethodValidator =
-        new MultibindingsMethodValidator(elements, types);
     BindsOptionalOfMethodValidator bindsOptionalOfMethodValidator =
         new BindsOptionalOfMethodValidator(elements, types);
     AnyBindingMethodValidator anyBindingMethodValidator =
@@ -92,20 +90,11 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindsMethodValidator,
             multibindsMethodValidator,
             bindsOptionalOfMethodValidator);
-    MultibindingsValidator multibindingsValidator =
-        new MultibindingsValidator(
-            elements,
-            types,
-            keyFactory,
-            keyFormatter,
-            methodSignatureFormatter,
-            multibindingsMethodValidator);
     ModuleValidator moduleValidator =
         new ModuleValidator(
             types,
             elements,
             anyBindingMethodValidator,
-            multibindingsValidator,
             methodSignatureFormatter);
     BuilderValidator builderValidator = new BuilderValidator(elements, types);
     ComponentValidator subcomponentValidator =
@@ -242,7 +231,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             componentDescriptorFactory,
             bindingGraphFactory,
             componentGenerator),
-        new MultibindingsProcessingStep(messager, multibindingsValidator),
         new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
   }
 

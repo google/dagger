@@ -17,7 +17,6 @@ package test;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auto.value.AutoAnnotation;
-import com.google.common.collect.ImmutableList;
 import dagger.multibindings.ClassKey;
 import dagger.multibindings.StringKey;
 import java.math.BigDecimal;
@@ -26,42 +25,14 @@ import java.util.Map;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
 
-@RunWith(Parameterized.class)
+/** Tests for {@link MultibindingComponent}. */
+@RunWith(JUnit4.class)
 public class MultibindingTest {
 
-  private static final MultibindingDependency MULTIBINDING_DEPENDENCY =
-      new MultibindingDependency() {
-        @Override
-        public double doubleDependency() {
-          return 0.0;
-        }
-      };
-
-  @Parameters(name = "{0}")
-  public static Iterable<Object[]> parameters() {
-    return ImmutableList.copyOf(
-        new Object[][] {
-          {
-            DaggerMultibindingComponent.builder()
-                .multibindingDependency(MULTIBINDING_DEPENDENCY)
-                .build()
-          },
-          {
-            DaggerMultibindingComponentWithMultibindingsInterface.builder()
-                .multibindingDependency(MULTIBINDING_DEPENDENCY)
-                .build()
-          }
-        });
-  }
-
-  private final MultibindingComponent multibindingComponent;
-
-  public MultibindingTest(MultibindingComponent multibindingComponent) {
-    this.multibindingComponent = multibindingComponent;
-  }
+  private final MultibindingComponent multibindingComponent =
+      DaggerMultibindingComponent.builder().multibindingDependency(() -> 0.0).build();
 
   @Test public void map() {
     Map<String, String> map = multibindingComponent.map();

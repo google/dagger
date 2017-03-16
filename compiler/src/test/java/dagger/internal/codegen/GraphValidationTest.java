@@ -967,8 +967,8 @@ public class GraphValidationTest {
             "",
             "import dagger.Component;",
             "import dagger.Module;",
-            "import dagger.Multibindings;",
             "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
             "import java.util.HashMap;",
             "import java.util.HashSet;",
             "import java.util.Map;",
@@ -976,12 +976,9 @@ public class GraphValidationTest {
             "",
             "final class Outer {",
             "  @Module",
-            "  static class TestModule1 {",
-            "    @Multibindings",
-            "    interface Empties {",
-            "      Map<String, String> stringMap();",
-            "      Set<String> stringSet();",
-            "    }",
+            "  abstract static class TestModule1 {",
+            "    @Multibinds abstract Map<String, String> stringMap();",
+            "    @Multibinds abstract Set<String> stringSet();",
             "  }",
             "",
             "  @Module",
@@ -1003,7 +1000,8 @@ public class GraphValidationTest {
     String expectedSetError =
         "java.util.Set<java.lang.String> has incompatible bindings or declarations:\n"
             + "      Set bindings and declarations:\n"
-            + "          Set<String> test.Outer.TestModule1.Empties.stringSet()\n"
+            + "          @dagger.multibindings.Multibinds Set<String> "
+            + "test.Outer.TestModule1.stringSet()\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
 
@@ -1011,7 +1009,8 @@ public class GraphValidationTest {
         "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
             + "or declarations:\n"
             + "      Map bindings and declarations:\n"
-            + "          Map<String,String> test.Outer.TestModule1.Empties.stringMap()\n"
+            + "          @dagger.multibindings.Multibinds Map<String,String> "
+            + "test.Outer.TestModule1.stringMap()\n"
             + "      Unique bindings and declarations:\n"
             + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
 
@@ -1021,11 +1020,11 @@ public class GraphValidationTest {
         .failsToCompile()
         .withErrorContaining(expectedSetError)
         .in(component)
-        .onLine(35)
+        .onLine(32)
         .and()
         .withErrorContaining(expectedMapError)
         .in(component)
-        .onLine(36);
+        .onLine(33);
   }
 
   @Test public void duplicateBindings_TruncateAfterLimit() {

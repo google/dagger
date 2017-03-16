@@ -16,16 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
-import static javax.lang.model.element.ElementKind.INTERFACE;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableSet;
 import dagger.Module;
-import dagger.Multibindings;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.multibindings.Multibinds;
@@ -38,7 +34,6 @@ import javax.inject.Provider;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -47,7 +42,7 @@ import javax.lang.model.util.Types;
 /**
  * A declaration that a multibinding with a certain key is available to be injected in a component
  * even if the component has no multibindings for that key. Identified by a map- or set-returning
- * method in a {@link Multibindings @Multibindings}-annotated interface nested within a module.
+ * method annotated with {@link Multibinds @Multibinds}.
  */
 @AutoValue
 abstract class MultibindingDeclaration extends BindingDeclaration
@@ -69,8 +64,8 @@ abstract class MultibindingDeclaration extends BindingDeclaration
   public abstract ContributionType contributionType();
 
   /**
-   * {@link BindingType#PROVISION} if the {@link Multibindings @Multibindings}-annotated interface
-   * is nested in a {@link Module @Module}, or {@link BindingType#PROVISION} if it is nested in a
+   * {@link BindingType#PROVISION} if {@link Multibinds @Multibinds}-annotated method
+   * is enclosed in a {@link Module @Module}, or {@link BindingType#PROVISION} if it is nested in a
    * {@link ProducerModule @ProducerModule}.
    */
   @Override
@@ -90,28 +85,6 @@ abstract class MultibindingDeclaration extends BindingDeclaration
       this.types = types;
       this.keyFactory = keyFactory;
       this.objectElement = elements.getTypeElement(Object.class.getCanonicalName());
-    }
-
-    /**
-     * Creates multibinding declarations for each method in a
-     * {@link Multibindings @Multibindings}-annotated interface.
-     */
-    ImmutableSet<MultibindingDeclaration> forMultibindingsInterface(TypeElement interfaceElement) {
-      checkArgument(interfaceElement.getKind().equals(INTERFACE));
-      checkArgument(isAnnotationPresent(interfaceElement, Multibindings.class));
-      BindingType bindingType = bindingType(interfaceElement.getEnclosingElement());
-      DeclaredType interfaceType = MoreTypes.asDeclared(interfaceElement.asType());
-
-      ImmutableSet.Builder<MultibindingDeclaration> declarations = ImmutableSet.builder();
-      for (ExecutableElement method :
-          getLocalAndInheritedMethods(interfaceElement, types, elements)) {
-        if (!method.getEnclosingElement().equals(objectElement)) {
-          ExecutableType methodType =
-              MoreTypes.asExecutable(types.asMemberOf(interfaceType, method));
-          declarations.add(forDeclaredMethod(bindingType, method, methodType, interfaceElement));
-        }
-      }
-      return declarations.build();
     }
 
     /** A multibinding declaration for a {@link Multibinds @Multibinds} method. */

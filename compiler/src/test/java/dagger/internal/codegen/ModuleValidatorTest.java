@@ -279,40 +279,4 @@ public final class ModuleValidatorTest {
         .inFile(module)
         .onLine(5);
   }
-
-  @Test
-  public void invalidNestedMultibindingsType() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.IncludesBadMultibindings",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Multibindings;",
-            "import dagger.Provides;",
-            "",
-            "@Module",
-            "abstract class IncludesBadMultibindings {",
-            "  @Provides static String string() { return \"a string\"; }",
-            "",
-            "  @Multibindings interface BadMultibindings {",
-            "    String notASetOrMap();",
-            "  }",
-            "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "@Component(modules = IncludesBadMultibindings.class)",
-            "interface TestComponent {",
-            "  String aString();",
-            "}");
-    assertThat(daggerCompiler().compile(module, component))
-        .hadErrorContaining("test.IncludesBadMultibindings has errors")
-        .inFile(component)
-        .onLine(5);
-  }
 }

@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
-import static dagger.internal.codegen.Util.requiresAPassedInstance;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -191,6 +190,6 @@ final class ComponentWriter extends AbstractComponentWriter {
   private boolean canInstantiateAllRequirements() {
     return !Iterables.any(
         graph.componentRequirements(),
-        dependency -> requiresAPassedInstance(elements, types, dependency));
+        dependency -> dependency.requiresAPassedInstance(elements, types));
   }
 }

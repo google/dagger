@@ -494,12 +494,12 @@ public class ComponentBuilderTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerSimpleComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test

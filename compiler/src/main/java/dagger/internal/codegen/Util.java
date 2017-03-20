@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
-import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
@@ -25,57 +23,17 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import dagger.Binds;
-import dagger.Provides;
-import dagger.producers.Produces;
 import java.util.stream.Collector;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Utilities for handling types in annotation processors
  */
 final class Util {
-  /**
-   * Returns true if the passed {@link ComponentRequirement} requires a passed instance in order
-   * to be used within a component.
-   */
-  static boolean requiresAPassedInstance(
-      Elements elements, Types types, ComponentRequirement componentRequirement) {
-    if (componentRequirement.kind() == ComponentRequirement.Kind.BINDING) {
-      // A user has explicitly defined in their component builder they will provide an instance.
-      return true;
-    }
-
-    TypeElement typeElement = componentRequirement.typeElement();
-    ImmutableSet<ExecutableElement> methods =
-        getLocalAndInheritedMethods(typeElement, types, elements);
-    boolean foundInstanceMethod = false;
-    for (ExecutableElement method : methods) {
-      if (method.getModifiers().contains(ABSTRACT)
-          && !MoreElements.isAnnotationPresent(method, Binds.class)) {
-        /* We found an abstract method that isn't a @Binds method.  That automatically means that
-         * a user will have to provide an instance because we don't know which subclass to use. */
-        return true;
-      } else if (!method.getModifiers().contains(STATIC)
-          && isAnyAnnotationPresent(method, Provides.class, Produces.class)) {
-        foundInstanceMethod = true;
-      }
-    }
-
-    if (foundInstanceMethod) {
-      return !componentCanMakeNewInstances(typeElement);
-    }
-
-    return false;
-  }
-
   /**
    * Returns true if and only if a component can instantiate new instances (typically of a module)
    * rather than requiring that they be passed.

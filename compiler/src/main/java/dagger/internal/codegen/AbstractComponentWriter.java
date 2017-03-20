@@ -1127,7 +1127,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                       CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
           ClassName dependencyClassName = ClassName.get(dependencyType);
           String factoryName =
-              dependencyClassName.toString().replaceAll("\\.", "_") + "_" + componentMethod;
+              dependencyClassName.toString().replace('.', '_') + "_" + componentMethod;
           MethodSpec.Builder getMethod =
               methodBuilder("get")
                   .addAnnotation(Override.class)

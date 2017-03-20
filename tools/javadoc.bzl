@@ -59,6 +59,7 @@ def javadoc_library(
         name = deploy_jar_name,
         deps = deps,
         manifest = "//tools:AndroidManifest.xml",
+        manifest_merger = "legacy",
         custom_package = "dummy",
         tags = ["manual"],
     )

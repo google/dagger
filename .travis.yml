@@ -13,7 +13,7 @@ addons:
     packages:
       - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
-      - bazel=0.4.4
+      - bazel=0.4.5
 
 jdk:
   - &jdk_for_publishing oraclejdk8

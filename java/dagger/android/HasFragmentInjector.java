@@ -16,13 +16,13 @@
 
 package dagger.android;
 
-import android.app.Activity;
+import android.app.Fragment;
 import dagger.internal.Beta;
 
-/** Provides a {@link DispatchingAndroidInjector} of {@link Activity}s. */
+/** Provides an {@link AndroidInjector} of {@link Fragment}s. */
 @Beta
-public interface HasDispatchingActivityInjector {
+public interface HasFragmentInjector {
 
-  /** Returns a {@link DispatchingAndroidInjector} of {@link Activity}s. */
-  DispatchingAndroidInjector<Activity> activityInjector();
+  /** Returns an {@link AndroidInjector} of {@link Fragment}s. */
+  AndroidInjector<Fragment> fragmentInjector();
 }

@@ -40,7 +40,7 @@ import javax.inject.Provider;
  * @param <T> the core Android type to be injected
  */
 @Beta
-public final class DispatchingAndroidInjector<T> {
+public final class DispatchingAndroidInjector<T> implements AndroidInjector<T> {
   private static final String NO_SUPERTYPES_BOUND_FORMAT =
       "No injector factory bound for Class<%s>";
   private static final String SUPERTYPES_BOUND_FORMAT =
@@ -99,6 +99,7 @@ public final class DispatchingAndroidInjector<T> {
    * @throws IllegalArgumentException if no {@link AndroidInjector.Factory} is bound for {@code
    *     instance}
    */
+  @Override
   public void inject(T instance) {
     boolean wasInjected = maybeInject(instance);
     if (!wasInjected) {

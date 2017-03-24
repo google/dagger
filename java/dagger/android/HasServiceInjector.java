@@ -19,10 +19,10 @@ package dagger.android;
 import android.app.Service;
 import dagger.internal.Beta;
 
-/** Provides a {@link DispatchingAndroidInjector} of {@link Service}s. */
+/** Provides an {@link AndroidInjector} of {@link Service}s. */
 @Beta
-public interface HasDispatchingServiceInjector {
+public interface HasServiceInjector {
 
-  /** Returns a {@link DispatchingAndroidInjector} of {@link Service}s. */
-  DispatchingAndroidInjector<Service> serviceInjector();
+  /** Returns an {@link AndroidInjector} of {@link Service}s. */
+  AndroidInjector<Service> serviceInjector();
 }

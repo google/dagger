@@ -27,7 +27,7 @@ import javax.inject.Inject;
  * members will be injected again.
  */
 @Beta
-public abstract class DaggerFragment extends Fragment implements HasDispatchingFragmentInjector {
+public abstract class DaggerFragment extends Fragment implements HasFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
 
@@ -38,7 +38,7 @@ public abstract class DaggerFragment extends Fragment implements HasDispatchingF
   }
 
   @Override
-  public DispatchingAndroidInjector<Fragment> fragmentInjector() {
+  public AndroidInjector<Fragment> fragmentInjector() {
     return childFragmentInjector;
   }
 }

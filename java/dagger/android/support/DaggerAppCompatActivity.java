@@ -20,8 +20,9 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
-import dagger.android.HasDispatchingFragmentInjector;
+import dagger.android.HasFragmentInjector;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
@@ -31,7 +32,7 @@ import javax.inject.Inject;
  */
 @Beta
 public abstract class DaggerAppCompatActivity extends AppCompatActivity
-    implements HasDispatchingFragmentInjector, HasDispatchingSupportFragmentInjector {
+    implements HasFragmentInjector, HasSupportFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> supportFragmentInjector;
   @Inject DispatchingAndroidInjector<android.app.Fragment> frameworkFragmentInjector;
@@ -43,12 +44,12 @@ public abstract class DaggerAppCompatActivity extends AppCompatActivity
   }
 
   @Override
-  public DispatchingAndroidInjector<Fragment> supportFragmentInjector() {
+  public AndroidInjector<Fragment> supportFragmentInjector() {
     return supportFragmentInjector;
   }
 
   @Override
-  public DispatchingAndroidInjector<android.app.Fragment> fragmentInjector() {
+  public AndroidInjector<android.app.Fragment> fragmentInjector() {
     return frameworkFragmentInjector;
   }
 }

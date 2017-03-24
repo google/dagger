@@ -33,26 +33,25 @@ public final class AndroidInjection {
   private static final String TAG = "dagger.android";
 
   /**
-   * Injects {@code activity} if an associated {@link AndroidInjector.Factory} implementation can be
-   * found, otherwise throws an {@link IllegalArgumentException}.
+   * Injects {@code activity} if an associated {@link AndroidInjector} implementation can be found,
+   * otherwise throws an {@link IllegalArgumentException}.
    *
    * @throws RuntimeException if the {@link Application} doesn't implement {@link
-   *     HasDispatchingActivityInjector}, or if no {@code AndroidInjector.Factory<? extends
-   *     Activity>} is bound for {@code activity}.
+   *     HasActivityInjector}.
    */
   public static void inject(Activity activity) {
     checkNotNull(activity, "activity");
     Application application = activity.getApplication();
-    if (!(application instanceof HasDispatchingActivityInjector)) {
+    if (!(application instanceof HasActivityInjector)) {
       throw new RuntimeException(
           String.format(
               "%s does not implement %s",
               application.getClass().getCanonicalName(),
-              HasDispatchingActivityInjector.class.getCanonicalName()));
+              HasActivityInjector.class.getCanonicalName()));
     }
 
-    DispatchingAndroidInjector<Activity> activityInjector =
-        ((HasDispatchingActivityInjector) application).activityInjector();
+    AndroidInjector<Activity> activityInjector =
+        ((HasActivityInjector) application).activityInjector();
     checkNotNull(
         activityInjector,
         "%s.activityInjector() returned null",
@@ -62,87 +61,82 @@ public final class AndroidInjection {
   }
 
   /**
-   * Injects {@code fragment} if an associated {@link AndroidInjector.Factory} implementation can be
-   * found, otherwise throws an {@link IllegalArgumentException}.
+   * Injects {@code fragment} if an associated {@link AndroidInjector} implementation can be found,
+   * otherwise throws an {@link IllegalArgumentException}.
    *
-   * <p>Uses the following algorithm to find the appropriate {@code
-   * DispatchingAndroidInjector<Fragment>} to inject {@code fragment}:
+   * <p>Uses the following algorithm to find the appropriate {@code AndroidInjector<Fragment>} to
+   * use to inject {@code fragment}:
    *
    * <ol>
    *   <li>Walks the parent-fragment hierarchy to find the a fragment that implements {@link
-   *       HasDispatchingFragmentInjector}, and if none do
+   *       HasFragmentInjector}, and if none do
    *   <li>Uses the {@code fragment}'s {@link Fragment#getActivity() activity} if it implements
-   *       {@link HasDispatchingFragmentInjector}, and if not
-   *   <li>Uses the {@link android.app.Application} if it implements {@link
-   *       HasDispatchingFragmentInjector}.
+   *       {@link HasFragmentInjector}, and if not
+   *   <li>Uses the {@link android.app.Application} if it implements {@link HasFragmentInjector}.
    * </ol>
    *
-   * If none of them implement {@link HasDispatchingFragmentInjector}, a {@link
-   * IllegalArgumentException} is thrown.
+   * If none of them implement {@link HasFragmentInjector}, a {@link IllegalArgumentException} is
+   * thrown.
    *
-   * @throws IllegalArgumentException if no {@code AndroidInjector.Factory<? extends Fragment>} is
-   *     bound for {@code fragment}.
+   * @throws IllegalArgumentException if no parent fragment, activity, or application implements
+   *     {@link HasFragmentInjector}.
    */
   public static void inject(Fragment fragment) {
     checkNotNull(fragment, "fragment");
-    HasDispatchingFragmentInjector hasDispatchingFragmentInjector =
-        findHasFragmentInjector(fragment);
+    HasFragmentInjector hasFragmentInjector = findHasFragmentInjector(fragment);
     Log.d(
         TAG,
         String.format(
             "An injector for %s was found in %s",
             fragment.getClass().getCanonicalName(),
-            hasDispatchingFragmentInjector.getClass().getCanonicalName()));
+            hasFragmentInjector.getClass().getCanonicalName()));
 
-    DispatchingAndroidInjector<Fragment> fragmentInjector =
-        hasDispatchingFragmentInjector.fragmentInjector();
+    AndroidInjector<Fragment> fragmentInjector = hasFragmentInjector.fragmentInjector();
     checkNotNull(
         fragmentInjector,
         "%s.fragmentInjector() returned null",
-        hasDispatchingFragmentInjector.getClass().getCanonicalName());
+        hasFragmentInjector.getClass().getCanonicalName());
 
     fragmentInjector.inject(fragment);
   }
 
-  private static HasDispatchingFragmentInjector findHasFragmentInjector(Fragment fragment) {
+  private static HasFragmentInjector findHasFragmentInjector(Fragment fragment) {
     Fragment parentFragment = fragment;
     while ((parentFragment = parentFragment.getParentFragment()) != null) {
-      if (parentFragment instanceof HasDispatchingFragmentInjector) {
-        return (HasDispatchingFragmentInjector) parentFragment;
+      if (parentFragment instanceof HasFragmentInjector) {
+        return (HasFragmentInjector) parentFragment;
       }
     }
     Activity activity = fragment.getActivity();
-    if (activity instanceof HasDispatchingFragmentInjector) {
-      return (HasDispatchingFragmentInjector) activity;
+    if (activity instanceof HasFragmentInjector) {
+      return (HasFragmentInjector) activity;
     }
-    if (activity.getApplication() instanceof HasDispatchingFragmentInjector) {
-      return (HasDispatchingFragmentInjector) activity.getApplication();
+    if (activity.getApplication() instanceof HasFragmentInjector) {
+      return (HasFragmentInjector) activity.getApplication();
     }
     throw new IllegalArgumentException(
         String.format("No injector was found for %s", fragment.getClass().getCanonicalName()));
   }
 
   /**
-   * Injects {@code service} if an associated {@link AndroidInjector.Factory} implementation can be
-   * found, otherwise throws an {@link IllegalArgumentException}.
+   * Injects {@code service} if an associated {@link AndroidInjector} implementation can be found,
+   * otherwise throws an {@link IllegalArgumentException}.
    *
    * @throws RuntimeException if the {@link Application} doesn't implement {@link
-   *     HasDispatchingServiceInjector}, or if no {@code AndroidInjector.Factory<? extends Service>}
-   *     is bound for {@code service}.
+   *     HasServiceInjector}.
    */
   public static void inject(Service service) {
     checkNotNull(service, "service");
     Application application = service.getApplication();
-    if (!(application instanceof HasDispatchingServiceInjector)) {
+    if (!(application instanceof HasServiceInjector)) {
       throw new RuntimeException(
           String.format(
               "%s does not implement %s",
               application.getClass().getCanonicalName(),
-              HasDispatchingServiceInjector.class.getCanonicalName()));
+              HasServiceInjector.class.getCanonicalName()));
     }
 
-    DispatchingAndroidInjector<Service> serviceInjector =
-        ((HasDispatchingServiceInjector) application).serviceInjector();
+    AndroidInjector<Service> serviceInjector = ((HasServiceInjector) application).serviceInjector();
     checkNotNull(
         serviceInjector,
         "%s.serviceInjector() returned null",
@@ -152,28 +146,26 @@ public final class AndroidInjection {
   }
 
   /**
-   * Injects {@code broadcastReceiver} if an associated {@link AndroidInjector.Factory}
-   * implementation can be found, otherwise throws an {@link IllegalArgumentException}.
+   * Injects {@code broadcastReceiver} if an associated {@link AndroidInjector} implementation can
+   * be found, otherwise throws an {@link IllegalArgumentException}.
    *
    * @throws RuntimeException if the {@link Application} from {@link
-   *     Context#getApplicationContext()} doesn't implement {@link
-   *     HasDispatchingBroadcastReceiverInjector}, or if no {@code AndroidInjector.Factory<? extends
-   *     BroadcastReceiver>} is bound for {@code broadcastReceiver}.
+   *     Context#getApplicationContext()} doesn't implement {@link HasBroadcastReceiverInjector}.
    */
   public static void inject(BroadcastReceiver broadcastReceiver, Context context) {
     checkNotNull(broadcastReceiver, "broadcastReceiver");
     checkNotNull(context, "context");
     Application application = (Application) context.getApplicationContext();
-    if (!(application instanceof HasDispatchingBroadcastReceiverInjector)) {
+    if (!(application instanceof HasBroadcastReceiverInjector)) {
       throw new RuntimeException(
           String.format(
               "%s does not implement %s",
               application.getClass().getCanonicalName(),
-              HasDispatchingBroadcastReceiverInjector.class.getCanonicalName()));
+              HasBroadcastReceiverInjector.class.getCanonicalName()));
     }
 
-    DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector =
-        ((HasDispatchingBroadcastReceiverInjector) application).broadcastReceiverInjector();
+    AndroidInjector<BroadcastReceiver> broadcastReceiverInjector =
+        ((HasBroadcastReceiverInjector) application).broadcastReceiverInjector();
     checkNotNull(
         broadcastReceiverInjector,
         "%s.broadcastReceiverInjector() returned null",

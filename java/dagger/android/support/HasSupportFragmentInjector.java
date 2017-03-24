@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package dagger.android;
+package dagger.android.support;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
+import dagger.android.AndroidInjector;
 import dagger.internal.Beta;
 
-/** Provides a {@link DispatchingAndroidInjector} of {@link Fragment}s. */
+/** Provides an {@link AndroidInjector} of {@link Fragment}s. */
 @Beta
-public interface HasDispatchingFragmentInjector {
+public interface HasSupportFragmentInjector {
 
-  /** Returns a {@link DispatchingAndroidInjector} of {@link Fragment}s. */
-  DispatchingAndroidInjector<Fragment> fragmentInjector();
+  /** Returns an {@link AndroidInjector} of {@link Fragment}s. */
+  AndroidInjector<Fragment> supportFragmentInjector();
 }

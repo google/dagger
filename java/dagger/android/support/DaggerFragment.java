@@ -18,6 +18,7 @@ package dagger.android.support;
 
 import android.content.Context;
 import android.support.v4.app.Fragment;
+import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.internal.Beta;
 import javax.inject.Inject;
@@ -28,8 +29,7 @@ import javax.inject.Inject;
  * members will be injected again.
  */
 @Beta
-public abstract class DaggerFragment extends Fragment implements
-    HasDispatchingSupportFragmentInjector {
+public abstract class DaggerFragment extends Fragment implements HasSupportFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
 
@@ -40,7 +40,7 @@ public abstract class DaggerFragment extends Fragment implements
   }
 
   @Override
-  public DispatchingAndroidInjector<Fragment> supportFragmentInjector() {
+  public AndroidInjector<Fragment> supportFragmentInjector() {
     return childFragmentInjector;
   }
 }

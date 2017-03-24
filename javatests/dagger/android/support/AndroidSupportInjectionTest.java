@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 import android.app.Application;
 import android.support.v4.app.Fragment;
 import org.robolectric.RobolectricTestRunner;
-import dagger.android.DispatchingAndroidInjector;
+import dagger.android.AndroidInjector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
@@ -45,16 +45,16 @@ public final class AndroidSupportInjectionTest {
   }
 
   private static class ApplicationReturnsNull extends Application
-      implements HasDispatchingSupportFragmentInjector {
+      implements HasSupportFragmentInjector {
     @Override
-    public DispatchingAndroidInjector<Fragment> supportFragmentInjector() {
+    public AndroidInjector<Fragment> supportFragmentInjector() {
       return null;
     }
   }
 
   @Test
   @Config(manifest = Config.NONE, application = ApplicationReturnsNull.class)
-  public void dispatchingFragmentInjector_returnsNull() {
+  public void fragmentInjector_returnsNull() {
     Fragment fragment = new Fragment();
     SupportFragmentTestUtil.startFragment(fragment);
 

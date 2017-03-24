@@ -19,10 +19,10 @@ package dagger.android;
 import android.content.BroadcastReceiver;
 import dagger.internal.Beta;
 
-/** Provides a {@link DispatchingAndroidInjector} of {@link BroadcastReceiver}s. */
+/** Provides an {@link AndroidInjector} of {@link BroadcastReceiver}s. */
 @Beta
-public interface HasDispatchingBroadcastReceiverInjector {
+public interface HasBroadcastReceiverInjector {
 
-  /** Returns a {@link DispatchingAndroidInjector} of {@link BroadcastReceiver}s. */
-  DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector();
+  /** Returns an {@link AndroidInjector} of {@link BroadcastReceiver}s. */
+  AndroidInjector<BroadcastReceiver> broadcastReceiverInjector();
 }

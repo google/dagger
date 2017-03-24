@@ -30,9 +30,9 @@ import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
 import dagger.android.BroadcastReceiverKey;
 import dagger.android.DispatchingAndroidInjector;
-import dagger.android.HasDispatchingActivityInjector;
-import dagger.android.HasDispatchingBroadcastReceiverInjector;
-import dagger.android.HasDispatchingServiceInjector;
+import dagger.android.HasActivityInjector;
+import dagger.android.HasBroadcastReceiverInjector;
+import dagger.android.HasServiceInjector;
 import dagger.android.ServiceKey;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.FragmentKey;
@@ -44,9 +44,7 @@ import dagger.multibindings.IntoSet;
 import javax.inject.Inject;
 
 public final class AllControllersAreDirectChildrenOfApplication extends Application
-    implements HasDispatchingActivityInjector,
-        HasDispatchingServiceInjector,
-        HasDispatchingBroadcastReceiverInjector {
+    implements HasActivityInjector, HasServiceInjector, HasBroadcastReceiverInjector {
   @Inject DispatchingAndroidInjector<Activity> activityInjector;
   @Inject DispatchingAndroidInjector<Service> serviceInjector;
   @Inject DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector;
@@ -58,17 +56,17 @@ public final class AllControllersAreDirectChildrenOfApplication extends Applicat
   }
 
   @Override
-  public DispatchingAndroidInjector<Activity> activityInjector() {
+  public AndroidInjector<Activity> activityInjector() {
     return activityInjector;
   }
 
   @Override
-  public DispatchingAndroidInjector<Service> serviceInjector() {
+  public AndroidInjector<Service> serviceInjector() {
     return serviceInjector;
   }
 
   @Override
-  public DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector() {
+  public AndroidInjector<BroadcastReceiver> broadcastReceiverInjector() {
     return broadcastReceiverInjector;
   }
 

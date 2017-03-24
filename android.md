@@ -73,7 +73,7 @@ This has a few problems:
 2. More fundamentally, it requires the type requesting injection
    (`FrombulationActivity`) to know about its injector. Even if this is done
    through interfaces instead of concrete types, it breaks a core principle of
-   dependency injection: a class shouldn't know anything about how it isinjected.
+   dependency injection: a class shouldn't know anything about how it is injected.
 
 The classes in [`dagger.android`] offer one approach to simplify this pattern.
 

@@ -38,7 +38,7 @@ Dagger assumes that users on Android will use ProGuard.
 Watch this space for ProGuard settings that are relevant to applications using
 Dagger.
 
-## `dagger.android`
+## `dagger.android` (Beta)
 
 One of the central difficulties of writing an Android application using Dagger
 is that many Android framework classes are instantiated by the OS itself, like
@@ -253,6 +253,14 @@ For users of the Android support library, parallel types exist in the
 to bind `AndroidInjector.Factory<? extends android.support.v4.app.Fragment>`,
 AppCompat users should continue to implement `AndroidInjector.Factory<? extends
 Activity>` and not `<? extends AppCompatActivity>` (or `FragmentActivity`).
+
+### Using `dagger.android` In Your Build
+
+You will need to include the `dagger-android-2.X.jar` in your application's
+runtime. If you are using the Android support library, you will also need to
+include the `dagger-android-support-2.X.jar`. For API's usage validation,
+you will need to include the `dagger-android-processor-2.X.jar` in your build
+at compile time. See the [README][gradle-installation] for more information.
 
 <a name="when-to-inject"></a>
 

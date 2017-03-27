@@ -38,7 +38,7 @@ Dagger assumes that users on Android will use ProGuard.
 Watch this space for ProGuard settings that are relevant to applications using
 Dagger.
 
-## `dagger.android`
+## `dagger.android` (Beta)
 
 One of the central difficulties of writing an Android application using Dagger
 is that many Android framework classes are instantiated by the OS itself, like

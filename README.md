@@ -115,9 +115,9 @@ gradle.projectsEvaluated {
 }
 ```
 
-If you're using a version of Dagger above `2.10`, you can use Android's
-specific injection classes as explained in the
-[Android documentation](http://google.github.io/dagger/android.html).  
+If you're using a version of Dagger above `2.10`, you could give a try to the
+specific APIs for Android's injection, currently in **beta**, as explained in
+the [Android documentation](http://google.github.io/dagger/android.html).  
 In this case, you need to add the following dependencies in your gradle
 settings.
 

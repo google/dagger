@@ -253,6 +253,15 @@ to bind `AndroidInjector.Factory<? extends android.support.v4.app.Fragment>`,
 AppCompat users should continue to implement `AndroidInjector.Factory<? extends
 Activity>` and not `<? extends AppCompatActivity>` (or `FragmentActivity`).
 
+### Using `dagger.android` In Your Build
+
+You will need to include the `dagger-android-2.X.jar` in your application's
+runtime. If you are using the Android support library, you will also need to
+include the `dagger-android-support-2.X.jar`. In order to activate code
+generation you will need to include `dagger-android-processor-2.X.jar` in your
+build at compile time. See the [README][gradle-installation] for more
+information.
+
 <a name="when-to-inject"></a>
 
 ## When to inject

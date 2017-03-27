@@ -257,10 +257,9 @@ Activity>` and not `<? extends AppCompatActivity>` (or `FragmentActivity`).
 
 You will need to include the `dagger-android-2.X.jar` in your application's
 runtime. If you are using the Android support library, you will also need to
-include the `dagger-android-support-2.X.jar`. In order to activate code
-generation you will need to include `dagger-android-processor-2.X.jar` in your
-build at compile time. See the [README][gradle-installation] for more
-information.
+include the `dagger-android-support-2.X.jar`. For API's usage validation,
+you will need to include the `dagger-android-processor-2.X.jar` in your build
+at compile time. See the [README][gradle-installation] for more information.
 
 <a name="when-to-inject"></a>
 

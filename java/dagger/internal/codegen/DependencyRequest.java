@@ -370,17 +370,6 @@ abstract class DependencyRequest {
       return requests.build();
     }
 
-    DependencyRequest forRequiredVariable(VariableElement variableElement) {
-      return forRequiredVariable(variableElement, Optional.empty());
-    }
-
-    DependencyRequest forRequiredVariable(VariableElement variableElement, Optional<String> name) {
-      checkNotNull(variableElement);
-      TypeMirror type = variableElement.asType();
-      Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(variableElement);
-      return newDependencyRequest(variableElement, type, qualifier, name);
-    }
-
     DependencyRequest forRequiredResolvedVariable(
         VariableElement variableElement, TypeMirror resolvedType) {
       checkNotNull(variableElement);

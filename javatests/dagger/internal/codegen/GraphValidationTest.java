@@ -2072,6 +2072,143 @@ public class GraphValidationTest {
   }
 
   @Test
+  public void subcomponentBindingConflictsWithParentWhenSubcomponentPerformsMembersInjection() {
+    JavaFileObject parentConflictsWithChild =
+        JavaFileObjects.forSourceLines(
+            "test.ParentConflictsWithChild",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.annotation.Nullable;",
+            "",
+            "@Component(modules = ParentConflictsWithChild.ParentModule.class)",
+            "interface ParentConflictsWithChild {",
+            "  Child child();",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object parentChildConflict() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static Object parentChildConflict() {",
+            "      return \"child\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject injected =
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Injected {",
+            "  @Inject Object object;",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parentConflictsWithChild, child, injected))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "[test.Child.inject(test.Injected)] "
+                + "java.lang.Object is bound multiple times:\n"
+                + "      @Provides Object"
+                + " test.ParentConflictsWithChild.ParentModule.parentChildConflict()\n"
+                + "      @Provides Object"
+                + " test.Child.ChildModule.parentChildConflict()")
+        .in(parentConflictsWithChild)
+        .onLine(9);
+  }
+
+  @Test
+  public void subcomponentBindingConflictsWithParentWhenBothComponentsPerformMembersInjection() {
+    JavaFileObject parentConflictsWithChild =
+        JavaFileObjects.forSourceLines(
+            "test.ParentConflictsWithChild",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.annotation.Nullable;",
+            "",
+            "@Component(modules = ParentConflictsWithChild.ParentModule.class)",
+            "interface ParentConflictsWithChild {",
+            "  Child child();",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object parentChildConflict() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static Object parentChildConflict() {",
+            "      return \"child\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject injected =
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Injected {",
+            "  @Inject Object object;",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parentConflictsWithChild, child, injected))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "[test.Child.inject(test.Injected)] "
+                + "java.lang.Object is bound multiple times:\n"
+                + "      @Provides Object"
+                + " test.ParentConflictsWithChild.ParentModule.parentChildConflict()\n"
+                + "      @Provides Object"
+                + " test.Child.ChildModule.parentChildConflict()")
+        .in(parentConflictsWithChild)
+        .onLine(9);
+  }
+
+  @Test
   public void subcomponentBindingConflictsWithParentWithNullableViolationAsWarning() {
     JavaFileObject parentConflictsWithChild =
         JavaFileObjects.forSourceLines(

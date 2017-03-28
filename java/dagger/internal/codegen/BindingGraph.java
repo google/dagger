@@ -1005,7 +1005,7 @@ abstract class BindingGraph {
                     parentResolver.get().getInheritedModules(),
                     parentResolver.get().componentDescriptor.transitiveModules())
                 .immutableCopy()
-            : ImmutableSet.<ModuleDescriptor>of();
+            : ImmutableSet.of();
       }
 
       ImmutableSet<ModuleDescriptor> getOwnedModules() {

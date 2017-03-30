@@ -126,6 +126,7 @@ gradle.projectsEvaluated {
     * <a href="https://plus.google.com/118328287768685565185"
          rel="publisher">Google+ Dagger Project Page</a>
     * [Google+ Dagger Users Community][community]
+    * [Telegram Group about Dagger 2 (Russian)][telegram-rus]
   * 1.x (square/dagger)
     * [Square's original Dagger project site on GitHub][square]
     * [Square Open Source Community][squarecommunity]
@@ -169,3 +170,4 @@ the GitHub project's master branch.
 [square]: http://github.com/square/dagger/
 [squarecommunity]: https://plus.google.com/communities/109244258569782858265
 [website]: http://google.github.io/dagger
+[telegram-rus]: https://telegram.me/dagger_2

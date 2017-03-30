@@ -6,6 +6,12 @@ title: Frequently Asked Questions
 * auto-gen TOC:
 {:toc}
 
+These are some of the questions most commonly asked of the Dagger team.
+
+In addition to those listed below, be sure to check the highest voted [Dagger 2
+questions on Stack Overflow][dagger-2-stack-overflow].
+
+
 ## [`@Binds`]
 
 ### Why is `@Binds` different from `@Provides`?
@@ -110,5 +116,5 @@ as handwritten code. If you experience any weirdness, file a bug!
 [`dagger.producers.monitoring`]: http://google.github.io/dagger/api/latest/dagger/producers/monitoring/package-summary.html
 [AOP]: https://en.wikipedia.org/wiki/Aspect-oriented_programming
 [m2e-apt]: https://immutables.github.io/apt.html
-
+[dagger-2-stack-overflow]: https://stackoverflow.com/questions/tagged/dagger-2?sort=votes&pageSize=15
 

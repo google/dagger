@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains the public API for the <a href="http://google.github.io/dagger/">Dagger
+ * This package contains the public API for the <a href="https://google.github.io/dagger/">Dagger
  * 2</a> dependency injection framework.  By building upon
  * <a href="https://jcp.org/en/jsr/detail?id=330">JSR 330</a>, Dagger 2 provides an
  * annotation-driven API for dependency injection whose implementation is entirely generated at

@@ -24,7 +24,7 @@ import javax.inject.Provider;
 
 /**
  * An object that can <a
- * href="http://google.github.io/dagger/users-guide.html#releasable-references">release or restore
+ * href="https://google.github.io/dagger/users-guide.html#releasable-references">release or restore
  * strong references</a> held in a {@link CanReleaseReferences @CanReleaseReferences} scope.
  *
  * <p>Your top-level component can provide a {@link

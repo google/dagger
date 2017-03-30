@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * method as parameters. The {@code Set<T>} produced from the accumulation of values will be
  * immutable.
  *
- * @see <a href="http://google.github.io/dagger/multibindings#set-multibindings">Set
+ * @see <a href="https://google.github.io/dagger/multibindings#set-multibindings">Set
  *      multibinding</a>
  */
 @Documented

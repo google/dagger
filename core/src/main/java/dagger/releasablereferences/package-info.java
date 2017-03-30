@@ -16,7 +16,7 @@
 
 /**
  * This package contains the API by which Dagger allows you
- * <a href="http://google.github.io/dagger/users-guide.html#releasable-references">release
+ * <a href="https://google.github.io/dagger/users-guide.html#releasable-references">release
  * references</a> held within some scopes.
  * 
  * <p><b>Note:</b>Releasable references uses Java's {@link java.lang.ref.WeakReference}, and so is

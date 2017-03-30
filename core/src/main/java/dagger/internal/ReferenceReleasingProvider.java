@@ -54,7 +54,7 @@ import javax.inject.Provider;
  *
  * <p><img src="doc-files/ReferenceReleasingProvider-statemachine.png">
  *
- * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
+ * @see <a href="https://google.github.io/dagger/users-guide.html#releasable-references">Releasable
  *     references</a>
  */
 @GwtIncompatible

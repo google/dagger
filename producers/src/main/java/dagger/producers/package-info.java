@@ -21,7 +21,7 @@
  * dependency injection in Java.
  *
  * <p>Extended documentation on Dagger Producers can be found at
- * <a href="http://google.github.io/dagger/producers">
+ * <a href="https://google.github.io/dagger/producers">
  * google.github.io/dagger/producers</a>.
  *
  */

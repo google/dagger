@@ -24,6 +24,8 @@ java_library(
     name = "core",
     plugins = [
         # TODO(cgruber): Enable Beta checker.
+        # "",
+        #"",
     ],
     exports = ["//core/src/main/java/dagger:core"],
 )

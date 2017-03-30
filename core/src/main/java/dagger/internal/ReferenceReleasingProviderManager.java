@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * A {@link ReleasableReferenceManager} that forwards calls to a dynamic set of weakly-referenced
  * {@link ReferenceReleasingProvider}s.
  *
- * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
+ * @see <a href="https://google.github.io/dagger/users-guide.html#releasable-references">Releasable
  *     references</a>
  */
 @GwtIncompatible

@@ -37,6 +37,8 @@ java_library(
     javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = [
         # TODO(cgruber): Enable Beta checker.
+        # "",
+        #"",
     ],
     exports = [
         # TODO(dpb): Don't export any of Guava.

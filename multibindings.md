@@ -112,7 +112,7 @@ value each time you query the map.
 ### Simple map keys
 
 For maps with keys that are strings, `Class<?>`, or boxed primitives, use one of
-the standard annotations in [`dagger.mapkeys`]:
+the standard annotations in [`dagger.multibindings`]:
 
 ```java
 @Module
@@ -450,7 +450,7 @@ class ChildModule {
 <!-- References -->
 
 [`@AutoAnnotation`]: https://github.com/google/auto/blob/master/value/src/main/java/com/google/auto/value/AutoAnnotation.java
-[`dagger.mapkeys`]: http://google.github.io/dagger/api/latest/dagger/mapkeys/package-summary.html
+[`dagger.mapkeys`]: https://google.github.io/dagger/api/latest/dagger/multibindings/package-summary.html
 [`@ElementsIntoSet`]: http://google.github.io/dagger/api/latest/dagger/multibindings/ElementsIntoSet.html
 [`@IntoMap`]: http://google.github.io/dagger/api/latest/dagger/multibindings/IntoMap.html
 [`@IntoSet`]: http://google.github.io/dagger/api/latest/dagger/multibindings/IntoSet.html

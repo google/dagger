@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
 import dagger.Module;
 import dagger.internal.Beta;
 import dagger.multibindings.Multibinds;
@@ -49,6 +50,11 @@ public abstract class AndroidInjectionModule {
   abstract Map<
           Class<? extends BroadcastReceiver>, AndroidInjector.Factory<? extends BroadcastReceiver>>
       broadcastReceiverInjectorFactories();
+
+  @Multibinds
+  abstract Map<
+          Class<? extends ContentProvider>, AndroidInjector.Factory<? extends ContentProvider>>
+      contentProviderInjectorFactories();
 
   private AndroidInjectionModule() {}
 }

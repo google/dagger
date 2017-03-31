@@ -451,9 +451,9 @@ class ChildModule {
 
 [`@AutoAnnotation`]: https://github.com/google/auto/blob/master/value/src/main/java/com/google/auto/value/AutoAnnotation.java
 [`dagger.mapkeys`]: https://google.github.io/dagger/api/latest/dagger/multibindings/package-summary.html
-[`@ElementsIntoSet`]: http://google.github.io/dagger/api/latest/dagger/multibindings/ElementsIntoSet.html
-[`@IntoMap`]: http://google.github.io/dagger/api/latest/dagger/multibindings/IntoMap.html
-[`@IntoSet`]: http://google.github.io/dagger/api/latest/dagger/multibindings/IntoSet.html
-[`@MapKey`]: http://google.github.io/dagger/api/latest/dagger/MapKey.html
-[`@Multibinds`]: http://google.github.io/dagger/api/latest/dagger/multibindings/Multibinds.html
+[`@ElementsIntoSet`]: https://google.github.io/dagger/api/latest/dagger/multibindings/ElementsIntoSet.html
+[`@IntoMap`]: https://google.github.io/dagger/api/latest/dagger/multibindings/IntoMap.html
+[`@IntoSet`]: https://google.github.io/dagger/api/latest/dagger/multibindings/IntoSet.html
+[`@MapKey`]: https://google.github.io/dagger/api/latest/dagger/MapKey.html
+[`@Multibinds`]: https://google.github.io/dagger/api/latest/dagger/multibindings/Multibinds.html
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Dagger Authors.
+ * Copyright (C) 2016 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,13 @@
 
 package dagger.android;
 
-import android.app.IntentService;
+import android.content.ContentProvider;
 import dagger.internal.Beta;
 
-/** An {@link IntentService} that injects its members in {@link #onCreate()}. */
+/** Provides an {@link AndroidInjector} of {@link ContentProvider}s. */
 @Beta
-public abstract class DaggerIntentService extends IntentService {
-  public DaggerIntentService(String name) {
-    super(name);
-  }
+public interface HasContentProviderInjector {
 
-  @Override
-  public void onCreate() {
-    AndroidInjection.inject(this);
-    super.onCreate();
-  }
+  /** Returns an {@link AndroidInjector} of {@link ContentProvider}s. */
+  AndroidInjector<ContentProvider> contentProviderInjector();
 }

@@ -16,19 +16,17 @@
 
 package dagger.android;
 
-import android.app.IntentService;
+import android.content.ContentProvider;
+import android.support.annotation.CallSuper;
 import dagger.internal.Beta;
 
-/** An {@link IntentService} that injects its members in {@link #onCreate()}. */
+/** A {@link ContentProvider} that injects its members in {@link #onCreate()}. */
 @Beta
-public abstract class DaggerIntentService extends IntentService {
-  public DaggerIntentService(String name) {
-    super(name);
-  }
-
+public abstract class DaggerContentProvider extends ContentProvider {
+  @CallSuper
   @Override
-  public void onCreate() {
+  public boolean onCreate() {
     AndroidInjection.inject(this);
-    super.onCreate();
+    return true;
   }
 }

@@ -17,8 +17,10 @@
 package dagger.android;
 
 import android.app.Service;
+import dagger.internal.Beta;
 
 /** A {@link Service} that injects its members in {@link #onCreate()}. */
+@Beta
 public abstract class DaggerService extends Service {
   @Override
   public void onCreate() {

@@ -16,19 +16,17 @@
 
 package dagger.android;
 
-import android.app.IntentService;
+import static java.lang.annotation.ElementType.METHOD;
+
+import android.content.ContentProvider;
+import dagger.MapKey;
 import dagger.internal.Beta;
+import java.lang.annotation.Target;
 
-/** An {@link IntentService} that injects its members in {@link #onCreate()}. */
+/** {@link MapKey} annotation to key bindings by a type of a {@link ContentProvider}. */
 @Beta
-public abstract class DaggerIntentService extends IntentService {
-  public DaggerIntentService(String name) {
-    super(name);
-  }
-
-  @Override
-  public void onCreate() {
-    AndroidInjection.inject(this);
-    super.onCreate();
-  }
+@MapKey
+@Target(METHOD)
+public @interface ContentProviderKey {
+  Class<? extends ContentProvider> value();
 }

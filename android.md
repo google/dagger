@@ -241,6 +241,11 @@ the same purpose — all you need to do is to extend it and override the
 `applicationInjector()` method to return the component that should inject the
 `Application`.
 
+The following types are also included:
+  - [`DaggerService`] and [`DaggerIntentService`]
+  - [`DaggerBroadcastReceiver`]
+  - [`DaggerContentProvider`]
+
 *Note:* [`DaggerBroadcastReceiver`] should only be used when the
 `BroadcastReceiver` is registered in the `AndroidManifest.xml`. When the
 `BroadcastReceiver` is created in your own code, prefer constructor injection
@@ -296,10 +301,13 @@ method.
 [android-performance]: http://developer.android.com/training/best-performance.html
 [`AndroidInjectionModule`]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjectionModule.html
 [`dagger.android`]: https://google.github.io/dagger/api/latest/dagger/android/package-summary.html
-[DaggerActivity]: https://google.github.io/dagger/api/latest/dagger/android/DaggerActivity.html
-[DaggerApplication]: https://google.github.io/dagger/api/latest/dagger/android/DaggerApplication.html
-[DaggerBroadcastReceiver]: https://google.github.io/dagger/api/latest/dagger/android/DaggerBroadcastReceiver.html
-[DaggerFragment]: https://google.github.io/dagger/api/latest/dagger/android/DaggerFragment.html
+[`DaggerActivity`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerActivity.html
+[`DaggerApplication`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerApplication.html
+[`DaggerBroadcastReceiver`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerBroadcastReceiver.html
+[`DaggerContentProvider`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerContentProvider.html
+[`DaggerFragment`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerFragment.html
+[`DaggerIntentService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerIntentService.html
+[`DaggerService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerService.html
 [DispatchingAndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/DispatchingAndroidInjector.html
 [effective-java]: https://books.google.com/books?id=ka2VUBqHiWkC
 [ErrorProne]: https://github.com/google/error-prone

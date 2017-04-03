@@ -327,8 +327,10 @@ public class ComponentTreeTraverser {
             "contribution binding keys should never have members injection bindings");
       }
       asMap(resolvedBindings.allContributionBindings())
-          .forEach((owningComponent, bindings) ->
-                  bindings.forEach(binding -> visitContributionBinding(binding, owningComponent)));
+          .forEach(
+              (owningComponent, bindings) -> {
+                bindings.forEach(binding -> visitContributionBinding(binding, owningComponent));
+              });
     }
 
     /**

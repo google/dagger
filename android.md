@@ -114,13 +114,13 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     interface YourApplicationComponent {}
     ```
 
-4. Next, make your `Application` implement [`HasDispatchingActivityInjector`]
+4. Next, make your `Application` implement [`HasActivityInjector`]
    and `@Inject` a
    [`DispatchingAndroidInjector<Activity>`][DispatchingAndroidInjector] to
    return from the `activityInjector()` method:
 
     ```java
-    public class YourApplication extends Application implements HasDispatchingActivityInjector {
+    public class YourApplication extends Application implements HasActivityInjector {
       @Inject DispatchingAndroidInjector<Activity> dispatchingActivityInjector;
 
       @Override
@@ -131,7 +131,7 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
       }
 
       @Override
-      public DispatchingAndroidInjector<Activity> activityInjector() {
+      public AndroidInjector<Activity> activityInjector() {
         return dispatchingActivityInjector;
       }
     }
@@ -166,7 +166,7 @@ activity to `inject(YourActivity)`.
 Injecting a `Fragment` is just as simple as injecting an `Activity`. Define your
 subcomponent in the same way, replacing `Activity` type parameters with
 `Fragment`, `@ActivityKey` with `@FragmentKey`, and
-`HasDispatchingActivityInjector` with [`HasDispatchingFragmentInjector`].
+`HasActivityInjector` with [`HasFragmentInjector`].
 
 Instead of injecting in `onCreate()` as is done for `Activity`
 types, [inject `Fragment`s to in `onAttach()`](#when-to-inject).
@@ -176,14 +176,14 @@ install modules for `Fragment`s. You can make your `Fragment` component a
 subcomponent of another `Fragment` component, an `Activity` component, or the
 `Application` component — it all depends on which other bindings your `Fragment`
 requires. After deciding on the component location, make the corresponding type
-implement `HasDispatchingFragmentInjector`. For example, if your `Fragment`
+implement `HasFragmentInjector`. For example, if your `Fragment`
 needs bindings from `YourActivitySubcomponent`, your code will look something
 like this:
 
 ```java
 public class YourActivity extends Activity
-    implements HasDispatchingFragmentInjector {
-  @Inject DispatchingFragmentInjector<Fragment> fragmentInjector;
+    implements HasFragmentInjector {
+  @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -193,7 +193,7 @@ public class YourActivity extends Activity
   }
 
   @Override
-  public DispatchingAndroidInjector<Activity> activityInjector() {
+  public AndroidInjector<Fragment> activityInjector() {
     return fragmentInjector;
   }
 }
@@ -232,7 +232,7 @@ public interface YourActivityOrYourApplicationComponent { ... }
 
 Because `DispatchingAndroidInjector` looks up the appropriate
 `AndroidInjector.Factory` by the class at runtime, a base class can implement
-`HasDispatchingActivityInjector`/`HasDispatchingFragmentInjector`/etc as well as
+`HasActivityInjector`/`HasFragmentInjector`/etc as well as
 call `AndroidInjection.inject()`. All each subclass needs to do is bind a
 corresponding `@Subcomponent`. Dagger provides a few base types that do this,
 such as [`DaggerActivity`] and [`DaggerFragment`], if you don't have a
@@ -313,7 +313,7 @@ method.
 [DispatchingAndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/DispatchingAndroidInjector.html
 [effective-java]: https://books.google.com/books?id=ka2VUBqHiWkC
 [ErrorProne]: https://github.com/google/error-prone
-[`HasDispatchingActivityInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasDispatchingActivityInjector.html
-[`HasDispatchingFragmentInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasDispatchingFragmentInjector.html
+[`HasActivityInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasActivityInjector.html
+[`HasFragmentInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasFragmentInjector.html
 [ProGuard]: http://proguard.sourceforge.net/
 

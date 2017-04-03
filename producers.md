@@ -328,21 +328,21 @@ for `Foo`, then a `@Produces` method can depend on any of:
 
 <!-- References -->
 
-[`@BindsOptionalOf`]: http://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
-[Component]: http://google.github.io/dagger/api/latest/dagger/Component.html
+[`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[Component]: https://google.github.io/dagger/api/latest/dagger/Component.html
 [Dagger 2]: http://google.github.io/dagger/
 [ListenableFuture]: http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html
-[Module]: http://google.github.io/dagger/api/latest/dagger/Module.html
-[Produced]: http://google.github.io/dagger/api/latest/dagger/producers/Produced.html
-[Producer]: http://google.github.io/dagger/api/latest/dagger/producers/Producer.html
-[ProducerModule]: http://google.github.io/dagger/api/latest/dagger/producers/ProducerModule.html
-[ProducerMonitor]: http://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProducerMonitor.html
-[Produces]: http://google.github.io/dagger/api/latest/dagger/producers/Produces.html
-[ProductionComponent]: http://google.github.io/dagger/api/latest/dagger/producers/ProductionComponent.html
-[ProductionComponentMonitor]: http://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProductionComponentMonitor.html
-[ProductionComponentMonitorFactory]: http://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProductionComponentMonitor.Factory.html
-[ProductionSubcomponent]: http://google.github.io/dagger/api/latest/dagger/producers/ProductionSubcomponent.html
+[Module]: https://google.github.io/dagger/api/latest/dagger/Module.html
+[Produced]: https://google.github.io/dagger/api/latest/dagger/producers/Produced.html
+[Producer]: https://google.github.io/dagger/api/latest/dagger/producers/Producer.html
+[ProducerModule]: https://google.github.io/dagger/api/latest/dagger/producers/ProducerModule.html
+[ProducerMonitor]: https://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProducerMonitor.html
+[Produces]: https://google.github.io/dagger/api/latest/dagger/producers/Produces.html
+[ProductionComponent]: https://google.github.io/dagger/api/latest/dagger/producers/ProductionComponent.html
+[ProductionComponentMonitor]: https://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProductionComponentMonitor.html
+[ProductionComponentMonitorFactory]: https://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProductionComponentMonitor.Factory.html
+[ProductionSubcomponent]: https://google.github.io/dagger/api/latest/dagger/producers/ProductionSubcomponent.html
 [Provider]: http://docs.oracle.com/javaee/6/api/javax/inject/Provider.html
-[Provides]: http://google.github.io/dagger/api/latest/dagger/Provides.html
-[Subcomponent]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
+[Provides]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[Subcomponent]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html
 

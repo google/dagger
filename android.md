@@ -297,7 +297,9 @@ method.
 
 <!-- References -->
 
-[AndroidInjection.inject(Activity)]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjection.html#inject-Activity-
+[AndroidInjection.inject(Activity)]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjection.html#inject-android.app.Activity-
+[AndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjector.html
+[AndroidInjector.Builder]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjector.Builder.html
 [android-performance]: http://developer.android.com/training/best-performance.html
 [`AndroidInjectionModule`]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjectionModule.html
 [`dagger.android`]: https://google.github.io/dagger/api/latest/dagger/android/package-summary.html

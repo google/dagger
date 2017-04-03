@@ -655,13 +655,14 @@ limitations under the License.
 
 [Android Application]: http://developer.android.com/reference/android/app/Application.html
 [Annotation Processor]: http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html
-[`@BindsOptionalOf`]: http://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[BindsInstance]: https://google.github.io/dagger/api/latest/dagger/BindsInstance.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
-[`@CanReleaseReferences`]: http://google.github.io/dagger/api/latest/dagger/releasablereferences/CanReleaseReferences.html
+[`@CanReleaseReferences`]: https://google.github.io/dagger/api/latest/dagger/releasablereferences/CanReleaseReferences.html
 [CoffeeMaker Example]: https://github.com/google/dagger/tree/master/examples/simple/src/main/java/coffee
-[Component#dependencies]: http://google.github.io/dagger/api/latest/dagger/Component.html#dependencies()
-[Component#provision-methods]: http://google.github.io/dagger/api/latest/dagger/Component.html#provision-methods
-[Component]: http://google.github.io/dagger/api/latest/dagger/Component.html
+[Component#dependencies]: https://google.github.io/dagger/api/latest/dagger/Component.html#dependencies--
+[Component#provision-methods]: https://google.github.io/dagger/api/latest/dagger/Component.html#provision-methods
+[Component]: https://google.github.io/dagger/api/latest/dagger/Component.html
 [Dagger Talk Slides]: https://docs.google.com/presentation/d/1fby5VeGU9CN8zjw4lAb2QPPsKRxx6mSwCe9q7ECNSJQ/pub?start=false&loop=false&delayms=3000
 [DI]: http://en.wikipedia.org/wiki/Dependency_injection
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
@@ -673,17 +674,17 @@ limitations under the License.
 [`javax.inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/package-summary.html
 [jdk-optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
 [JSR 330]: https://jcp.org/en/jsr/detail?id=330
-[Lazy]: http://google.github.io/dagger/api/latest/dagger/Lazy.html
-[Module]: http://google.github.io/dagger/api/latest/dagger/Module.html
+[Lazy]: https://google.github.io/dagger/api/latest/dagger/Lazy.html
+[Module]: https://google.github.io/dagger/api/latest/dagger/Module.html
 [Named]: http://docs.oracle.com/javaee/7/api/javax/inject/Named.html
 [Provider]: http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html
-[Provides]: http://google.github.io/dagger/api/latest/dagger/Provides.html
+[Provides]: https://google.github.io/dagger/api/latest/dagger/Provides.html
 [Qualifier]: http://docs.oracle.com/javaee/7/api/javax/inject/Qualifier.html
-[`ReleasableReferenceManager`]: http://google.github.io/dagger/api/latest/dagger/releasablereferences/ReleasableReferenceManager.html
-[`@Reusable`]: http://google.github.io/dagger/api/latest/dagger/Reusable.html
+[`ReleasableReferenceManager`]: https://google.github.io/dagger/api/latest/dagger/releasablereferences/ReleasableReferenceManager.html
+[`@Reusable`]: https://google.github.io/dagger/api/latest/dagger/Reusable.html
 [Scope]: http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [Singleton]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
-[Subcomponent.Builder]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
-[Subcomponent]: http://google.github.io/dagger/api/latest/dagger/Subcomponent.html
+[Subcomponent.Builder]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
+[Subcomponent]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html
 [`WeakReference`]: https://docs.oracle.com/javase/7/docs/api/java/lang/ref/WeakReference.html
 

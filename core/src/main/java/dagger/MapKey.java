@@ -26,9 +26,8 @@ import java.lang.annotation.Target;
 import java.util.Map;
 
 /**
- * Identifies annotation types that are used to associate keys with values returned by
- * {@linkplain Provides provider methods} in order to compose a {@linkplain
- * dagger.multibindings.IntoMap map}.
+ * Identifies annotation types that are used to associate keys with values returned by {@linkplain
+ * Provides provider methods} in order to compose a {@linkplain dagger.multibindings.IntoMap map}.
  *
  * <p>Every provider method annotated with {@code @Provides} and {@code @IntoMap} must also have an
  * annotation that identifies the key for that map entry. That annotation's type must be annotated
@@ -36,8 +35,8 @@ import java.util.Map;
  *
  * <p>Typically, the key annotation has a single member, whose value is used as the map key.
  *
- * <p>For example, to add an entry to a {@code Map<SomeEnum, Integer>} with key
- * {@code SomeEnum.FOO}, you could use an annotation called {@code @SomeEnumKey}:
+ * <p>For example, to add an entry to a {@code Map<SomeEnum, Integer>} with key {@code
+ * SomeEnum.FOO}, you could use an annotation called {@code @SomeEnumKey}:
  *
  * <pre><code>
  * {@literal @}MapKey
@@ -65,7 +64,7 @@ import java.util.Map;
  *
  * <p>If {@code unwrapValue} is true, the annotation's single member can be any type except an
  * array.
- * 
+ *
  * <p>See {@link dagger.multibindings} for standard unwrapped map key annotations for keys that are
  * boxed primitives, strings, or classes.
  *
@@ -102,8 +101,7 @@ import java.util.Map;
  * <p>(Note that there must be a class {@code MyMapKeyImpl} that implements {@code MyMapKey} in
  * order to call {@link Map#get(Object)} on the provided map.)
  *
- * @see <a href="https://google.github.io/dagger/multibindings#map-multibindings">Map
- *      multibinding</a>
+ * @see <a href="https://google.github.io/dagger/multibindings#map-multibindings">Map multibinding</a>
  */
 @Documented
 @Target(ANNOTATION_TYPE)

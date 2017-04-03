@@ -17,13 +17,10 @@
 /**
  * This package contains the public API for Dagger 2's producer functionality.
  *
- * <p>Dagger Producers is an extension to Dagger that implements asynchronous
- * dependency injection in Java.
+ * <p>Dagger Producers is an extension to Dagger that implements asynchronous dependency injection
+ * in Java.
  *
- * <p>Extended documentation on Dagger Producers can be found at
- * <a href="https://google.github.io/dagger/producers">
- * google.github.io/dagger/producers</a>.
- *
+ * <p>Extended documentation on Dagger Producers can be found at <a
+ * href="https://google.github.io/dagger/producers">google.github.io/dagger/producers</a>.
  */
-
 package dagger.producers;

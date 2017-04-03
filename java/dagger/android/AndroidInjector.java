@@ -34,8 +34,7 @@ import dagger.internal.Beta;
  */
 @Beta
 @DoNotMock(
-    "Faked versions of AndroidInjector are much clearer than a mock. See "
-        + "https://google.github.io/dagger/testing")
+    "Faked versions of AndroidInjector are much clearer than a mock. See https://google.github.io/dagger/testing")
 public interface AndroidInjector<T> {
 
   /** Injects the members of {@code instance}. */

@@ -43,7 +43,7 @@ public class SimpleApplication extends Application implements HasActivityInjecto
     @dagger.Component.Builder
     interface Builder {
       @BindsInstance
-      Builder applicaiton(SimpleApplication application);
+      Builder application(SimpleApplication application);
 
       Component build();
     }
@@ -59,7 +59,7 @@ public class SimpleApplication extends Application implements HasActivityInjecto
   @Override
   public void onCreate() {
     super.onCreate();
-    DaggerSimpleApplication_Component.builder().applicaiton(this).build().inject(this);
+    DaggerSimpleApplication_Component.builder().application(this).build().inject(this);
   }
 
   @Override

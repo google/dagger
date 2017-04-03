@@ -952,7 +952,7 @@ abstract class BindingGraph {
          *    the supercomponent, so resolve them here so that conflicts can be caught.
          */
         if (getPreviouslyResolvedBindings(bindingKey).isPresent()
-            && bindingKey.kind() == BindingKey.Kind.CONTRIBUTION) {
+            && bindingKey.kind().equals(BindingKey.Kind.CONTRIBUTION)) {
           /* Resolve in the parent in case there are multibinding contributions or conflicts in some
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(bindingKey);

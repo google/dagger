@@ -36,7 +36,7 @@ android_library(
         # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
         # used without a Guava and jsr305 deps.
         "//:dagger_with_compiler",
-        "//java/dagger/android",
+        "//:android",
     ],
 )
 

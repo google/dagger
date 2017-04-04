@@ -26,9 +26,9 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
+        "//:android",
+        "//:android-support",
         "//:dagger_with_compiler",
-        "//java/dagger/android",
-        "//java/dagger/android/support",
         "//third_party:guava",
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
         "@androidsdk//com.android.support:support-v4-25.0.0",
@@ -42,9 +42,9 @@ GenRobolectricTests(
     srcs = glob(["*Test.java"]),
     deps = [
         ":functional",
+        "//:android",
+        "//:android-support",
         "//:dagger_with_compiler",
-        "//java/dagger/android",
-        "//java/dagger/android/support",
         "//third_party:junit",
         "//third_party:truth",
         "@androidsdk//com.android.support:support-v4-25.0.0",

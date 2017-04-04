@@ -23,7 +23,6 @@ import static dagger.producers.internal.Producers.producerFromProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.internal.Beta;
 import dagger.producers.Producer;
 import java.util.Map;
 import javax.inject.Provider;
@@ -34,7 +33,6 @@ import javax.inject.Provider;
  *
  * @author Jesse Beder
  */
-@Beta
 public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, Producer<V>>> {
   private static final MapOfProducerProducer<Object, Object> EMPTY =
       new MapOfProducerProducer<Object, Object>(ImmutableMap.<Object, Producer<Object>>of());

@@ -26,7 +26,6 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.internal.Beta;
 import dagger.producers.Producer;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +36,6 @@ import java.util.Map;
  *
  * @author Jesse Beder
  */
-@Beta
 public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
   private final Producer<Map<K, Producer<V>>> mapProducerProducer;
 

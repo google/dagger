@@ -16,13 +16,9 @@
 
 package dagger.example.android.simple;
 
-import android.app.Activity;
-import android.app.Application;
 import android.util.Log;
-import dagger.BindsInstance;
 import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
-import dagger.android.HasActivityInjector;
+import dagger.android.DaggerApplication;
 import dagger.android.support.AndroidSupportInjectionModule;
 import javax.inject.Inject;
 
@@ -30,26 +26,17 @@ import javax.inject.Inject;
  * A simple, skeletal application that demonstrates a dependency-injected application using the
  * utilities in {@code dagger.android}.
  */
-public class SimpleApplication extends Application implements HasActivityInjector {
+public class SimpleApplication extends DaggerApplication {
   private static final String TAG = SimpleApplication.class.getSimpleName();
 
   @dagger.Component(
     modules = {AndroidSupportInjectionModule.class, MainActivity.Module.class, BuildModule.class}
   )
   /* @ApplicationScoped and/or @Singleton */
-  interface Component {
-    void inject(SimpleApplication app);
-
+  interface Component extends AndroidInjector<SimpleApplication> {
     @dagger.Component.Builder
-    interface Builder {
-      @BindsInstance
-      Builder application(SimpleApplication application);
-
-      Component build();
-    }
+    abstract class Builder extends AndroidInjector.Builder<SimpleApplication> {}
   }
-
-  @Inject DispatchingAndroidInjector<Activity> activityInjector;
 
   @Inject
   void logInjection() {
@@ -59,11 +46,10 @@ public class SimpleApplication extends Application implements HasActivityInjecto
   @Override
   public void onCreate() {
     super.onCreate();
-    DaggerSimpleApplication_Component.builder().application(this).build().inject(this);
   }
 
   @Override
-  public AndroidInjector<Activity> activityInjector() {
-    return activityInjector;
+  protected AndroidInjector<SimpleApplication> applicationInjector() {
+    return DaggerSimpleApplication_Component.builder().create(this);
   }
 }

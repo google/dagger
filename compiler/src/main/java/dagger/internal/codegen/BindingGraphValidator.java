@@ -91,6 +91,7 @@ import dagger.Lazy;
 import dagger.MapKey;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
+import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -354,7 +355,8 @@ final class BindingGraphValidator {
       Set<ComponentRequirement> availableDependencies = graph.availableDependencies();
       Set<ComponentRequirement> requiredDependencies =
           Sets.filter(
-              availableDependencies, input -> !componentCanMakeNewInstances(input.typeElement()));
+              availableDependencies,
+              input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
       final BuilderSpec spec = componentDesc.builderSpec().get();
       ImmutableSet<BuilderRequirementMethod> declaredSetters =
           spec.requirementMethods()

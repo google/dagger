@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -2368,21 +2369,11 @@ public class GraphValidationTest {
             "  }",
             "",
             "  private final class ChildImpl implements Child {",
-            "    private MembersInjector<Injected> injectedMembersInjector;",
-            "",
-            "    private ChildImpl() {",
-            "      initialize();",
-            "    }",
-            "",
-            "    @SuppressWarnings(\"unchecked\")",
-            "    private void initialize() {",
-            "      this.injectedMembersInjector = Injected_MembersInjector",
-            "          .create(Parent_ParentModule_ObjectFactory.create());",
-            "    }",
+            "    private ChildImpl() {}",
             "",
             "    @Override",
             "    public void inject(Injected injected) {",
-            "      injectedMembersInjector.injectMembers(injected);",
+            "      DaggerParent.this.injectedMembersInjector.injectMembers(injected);",
             "    }",
             "  }",
             "}");

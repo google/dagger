@@ -273,6 +273,19 @@ to bind `AndroidInjector.Factory<? extends android.support.v4.app.Fragment>`,
 AppCompat users should continue to implement `AndroidInjector.Factory<? extends
 Activity>` and not `<? extends AppCompatActivity>` (or `FragmentActivity`).
 
+### How do I get it?
+
+Add the following to your build.gradle:
+
+```groovy
+dependencies {
+  compile 'com.google.dagger:dagger-android:2.x'
+  compile 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
+  annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
+}
+```
+
+
 <a name="when-to-inject"></a>
 
 ## When to inject

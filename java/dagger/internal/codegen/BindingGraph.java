@@ -941,8 +941,8 @@ abstract class BindingGraph {
           return;
         }
 
-        /* If a contribution binding was previously resolved in a supercomponent, then we may be
-         * able to avoid resolving it here and just depend on the supercomponent resolution.
+        /* If the binding was previously resolved in a supercomponent, then we may be able to avoid
+         * resolving it here and just depend on the supercomponent resolution.
          *
          * 1. If it depends transitively on multibinding contributions or optional bindings with
          *    bindings from this subcomponent, then we have to resolve it in this subcomponent so

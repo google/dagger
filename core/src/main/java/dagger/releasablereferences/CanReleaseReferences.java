@@ -26,8 +26,8 @@ import java.lang.annotation.Target;
 /**
  * Annotates {@linkplain javax.inject.Scope scope annotations} to indicate that references to
  * objects stored within that scope can be <a
- * href="http://google.github.io/dagger/users-guide.html#releasable-references">released</a> during
- * the lifetime of the scope.
+ * href="https://google.github.io/dagger/users-guide.html#releasable-references">released</a> during the lifetime
+ * of the scope.
  *
  * <p>A scope can release references if it is annotated with {@code CanReleaseReferences} or if it
  * is annotated with an annotation that itself is annotated with {@code CanReleaseReferences}.

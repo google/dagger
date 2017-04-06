@@ -56,8 +56,6 @@ import javax.tools.Diagnostic.Kind;
  * dagger.android.support} methods.
  */
 final class AndroidMapKeyValidator implements ProcessingStep {
-  private static final String LINK_TO_DOCS = "google.github.io/dagger/android";
-
   private final Elements elements;
   private final Types types;
   private final Messager messager;
@@ -148,8 +146,8 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       messager.printMessage(
           Kind.ERROR,
           String.format(
-              "@%s methods should bind %s, not %s. See %s",
-              annotation.getCanonicalName(), intendedReturnType, returnType, LINK_TO_DOCS),
+              "@%s methods should bind %s, not %s. See https://google.github.io/dagger/android",
+              annotation.getCanonicalName(), intendedReturnType, returnType),
           method);
     }
 

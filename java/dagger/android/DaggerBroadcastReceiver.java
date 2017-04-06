@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.CallSuper;
+import dagger.internal.Beta;
 
 /**
  * A {@link BroadcastReceiver} that injects its members in the first call to {@link
@@ -38,6 +39,7 @@ import android.support.annotation.CallSuper;
  * <p>Subclasses should override {@link #onReceive(Context, Intent)} and call {@code
  * super.onReceive(context, intent)} immediately to ensure injection is performed immediately.
  */
+@Beta
 public abstract class DaggerBroadcastReceiver extends BroadcastReceiver {
   @CallSuper
   @Override

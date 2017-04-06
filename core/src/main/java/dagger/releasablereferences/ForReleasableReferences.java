@@ -68,8 +68,7 @@ import javax.inject.Qualifier;
  * <p><b>Note:</b>Releasable references uses Java's {@link java.lang.ref.WeakReference}, and so is
  * not compatible with <a href="http://www.gwtproject.org/">GWT</a>.
  *
- * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
- *     references</a>
+ * @see <a href="https://google.github.io/dagger/users-guide.html#releasable-references">Releasable references</a>
  * @since 2.8
  */
 @Beta

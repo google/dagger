@@ -28,14 +28,14 @@ import javax.inject.Provider;
  * <p>The provider can be in any one of four states at a time:
  *
  * <ul>
- * <li>In <b>uninitialized</b> state, the provider's strong reference and its weak reference are
- *     both {@code null}.
- * <li>In <b>cleared</b> state, the strong reference is {@code null}, and the weak reference's value
- *     is {@code null}.
- * <li>In <b>strong-reference</b> state, the strong reference refers to the stored object, and the
- *     weak reference is {@code null}.
- * <li>In <b>weak-reference</b> state, the strong reference is {@code null}, and the weak
- *     reference's value is not {@code null}.
+ *   <li>In <b>uninitialized</b> state, the provider's strong reference and its weak reference are
+ *       both {@code null}.
+ *   <li>In <b>cleared</b> state, the strong reference is {@code null}, and the weak reference's
+ *       value is {@code null}.
+ *   <li>In <b>strong-reference</b> state, the strong reference refers to the stored object, and the
+ *       weak reference is {@code null}.
+ *   <li>In <b>weak-reference</b> state, the strong reference is {@code null}, and the weak
+ *       reference's value is not {@code null}.
  * </ul>
  *
  * <p>The provider starts in <b>uninitialized</b> state.
@@ -54,8 +54,7 @@ import javax.inject.Provider;
  *
  * <p><img src="doc-files/ReferenceReleasingProvider-statemachine.png">
  *
- * @see <a href="http://google.github.io/dagger/users-guide.html#releasable-references">Releasable
- *     references</a>
+ * @see <a href="https://google.github.io/dagger/users-guide.html#releasable-references">Releasable references</a>
  */
 @GwtIncompatible
 public final class ReferenceReleasingProvider<T> implements Provider<T> {

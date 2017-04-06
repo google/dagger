@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-/**
- * This package contains the public API for Dagger 2's producer functionality.
- *
- * <p>Dagger Producers is an extension to Dagger that implements asynchronous dependency injection
- * in Java.
- *
- * <p>Extended documentation on Dagger Producers can be found at <a
- * href="https://google.github.io/dagger/producers">google.github.io/dagger/producers</a>.
- */
-package dagger.producers;
+package dagger.android;
+
+import android.content.ContentProvider;
+import dagger.internal.Beta;
+
+/** Provides an {@link AndroidInjector} of {@link ContentProvider}s. */
+@Beta
+public interface HasContentProviderInjector {
+
+  /** Returns an {@link AndroidInjector} of {@link ContentProvider}s. */
+  AndroidInjector<ContentProvider> contentProviderInjector();
+}

@@ -24,13 +24,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * The method's return type forms the generic type argument of a {@code Set<T>}, and the
- * returned value is contributed to the set. The object graph will pass dependencies to the
- * method as parameters. The {@code Set<T>} produced from the accumulation of values will be
- * immutable.
+ * The method's return type forms the generic type argument of a {@code Set<T>}, and the returned
+ * value is contributed to the set. The object graph will pass dependencies to the method as
+ * parameters. The {@code Set<T>} produced from the accumulation of values will be immutable.
  *
- * @see <a href="http://google.github.io/dagger/multibindings#set-multibindings">Set
- *      multibinding</a>
+ * @see <a href="https://google.github.io/dagger/multibindings#set-multibindings">Set multibinding</a>
  */
 @Documented
 @Target(METHOD)

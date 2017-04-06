@@ -17,8 +17,10 @@
 package dagger.android;
 
 import android.app.IntentService;
+import dagger.internal.Beta;
 
 /** An {@link IntentService} that injects its members in {@link #onCreate()}. */
+@Beta
 public abstract class DaggerIntentService extends IntentService {
   public DaggerIntentService(String name) {
     super(name);

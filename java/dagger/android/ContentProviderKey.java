@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-/**
- * This package contains the public API for Dagger 2's producer functionality.
- *
- * <p>Dagger Producers is an extension to Dagger that implements asynchronous dependency injection
- * in Java.
- *
- * <p>Extended documentation on Dagger Producers can be found at <a
- * href="https://google.github.io/dagger/producers">google.github.io/dagger/producers</a>.
- */
-package dagger.producers;
+package dagger.android;
+
+import static java.lang.annotation.ElementType.METHOD;
+
+import android.content.ContentProvider;
+import dagger.MapKey;
+import dagger.internal.Beta;
+import java.lang.annotation.Target;
+
+/** {@link MapKey} annotation to key bindings by a type of a {@link ContentProvider}. */
+@Beta
+@MapKey
+@Target(METHOD)
+public @interface ContentProviderKey {
+  Class<? extends ContentProvider> value();
+}

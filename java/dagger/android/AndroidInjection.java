@@ -23,6 +23,7 @@ import android.app.Application;
 import android.app.Fragment;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
 import android.content.Context;
 import android.util.Log;
 import dagger.internal.Beta;
@@ -172,6 +173,34 @@ public final class AndroidInjection {
         application.getClass().getCanonicalName());
 
     broadcastReceiverInjector.inject(broadcastReceiver);
+  }
+
+  /**
+   * Injects {@code contentProvider} if an associated {@link AndroidInjector} implementation can be
+   * found, otherwise throws an {@link IllegalArgumentException}.
+   *
+   * @throws RuntimeException if the {@link Application} doesn't implement {@link
+   *     HasContentProviderInjector}.
+   */
+  public static void inject(ContentProvider contentProvider) {
+    checkNotNull(contentProvider, "contentProvider");
+    Application application = (Application) contentProvider.getContext().getApplicationContext();
+    if (!(application instanceof HasContentProviderInjector)) {
+      throw new RuntimeException(
+          String.format(
+              "%s does not implement %s",
+              application.getClass().getCanonicalName(),
+              HasContentProviderInjector.class.getCanonicalName()));
+    }
+
+    AndroidInjector<ContentProvider> contentProviderInjector =
+        ((HasContentProviderInjector) application).contentProviderInjector();
+    checkNotNull(
+        contentProviderInjector,
+        "%s.contentProviderInjector() returned null",
+        application.getClass().getCanonicalName());
+
+    contentProviderInjector.inject(contentProvider);
   }
 
   private AndroidInjection() {}

@@ -42,6 +42,7 @@ public class InjectorsTest {
   private TestService service;
   private TestIntentService intentService;
   private TestBroadcastReceiver broadcastReceiver;
+  private TestContentProvider contentProvider;
 
   @Before
   public void setUp() {
@@ -59,6 +60,8 @@ public class InjectorsTest {
 
     broadcastReceiver = new TestBroadcastReceiver();
     broadcastReceiver.onReceive(RuntimeEnvironment.application, new Intent());
+
+    contentProvider = Robolectric.setupContentProvider(TestContentProvider.class);
   }
 
   @Test
@@ -106,6 +109,12 @@ public class InjectorsTest {
             ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
                 .BroadcastReceiverSubcomponent.class);
 
+    assertThat(contentProvider.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .ContentProviderSubcomponent.class);
+
     changeConfiguration();
   }
 
@@ -131,8 +140,8 @@ public class InjectorsTest {
     assertThat(service.componentHierarchy)
         .containsExactly(
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
-            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
-                .ServiceSubcomponent.class);
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.ServiceSubcomponent
+                .class);
     assertThat(intentService.componentHierarchy)
         .containsExactly(
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
@@ -144,6 +153,12 @@ public class InjectorsTest {
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent
                 .BroadcastReceiverSubcomponent.class);
+
+    assertThat(contentProvider.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .ContentProviderSubcomponent.class);
 
     changeConfiguration();
   }

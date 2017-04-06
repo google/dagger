@@ -169,4 +169,16 @@ final class DaggerElements {
     }
     return ImmutableSet.copyOf(suppressedWarnings.value());
   }
+
+  /**
+   * Invokes {@link Elements#getTypeElement(CharSequence)}, throwing {@link TypeNotPresentException}
+   * if it is not accessible in the current compilation.
+   */
+  static TypeElement checkTypePresent(String typeName, Elements elements) {
+    TypeElement type = elements.getTypeElement(typeName);
+    if (type == null) {
+      throw new TypeNotPresentException(typeName, null);
+    }
+    return type;
+  }
 }

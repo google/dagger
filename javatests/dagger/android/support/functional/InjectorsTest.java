@@ -120,7 +120,7 @@ public class InjectorsTest {
 
   @Test
   @Config(manifest = MANIFEST, application = AllControllersAreDirectChildrenOfApplication.class)
-  public void AllControllersAreDirectChildrenOfApplication() {
+  public void allControllersAreDirectChildrenOfApplication() {
     assertThat(activity.componentHierarchy)
         .containsExactly(
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
@@ -161,6 +161,49 @@ public class InjectorsTest {
                 .ContentProviderSubcomponent.class);
 
     changeConfiguration();
+  }
+
+  @Test
+  @Config(manifest = MANIFEST, application = UsesGeneratedModulesApplication.class)
+  public void usesGeneratedModules() {
+    assertThat(activity.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyActivitySubcomponent.class);
+    assertThat(parentFragment.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyParentFragmentSubcomponent.class);
+    assertThat(childFragment.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyChildFragmentSubcomponent.class);
+
+    assertThat(service.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyServiceSubcomponent.class);
+    assertThat(intentService.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyIntentServiceSubcomponent.class);
+
+    assertThat(broadcastReceiver.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyBroadcastReceiverSubcomponent.class);
+
+    assertThat(contentProvider.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyContentProviderSubcomponent.class);
+
+    changeConfiguration();
+
+    TestActivityWithScope activityWithScope =
+        Robolectric.setupActivity(TestActivityWithScope.class);
+    assertThat(activityWithScope.scopedStringProvider.get())
+        .isSameAs(activityWithScope.scopedStringProvider.get());
   }
 
   // https://github.com/google/dagger/issues/598

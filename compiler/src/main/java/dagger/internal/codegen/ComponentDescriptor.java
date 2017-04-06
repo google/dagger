@@ -25,6 +25,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
+import static dagger.internal.codegen.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
@@ -718,11 +719,7 @@ abstract class ComponentDescriptor {
     private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
       ClassName monitoringModuleName =
           SourceFiles.generatedMonitoringModuleName(componentDefinitionType);
-      String generatedMonitorModuleName = monitoringModuleName.toString();
-      TypeElement monitoringModule = elements.getTypeElement(generatedMonitorModuleName);
-      if (monitoringModule == null) {
-        throw new TypeNotPresentException(generatedMonitorModuleName, null);
-      }
+      TypeElement monitoringModule = checkTypePresent(monitoringModuleName.toString(), elements);
       return moduleDescriptorFactory.create(monitoringModule);
     }
 
@@ -738,12 +735,8 @@ abstract class ComponentDescriptor {
         TypeElement componentDefinitionType) {
       ClassName productionExecutorModuleName =
           SourceFiles.generatedProductionExecutorModuleName(componentDefinitionType);
-      String generatedProductionExecutorModuleName = productionExecutorModuleName.toString();
       TypeElement productionExecutorModule =
-          elements.getTypeElement(generatedProductionExecutorModuleName);
-      if (productionExecutorModule == null) {
-        throw new TypeNotPresentException(generatedProductionExecutorModuleName, null);
-      }
+          checkTypePresent(productionExecutorModuleName.toString(), elements);
       return moduleDescriptorFactory.create(productionExecutorModule);
     }
   }

@@ -21,8 +21,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static java.util.stream.Collectors.toMap;
-import static javax.lang.model.util.ElementFilter.methodsIn;
+import static dagger.android.processor.AndroidMapKeys.annotationsAndFrameworkTypes;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
@@ -31,12 +30,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
-import dagger.MapKey;
 import dagger.android.AndroidInjector;
 import java.lang.annotation.Annotation;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
 import javax.inject.Scope;
@@ -46,7 +42,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
@@ -66,39 +61,6 @@ final class AndroidMapKeyValidator implements ProcessingStep {
     this.types = types;
     this.messager = messager;
     this.annotationsAndFrameworkTypes = annotationsAndFrameworkTypes(elements);
-  }
-
-  private ImmutableMap<Class<? extends Annotation>, TypeMirror> annotationsAndFrameworkTypes(
-      Elements elements) {
-    return ImmutableMap.copyOf(
-        Stream.of(
-                elements.getPackageElement("dagger.android"),
-                elements.getPackageElement("dagger.android.support"))
-            .filter(element -> element != null)
-            .flatMap(element -> element.getEnclosedElements().stream())
-            .filter(element -> isAnnotationPresent(element, MapKey.class))
-            .filter(element -> element.getAnnotation(MapKey.class).unwrapValue())
-            .flatMap(AndroidMapKeyValidator::classForAnnotationElement)
-            .collect(toMap(key -> key, key -> mapKeyValue(key, elements))));
-  }
-
-  @SuppressWarnings("unchecked")
-  private static Stream<Class<? extends Annotation>> classForAnnotationElement(Element element) {
-    try {
-      return Stream.of((Class<? extends Annotation>)
-          Class.forName(MoreElements.asType(element).getQualifiedName().toString()));
-    } catch (ClassNotFoundException e) {
-      return Stream.of();
-    }
-  }
-
-  private static TypeMirror mapKeyValue(Class<? extends Annotation> annotation, Elements elements) {
-    List<ExecutableElement> mapKeyMethods =
-        methodsIn(elements.getTypeElement(annotation.getCanonicalName()).getEnclosedElements());
-    TypeMirror returnType = getOnlyElement(mapKeyMethods).getReturnType();
-    // TODO(ronshapiro): replace with MoreTypes.asWildcard() when auto-common 0.9 is released
-    return ((WildcardType) getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments()))
-        .getExtendsBound();
   }
 
   @Override

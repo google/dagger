@@ -16,12 +16,18 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
+import static dagger.internal.codegen.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
+import static dagger.internal.codegen.SourceFiles.classFileName;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -32,6 +38,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.squareup.javapoet.ClassName;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Module;
@@ -79,8 +86,8 @@ abstract class ModuleDescriptor {
     private final Class<? extends Annotation> methodAnnotation;
 
     /**
-     * Returns the kind of an annotated element if it is annotated with one of the
-     * {@linkplain #moduleAnnotation() annotation types}.
+     * Returns the kind of an annotated element if it is annotated with one of the {@linkplain
+     * #moduleAnnotation() annotation types}.
      *
      * @throws IllegalArgumentException if the element is annotated with more than one of the
      *     annotation types
@@ -210,8 +217,35 @@ abstract class ModuleDescriptor {
             .map(MoreTypes::asTypeElement)
             .map(this::create)
             .forEach(includedModules::add);
+
+        collectImplicitlyIncludedModules(includedModules, moduleElement);
       }
       return includedModules;
+    }
+
+    // @ContributesAndroidInjector generates a module that is implicitly included in the enclosing
+    // module
+    private void collectImplicitlyIncludedModules(
+        Set<ModuleDescriptor> includedModules, TypeElement moduleElement) {
+      TypeElement contributesAndroidInjector =
+          elements.getTypeElement("dagger.android.ContributesAndroidInjector");
+      if (contributesAndroidInjector == null) {
+        return;
+      }
+      for (ExecutableElement method : methodsIn(moduleElement.getEnclosedElements())) {
+        if (isAnnotationPresent(method, contributesAndroidInjector.asType())) {
+          includedModules.add(
+              create(checkTypePresent(implicitlyIncludedModuleName(method), elements)));
+        }
+      }
+    }
+
+    private String implicitlyIncludedModuleName(ExecutableElement method) {
+      return getPackage(method).getQualifiedName()
+          + "."
+          + classFileName(ClassName.get(MoreElements.asType(method.getEnclosingElement())))
+          + "_"
+          + LOWER_CAMEL.to(UPPER_CAMEL, method.getSimpleName().toString());
     }
   }
 }

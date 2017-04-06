@@ -37,6 +37,8 @@ java_library(
         "//third_party:auto_service",
         "//third_party:auto_value",
         "//third_party:auto_common",
+        "//third_party:javapoet",
+        "//third_party:google_java_format",
         "//core",
         # https://github.com/bazelbuild/bazel/issues/2517
         "//java/dagger/android:libandroid.jar",
@@ -46,6 +48,7 @@ java_library(
 
 java_plugin(
     name = "plugin",
+    generates_api = 1,
     processor_class = "dagger.android.processor.AndroidProcessor",
     deps = [":processor"],
 )

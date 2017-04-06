@@ -56,6 +56,20 @@ jarjar_library(
     ],
 )
 
+android_library(
+    name = "android",
+    exported_plugins = ["//java/dagger/android/processor:plugin"],
+    exports = ["//java/dagger/android"],
+)
+
+android_library(
+    name = "android-support",
+    exports = [
+        ":android",
+        "//java/dagger/android/support",
+    ],
+)
+
 load("//tools:javadoc.bzl", "javadoc_library")
 
 # coalesced javadocs used for the gh-pages site

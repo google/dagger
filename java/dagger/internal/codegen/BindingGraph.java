@@ -951,13 +951,13 @@ abstract class BindingGraph {
          * 2. If there are any explicit bindings in this component, they may conflict with those in
          *    the supercomponent, so resolve them here so that conflicts can be caught.
          */
-        if (getPreviouslyResolvedBindings(bindingKey).isPresent()
-            && bindingKey.kind().equals(BindingKey.Kind.CONTRIBUTION)) {
+        if (getPreviouslyResolvedBindings(bindingKey).isPresent()) {
           /* Resolve in the parent in case there are multibinding contributions or conflicts in some
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(bindingKey);
-          if (!new LocalDependencyChecker().dependsOnLocalBindings(bindingKey)
-              && getLocalExplicitBindings(bindingKey.key()).isEmpty()) {
+          LocalDependencyChecker localDependencyChecker = new LocalDependencyChecker();
+          if (!localDependencyChecker.dependsOnLocalBindings(bindingKey) &&
+              !localDependencyChecker.bindingDefinedLocally(bindingKey)) {
             /* Cache the inherited parent component's bindings in case resolving at the parent found
              * bindings in some component between this one and the previously-resolved one. */
             ResolvedBindings inheritedBindings =
@@ -1057,6 +1057,24 @@ abstract class BindingGraph {
             }
           }
           return false;
+        }
+
+        /**
+         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are
+         * defined locally within this component's modules. If {@code bindingKey} is of kind
+         * {@link BindingKey.Kind#MEMBERS_INJECTION} each of the binding's dependencies will be
+         * checked to see if they are defined locally within this component's modules.
+         */
+        boolean bindingDefinedLocally(BindingKey bindingKey) {
+          if (bindingKey.kind().equals(BindingKey.Kind.MEMBERS_INJECTION)) {
+            return !getPreviouslyResolvedBindings(bindingKey)
+                .get()
+                .bindings()
+                .stream()
+                .flatMap(binding -> binding.dependencies().stream())
+                .anyMatch(dependency -> getLocalExplicitBindings(dependency.key()).isEmpty());
+          }
+          return !getLocalExplicitBindings(bindingKey.key()).isEmpty();
         }
 
         /**

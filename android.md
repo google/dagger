@@ -80,13 +80,13 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
 
 ### Injecting `Activity` objects
 
-1. Install [`AndroidInjectionModule`] in your application component to ensure that
-   all bindings necessary for these base types are available.
+1.  Install [`AndroidInjectionModule`] in your application component to ensure
+    that all bindings necessary for these base types are available.
 
-2. Start off by writing a `@Subcomponent` that implements
-   [`AndroidInjector<YourActivity>`][AndroidInjector], with a
-   `@Subcomponent.Builder` that extends
-   [`AndroidInjector.Builder<YourActivity>`][AndroidInjector.Builder]:
+2.  Start off by writing a `@Subcomponent` that implements
+    [`AndroidInjector<YourActivity>`][AndroidInjector], with a
+    `@Subcomponent.Builder` that extends
+    [`AndroidInjector.Builder<YourActivity>`][AndroidInjector.Builder]:
 
     ```java
     @Subcomponent(modules = ...)
@@ -96,9 +96,9 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     }
     ```
 
-3. After defining the subcomponent, add it to your component hierarchy by
-   defining a module that binds the subcomponent builder and adding it to the
-   component that injects your `Application`:
+3.  After defining the subcomponent, add it to your component hierarchy by
+    defining a module that binds the subcomponent builder and adding it to the
+    component that injects your `Application`:
 
     ```java
     @Module(subcomponents = YourActivitySubcomponent.class)
@@ -114,10 +114,24 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     interface YourApplicationComponent {}
     ```
 
-4. Next, make your `Application` implement [`HasActivityInjector`]
-   and `@Inject` a
-   [`DispatchingAndroidInjector<Activity>`][DispatchingAndroidInjector] to
-   return from the `activityInjector()` method:
+    Pro-tip: If your subcomponent and its builder have no other methods or
+    supertypes than the ones mentioned in step #2, you can use
+    [`@ContributesAndroidInjector`] to generate them for you. Instead of steps 2
+    and 3, add an `abstract` module method that returns your activity, annotate
+    it with `@ContributesAndroidInjector`, and specify the modules you want to
+    install into the subcomponent. If the subcomponent needs scopes, apply the
+    scope annotations to the method as well.
+
+    ```java
+    @ActivityScope
+    @ContributesAndroidInjector(modules = { /* modules to install into the subcomponent */ })
+    abstract YourActivity contributeYourActivityInjector();
+    ```
+
+4.  Next, make your `Application` implement [`HasActivityInjector`]
+    and `@Inject` a
+    [`DispatchingAndroidInjector<Activity>`][DispatchingAndroidInjector] to
+    return from the `activityInjector()` method:
 
     ```java
     public class YourApplication extends Application implements HasActivityInjector {
@@ -137,9 +151,9 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     }
     ```
 
-5. Finally, in your `Activity.onCreate()` method, call
-   [`AndroidInjection.inject(this)`][AndroidInjection.inject(Activity)] *before*
-   calling `super.onCreate();`:
+5.  Finally, in your `Activity.onCreate()` method, call
+    [`AndroidInjection.inject(this)`][AndroidInjection.inject(Activity)]
+    *before* calling `super.onCreate();`:
 
     ```java
     public class YourActivity extends Activity {
@@ -150,7 +164,7 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     }
     ```
 
-6. Congratulations!
+6.  Congratulations!
 
 #### How did that work?
 
@@ -302,6 +316,7 @@ method.
 [AndroidInjector.Builder]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjector.Builder.html
 [android-performance]: http://developer.android.com/training/best-performance.html
 [`AndroidInjectionModule`]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjectionModule.html
+[`@ContributesAndroidInjector`]: https://google.github.io/dagger/api/latest/dagger/android/ContributesAndroidInjector.html
 [`dagger.android`]: https://google.github.io/dagger/api/latest/dagger/android/package-summary.html
 [`DaggerActivity`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerActivity.html
 [`DaggerApplication`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerApplication.html

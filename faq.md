@@ -25,7 +25,7 @@ functions:
 3.  Provide an implementation for exactly _how_ the instance is provided —
      this is the method body
 
-While the first two fuctions are unique and critical to _every_ `@Provides`
+While the first two functions are unique and critical to _every_ `@Provides`
 method, the third can often be tedious and repetitive. So, whenever there is a
 `@Provides` whose implementation is simple and common enough to be inferred by
 Dagger, it makes sense to just declare that as a method without a body (an
@@ -44,7 +44,7 @@ correctness because the annotation determines the constraints.
 
 Because `@Binds` methods are _just_ a method _declaration_, they are expressed
 as `abstract` methods — no implementation is ever created and nothing is never
-invoked. On the other hand, a `@Provides` method _does_ have an implmentation
+invoked. On the other hand, a `@Provides` method _does_ have an implementation
 and _will_ be invoked.
 
 Since `@Binds` methods are never implemented, no concrete class is ever created
@@ -83,7 +83,7 @@ final class HttpServletRequestModule {
 
 ### How do I add tracing to my components?
 
-Dagger does not include a tracing mechnamism for `@Component` implementations —
+Dagger does not include a tracing mechanism for `@Component` implementations —
 the runtime cost of monitoring relative to the runtime cost of simple provisions
 would be too great to apply broadly.
 

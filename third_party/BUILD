@@ -36,7 +36,7 @@ java_library(
 
 java_library(
     name = "error_prone_annotations",
-    tags = ["compile_time_dep"],
+    tags = ["maven:compile_only"],
     exports = ["@com_google_errorprone_error_prone_annotations//jar"],
 )
 
@@ -68,6 +68,7 @@ java_library(
 
 java_library(
     name = "auto_common",
+    tags = ["maven:shaded"],
     exports = ["@com_google_auto_auto_common//jar"],
 )
 
@@ -101,7 +102,7 @@ java_library(
         ":auto_value_processor",
         ":auto_annotation_processor",
     ],
-    tags = ["compile_time_dep"],
+    tags = ["maven:compile_only"],
     exports = [
         ":jsr_250",
         "@com_google_auto_value_auto_value//jar",
@@ -142,7 +143,7 @@ java_plugin(
 java_library(
     name = "auto_service",
     exported_plugins = [":auto_service_processor"],
-    tags = ["compile_time_dep"],
+    tags = ["maven:compile_only"],
     exports = ["@com_google_auto_service_auto_service//jar"],
 )
 

@@ -28,8 +28,9 @@ def _shell(command):
 
 def deps_of(label):
   return _shell(
-      """bazel query 'let deps = labels(deps, {0}) in
-      $deps except attr(tags, compile_time_dep, $deps)'""".format(label))
+      """bazel query 'let deps = labels(deps, {0})in $deps
+      except attr(tags, "maven:(compile_only|shaded)", $deps)
+      '""".format(label))
 
 def exports_for(label):
   return _shell('bazel query "labels(exports, %s)"' % label)
@@ -82,7 +83,27 @@ METADATA = {
     },
 }
 
+
+def dependencies_comparator(first, second):
+  if first == second:
+    return 0
+
+  first = first.split(':')
+  second = second.split(':')
+
+  if first[0] == GROUP and second[0] != GROUP:
+    return -1
+  if second[0] == GROUP and first[0] != GROUP:
+    return 1
+
+  # Compare each item in the list: first sort by group, then artifact
+  if first < second:
+    return -1
+  else:
+    return 1
+
 class UnknownDependencyException(Exception): pass
+
 
 def main():
   if len(sys.argv) < 3:
@@ -113,12 +134,9 @@ def main():
   for arg in sys.argv[2:]:
     metadata = METADATA[arg]
     with open('%s.pom.xml' % metadata['artifact'], 'w') as pom_file:
-      pom_file.write(
-          generate_pom(
-              artifacts[arg],
-              metadata,
-              map(artifact_for_dep, pom_deps(arg)),
-              version))
+      deps = map(artifact_for_dep, pom_deps(arg))
+      deps.sort(cmp=dependencies_comparator)
+      pom_file.write(generate_pom(artifacts[arg], metadata, deps, version))
 
 if __name__ == '__main__':
   main()

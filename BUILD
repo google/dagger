@@ -39,23 +39,6 @@ java_library(
     ],
 )
 
-load("//tools:jarjar.bzl", "jarjar_library")
-
-genrule(
-    name = "rules_file",
-    outs = ["rules_file.txt"],
-    cmd = "echo \"rule com.google.auto.common.** dagger.shaded.auto.common.@1\" > $@",
-)
-
-jarjar_library(
-    name = "shaded_compiler",
-    rules_file = ":rules_file.txt",
-    deps = [
-        "//compiler",
-        "@com_google_auto_auto_common//jar",
-    ],
-)
-
 android_library(
     name = "android",
     exported_plugins = ["//java/dagger/android/processor:plugin"],
@@ -67,6 +50,26 @@ android_library(
     exports = [
         ":android",
         "//java/dagger/android/support",
+    ],
+)
+
+load("//tools:jarjar.bzl", "jarjar_library")
+
+jarjar_library(
+    name = "shaded_compiler",
+    rules_file = "shade_rules.txt",
+    deps = [
+        "//compiler",
+        "@com_google_auto_auto_common//jar",
+    ],
+)
+
+jarjar_library(
+    name = "shaded_android_processor",
+    rules_file = "shade_rules.txt",
+    deps = [
+        "//java/dagger/android/processor",
+        "@com_google_auto_auto_common//jar",
     ],
 )
 

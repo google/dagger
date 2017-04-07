@@ -1,0 +1,1 @@
+rule com.google.auto.common.** dagger.shaded.auto.common.@1

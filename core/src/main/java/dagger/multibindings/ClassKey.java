@@ -20,7 +20,6 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import dagger.MapKey;
-import dagger.internal.Beta;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -31,7 +30,6 @@ import java.lang.annotation.Target;
  * <p>If your map's keys can be constrained, consider using a custom annotation instead, with a
  * member whose type is {@code Class<? extends Something>}.
  */
-@Beta
 @Documented
 @Target(METHOD)
 @Retention(RUNTIME)

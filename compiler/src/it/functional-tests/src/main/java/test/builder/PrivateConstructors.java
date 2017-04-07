@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,31 @@
  * limitations under the License.
  */
 
-package dagger.multibindings;
+package test.builder;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 
-import dagger.MapKey;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+final class PrivateConstructors {
+  @Module
+  static final class M {
+    @Provides
+    static String provideString() {
+      return "str";
+    }
 
-/** A {@link MapKey} annotation for maps with {@code int} keys. */
-@Documented
-@Target(METHOD)
-@Retention(RUNTIME)
-@MapKey
-public @interface IntKey {
-  int value();
+    private M() {}
+  }
+
+  @Component(modules = M.class)
+  interface C {
+    String string();
+
+    @Component.Builder
+    interface Builder {
+      // M should not be required, even though the constructor is inaccessible
+      C build();
+    }
+  }
 }

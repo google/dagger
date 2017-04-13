@@ -8,11 +8,11 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_BRANCH" == "master" ]; then
   echo -e "Publishing maven snapshot...\n"
 
-  sh $(dirname $0)/execute-deploy.sh \
+  bash $(dirname $0)/execute-deploy.sh \
     "HEAD-SNAPSHOT" \
     "sonatype-nexus-snapshots" \
     "https://oss.sonatype.org/content/repositories/snapshots" \
-    "--settings=util/settings.xml"
+    "--settings=$(dirname $0)/settings.xml"
 
   echo -e "Published maven snapshot"
 else

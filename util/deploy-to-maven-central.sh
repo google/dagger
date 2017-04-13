@@ -30,7 +30,7 @@ if [ "${keystatus}" != "pub" ]; then
   exit 64
 fi
 
-sh $(dirname $0)/execute-deploy.sh \
+bash $(dirname $0)/execute-deploy.sh \
   "$version_name" \
   "sonatype-nexus-staging" \
   "https://oss.sonatype.org/service/local/staging/deploy/maven2/" \

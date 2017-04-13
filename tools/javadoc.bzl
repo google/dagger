@@ -92,7 +92,7 @@ def javadoc_library(
       name = name,
       srcs = genrule_srcs,
       outs = [name + ".jar"],
-      tools = ["@local_jdk//:bin/javadoc", "@local_jdk//:bin/jar"],
+      tools = ["@local_jdk//:bin/javadoc", "@local_jdk//:bin/jar", "@local_jdk//:jdk-default"],
       cmd = """
 $(location //tools:javadoc_library_impl) \
   "$(location @local_jdk//:bin/javadoc)" "$(location @local_jdk//:bin/jar)" "$@" \

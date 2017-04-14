@@ -9,6 +9,7 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
   echo -e "Publishing maven snapshot...\n"
 
   bash $(dirname $0)/execute-deploy.sh \
+    "deploy:deploy-file" \
     "HEAD-SNAPSHOT" \
     "sonatype-nexus-snapshots" \
     "https://oss.sonatype.org/content/repositories/snapshots" \

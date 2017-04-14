@@ -1,9 +1,10 @@
 #!/bin/sh
 
-VERSION_NAME=$1
-REPOSITORY_ID=$2
-REPOSITORY_URL=$3
-EXTRA_MAVEN_ARGS=$4
+MVN_GOAL=$1
+VERSION_NAME=$2
+REPOSITORY_ID=$3
+REPOSITORY_URL=$4
+EXTRA_MAVEN_ARGS=$5
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //core/src/main/java/dagger:core \
@@ -32,7 +33,7 @@ deploy_library() {
   javadoc=$3
   pomfile=$4
   bazel build $library $srcjar $javadoc
-  mvn gpg:sign-and-deploy-file \
+  mvn $MVN_GOAL \
     -Dfile=$(library_output_file $library) \
     -DrepositoryId=$REPOSITORY_ID \
     -Durl=$REPOSITORY_URL \

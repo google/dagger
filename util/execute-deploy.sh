@@ -73,7 +73,7 @@ deploy_library \
   dagger-android-support.pom.xml
 
 deploy_library \
-  shaded_android_processor.jar
+  shaded_android_processor.jar \
   java/dagger/android/processor/libprocessor-src.jar \
   java/dagger/android/processor/processor-javadoc.jar \
   dagger-android-processor.pom.xml

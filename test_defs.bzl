@@ -12,15 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def GenJavaTests(name, srcs, deps, plugins = None, javacopts = None):
-  _GenTests(native.java_library, native.java_test, name, srcs, deps, plugins, javacopts)
+def GenJavaTests(name, srcs, deps, test_only_deps = None, plugins = None, javacopts = None):
+  _GenTests(
+      native.java_library, native.java_test, name, srcs, deps, test_only_deps, plugins, javacopts)
 
-def GenRobolectricTests(name, srcs, deps, plugins = None, javacopts = None):
+def GenRobolectricTests(name, srcs, deps, test_only_deps = None, plugins = None, javacopts = None):
   # TODO(ronshapiro): enable these when Bazel supports robolectric tests
   pass
 
 def _GenTests(
-    library_rule_type, test_rule_type, name, srcs, deps, plugins = None, javacopts = None):
+    library_rule_type,
+    test_rule_type,
+    name,
+    srcs,
+    deps,
+    test_only_deps = None,
+    plugins = None,
+    javacopts = None):
   test_files = []
   supporting_files = []
   for src in srcs:
@@ -29,7 +37,10 @@ def _GenTests(
     else:
       supporting_files.append(src)
 
-  test_deps = [] + deps
+  if not test_only_deps:
+    test_only_deps = []
+
+  test_deps = test_only_deps + deps
   if len(supporting_files) > 0:
     supporting_files_name = name + "_lib"
     test_deps.append(":" + supporting_files_name)

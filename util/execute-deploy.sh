@@ -8,7 +8,7 @@ EXTRA_MAVEN_ARGS=$5
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //core/src/main/java/dagger:core \
-  //compiler:compiler \
+  //java/dagger/internal/codegen:codegen \
   //producers:producers \
   //java/dagger/android:android \
   //java/dagger/android/support:support \
@@ -51,8 +51,8 @@ deploy_library \
 
 deploy_library \
   shaded_compiler.jar \
-  compiler/libcompiler-src.jar \
-  compiler/compiler-javadoc.jar \
+  java/dagger/internal/codegen/libcodegen-src.jar \
+  java/dagger/internal/codegen/codegen-javadoc.jar \
   dagger-compiler.pom.xml
 
 deploy_library \

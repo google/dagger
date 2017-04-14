@@ -144,6 +144,12 @@ maven_jar(
 )
 
 maven_jar(
+    name = "com_google_truth_extensions_truth_java8_extension",
+    artifact = "com.google.truth.extensions:truth-java8-extension:0.30",
+    sha1 = "f3bb5e49001a9b575bcdef9aa8417b6d1ef35509",
+)
+
+maven_jar(
     name = "com_squareup_javapoet",
     artifact = "com.squareup:javapoet:1.7.0",
     sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",

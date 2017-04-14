@@ -27,7 +27,7 @@ py_test(
 
 java_library(
     name = "dagger_with_compiler",
-    exported_plugins = ["//compiler:component-codegen"],
+    exported_plugins = ["//java/dagger/internal/codegen:component-codegen"],
     exports = ["//core"],
 )
 
@@ -59,7 +59,7 @@ jarjar_library(
     name = "shaded_compiler",
     rules_file = "shade_rules.txt",
     deps = [
-        "//compiler",
+        "//java/dagger/internal/codegen",
         "@com_google_auto_auto_common//jar",
     ],
 )

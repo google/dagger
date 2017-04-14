@@ -56,6 +56,15 @@ java_library(
 )
 
 java_library(
+    name = "truth8",
+    testonly = 1,
+    exports = [
+        ":truth",
+        "@com_google_truth_extensions_truth_java8_extension//jar",
+    ],
+)
+
+java_library(
     name = "guava",
     exports = ["@com_google_guava_guava//jar"],
 )

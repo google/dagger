@@ -59,7 +59,7 @@ METADATA = {
         'artifact': 'dagger',
         'alias': '//core:core',
     },
-    '//compiler:compiler': {
+    '//java/dagger/internal/codegen:codegen': {
         'name': 'Dagger Compiler',
         'artifact': 'dagger-compiler',
     },

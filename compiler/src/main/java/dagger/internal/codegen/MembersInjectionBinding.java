@@ -122,6 +122,20 @@ abstract class MembersInjectionBinding extends Binding {
     }
   }
 
+  private static final class InjectionMethodWrapper{
+
+    final ExecutableElement element;
+
+    final DeclaredType type;
+
+    Optional<InjectionSite> resolved = null;
+
+    InjectionMethodWrapper(ExecutableElement element, DeclaredType type){
+      this.element = element;
+      this.type = type;
+    }
+  }
+
   static final class Factory {
     private final Elements elements;
     private final Types types;
@@ -212,26 +226,23 @@ abstract class MembersInjectionBinding extends Binding {
     private ImmutableSortedSet<InjectionSite> getInjectionSites(DeclaredType declaredType) {
       Set<InjectionSite> injectionSites = new HashSet<>();
       final List<TypeElement> ancestors = new ArrayList<>();
-      SetMultimap<String, ExecutableElement> overriddenMethodMap = LinkedHashMultimap.create();
+      SetMultimap<String, InjectionMethodWrapper> overriddenMethodMap = LinkedHashMultimap.create();
       for (Optional<DeclaredType> currentType = Optional.of(declaredType);
           currentType.isPresent();
           currentType = nonObjectSuperclass(types, elements, currentType.get())) {
         final DeclaredType type = currentType.get();
         ancestors.add(MoreElements.asType(type.asElement()));
         for (Element enclosedElement : type.asElement().getEnclosedElements()) {
-          Optional<InjectionSite> maybeInjectionSite =
-              injectionSiteVisitor.visit(enclosedElement, type);
-          if (maybeInjectionSite.isPresent()) {
-            InjectionSite injectionSite = maybeInjectionSite.get();
-            if (shouldBeInjected(injectionSite.element(), overriddenMethodMap)) {
-              injectionSites.add(injectionSite);
-            }
-            if (injectionSite.kind().equals(InjectionSite.Kind.METHOD)) {
-              ExecutableElement injectionSiteMethod =
-                  MoreElements.asExecutable(injectionSite.element());
-              overriddenMethodMap.put(
-                  injectionSiteMethod.getSimpleName().toString(), injectionSiteMethod);
-            }
+
+          if (shouldBeInjected(enclosedElement, overriddenMethodMap)) {
+            injectionSiteVisitor.visit(enclosedElement, type).ifPresent(injectionSites::add);
+          }
+          if (enclosedElement.getKind() == ElementKind.METHOD) {
+            ExecutableElement injectionSiteMethod =
+                  MoreElements.asExecutable(enclosedElement);
+            overriddenMethodMap.put(
+                  injectionSiteMethod.getSimpleName().toString(),
+                    new InjectionMethodWrapper(injectionSiteMethod,type));
           }
         }
       }
@@ -250,7 +261,7 @@ abstract class MembersInjectionBinding extends Binding {
     }
 
     private boolean shouldBeInjected(
-        Element injectionSite, SetMultimap<String, ExecutableElement> overriddenMethodMap) {
+        Element injectionSite, SetMultimap<String, InjectionMethodWrapper> overriddenMethodMap) {
       if (!isAnnotationPresent(injectionSite, Inject.class)
           || injectionSite.getModifiers().contains(PRIVATE)
           || injectionSite.getModifiers().contains(STATIC)) {
@@ -267,9 +278,15 @@ abstract class MembersInjectionBinding extends Binding {
       // check the methods with the same name.
       ExecutableElement injectionSiteMethod = MoreElements.asExecutable(injectionSite);
       TypeElement injectionSiteType = MoreElements.asType(injectionSite.getEnclosingElement());
-      for (ExecutableElement method :
-          overriddenMethodMap.get(injectionSiteMethod.getSimpleName().toString())) {
-        if (elements.overrides(method, injectionSiteMethod, injectionSiteType)) {
+      String key = injectionSiteMethod.getSimpleName().toString();
+      for (InjectionMethodWrapper method : overriddenMethodMap.get(key)) {
+        if(method.resolved == null) {
+          method.resolved = injectionSiteVisitor.visit(method.element, method.type);
+          if(!method.resolved.isPresent()){
+            continue;
+          }
+        }
+        if (elements.overrides(method.element, injectionSiteMethod, injectionSiteType)) {
           return false;
         }
       }

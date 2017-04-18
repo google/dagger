@@ -22,7 +22,7 @@ import dagger.Lazy;
 import javax.inject.Provider;
 
 /**
- * A {@link Lazy} and {@link Provider} implementation that memoizes the value returned from a
+ * A {@link Lazy} and {@link Provider} implementation that memorizes the value returned from a
  * delegate using the double-check idiom described in Item 71 of <i>Effective Java 2</i>.
  */
 public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {

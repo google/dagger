@@ -22,7 +22,7 @@ import dagger.Lazy;
 import javax.inject.Provider;
 
 /**
- * A {@link Lazy} and {@link Provider} implementation that memoizes the value returned from a
+ * A {@link Lazy} and {@link Provider} implementation that memorizes the value returned from a
  * delegate using the double-check idiom described in Item 71 of <i>Effective Java 2</i>.
  */
 public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
@@ -80,7 +80,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
     if (provider instanceof Lazy) {
       @SuppressWarnings("unchecked")
       final Lazy<T> lazy = (Lazy<T>) provider;
-      // Avoids memoizing a value that is already memoized.
+      // Avoids memorizing a value that is already memorized.
       // NOTE: There is a pathological case where Provider<P> may implement Lazy<L>, but P and L
       // are different types using covariant return on get(). Right now this is used with
       // DoubleCheck<T> exclusively, which is implemented such that P and L are always

@@ -22,7 +22,7 @@ import dagger.Lazy;
 import javax.inject.Provider;
 
 /**
- * A {@link Provider} implementation that memoizes the result of another {@link Provider} using
+ * A {@link Provider} implementation that memorizes the result of another {@link Provider} using
  * simple lazy initialization, not the double-checked lock pattern.
  */
 public final class SingleCheck<T> implements Provider<T>, Lazy<T> {

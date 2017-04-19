@@ -17,11 +17,6 @@
 
 package(default_visibility = ["//:src"])
 
-sh_library(
-    name = "javadoc_library_impl",
-    srcs = ["javadoc_library_impl.sh"],
-)
-
 sh_binary(
     name = "jarjar_library_impl",
     srcs = ["jarjar_library_impl.sh"],
@@ -67,5 +62,3 @@ java_binary(
         "@org_pantsbuild_jarjar//jar",
     ],
 )
-
-exports_files(["AndroidManifest.xml"])

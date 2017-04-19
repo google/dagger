@@ -96,6 +96,7 @@ javadoc_library(
     deps = [
         "//core/src/main/java/dagger:core",
         "//java/dagger/android",
+        "//java/dagger/android/support",
         "//producers",
     ],
 )

@@ -37,7 +37,7 @@ deploy_library() {
     -Dfile=$(library_output_file $library) \
     -DrepositoryId=$REPOSITORY_ID \
     -Durl=$REPOSITORY_URL \
-    -Djavadoc=bazel-genfiles/$javadoc \
+    -Djavadoc=bazel-bin/$javadoc \
     -DpomFile=$pomfile \
     -Dsources=bazel-bin/$srcjar \
     $EXTRA_MAVEN_ARGS

@@ -26,7 +26,6 @@ import static dagger.android.processor.AndroidMapKeys.annotationsAndFrameworkTyp
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
@@ -54,18 +53,16 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   private final Elements elements;
   private final Types types;
   private final Messager messager;
-  private final ImmutableMap<Class<? extends Annotation>, TypeMirror> annotationsAndFrameworkTypes;
 
   AndroidMapKeyValidator(Elements elements, Types types, Messager messager) {
     this.elements = elements;
     this.types = types;
     this.messager = messager;
-    this.annotationsAndFrameworkTypes = annotationsAndFrameworkTypes(elements);
   }
 
   @Override
   public Set<? extends Class<? extends Annotation>> annotations() {
-    return annotationsAndFrameworkTypes.keySet();
+    return annotationsAndFrameworkTypes(elements).keySet();
   }
 
   @Override
@@ -87,7 +84,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       return;
     }
 
-    TypeMirror frameworkType = annotationsAndFrameworkTypes.get(annotation);
+    TypeMirror frameworkType = annotationsAndFrameworkTypes(elements).get(annotation);
 
     if (!getAnnotatedAnnotations(method, Scope.class).isEmpty()) {
       SuppressWarnings suppressedWarnings = method.getAnnotation(SuppressWarnings.class);

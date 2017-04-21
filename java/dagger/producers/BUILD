@@ -22,13 +22,12 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
-    "JAVA_7_SOURCE_LEVEL",
     "PRE_JAVA_8_INFERENCE_OPTS",
 )
 
 filegroup(
     name = "producers-srcs",
-    srcs = glob(["src/main/java/**/*.java"]),
+    srcs = glob(["**/*.java"]),
 )
 
 java_library(
@@ -62,20 +61,4 @@ javadoc_library(
     ],
     root_packages = ["dagger.producers"],
     deps = [":producers"],
-)
-
-load("//:test_defs.bzl", "GenJavaTests")
-
-GenJavaTests(
-    name = "produces_tests",
-    srcs = glob(["src/test/java/**/*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_7_SOURCE_LEVEL,
-    deps = [
-        ":producers",
-        "//third_party:guava",
-        "//third_party:guava_testlib",
-        "//third_party:junit",
-        "//third_party:mockito",
-        "//third_party:truth",
-    ],
 )

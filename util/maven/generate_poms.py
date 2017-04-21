@@ -62,7 +62,7 @@ METADATA = {
         'name': 'Dagger Compiler',
         'artifact': 'dagger-compiler',
     },
-    '//producers:producers': {
+    '//java/dagger/producers:producers': {
         'name': 'Dagger Producers',
         'artifact': 'dagger-producers',
     },

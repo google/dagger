@@ -35,7 +35,7 @@ java_library(
     name = "producers_with_compiler",
     exports = [
         ":dagger_with_compiler",
-        "//producers",
+        "//java/dagger/producers",
     ],
 )
 
@@ -82,7 +82,7 @@ javadoc_library(
         "//java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
         "//java/dagger/android/support:support-srcs",
-        "//producers:producers-srcs",
+        "//java/dagger/producers:producers-srcs",
     ],
     android_api_level = 25,
     # TODO(ronshapiro): figure out how to specify the version number for release builds
@@ -97,6 +97,6 @@ javadoc_library(
         "//java/dagger:core",
         "//java/dagger/android",
         "//java/dagger/android/support",
-        "//producers",
+        "//java/dagger/producers",
     ],
 )

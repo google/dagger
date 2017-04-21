@@ -9,7 +9,7 @@ EXTRA_MAVEN_ARGS=$5
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \
   //java/dagger/internal/codegen:codegen \
-  //producers:producers \
+  //java/dagger/producers:producers \
   //java/dagger/android:android \
   //java/dagger/android/support:support \
   //java/dagger/android/processor:processor
@@ -56,9 +56,9 @@ deploy_library \
   dagger-compiler.pom.xml
 
 deploy_library \
-  producers/libproducers.jar \
-  producers/libproducers-src.jar \
-  producers/producers-javadoc.jar \
+  java/dagger/producers/libproducers.jar \
+  java/dagger/producers/libproducers-src.jar \
+  java/dagger/producers/producers-javadoc.jar \
   dagger-producers.pom.xml
 
 deploy_library \

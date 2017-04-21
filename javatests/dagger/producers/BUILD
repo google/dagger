@@ -13,27 +13,27 @@
 # limitations under the License.
 
 # Description:
-#   Tests for the Dagger compiler/codegen
+#   Tests for dagger.producers
 
 package(default_visibility = ["//:src"])
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
+load(
+    "//:build_defs.bzl",
+    "DOCLINT_HTML_AND_SYNTAX",
+    "DOCLINT_REFERENCES",
+    "SOURCE_7_TARGET_7",
+    "PRE_JAVA_8_INFERENCE_OPTS",
+)
 load("//:test_defs.bzl", "GenJavaTests")
 
 GenJavaTests(
-    name = "compiler_tests",
-    srcs = glob(["*.java"]),
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    name = "producers_tests",
+    srcs = glob(["**/*.java"]),
+    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen",
         "//java/dagger/producers",
-        "//third_party:auto_common",
-        "//third_party:auto_value",
-        "//third_party:compile_testing",
         "//third_party:guava",
-        "//third_party:javapoet",
-        "//third_party:jsr330_inject",
+        "//third_party:guava_testlib",
         "//third_party:junit",
         "//third_party:mockito",
         "//third_party:truth",

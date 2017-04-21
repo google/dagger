@@ -38,7 +38,7 @@ CODEGEN_SHARED_DEPS = [
     "//third_party:jsr305_annotations",
     "//third_party:jsr330_inject",
     "//java/dagger:core",
-    "//producers",
+    "//java/dagger/producers",
 ]
 
 java_library(

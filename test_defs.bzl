@@ -12,23 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def GenJavaTests(name, srcs, deps, test_only_deps = None, plugins = None, javacopts = None):
-  _GenTests(
-      native.java_library, native.java_test, name, srcs, deps, test_only_deps, plugins, javacopts)
+def GenJavaTests(name, srcs, deps, test_only_deps=None, plugins=None, javacopts=None,
+                 lib_javacopts=None, test_javacopts=None):
+  _GenTests(native.java_library, native.java_test, name, srcs, deps, test_only_deps=test_only_deps,
+            plugins=plugins, javacopts=javacopts, lib_javacopts=lib_javacopts,
+            test_javacopts=test_javacopts)
 
-def GenRobolectricTests(name, srcs, deps, test_only_deps = None, plugins = None, javacopts = None):
+def GenRobolectricTests(name, srcs, deps, test_only_deps=None, plugins=None, javacopts=None,
+                        lib_javacopts=None, test_javacopts=None):
   # TODO(ronshapiro): enable these when Bazel supports robolectric tests
   pass
 
-def _GenTests(
-    library_rule_type,
-    test_rule_type,
-    name,
-    srcs,
-    deps,
-    test_only_deps = None,
-    plugins = None,
-    javacopts = None):
+def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps=None,
+              plugins=None, javacopts=None, lib_javacopts=None, test_javacopts=None):
   test_files = []
   supporting_files = []
   for src in srcs:
@@ -49,7 +45,7 @@ def _GenTests(
         deps = deps,
         srcs = supporting_files,
         plugins = plugins,
-        javacopts = javacopts,
+        javacopts = (javacopts or []) + (lib_javacopts or []),
         testonly = 1,
     )
 
@@ -64,6 +60,6 @@ def _GenTests(
         deps = test_deps,
         srcs = [test_file],
         plugins = plugins,
-        javacopts = javacopts,
+        javacopts = (javacopts or []) + (test_javacopts or []),
         test_class = test_class,
     )

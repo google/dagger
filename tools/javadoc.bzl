@@ -102,7 +102,6 @@ javadoc_library = rule(
     outputs = {"jar": "%{name}.jar"},
     implementation = _javadoc_libary,
 )
-
 """
 Generates a Javadoc jar path/to/target/<name>.jar.
 

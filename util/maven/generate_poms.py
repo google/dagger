@@ -54,10 +54,9 @@ def pom_deps(label):
 GROUP = 'com.google.dagger'
 
 METADATA = {
-    '//core/src/main/java/dagger:core': {
+    '//java/dagger:core': {
         'name': 'Dagger',
         'artifact': 'dagger',
-        'alias': '//core:core',
     },
     '//java/dagger/internal/codegen:codegen': {
         'name': 'Dagger Compiler',
@@ -120,8 +119,6 @@ def main():
     artifacts[label] = (
         'com.google.dagger:%s:%s' % (metadata['artifact'], version)
     )
-    if 'alias' in metadata:
-      artifacts[metadata['alias']] = artifacts[label]
 
   def artifact_for_dep(label):
     if label in artifacts:

@@ -25,7 +25,7 @@ GenJavaTests(
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//core",
+        "//java/dagger:core",
         "//java/dagger/internal/codegen",
         "//producers",
         "//third_party:auto_common",

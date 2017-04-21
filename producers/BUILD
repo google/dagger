@@ -44,7 +44,7 @@ java_library(
         "//third_party:jsr330_inject",
     ],
     deps = [
-        "//core",
+        "//java/dagger:core",
         "//third_party:guava",
         "//third_party:jsr305_annotations",
         "//third_party:jsr330_inject",

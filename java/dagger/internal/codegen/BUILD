@@ -37,7 +37,7 @@ CODEGEN_SHARED_DEPS = [
     "@local_jdk//:lib/tools.jar",
     "//third_party:jsr305_annotations",
     "//third_party:jsr330_inject",
-    "//core",
+    "//java/dagger:core",
     "//producers",
 ]
 

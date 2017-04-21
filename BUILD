@@ -28,7 +28,7 @@ py_test(
 java_library(
     name = "dagger_with_compiler",
     exported_plugins = ["//java/dagger/internal/codegen:component-codegen"],
-    exports = ["//core"],
+    exports = ["//java/dagger:core"],
 )
 
 java_library(
@@ -79,7 +79,7 @@ load("//tools:javadoc.bzl", "javadoc_library")
 javadoc_library(
     name = "user-docs",
     srcs = [
-        "//core/src/main/java/dagger:javadoc-srcs",
+        "//java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
         "//java/dagger/android/support:support-srcs",
         "//producers:producers-srcs",
@@ -94,7 +94,7 @@ javadoc_library(
     ],
     root_packages = ["dagger"],
     deps = [
-        "//core/src/main/java/dagger:core",
+        "//java/dagger:core",
         "//java/dagger/android",
         "//java/dagger/android/support",
         "//producers",

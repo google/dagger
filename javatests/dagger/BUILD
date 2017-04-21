@@ -20,25 +20,15 @@ package(default_visibility = ["//:src"])
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 load("//:test_defs.bzl", "GenJavaTests")
 
-java_library(
-    name = "core",
-    plugins = [
-        # TODO(cgruber): Enable Beta checker.
-    ],
-    exports = ["//core/src/main/java/dagger:core"],
-)
-
 GenJavaTests(
     name = "core_tests",
-    srcs = glob(["src/test/java/**/*.java"]),
+    srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        ":core",
+        "//java/dagger:core",
         "//third_party:guava",
         "//third_party:jsr330_inject",
         "//third_party:junit",
         "//third_party:truth",
     ],
 )
-
-test_suite(name = "AllTests")

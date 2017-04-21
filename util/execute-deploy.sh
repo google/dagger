@@ -7,7 +7,7 @@ REPOSITORY_URL=$4
 EXTRA_MAVEN_ARGS=$5
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
-  //core/src/main/java/dagger:core \
+  //java/dagger:core \
   //java/dagger/internal/codegen:codegen \
   //producers:producers \
   //java/dagger/android:android \
@@ -44,9 +44,9 @@ deploy_library() {
 }
 
 deploy_library \
-  core/src/main/java/dagger/libcore.jar \
-  core/src/main/java/dagger/libcore-src.jar \
-  core/src/main/java/dagger/core-javadoc.jar \
+  java/dagger/libcore.jar \
+  java/dagger/libcore-src.jar \
+  java/dagger/core-javadoc.jar \
   dagger.pom.xml
 
 deploy_library \

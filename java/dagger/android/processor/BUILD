@@ -39,7 +39,7 @@ java_library(
         "//third_party:auto_common",
         "//third_party:javapoet",
         "//third_party:google_java_format",
-        "//core",
+        "//java/dagger:core",
         # https://github.com/bazelbuild/bazel/issues/2517
         "//java/dagger/android:libandroid.jar",
         "//java/dagger/android/support:libsupport.jar",

@@ -18,6 +18,7 @@ package dagger.producers.monitoring;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -160,10 +161,10 @@ public final class TimingRecordersTest {
     setUpNormalSingleRecorder();
     doThrow(new RuntimeException("monkey"))
         .when(mockProducerTimingRecorder)
-        .recordMethod(any(Long.class), any(Long.class));
+        .recordMethod(anyLong(), anyLong());
     doThrow(new RuntimeException("monkey"))
         .when(mockProducerTimingRecorder)
-        .recordSuccess(any(Long.class));
+        .recordSuccess(anyLong());
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
             ImmutableList.of(mockProductionComponentTimingRecorderFactory));
@@ -302,13 +303,13 @@ public final class TimingRecordersTest {
     setUpNormalMultipleRecorders();
     doThrow(new RuntimeException("monkey"))
         .when(mockProducerTimingRecorderA)
-        .recordMethod(any(Long.class), any(Long.class));
+        .recordMethod(anyLong(), anyLong());
     doThrow(new RuntimeException("monkey"))
         .when(mockProducerTimingRecorderB)
-        .recordSuccess(any(Long.class));
+        .recordSuccess(anyLong());
     doThrow(new RuntimeException("monkey"))
         .when(mockProducerTimingRecorderC)
-        .recordMethod(any(Long.class), any(Long.class));
+        .recordMethod(anyLong(), anyLong());
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
             ImmutableList.of(

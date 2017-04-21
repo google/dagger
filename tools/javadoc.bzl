@@ -56,6 +56,8 @@ def _javadoc_libary(ctx):
       "-notimestamp",
       '-bottom "Copyright &copy; 2012&ndash;2017 The Dagger Authors. All rights reserved."',
       "-d tmp",
+      "-Xdoclint:-missing",
+      "-quiet",
   ]
 
   if ctx.attr.doctitle:
@@ -67,7 +69,7 @@ def _javadoc_libary(ctx):
   for link in _EXTERNAL_JAVADOC_LINKS:
     javadoc_command.append("-linkoffline {0} {0}".format(link))
 
-  jar_command = "%s cvf %s -C tmp ." % (ctx.file._jar_binary.path, ctx.outputs.jar.path)
+  jar_command = "%s cf %s -C tmp ." % (ctx.file._jar_binary.path, ctx.outputs.jar.path)
 
   ctx.action(
       inputs = inputs + ctx.files._jdk,

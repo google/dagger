@@ -15,6 +15,7 @@ public class SubcomponentMembersInjectTest {
         Injected injectedByChild = new Injected();
         DaggerParentComponent.create().child().inject(injectedByChild);
 
-        assertThat(injectedByChild.string).isNotEqualTo(injectedByParent.string);
+        assertThat(injectedByParent.strings).containsExactly("parent");
+        assertThat(injectedByChild.strings).containsExactly("parent", "child");
     }
 }

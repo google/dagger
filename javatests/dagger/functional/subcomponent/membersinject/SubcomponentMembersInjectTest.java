@@ -1,4 +1,4 @@
-package test.subcomponent.membersinject;
+package dagger.functional.subcomponent.membersinject;
 
 import static com.google.common.truth.Truth.assertThat;
 

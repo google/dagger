@@ -2386,6 +2386,68 @@ public class GraphValidationTest {
   }
 
   @Test
+  public void subcomponentTransitiveBindingConflictsWithParent() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  Object object();",
+            "  Child child();",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object object(String string) {",
+            "      return \"parent\";",
+            "    }",
+            "",
+            "    @Provides static String string() {",
+            "      return \"transitive\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  Object object();",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static String string() {",
+            "      return \"transitive\";",
+            "    }",
+            "  }",
+            "}");
+    assertAbout(javaSources())
+        .that(ImmutableList.of(parent, child))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "[test.Child.string()] java.lang.String is bound multiple times:\n"
+                + "      @Provides String"
+                + " test.Parent.ParentModule.string()\n"
+                + "      @Provides String"
+                + " test.Child.ChildModule.string()")
+        .in(parent)
+        .onLine(8);
+  }
+
+
+  @Test
   public void bindingUsedOnlyInSubcomponentDependsOnBindingOnlyInSubcomponent() {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(

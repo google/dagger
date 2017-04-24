@@ -16,13 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Suppliers.memoize;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static java.util.stream.Collectors.toList;
+import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -91,6 +92,14 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
         : Sets.union(implicitDependencies, explicitDependencies());
   }
 
+  private final Supplier<ImmutableList<FrameworkDependency>> frameworkDependencies =
+      memoize(
+          () ->
+              dependencyAssociations()
+                  .stream()
+                  .map(DependencyAssociation::frameworkDependency)
+                  .collect(toImmutableList()));
+
   /**
    * The framework dependencies of {@code binding}. There will be one element for each different
    * binding key in the <em>{@linkplain Binding#unresolved() unresolved}</em> version of {@code
@@ -125,13 +134,8 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
   /* TODO(dpb): The stable-order postcondition is actually hard to verify in code for two equal
    * instances of Binding, because it really depends on the order of the binding's dependencies,
    * and two equal instances of Binding may have the same dependencies in a different order. */
-  @Memoized
   ImmutableList<FrameworkDependency> frameworkDependencies() {
-    return ImmutableList.copyOf(
-        dependencyAssociations()
-            .stream()
-            .map(DependencyAssociation::frameworkDependency)
-            .collect(toList()));
+    return frameworkDependencies.get();
   }
 
   /**
@@ -151,6 +155,25 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
     }
   }
 
+  private final Supplier<ImmutableList<DependencyAssociation>> dependencyAssociations =
+      memoize(
+          () -> {
+            BindingTypeMapper bindingTypeMapper = BindingTypeMapper.forBindingType(bindingType());
+            ImmutableList.Builder<DependencyAssociation> list = ImmutableList.builder();
+            for (Collection<DependencyRequest> requests : groupByUnresolvedKey()) {
+              list.add(
+                  DependencyAssociation.create(
+                      FrameworkDependency.create(
+                          getOnlyElement(
+                              FluentIterable.from(requests)
+                                  .transform(DependencyRequest::bindingKey)
+                                  .toSet()),
+                          bindingTypeMapper.getBindingType(requests)),
+                      requests));
+            }
+            return list.build();
+          });
+
   /**
    * Returns the same {@link FrameworkDependency} instances from {@link #frameworkDependencies}, but
    * with the set of {@link DependencyRequest} instances with which each is associated.
@@ -160,38 +183,32 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
    * multiple times if the {@linkplain Binding#unresolved() unresolved} binding requires it. If that
    * distinction is not important, the entries can be merged into a single mapping.
    */
-  @Memoized
   ImmutableList<DependencyAssociation> dependencyAssociations() {
-    BindingTypeMapper bindingTypeMapper = BindingTypeMapper.forBindingType(bindingType());
-    ImmutableList.Builder<DependencyAssociation> frameworkDependencies = ImmutableList.builder();
-    for (Collection<DependencyRequest> requests : groupByUnresolvedKey()) {
-      frameworkDependencies.add(
-          DependencyAssociation.create(
-              FrameworkDependency.create(
-                  getOnlyElement(
-                      FluentIterable.from(requests)
-                          .transform(DependencyRequest::bindingKey)
-                          .toSet()),
-                  bindingTypeMapper.getBindingType(requests)),
-              requests));
-    }
-    return frameworkDependencies.build();
+    return dependencyAssociations.get();
   }
+
+  private final Supplier<ImmutableMap<DependencyRequest, FrameworkDependency>>
+      frameworkDependenciesMap =
+          memoize(
+              () -> {
+                ImmutableMap.Builder<DependencyRequest, FrameworkDependency> frameworkDependencies =
+                    ImmutableMap.builder();
+                for (DependencyAssociation dependencyAssociation : dependencyAssociations()) {
+                  for (DependencyRequest dependencyRequest :
+                      dependencyAssociation.dependencyRequests()) {
+                    frameworkDependencies.put(
+                        dependencyRequest, dependencyAssociation.frameworkDependency());
+                  }
+                }
+                return frameworkDependencies.build();
+              });
 
   /**
    * Returns the mapping from each {@linkplain #dependencies dependency} to its associated {@link
    * FrameworkDependency}.
    */
-  @Memoized
   ImmutableMap<DependencyRequest, FrameworkDependency> dependenciesToFrameworkDependenciesMap() {
-    ImmutableMap.Builder<DependencyRequest, FrameworkDependency> frameworkDependencyMap =
-        ImmutableMap.builder();
-    for (DependencyAssociation dependencyAssociation : dependencyAssociations()) {
-      for (DependencyRequest dependencyRequest : dependencyAssociation.dependencyRequests()) {
-        frameworkDependencyMap.put(dependencyRequest, dependencyAssociation.frameworkDependency());
-      }
-    }
-    return frameworkDependencyMap.build();
+    return frameworkDependenciesMap.get();
   }
 
   /**

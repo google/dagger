@@ -15,9 +15,7 @@
  */
 
 package dagger.functional;
-
 import dagger.MapKey;
-
 @MapKey(unwrapValue = true)
 @interface ByteKey {
   byte value();

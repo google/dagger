@@ -2446,7 +2446,6 @@ public class GraphValidationTest {
         .onLine(8);
   }
 
-
   @Test
   public void bindingUsedOnlyInSubcomponentDependsOnBindingOnlyInSubcomponent() {
     JavaFileObject parent =

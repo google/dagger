@@ -956,8 +956,7 @@ abstract class BindingGraph {
           /* Resolve in the parent in case there are multibinding contributions or conflicts in some
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(bindingKey);
-          LocalDependencyChecker localDependencyChecker = new LocalDependencyChecker();
-          if (!localDependencyChecker.dependsOnLocalBindings(bindingKey)) {
+          if (!new LocalDependencyChecker().dependsOnLocalBindings(bindingKey)) {
             /* Cache the inherited parent component's bindings in case resolving at the parent found
              * bindings in some component between this one and the previously-resolved one. */
             ResolvedBindings inheritedBindings =

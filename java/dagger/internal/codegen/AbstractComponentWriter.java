@@ -34,6 +34,7 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MemberSelect.emptyFrameworkMapFactory;
@@ -967,10 +968,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                 ImmutableList.of(
                     initializeDeferredDependencies(binding),
                     initializeMember(
-                        bindingKey,
-                        binding.scope().isPresent()
-                            ? decorateForScope(delegatingCodeBlock, binding.scope().get())
-                            : delegatingCodeBlock))));
+                        bindingKey, decorateForScope(delegatingCodeBlock, binding.scope())))));
       case SINGLETON_INSTANCE:
         if (!binding.scope().isPresent()) {
           return Optional.empty();
@@ -1201,9 +1199,16 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                   "$T.create($L)",
                   generatedClassNameForBinding(binding),
                   makeParametersCodeBlock(arguments));
-          return binding.scope().isPresent()
-              ? decorateForScope(factoryCreate, binding.scope().get())
-              : factoryCreate;
+
+          // If scoping a parameterized factory for an @Inject class, Java 7 cannot always infer the
+          // type properly, so cast to a raw framework type before scoping.
+          if (binding.bindingKind().equals(INJECTION)
+              && binding.unresolved().isPresent()
+              && binding.scope().isPresent()) {
+            factoryCreate =
+                CodeBlock.of("($T) $L", binding.bindingType().frameworkClass(), factoryCreate);
+          }
+          return decorateForScope(factoryCreate, binding.scope());
         }
 
       case COMPONENT_PRODUCTION:
@@ -1278,7 +1283,11 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     return graph.componentDescriptor().dependencyMethodIndex().get(binding.bindingElement().get());
   }
 
-  private CodeBlock decorateForScope(CodeBlock factoryCreate, Scope scope) {
+  private CodeBlock decorateForScope(CodeBlock factoryCreate, Optional<Scope> maybeScope) {
+    if (!maybeScope.isPresent()) {
+      return factoryCreate;
+    }
+    Scope scope = maybeScope.get();
     if (requiresReleasableReferences(scope)) {
       return CodeBlock.of(
           "$T.create($L, $L)",

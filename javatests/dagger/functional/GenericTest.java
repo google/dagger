@@ -126,17 +126,29 @@ public class GenericTest {
     PublicSubclass publicSubclass = component.publicSubclass();
     assertThat(((Generic)publicSubclass).t).isNotNull();
   }
-  
+
   @Test public void singletonScopesAppliesToEachResolvedType() {
     SingletonGenericComponent component = DaggerSingletonGenericComponent.create();
     ScopedGeneric<A> a = component.scopedGenericA();
     assertThat(a).isSameAs(component.scopedGenericA());
     assertThat(a.t).isNotNull();
-    
+
     ScopedGeneric<B> b = component.scopedGenericB();
     assertThat(b).isSameAs(component.scopedGenericB());
     assertThat(b.t).isNotNull();
-    
+
+    assertThat(a).isNotSameAs(b);
+  }
+
+  @Test // See https://github.com/google/dagger/issues/671
+  public void scopedSimpleGenerics() {
+    SingletonGenericComponent component = DaggerSingletonGenericComponent.create();
+    ScopedSimpleGeneric<A> a = component.scopedSimpleGenericA();
+    assertThat(a).isSameAs(component.scopedSimpleGenericA());
+
+    ScopedSimpleGeneric<B> b = component.scopedSimpleGenericB();
+    assertThat(b).isSameAs(component.scopedSimpleGenericB());
+
     assertThat(a).isNotSameAs(b);
   }
   

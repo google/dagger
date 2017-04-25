@@ -226,7 +226,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
   /**
    * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created
-   * for this binding. Uses the binding's key, V in the came of {@code Map<K, FrameworkClass<V>>>},
+   * for this binding. Uses the binding's key, V in the case of {@code Map<K, FrameworkClass<V>>>},
    * and E {@code Set<E>} for {@link dagger.multibindings.IntoSet @IntoSet} methods.
    */
   final TypeMirror contributedType() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 
 package dagger.functional;
 
-import dagger.Component;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/**
+ * An {@link Inject Inject}ed generic class with no dependencies. Its factory class will have a
+ * generic {@code create()} method returning an object whose type parameters cannot be inferred from
+ * its arguments. Since it's scoped, the initialization of its field in a generated component must
+ * use a raw {@link javax.inject.Provider} in order to allow casting from {@code
+ * Provider<ScopedSimpleGeneric<Object>>} to {@code Provider<ScopedSimpleGeneric<Foo>>}.
+ */
 @Singleton
-@Component
-interface SingletonGenericComponent {
-  
-  ScopedGeneric<A> scopedGenericA();
-
-  ScopedGeneric<B> scopedGenericB();
-  
-  ScopedSimpleGeneric<A> scopedSimpleGenericA();
-
-  ScopedSimpleGeneric<B> scopedSimpleGenericB();
-
+class ScopedSimpleGeneric<T> {
+  @Inject
+  ScopedSimpleGeneric() {}
 }

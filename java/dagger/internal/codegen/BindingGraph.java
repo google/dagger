@@ -24,6 +24,7 @@ import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
+import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.Key.indexByKey;
@@ -956,8 +957,7 @@ abstract class BindingGraph {
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(bindingKey);
           LocalDependencyChecker localDependencyChecker = new LocalDependencyChecker();
-          if (!localDependencyChecker.dependsOnLocalBindings(bindingKey) &&
-              !localDependencyChecker.bindingDefinedLocally(bindingKey)) {
+          if (!localDependencyChecker.dependsOnLocalBindings(bindingKey)) {
             /* Cache the inherited parent component's bindings in case resolving at the parent found
              * bindings in some component between this one and the previously-resolved one. */
             ResolvedBindings inheritedBindings =
@@ -1060,24 +1060,6 @@ abstract class BindingGraph {
         }
 
         /**
-         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are
-         * defined locally within this component's modules. If {@code bindingKey} is of kind
-         * {@link BindingKey.Kind#MEMBERS_INJECTION} each of the binding's dependencies will be
-         * checked to see if they are defined locally within this component's modules.
-         */
-        boolean bindingDefinedLocally(BindingKey bindingKey) {
-          if (bindingKey.kind().equals(BindingKey.Kind.MEMBERS_INJECTION)) {
-            return !getPreviouslyResolvedBindings(bindingKey)
-                .get()
-                .bindings()
-                .stream()
-                .flatMap(binding -> binding.dependencies().stream())
-                .anyMatch(dependency -> getLocalExplicitBindings(dependency.key()).isEmpty());
-          }
-          return !getLocalExplicitBindings(bindingKey.key()).isEmpty();
-        }
-
-        /**
          * Returns {@code true} if {@code binding} is unscoped (or has {@link Reusable @Reusable}
          * scope) and depends on multibindings with contributions declared within this component's
          * modules, or if any of its unscoped or {@link Reusable @Reusable} scoped dependencies
@@ -1133,6 +1115,19 @@ abstract class BindingGraph {
                   .anyMatch(isEqual(SYNTHETIC_OPTIONAL_BINDING))
               && !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
                   .isEmpty();
+        }
+
+        /**
+         * Returns {@code true} if {@code resolvedBindings} contains a provision binding
+         * for which there is an explicit present binding in this component.
+         */
+        boolean hasLocallyResolvedContributionBinding(ResolvedBindings resolvedBindings) {
+          return resolvedBindings
+                .contributionBindings()
+                .stream()
+                .map(ContributionBinding::bindingKind)
+                .anyMatch(isEqual(PROVISION))
+            && !getLocalExplicitBindings(resolvedBindings.key()).isEmpty();
         }
       }
     }

@@ -2437,7 +2437,7 @@ public class GraphValidationTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "[test.Child.string()] java.lang.String is bound multiple times:\n"
+            "[test.Child.object()] java.lang.String is bound multiple times:\n"
                 + "      @Provides String"
                 + " test.Parent.ParentModule.string()\n"
                 + "      @Provides String"

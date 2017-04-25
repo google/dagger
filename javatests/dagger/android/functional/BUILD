@@ -20,7 +20,6 @@ package(default_visibility = ["//:src"])
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
-    "PRE_JAVA_8_INFERENCE_OPTS",
 )
 load("//:test_defs.bzl", "GenRobolectricTests")
 
@@ -31,7 +30,7 @@ android_library(
         ["*.java"],
         exclude = ["*Test.java"],
     ),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX,
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
         # used without a Guava and jsr305 deps.
@@ -43,7 +42,7 @@ android_library(
 GenRobolectricTests(
     name = "android_functional_tests",
     srcs = glob(["*Test.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX,
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         ":code_under_test",
         "//third_party:guava",

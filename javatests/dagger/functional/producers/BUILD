@@ -21,15 +21,14 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "JAVA_7_SOURCE_LEVEL",
-    "PRE_JAVA_8_INFERENCE_OPTS",
+    "SOURCE_7_TARGET_7",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
 GenJavaTests(
     name = "producers-functional-tests",
     srcs = glob(["**/*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + JAVA_7_SOURCE_LEVEL + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:producers_with_compiler",
         "//third_party:auto_value",

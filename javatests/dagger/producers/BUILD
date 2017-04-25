@@ -22,14 +22,13 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
-    "PRE_JAVA_8_INFERENCE_OPTS",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
 GenJavaTests(
     name = "producers_tests",
     srcs = glob(["**/*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
+    javacopts = SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger/producers",
         "//third_party:guava",

@@ -20,7 +20,6 @@ package(default_visibility = ["//:src"])
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
-    "PRE_JAVA_8_INFERENCE_OPTS",
     "SOURCE_7_TARGET_7",
 )
 load("//:test_defs.bzl", "GenJavaTests")
@@ -31,7 +30,7 @@ GenJavaTests(
         ["**/*.java"],
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7 + PRE_JAVA_8_INFERENCE_OPTS,
+    lib_javacopts = SOURCE_7_TARGET_7,
     # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
     # used without Guava and jsr305 deps.
     test_only_deps = [

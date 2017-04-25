@@ -22,7 +22,6 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
-    "PRE_JAVA_8_INFERENCE_OPTS",
 )
 
 filegroup(
@@ -33,7 +32,7 @@ filegroup(
 android_library(
     name = "android",
     srcs = [":android-srcs"],
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     deps = [
         "//:dagger_with_compiler",

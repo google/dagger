@@ -21,14 +21,13 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "PRE_JAVA_8_INFERENCE_OPTS",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
 GenJavaTests(
     name = "tck_tests",
     srcs = glob(["*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES + [
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES + [
         "-Adagger.privateMemberValidation=warning",
         "-Adagger.staticMemberValidation=warning",
         "-Adagger.ignorePrivateAndStaticInjectionForComponent=enabled",

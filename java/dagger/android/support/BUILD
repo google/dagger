@@ -17,7 +17,7 @@
 
 package(default_visibility = ["//:src"])
 
-load("//:build_defs.bzl", "SOURCE_7_TARGET_7", "PRE_JAVA_8_INFERENCE_OPTS")
+load("//:build_defs.bzl", "SOURCE_7_TARGET_7")
 
 filegroup(
     name = "support-srcs",
@@ -27,7 +27,7 @@ filegroup(
 android_library(
     name = "support",
     srcs = glob(["*.java"]),
-    javacopts = PRE_JAVA_8_INFERENCE_OPTS + SOURCE_7_TARGET_7,
+    javacopts = SOURCE_7_TARGET_7,
     manifest = "AndroidManifest.xml",
     deps = [
         "//:dagger_with_compiler",

@@ -53,7 +53,7 @@ public class MainActivity extends DaggerAppCompatActivity {
   @Inject @Model String model;
 
   @Inject
-  void logInjnection() {
+  void logInjection() {
     Log.i(TAG, "Injecting " + MainActivity.class.getSimpleName());
   }
 

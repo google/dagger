@@ -1016,10 +1016,11 @@ abstract class BindingGraph {
         private final Set<Object> cycleChecker = new HashSet<>();
 
         /**
-         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are
-         * multibindings with contributions declared within this component's modules or optional
-         * bindings with present values declared within this component's modules, or if any of its
-         * unscoped dependencies depend on such bindings.
+         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are provision
+         * bindings that conflict with previously resolved bindings or multibindings with
+         * contributions declared within this component's modules or optional bindings with present
+         * values declared within this component's modules, or if any of its unscoped dependencies
+         * depend on such bindings.
          *
          * <p>We don't care about scoped dependencies because they will never depend on bindings
          * from subcomponents.
@@ -1118,18 +1119,20 @@ abstract class BindingGraph {
 
         /**
          * Returns {@code true} if {@code resolvedBindings} contains a provision binding
-         * for which there is an explicit present binding in this component that was not resolved
-         * in the parent.
+         * for which there is an explicit present binding in this component that was resolved
+         * previously.
          */
-        boolean hasLocallyResolvedContributionBinding(ResolvedBindings resolvedBindings) {
+        boolean hasLocallyConflictingContributionBinding(ResolvedBindings resolvedBindings) {
           return resolvedBindings
                 .contributionBindings()
                 .stream()
-                .anyMatch(contributionBinding
-                  -> contributionBinding.bindingKind().equals(PROVISION))
-            && !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
-            && parentResolver.isPresent()
-            && !parentResolver.get().resolvedBindings.get(resolvedBindings.bindingKey()).isEmpty();
+                .anyMatch(contributionBinding -> contributionBinding.bindingKind().equals(PROVISION)
+                  && !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
+                  && parentResolver.isPresent()
+                  && parentResolver.get().getPreviouslyResolvedBindings(
+                      resolvedBindings.bindingKey()).isPresent()
+                  && !parentResolver.get().getPreviouslyResolvedBindings(
+                      resolvedBindings.bindingKey()).get().isEmpty());
         }
       }
     }

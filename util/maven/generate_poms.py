@@ -80,6 +80,18 @@ METADATA = {
         'name': 'Dagger Android Processor',
         'artifact': 'dagger-android-processor',
     },
+    '//java/dagger/grpc/server:server': {
+        'name': 'Dagger gRPC Server',
+        'artifact': 'dagger-grpc-server',
+    },
+    '//java/dagger/grpc/server:annotations': {
+        'name': 'Dagger gRPC Server annotations',
+        'artifact': 'dagger-grpc-server-annotations',
+    },
+    '//java/dagger/grpc/server/processor:processor': {
+        'name': 'Dagger gRPC Server processor',
+        'artifact': 'dagger-grpc-server-processor',
+    },
 }
 
 

@@ -73,6 +73,15 @@ jarjar_library(
     ],
 )
 
+jarjar_library(
+    name = "shaded_grpc_server_processor",
+    rules_file = "shade_rules.txt",
+    deps = [
+        "//java/dagger/grpc/server/processor",
+        "@com_google_auto_auto_common//jar",
+    ],
+)
+
 load("//tools:javadoc.bzl", "javadoc_library")
 
 # coalesced javadocs used for the gh-pages site
@@ -82,6 +91,8 @@ javadoc_library(
         "//java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
         "//java/dagger/android/support:support-srcs",
+        "//java/dagger/grpc/server:javadoc-srcs",
+        "//java/dagger/grpc/server/processor:javadoc-srcs",
         "//java/dagger/producers:producers-srcs",
     ],
     android_api_level = 25,
@@ -97,6 +108,8 @@ javadoc_library(
         "//java/dagger:core",
         "//java/dagger/android",
         "//java/dagger/android/support",
+        "//java/dagger/grpc/server",
+        "//java/dagger/grpc/server/processor",
         "//java/dagger/producers",
     ],
 )

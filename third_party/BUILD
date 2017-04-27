@@ -183,6 +183,41 @@ java_library(
 )
 
 java_library(
+    name = "grpc",
+    exports = ["@io_grpc_grpc_all//jar"],
+)
+
+java_library(
+    name = "grpc_core",
+    exports = ["@io_grpc_grpc_core//jar"],
+)
+
+java_library(
+    name = "grpc_netty",
+    exports = ["@io_grpc_grpc_netty//jar"],
+)
+
+java_library(
+    name = "grpc_context",
+    exports = ["@io_grpc_grpc_context//jar"],
+)
+
+java_library(
+    name = "grpc_protobuf",
+    exports = ["@io_grpc_grpc_protobuf//jar"],
+)
+
+java_library(
+    name = "grpc_stub",
+    exports = ["@io_grpc_grpc_stub//jar"],
+)
+
+java_library(
+    name = "protobuf",
+    exports = ["@com_google_protobuf_protobuf_java//jar"],
+)
+
+java_library(
     name = "compile_testing",
     testonly = 1,
     exports = [

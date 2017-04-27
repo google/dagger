@@ -155,6 +155,62 @@ maven_jar(
     sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",
 )
 
+maven_jar(
+    name = "io_grpc_grpc_core",
+    artifact = "io.grpc:grpc-core:1.2.0",
+    sha1 = "f12a213e2b59a0615df2cc9bed35dc15fd2fee37",
+)
+
+maven_jar(
+    name = "io_grpc_grpc_netty",
+    artifact = "io.grpc:grpc-netty:1.2.0",
+    sha1 = "e2682d2dc052898f87433e7a6d03d104ef98df74",
+)
+
+maven_jar(
+    name = "io_grpc_grpc_context",
+    artifact = "io.grpc:grpc-context:1.2.0",
+    sha1 = "1932db544cbb427bc18f902c7ebbb3f7e44991df",
+)
+
+maven_jar(
+    name = "io_grpc_grpc_protobuf",
+    artifact = "io.grpc:grpc-protobuf:1.2.0",
+    sha1 = "2676852d2dbd20155d9b1a940a456eae5b7445f0",
+)
+
+maven_jar(
+    name = "io_grpc_grpc_stub",
+    artifact = "io.grpc:grpc-stub:1.2.0",
+    sha1 = "964dda53b3085bfd17c7aaf51495f9efc8bda36c",
+)
+
+maven_jar(
+    name = "io_grpc_grpc_all",
+    artifact = "io.grpc:grpc-all:1.2.0",
+    sha1 = "f32006a1245dfa2d68bf92a1b4cc01831889c95b",
+)
+
+maven_jar(
+    name = "com_google_protobuf_protobuf_java",
+    artifact = "com.google.protobuf:protobuf-java:3.2.0",
+    sha1 = "62ccf171a106ff6791507f2d5364c275f9a3131d",
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    sha256 = "ff771a662fb6bd4d3cc209bcccedef3e93980a49f71df1e987f6afa3bcdcba3a",
+    strip_prefix = "protobuf-b4b0e304be5a68de3d0ee1af9b286f958750f5e4",
+    urls = ["https://github.com/google/protobuf/archive/b4b0e304be5a68de3d0ee1af9b286f958750f5e4.zip"],
+)
+
+http_archive(
+    name = "com_google_protobuf_java",
+    sha256 = "ff771a662fb6bd4d3cc209bcccedef3e93980a49f71df1e987f6afa3bcdcba3a",
+    strip_prefix = "protobuf-b4b0e304be5a68de3d0ee1af9b286f958750f5e4",
+    urls = ["https://github.com/google/protobuf/archive/b4b0e304be5a68de3d0ee1af9b286f958750f5e4.zip"],
+)
+
 load("//tools:jarjar.bzl", "jarjar_deps")
 
 jarjar_deps()

@@ -1,10 +1,12 @@
 #!/bin/sh
 
-MVN_GOAL=$1
-VERSION_NAME=$2
-REPOSITORY_ID=$3
-REPOSITORY_URL=$4
-EXTRA_MAVEN_ARGS=$5
+set -eu
+
+readonly MVN_GOAL="$1"
+readonly VERSION_NAME="$2"
+readonly REPOSITORY_ID="$3"
+readonly REPOSITORY_URL="$4"
+readonly EXTRA_MAVEN_ARG="${5:-''}"
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \
@@ -43,7 +45,7 @@ deploy_library() {
     -Djavadoc=bazel-bin/$javadoc \
     -DpomFile=$pomfile \
     -Dsources=bazel-bin/$srcjar \
-    $EXTRA_MAVEN_ARGS
+    $EXTRA_MAVEN_ARG
 }
 
 deploy_library \

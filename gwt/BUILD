@@ -20,4 +20,5 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "gwt",
     resources = glob(["**/*.gwt.xml"]),
+    resource_strip_prefix = "gwt/",
 )

@@ -24,7 +24,6 @@ import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
-import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.Key.indexByKey;
@@ -1044,7 +1043,8 @@ abstract class BindingGraph {
           ResolvedBindings previouslyResolvedBindings =
               getPreviouslyResolvedBindings(bindingKey).get();
           if (hasLocalMultibindingContributions(previouslyResolvedBindings)
-              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
+              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)
+              || hasLocalContributionBinding(previouslyResolvedBindings)) {
             return true;
           }
 
@@ -1118,7 +1118,7 @@ abstract class BindingGraph {
          * Returns {@code true} if {@code resolvedBindings} contains a binding for which there is
          * an explicit present binding in this component that was resolved previously.
          */
-        boolean hasLocallyConflictingContributionBinding(ResolvedBindings resolvedBindings) {
+        boolean hasLocalContributionBinding(ResolvedBindings resolvedBindings) {
           return resolvedBindings
                 .contributionBindings()
                 .stream()

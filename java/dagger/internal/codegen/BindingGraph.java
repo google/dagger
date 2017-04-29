@@ -1122,7 +1122,8 @@ abstract class BindingGraph {
           return resolvedBindings
                 .contributionBindings()
                 .stream()
-                .anyMatch(contributionBinding -> !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
+                .anyMatch(contributionBinding ->
+                    !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
                   && parentResolver.isPresent()
                   && parentResolver.get().getPreviouslyResolvedBindings(
                       resolvedBindings.bindingKey()).isPresent()

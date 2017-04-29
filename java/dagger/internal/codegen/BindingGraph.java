@@ -1016,11 +1016,8 @@ abstract class BindingGraph {
         private final Set<Object> cycleChecker = new HashSet<>();
 
         /**
-         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are provision
-         * bindings that conflict with previously resolved bindings or multibindings with
-         * contributions declared within this component's modules or optional bindings with present
-         * values declared within this component's modules, or if any of its unscoped dependencies
-         * depend on such bindings.
+         * Returns {@code true} if the binding and its transitive dependencies, as resolved in this
+         * component, will be different than what was resolved in the parent.
          *
          * <p>We don't care about scoped dependencies because they will never depend on bindings
          * from subcomponents.

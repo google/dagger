@@ -1118,16 +1118,14 @@ abstract class BindingGraph {
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a provision binding
-         * for which there is an explicit present binding in this component that was resolved
-         * previously.
+         * Returns {@code true} if {@code resolvedBindings} contains a binding for which there is
+         * an explicit present binding in this component that was resolved previously.
          */
         boolean hasLocallyConflictingContributionBinding(ResolvedBindings resolvedBindings) {
           return resolvedBindings
                 .contributionBindings()
                 .stream()
-                .anyMatch(contributionBinding -> contributionBinding.bindingKind().equals(PROVISION)
-                  && !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
+                .anyMatch(contributionBinding -> !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
                   && parentResolver.isPresent()
                   && parentResolver.get().getPreviouslyResolvedBindings(
                       resolvedBindings.bindingKey()).isPresent()

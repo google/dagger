@@ -44,8 +44,6 @@ def pom_deps(label):
         accumulated_deps.add(export)
         accumulated_deps.update(pom_deps(export))
     else:
-      if ':lib' in dep and dep.endswith('.jar'):
-        dep = dep[:-4].replace(':lib', ':')
       accumulated_deps.add(dep)
 
   return accumulated_deps
@@ -91,6 +89,14 @@ METADATA = {
     '//java/dagger/grpc/server/processor:processor': {
         'name': 'Dagger gRPC Server processor',
         'artifact': 'dagger-grpc-server-processor',
+    # b/37741866 and https://github.com/google/dagger/issues/715
+    '//java/dagger/android:libandroid.jar': {
+        'name': 'Dagger Android (Jar Impl)',
+        'artifact': 'dagger-android-jarimpl',
+    },
+    '//java/dagger/android/support:libsupport.jar': {
+        'name': 'Dagger Android Support (Jar Impl)',
+        'artifact': 'dagger-android-support-jarimpl',
     },
 }
 

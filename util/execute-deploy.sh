@@ -13,6 +13,8 @@ python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger/internal/codegen:codegen \
   //java/dagger/producers:producers \
   //java/dagger/android:android \
+  //java/dagger/android:libandroid.jar \
+  //java/dagger/android/support:libsupport.jar \
   //java/dagger/android/support:support \
   //java/dagger/android/processor:processor \
   //java/dagger/grpc/server:server \
@@ -72,11 +74,25 @@ deploy_library \
   java/dagger/android/android-javadoc.jar \
   dagger-android.pom.xml
 
+# b/37741866 and https://github.com/google/dagger/issues/715
+deploy_library \
+  java/dagger/android/libandroid.jar \
+  java/dagger/android/libandroid-src.jar \
+  java/dagger/android/android-javadoc.jar \
+  dagger-android-jarimpl.pom.xml
+
 deploy_library \
   java/dagger/android/support/support.aar \
   java/dagger/android/support/libsupport-src.jar \
   java/dagger/android/support/support-javadoc.jar \
   dagger-android-support.pom.xml
+
+# b/37741866 and https://github.com/google/dagger/issues/715
+deploy_library \
+  java/dagger/android/support/libsupport.jar \
+  java/dagger/android/support/libsupport-src.jar \
+  java/dagger/android/support/support-javadoc.jar \
+  dagger-android-support-jarimpl.pom.xml
 
 deploy_library \
   shaded_android_processor.jar \

@@ -56,7 +56,3 @@ branches:
   only:
     - master
     - /^release.*$/
-
-cache:
-  directories:
-    - $HOME/.cache/bazel

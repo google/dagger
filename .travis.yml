@@ -14,6 +14,8 @@ addons:
       - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
       - bazel=0.4.5
+      - gcc-4.8
+      - g++-4.8
 
 jdk:
   - &jdk_for_publishing oraclejdk8
@@ -32,6 +34,10 @@ before_install:
   - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
   - tar -zxf apache-maven-3.1.1-bin.tar.gz
   - export PATH="$PWD/apache-maven-3.1.1/bin:$PATH"
+  - mkdir travis_bin
+  - ln -s $(which gcc-4.8) travis_bin/gcc
+  - ln -s $(which g++-4.8) travis_bin/g++
+  - export PATH="${PWD}/travis_bin:${PATH}"
 
 script: bazel test --test_output errors //...
 

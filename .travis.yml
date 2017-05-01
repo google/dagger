@@ -30,11 +30,8 @@ android:
 before_install:
   - sudo rm -f /etc/mavenrc
   - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
-  - tar -zxvf apache-maven-3.1.1-bin.tar.gz
-  - export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m"
-  - export M2_HOME=$PWD/apache-maven-3.1.1
-  - export PATH=$M2_HOME/bin:$PATH
-  - mvn --version
+  - tar -zxf apache-maven-3.1.1-bin.tar.gz
+  - export PATH="$PWD/apache-maven-3.1.1/bin:$PATH"
 
 script: bazel test --test_output errors //...
 

@@ -44,27 +44,8 @@ at compile time.
 ### Maven
 
 In a Maven project, include the `dagger` artifact in the dependencies section
-of your `pom.xml` and the `dagger-compiler` artifact as either an `optional` or
-`provided` dependency:
-
-```xml
-<dependencies>
-  <dependency>
-    <groupId>com.google.dagger</groupId>
-    <artifactId>dagger</artifactId>
-    <version>2.x</version>
-  </dependency>
-  <dependency>
-    <groupId>com.google.dagger</groupId>
-    <artifactId>dagger-compiler</artifactId>
-    <version>2.x</version>
-    <optional>true</optional>
-  </dependency>
-</dependencies>
-```
-
-or as an `annotationProcessorPaths` value of the `maven-compiler-plugin`
-(requires at least version 3.5):
+of your `pom.xml` and the `dagger-compiler` artifact as an
+`annotationProcessorPaths` value of the `maven-compiler-plugin`:
 
 ```xml
 <dependencies>
@@ -92,6 +73,24 @@ or as an `annotationProcessorPaths` value of the `maven-compiler-plugin`
     </plugin>
   </plugins>
 </build>
+```
+
+If you are using a version of the `maven-compiler-plugin` lower than `3.5`, add
+the `dagger-compiler` artifact as with the `provided` scope:
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.google.dagger</groupId>
+    <artifactId>dagger</artifactId>
+    <version>2.x</version>
+  </dependency>
+  <dependency>
+    <groupId>com.google.dagger</groupId>
+    <artifactId>dagger-compiler</artifactId>
+    <version>2.x</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
 ```
 
 If you use the beta `dagger-producers` extension (which supplies

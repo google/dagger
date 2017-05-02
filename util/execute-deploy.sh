@@ -10,6 +10,7 @@ readonly EXTRA_MAVEN_ARG="${5:-''}"
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \
+  //gwt:gwt \
   //java/dagger/internal/codegen:codegen \
   //java/dagger/producers:producers \
   //java/dagger/android:android \
@@ -55,6 +56,12 @@ deploy_library \
   java/dagger/libcore-src.jar \
   java/dagger/core-javadoc.jar \
   dagger.pom.xml
+
+deploy_library \
+  gwt/libgwt.jar \
+  gwt/libgwt.jar \
+  gwt/libgwt.jar \
+  dagger-gwt.pom.xml
 
 deploy_library \
   shaded_compiler.jar \

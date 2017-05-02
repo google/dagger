@@ -56,6 +56,29 @@ METADATA = {
         'name': 'Dagger',
         'artifact': 'dagger',
     },
+    '//gwt:gwt': {
+        'name': 'Dagger GWT',
+        'artifact': 'dagger-gwt',
+        'manual_dependencies': '''
+            <dependency>
+              <groupId>%s</groupId>
+              <artifactId>dagger</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>%s</groupId>
+              <artifactId>dagger</artifactId>
+              <version>${project.version}</version>
+              <classifier>sources</classifier>
+            </dependency>
+            <dependency>
+              <groupId>javax.inject</groupId>
+              <artifactId>javax.inject</artifactId>
+              <version>1</version>
+              <classifier>sources</classifier>
+            </dependency>
+        ''' % (GROUP, GROUP),
+    },
     '//java/dagger/internal/codegen:codegen': {
         'name': 'Dagger Compiler',
         'artifact': 'dagger-compiler',

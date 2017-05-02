@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import textwrap
+
 DEP_BLOCK = """
 <dependency>
   <groupId>%s</groupId>
@@ -23,7 +25,7 @@ DEP_BLOCK = """
 def maven_dependency_xml(artifact_string):
   group, artifact, version = artifact_string.split(':')
   formatted = DEP_BLOCK % (group, artifact, version)
-  return '\n'.join(['    %s' %x for x in formatted.split('\n')])
+  return '\n'.join(['    %s' % x for x in formatted.split('\n')])
 
 POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
 <!--
@@ -91,10 +93,15 @@ POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
 def generate_pom(artifact_string, metadata, deps, version):
   group, artifact, version = artifact_string.split(':')
 
+  manual_deps = metadata.get('manual_dependencies', '')
+  # re-indent
+  manual_deps = textwrap.dedent(manual_deps).strip()
+  manual_deps = '\n'.join(['    %s' %x for x in manual_deps.split('\n')])
+
   return POM_OUTLINE.format(
       group=group,
       artifact=artifact,
       name=metadata['name'],
       version=version,
       packaging=metadata.get('packaging', 'jar'),
-      deps='\n'.join(map(maven_dependency_xml, deps)))
+      deps='\n'.join(map(maven_dependency_xml, deps) + [manual_deps]))

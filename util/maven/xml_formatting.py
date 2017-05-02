@@ -22,10 +22,24 @@ DEP_BLOCK = """
 </dependency>
 """.strip()
 
+CLASSIFIER_DEP_BLOCK = """
+<dependency>
+  <groupId>%s</groupId>
+  <artifactId>%s</artifactId>
+  <version>%s</version>
+  <type>%s</type>
+  <classifier>%s</classifier>
+</dependency>
+""".strip()
+
+
 def maven_dependency_xml(artifact_string):
-  group, artifact, version = artifact_string.split(':')
-  formatted = DEP_BLOCK % (group, artifact, version)
-  return '\n'.join(['    %s' % x for x in formatted.split('\n')])
+  if artifact_string.count(':') is 2:
+    format_string = DEP_BLOCK
+  else:
+    format_string = CLASSIFIER_DEP_BLOCK
+  formatted = format_string % tuple(artifact_string.split(':'))
+  return '\n'.join(['    %s' %x for x in formatted.split('\n')])
 
 POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
 <!--
@@ -93,10 +107,7 @@ POM_OUTLINE = """<?xml version="1.0" encoding="UTF-8"?>
 def generate_pom(artifact_string, metadata, deps, version):
   group, artifact, version = artifact_string.split(':')
 
-  manual_deps = metadata.get('manual_dependencies', '')
-  # re-indent
-  manual_deps = textwrap.dedent(manual_deps).strip()
-  manual_deps = '\n'.join(['    %s' %x for x in manual_deps.split('\n')])
+  deps = deps + metadata.get('manual_dependencies', [])
 
   return POM_OUTLINE.format(
       group=group,
@@ -104,4 +115,4 @@ def generate_pom(artifact_string, metadata, deps, version):
       name=metadata['name'],
       version=version,
       packaging=metadata.get('packaging', 'jar'),
-      deps='\n'.join(map(maven_dependency_xml, deps) + [manual_deps]))
+      deps='\n'.join(map(maven_dependency_xml, deps)))

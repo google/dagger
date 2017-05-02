@@ -6,7 +6,7 @@ readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
 readonly REPOSITORY_ID="$3"
 readonly REPOSITORY_URL="$4"
-readonly EXTRA_MAVEN_ARG="${5:-''}"
+readonly EXTRA_MAVEN_ARG="${5:-}"
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \

@@ -27,6 +27,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.util.Elements;
 
 /**
  * A validator for {@link MapKey} annotations.
@@ -36,6 +37,12 @@ import javax.lang.model.type.TypeKind;
  */
 // TODO(dpb,gak): Should unwrapped MapKeys be required to have their single member be named "value"?
 final class MapKeyValidator {
+  private final Elements elements;
+
+  MapKeyValidator(Elements elements) {
+    this.elements = elements;
+  }
+
   ValidationReport<Element> validate(Element element) {
     ValidationReport.Builder<Element> builder = ValidationReport.about(element);
     List<ExecutableElement> members = methodsIn(((TypeElement) element).getEnclosedElements());
@@ -47,7 +54,15 @@ final class MapKeyValidator {
       } else if (members.get(0).getReturnType().getKind() == TypeKind.ARRAY) {
         builder.addError(UNWRAPPED_MAP_KEY_WITH_ARRAY_MEMBER, element);
       }
+    } else if (autoAnnotationIsMissing()) {
+      builder.addError(
+          "@AutoAnnotation is a necessary dependency if @MapKey(unwrapValue = false). Add a "
+              + "dependency on com.google.auto.value:auto-value:<current version>");
     }
     return builder.build();
+  }
+
+  private boolean autoAnnotationIsMissing() {
+    return elements.getTypeElement("com.google.auto.value.AutoAnnotation") == null;
   }
 }

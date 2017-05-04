@@ -103,7 +103,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ComponentValidator componentValidator =
         ComponentValidator.createForComponent(
             elements, types, moduleValidator, subcomponentValidator, builderValidator);
-    MapKeyValidator mapKeyValidator = new MapKeyValidator();
+    MapKeyValidator mapKeyValidator = new MapKeyValidator(elements);
 
     this.factoryGenerator =
         new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);

@@ -33,8 +33,8 @@ fi
 bash $(dirname $0)/execute-deploy.sh \
   "gpg:sign-and-deploy-file" \
   "$version_name" \
-  "sonatype-nexus-staging" \
-  "https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+  "-DrepositoryId=sonatype-nexus-staging" \
+  "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${key}"
 
 # Publish javadocs to gh-pages

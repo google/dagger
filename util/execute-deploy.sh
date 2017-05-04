@@ -4,9 +4,8 @@ set -eu
 
 readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
-readonly REPOSITORY_ID="$3"
-readonly REPOSITORY_URL="$4"
-readonly EXTRA_MAVEN_ARG="${5:-}"
+shift 2
+readonly EXTRA_MAVEN_ARGS=("$@")
 
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \
@@ -41,14 +40,13 @@ deploy_library() {
   javadoc=$3
   pomfile=$4
   bazel build $library $srcjar $javadoc
+
   mvn $MVN_GOAL \
     -Dfile=$(library_output_file $library) \
-    -DrepositoryId=$REPOSITORY_ID \
-    -Durl=$REPOSITORY_URL \
     -Djavadoc=bazel-bin/$javadoc \
     -DpomFile=$pomfile \
     -Dsources=bazel-bin/$srcjar \
-    $EXTRA_MAVEN_ARG
+    "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
 }
 
 deploy_library \

@@ -230,7 +230,7 @@ abstract class Key {
   }
 
   boolean isValidMembersInjectionKey() {
-    return !qualifier().isPresent() && !type().getKind().equals(TypeKind.WILDCARD);
+    return !qualifier().isPresent() && type().getKind().equals(TypeKind.DECLARED);
   }
 
   /**

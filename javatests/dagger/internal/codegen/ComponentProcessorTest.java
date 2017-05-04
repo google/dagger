@@ -2185,6 +2185,26 @@ public class ComponentProcessorTest {
             "test.B<? extends test.A> cannot be provided without an @Provides-annotated method");
   }
 
+  // https://github.com/google/dagger/issues/630
+  @Test
+  public void arrayKeyRequiresAtProvides() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  String[] array();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("String[] cannot be provided without an @Provides-annotated method");
+  }
+
   @Test
   public void componentImplicitlyDependsOnGeneratedType() {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",

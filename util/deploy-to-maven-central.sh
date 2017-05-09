@@ -30,6 +30,8 @@ if [ "${keystatus}" != "pub" ]; then
   exit 64
 fi
 
+bazel test //...
+
 bash $(dirname $0)/execute-deploy.sh \
   "gpg:sign-and-deploy-file" \
   "$version_name" \

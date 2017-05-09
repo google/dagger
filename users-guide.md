@@ -362,10 +362,10 @@ hold a [`WeakReference`] to the object instead of a strong reference:
 
 ```java
 @Inject @ForReleasableReferences(MyScope.class)
-ReleasableReferences myScopeReferences;
+ReleasableReferenceManager myScopeReferenceManager;
 
 void lowMemory() {
-  myScopeReferences.releaseStrongReferences();
+  myScopeReferenceManager.releaseStrongReferences();
 }
 ```
 
@@ -375,7 +375,7 @@ garbage collection by calling `restoreStrongReferences()`:
 
 ```java
 void highMemory() {
-  myScopeReferences.restoreStrongReferences();
+  myScopeReferenceManager.restoreStrongReferences();
 }
 ```
 

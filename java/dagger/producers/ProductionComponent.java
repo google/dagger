@@ -67,10 +67,10 @@ import javax.inject.Qualifier;
  *
  * <h2>Executor</h2>
  *
- * <p>The component must include a binding for <code>{@literal @}Production Executor</code>;
- * this binding will be called exactly once, and the provided executor will be used by the framework
- * to schedule all producer methods (for this component, and any {@link ProductionSubcomponent} it
- * may have.
+ * <p>The component must include a binding for <code>{@literal @}{@link Production}
+ * {@link java.util.concurrent.Executor}</code>; this binding will be called exactly once, and the
+ * provided executor will be used by the framework to schedule all producer methods (for this
+ * component, and any {@link ProductionSubcomponent} it may have.
  *
  * @author Jesse Beder
  */

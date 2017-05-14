@@ -23,6 +23,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -213,6 +214,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     factoryBuilder.addMethod(computeMethodBuilder.build());
     factoryBuilder.addMethod(applyMethodBuilder.build());
     factoryBuilder.addMethod(executeMethodBuilder.build());
+
+    gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     // TODO(gak): write a sensible toString
     return Optional.of(factoryBuilder);

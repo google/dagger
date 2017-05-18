@@ -32,7 +32,7 @@ public @interface Module {
    * Additional {@code @Module}-annotated classes from which this module is
    * composed. The de-duplicated contributions of the modules in
    * {@code includes}, and of their inclusions recursively, are all contributed
-   * to the object graph.
+   * to the component.
    */
   Class<?>[] includes() default {};
 

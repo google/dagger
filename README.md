@@ -153,6 +153,23 @@ gradle.projectsEvaluated {
 }
 ```
 
+If you're using a version of Dagger above `2.10`, you could give a try to the
+specific APIs for Android's injection, currently in **beta**, as explained in
+the [Android documentation](http://google.github.io/dagger/android.html).  
+In this case, you need to add the following dependencies in your gradle
+settings.
+
+```groovy
+// Add Android's specific Dagger dependencies, from 2.10 and above
+dependencies {
+  compile 'com.google.dagger:dagger-android:2.x'
+  annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
+  // Additions to the APIs in dagger.android
+  // for use with the Android support libraries
+  compile 'com.google.dagger:dagger-android-support:2.x'
+}
+```
+
 ### Download
 
   * 2.x (google/dagger)

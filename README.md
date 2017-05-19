@@ -125,6 +125,7 @@ dependencies {
 // Add Dagger dependencies
 dependencies {
   compile 'com.google.dagger:dagger:2.x'
+  compile 'com.google.dagger:dagger-android:2.x' // usefull helpers for android objects Injection
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```

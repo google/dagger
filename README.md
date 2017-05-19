@@ -93,6 +93,37 @@ the `dagger-compiler` artifact with the `provided` scope:
 </dependencies>
 ```
 
+or as an `annotationProcessorPaths` value of the `maven-compiler-plugin`
+(requires at least version 3.5):
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.google.dagger</groupId>
+    <artifactId>dagger</artifactId>
+    <version>2.x</version>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.6.1</version>
+      <configuration>
+        <annotationProcessorPaths>
+          <path>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger-compiler</artifactId>
+            <version>2.x</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
 If you use the beta `dagger-producers` extension (which supplies
 parallelizable execution graphs), then add this to your maven configuration:
 

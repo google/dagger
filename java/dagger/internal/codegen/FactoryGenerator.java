@@ -27,6 +27,7 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
+import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.Proxies.createProxy;
 import static dagger.internal.codegen.Proxies.shouldGenerateProxy;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
@@ -275,6 +276,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     }
 
     proxyMethodFor(binding).ifPresent(factoryBuilder::addMethod);
+
+    gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return Optional.of(factoryBuilder);
   }

@@ -29,6 +29,7 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
@@ -218,6 +219,8 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
 
     injectorTypeBuilder.addMethod(injectMembersBuilder.build());
     injectMethodsForSubclasses.forEach(injectorTypeBuilder::addMethod);
+
+    gwtIncompatibleAnnotation(binding).ifPresent(injectorTypeBuilder::addAnnotation);
 
     return Optional.of(injectorTypeBuilder);
   }

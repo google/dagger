@@ -24,6 +24,7 @@ import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
+import static dagger.internal.codegen.Util.toImmutableList;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
@@ -41,6 +42,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -234,12 +236,9 @@ class SourceFiles {
         return ImmutableList.of();
       }
     }
-    ImmutableList.Builder<TypeVariableName> builder = ImmutableList.builder();
-    for (TypeParameterElement typeParameter :
-        binding.bindingTypeElement().get().getTypeParameters()) {
-      builder.add(TypeVariableName.get(typeParameter));
-    }
-    return builder.build();
+    List<? extends TypeParameterElement> typeParameters =
+        binding.bindingTypeElement().get().getTypeParameters();
+    return typeParameters.stream().map(TypeVariableName::get).collect(toImmutableList());
   }
 
   /**

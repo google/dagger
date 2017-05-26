@@ -19,9 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toTypeNamesCodeBlock;
+import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
+import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.TypeNames.FACTORY;
-import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCER_PRODUCER;
-import static dagger.internal.codegen.TypeNames.MAP_PROVIDER_FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
 
@@ -31,7 +31,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.MembersInjector;
 import java.util.List;
-import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -110,41 +109,33 @@ abstract class MemberSelect {
         MEMBERS_INJECTOR);
   }
 
-   /**
-   * A {@link MemberSelect} for an empty map of framework types.
-   *
-   * @param bindingType the type of the binding of the empty map
+  /**
+   * A {@link MemberSelect} for a factory of an empty map of factory types, where a factory can be
+   * either a {@link javax.inject.Provider} or {@link dagger.producers.Producer}.
    */
-  static MemberSelect emptyFrameworkMapFactory(
-      BindingType bindingType, TypeMirror keyType, TypeMirror unwrappedValueType) {
-    final ClassName frameworkMapFactoryClass;
-    switch (bindingType) {
-      case PROVISION:
-        frameworkMapFactoryClass = MAP_PROVIDER_FACTORY;
-        break;
-      case PRODUCTION:
-        frameworkMapFactoryClass = MAP_OF_PRODUCER_PRODUCER;
-        break;
-      case MEMBERS_INJECTION:
-        throw new IllegalArgumentException();
-      default:
-        throw new AssertionError();
-    }
+  static MemberSelect emptyFrameworkMapFactory(ContributionBinding contributionBinding) {
+    BindingType bindingType = contributionBinding.bindingType();
+    MapType mapType = MapType.from(contributionBinding.key());
+
     return new ParameterizedStaticMethod(
-        frameworkMapFactoryClass,
-        ImmutableList.of(keyType, unwrappedValueType),
+        frameworkMapFactoryClassName(bindingType),
+        ImmutableList.of(
+            mapType.keyType(), mapType.unwrappedValueType(bindingType.frameworkClass())),
         CodeBlock.of("empty()"),
         ClassName.get(bindingType.frameworkClass()));
   }
 
   /**
-   * Returns the {@link MemberSelect} for an empty set provider.  Since there are several different
-   * implementations for a multibound {@link Set}, the caller is responsible for passing the
-   * correct factory.
+   * A static member select for an empty set factory. Calls {@link
+   * dagger.internal.SetFactory#empty()}, {@link dagger.producers.internal.SetProducer#empty()}, or
+   * {@link dagger.producers.internal.SetOfProducedProducer#empty()}, depending on the set bindings.
    */
-  static MemberSelect emptySetProvider(ClassName setFactoryType, SetType setType) {
+  static MemberSelect emptySetFactory(ContributionBinding binding) {
     return new ParameterizedStaticMethod(
-        setFactoryType, ImmutableList.of(setType.elementType()), CodeBlock.of("empty()"), FACTORY);
+        setFactoryClassName(binding),
+        ImmutableList.of(SetType.from(binding.key()).elementType()),
+        CodeBlock.of("empty()"),
+        FACTORY);
   }
 
   private static final class ParameterizedStaticMethod extends MemberSelect {

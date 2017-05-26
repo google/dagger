@@ -38,32 +38,27 @@ import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MemberSelect.emptyFrameworkMapFactory;
-import static dagger.internal.codegen.MemberSelect.emptySetProvider;
+import static dagger.internal.codegen.MemberSelect.emptySetFactory;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.MemberSelect.noOpMembersInjector;
 import static dagger.internal.codegen.MemberSelect.staticMethod;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
+import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.TypeNames.LISTENABLE_FUTURE;
-import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
-import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCED_PRODUCER;
-import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCER_PRODUCER;
-import static dagger.internal.codegen.TypeNames.MAP_PRODUCER;
-import static dagger.internal.codegen.TypeNames.MAP_PROVIDER_FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
-import static dagger.internal.codegen.TypeNames.SET_FACTORY;
-import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
-import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.providerOf;
@@ -98,20 +93,13 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.DelegateFactory;
 import dagger.internal.InstanceFactory;
-import dagger.internal.MapFactory;
-import dagger.internal.MapProviderFactory;
 import dagger.internal.Preconditions;
-import dagger.internal.SetFactory;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import dagger.producers.internal.MapOfProducerProducer;
-import dagger.producers.internal.MapProducer;
-import dagger.producers.internal.SetOfProducedProducer;
-import dagger.producers.internal.SetProducer;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
@@ -688,18 +676,10 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
             && !contributionBinding.scope().isPresent()) {
           switch (contributionBinding.bindingKind()) {
             case SYNTHETIC_MULTIBOUND_MAP:
-              BindingType bindingType = contributionBinding.bindingType();
-              MapType mapType = MapType.from(contributionBinding.key());
-              return Optional.of(
-                  emptyFrameworkMapFactory(
-                      bindingType,
-                      mapType.keyType(),
-                      mapType.unwrappedValueType(bindingType.frameworkClass())));
+              return Optional.of(emptyFrameworkMapFactory(contributionBinding));
 
             case SYNTHETIC_MULTIBOUND_SET:
-              return Optional.of(
-                  emptySetFactoryStaticMemberSelect(
-                      contributionBinding.bindingType(), contributionBinding.key()));
+              return Optional.of(emptySetFactory(contributionBinding));
 
             case INJECTION:
             case PROVISION:
@@ -736,69 +716,6 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         throw new AssertionError();
     }
     return Optional.empty();
-  }
-
-  /**
-   * A static member select for an empty set factory. Calls {@link SetFactory#empty()}, {@link
-   * SetProducer#empty()}, or {@link SetOfProducedProducer#empty()}, depending on the set
-   * bindings.
-   */
-  private static MemberSelect emptySetFactoryStaticMemberSelect(BindingType bindingType, Key key) {
-    return emptySetProvider(setFactoryClassName(bindingType, key), SetType.from(key));
-  }
-
-  /**
-   * The {@link Set} factory class name appropriate for set bindings.
-   *
-   * <ul>
-   * <li>{@link SetFactory} for provision bindings.
-   * <li>{@link SetProducer} for production bindings for {@code Set<T>}.
-   * <li>{@link SetOfProducedProducer} for production bindings for {@code Set<Produced<T>>}.
-   * </ul>
-   */
-  private static ClassName setFactoryClassName(BindingType bindingType, Key key) {
-    if (bindingType.equals(BindingType.PROVISION)) {
-      return SET_FACTORY;
-    } else {
-      SetType setType = SetType.from(key);
-      return setType.elementsAreTypeOf(Produced.class) ? SET_OF_PRODUCED_PRODUCER : SET_PRODUCER;
-    }
-  }
-
-  /**
-   * The {@link Map}-of-value factory class name appropriate for map bindings.
-   *
-   * <ul>
-   * <li>{@link MapFactory} for provision bindings.
-   * <li>{@link MapProducer} for production bindings.
-   * </ul>
-   */
-  private static ClassName mapFactoryClassName(ContributionBinding binding) {
-    switch (binding.bindingType()) {
-      case PRODUCTION:
-        return MapType.from(binding.key()).valuesAreTypeOf(Produced.class)
-            ? MAP_OF_PRODUCED_PRODUCER : MAP_PRODUCER;
-
-      case PROVISION:
-      case MEMBERS_INJECTION:
-        return MAP_FACTORY;
-
-      default:
-        throw new AssertionError(binding.toString());
-    }
-  }
-
-  /**
-   * The {@link Map}-of-framework factory class name appropriate for map bindings.
-   *
-   * <ul>
-   * <li>{@link MapProviderFactory} for provision bindings.
-   * <li>{@link MapOfProducerProducer} for production bindings.
-   * </ul>
-   */
-  private static ClassName frameworkMapFactoryClassName(BindingType bindingType) {
-    return bindingType.equals(BindingType.PRODUCTION)
-        ? MAP_OF_PRODUCER_PRODUCER : MAP_PROVIDER_FACTORY;
   }
 
   private void implementInterfaceMethods() {
@@ -1337,8 +1254,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   }
 
   private CodeBlock initializeFactoryForSetMultibinding(ContributionBinding binding) {
-    CodeBlock.Builder builder =
-        CodeBlock.builder().add("$T.", setFactoryClassName(binding.bindingType(), binding.key()));
+    CodeBlock.Builder builder = CodeBlock.builder().add("$T.", setFactoryClassName(binding));
     boolean useRawTypes = useRawType(binding);
     if (!useRawTypes) {
       SetType setType = SetType.from(binding.key());

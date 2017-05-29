@@ -737,25 +737,20 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           interfaceMethods.add(signature);
           MethodSpec.Builder interfaceMethod =
               methodSpecForComponentMethod(methodElement, requestType);
-          RequestFulfillment fulfillment =
-              requestFulfillmentRegistry.getRequestFulfillment(interfaceRequest.bindingKey());
-          CodeBlock codeBlock = fulfillment.getSnippetForDependencyRequest(interfaceRequest, name);
-          switch (interfaceRequest.kind()) {
-            case MEMBERS_INJECTOR:
-              List<? extends VariableElement> parameters = methodElement.getParameters();
-              if (!parameters.isEmpty()) {
-                Name parameterName =
-                    Iterables.getOnlyElement(methodElement.getParameters()).getSimpleName();
-                interfaceMethod.addStatement("$L.injectMembers($L)", codeBlock, parameterName);
-                if (!requestType.getReturnType().getKind().equals(VOID)) {
-                  interfaceMethod.addStatement("return $L", parameterName);
-                }
-                break;
-              }
-              // fall through
-            default:
-              interfaceMethod.addStatement("return $L", codeBlock);
-              break;
+          CodeBlock codeBlock =
+              requestFulfillmentRegistry
+                  .getRequestFulfillment(interfaceRequest.bindingKey())
+                  .getSnippetForDependencyRequest(interfaceRequest, name);
+          List<? extends VariableElement> parameters = methodElement.getParameters();
+          if (interfaceRequest.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR)
+              && !parameters.isEmpty() /* i.e. it's not a request for a MembersInjector<T> */) {
+            Name parameterName = getOnlyElement(parameters).getSimpleName();
+            interfaceMethod.addStatement("$L.injectMembers($L)", codeBlock, parameterName);
+            if (!requestType.getReturnType().getKind().equals(VOID)) {
+              interfaceMethod.addStatement("return $L", parameterName);
+            }
+          } else {
+            interfaceMethod.addStatement("return $L", codeBlock);
           }
           component.addMethod(interfaceMethod.build());
         }

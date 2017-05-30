@@ -57,18 +57,5 @@ public final class MembersInjectors {
     }
   }
 
-  /**
-   * Returns a {@link MembersInjector} that delegates to the {@link MembersInjector} of its
-   * supertype.  This is useful for cases where a type is known not to have its own {@link Inject}
-   * members, but must still inject members on its supertype(s).
-   *
-   * <p>Note that there is no verification that the type being injected does not have {@link Inject}
-   * members, so care should be taken to ensure appropriate use.
-   */
-  @SuppressWarnings("unchecked")
-  public static <T> MembersInjector<T> delegatingTo(MembersInjector<? super T> delegate) {
-    return (MembersInjector<T>) checkNotNull(delegate);
-  }
-
   private MembersInjectors() {}
 }

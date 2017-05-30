@@ -192,7 +192,22 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     this.subcomponentNames = subcomponentNames;
     this.optionalFactories = optionalFactories;
     this.requestFulfillmentRegistry =
-        new RequestFulfillmentRegistry(graph.resolvedBindings(), this);
+        new RequestFulfillmentRegistry(
+            graph.resolvedBindings(), this, childComponentNames(keyFactory, subcomponentNames));
+  }
+
+  private static ImmutableMap<BindingKey, String> childComponentNames(
+      Key.Factory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
+    ImmutableMap.Builder<BindingKey, String> builder = ImmutableMap.builder();
+    subcomponentNames.forEach(
+        (component, name) -> {
+          if (component.builderSpec().isPresent()) {
+            TypeMirror builderType = component.builderSpec().get().builderDefinitionType().asType();
+            builder.put(
+                BindingKey.contribution(keyFactory.forSubcomponentBuilder(builderType)), name);
+          }
+        });
+    return builder.build();
   }
 
   protected AbstractComponentWriter(

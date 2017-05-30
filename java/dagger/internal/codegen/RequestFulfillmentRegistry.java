@@ -33,13 +33,16 @@ final class RequestFulfillmentRegistry {
   private final HasBindingMembers hasBindingMembers;
   /** This map is mutated as {@link #getRequestFulfillment} is invoked. */
   private final Map<BindingKey, RequestFulfillment> requestFulfillments;
+  private final ImmutableMap<BindingKey, String> subcomponentNames;
 
   RequestFulfillmentRegistry(
       ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap,
-      HasBindingMembers hasBindingMembers) {
+      HasBindingMembers hasBindingMembers,
+      ImmutableMap<BindingKey, String> subcomponentNames) {
     this.resolvedBindingsMap = resolvedBindingsMap;
     this.hasBindingMembers = hasBindingMembers;
     this.requestFulfillments = newLinkedHashMapWithExpectedSize(resolvedBindingsMap.size());
+    this.subcomponentNames = subcomponentNames;
   }
 
   /** Returns a {@link RequestFulfillment} implementation for the given {@link BindingKey} */
@@ -64,6 +67,12 @@ final class RequestFulfillmentRegistry {
 
         ProviderFieldRequestFulfillment providerFieldRequestFulfillment =
             new ProviderFieldRequestFulfillment(bindingKey, memberSelect);
+
+        if (provisionBinding.bindingKind().equals(ContributionBinding.Kind.SUBCOMPONENT_BUILDER)) {
+          return new SubcomponentBuilderRequestFulfillment(
+              bindingKey, providerFieldRequestFulfillment, subcomponentNames.get(bindingKey));
+        }
+
         if (provisionBinding.implicitDependencies().isEmpty()
             && !provisionBinding.scope().isPresent()
             && !provisionBinding.requiresModuleInstance()

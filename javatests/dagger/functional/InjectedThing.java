@@ -159,6 +159,7 @@ final class InjectedThing {
       Thing thing,
       Provider<Thing> thingProvider,
       Lazy<Thing> lazyThing,
+      Provider<Lazy<Thing>> lazyThingProvider,
       MembersInjector<Thing> thingMembersInjector) {}
 
   @Inject void primitiveByte(byte primitiveByte) {}
@@ -222,6 +223,7 @@ final class InjectedThing {
   @Inject void lazyLongArray(Lazy<long[]> lazyLongArray) {}
   @Inject void lazyBooleanArray(Lazy<boolean[]> lazyBooleanArray) {}
   @Inject void lazy(Lazy<float[]> lazy) {}
+  @Inject void lazyThingProvider(Provider<Lazy<Thing>> lazyThingProvider) {}
   @Inject void lazyDoubleArray(Lazy<double[]> lazyDoubleArray) {}
 
   @Inject void thing(Thing thing) {}

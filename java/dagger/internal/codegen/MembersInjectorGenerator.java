@@ -246,7 +246,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   private CodeBlock delegateInjectMemberCodeBlock(
       ImmutableMap<BindingKey, FieldSpec> dependencyFields, InjectionSite injectionSite) {
     return CodeBlock.of(
-        "$L.$L($L);",
+        "$T.$L($L);",
         membersInjectorNameForType(
             MoreElements.asType(injectionSite.element().getEnclosingElement())),
         injectionSiteDelegateMethodName(injectionSite.element()),

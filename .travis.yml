@@ -49,8 +49,8 @@ env:
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
 
 after_success:
-  - util/generate-latest-docs.sh
-  - util/publish-snapshot-on-commit.sh
+  - bash util/generate-latest-docs.sh
+  - bash util/publish-snapshot-on-commit.sh
 
 branches:
   only:

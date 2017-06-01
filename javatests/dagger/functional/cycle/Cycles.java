@@ -172,4 +172,26 @@ final class Cycles {
     @SuppressWarnings("dependency-cycle")
     Object object();
   }
+
+  interface Foo {}
+
+  static class Bar implements Foo {
+    @Inject
+    Bar(Provider<Foo> fooProvider) {}
+  }
+
+  /**
+   * A component with a cycle in which a {@code @Binds} binding depends on the binding that has to
+   * be deferred.
+   */
+  @Component(modules = BindsCycleModule.class)
+  interface BindsCycleComponent {
+    Bar bar();
+  }
+
+  @Module
+  abstract static class BindsCycleModule {
+    @Binds
+    abstract Foo foo(Bar bar);
+  }
 }

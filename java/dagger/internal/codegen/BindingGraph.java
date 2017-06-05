@@ -36,8 +36,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.VerifyException;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -59,6 +57,7 @@ import dagger.producers.Producer;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,7 +65,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
@@ -369,10 +367,8 @@ abstract class BindingGraph {
       final ImmutableSetMultimap<Key, DelegateDeclaration> delegateMultibindingDeclarations;
       final Map<BindingKey, ResolvedBindings> resolvedBindings;
       final Deque<BindingKey> cycleStack = new ArrayDeque<>();
-      final Cache<BindingKey, Boolean> bindingKeyDependsOnLocalBindingsCache =
-          CacheBuilder.newBuilder().build();
-      final Cache<Binding, Boolean> bindingDependsOnLocalBindingsCache =
-          CacheBuilder.newBuilder().build();
+      final Map<BindingKey, Boolean> bindingKeyDependsOnLocalBindingsCache = new HashMap<>();
+      final Map<Binding, Boolean> bindingDependsOnLocalBindingsCache = new HashMap<>();
       final Queue<ComponentDescriptor> subcomponentsToResolve = new ArrayDeque<>();
 
       Resolver(
@@ -1027,37 +1023,34 @@ abstract class BindingGraph {
          *     empty
          */
         boolean dependsOnLocalBindings(BindingKey bindingKey) {
-          checkArgument(
-              getPreviouslyResolvedBindings(bindingKey).isPresent(),
-              "no previously resolved bindings in %s for %s",
-              Resolver.this,
-              bindingKey);
           // Don't recur infinitely if there are valid cycles in the dependency graph.
           // http://b/23032377
           if (!cycleChecker.add(bindingKey)) {
             return false;
           }
-          try {
-            return bindingKeyDependsOnLocalBindingsCache.get(
-                bindingKey,
-                () -> {
-                  ResolvedBindings previouslyResolvedBindings =
-                      getPreviouslyResolvedBindings(bindingKey).get();
-                  if (hasLocalMultibindingContributions(previouslyResolvedBindings)
-                      || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
-                    return true;
-                  }
+          return bindingKeyDependsOnLocalBindingsCache.computeIfAbsent(
+              bindingKey, this::dependsOnLocalBindingsUncached);
+        }
 
-                  for (Binding binding : previouslyResolvedBindings.bindings()) {
-                    if (dependsOnLocalBindings(binding)) {
-                      return true;
-                    }
-                  }
-                  return false;
-                });
-          } catch (ExecutionException e) {
-            throw new AssertionError(e);
+        private boolean dependsOnLocalBindingsUncached(BindingKey bindingKey) {
+          checkArgument(
+              getPreviouslyResolvedBindings(bindingKey).isPresent(),
+              "no previously resolved bindings in %s for %s",
+              Resolver.this,
+              bindingKey);
+          ResolvedBindings previouslyResolvedBindings =
+              getPreviouslyResolvedBindings(bindingKey).get();
+          if (hasLocalMultibindingContributions(previouslyResolvedBindings)
+              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
+            return true;
           }
+
+          for (Binding binding : previouslyResolvedBindings.bindings()) {
+            if (dependsOnLocalBindings(binding)) {
+              return true;
+            }
+          }
+          return false;
         }
 
         /**
@@ -1073,25 +1066,22 @@ abstract class BindingGraph {
           if (!cycleChecker.add(binding)) {
             return false;
           }
-          try {
-            return bindingDependsOnLocalBindingsCache.get(
-                binding,
-                () -> {
-                  if ((!binding.scope().isPresent()
-                          || binding.scope().get().equals(reusableScope(elements)))
-                      // TODO(beder): Figure out what happens with production subcomponents.
-                      && !binding.bindingType().equals(BindingType.PRODUCTION)) {
-                    for (DependencyRequest dependency : binding.dependencies()) {
-                      if (dependsOnLocalBindings(dependency.bindingKey())) {
-                        return true;
-                      }
-                    }
-                  }
-                  return false;
-                });
-          } catch (ExecutionException e) {
-            throw new AssertionError(e);
+          return bindingDependsOnLocalBindingsCache.computeIfAbsent(
+              binding, this::dependsOnLocalBindingsUncached);
+        }
+
+        private boolean dependsOnLocalBindingsUncached(Binding binding) {
+          if ((!binding.scope().isPresent()
+                  || binding.scope().get().equals(reusableScope(elements)))
+              // TODO(beder): Figure out what happens with production subcomponents.
+              && !binding.bindingType().equals(BindingType.PRODUCTION)) {
+            for (DependencyRequest dependency : binding.dependencies()) {
+              if (dependsOnLocalBindings(dependency.bindingKey())) {
+                return true;
+              }
+            }
           }
+          return false;
         }
 
         /**

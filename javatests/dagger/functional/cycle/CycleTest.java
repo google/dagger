@@ -19,6 +19,7 @@ package dagger.functional.cycle;
 import static com.google.common.truth.Truth.assertThat;
 
 import dagger.functional.cycle.Cycles.A;
+import dagger.functional.cycle.Cycles.BindsCycleComponent;
 import dagger.functional.cycle.Cycles.C;
 import dagger.functional.cycle.Cycles.ChildCycleComponent;
 import dagger.functional.cycle.Cycles.CycleComponent;
@@ -88,5 +89,15 @@ public class CycleTest {
     assertThat(cycleMapComponent.y().mapOfProvidersOfY.get("Y").get().mapOfProvidersOfX).hasSize(1);
     assertThat(cycleMapComponent.y().mapOfProvidersOfY.get("Y").get().mapOfProvidersOfY).hasSize(1);
     assertThat(cycleMapComponent.y().mapOfProvidersOfY).hasSize(1);
+  }
+
+  /**
+   * Tests that a cycle where a {@code @Binds} binding depends on a binding that has to be deferred
+   * works.
+   */
+  @Test
+  public void cycleWithDeferredBinds() {
+    BindsCycleComponent bindsCycleComponent = DaggerCycles_BindsCycleComponent.create();
+    assertThat(bindsCycleComponent.bar()).isNotNull();
   }
 }

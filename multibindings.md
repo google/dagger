@@ -4,7 +4,7 @@ title: Multibindings
 ---
 
 Dagger allows you to bind several objects into a collection even when the
-objects are bound in different modules using mutlbindings. Dagger assembles the
+objects are bound in different modules using multibindings. Dagger assembles the
 collection so that application code can inject it without depending directly on
 the individual bindings.
 

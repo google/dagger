@@ -63,6 +63,7 @@ import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
+import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -752,10 +753,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           interfaceMethods.add(signature);
           MethodSpec.Builder interfaceMethod =
               methodSpecForComponentMethod(methodElement, requestType);
-          CodeBlock codeBlock =
-              requestFulfillmentRegistry
-                  .getRequestFulfillment(interfaceRequest.bindingKey())
-                  .getSnippetForDependencyRequest(interfaceRequest, name);
+          CodeBlock codeBlock = getRequestFulfillment(interfaceRequest);
           List<? extends VariableElement> parameters = methodElement.getParameters();
           if (interfaceRequest.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR)
               && !parameters.isEmpty() /* i.e. it's not a request for a MembersInjector<T> */) {
@@ -965,29 +963,30 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   private CodeBlock initializeProducersFromProviderDependencies(Binding binding) {
     ImmutableList.Builder<CodeBlock> initializations = ImmutableList.builder();
     for (FrameworkDependency frameworkDependency : binding.frameworkDependencies()) {
-      ResolvedBindings resolvedBindings =
-          graph.resolvedBindings().get(frameworkDependency.bindingKey());
-      if (resolvedBindings.frameworkClass().equals(Provider.class)
-          && frameworkDependency.frameworkClass().equals(Producer.class)) {
-        MemberSelect memberSelect =
-            producerFromProviderMemberSelects.get(frameworkDependency.bindingKey());
-        if (memberSelect != null) {
+      if (isProducerFromProvider(frameworkDependency)) {
+        BindingKey dependencyKey = frameworkDependency.bindingKey();
+        if (producerFromProviderMemberSelects.containsKey(dependencyKey)) {
           continue;
         }
-        FieldSpec frameworkField =
-            addFrameworkField(resolvedBindings, Optional.of(PRODUCER));
-        memberSelect = localField(name, frameworkField.name);
-        producerFromProviderMemberSelects.put(frameworkDependency.bindingKey(), memberSelect);
+        ResolvedBindings resolvedBindings = graph.resolvedBindings().get(dependencyKey);
+        FieldSpec frameworkField = addFrameworkField(resolvedBindings, Optional.of(PRODUCER));
+        MemberSelect memberSelect = localField(name, frameworkField.name);
+        producerFromProviderMemberSelects.put(dependencyKey, memberSelect);
         initializations.add(
             CodeBlock.of(
                 "this.$L = $L;",
                 memberSelect.getExpressionFor(name),
-                requestFulfillmentRegistry
-                    .getRequestFulfillment(frameworkDependency.bindingKey())
-                    .getSnippetForFrameworkDependency(frameworkDependency, name)));
+                getRequestFulfillment(frameworkDependency)));
       }
     }
     return CodeBlocks.concat(initializations.build());
+  }
+
+  private boolean isProducerFromProvider(FrameworkDependency frameworkDependency) {
+    ResolvedBindings resolvedBindings =
+        graph.resolvedBindings().get(frameworkDependency.bindingKey());
+    return resolvedBindings.frameworkClass().equals(Provider.class)
+        && frameworkDependency.frameworkClass().equals(Producer.class);
   }
 
   private CodeBlock initializeMember(BindingKey bindingKey, CodeBlock initializationCodeBlock) {
@@ -1182,9 +1181,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         return CodeBlock.of(
             "$T.create($L)",
             mapFactoryClassName(binding),
-            requestFulfillmentRegistry
-                .getRequestFulfillment(frameworkDependency.bindingKey())
-                .getSnippetForFrameworkDependency(frameworkDependency, name));
+            getRequestFulfillment(frameworkDependency));
 
       case SYNTHETIC_MULTIBOUND_SET:
         return initializeFactoryForSetMultibinding(binding);
@@ -1242,25 +1239,16 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    * The expressions that represent factory arguments for the dependencies of a binding.
    */
   private ImmutableList<CodeBlock> getDependencyArguments(Binding binding) {
-    ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
-    for (FrameworkDependency frameworkDependency : binding.frameworkDependencies()) {
-      parameters.add(getDependencyArgument(frameworkDependency));
-    }
-    return parameters.build();
+    ImmutableList<FrameworkDependency> dependencies = binding.frameworkDependencies();
+    return dependencies.stream().map(this::getDependencyArgument).collect(toImmutableList());
   }
 
   /** Returns the expression to use as an argument for a dependency. */
   private CodeBlock getDependencyArgument(FrameworkDependency frameworkDependency) {
     BindingKey requestedKey = frameworkDependency.bindingKey();
-    ResolvedBindings resolvedBindings = graph.resolvedBindings().get(requestedKey);
-    if (resolvedBindings.frameworkClass().equals(Provider.class)
-        && frameworkDependency.frameworkClass().equals(Producer.class)) {
-      return producerFromProviderMemberSelects.get(requestedKey).getExpressionFor(name);
-    } else {
-      RequestFulfillment requestFulfillment =
-          requestFulfillmentRegistry.getRequestFulfillment(requestedKey);
-      return requestFulfillment.getSnippetForFrameworkDependency(frameworkDependency, name);
-    }
+    return isProducerFromProvider(frameworkDependency)
+        ? producerFromProviderMemberSelects.get(requestedKey).getExpressionFor(name)
+        : getRequestFulfillment(frameworkDependency);
   }
 
   private CodeBlock initializeFactoryForSetMultibinding(ContributionBinding binding) {
@@ -1479,6 +1467,18 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
       return optionalFactories.presentOptionalFactory(
           binding, getOnlyElement(getDependencyArguments(binding)));
     }
+  }
+
+  private CodeBlock getRequestFulfillment(FrameworkDependency frameworkDependency) {
+    return requestFulfillmentRegistry
+        .getRequestFulfillment(frameworkDependency.bindingKey())
+        .getSnippetForFrameworkDependency(frameworkDependency, name);
+  }
+
+  private CodeBlock getRequestFulfillment(DependencyRequest dependencyRequest) {
+    return requestFulfillmentRegistry
+        .getRequestFulfillment(dependencyRequest.bindingKey())
+        .getSnippetForDependencyRequest(dependencyRequest, name);
   }
 
   /**

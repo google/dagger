@@ -18,10 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.difference;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.MemberSelect.localField;
@@ -126,26 +124,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
             graph.componentDescriptor().builderSpec().isPresent()
                 ? graph.componentDescriptor().builderSpec().get().componentType()
                 : resolvedSubcomponentFactoryMethod().getReturnType()));
-  }
-
-  @Override
-  protected void addBuilder() {
-    // Only write subcomponent builders if there is a spec.
-    if (graph.componentDescriptor().builderSpec().isPresent()) {
-      super.addBuilder();
-    }
-  }
-
-  @Override
-  protected ClassName builderName() {
-    return name.peerClass(subcomponentNames.get(graph.componentDescriptor()) + "Builder");
-  }
-
-  @Override
-  protected TypeSpec.Builder createBuilder(String builderSimpleName) {
-    // Only write subcomponent builders if there is a spec.
-    verify(graph.componentDescriptor().builderSpec().isPresent());
-    return classBuilder(builderSimpleName);
   }
 
   @Override

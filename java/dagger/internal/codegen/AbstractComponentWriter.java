@@ -62,9 +62,7 @@ import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MAN
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.providerOf;
-import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.Util.toImmutableList;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -78,7 +76,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -96,8 +93,6 @@ import dagger.internal.DelegateFactory;
 import dagger.internal.InstanceFactory;
 import dagger.internal.Preconditions;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -122,7 +117,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -130,10 +124,6 @@ import javax.tools.Diagnostic;
 
 /** Creates the implementation class for a component or subcomponent. */
 abstract class AbstractComponentWriter implements HasBindingMembers {
-  private static final String NOOP_BUILDER_METHOD_JAVADOC =
-      "This module is declared, but an instance is not used in the component. This method is a "
-          + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
-
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
   protected final Types types;
@@ -149,8 +139,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   private final Map<BindingKey, MemberSelect> producerFromProviderMemberSelects = new HashMap<>();
   private final RequestFulfillmentRegistry requestFulfillmentRegistry;
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
-  protected Optional<ClassName> builderName = Optional.empty();
   private final OptionalFactories optionalFactories;
+  private ComponentBuilder builder;
   private boolean done;
 
   /**
@@ -315,7 +305,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   final TypeSpec.Builder write() {
     checkState(!done, "ComponentWriter has already been generated.");
     decorateComponent();
-    addBuilder();
+    if (hasBuilder()) {
+      addBuilder();
+    }
     addFactoryMethods();
     addReferenceReleasingProviderManagerFields();
     addFrameworkFields();
@@ -336,30 +328,21 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    */
   protected abstract void decorateComponent();
 
+  private boolean hasBuilder() {
+    ComponentDescriptor component = graph.componentDescriptor();
+    return component.kind().isTopLevel() || component.builderSpec().isPresent();
+  }
+
   /**
    * Adds a builder type.
    */
-  protected void addBuilder() {
-    builderName = Optional.of(builderName());
-    TypeSpec.Builder componentBuilder =
-        createBuilder(builderName.get().simpleName()).addModifiers(FINAL);
+  private void addBuilder() {
+    builder = ComponentBuilder.create(name, graph, subcomponentNames, elements, types);
+    builderFields = builder.builderFields();
 
-    Optional<BuilderSpec> builderSpec = graph.componentDescriptor().builderSpec();
-    if (builderSpec.isPresent()) {
-      componentBuilder.addModifiers(PRIVATE);
-      addSupertype(componentBuilder, builderSpec.get().builderDefinitionType());
-    } else {
-      componentBuilder
-          .addModifiers(PUBLIC)
-          .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
-    }
+    addBuilderClass(builder.typeSpec());
 
-    builderFields = addBuilderFields(componentBuilder);
-    addBuildMethod(componentBuilder, builderSpec);
-    addBuilderMethods(componentBuilder, builderSpec);
-    addBuilderClass(componentBuilder.build());
-
-    constructor.addParameter(builderName.get(), "builder");
+    constructor.addParameter(builderName(), "builder");
     constructor.addStatement("assert builder != null");
   }
 
@@ -369,172 +352,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
    */
   protected abstract void addBuilderClass(TypeSpec builder);
 
-  /**
-   * Adds fields for each of the {@linkplain BindingGraph#componentRequirements component
-   * requirements}. Regardless of builder spec, there is always one field per requirement.
-   */
-  private ImmutableMap<ComponentRequirement, FieldSpec> addBuilderFields(
-      TypeSpec.Builder componentBuilder) {
-    UniqueNameSet builderFieldNames = new UniqueNameSet();
-    ImmutableMap.Builder<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.builder();
-    for (ComponentRequirement componentRequirement : graph.componentRequirements()) {
-      String contributionName =
-          builderFieldNames.getUniqueName(componentRequirement.variableName());
-      FieldSpec builderField =
-          FieldSpec.builder(TypeName.get(componentRequirement.type()), contributionName, PRIVATE)
-              .build();
-      componentBuilder.addField(builderField);
-      builderFields.put(componentRequirement, builderField);
-    }
-    return builderFields.build();
+  protected final ClassName builderName() {
+    return builder.name();
   }
-
-  /** Adds the build method to the builder. */
-  private void addBuildMethod(
-      TypeSpec.Builder componentBuilder, Optional<BuilderSpec> builderSpec) {
-    MethodSpec.Builder buildMethod;
-    if (builderSpec.isPresent()) {
-      ExecutableElement specBuildMethod = builderSpec.get().buildMethod();
-      // Note: we don't use the specBuildMethod.getReturnType() as the return type
-      // because it might be a type variable.  We make use of covariant returns to allow
-      // us to return the component type, which will always be valid.
-      buildMethod =
-          methodBuilder(specBuildMethod.getSimpleName().toString()).addAnnotation(Override.class);
-    } else {
-      buildMethod = methodBuilder("build");
-    }
-    buildMethod.returns(componentDefinitionTypeName()).addModifiers(PUBLIC);
-
-    for (Map.Entry<ComponentRequirement, FieldSpec> builderFieldEntry : builderFields.entrySet()) {
-      FieldSpec builderField = builderFieldEntry.getValue();
-      switch (builderFieldEntry.getKey().nullPolicy(elements, types)) {
-        case NEW:
-          buildMethod.addCode(
-              "if ($1N == null) { this.$1N = new $2T(); }", builderField, builderField.type);
-          break;
-        case THROW:
-          buildMethod.addCode(
-              "if ($N == null) { throw new $T($T.class.getCanonicalName() + $S); }",
-              builderField,
-              IllegalStateException.class,
-              TypeNames.rawTypeName(builderField.type),
-              " must be set");
-          break;
-        case ALLOW:
-          break;
-        default:
-          throw new AssertionError(builderFieldEntry.getKey());
-      }
-    }
-    buildMethod.addStatement("return new $T(this)", name);
-    componentBuilder.addMethod(buildMethod.build());
-  }
-
-  /**
-   * Adds the methods that set each of parameters on the builder. If the {@link BuilderSpec} is
-   * present, it will tailor the methods to match the spec.
-   */
-  private void addBuilderMethods(
-      TypeSpec.Builder componentBuilder, Optional<BuilderSpec> builderSpec) {
-    ImmutableSet<ComponentRequirement> componentRequirements = graph.componentRequirements();
-    if (builderSpec.isPresent()) {
-      UniqueNameSet parameterNames = new UniqueNameSet();
-      for (BuilderRequirementMethod requirementMethod : builderSpec.get().requirementMethods()) {
-        ComponentRequirement builderRequirement = requirementMethod.requirement();
-        ExecutableElement specMethod = requirementMethod.method();
-        MethodSpec.Builder builderMethod = addBuilderMethodFromSpec(specMethod);
-        VariableElement parameterElement = Iterables.getOnlyElement(specMethod.getParameters());
-        String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
-
-        TypeName argType =
-            parameterElement.asType().getKind().isPrimitive()
-                // Primitives need to use the original (unresolved) type to avoid boxing.
-                ? TypeName.get(parameterElement.asType())
-                // Otherwise we use the full resolved type.
-                : TypeName.get(builderRequirement.type());
-
-        builderMethod.addParameter(argType, parameterName);
-        if (componentRequirements.contains(builderRequirement)) {
-          // required type
-          builderMethod.addStatement(
-              "this.$N = $L",
-              builderFields.get(builderRequirement),
-              builderRequirement
-                      .nullPolicy(elements, types)
-                      .equals(ComponentRequirement.NullPolicy.ALLOW)
-                  ? parameterName
-                  : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
-          addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
-        } else if (graph.ownedModuleTypes().contains(builderRequirement.typeElement())) {
-          // owned, but not required
-          builderMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
-          addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
-        } else {
-          // neither owned nor required, so it must be an inherited module
-          builderMethod.addStatement(
-              "throw new $T($T.format($S, $T.class.getCanonicalName()))",
-              UnsupportedOperationException.class,
-              String.class,
-              "%s cannot be set because it is inherited from the enclosing component",
-              TypeNames.rawTypeName(TypeName.get(builderRequirement.type())));
-        }
-        componentBuilder.addMethod(builderMethod.build());
-      }
-    } else {
-      for (ComponentRequirement componentRequirement : graph.availableDependencies()) {
-        String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
-        MethodSpec.Builder builderMethod =
-            methodBuilder(componentRequirementName)
-                .returns(builderName.get())
-                .addModifiers(PUBLIC)
-                .addParameter(ClassName.get(componentRequirement.type()), componentRequirementName);
-        if (componentRequirements.contains(componentRequirement)) {
-          builderMethod.addStatement(
-              "this.$N = $T.checkNotNull($L)",
-              builderFields.get(componentRequirement),
-              Preconditions.class,
-              componentRequirementName);
-        } else {
-          builderMethod.addStatement("$T.checkNotNull($L)",
-              Preconditions.class,
-              componentRequirementName);
-          builderMethod.addJavadoc("@deprecated " + NOOP_BUILDER_METHOD_JAVADOC);
-          builderMethod.addAnnotation(Deprecated.class);
-        }
-        builderMethod.addStatement("return this");
-        componentBuilder.addMethod(builderMethod.build());
-      }
-    }
-  }
-
-  private void addBuilderMethodReturnStatementForSpec(
-      ExecutableElement specMethod, MethodSpec.Builder builderMethod) {
-    if (!specMethod.getReturnType().getKind().equals(VOID)) {
-      builderMethod.addStatement("return this");
-    }
-  }
-
-  private MethodSpec.Builder addBuilderMethodFromSpec(ExecutableElement method) {
-    TypeMirror returnType = method.getReturnType();
-    MethodSpec.Builder builderMethod =
-        methodBuilder(method.getSimpleName().toString())
-            .addAnnotation(Override.class)
-            .addModifiers(Sets.difference(method.getModifiers(), ImmutableSet.of(ABSTRACT)));
-    // If the return type is void, we add a method with the void return type.
-    // Otherwise we use the generated builder name and take advantage of covariant returns
-    // (so that we don't have to worry about setter methods that return type variables).
-    if (!returnType.getKind().equals(TypeKind.VOID)) {
-      builderMethod.returns(builderName.get());
-    }
-    return builderMethod;
-  }
-
-  /**
-   * Creates the builder class.
-   */
-  protected abstract TypeSpec.Builder createBuilder(String builderName);
-
-  protected abstract ClassName builderName();
 
   /**
    * Adds component factory methods.
@@ -838,8 +658,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                * separate fields and initilization as we do now. */
               .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
               .addCode(CodeBlocks.concat(partition));
-      if (builderName.isPresent()) {
-        initializeMethod.addParameter(builderName.get(), "builder", FINAL);
+      if (hasBuilder()) {
+        initializeMethod.addParameter(builderName(), "builder", FINAL);
         constructor.addStatement("$L(builder)", methodName);
       } else {
         constructor.addStatement("$L()", methodName);

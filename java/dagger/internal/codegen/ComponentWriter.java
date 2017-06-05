@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
@@ -186,15 +185,7 @@ final class ComponentWriter extends AbstractComponentWriter {
     addSupertype(component, graph.componentType());
   }
 
-  @Override
-  protected ClassName builderName() {
-    return name.nestedClass("Builder");
-  }
-
-  @Override
-  protected TypeSpec.Builder createBuilder(String builderSimpleName) {
-    TypeSpec.Builder builder = classBuilder(builderSimpleName).addModifiers(STATIC);
-
+  private void addBuilderFactoryMethod() {
     // Only top-level components have the factory builder() method.
     // Mirror the user's builder API type if they had one.
     MethodSpec builderFactoryMethod =
@@ -203,12 +194,11 @@ final class ComponentWriter extends AbstractComponentWriter {
             .returns(
                 graph.componentDescriptor().builderSpec().isPresent()
                     ? ClassName.get(
-                        graph.componentDescriptor().builderSpec().get().builderDefinitionType())
-                    : builderName.get())
-            .addStatement("return new $T()", builderName.get())
+                    graph.componentDescriptor().builderSpec().get().builderDefinitionType())
+                    : builderName())
+            .addStatement("return new $T()", builderName())
             .build();
     component.addMethod(builderFactoryMethod);
-    return builder;
   }
 
   @Override
@@ -218,6 +208,7 @@ final class ComponentWriter extends AbstractComponentWriter {
 
   @Override
   protected void addFactoryMethods() {
+    addBuilderFactoryMethod();
     if (canInstantiateAllRequirements()) {
       CharSequence buildMethodName =
           graph.componentDescriptor().builderSpec().isPresent()

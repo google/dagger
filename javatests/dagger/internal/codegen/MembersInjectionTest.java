@@ -655,6 +655,10 @@ public class MembersInjectionTest {
         "  public static void injectS(AllInjections instance, Provider<String> sProvider) {",
         "    instance.s = sProvider.get();",
         "  }",
+        "",
+        "  public static void injectS2(AllInjections instance, Provider<String> sProvider) {",
+        "    instance.s(sProvider.get());",
+        "  }",
         "}");
     assertAbout(javaSource())
         .that(file)

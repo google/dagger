@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
@@ -42,7 +44,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -192,7 +193,6 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
     injectorTypeBuilder.addMethod(constructorBuilder.build());
     injectorTypeBuilder.addMethod(createMethodBuilder.build());
 
-    Set<String> delegateMethods = new HashSet<>();
     ImmutableMap<BindingKey, FieldSpec> dependencyFields = dependencyFieldsBuilder.build();
     List<MethodSpec> injectMethodsForSubclasses = new ArrayList<>();
     for (InjectionSite injectionSite : binding.injectionSites()) {
@@ -201,15 +201,10 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
               ? directInjectMemberCodeBlock(binding, dependencyFields, injectionSite)
               : delegateInjectMemberCodeBlock(dependencyFields, injectionSite));
       if (!injectionSite.element().getModifiers().contains(PUBLIC)
-          && injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())
-          && delegateMethods.add(injectionSiteDelegateMethodName(injectionSite.element()))) {
+          && injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())) {
         injectMethodsForSubclasses.add(
             injectorMethodForSubclasses(
-                dependencyFields,
-                typeParameters,
-                injectedTypeName,
-                injectionSite.element(),
-                injectionSite.dependencies()));
+                dependencyFields, typeParameters, injectedTypeName, injectionSite));
       }
     }
 
@@ -249,7 +244,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
         "$T.$L($L);",
         membersInjectorNameForType(
             MoreElements.asType(injectionSite.element().getEnclosingElement())),
-        injectionSiteDelegateMethodName(injectionSite.element()),
+        injectionSiteDelegateMethodName(injectionSite),
         makeParametersCodeBlock(
             new ImmutableList.Builder<CodeBlock>()
                 .add(CodeBlock.of("instance"))
@@ -292,26 +287,28 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
     return CodeBlock.of("(($T) instance)", injectionSiteName);
   }
 
-  private static String injectionSiteDelegateMethodName(Element injectionSiteElement) {
+  private static String injectionSiteDelegateMethodName(InjectionSite injectionSite) {
+    int index = injectionSite.indexAmongAtInjectMembersWithSameSimpleName();
+    String indexString = index == 0 ? "" : String.valueOf(index + 1);
     return "inject"
-        + CaseFormat.LOWER_CAMEL.to(
-            CaseFormat.UPPER_CAMEL, injectionSiteElement.getSimpleName().toString());
+        + LOWER_CAMEL.to(UPPER_CAMEL, injectionSite.element().getSimpleName().toString())
+        + indexString;
   }
 
   private MethodSpec injectorMethodForSubclasses(
       ImmutableMap<BindingKey, FieldSpec> dependencyFields,
       List<TypeVariableName> typeParameters,
       TypeName injectedTypeName,
-      Element injectionElement,
-      ImmutableSet<DependencyRequest> dependencies) {
+      InjectionSite injectionSite) {
+    Element injectionElement = injectionSite.element();
     MethodSpec.Builder methodBuilder =
-        methodBuilder(injectionSiteDelegateMethodName(injectionElement))
+        methodBuilder(injectionSiteDelegateMethodName(injectionSite))
             .addModifiers(PUBLIC, STATIC)
             .addParameter(injectedTypeName, "instance")
             .addTypeVariables(typeParameters);
     ImmutableList.Builder<CodeBlock> providedParameters = ImmutableList.builder();
     Set<String> parameterNames = new HashSet<>();
-    for (DependencyRequest dependency : dependencies) {
+    for (DependencyRequest dependency : injectionSite.dependencies()) {
       FieldSpec field = dependencyFields.get(dependency.bindingKey());
       ParameterSpec parameter =
           ParameterSpec.builder(

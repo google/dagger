@@ -76,7 +76,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -705,9 +704,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
             CodeBlock.of(
                 "($T) $L",
                 binding.bindingType().frameworkClass(),
-                getMemberSelect(
-                        Iterables.getOnlyElement(binding.explicitDependencies()).bindingKey())
-                    .getExpressionFor(name));
+                getRequestFulfillment(getOnlyElement(binding.frameworkDependencies())));
         return Optional.of(
             CodeBlocks.concat(
                 ImmutableList.of(

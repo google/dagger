@@ -1,56 +1,37 @@
-language: android
+sudo: false
 
-os: linux
-dist: precise
-sudo: required
-addons:
-  apt:
-    sources:
-      # https://github.com/bazelbuild/bazel/issues/1821#issuecomment-262870638
-      - sourceline: "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8"
-        key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
-      - ubuntu-toolchain-r-test
-    packages:
-      - oracle-java8-installer
-      - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
-      - bazel=0.4.5
-      - gcc-4.8
-      - g++-4.8
+language: java
 
 jdk:
-  - &jdk_for_publishing oraclejdk8
+  - oraclejdk8
 
-android:
-  components:
-    - tools
-    - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
-    - build-tools-25.0.2
-    - android-25
-    - platform-tools
-    - extra-android-m2repository
+# https://github.com/travis-ci/travis-ci/issues/3259#issuecomment-130860338
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
 
-before_install:
-  - sudo rm -f /etc/mavenrc
-  - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
-  - tar -zxf apache-maven-3.1.1-bin.tar.gz
-  - export PATH="$PWD/apache-maven-3.1.1/bin:$PATH"
-  - mkdir travis_bin
-  - ln -s $(which gcc-4.8) travis_bin/gcc
-  - ln -s $(which g++-4.8) travis_bin/g++
-  - export PATH="${PWD}/travis_bin:${PATH}"
+install: mvn -B install -U -DskipTests=true -f $ROOT_POM
 
-script: bazel test --test_output errors //...
+# https://docs.travis-ci.com/user/common-build-problems/#Build-times-out-because-no-output-was-received
+script: travis_wait 60 mvn -B verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+
+after_success:
+  - util/deploy_snapshot.sh
+  - util/update_snapshot_docs.sh
+
+cache:
+  directories:
+  - $HOME/.m2
 
 env:
   global:
-    - secure: eGc3LHBRIPmTnXLM1YoIqG1do9BkpFI2pJm3fz5Cd8UaXtf7Oefa+Ts3rcn4ipee5A+lf8kEouPshSoaQs81KZ2/qf8rSTCIqeFjHR8hzmOVYo/0zRfS/VSUT0yqN+jeRhuNk3+A49RTPlcfJqPv3tyddtrM1vF7axhCJPQIRJM=
-    - secure: LTzrlqcSNeZTOV52D3ibY9RBdxY4Yu8dUOYhAonrWLE+eDTzuoyCzcPw8pEcYVNUi1rG6Q7v3QBDTnBztsPoCbcN5tEGjw5cQEbfEzSTkWaNCFjncWn36cLwx9lgbF+5Db/L0mYJ36unDKUpKVC8AgOtxQibfv/ffugfxxj8ohY=
-    - secure: PEdRiHTy+xVFPnlBwOhr7RVW/QIFSgd4hO0LESRBeF7KGIjxTZWtKPjnYrysZFm6tozMk6WBVJO6avOss0v7L64nemwpCnSspNYBa6pRGPgQ3rv/wgdPSzqDDmABmpPC18EHbUtF94KVdRX3Cr4kmwKQyD+YUKNRCY11Txt+xfo=
-    - JDK_FOR_PUBLISHING: *jdk_for_publishing
-
-after_success:
-  - util/generate-latest-docs.sh
-  - util/publish-snapshot-on-commit.sh
+    - secure: "IPvqFwnLx/GXyImJuwM2MIvzDlBLqEXaQXFGJgAP1nbuenaLAloOOlqQ+iy2FDLBD/j+zjSbR3WWF9DIT4YxAS03Z6iMwxh7GCfk+tyhVtLQnwt7w1rquyhbrrGFsY5U0hr5q80Ww6J+zfp2yZ8aP9FHSy5ahNjqys4FtubOWLk="
+    - secure: "G77Wt2h2fceQ867i1uwOjUygrNeBpLRS8sxgfUZsO66dvlrx1wYFpZLLRIiPcy01peUTE2SvXIXLHKe9v3AlMonPibsQtvvfQSVfx+jgKwLZx9cuf/M5VQlD3etRUh4K/rBezlxWRroeeKcM2DQqiEVLsTDSyNZV9kVAjwfLTvM="
+    - secure: "wieIClPLTXS3QjDzqyp0TqIrVP/Q6iWNPOtcUQYfdDZJGwufE61laTFtzVKXZRb7uJ4GXDObcVU3AcpAwkTX/5sEksBxgv3TZ5Qi0mVx2GRmbE06ULLxi7sPnTCZ/VFtselDWcWArWGAcdCjW9gcCrgj5K/+sYpVKz9a8V+SDM4="
+  matrix:
+    - ROOT_POM="pom.xml"
+    - ROOT_POM="android/pom.xml"
 
 branches:
   only:

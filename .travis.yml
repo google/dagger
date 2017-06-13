@@ -5,6 +5,8 @@ dist: precise
 sudo: required
 addons:
   apt:
+    sources:
+        - ubuntu-toolchain-r-test
     packages:
       - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853

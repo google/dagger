@@ -1015,7 +1015,7 @@ abstract class BindingGraph {
         private final Set<Object> cycleChecker = new HashSet<>();
 
         /**
-         * Returns {@code true} if the binding and its transitive dependencies, as resolved in this
+         * Returns {@code true} if the binding or its transitive dependencies, as resolved in this
          * component, will be different than what was resolved in the parent.
          *
          * <p>We don't care about scoped dependencies because they will never depend on bindings

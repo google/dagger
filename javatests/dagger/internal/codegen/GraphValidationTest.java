@@ -17,14 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
@@ -2125,18 +2128,17 @@ public class GraphValidationTest {
             "final class Injected {",
             "  @Inject Object object;",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, child, injected))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "[test.Child.inject(test.Injected)] "
                 + "java.lang.Object is bound multiple times:\n"
                 + "      @Provides Object"
                 + " test.Parent.ParentModule.object()\n"
                 + "      @Provides Object"
                 + " test.Child.ChildModule.object()")
-        .in(parent)
+        .inFile(parent)
         .onLine(8);
   }
 
@@ -2193,18 +2195,18 @@ public class GraphValidationTest {
             "final class Injected {",
             "  @Inject Object object;",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, child, injected))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "[test.Child.inject(test.Injected)] "
                 + "java.lang.Object is bound multiple times:\n"
                 + "      @Provides Object"
                 + " test.Parent.ParentModule.object()\n"
                 + "      @Provides Object"
                 + " test.Child.ChildModule.object()")
-        .in(parent)
+        .inFile(parent)
         .onLine(8);
   }
 
@@ -2376,12 +2378,12 @@ public class GraphValidationTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, child, injected))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -2431,17 +2433,17 @@ public class GraphValidationTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, child))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+
+    Compilation compilation = daggerCompiler().compile(parent, child);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "[test.Child.object()] java.lang.String is bound multiple times:\n"
                 + "      @Provides String"
                 + " test.Parent.ParentModule.string()\n"
                 + "      @Provides String"
                 + " test.Child.ChildModule.string()")
-        .in(parent)
+        .inFile(parent)
         .onLine(8);
   }
 

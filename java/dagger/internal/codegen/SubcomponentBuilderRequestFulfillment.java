@@ -18,30 +18,18 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.internal.codegen.DependencyRequest.Kind;
 
-final class SubcomponentBuilderRequestFulfillment extends RequestFulfillment {
-  private final RequestFulfillment delegate;
+final class SubcomponentBuilderRequestFulfillment extends SimpleInvocationRequestFulfillment {
   private final String subcomponentBuilderName;
 
   SubcomponentBuilderRequestFulfillment(
       BindingKey bindingKey, RequestFulfillment delegate, String subcomponentBuilderName) {
-    super(bindingKey);
-    this.delegate = delegate;
+    super(bindingKey, delegate);
     this.subcomponentBuilderName = subcomponentBuilderName;
   }
 
   @Override
-  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
-    if (request.kind().equals(Kind.INSTANCE)) {
-      return CodeBlock.of("new $LBuilder()", subcomponentBuilderName);
-    }
-    return delegate.getSnippetForDependencyRequest(request, requestingClass);
-  }
-
-  @Override
-  CodeBlock getSnippetForFrameworkDependency(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return delegate.getSnippetForFrameworkDependency(frameworkDependency, requestingClass);
+  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
+    return CodeBlock.of("new $LBuilder()", subcomponentBuilderName);
   }
 }

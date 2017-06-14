@@ -29,7 +29,6 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.common.util.concurrent.Futures;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
@@ -41,10 +40,9 @@ import javax.lang.model.type.TypeMirror;
  * requests whenever possible. In cases where direct invocation is not possible, this implementation
  * delegates to one that uses a {@link javax.inject.Provider}.
  */
-final class SimpleMethodRequestFulfillment extends RequestFulfillment {
+final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfillment {
 
   private final ProvisionBinding provisionBinding;
-  private final RequestFulfillment providerDelegate;
   private final RequestFulfillmentRegistry registry;
 
   SimpleMethodRequestFulfillment(
@@ -52,7 +50,7 @@ final class SimpleMethodRequestFulfillment extends RequestFulfillment {
       ProvisionBinding provisionBinding,
       RequestFulfillment providerDelegate,
       RequestFulfillmentRegistry registry) {
-    super(bindingKey);
+    super(bindingKey, providerDelegate);
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
@@ -60,30 +58,11 @@ final class SimpleMethodRequestFulfillment extends RequestFulfillment {
     checkArgument(!provisionBinding.requiresModuleInstance());
     checkArgument(provisionBinding.bindingElement().isPresent());
     this.provisionBinding = provisionBinding;
-    this.providerDelegate = providerDelegate;
     this.registry = registry;
   }
 
   @Override
-  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
-    switch (request.kind()) {
-      case INSTANCE:
-        return invokeMethodOrProxy(requestingClass);
-      case FUTURE:
-        return CodeBlock.of(
-            "$T.immediateFuture($L)", Futures.class, invokeMethodOrProxy(requestingClass));
-      default:
-        return providerDelegate.getSnippetForDependencyRequest(request, requestingClass);
-    }
-  }
-
-  @Override
-  CodeBlock getSnippetForFrameworkDependency(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return providerDelegate.getSnippetForFrameworkDependency(frameworkDependency, requestingClass);
-  }
-
-  private CodeBlock invokeMethodOrProxy(ClassName requestingClass) {
+  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
     ExecutableElement bindingElement = asExecutable(provisionBinding.bindingElement().get());
     return requiresProxyAccess(bindingElement, requestingClass.packageName())
         ? invokeProxyMethod(requestingClass)

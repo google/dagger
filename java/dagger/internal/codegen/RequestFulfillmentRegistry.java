@@ -68,21 +68,30 @@ final class RequestFulfillmentRegistry {
         ProviderFieldRequestFulfillment providerFieldRequestFulfillment =
             new ProviderFieldRequestFulfillment(bindingKey, memberSelect);
 
-        if (provisionBinding.bindingKind().equals(ContributionBinding.Kind.SUBCOMPONENT_BUILDER)) {
-          return new SubcomponentBuilderRequestFulfillment(
-              bindingKey, providerFieldRequestFulfillment, subcomponentNames.get(bindingKey));
+        switch (provisionBinding.bindingKind()) {
+          case SUBCOMPONENT_BUILDER:
+            return new SubcomponentBuilderRequestFulfillment(
+                bindingKey, providerFieldRequestFulfillment, subcomponentNames.get(bindingKey));
+          case SYNTHETIC_MULTIBOUND_SET:
+            return new SetBindingRequestFulfillment(
+                bindingKey,
+                provisionBinding,
+                resolvedBindingsMap,
+                this,
+                providerFieldRequestFulfillment);
+          case INJECTION:
+          case PROVISION:
+            if (provisionBinding.implicitDependencies().isEmpty()
+                && !provisionBinding.scope().isPresent()
+                && !provisionBinding.requiresModuleInstance()
+                && provisionBinding.bindingElement().isPresent()) {
+              return new SimpleMethodRequestFulfillment(
+                  bindingKey, provisionBinding, providerFieldRequestFulfillment, this);
+            }
+            // fall through
+          default:
+            return providerFieldRequestFulfillment;
         }
-
-        if (provisionBinding.implicitDependencies().isEmpty()
-            && !provisionBinding.scope().isPresent()
-            && !provisionBinding.requiresModuleInstance()
-            && provisionBinding.bindingElement().isPresent()
-            && (provisionBinding.bindingKind().equals(INJECTION)
-                || provisionBinding.bindingKind().equals(PROVISION))) {
-          return new SimpleMethodRequestFulfillment(
-              bindingKey, provisionBinding, providerFieldRequestFulfillment, this);
-        }
-        return providerFieldRequestFulfillment;
       default:
         throw new AssertionError();
     }

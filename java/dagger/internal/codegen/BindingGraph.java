@@ -1088,47 +1088,47 @@ abstract class BindingGraph {
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a synthetic multibinding with
+         * Returns {@code true} if {@code parentBindings} contains a synthetic multibinding with
          * at least one contribution declared within this component's modules.
          */
-        private boolean hasLocalMultibindingContributions(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
+        private boolean hasLocalMultibindingContributions(ResolvedBindings parentBindings) {
+          return parentBindings
                   .contributionBindings()
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
-              && !getLocalExplicitMultibindings(resolvedBindings.key()).isEmpty();
+              && !getLocalExplicitMultibindings(parentBindings.key()).isEmpty();
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a synthetic optional binding
+         * Returns {@code true} if {@code parentBindings} contains a synthetic optional binding
          * for which there is an explicit present binding in this component.
          */
-        private boolean hasLocallyPresentOptionalBinding(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
+        private boolean hasLocallyPresentOptionalBinding(ResolvedBindings parentBindings) {
+          return parentBindings
                   .contributionBindings()
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(isEqual(SYNTHETIC_OPTIONAL_BINDING))
-              && !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
+              && !getLocalExplicitBindings(keyFactory.unwrapOptional(parentBindings.key()).get())
                   .isEmpty();
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a binding for which there is
+         * Returns {@code true} if {@code parentBindings} contains a binding for which there is
          * an explicit binding in this component that was resolved previously.
          */
-        boolean hasLocalContributionBinding(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
+        boolean hasLocalContributionBinding(ResolvedBindings parentBindings) {
+          return parentBindings
                 .contributionBindings()
                 .stream()
                 .anyMatch(contributionBinding ->
-                    !getLocalExplicitBindings(resolvedBindings.key()).isEmpty()
+                    !getLocalExplicitBindings(parentBindings.key()).isEmpty()
                   && parentResolver.isPresent()
                   && parentResolver.get().getPreviouslyResolvedBindings(
-                      resolvedBindings.bindingKey()).isPresent()
+                      parentBindings.bindingKey()).isPresent()
                   && !parentResolver.get().getPreviouslyResolvedBindings(
-                      resolvedBindings.bindingKey()).get().isEmpty());
+                      parentBindings.bindingKey()).get().isEmpty());
         }
       }
     }

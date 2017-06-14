@@ -1116,7 +1116,7 @@ abstract class BindingGraph {
 
         /**
          * Returns {@code true} if {@code resolvedBindings} contains a binding for which there is
-         * an explicit present binding in this component that was resolved previously.
+         * an explicit binding in this component that was resolved previously.
          */
         boolean hasLocalContributionBinding(ResolvedBindings resolvedBindings) {
           return resolvedBindings

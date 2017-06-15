@@ -19,18 +19,27 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toTypeNamesCodeBlock;
+import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
+import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
+import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.TypeNames.FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
+import static javax.lang.model.type.TypeKind.DECLARED;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeVariableName;
 import dagger.MembersInjector;
 import java.util.List;
+import java.util.Optional;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -65,18 +74,68 @@ abstract class MemberSelect {
   }
 
   /**
-   * Returns a {@link MemberSelect} for the invocation of a static method (given by
-   * {@code methodInvocationCodeBlock}) on the {@code owningClass}.
+   * If {@code resolvedBindings} is an unscoped provision binding with no factory arguments or a
+   * no-op members injection binding, then we don't need a field to hold its factory. In that case,
+   * this method returns the static member select that returns the factory or no-op members
+   * injector.
    */
-  static MemberSelect staticMethod(ClassName owningClass, CodeBlock methodInvocationCodeBlock) {
-    return new StaticMethod(owningClass, methodInvocationCodeBlock);
+  static Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
+    BindingKey bindingKey = resolvedBindings.bindingKey();
+    switch (bindingKey.kind()) {
+      case CONTRIBUTION:
+        ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
+        if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
+            && !contributionBinding.scope().isPresent()) {
+          switch (contributionBinding.bindingKind()) {
+            case SYNTHETIC_MULTIBOUND_MAP:
+              return Optional.of(emptyFrameworkMapFactory(contributionBinding));
+
+            case SYNTHETIC_MULTIBOUND_SET:
+              return Optional.of(emptySetFactory(contributionBinding));
+
+            case INJECTION:
+            case PROVISION:
+              if (bindingKey.key().type().getKind().equals(DECLARED)) {
+                ImmutableList<TypeVariableName> typeVariables =
+                    bindingTypeElementTypeVariableNames(contributionBinding);
+                if (!typeVariables.isEmpty()) {
+                  List<? extends TypeMirror> typeArguments =
+                      ((DeclaredType) bindingKey.key().type()).getTypeArguments();
+                  return Optional.of(
+                      MemberSelect.parameterizedFactoryCreateMethod(
+                          generatedClassNameForBinding(contributionBinding), typeArguments));
+                }
+              }
+              // fall through
+
+            default:
+              return Optional.of(
+                  new StaticMethod(
+                      generatedClassNameForBinding(contributionBinding), CodeBlock.of("create()")));
+          }
+        }
+        break;
+
+      case MEMBERS_INJECTION:
+        Optional<MembersInjectionBinding> membersInjectionBinding =
+            resolvedBindings.membersInjectionBinding();
+        if (membersInjectionBinding.isPresent()
+            && membersInjectionBinding.get().injectionSites().isEmpty()) {
+          return Optional.of(noOpMembersInjector(membersInjectionBinding.get().key().type()));
+        }
+        break;
+
+      default:
+        throw new AssertionError();
+    }
+    return Optional.empty();
   }
 
   /**
-   * Returns a {@link MemberSelect} for the instance of a {@code create()} method on a factory.
-   * This only applies for factories that do not have any dependencies.
+   * Returns a {@link MemberSelect} for the instance of a {@code create()} method on a factory. This
+   * only applies for factories that do not have any dependencies.
    */
-  static MemberSelect parameterizedFactoryCreateMethod(
+  private static MemberSelect parameterizedFactoryCreateMethod(
       ClassName owningClass, List<? extends TypeMirror> parameters) {
     return new ParameterizedStaticMethod(
         owningClass, ImmutableList.copyOf(parameters), CodeBlock.of("create()"), FACTORY);
@@ -98,10 +157,8 @@ abstract class MemberSelect {
     }
   }
 
-  /**
-   * Returns the {@link MemberSelect} for a no-op {@link MembersInjector} for the given type.
-   */
-  static MemberSelect noOpMembersInjector(TypeMirror type) {
+  /** Returns the {@link MemberSelect} for a no-op {@link MembersInjector} for the given type. */
+  private static MemberSelect noOpMembersInjector(TypeMirror type) {
     return new ParameterizedStaticMethod(
         MEMBERS_INJECTORS,
         ImmutableList.of(type),
@@ -113,7 +170,7 @@ abstract class MemberSelect {
    * A {@link MemberSelect} for a factory of an empty map of factory types, where a factory can be
    * either a {@link javax.inject.Provider} or {@link dagger.producers.Producer}.
    */
-  static MemberSelect emptyFrameworkMapFactory(ContributionBinding contributionBinding) {
+  private static MemberSelect emptyFrameworkMapFactory(ContributionBinding contributionBinding) {
     BindingType bindingType = contributionBinding.bindingType();
     MapType mapType = MapType.from(contributionBinding.key());
 
@@ -130,7 +187,7 @@ abstract class MemberSelect {
    * dagger.internal.SetFactory#empty()}, {@link dagger.producers.internal.SetProducer#empty()}, or
    * {@link dagger.producers.internal.SetOfProducedProducer#empty()}, depending on the set bindings.
    */
-  static MemberSelect emptySetFactory(ContributionBinding binding) {
+  private static MemberSelect emptySetFactory(ContributionBinding binding) {
     return new ParameterizedStaticMethod(
         setFactoryClassName(binding),
         ImmutableList.of(SetType.from(binding.key()).elementType()),

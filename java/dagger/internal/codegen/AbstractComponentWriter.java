@@ -26,25 +26,20 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
-import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.DELEGATED;
-import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.INITIALIZED;
-import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
+import static dagger.internal.codegen.BindingExpression.InitializationState.DELEGATED;
+import static dagger.internal.codegen.BindingExpression.InitializationState.INITIALIZED;
+import static dagger.internal.codegen.BindingExpression.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
-import static dagger.internal.codegen.MemberSelect.emptyFrameworkMapFactory;
-import static dagger.internal.codegen.MemberSelect.emptySetFactory;
 import static dagger.internal.codegen.MemberSelect.localField;
-import static dagger.internal.codegen.MemberSelect.noOpMembersInjector;
-import static dagger.internal.codegen.MemberSelect.staticMethod;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
-import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
@@ -67,7 +62,6 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.auto.common.MoreElements;
@@ -87,8 +81,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
-import dagger.internal.DelegateFactory;
 import dagger.internal.InstanceFactory;
 import dagger.internal.Preconditions;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
@@ -103,6 +95,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,7 +107,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -122,7 +114,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 /** Creates the implementation class for a component or subcomponent. */
-abstract class AbstractComponentWriter implements HasBindingMembers {
+abstract class AbstractComponentWriter implements HasBindingExpressions {
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
   protected final Types types;
@@ -131,12 +123,11 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   protected final ClassName name;
   protected final BindingGraph graph;
   protected final ImmutableMap<ComponentDescriptor, String> subcomponentNames;
-  private final Map<BindingKey, InitializationState> initializationStates = new HashMap<>();
   protected final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
-  private final Map<BindingKey, MemberSelect> memberSelects = new HashMap<>();
+  private final Map<BindingKey, BindingExpression> bindingExpressions = new LinkedHashMap<>();
   private final Map<BindingKey, MemberSelect> producerFromProviderMemberSelects = new HashMap<>();
-  private final RequestFulfillmentRegistry requestFulfillmentRegistry;
+  private final BindingExpression.Factory bindingExpressionFactory;
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
   private final OptionalFactories optionalFactories;
   private ComponentBuilder builder;
@@ -181,9 +172,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     this.graph = graph;
     this.subcomponentNames = subcomponentNames;
     this.optionalFactories = optionalFactories;
-    this.requestFulfillmentRegistry =
-        new RequestFulfillmentRegistry(
-            graph.resolvedBindings(), this, childComponentNames(keyFactory, subcomponentNames));
+    this.bindingExpressionFactory =
+        new BindingExpression.Factory(
+            name, this, childComponentNames(keyFactory, subcomponentNames), graph);
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(
@@ -266,26 +257,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     return FieldSpec.builder(type, componentFieldNames.getUniqueName(name));
   }
 
-  private CodeBlock getMemberSelectExpression(BindingKey key) {
-    return getMemberSelect(key).getExpressionFor(name);
-  }
-
   @Override
-  public MemberSelect getMemberSelect(BindingKey key) {
-    return memberSelects.get(key);
-  }
-
-  /**
-   * Returns the initialization state of the factory field for a binding key in this component.
-   */
-  protected InitializationState getInitializationState(BindingKey bindingKey) {
-    return initializationStates.containsKey(bindingKey)
-        ? initializationStates.get(bindingKey)
-        : UNINITIALIZED;
-  }
-
-  private void setInitializationState(BindingKey bindingKey, InitializationState state) {
-    initializationStates.put(bindingKey, state);
+  public BindingExpression getBindingExpression(BindingKey key) {
+    return bindingExpressions.get(key);
   }
 
   /**
@@ -309,8 +283,9 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     }
     addFactoryMethods();
     addReferenceReleasingProviderManagerFields();
-    addFrameworkFields();
-    initializeFrameworkTypes();
+    createBindingExpressions();
+    initializeFrameworkFields();
+    writeFieldsAndInitializeMethods();
     implementInterfaceMethods();
     addSubcomponents();
     component.addMethod(constructor.build());
@@ -432,18 +407,18 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         .build();
   }
 
-  private void addFrameworkFields() {
-    graph.resolvedBindings().values().forEach(this::addField);
+  private void createBindingExpressions() {
+    graph.resolvedBindings().values().forEach(this::createBindingExpression);
   }
 
-  private void addField(ResolvedBindings resolvedBindings) {
-    BindingKey bindingKey = resolvedBindings.bindingKey();
-
+  private void createBindingExpression(ResolvedBindings resolvedBindings) {
     // If the binding can be satisfied with a static method call without dependencies or state,
     // no field is necessary.
-    Optional<MemberSelect> staticMemberSelect = staticMemberSelect(resolvedBindings);
-    if (staticMemberSelect.isPresent()) {
-      memberSelects.put(bindingKey, staticMemberSelect.get());
+    // TODO(ronshapiro): can these be merged into bindingExpressionFactory.forResolvedBindings()?
+    Optional<BindingExpression> staticBindingExpression =
+        bindingExpressionFactory.forStaticMethod(resolvedBindings);
+    if (staticBindingExpression.isPresent()) {
+      bindingExpressions.put(resolvedBindings.bindingKey(), staticBindingExpression.get());
       return;
     }
 
@@ -453,16 +428,17 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     }
 
     // TODO(gak): get rid of the field for unscoped delegated bindings
-
-    FieldSpec frameworkField = addFrameworkField(resolvedBindings, Optional.empty());
-    memberSelects.put(bindingKey, localField(name, frameworkField.name));
+    bindingExpressions.put(
+        resolvedBindings.bindingKey(),
+        bindingExpressionFactory.forField(
+            resolvedBindings, generateFrameworkField(resolvedBindings, Optional.empty())));
   }
 
   /**
    * Adds a field representing the resolved bindings, optionally forcing it to use a particular
    * framework class (instead of the class the resolved bindings would typically use).
    */
-  private FieldSpec addFrameworkField(
+  private FieldSpec generateFrameworkField(
       ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
     boolean useRawType = useRawType(resolvedBindings);
 
@@ -479,9 +455,7 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
 
-    FieldSpec field = contributionField.build();
-    component.addField(field);
-    return field;
+    return contributionField.build();
   }
 
   private boolean useRawType(ResolvedBindings resolvedBindings) {
@@ -494,63 +468,6 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
 
   private boolean useRawType(Optional<String> bindingPackage) {
     return bindingPackage.isPresent() && !bindingPackage.get().equals(name.packageName());
-  }
-
-  /**
-   * If {@code resolvedBindings} is an unscoped provision binding with no factory arguments or a
-   * no-op members injection binding, then we don't need a field to hold its factory. In that case,
-   * this method returns the static member select that returns the factory or no-op members
-   * injector.
-   */
-  private static Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
-    BindingKey bindingKey = resolvedBindings.bindingKey();
-    switch (bindingKey.kind()) {
-      case CONTRIBUTION:
-        ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
-        if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
-            && !contributionBinding.scope().isPresent()) {
-          switch (contributionBinding.bindingKind()) {
-            case SYNTHETIC_MULTIBOUND_MAP:
-              return Optional.of(emptyFrameworkMapFactory(contributionBinding));
-
-            case SYNTHETIC_MULTIBOUND_SET:
-              return Optional.of(emptySetFactory(contributionBinding));
-
-            case INJECTION:
-            case PROVISION:
-              if (bindingKey.key().type().getKind().equals(DECLARED)) {
-                ImmutableList<TypeVariableName> typeVariables =
-                    bindingTypeElementTypeVariableNames(contributionBinding);
-                if (!typeVariables.isEmpty()) {
-                  List<? extends TypeMirror> typeArguments =
-                      ((DeclaredType) bindingKey.key().type()).getTypeArguments();
-                  return Optional.of(MemberSelect.parameterizedFactoryCreateMethod(
-                      generatedClassNameForBinding(contributionBinding), typeArguments));
-                }
-              }
-              // fall through
-
-            default:
-              return Optional.of(
-                  staticMethod(
-                      generatedClassNameForBinding(contributionBinding), CodeBlock.of("create()")));
-          }
-        }
-        break;
-
-      case MEMBERS_INJECTION:
-        Optional<MembersInjectionBinding> membersInjectionBinding =
-            resolvedBindings.membersInjectionBinding();
-        if (membersInjectionBinding.isPresent()
-            && membersInjectionBinding.get().injectionSites().isEmpty()) {
-          return Optional.of(noOpMembersInjector(membersInjectionBinding.get().key().type()));
-        }
-        break;
-
-      default:
-        throw new AssertionError();
-    }
-    return Optional.empty();
   }
 
   private void implementInterfaceMethods() {
@@ -637,11 +554,20 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
 
   private static final int INITIALIZATIONS_PER_INITIALIZE_METHOD = 100;
 
-  private void initializeFrameworkTypes() {
+  private void initializeFrameworkFields() {
+    bindingExpressions.values().forEach(this::initializeFrameworkType);
+  }
+
+  private void writeFieldsAndInitializeMethods() {
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
-    for (BindingKey bindingKey : graph.resolvedBindings().keySet()) {
-      initializeFrameworkType(bindingKey).ifPresent(codeBlocks::add);
+    for (BindingExpression bindingExpression : bindingExpressions.values()) {
+      bindingExpression.initializeField(
+          (field, initialization) -> {
+            component.addField(field);
+            codeBlocks.add(initialization);
+          });
     }
+
     List<List<CodeBlock>> partitions =
         Lists.partition(codeBlocks.build(), INITIALIZATIONS_PER_INITIALIZE_METHOD);
 
@@ -667,35 +593,34 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
     }
   }
 
-  /**
-   * Returns a single code block representing the initialization of the framework type.
-   *
-   * <p>Note that this must be a single code block because initialization code blocks can be invoked
-   * from any place in any order.  By requiring a single code block (often of concatenated code
-   * blocks) we ensure that things like local variables always behave as expected by the
-   * initialization logic.
-   */
-  private Optional<CodeBlock> initializeFrameworkType(BindingKey bindingKey) {
-    // If the field is inherited or the member select is static, don't initialize.
-    MemberSelect memberSelect = getMemberSelect(bindingKey);
-    if (memberSelect.staticMember() || !memberSelect.owningClass().equals(name)) {
-      return Optional.empty();
+  /** Adds code to the given binding expression to initialize it, if necessary. */
+  private void initializeFrameworkType(BindingExpression bindingExpression) {
+    // If there is no field, don't initialize it.
+    if (!bindingExpression.hasFieldSpec()) {
+      return;
     }
 
-    switch (bindingKey.kind()) {
+    // We don't have to check whether we own the field because this method is called only for
+    // the bindingExpressions map values). That map is only populated for bindings we own, while
+    // getBindingExpression(BindingKey) may return those owned by parents.
+
+    switch (bindingExpression.bindingKey().kind()) {
       case CONTRIBUTION:
-        return initializeContributionBinding(bindingKey);
+        initializeContributionBinding(bindingExpression);
+        break;
 
       case MEMBERS_INJECTION:
-        return initializeMembersInjectionBinding(bindingKey);
+        initializeMembersInjectionBinding(bindingExpression);
+        break;
 
       default:
         throw new AssertionError();
     }
   }
 
-  private Optional<CodeBlock> initializeContributionBinding(BindingKey bindingKey) {
-    ContributionBinding binding = graph.resolvedBindings().get(bindingKey).contributionBinding();
+  private void initializeContributionBinding(BindingExpression bindingExpression) {
+    ContributionBinding binding =
+        graph.resolvedBindings().get(bindingExpression.bindingKey()).contributionBinding();
     /* We have some duplication in the branches below b/c initializeDeferredDependencies must be
      * called before we get the code block that initializes the member. */
     switch (binding.factoryCreationStrategy()) {
@@ -705,42 +630,38 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
                 "($T) $L",
                 binding.bindingType().frameworkClass(),
                 getRequestFulfillment(getOnlyElement(binding.frameworkDependencies())));
-        return Optional.of(
-            CodeBlocks.concat(
-                ImmutableList.of(
-                    initializeDeferredDependencies(binding),
-                    initializeMember(
-                        bindingKey, decorateForScope(delegatingCodeBlock, binding.scope())))));
+        bindingExpression.setInitializationCode(
+            initializeDeferredDependencies(binding),
+            initializeMember(
+                bindingExpression, decorateForScope(delegatingCodeBlock, binding.scope())));
+        break;
       case SINGLETON_INSTANCE:
         if (!binding.scope().isPresent()) {
-          return Optional.empty();
+          break;
         }
         // fall through
       case CLASS_CONSTRUCTOR:
-        return Optional.of(
-            CodeBlocks.concat(
-                ImmutableList.of(
-                    initializeDeferredDependencies(binding),
-                    initializeMember(
-                        bindingKey, initializeFactoryForContributionBinding(binding)))));
+        bindingExpression.setInitializationCode(
+            initializeDeferredDependencies(binding),
+            initializeMember(bindingExpression, initializeFactoryForContributionBinding(binding)));
+        break;
       default:
         throw new AssertionError();
     }
   }
 
-  private Optional<CodeBlock> initializeMembersInjectionBinding(BindingKey bindingKey) {
+  private void initializeMembersInjectionBinding(BindingExpression bindingExpression) {
+    BindingKey bindingKey = bindingExpression.bindingKey();
     MembersInjectionBinding binding =
         graph.resolvedBindings().get(bindingKey).membersInjectionBinding().get();
 
     if (binding.injectionSites().isEmpty()) {
-      return Optional.empty();
+      return;
     }
 
-    return Optional.of(
-        CodeBlocks.concat(
-            ImmutableList.of(
-                initializeDeferredDependencies(binding),
-                initializeMember(bindingKey, initializeMembersInjectorForBinding(binding)))));
+    bindingExpression.setInitializationCode(
+        initializeDeferredDependencies(binding),
+        initializeMember(bindingExpression, initializeMembersInjectorForBinding(binding)));
   }
 
   /**
@@ -765,12 +686,13 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         FluentIterable.from(binding.dependencies())
             .transform(DependencyRequest::bindingKey)
             .toSet()) {
-      if (!getMemberSelect(dependencyKey).staticMember()
-          && getInitializationState(dependencyKey).equals(UNINITIALIZED)) {
+      BindingExpression dependencyExpression = getBindingExpression(dependencyKey);
+      if (dependencyExpression.hasFieldSpec()
+          && dependencyExpression.fieldInitializationState().equals(UNINITIALIZED)) {
         initializations.add(
             CodeBlock.of(
-                "this.$L = new $T();", getMemberSelectExpression(dependencyKey), DELEGATE_FACTORY));
-        setInitializationState(dependencyKey, DELEGATED);
+                "this.$L = new $T();", dependencyExpression.fieldName(), DELEGATE_FACTORY));
+        dependencyExpression.setFieldInitializationState(DELEGATED);
       }
     }
 
@@ -786,7 +708,8 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
           continue;
         }
         ResolvedBindings resolvedBindings = graph.resolvedBindings().get(dependencyKey);
-        FieldSpec frameworkField = addFrameworkField(resolvedBindings, Optional.of(PRODUCER));
+        FieldSpec frameworkField = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
+        component.addField(frameworkField);
         MemberSelect memberSelect = localField(name, frameworkField.name);
         producerFromProviderMemberSelects.put(dependencyKey, memberSelect);
         initializations.add(
@@ -806,29 +729,29 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
         && frameworkDependency.frameworkClass().equals(Producer.class);
   }
 
-  private CodeBlock initializeMember(BindingKey bindingKey, CodeBlock initializationCodeBlock) {
+  private CodeBlock initializeMember(
+      BindingExpression bindingExpression, CodeBlock initializationCodeBlock) {
     ImmutableList.Builder<CodeBlock> initializations = ImmutableList.builder();
+    String fieldName = bindingExpression.fieldName();
+    CodeBlock delegateFactoryVariable = delegateFactoryVariableName(bindingExpression);
 
-    CodeBlock memberSelect = getMemberSelectExpression(bindingKey);
-    CodeBlock delegateFactoryVariable = delegateFactoryVariableExpression(bindingKey);
-    if (getInitializationState(bindingKey).equals(DELEGATED)) {
+    if (bindingExpression.fieldInitializationState().equals(DELEGATED)) {
       initializations.add(
           CodeBlock.of(
-              "$1T $2L = ($1T) $3L;", DELEGATE_FACTORY, delegateFactoryVariable, memberSelect));
+              "$1T $2L = ($1T) $3L;", DELEGATE_FACTORY, delegateFactoryVariable, fieldName));
     }
-    initializations.add(
-        CodeBlock.of("this.$L = $L;", memberSelect, initializationCodeBlock));
-    if (getInitializationState(bindingKey).equals(DELEGATED)) {
+    initializations.add(CodeBlock.of("this.$L = $L;", fieldName, initializationCodeBlock));
+    if (bindingExpression.fieldInitializationState().equals(DELEGATED)) {
       initializations.add(
-          CodeBlock.of("$L.setDelegatedProvider($L);", delegateFactoryVariable, memberSelect));
+          CodeBlock.of("$L.setDelegatedProvider($L);", delegateFactoryVariable, fieldName));
     }
-    setInitializationState(bindingKey, INITIALIZED);
+    bindingExpression.setFieldInitializationState(INITIALIZED);
 
     return CodeBlocks.concat(initializations.build());
   }
 
-  private CodeBlock delegateFactoryVariableExpression(BindingKey key) {
-    return CodeBlock.of("$LDelegate", getMemberSelectExpression(key).toString().replace('.', '_'));
+  private CodeBlock delegateFactoryVariableName(BindingExpression bindingExpression) {
+    return CodeBlock.of("$LDelegate", bindingExpression.fieldName().replace('.', '_'));
   }
 
   private CodeBlock initializeFactoryForContributionBinding(ContributionBinding binding) {
@@ -1287,28 +1210,14 @@ abstract class AbstractComponentWriter implements HasBindingMembers {
   }
 
   private CodeBlock getRequestFulfillment(FrameworkDependency frameworkDependency) {
-    return requestFulfillmentRegistry
-        .getRequestFulfillment(frameworkDependency.bindingKey())
+    return getBindingExpression(frameworkDependency.bindingKey())
+        .requestFulfillment()
         .getSnippetForFrameworkDependency(frameworkDependency, name);
   }
 
   private CodeBlock getRequestFulfillment(DependencyRequest dependencyRequest) {
-    return requestFulfillmentRegistry
-        .getRequestFulfillment(dependencyRequest.bindingKey())
+    return getBindingExpression(dependencyRequest.bindingKey())
+        .requestFulfillment()
         .getSnippetForDependencyRequest(dependencyRequest, name);
-  }
-
-  /**
-   * Initialization state for a factory field.
-   */
-  enum InitializationState {
-    /** The field is {@code null}. */
-    UNINITIALIZED,
-
-    /** The field is set to a {@link DelegateFactory}. */
-    DELEGATED,
-
-    /** The field is set to an undelegated factory. */
-    INITIALIZED;
   }
 }

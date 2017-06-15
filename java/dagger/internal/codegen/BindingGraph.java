@@ -1116,14 +1116,27 @@ abstract class BindingGraph {
 
         /**
          * Returns {@code true} if {@code parentBindings} contains a binding for which there is
-         * an explicit binding in this component that was resolved previously.
+         * an explicit binding in this component that was resolved previously in a parent component.
          */
         boolean hasLocalContributionBinding(ResolvedBindings parentBindings) {
           return parentBindings
                 .contributionBindings()
                 .stream()
                 .anyMatch(contributionBinding ->
-                    !getLocalExplicitBindings(parentBindings.key()).isEmpty());
+                    !getLocalExplicitBindings(parentBindings.key()).isEmpty()
+                    // TO BE REMOVED BEFORE COMMITTING:
+
+                    // Checks that the owning component is not this component.
+                    //
+                    // If the owning component is this component this means the binding that
+                    // requires {@code parentBindings} as a dependency can't be satisfied in the
+                    // parent. This will be reported as a "Cannot be provided" error when the
+                    // graph is validated.
+                    //
+                    // If the owning component isn't this component we have a local contribution
+                    // binding that's a duplicate and will result in a duplicate binding error
+                    // when the graph is validated.
+                    && parentBindings.owningComponent() != componentDescriptor);
         }
       }
     }

@@ -43,13 +43,13 @@ import javax.lang.model.type.TypeMirror;
 final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfillment {
 
   private final ProvisionBinding provisionBinding;
-  private final RequestFulfillmentRegistry registry;
+  private final HasBindingExpressions hasBindingExpressions;
 
   SimpleMethodRequestFulfillment(
       BindingKey bindingKey,
       ProvisionBinding provisionBinding,
       RequestFulfillment providerDelegate,
-      RequestFulfillmentRegistry registry) {
+      HasBindingExpressions hasBindingExpressions) {
     super(bindingKey, providerDelegate);
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
@@ -58,7 +58,7 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
     checkArgument(!provisionBinding.requiresModuleInstance());
     checkArgument(provisionBinding.bindingElement().isPresent());
     this.provisionBinding = provisionBinding;
-    this.registry = registry;
+    this.hasBindingExpressions = hasBindingExpressions;
   }
 
   @Override
@@ -116,8 +116,9 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
   }
 
   private CodeBlock getDependencySnippet(ClassName requestingClass, DependencyRequest request) {
-    return registry
-        .getRequestFulfillment(request.bindingKey())
+    return hasBindingExpressions
+        .getBindingExpression(request.bindingKey())
+        .requestFulfillment()
         .getSnippetForDependencyRequest(request, requestingClass);
   }
 }

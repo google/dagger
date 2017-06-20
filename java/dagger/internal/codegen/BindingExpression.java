@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
 import com.google.common.collect.ImmutableList;
@@ -34,10 +32,9 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /** The code expressions to declare, initialize, and/or access a binding in a component. */
-final class BindingExpression {
-  private final BindingKey bindingKey;
+final class BindingExpression extends RequestFulfillment {
   private final Optional<FieldSpec> fieldSpec;
-  private final RequestFulfillment requestFulfillment;
+  private final RequestFulfillment requestFulfillmentDelegate;
   private Optional<CodeBlock> initializeDeferredBindingFields = Optional.empty();
   private Optional<CodeBlock> initializeField = Optional.empty();
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
@@ -76,7 +73,6 @@ final class BindingExpression {
     BindingExpression forField(ResolvedBindings resolvedBindings, FieldSpec fieldSpec) {
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
       return new BindingExpression(
-          resolvedBindings.bindingKey(),
           createRequestFulfillment(resolvedBindings, memberSelect),
           Optional.of(fieldSpec));
     }
@@ -87,7 +83,6 @@ final class BindingExpression {
       return memberSelect.map(
           value ->
               new BindingExpression(
-                  resolvedBindings.bindingKey(),
                   createRequestFulfillment(resolvedBindings, value),
                   Optional.empty()));
     }
@@ -141,15 +136,10 @@ final class BindingExpression {
   }
 
   private BindingExpression(
-      BindingKey bindingKey, RequestFulfillment requestFulfillment, Optional<FieldSpec> fieldSpec) {
-    this.bindingKey = bindingKey;
-    this.requestFulfillment = requestFulfillment;
+      RequestFulfillment requestFulfillmentDelegate, Optional<FieldSpec> fieldSpec) {
+    super(requestFulfillmentDelegate.bindingKey());
+    this.requestFulfillmentDelegate = requestFulfillmentDelegate;
     this.fieldSpec = fieldSpec;
-  }
-
-  /** Returns the binding key associated with this binding expression. */
-  BindingKey bindingKey() {
-    return bindingKey;
   }
 
   /** Returns true if this binding expression has a field spec. */
@@ -163,9 +153,16 @@ final class BindingExpression {
     return fieldSpec.get().name;
   }
 
-  /** Returns a request fulfillment for satisfying dependency requests for this expression. */
-  RequestFulfillment requestFulfillment() {
-    return requestFulfillment;
+  @Override
+  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
+    return requestFulfillmentDelegate.getSnippetForDependencyRequest(request, requestingClass);
+  }
+
+  @Override
+  CodeBlock getSnippetForFrameworkDependency(
+      FrameworkDependency frameworkDependency, ClassName requestingClass) {
+    return requestFulfillmentDelegate.getSnippetForFrameworkDependency(
+        frameworkDependency, requestingClass);
   }
 
   /** Returns this field's field spec, if it has one. */

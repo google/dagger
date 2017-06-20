@@ -118,7 +118,6 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
   private CodeBlock getDependencySnippet(ClassName requestingClass, DependencyRequest request) {
     return hasBindingExpressions
         .getBindingExpression(request.bindingKey())
-        .requestFulfillment()
         .getSnippetForDependencyRequest(request, requestingClass);
   }
 }

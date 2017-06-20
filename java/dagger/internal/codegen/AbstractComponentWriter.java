@@ -1211,13 +1211,11 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
 
   private CodeBlock getRequestFulfillment(FrameworkDependency frameworkDependency) {
     return getBindingExpression(frameworkDependency.bindingKey())
-        .requestFulfillment()
         .getSnippetForFrameworkDependency(frameworkDependency, name);
   }
 
   private CodeBlock getRequestFulfillment(DependencyRequest dependencyRequest) {
     return getBindingExpression(dependencyRequest.bindingKey())
-        .requestFulfillment()
         .getSnippetForDependencyRequest(dependencyRequest, name);
   }
 }

@@ -90,7 +90,6 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
       DependencyRequest dependency, ClassName requestingClass) {
     return hasBindingExpressions
         .getBindingExpression(dependency.bindingKey())
-        .requestFulfillment()
         .getSnippetForDependencyRequest(dependency, requestingClass);
   }
 

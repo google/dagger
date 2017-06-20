@@ -18,14 +18,16 @@ package dagger.internal.codegen;
 
 import javax.annotation.Nullable;
 
-/** An object which associates a {@link MemberSelect} instance with a {@link BindingKey}. */
+/** An object which associates a {@link BindingExpression} instance with a {@link BindingKey}. */
 // TODO(gak): this isn't a particularly good abstraction. This should go away when MS is reworked.
-interface HasBindingMembers {
+interface HasBindingExpressions {
 
   /**
-   * Returns the {@link MemberSelect} associated with the given {@link BindingKey} or {@code null}
-   * if no association exists.
+   * Returns the {@link BindingExpression} associated with the given {@link BindingKey} or {@code
+   * null} if no association exists.
    */
+  // TODO(dpb): Move the hierarchical map of binding expressions out into a separate class.
+  // This should remove the need for HasBindingExpressions
   @Nullable
-  MemberSelect getMemberSelect(BindingKey bindingKey);
+  BindingExpression getBindingExpression(BindingKey bindingKey);
 }

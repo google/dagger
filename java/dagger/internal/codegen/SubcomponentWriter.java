@@ -20,7 +20,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Sets.difference;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
@@ -75,14 +74,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected InitializationState getInitializationState(BindingKey bindingKey) {
-    InitializationState initializationState = super.getInitializationState(bindingKey);
-    return initializationState.equals(UNINITIALIZED)
-        ? parent.getInitializationState(bindingKey)
-        : initializationState;
-  }
-
-  @Override
   protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
       ComponentRequirement componentRequirement) {
     Optional<CodeBlock> expression =
@@ -93,9 +84,9 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  public MemberSelect getMemberSelect(BindingKey key) {
-    MemberSelect memberSelect = super.getMemberSelect(key);
-    return memberSelect == null ? parent.getMemberSelect(key) : memberSelect;
+  public BindingExpression getBindingExpression(BindingKey key) {
+    BindingExpression bindingExpression = super.getBindingExpression(key);
+    return bindingExpression == null ? parent.getBindingExpression(key) : bindingExpression;
   }
 
   @Override

@@ -20,7 +20,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.CodeBlock.of;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 
-import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
@@ -33,19 +32,19 @@ import javax.lang.model.type.TypeMirror;
  */
 final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillment {
   private final ProvisionBinding binding;
-  private final ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap;
-  private final RequestFulfillmentRegistry registry;
+  private final BindingGraph graph;
+  private final HasBindingExpressions hasBindingExpressions;
 
   SetBindingRequestFulfillment(
       BindingKey bindingKey,
       ProvisionBinding binding,
-      ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap,
-      RequestFulfillmentRegistry registry,
+      BindingGraph graph,
+      HasBindingExpressions hasBindingExpressions,
       RequestFulfillment delegate) {
     super(bindingKey, delegate);
     this.binding = binding;
-    this.resolvedBindingsMap = resolvedBindingsMap;
-    this.registry = registry;
+    this.graph = graph;
+    this.hasBindingExpressions = hasBindingExpressions;
   }
 
   @Override
@@ -89,8 +88,9 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
 
   private CodeBlock getRequestFulfillmentForDependency(
       DependencyRequest dependency, ClassName requestingClass) {
-    return registry
-        .getRequestFulfillment(dependency.bindingKey())
+    return hasBindingExpressions
+        .getBindingExpression(dependency.bindingKey())
+        .requestFulfillment()
         .getSnippetForDependencyRequest(dependency, requestingClass);
   }
 
@@ -112,7 +112,8 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
   }
 
   private boolean isSingleValue(DependencyRequest dependency) {
-    return resolvedBindingsMap
+    return graph
+        .resolvedBindings()
         .get(dependency.bindingKey())
         .contributionBinding()
         .contributionType()

@@ -35,8 +35,11 @@ Dagger assumes that users on Android will use ProGuard.
 
 ## Recommended ProGuard Settings
 
-Watch this space for ProGuard settings that are relevant to applications using
-Dagger.
+If you don't use [Error Prone](https://github.com/google/error-prone), add the following to your proguard configuration:
+
+```
+-dontwarn com.google.errorprone.annotations.*
+```
 
 ## `dagger.android`
 

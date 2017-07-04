@@ -143,7 +143,8 @@ https://bitbucket.org/hvisser/android-apt.
 If you're using the [Android Databinding library][databinding], you may want to
 increase the number of errors that `javac` will print. When Dagger prints an
 error, databinding compilation will halt and sometimes print more than 100
-errors, which is the default amount for `javac`. For more information, see #306.
+errors, which is the default amount for `javac`. For more information, see
+[Issue 306](https://github.com/google/dagger/issues/306).
 
 ```groovy
 gradle.projectsEvaluated {

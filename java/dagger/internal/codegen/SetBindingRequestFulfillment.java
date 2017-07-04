@@ -17,14 +17,19 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static com.squareup.javapoet.CodeBlock.of;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 import dagger.internal.SetBuilder;
 import java.util.Collections;
+import java.util.Set;
+import java.util.function.Function;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 
 /**
  * A {@link RequestFulfillment} for {@link
@@ -34,24 +39,46 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final HasBindingExpressions hasBindingExpressions;
+  private final Elements elements;
 
   SetBindingRequestFulfillment(
       BindingKey bindingKey,
       ProvisionBinding binding,
       BindingGraph graph,
       HasBindingExpressions hasBindingExpressions,
-      RequestFulfillment delegate) {
+      RequestFulfillment delegate,
+      Elements elements) {
     super(bindingKey, delegate);
     this.binding = binding;
     this.graph = graph;
     this.hasBindingExpressions = hasBindingExpressions;
+    this.elements = elements;
   }
 
   @Override
   CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
-    // TODO(ronshapiro): if you have ImmutableSet on your classpath, use ImmutableSet.Builder
-    // otherwise, we can consider providing our own static factories for multibinding cases where
-    // all of the dependencies are @IntoSet
+    Function<DependencyRequest, CodeBlock> getRequestFulfillmentForDependency =
+        dependency ->
+            hasBindingExpressions
+                .getBindingExpression(dependency.bindingKey())
+                .getSnippetForDependencyRequest(dependency, requestingClass);
+
+    // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
+    boolean isImmutableSetAvailable = isImmutableSetAvailable();
+    // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
+    if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
+      return CodeBlock.builder()
+          .add("$T.", ImmutableSet.class)
+          .add(maybeTypeParameter(request, requestingClass))
+          .add(
+              "of($L)",
+              binding
+                  .dependencies()
+                  .stream()
+                  .map(getRequestFulfillmentForDependency)
+                  .collect(toParametersCodeBlock()))
+          .build();
+    }
     switch (binding.dependencies().size()) {
       case 0:
         return collectionsStaticFactoryInvocation(
@@ -59,22 +86,30 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
       case 1:
         {
           DependencyRequest dependency = getOnlyElement(binding.dependencies());
+          CodeBlock dependencySnippet =
+              getRequestFulfillmentForDependency(dependency, requestingClass);
           if (isSingleValue(dependency)) {
             return collectionsStaticFactoryInvocation(
-                request,
-                requestingClass,
-                CodeBlock.of(
-                    "singleton($L)",
-                    getRequestFulfillmentForDependency(dependency, requestingClass)));
+                request, requestingClass, CodeBlock.of("singleton($L)", dependencySnippet));
+          } else if (isImmutableSetAvailable) {
+            return CodeBlock.builder()
+                .add("$T.", ImmutableSet.class)
+                .add(maybeTypeParameter(request, requestingClass))
+                .add("copyOf($L)", dependencySnippet)
+                .build();
           }
         }
         // fall through
       default:
         CodeBlock.Builder instantiation = CodeBlock.builder();
         instantiation
-            .add("$T.", SetBuilder.class)
-            .add(maybeTypeParameter(request, requestingClass))
-            .add("newSetBuilder($L)", binding.dependencies().size());
+            .add("$T.", isImmutableSetAvailable ? ImmutableSet.class : SetBuilder.class)
+            .add(maybeTypeParameter(request, requestingClass));
+        if (isImmutableSetAvailable) {
+          instantiation.add("builder()");
+        } else {
+          instantiation.add("newSetBuilder($L)", binding.dependencies().size());
+        }
         for (DependencyRequest dependency : binding.dependencies()) {
           String builderMethod = isSingleValue(dependency) ? "add" : "addAll";
           instantiation.add(
@@ -82,7 +117,7 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
               builderMethod,
               getRequestFulfillmentForDependency(dependency, requestingClass));
         }
-        return instantiation.add(".create()").build();
+        return instantiation.add(".build()").build();
     }
   }
 
@@ -106,8 +141,8 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
       DependencyRequest request, ClassName requestingClass) {
     TypeMirror elementType = SetType.from(request.key()).elementType();
     return isTypeAccessibleFrom(elementType, requestingClass.packageName())
-        ? of("<$T>", elementType)
-        : of("");
+        ? CodeBlock.of("<$T>", elementType)
+        : CodeBlock.of("");
   }
 
   private boolean isSingleValue(DependencyRequest dependency) {
@@ -117,5 +152,22 @@ final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillm
         .contributionBinding()
         .contributionType()
         .equals(ContributionType.SET);
+  }
+
+  private boolean isImmutableSetAvailable() {
+    return elements.getTypeElement(ImmutableSet.class.getCanonicalName()) != null;
+  }
+
+  @Override
+  protected CodeBlock explicitTypeParameter(ClassName requestingClass) {
+    if (isImmutableSetAvailable()) {
+      TypeMirror keyType = binding.key().type();
+      return CodeBlock.of(
+          "<$T>",
+          isTypeAccessibleFrom(keyType, requestingClass.packageName())
+              ? TypeName.get(keyType)
+              : ClassName.get(Set.class));
+    }
+    return CodeBlock.of("");
   }
 }

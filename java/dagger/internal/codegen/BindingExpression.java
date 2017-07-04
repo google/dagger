@@ -30,6 +30,7 @@ import com.squareup.javapoet.FieldSpec;
 import dagger.internal.DelegateFactory;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import javax.lang.model.util.Elements;
 
 /** The code expressions to declare, initialize, and/or access a binding in a component. */
 final class BindingExpression extends RequestFulfillment {
@@ -57,16 +58,19 @@ final class BindingExpression extends RequestFulfillment {
     private final HasBindingExpressions hasBindingExpressions;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
+    private final Elements elements;
 
     Factory(
         ClassName componentName,
         HasBindingExpressions hasBindingExpressions,
         ImmutableMap<BindingKey, String> subcomponentNames,
-        BindingGraph graph) {
+        BindingGraph graph,
+        Elements elements) {
       this.componentName = checkNotNull(componentName);
       this.hasBindingExpressions = checkNotNull(hasBindingExpressions);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
+      this.elements = elements;
     }
 
     /** Creates a binding expression for a field. */
@@ -112,7 +116,8 @@ final class BindingExpression extends RequestFulfillment {
                   provisionBinding,
                   graph,
                   hasBindingExpressions,
-                  providerFieldRequestFulfillment);
+                  providerFieldRequestFulfillment,
+                  elements);
             case INJECTION:
             case PROVISION:
               if (provisionBinding.implicitDependencies().isEmpty()

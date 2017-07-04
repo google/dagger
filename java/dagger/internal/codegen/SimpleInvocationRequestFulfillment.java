@@ -34,6 +34,17 @@ abstract class SimpleInvocationRequestFulfillment extends RequestFulfillment {
 
   abstract CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass);
 
+  /**
+   * Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
+   * make type parameters for {@link Futures#immediateFuture(Object)} explicit.
+   *
+   * <p>For example, {@code javac7} cannot detect that Futures.immediateFuture(ImmutableSet.of(T))}
+   * can safely be assigned to {@code ListenableFuture<Set<T>>}.
+   */
+  protected CodeBlock explicitTypeParameter(ClassName requestingClass) {
+    return CodeBlock.of("");
+  }
+
   @Override
   final CodeBlock getSnippetForDependencyRequest(
       DependencyRequest request, ClassName requestingClass) {
@@ -41,8 +52,11 @@ abstract class SimpleInvocationRequestFulfillment extends RequestFulfillment {
       case INSTANCE:
         return getSimpleInvocation(request, requestingClass);
       case FUTURE:
-        return CodeBlock.of(
-            "$T.immediateFuture($L)", Futures.class, getSimpleInvocation(request, requestingClass));
+        return CodeBlock.builder()
+            .add("$T.", Futures.class)
+            .add(explicitTypeParameter(requestingClass))
+            .add("immediateFuture($L)", getSimpleInvocation(request, requestingClass))
+            .build();
       default:
         return delegate.getSnippetForDependencyRequest(request, requestingClass);
     }

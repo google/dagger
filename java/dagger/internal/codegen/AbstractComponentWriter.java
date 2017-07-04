@@ -174,7 +174,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     this.optionalFactories = optionalFactories;
     this.bindingExpressionFactory =
         new BindingExpression.Factory(
-            name, this, childComponentNames(keyFactory, subcomponentNames), graph);
+            name, this, childComponentNames(keyFactory, subcomponentNames), graph, elements);
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(

@@ -37,7 +37,7 @@ public final class SetBuilder<T> {
   /**
    * {@code estimatedSize} is the number of bindings which contribute to the set. They may each
    * provide {@code [0..n)} instances to the set. Because the final size is unknown, {@code
-   * contributions} are collected in a list and only hashed in {@link #create()}.
+   * contributions} are collected in a list and only hashed in {@link #build()}.
    */
   public static <T> SetBuilder<T> newSetBuilder(int estimatedSize) {
     return new SetBuilder<T>(estimatedSize);
@@ -53,7 +53,7 @@ public final class SetBuilder<T> {
     return this;
   }
 
-  public Set<T> create() {
+  public Set<T> build() {
     switch (contributions.size()) {
       case 0:
         return Collections.emptySet();

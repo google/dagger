@@ -393,12 +393,11 @@ abstract class ProvisionBinding extends ContributionBinding {
      * Returns a synthetic binding for an {@linkplain dagger.BindsOptionalOf optional binding} in a
      * component with a binding for the underlying key.
      */
-    ProvisionBinding syntheticPresentBinding(Key key) {
+    ProvisionBinding syntheticPresentBinding(Key key, DependencyRequest.Kind kind) {
       return syntheticAbsentBinding(key)
           .toBuilder()
           .explicitDependencies(
-              dependencyRequestFactory.forSyntheticPresentOptionalBinding(
-                  key, DependencyRequest.Kind.PROVIDER))
+              dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, kind))
           .build();
     }
   }

@@ -161,7 +161,7 @@ abstract class DependencyRequest {
 
   abstract Kind kind();
   abstract Key key();
-  
+
   BindingKey bindingKey() {
     switch (kind()) {
       case INSTANCE:

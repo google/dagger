@@ -654,14 +654,19 @@ abstract class BindingGraph {
         if (optionalBindingDeclarations.isEmpty()) {
           return Optional.empty();
         }
+        DependencyRequest.Kind kind =
+            DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).kind();
         ResolvedBindings underlyingKeyBindings =
             lookUpBindings(contribution(keyFactory.unwrapOptional(key).get()));
         if (underlyingKeyBindings.isEmpty()) {
           return Optional.of(provisionBindingFactory.syntheticAbsentBinding(key));
-        } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)) {
-          return Optional.of(productionBindingFactory.syntheticPresentBinding(key));
+        } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)
+            // handles producerFromProvider cases
+            || kind.equals(DependencyRequest.Kind.PRODUCER)
+            || kind.equals(DependencyRequest.Kind.PRODUCED)) {
+          return Optional.of(productionBindingFactory.syntheticPresentBinding(key, kind));
         } else {
-          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key));
+          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key, kind));
         }
       }
 

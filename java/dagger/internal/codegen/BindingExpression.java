@@ -118,6 +118,12 @@ final class BindingExpression extends RequestFulfillment {
                   hasBindingExpressions,
                   providerFieldRequestFulfillment,
                   elements);
+            case SYNTHETIC_OPTIONAL_BINDING:
+              return new OptionalBindingRequestFulfillment(
+                  bindingKey,
+                  provisionBinding,
+                  providerFieldRequestFulfillment,
+                  hasBindingExpressions);
             case INJECTION:
             case PROVISION:
               if (provisionBinding.implicitDependencies().isEmpty()

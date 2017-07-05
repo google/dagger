@@ -65,10 +65,9 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
     Filer filer =  new FormattingFiler(processingEnv.getFiler());
 
-    KeyFormatter keyFormatter = new KeyFormatter();
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
-        new BindingDeclarationFormatter(methodSignatureFormatter, keyFormatter);
+        new BindingDeclarationFormatter(methodSignatureFormatter);
     DependencyRequestFormatter dependencyRequestFormatter =
         new DependencyRequestFormatter(types, elements);
 
@@ -187,7 +186,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindingDeclarationFormatter,
             methodSignatureFormatter,
             dependencyRequestFormatter,
-            keyFormatter,
             keyFactory);
 
     return ImmutableList.of(

@@ -134,7 +134,6 @@ final class BindingGraphValidator {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFormatter dependencyRequestFormatter;
-  private final KeyFormatter keyFormatter;
   private final Key.Factory keyFactory;
 
   BindingGraphValidator(
@@ -146,7 +145,6 @@ final class BindingGraphValidator {
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFormatter dependencyRequestFormatter,
-      KeyFormatter keyFormatter,
       Key.Factory keyFactory) {
     this.elements = elements;
     this.types = types;
@@ -156,7 +154,6 @@ final class BindingGraphValidator {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
-    this.keyFormatter = keyFormatter;
     this.keyFactory = keyFactory;
   }
 
@@ -1165,7 +1162,7 @@ final class BindingGraphValidator {
       }
 
       private String formatCurrentDependencyRequestKey() {
-        return keyFormatter.format(dependencyRequest().key());
+        return dependencyRequest().key().toString();
       }
     }
   }

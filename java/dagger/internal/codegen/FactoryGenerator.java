@@ -246,7 +246,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
               parametersCodeBlock);
       getMethodBuilder.addStatement(
           "return $L",
-          !binding.nullableType().isPresent() && compilerOptions.doCheckForNulls()
+          binding.shouldCheckForNull(compilerOptions)
               ? checkNotNullProvidesMethod(methodCall)
               : methodCall);
     } else if (!binding.injectionSites().isEmpty()) {

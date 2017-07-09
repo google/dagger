@@ -2610,6 +2610,121 @@ public class ComponentProcessorTest {
                 "}"));
   }
 
+  @Test
+  public void nullCheckingIgnoredWhenProviderReturnsPrimitive() {
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                JavaFileObjects.forSourceLines(
+                    "test.TestModule",
+                    "package test;",
+                    "",
+                    "import dagger.Module;",
+                    "import dagger.Provides;",
+                    "",
+                    "@Module",
+                    "public abstract class TestModule {",
+                    "  @Provides static int primitiveInteger() { return 1; }",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.InjectsMember",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public class InjectsMember {",
+                    "  @Inject Integer member;",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.TestComponent",
+                    "package test;",
+                    "",
+                    "import dagger.Component;",
+                    "",
+                    "@Component(modules = TestModule.class)",
+                    "interface TestComponent {",
+                    "  Integer nonNullableInteger();",
+                    "  void inject(InjectsMember member);",
+                    "}"));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.TestModule_PrimitiveIntegerFactory")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "test.TestModule_PrimitiveIntegerFactory",
+                "package test;",
+                "",
+                "import dagger.internal.Factory;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class TestModule_PrimitiveIntegerFactory",
+                "    implements Factory<Integer> {",
+                "  private static final TestModule_PrimitiveIntegerFactory INSTANCE =",
+                "      new TestModule_PrimitiveIntegerFactory();",
+                "",
+                "  @Override",
+                "  public Integer get() {",
+                "    return TestModule.primitiveInteger();",
+                "  }",
+                "",
+                "  public static Factory<Integer> create() {",
+                "    return INSTANCE;",
+                "  }",
+                "",
+                "  public static int proxyPrimitiveInteger() {",
+                "    return TestModule.primitiveInteger();",
+                "  }",
+                "}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Integer nonNullableInteger() {",
+                "    return TestModule.primitiveInteger();",
+                "  }",
+                "",
+                "  @Override",
+                "  public void inject(InjectsMember member) {",
+                "    injectInjectsMember(member);",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
+                "    InjectsMember_MembersInjector.injectMember(",
+                "        instance, TestModule.primitiveInteger());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
+  }
+
   private static Compiler daggerCompiler(Processor... extraProcessors) {
     return javac().withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors));
   }

@@ -108,6 +108,20 @@ abstract class ProvisionBinding extends ContributionBinding {
   
   abstract Builder toBuilder();
 
+  boolean shouldCheckForNull(CompilerOptions compilerOptions) {
+    return !providesPrimitiveType()
+        && !nullableType().isPresent()
+        && compilerOptions.doCheckForNulls();
+  }
+
+  private boolean providesPrimitiveType() {
+    return bindingElement().isPresent()
+        && MoreElements.asExecutable(bindingElement().get())
+            .getReturnType()
+            .getKind()
+            .isPrimitive();
+  }
+
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<Builder> {

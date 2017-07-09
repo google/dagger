@@ -121,8 +121,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
   private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
     return !provisionBinding.bindingKind().equals(INJECTION)
-            && !provisionBinding.nullableType().isPresent()
-            && compilerOptions.doCheckForNulls()
+            && provisionBinding.shouldCheckForNull(compilerOptions)
         ? checkNotNullProvidesMethod(methodCall)
         : methodCall;
   }

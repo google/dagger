@@ -25,7 +25,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableListMultimap;
@@ -75,7 +74,6 @@ final class ComponentWriter extends AbstractComponentWriter {
   private static class UniqueSubcomponentNamesGenerator {
 
     private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
-    private static final Joiner QUALIFIED_NAME_JOINER = Joiner.on('_');
 
     private final BindingGraph graph;
     private final ImmutableListMultimap<String, ComponentDescriptor>

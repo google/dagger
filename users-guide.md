@@ -390,7 +390,7 @@ calls to any given instance of `Lazy<T>` will return the same underlying
 instance of `T`.
 
 ```java
-class GridingCoffeeMaker {
+class GrindingCoffeeMaker {
   @Inject Lazy<Grinder> lazyGrinder;
 
   public void brew() {

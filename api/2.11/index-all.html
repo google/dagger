@@ -121,6 +121,8 @@
 <dd>
 <div class="block">Configures bindings to ensure the usability of <code>dagger.android</code> and <code>dagger.android.support</code> framework classes.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html#annotations--">annotations()</a></span> - Method in class dagger.grpc.server.processor.<a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor">GrpcServiceProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="dagger/android/DaggerApplication.html#applicationInjector--">applicationInjector()</a></span> - Method in class dagger.android.<a href="dagger/android/DaggerApplication.html" title="class in dagger.android">DaggerApplication</a></dt>
 <dd>
 <div class="block">Implementations should return an <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> for the concrete <a href="dagger/android/DaggerApplication.html" title="class in dagger.android"><code>DaggerApplication</code></a>.</div>
@@ -133,6 +135,14 @@
 </a>
 <h2 class="title">B</h2>
 <dl>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/NettyServerModule.html#bindingTo-java.net.SocketAddress-">bindingTo(SocketAddress)</a></span> - Static method in class dagger.grpc.server.<a href="dagger/grpc/server/NettyServerModule.html" title="class in dagger.grpc.server">NettyServerModule</a></dt>
+<dd>
+<div class="block">A module that binds to <code>socketAddress</code>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/NettyServerModule.html#bindingToPort-int-">bindingToPort(int)</a></span> - Static method in class dagger.grpc.server.<a href="dagger/grpc/server/NettyServerModule.html" title="class in dagger.grpc.server">NettyServerModule</a></dt>
+<dd>
+<div class="block">A module that binds to <code>port</code> on the wildcard address.</div>
+</dd>
 <dt><a href="dagger/Binds.html" title="annotation in dagger"><span class="typeNameLink">Binds</span></a> - Annotation Type in <a href="dagger/package-summary.html">dagger</a></dt>
 <dd>
 <div class="block">Annotates <em>abstract</em> methods of a <a href="dagger/Module.html" title="annotation in dagger"><code>Module</code></a> that delegate bindings.</div>
@@ -169,6 +179,10 @@
 </a>
 <h2 class="title">C</h2>
 <dl>
+<dt><a href="dagger/grpc/server/CallScoped.html" title="annotation in dagger.grpc.server"><span class="typeNameLink">CallScoped</span></a> - Annotation Type in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">A scope that lasts as long as a single gRPC <code>ServerCall</code>.</div>
+</dd>
 <dt><a href="dagger/releasablereferences/CanReleaseReferences.html" title="annotation in dagger.releasablereferences"><span class="typeNameLink">CanReleaseReferences</span></a> - Annotation Type in <a href="dagger/releasablereferences/package-summary.html">dagger.releasablereferences</a></dt>
 <dd>
 <div class="block">Annotates <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Scope.html?is-external=true" title="class or interface in javax.inject">scope annotations</a> to indicate that references to
@@ -227,6 +241,12 @@
 </dd>
 <dt><span class="memberNameLink"><a href="dagger/producers/monitoring/TimingProductionComponentMonitor.Factory.html#create-java.lang.Object-">create(Object)</a></span> - Method in class dagger.producers.monitoring.<a href="dagger/producers/monitoring/TimingProductionComponentMonitor.Factory.html" title="class in dagger.producers.monitoring">TimingProductionComponentMonitor.Factory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="dagger/grpc/server/CurrentContextModule.html" title="class in dagger.grpc.server"><span class="typeNameLink">CurrentContextModule</span></a> - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Provides the current <code>Context</code>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/CurrentContextModule.html#CurrentContextModule--">CurrentContextModule()</a></span> - Constructor for class dagger.grpc.server.<a href="dagger/grpc/server/CurrentContextModule.html" title="class in dagger.grpc.server">CurrentContextModule</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <a name="I:D">
 <!--   -->
@@ -241,6 +261,10 @@
 <dt><a href="dagger/android/package-summary.html">dagger.android</a> - package dagger.android</dt>
 <dd>&nbsp;</dd>
 <dt><a href="dagger/android/support/package-summary.html">dagger.android.support</a> - package dagger.android.support</dt>
+<dd>&nbsp;</dd>
+<dt><a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a> - package dagger.grpc.server</dt>
+<dd>&nbsp;</dd>
+<dt><a href="dagger/grpc/server/processor/package-summary.html">dagger.grpc.server.processor</a> - package dagger.grpc.server.processor</dt>
 <dd>&nbsp;</dd>
 <dt><a href="dagger/multibindings/package-summary.html">dagger.multibindings</a> - package dagger.multibindings</dt>
 <dd>
@@ -270,7 +294,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="dagger/android/support/DaggerAppCompatActivity.html" title="class in dagger.android.support"><span class="typeNameLink">DaggerAppCompatActivity</span></a> - Class in <a href="dagger/android/support/package-summary.html">dagger.android.support</a></dt>
 <dd>
-<div class="block">An <code>AppCompatActivity</code> that injects its members in <a href="dagger/android/support/DaggerAppCompatActivity.html#onCreate-android.os.Bundle-"><code>DaggerAppCompatActivity.onCreate(Bundle)</code></a> and can be
+<div class="block">An <a href="https://developer.android.com/reference/android/support/v7/app/AppCompatActivity.html?is-external=true" title="class or interface in android.support.v7.app"><code>AppCompatActivity</code></a> that injects its members in <a href="dagger/android/support/DaggerAppCompatActivity.html#onCreate-android.os.Bundle-"><code>DaggerAppCompatActivity.onCreate(Bundle)</code></a> and can be
  used to inject <code>Fragment</code>s attached to it.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="dagger/android/support/DaggerAppCompatActivity.html#DaggerAppCompatActivity--">DaggerAppCompatActivity()</a></span> - Constructor for class dagger.android.support.<a href="dagger/android/support/DaggerAppCompatActivity.html" title="class in dagger.android.support">DaggerAppCompatActivity</a></dt>
@@ -285,7 +309,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="dagger/android/support/DaggerApplication.html" title="class in dagger.android.support"><span class="typeNameLink">DaggerApplication</span></a> - Class in <a href="dagger/android/support/package-summary.html">dagger.android.support</a></dt>
 <dd>
-<div class="block">An <a href="https://developer.android.com/reference/android/app/Application.html?is-external=true" title="class or interface in android.app"><code>Application</code></a> that injects its members and can be used to inject <a href="https://developer.android.com/reference/android/app/Activity.html?is-external=true" title="class or interface in android.app"><code>Activity</code></a>s, <a href="https://developer.android.com/reference/android/app/Fragment.html?is-external=true" title="class or interface in android.app">framework fragments</a>, support fragments, <a href="https://developer.android.com/reference/android/app/Service.html?is-external=true" title="class or interface in android.app"><code>Service</code></a>s, <a href="https://developer.android.com/reference/android/content/BroadcastReceiver.html?is-external=true" title="class or interface in android.content"><code>BroadcastReceiver</code></a>s, and <a href="https://developer.android.com/reference/android/content/ContentProvider.html?is-external=true" title="class or interface in android.content"><code>ContentProvider</code></a>s attached to it.</div>
+<div class="block">An <a href="https://developer.android.com/reference/android/app/Application.html?is-external=true" title="class or interface in android.app"><code>Application</code></a> that injects its members and can be used to inject <a href="https://developer.android.com/reference/android/app/Activity.html?is-external=true" title="class or interface in android.app"><code>Activity</code></a>s, <a href="https://developer.android.com/reference/android/app/Fragment.html?is-external=true" title="class or interface in android.app">framework fragments</a>, <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app">support fragments</a>, <a href="https://developer.android.com/reference/android/app/Service.html?is-external=true" title="class or interface in android.app"><code>Service</code></a>s, <a href="https://developer.android.com/reference/android/content/BroadcastReceiver.html?is-external=true" title="class or interface in android.content"><code>BroadcastReceiver</code></a>s, and <a href="https://developer.android.com/reference/android/content/ContentProvider.html?is-external=true" title="class or interface in android.content"><code>ContentProvider</code></a>s attached to it.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="dagger/android/support/DaggerApplication.html#DaggerApplication--">DaggerApplication()</a></span> - Constructor for class dagger.android.support.<a href="dagger/android/support/DaggerApplication.html" title="class in dagger.android.support">DaggerApplication</a></dt>
 <dd>&nbsp;</dd>
@@ -310,8 +334,8 @@
 <dd>&nbsp;</dd>
 <dt><a href="dagger/android/support/DaggerFragment.html" title="class in dagger.android.support"><span class="typeNameLink">DaggerFragment</span></a> - Class in <a href="dagger/android/support/package-summary.html">dagger.android.support</a></dt>
 <dd>
-<div class="block">A <code>Fragment</code> that injects its members in <a href="dagger/android/support/DaggerFragment.html#onAttach-android.content.Context-"><code>DaggerFragment.onAttach(Context)</code></a> and can be used to
- inject child <code>Fragment</code>s attached to it.</div>
+<div class="block">A <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app"><code>Fragment</code></a> that injects its members in <a href="dagger/android/support/DaggerFragment.html#onAttach-android.content.Context-"><code>DaggerFragment.onAttach(Context)</code></a> and can be used to
+ inject child <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app"><code>Fragment</code></a>s attached to it.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="dagger/android/support/DaggerFragment.html#DaggerFragment--">DaggerFragment()</a></span> - Constructor for class dagger.android.support.<a href="dagger/android/support/DaggerFragment.html" title="class in dagger.android.support">DaggerFragment</a></dt>
 <dd>&nbsp;</dd>
@@ -379,6 +403,10 @@
 <div class="block">Returns a failed <code>Produced</code>, whose <a href="dagger/producers/Produced.html#get--"><code>Produced.get()</code></a> will throw an
  <code>ExecutionException</code> with the given cause.</div>
 </dd>
+<dt><a href="dagger/grpc/server/ForGrpcService.html" title="annotation in dagger.grpc.server"><span class="typeNameLink">ForGrpcService</span></a> - Annotation Type in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Qualifies some per-service types provided by <a href="dagger/Module.html" title="annotation in dagger"><code>Module</code></a>s generated by <a href="dagger/grpc/server/GrpcService.html" title="annotation in dagger.grpc.server"><code>GrpcService</code></a>.</div>
+</dd>
 <dt><a href="dagger/releasablereferences/ForReleasableReferences.html" title="annotation in dagger.releasablereferences"><span class="typeNameLink">ForReleasableReferences</span></a> - Annotation Type in <a href="dagger/releasablereferences/package-summary.html">dagger.releasablereferences</a></dt>
 <dd>
 <div class="block">A <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Qualifier.html?is-external=true" title="class or interface in javax.inject"><code>Qualifier</code></a> to inject a <a href="dagger/releasablereferences/ReleasableReferenceManager.html" title="interface in dagger.releasablereferences"><code>ReleasableReferenceManager</code></a> or <a href="dagger/releasablereferences/TypedReleasableReferenceManager.html" title="interface in dagger.releasablereferences"><code>TypedReleasableReferenceManager</code></a> object for a particular scope.</div>
@@ -401,7 +429,7 @@
 </dd>
 <dt><a href="dagger/android/support/FragmentKey.html" title="annotation in dagger.android.support"><span class="typeNameLink">FragmentKey</span></a> - Annotation Type in <a href="dagger/android/support/package-summary.html">dagger.android.support</a></dt>
 <dd>
-<div class="block"><a href="dagger/MapKey.html" title="annotation in dagger"><code>MapKey</code></a> annotation to key bindings by a type of a <code>Fragment</code>.</div>
+<div class="block"><a href="dagger/MapKey.html" title="annotation in dagger"><code>MapKey</code></a> annotation to key bindings by a type of a <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app"><code>Fragment</code></a>.</div>
 </dd>
 </dl>
 <a name="I:G">
@@ -421,6 +449,29 @@
 <dd>
 <div class="block">Returns a future representing a running task that produces a value.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/ProxyServerCallHandler.ServiceDefinitionFactory.html#getServiceDefinition-io.grpc.Metadata-">getServiceDefinition(Metadata)</a></span> - Method in interface dagger.grpc.server.<a href="dagger/grpc/server/ProxyServerCallHandler.ServiceDefinitionFactory.html" title="interface in dagger.grpc.server">ProxyServerCallHandler.ServiceDefinitionFactory</a></dt>
+<dd>
+<div class="block">Returns a service definition that contains a <code>ServerCallHandler</code> for the
+ <a href="dagger/grpc/server/ProxyServerCallHandler.html" title="class in dagger.grpc.server"><code>ProxyServerCallHandler</code></a>'s method.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html#getSupportedSourceVersion--">getSupportedSourceVersion()</a></span> - Method in class dagger.grpc.server.processor.<a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor">GrpcServiceProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="dagger/grpc/server/GrpcCallMetadataModule.html" title="class in dagger.grpc.server"><span class="typeNameLink">GrpcCallMetadataModule</span></a> - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Provides <code>Metadata</code> about a gRPC call.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/GrpcCallMetadataModule.html#GrpcCallMetadataModule-io.grpc.Metadata-">GrpcCallMetadataModule(Metadata)</a></span> - Constructor for class dagger.grpc.server.<a href="dagger/grpc/server/GrpcCallMetadataModule.html" title="class in dagger.grpc.server">GrpcCallMetadataModule</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="dagger/grpc/server/GrpcService.html" title="annotation in dagger.grpc.server"><span class="typeNameLink">GrpcService</span></a> - Annotation Type in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Annotates a class that implements a gRPC service.</div>
+</dd>
+<dt><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor"><span class="typeNameLink">GrpcServiceProcessor</span></a> - Class in <a href="dagger/grpc/server/processor/package-summary.html">dagger.grpc.server.processor</a></dt>
+<dd>
+<div class="block">Generates code from types annotated with <a href="dagger/grpc/server/GrpcService.html" title="annotation in dagger.grpc.server"><code>@GrpcService</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html#GrpcServiceProcessor--">GrpcServiceProcessor()</a></span> - Constructor for class dagger.grpc.server.processor.<a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor">GrpcServiceProcessor</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <a name="I:H">
 <!--   -->
@@ -457,7 +508,7 @@
 </dd>
 <dt><a href="dagger/android/support/HasSupportFragmentInjector.html" title="interface in dagger.android.support"><span class="typeNameLink">HasSupportFragmentInjector</span></a> - Interface in <a href="dagger/android/support/package-summary.html">dagger.android.support</a></dt>
 <dd>
-<div class="block">Provides an <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> of <code>Fragment</code>s.</div>
+<div class="block">Provides an <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> of <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app"><code>Fragment</code></a>s.</div>
 </dd>
 </dl>
 <a name="I:I">
@@ -465,6 +516,8 @@
 </a>
 <h2 class="title">I</h2>
 <dl>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html#initSteps--">initSteps()</a></span> - Method in class dagger.grpc.server.processor.<a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor">GrpcServiceProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="dagger/android/AndroidInjection.html#inject-android.app.Activity-">inject(Activity)</a></span> - Static method in class dagger.android.<a href="dagger/android/AndroidInjection.html" title="class in dagger.android">AndroidInjection</a></dt>
 <dd>
 <div class="block">Injects <code>activity</code> if an associated <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> implementation can be found,
@@ -498,7 +551,7 @@
 <dd>
 <div class="block">Performs members-injection on <code>instance</code>.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="dagger/android/support/AndroidSupportInjection.html#inject-Fragment-">inject(Fragment)</a></span> - Static method in class dagger.android.support.<a href="dagger/android/support/AndroidSupportInjection.html" title="class in dagger.android.support">AndroidSupportInjection</a></dt>
+<dt><span class="memberNameLink"><a href="dagger/android/support/AndroidSupportInjection.html#inject-android.support.v4.app.Fragment-">inject(Fragment)</a></span> - Static method in class dagger.android.support.<a href="dagger/android/support/AndroidSupportInjection.html" title="class in dagger.android.support">AndroidSupportInjection</a></dt>
 <dd>
 <div class="block">Injects <code>fragment</code> if an associated <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> implementation
  can be found, otherwise throws an <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html?is-external=true" title="class or interface in java.lang"><code>IllegalArgumentException</code></a>.</div>
@@ -506,6 +559,11 @@
 <dt><span class="memberNameLink"><a href="dagger/MembersInjector.html#injectMembers-T-">injectMembers(T)</a></span> - Method in interface dagger.<a href="dagger/MembersInjector.html" title="interface in dagger">MembersInjector</a></dt>
 <dd>
 <div class="block">Injects dependencies into the fields and methods of <code>instance</code>.</div>
+</dd>
+<dt><a href="dagger/grpc/server/InProcessServerModule.html" title="class in dagger.grpc.server"><span class="typeNameLink">InProcessServerModule</span></a> - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Installing this module into a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> component means the component can
+ provide a <code>Server</code> that serves in-process requests.</div>
 </dd>
 <dt><a href="dagger/multibindings/IntKey.html" title="annotation in dagger.multibindings"><span class="typeNameLink">IntKey</span></a> - Annotation Type in <a href="dagger/multibindings/package-summary.html">dagger.multibindings</a></dt>
 <dd>
@@ -581,6 +639,11 @@
 </a>
 <h2 class="title">N</h2>
 <dl>
+<dt><a href="dagger/grpc/server/NettyServerModule.html" title="class in dagger.grpc.server"><span class="typeNameLink">NettyServerModule</span></a> - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Installing this module into a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> component means the component can
+ provide a Netty-based <code>Server</code>.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="dagger/producers/monitoring/ProducerMonitor.html#noOp--">noOp()</a></span> - Static method in class dagger.producers.monitoring.<a href="dagger/producers/monitoring/ProducerMonitor.html" title="class in dagger.producers.monitoring">ProducerMonitor</a></dt>
 <dd>
 <div class="block">Returns a monitor that does no monitoring.</div>
@@ -639,6 +702,8 @@
 </a>
 <h2 class="title">P</h2>
 <dl>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/processor/GrpcServiceProcessor.html#process-com.google.common.collect.SetMultimap-">process(SetMultimap&lt;Class&lt;? extends Annotation&gt;, Element&gt;)</a></span> - Method in class dagger.grpc.server.processor.<a href="dagger/grpc/server/processor/GrpcServiceProcessor.html" title="class in dagger.grpc.server.processor">GrpcServiceProcessor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="dagger/producers/Produced.html" title="class in dagger.producers"><span class="typeNameLink">Produced</span></a>&lt;<a href="dagger/producers/Produced.html" title="type parameter in Produced">T</a>&gt; - Class in <a href="dagger/producers/package-summary.html">dagger.producers</a></dt>
 <dd>
 <div class="block">An interface that represents the result of a <a href="dagger/producers/Producer.html" title="interface in dagger.producers">production</a> of type <code>T</code>,
@@ -729,6 +794,20 @@
 <dd>
 <div class="block">Annotates methods of a <a href="dagger/Module.html" title="annotation in dagger">module</a> to create a provider method binding.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/ProxyServerCallHandler.html#proxyMethod-io.grpc.MethodDescriptor-dagger.grpc.server.ProxyServerCallHandler.ServiceDefinitionFactory-">proxyMethod(MethodDescriptor&lt;RequestT, ResponseT&gt;, ProxyServerCallHandler.ServiceDefinitionFactory)</a></span> - Static method in class dagger.grpc.server.<a href="dagger/grpc/server/ProxyServerCallHandler.html" title="class in dagger.grpc.server">ProxyServerCallHandler</a></dt>
+<dd>
+<div class="block">Returns a proxy method definition for <code>methodDescriptor</code>.</div>
+</dd>
+<dt><a href="dagger/grpc/server/ProxyServerCallHandler.html" title="class in dagger.grpc.server"><span class="typeNameLink">ProxyServerCallHandler</span></a>&lt;<a href="dagger/grpc/server/ProxyServerCallHandler.html" title="type parameter in ProxyServerCallHandler">RequestT</a>,<a href="dagger/grpc/server/ProxyServerCallHandler.html" title="type parameter in ProxyServerCallHandler">ResponseT</a>&gt; - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">A <code>ServerCallHandler</code> that handles calls for a particular method by delegating to a handler
+ in a <code>ServerServiceDefinition</code> returned by a factory.</div>
+</dd>
+<dt><a href="dagger/grpc/server/ProxyServerCallHandler.ServiceDefinitionFactory.html" title="interface in dagger.grpc.server"><span class="typeNameLink">ProxyServerCallHandler.ServiceDefinitionFactory</span></a> - Interface in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">A factory for the <code>ServerServiceDefinition</code> that a <a href="dagger/grpc/server/ProxyServerCallHandler.html" title="class in dagger.grpc.server"><code>ProxyServerCallHandler</code></a>
+ delegates to.</div>
+</dd>
 </dl>
 <a name="I:R">
 <!--   -->
@@ -799,6 +878,16 @@
 <dd>
 <div class="block">Provides <code>instance</code> to be used in the binding graph of the built <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a>.</div>
 </dd>
+<dt><a href="dagger/grpc/server/ServerModule.html" title="class in dagger.grpc.server"><span class="typeNameLink">ServerModule</span></a> - Class in <a href="dagger/grpc/server/package-summary.html">dagger.grpc.server</a></dt>
+<dd>
+<div class="block">Provides a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> <code>Server</code>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/ServerModule.html#ServerModule--">ServerModule()</a></span> - Constructor for class dagger.grpc.server.<a href="dagger/grpc/server/ServerModule.html" title="class in dagger.grpc.server">ServerModule</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/InProcessServerModule.html#serverNamed-java.lang.String-">serverNamed(String)</a></span> - Static method in class dagger.grpc.server.<a href="dagger/grpc/server/InProcessServerModule.html" title="class in dagger.grpc.server">InProcessServerModule</a></dt>
+<dd>
+<div class="block">Creates a module that provides a server that binds to a given name</div>
+</dd>
 <dt><span class="memberNameLink"><a href="dagger/android/DaggerApplication.html#serviceInjector--">serviceInjector()</a></span> - Method in class dagger.android.<a href="dagger/android/DaggerApplication.html" title="class in dagger.android">DaggerApplication</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="dagger/android/HasServiceInjector.html#serviceInjector--">serviceInjector()</a></span> - Method in interface dagger.android.<a href="dagger/android/HasServiceInjector.html" title="interface in dagger.android">HasServiceInjector</a></dt>
@@ -809,6 +898,8 @@
 <dd>
 <div class="block"><a href="dagger/MapKey.html" title="annotation in dagger"><code>MapKey</code></a> annotation to key bindings by a type of a <a href="https://developer.android.com/reference/android/app/Service.html?is-external=true" title="class or interface in android.app"><code>Service</code></a>.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="dagger/grpc/server/ProxyServerCallHandler.html#startCall-io.grpc.ServerCall-io.grpc.Metadata-">startCall(ServerCall&lt;InputStream, InputStream&gt;, Metadata)</a></span> - Method in class dagger.grpc.server.<a href="dagger/grpc/server/ProxyServerCallHandler.html" title="class in dagger.grpc.server">ProxyServerCallHandler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="dagger/multibindings/StringKey.html" title="annotation in dagger.multibindings"><span class="typeNameLink">StringKey</span></a> - Annotation Type in <a href="dagger/multibindings/package-summary.html">dagger.multibindings</a></dt>
 <dd>
 <div class="block">A <a href="dagger/MapKey.html" title="annotation in dagger"><code>MapKey</code></a> annotation for maps with <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang"><code>String</code></a> keys.</div>
@@ -838,7 +929,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="dagger/android/support/HasSupportFragmentInjector.html#supportFragmentInjector--">supportFragmentInjector()</a></span> - Method in interface dagger.android.support.<a href="dagger/android/support/HasSupportFragmentInjector.html" title="interface in dagger.android.support">HasSupportFragmentInjector</a></dt>
 <dd>
-<div class="block">Returns an <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> of <code>Fragment</code>s.</div>
+<div class="block">Returns an <a href="dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> of <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app"><code>Fragment</code></a>s.</div>
 </dd>
 </dl>
 <a name="I:T">
@@ -915,6 +1006,6 @@
 <!--   -->
 </a></div>
 <!-- ======== END OF BOTTOM NAVBAR ======= -->
-<p class="legalCopy"><small>Copyright &copy; 2012���2017 The Dagger Authors. All rights reserved.</small></p>
+<p class="legalCopy"><small>Copyright &copy; 2012&ndash;2017 The Dagger Authors. All rights reserved.</small></p>
 </body>
 </html>

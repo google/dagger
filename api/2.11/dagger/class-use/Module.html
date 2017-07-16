@@ -89,6 +89,10 @@
 <td class="colFirst"><a href="#dagger.android.support">dagger.android.support</a></td>
 <td class="colLast">&nbsp;</td>
 </tr>
+<tr class="altColor">
+<td class="colFirst"><a href="#dagger.grpc.server">dagger.grpc.server</a></td>
+<td class="colLast">&nbsp;</td>
+</tr>
 </tbody>
 </table>
 </li>
@@ -129,6 +133,52 @@
 <td class="colFirst"><code>class&nbsp;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/android/support/AndroidSupportInjectionModule.html" title="class in dagger.android.support">AndroidSupportInjectionModule</a></span></code>
 <div class="block">Configures bindings to ensure the usability of <code>dagger.android</code> and <code>dagger.android.support</code> framework classes.</div>
+</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li class="blockList"><a name="dagger.grpc.server">
+<!--   -->
+</a>
+<h3>Uses of <a href="../../dagger/Module.html" title="annotation in dagger">Module</a> in <a href="../../dagger/grpc/server/package-summary.html">dagger.grpc.server</a></h3>
+<table class="useSummary" border="0" cellpadding="3" cellspacing="0" summary="Use table, listing classes, and an explanation">
+<caption><span>Classes in <a href="../../dagger/grpc/server/package-summary.html">dagger.grpc.server</a> with annotations of type <a href="../../dagger/Module.html" title="annotation in dagger">Module</a></span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Class and Description</th>
+</tr>
+<tbody>
+<tr class="altColor">
+<td class="colFirst"><code>class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/grpc/server/CurrentContextModule.html" title="class in dagger.grpc.server">CurrentContextModule</a></span></code>
+<div class="block">Provides the current <code>Context</code>.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/grpc/server/GrpcCallMetadataModule.html" title="class in dagger.grpc.server">GrpcCallMetadataModule</a></span></code>
+<div class="block">Provides <code>Metadata</code> about a gRPC call.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/grpc/server/InProcessServerModule.html" title="class in dagger.grpc.server">InProcessServerModule</a></span></code>
+<div class="block">Installing this module into a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> component means the component can
+ provide a <code>Server</code> that serves in-process requests.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/grpc/server/NettyServerModule.html" title="class in dagger.grpc.server">NettyServerModule</a></span></code>
+<div class="block">Installing this module into a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> component means the component can
+ provide a Netty-based <code>Server</code>.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/grpc/server/ServerModule.html" title="class in dagger.grpc.server">ServerModule</a></span></code>
+<div class="block">Provides a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html?is-external=true" title="class or interface in javax.inject"><code>@Singleton</code></a> <code>Server</code>.</div>
 </td>
 </tr>
 </tbody>
@@ -185,6 +235,6 @@
 <!--   -->
 </a></div>
 <!-- ======== END OF BOTTOM NAVBAR ======= -->
-<p class="legalCopy"><small>Copyright &copy; 2012���2017 The Dagger Authors. All rights reserved.</small></p>
+<p class="legalCopy"><small>Copyright &copy; 2012&ndash;2017 The Dagger Authors. All rights reserved.</small></p>
 </body>
 </html>

@@ -24,3 +24,9 @@ Gemfile
 Gemfile.lock
 
 _site
+
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-testlogs
+bazel-dagger

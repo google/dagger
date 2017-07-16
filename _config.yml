@@ -1,5 +1,5 @@
 auto: true
-url: "https://linuxuser586.github.io/dagger"
+url: "https://google.github.io/dagger"
 markdown: kramdown
 dagger:
   groupId: com.google.dagger

@@ -66,7 +66,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
-  // TODO(beder): Make this an error.
+  // TODO(beder): Properly handle nullable with producer methods.
   private void checkNullable(ValidationReport.Builder<ExecutableElement> builder) {
     if (ConfigurationAnnotations.getNullableType(builder.getSubject()).isPresent()) {
       builder.addWarning(PRODUCES_METHOD_NULLABLE);

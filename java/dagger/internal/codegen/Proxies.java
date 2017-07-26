@@ -25,7 +25,6 @@ import static dagger.internal.codegen.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.Accessibility.isElementPubliclyAccessible;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isRawTypePubliclyAccessible;
-import static dagger.internal.codegen.Accessibility.isTypePubliclyAccessible;
 import static dagger.internal.codegen.CodeBlocks.javadocLinkTo;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
@@ -227,7 +226,7 @@ final class Proxies {
       ImmutableList.Builder<CodeBlock> argumentsBuilder) {
     for (VariableElement parameter : method.getParameters()) {
       TypeMirror parameterType = parameter.asType();
-      boolean useObject = !isTypePubliclyAccessible(parameterType);
+      boolean useObject = !isRawTypePubliclyAccessible(parameterType);
       TypeName typeName = useObject ? TypeName.OBJECT : TypeName.get(parameterType);
       String name = nameSet.getUniqueName(parameter.getSimpleName().toString());
       argumentsBuilder.add(

@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.Proxies.proxyName;
@@ -111,7 +112,20 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
         provisionBinding
             .explicitDependencies()
             .stream()
-            .map(request -> getDependencySnippet(requestingClass, request))
+            .map(
+                request -> {
+                  CodeBlock snippet = getDependencySnippet(requestingClass, request);
+                  TypeMirror requestElementType = request.requestElement().get().asType();
+                  /* If the type is accessible, use the snippet.  If only the raw type is
+                   * accessible, cast it to the raw type.  If the type is completely inaccessible,
+                   * the proxy will have an Object method parameter, so we can again, just use the
+                   * snippet. */
+                  return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
+                          || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
+                      ? snippet
+                      : CodeBlock.of(
+                          "($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
+                })
             .collect(collectingAndThen(toList(), CodeBlocks::makeParametersCodeBlock)));
   }
 

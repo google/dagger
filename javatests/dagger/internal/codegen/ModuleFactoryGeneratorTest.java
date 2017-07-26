@@ -479,8 +479,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static List<Object> proxyProvideObjects(",
-            "      TestModule instance, Object a, Object b, Object x) {",
-            "    return instance.provideObjects(a, b, (MembersInjector<X>) x);",
+            "      TestModule instance, Object a, Object b, MembersInjector<X> x) {",
+            "    return instance.provideObjects(a, b, x);",
             "  }",
             "}");
     assertAbout(javaSources()).that(

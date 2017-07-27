@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
 import com.google.common.collect.ImmutableList;
@@ -36,9 +35,99 @@ import javax.lang.model.util.Elements;
 final class BindingExpression extends RequestFulfillment {
   private final Optional<FieldSpec> fieldSpec;
   private final RequestFulfillment requestFulfillmentDelegate;
-  private Optional<CodeBlock> initializeDeferredBindingFields = Optional.empty();
-  private Optional<CodeBlock> initializeField = Optional.empty();
+  private CodeBlock initializeDeferredBindingFields;
+  private CodeBlock initializeField;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
+
+  private BindingExpression(
+      RequestFulfillment requestFulfillmentDelegate, Optional<FieldSpec> fieldSpec) {
+    super(requestFulfillmentDelegate.bindingKey());
+    this.requestFulfillmentDelegate = requestFulfillmentDelegate;
+    this.fieldSpec = fieldSpec;
+  }
+
+  @Override
+  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
+    return requestFulfillmentDelegate.getSnippetForDependencyRequest(request, requestingClass);
+  }
+
+  @Override
+  CodeBlock getSnippetForFrameworkDependency(
+      FrameworkDependency frameworkDependency, ClassName requestingClass) {
+    return requestFulfillmentDelegate.getSnippetForFrameworkDependency(
+        frameworkDependency, requestingClass);
+  }
+
+  /** Returns {@code true} if this binding expression has a field. */
+  boolean hasFieldSpec() {
+    return fieldSpec.isPresent();
+  }
+
+  /**
+   * Returns the name of the binding's underlying field.
+   *
+   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   */
+  String fieldName() {
+    checkHasField();
+    return fieldSpec.get().name;
+  }
+
+  /**
+   * Sets the code for initializing the binding's underlying field.
+   *
+   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   */
+  void setInitializationCode(CodeBlock initializeDeferredBindingFields, CodeBlock initializeField) {
+    checkHasField();
+    this.initializeDeferredBindingFields = checkNotNull(initializeDeferredBindingFields);
+    this.initializeField = checkNotNull(initializeField);
+  }
+
+  /**
+   * Returns the initialization code for the binding's underlying field.
+   *
+   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   */
+  private CodeBlock getInitializationCode() {
+    checkHasField();
+    checkState(initializeDeferredBindingFields != null && initializeField != null);
+    return CodeBlocks.concat(ImmutableList.of(initializeDeferredBindingFields, initializeField));
+  }
+
+  /**
+   * Returns the initialization state for the binding's underlying field.
+   *
+   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   */
+  InitializationState fieldInitializationState() {
+    checkHasField();
+    return fieldInitializationState;
+  }
+
+  /**
+   * Sets the initialization state for the binding's underlying field. Only valid for field types.
+   *
+   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   */
+  void setFieldInitializationState(InitializationState fieldInitializationState) {
+    checkHasField();
+    checkArgument(this.fieldInitializationState.compareTo(fieldInitializationState) < 0);
+    this.fieldInitializationState = fieldInitializationState;
+  }
+
+  /** Calls the consumer to initialize the binding's underlying field if it has one. */
+  void initializeField(BiConsumer<FieldSpec, CodeBlock> initializationConsumer) {
+    if (hasFieldSpec()) {
+      initializationConsumer.accept(fieldSpec.get(), getInitializationCode());
+    }
+  }
+
+  private void checkHasField() {
+    if (!hasFieldSpec()) {
+      throw new UnsupportedOperationException();
+    }
+  }
 
   /** Initialization state for a factory field. */
   enum InitializationState {
@@ -143,76 +232,6 @@ final class BindingExpression extends RequestFulfillment {
         default:
           throw new AssertionError();
       }
-    }
-  }
-
-  private BindingExpression(
-      RequestFulfillment requestFulfillmentDelegate, Optional<FieldSpec> fieldSpec) {
-    super(requestFulfillmentDelegate.bindingKey());
-    this.requestFulfillmentDelegate = requestFulfillmentDelegate;
-    this.fieldSpec = fieldSpec;
-  }
-
-  /** Returns true if this binding expression has a field spec. */
-  boolean hasFieldSpec() {
-    return fieldSpec.isPresent();
-  }
-
-  /** Returns the name of this binding's underlying field. Only valid for field types. */
-  String fieldName() {
-    checkState(hasFieldSpec());
-    return fieldSpec.get().name;
-  }
-
-  @Override
-  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
-    return requestFulfillmentDelegate.getSnippetForDependencyRequest(request, requestingClass);
-  }
-
-  @Override
-  CodeBlock getSnippetForFrameworkDependency(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return requestFulfillmentDelegate.getSnippetForFrameworkDependency(
-        frameworkDependency, requestingClass);
-  }
-
-  /** Returns this field's field spec, if it has one. */
-  Optional<FieldSpec> fieldSpec() {
-    return fieldSpec;
-  }
-
-  /** Sets the code for initializing this field. */
-  void setInitializationCode(CodeBlock initializeDeferredBindingFields, CodeBlock initializeField) {
-    this.initializeDeferredBindingFields = Optional.of(initializeDeferredBindingFields);
-    this.initializeField = Optional.of(initializeField);
-  }
-
-  /** Returns the initialization code for this field. */
-  Optional<CodeBlock> getInitializationCode() {
-    verify(initializeDeferredBindingFields.isPresent() == initializeField.isPresent());
-    return initializeDeferredBindingFields.map(
-        value -> CodeBlocks.concat(ImmutableList.of(value, initializeField.get())));
-  }
-
-  /** Returns the initialization state for this field. Only valid for field types. */
-  InitializationState fieldInitializationState() {
-    checkState(hasFieldSpec());
-    return fieldInitializationState;
-  }
-
-  /** Sets the initialization state for this field. Only valid for field types. */
-  void setFieldInitializationState(InitializationState fieldInitializationState) {
-    checkState(hasFieldSpec());
-    checkArgument(this.fieldInitializationState.compareTo(fieldInitializationState) < 0);
-    this.fieldInitializationState = fieldInitializationState;
-  }
-
-  /** Calls the consumer to initialize a field if this field/initialization is present. */
-  void initializeField(BiConsumer<FieldSpec, CodeBlock> initializationConsumer) {
-    if (hasFieldSpec()) {
-      Optional<CodeBlock> initCode = getInitializationCode();
-      checkState(initCode.isPresent());
-      initializationConsumer.accept(fieldSpec.get(), initCode.get());
     }
   }
 }

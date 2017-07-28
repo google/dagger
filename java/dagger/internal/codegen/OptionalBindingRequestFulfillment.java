@@ -55,9 +55,16 @@ final class OptionalBindingRequestFulfillment extends SimpleInvocationRequestFul
       return optionalKind.absentValueExpression();
     }
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
-    return optionalKind.presentExpression(
+
+    CodeBlock dependencyExpression =
         hasBindingExpressions
             .getBindingExpression(dependency.bindingKey())
-            .getSnippetForDependencyRequest(dependency, requestingClass));
+            .getSnippetForDependencyRequest(dependency, requestingClass);
+
+    // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
+    // we will get "incompatible types: inference variable has incompatible bounds.
+    return isTypeAccessibleFrom(dependency.key().type(), requestingClass.packageName())
+        ? optionalKind.presentExpression(dependencyExpression)
+        : optionalKind.presentObjectExpression(dependencyExpression);
   }
 }

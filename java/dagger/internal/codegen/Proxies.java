@@ -27,6 +27,7 @@ import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.CodeBlocks.javadocLinkTo;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -68,6 +69,7 @@ import javax.lang.model.type.TypeMirror;
  *       type regardless of its accessibility. For example, if a proxied method returns {@code
  *       MyPackagePrivateClass}, the proxy method will also return {@code MyPackagePrivateClass}
  *       because the accessibility of the return type does not impact callers.
+ *   <li>If the method being proxied is {@code @Nullable}, so will the proxy be.
  *   <li>Proxies for constructors are named "{@code newTypeName}" (where "{@code TypeName}" is the
  *       name of the type being constructed) and proxies for methods are named "{@code
  *       proxyMethodName}" (where "{@code methodName}" is the name of the method being proxied).
@@ -199,6 +201,9 @@ final class Proxies {
     }
     CodeBlock arguments = copyParameters(method, methodBuilder, nameSet, argumentsBuilder);
     if (!method.getReturnType().getKind().equals(VOID)) {
+      methodBuilder.returns(TypeName.get(method.getReturnType()));
+      getNullableType(method)
+          .ifPresent(nullableType -> CodeBlocks.addAnnotation(methodBuilder, nullableType));
       methodBuilder.addCode("return ");
     }
     if (method.getModifiers().contains(STATIC)) {
@@ -209,7 +214,6 @@ final class Proxies {
       methodBuilder.addCode("instance", method.getSimpleName());
     }
     methodBuilder.addCode(".$N($L);", method.getSimpleName(), arguments);
-    methodBuilder.returns(TypeName.get(method.getReturnType()));
     return methodBuilder;
   }
 

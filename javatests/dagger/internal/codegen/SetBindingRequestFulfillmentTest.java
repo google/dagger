@@ -27,6 +27,7 @@ import com.google.common.base.Splitter;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import com.squareup.javapoet.CodeBlock;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SetBindingRequestFulfillmentTest {
+
+  public static final CodeBlock NPE_FROM_PROVIDES =
+      CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+
   @Test
   public void setBindings() {
     JavaFileObject emptySetModuleFile = JavaFileObjects.forSourceLines("test.EmptySetModule",
@@ -120,8 +125,10 @@ public class SetBindingRequestFulfillmentTest {
             "  @Override",
             "  public Set<String> strings() {",
             "    return SetBuilder.<String>newSetBuilder(2)",
-            "        .addAll(EmptySetModule.emptySet())",
-            "        .add(SetModule.string())",
+            "        .addAll(Preconditions.checkNotNull(",
+            "            EmptySetModule.emptySet(), " + NPE_FROM_PROVIDES + "))",
+            "        .add(Preconditions.checkNotNull(",
+            "            SetModule.string(), " + NPE_FROM_PROVIDES + "))",
             "        .build();",
             "  }",
             "",
@@ -220,6 +227,7 @@ public class SetBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import dagger.internal.Factory;",
+            "import dagger.internal.Preconditions;",
             "import dagger.internal.SetBuilder;",
             "import dagger.internal.SetFactory;",
             "import java.util.Collections;",
@@ -265,7 +273,9 @@ public class SetBindingRequestFulfillmentTest {
             "    return UsesInaccessible_Factory.newUsesInaccessible(",
             "        (Set) Collections.emptySet(),",
             "        (Set) SetBuilder.newSetBuilder(1)",
-            "            .addAll(TestModule_EmptySetFactory.proxyEmptySet())",
+            "            .addAll(Preconditions.checkNotNull(",
+            "                TestModule_EmptySetFactory.proxyEmptySet(),",
+            "                " + NPE_FROM_PROVIDES + "))",
             "            .build());",
             "  }",
             "",
@@ -419,7 +429,8 @@ public class SetBindingRequestFulfillmentTest {
             "",
             "    @Override",
             "    public Set<Object> objectSet() {",
-            "      return Collections.<Object>singleton(ParentModule.parentObject());",
+            "      return Collections.<Object>singleton(Preconditions.checkNotNull(",
+            "          ParentModule.parentObject(), " + NPE_FROM_PROVIDES + "));",
             "    }",
             "",
             "    @Override",

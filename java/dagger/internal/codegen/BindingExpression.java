@@ -143,6 +143,7 @@ final class BindingExpression extends RequestFulfillment {
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {
+    private final CompilerOptions compilerOptions;
     private final ClassName componentName;
     private final HasBindingExpressions hasBindingExpressions;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
@@ -150,11 +151,13 @@ final class BindingExpression extends RequestFulfillment {
     private final Elements elements;
 
     Factory(
+        CompilerOptions compilerOptions,
         ClassName componentName,
         HasBindingExpressions hasBindingExpressions,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
         Elements elements) {
+      this.compilerOptions = checkNotNull(compilerOptions);
       this.componentName = checkNotNull(componentName);
       this.hasBindingExpressions = checkNotNull(hasBindingExpressions);
       this.subcomponentNames = checkNotNull(subcomponentNames);
@@ -220,6 +223,7 @@ final class BindingExpression extends RequestFulfillment {
                   && !provisionBinding.requiresModuleInstance()
                   && provisionBinding.bindingElement().isPresent()) {
                 return new SimpleMethodRequestFulfillment(
+                    compilerOptions,
                     bindingKey,
                     provisionBinding,
                     providerFieldRequestFulfillment,

@@ -22,6 +22,7 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import com.squareup.javapoet.CodeBlock;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +30,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class OptionalBindingRequestFulfillmentTest {
+
+  public static final CodeBlock NPE_FROM_PROVIDES =
+      CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+
   @Test
   public void inlinedOptionalBindings() {
     JavaFileObject module =
@@ -150,7 +155,9 @@ public class OptionalBindingRequestFulfillmentTest {
             "",
             "  @Override",
             "  public Optional<Maybe> maybe() {",
-            "    return Optional.of(Maybe.MaybeModule.provideMaybe());",
+            "    return Optional.of(",
+            "        Preconditions.checkNotNull(",
+            "            Maybe.MaybeModule.provideMaybe(), " + NPE_FROM_PROVIDES + "));",
             "  }",
             "",
             "  @Override",
@@ -331,7 +338,8 @@ public class OptionalBindingRequestFulfillmentTest {
             "",
             "  @Override",
             "  public ListenableFuture<Optional<Maybe>> maybe() {",
-            "    return Futures.immediateFuture(Optional.of(Maybe.MaybeModule.provideMaybe()));",
+            "    return Futures.immediateFuture(Optional.of(Preconditions.checkNotNull(",
+            "        Maybe.MaybeModule.provideMaybe(), " + NPE_FROM_PROVIDES + ")));",
             "  }",
             "",
             "  @Override",

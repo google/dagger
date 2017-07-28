@@ -33,7 +33,6 @@ import static dagger.internal.codegen.BindingExpression.InitializationState.INIT
 import static dagger.internal.codegen.BindingExpression.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
@@ -111,7 +110,6 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
 
 /** Creates the implementation class for a component or subcomponent. */
 abstract class AbstractComponentWriter implements HasBindingExpressions {
@@ -174,7 +172,12 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     this.optionalFactories = optionalFactories;
     this.bindingExpressionFactory =
         new BindingExpression.Factory(
-            name, this, childComponentNames(keyFactory, subcomponentNames), graph, elements);
+            compilerOptions,
+            name,
+            this,
+            childComponentNames(keyFactory, subcomponentNames),
+            graph,
+            elements);
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(
@@ -781,14 +784,13 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
           // using .class & String.format -- but that wouldn't be the whole story.
           // What should we do?
           CodeBlock getMethodBody =
-              binding.nullableType().isPresent()
-                      || compilerOptions.nullableValidationKind().equals(Diagnostic.Kind.WARNING)
-                  ? CodeBlock.of("return $L;", callFactoryMethod)
-                  : CodeBlock.of(
-                      "return $T.checkNotNull($L, $S);",
+              !binding.nullableType().isPresent() && compilerOptions.doCheckForNulls()
+                  ? CodeBlock.of(
+                      "return $T.checkNotNull($L, $S);", // TODO(dpb): Extract these checkNotNulls.
                       Preconditions.class,
                       callFactoryMethod,
-                      CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
+                      CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD)
+                  : CodeBlock.of("return $L;", callFactoryMethod);
           ClassName dependencyClassName = ClassName.get(dependencyType);
           String factoryName =
               dependencyClassName.toString().replace('.', '_') + "_" + componentMethod;

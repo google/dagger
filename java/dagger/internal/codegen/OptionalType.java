@@ -79,6 +79,14 @@ abstract class OptionalType {
     CodeBlock presentExpression(CodeBlock value) {
       return CodeBlock.of("$T.of($L)", clazz, value);
     }
+
+    /**
+     * Returns an expression for the present {@code value}, returning {@code Optional<Object>} no
+     * matter what type the value is.
+     */
+    CodeBlock presentObjectExpression(CodeBlock value) {
+      return CodeBlock.of("$T.<$T>of($L)", clazz, Object.class, value);
+    }
   }
 
   private static final TypeVisitor<Optional<OptionalKind>, Void> OPTIONAL_KIND =

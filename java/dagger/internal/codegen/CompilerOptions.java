@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
+import javax.tools.Diagnostic.Kind;
 
 /** A collection of options that dictate how the compiler will run. */
 @AutoValue
@@ -33,6 +34,11 @@ abstract class CompilerOptions {
   abstract boolean usesProducers();
   abstract boolean writeProducerNameInToken();
   abstract Diagnostic.Kind nullableValidationKind();
+
+  boolean doCheckForNulls() {
+    return nullableValidationKind().equals(Kind.ERROR);
+  }
+
   abstract Diagnostic.Kind privateMemberValidationKind();
   abstract Diagnostic.Kind staticMemberValidationKind();
   abstract boolean ignorePrivateAndStaticInjectionForComponent();

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
+import static dagger.internal.codegen.CodeBlocks.stringLiteral;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.auto.common.MoreElements;
@@ -52,8 +53,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ComponentProcessorTest {
-  private static final CodeBlock NPE_LITERAL =
-      CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
+  private static final CodeBlock NPE_FROM_COMPONENT_METHOD =
+      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
+  private static final CodeBlock NPE_FROM_PROVIDES_METHOD =
+      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
 
   @Test public void componentOnConcreteClass() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
@@ -638,6 +641,7 @@ public class ComponentProcessorTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
+            "import dagger.internal.Preconditions;",
             "import javax.annotation.Generated;",
             "import javax.inject.Provider;",
             "",
@@ -667,7 +671,8 @@ public class ComponentProcessorTest {
             "",
             "  @Override",
             "  public A a() {",
-            "    return new A(TestModule.b(new C()));",
+            "    return new A(Preconditions.checkNotNull(",
+            "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + "));",
             "  }",
             "",
             "  public static final class Builder {",
@@ -976,7 +981,8 @@ public class ComponentProcessorTest {
             "",
             "  @Override",
             "  public String notSubcomponent() {",
-            "    return ParentModule.notSubcomponent();",
+            "    return Preconditions.checkNotNull(",
+            "        ParentModule.notSubcomponent(), " + NPE_FROM_PROVIDES_METHOD + ");",
             "  }",
             "",
             "  public static final class Builder {",
@@ -1455,7 +1461,8 @@ public class ComponentProcessorTest {
             "    ",
             "    @Override()",
             "    public A get() {",
-            "      return Preconditions.checkNotNull(aComponent.a(), " + NPE_LITERAL + ");",
+            "      return Preconditions.checkNotNull(",
+            "          aComponent.a(), " + NPE_FROM_COMPONENT_METHOD + ");",
             "    }",
             "  }",
             "}");
@@ -2567,6 +2574,105 @@ public class ComponentProcessorTest {
         .hadErrorContaining("@BindsInstance parameters may not be framework types")
         .inFile(bindsFrameworkType)
         .onLine(9);
+  }
+
+  @Test
+  public void nullIncorrectlyReturnedFromNonNullableInlinedProvider() {
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                JavaFileObjects.forSourceLines(
+                    "test.TestModule",
+                    "package test;",
+                    "",
+                    "import dagger.Module;",
+                    "import dagger.Provides;",
+                    "",
+                    "@Module()",
+                    "public abstract class TestModule {",
+                    "  @Provides static String nonNullableString() { return \"string\"; }",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.TestComponent",
+                    "package test;",
+                    "",
+                    "import dagger.Component;",
+                    "",
+                    "@Component(modules = TestModule.class)",
+                    "interface TestComponent {",
+                    "  String nonNullableString();",
+                    "}"));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.TestModule_NonNullableStringFactory")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "test.TestModule_NonNullableStringFactory",
+                "package test;",
+                "",
+                "import dagger.internal.Factory;",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class TestModule_NonNullableStringFactory",
+                "    implements Factory<String> {",
+                "  private static final TestModule_NonNullableStringFactory INSTANCE =",
+                "      new TestModule_NonNullableStringFactory();",
+                "",
+                "  @Override",
+                "  public String get() {",
+                "    return Preconditions.checkNotNull(",
+                "        TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  public static Factory<String> create() {",
+                "    return INSTANCE;",
+                "  }",
+                "",
+                "  /** Proxies {@link TestModule#nonNullableString()}. */",
+                "  public static String proxyNonNullableString() {",
+                "    return TestModule.nonNullableString();",
+                "  }",
+                "}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    assert builder != null;",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public String nonNullableString() {",
+                "    return Preconditions.checkNotNull(",
+                "        TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
   }
 
   private static Compiler daggerCompiler(Processor... extraProcessors) {

@@ -66,7 +66,6 @@ import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.Elements;
-import javax.tools.Diagnostic;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
@@ -236,29 +235,22 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             .addModifiers(PUBLIC);
 
     if (binding.bindingKind().equals(PROVISION)) {
-      CodeBlock.Builder providesMethodInvocationBuilder = CodeBlock.builder();
-      if (binding.requiresModuleInstance()) {
-        providesMethodInvocationBuilder.add("module");
-      } else {
-        providesMethodInvocationBuilder.add(
-            "$T", ClassName.get(binding.bindingTypeElement().get()));
-      }
-      providesMethodInvocationBuilder.add(
-          ".$L($L)", binding.bindingElement().get().getSimpleName(), parametersCodeBlock);
-      CodeBlock providesMethodInvocation = providesMethodInvocationBuilder.build();
-
-      if (binding.nullableType().isPresent()
-          || compilerOptions.nullableValidationKind().equals(Diagnostic.Kind.WARNING)) {
-        if (binding.nullableType().isPresent()) {
-          getMethodBuilder.addAnnotation((ClassName) TypeName.get(binding.nullableType().get()));
-        }
-        getMethodBuilder.addStatement("return $L", providesMethodInvocation);
-      } else {
-        getMethodBuilder.addStatement("return $T.checkNotNull($L, $S)",
-            Preconditions.class,
-            providesMethodInvocation,
-            CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
-      }
+      binding
+          .nullableType()
+          .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethodBuilder, nullableType));
+      CodeBlock methodCall =
+          CodeBlock.of(
+              "$L.$L($L)",
+              binding.requiresModuleInstance()
+                  ? "module"
+                  : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
+              binding.bindingElement().get().getSimpleName(),
+              parametersCodeBlock);
+      getMethodBuilder.addStatement(
+          "return $L",
+          !binding.nullableType().isPresent() && compilerOptions.doCheckForNulls()
+              ? checkNotNullProvidesMethod(methodCall)
+              : methodCall);
     } else if (binding.membersInjectionRequest().isPresent()) {
       getMethodBuilder.addStatement(
           "return $T.injectMembers($N, new $T($L))",
@@ -280,6 +272,18 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return Optional.of(factoryBuilder);
+  }
+
+  /**
+   * Returns {@code Preconditions.checkNotNull(providesMethodInvocation)} with a message suitable
+   * for {@code @Provides} methods.
+   */
+  static CodeBlock checkNotNullProvidesMethod(CodeBlock providesMethodInvocation) {
+    return CodeBlock.of(
+        "$T.checkNotNull($L, $S)",
+        Preconditions.class,
+        providesMethodInvocation,
+        CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
   }
 
   /**

@@ -370,6 +370,7 @@ public class ModuleFactoryGeneratorTest {
             "    return new TestModule_ProvideStringFactory(module);",
             "  }",
             "",
+            "  @Nullable",
             "  public static String proxyProvideString(TestModule instance) {",
             "    return instance.provideString();",
             "  }",
@@ -579,9 +580,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  @Override public List<List<?>> get() {",
-            "    return Preconditions.checkNotNull(module.provideWildcardList(), "
-                + NPE_LITERAL
-                + ");",
+            "    return Preconditions.checkNotNull(",
+            "        module.provideWildcardList(), " + NPE_LITERAL + ");",
             "  }",
             "",
             "  public static Factory<List<List<?>>> create(TestModule module) {",

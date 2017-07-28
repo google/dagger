@@ -22,6 +22,7 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import com.squareup.javapoet.CodeBlock;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +30,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SetBindingRequestFulfillmentWithGuavaTest {
+
+  public static final CodeBlock NPE_FROM_PROVIDES =
+      CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+
   @Test
   public void setBindings() {
     JavaFileObject emptySetModuleFile = JavaFileObjects.forSourceLines("test.EmptySetModule",
@@ -125,8 +130,10 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  @Override",
             "  public Set<String> strings() {",
             "    return ImmutableSet.<String>builder()",
-            "        .addAll(EmptySetModule.emptySet())",
-            "        .add(SetModule.string())",
+            "        .addAll(Preconditions.checkNotNull(",
+            "            EmptySetModule.emptySet(), " + NPE_FROM_PROVIDES + "))",
+            "        .add(Preconditions.checkNotNull(",
+            "            SetModule.string(), " + NPE_FROM_PROVIDES + "))",
             "        .build();",
             "  }",
             "",
@@ -138,7 +145,9 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  @Override",
             "  public Set<Integer> onlyContributionIsElementsIntoSet() {",
             "    return ImmutableSet.<Integer>copyOf(",
-            "        EmptySetModule.onlyContributionIsElementsIntoSet());",
+            "        Preconditions.checkNotNull(",
+            "            EmptySetModule.onlyContributionIsElementsIntoSet(),",
+            "            " + NPE_FROM_PROVIDES + "));",
             "  }",
             "",
             "  public static final class Builder {",
@@ -233,6 +242,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "",
             "import com.google.common.collect.ImmutableSet;",
             "import dagger.internal.Factory;",
+            "import dagger.internal.Preconditions;",
             "import dagger.internal.SetFactory;",
             "import java.util.Set;",
             "import javax.annotation.Generated;",
@@ -275,7 +285,9 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newUsesInaccessible(",
             "        (Set) ImmutableSet.of(),",
-            "        (Set) ImmutableSet.copyOf(TestModule_EmptySetFactory.proxyEmptySet()));",
+            "        (Set) ImmutableSet.copyOf(Preconditions.checkNotNull(",
+            "            TestModule_EmptySetFactory.proxyEmptySet(),",
+            "            " + NPE_FROM_PROVIDES + ")));",
             "  }",
             "",
             "  public static final class Builder {",
@@ -429,7 +441,8 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "",
             "    @Override",
             "    public Set<Object> objectSet() {",
-            "      return ImmutableSet.<Object>of(ParentModule.parentObject());",
+            "      return ImmutableSet.<Object>of(Preconditions.checkNotNull(",
+            "          ParentModule.parentObject(), " + NPE_FROM_PROVIDES + "));",
             "    }",
             "",
             "    @Override",
@@ -517,7 +530,8 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  public ListenableFuture<Set<String>> strings() {",
             "    return Futures.<Set<String>>immediateFuture(",
 
-            "        ImmutableSet.<String>copyOf(EmptySetModule.emptySet());",
+            "        ImmutableSet.<String>copyOf(Preconditions.checkNotNull(",
+            "            EmptySetModule.emptySet(), " + NPE_FROM_PROVIDES + "));",
             "  }",
             "",
             "  public static final class Builder {",

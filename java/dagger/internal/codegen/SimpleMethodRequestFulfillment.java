@@ -22,11 +22,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.FactoryGenerator.checkNotNullProvidesMethod;
 import static dagger.internal.codegen.Proxies.proxyName;
 import static dagger.internal.codegen.Proxies.requiresProxyAccess;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
-import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -43,15 +45,18 @@ import javax.lang.model.type.TypeMirror;
  */
 final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfillment {
 
+  private final CompilerOptions compilerOptions;
   private final ProvisionBinding provisionBinding;
   private final HasBindingExpressions hasBindingExpressions;
 
   SimpleMethodRequestFulfillment(
+      CompilerOptions compilerOptions,
       BindingKey bindingKey,
       ProvisionBinding provisionBinding,
       RequestFulfillment providerDelegate,
       HasBindingExpressions hasBindingExpressions) {
     super(bindingKey, providerDelegate);
+    this.compilerOptions = compilerOptions;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
@@ -94,39 +99,48 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
         return CodeBlock.of("new $T($L)", provisionBinding.key().type(), parametersCodeBlock);
       case METHOD:
         checkState(method.getModifiers().contains(STATIC));
-        return CodeBlock.of(
-            "$T.$L($L)",
-            provisionBinding.bindingTypeElement().get(),
-            method.getSimpleName(),
-            parametersCodeBlock);
+        return maybeCheckForNulls(
+            CodeBlock.of(
+                "$T.$L($L)",
+                provisionBinding.bindingTypeElement().get(),
+                method.getSimpleName(),
+                parametersCodeBlock));
       default:
         throw new IllegalStateException();
     }
   }
 
   private CodeBlock invokeProxyMethod(ClassName requestingClass) {
-    return CodeBlock.of(
-        "$T.$L($L)",
-        generatedClassNameForBinding(provisionBinding),
-        proxyName(asExecutable(provisionBinding.bindingElement().get())),
-        provisionBinding
-            .explicitDependencies()
-            .stream()
-            .map(
-                request -> {
-                  CodeBlock snippet = getDependencySnippet(requestingClass, request);
-                  TypeMirror requestElementType = request.requestElement().get().asType();
-                  /* If the type is accessible, use the snippet.  If only the raw type is
-                   * accessible, cast it to the raw type.  If the type is completely inaccessible,
-                   * the proxy will have an Object method parameter, so we can again, just use the
-                   * snippet. */
-                  return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
-                          || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
-                      ? snippet
-                      : CodeBlock.of(
-                          "($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
-                })
-            .collect(collectingAndThen(toList(), CodeBlocks::makeParametersCodeBlock)));
+    return maybeCheckForNulls(
+        CodeBlock.of(
+            "$T.$L($L)",
+            generatedClassNameForBinding(provisionBinding),
+            proxyName(asExecutable(provisionBinding.bindingElement().get())),
+            provisionBinding
+                .explicitDependencies()
+                .stream()
+                .map(request -> proxyMethodParameter(request, requestingClass))
+                .collect(toParametersCodeBlock())));
+  }
+
+  private CodeBlock proxyMethodParameter(DependencyRequest dependency, ClassName requestingClass) {
+    CodeBlock snippet = getDependencySnippet(requestingClass, dependency);
+    TypeMirror requestElementType = dependency.requestElement().get().asType();
+    /* If the type is accessible, use the snippet.  If only the raw type is accessible, cast it to
+     * the raw type.  If the type is completely inaccessible, the proxy will have an Object method
+     * parameter, so we can again, just use the snippet. */
+    return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
+            || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
+        ? snippet
+        : CodeBlock.of("($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
+  }
+
+  private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
+    return !provisionBinding.bindingKind().equals(INJECTION)
+            && !provisionBinding.nullableType().isPresent()
+            && compilerOptions.doCheckForNulls()
+        ? checkNotNullProvidesMethod(methodCall)
+        : methodCall;
   }
 
   private CodeBlock getDependencySnippet(ClassName requestingClass, DependencyRequest request) {

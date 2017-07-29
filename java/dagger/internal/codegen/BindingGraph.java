@@ -1125,7 +1125,7 @@ abstract class BindingGraph {
                 .anyMatch(contributionBinding ->
                     !getLocalExplicitBindings(parentBindings.key()).isEmpty()
                     // TO BE REMOVED BEFORE COMMITTING:
-
+                    //
                     // Checks that the owning component is not this component.
                     //
                     // If the owning component is this component this means the binding that
@@ -1136,6 +1136,21 @@ abstract class BindingGraph {
                     // If the owning component isn't this component we have a local contribution
                     // binding that's a duplicate and will result in a duplicate binding error
                     // when the graph is validated.
+                    //
+                    // Without this check, GraphValidationTest.bindingUsedOnlyInSubcomponentDependsOnBindingOnlyInSubcomponent()
+                    // fails with the stacktrace below.
+                    //
+                    // java.util.NoSuchElementException
+	                  // at com.google.common.collect.Iterators$1.next(Iterators.java:81)
+	                  // at com.google.common.collect.Iterators.getOnlyElement(Iterators.java:308)
+	                  // at com.google.common.collect.Iterables.getOnlyElement(Iterables.java:263)
+	                  // at dagger.internal.codegen.ResolvedBindings.contributionBinding(ResolvedBindings.java:285)
+	                  // at dagger.internal.codegen.MemberSelect.staticMemberSelect(MemberSelect.java:86)
+	                  // at dagger.internal.codegen.BindingExpression$Factory.forStaticMethod(BindingExpression.java:86)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.createBindingExpression(AbstractComponentWriter.java:419)
+	                  // at com.google.common.collect.ImmutableList.forEach(ImmutableList.java:408)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.createBindingExpressions(AbstractComponentWriter.java:411)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.write(AbstractComponentWriter.java:286)
                     && parentBindings.owningComponent() != componentDescriptor);
         }
       }

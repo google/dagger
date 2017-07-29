@@ -2139,7 +2139,7 @@ public class GraphValidationTest {
                 + "      @Provides Object"
                 + " test.Child.ChildModule.object()")
         .inFile(parent)
-        .onLine(8);
+        .onLineContaining("interface Parent {");
   }
 
   @Test
@@ -2207,7 +2207,7 @@ public class GraphValidationTest {
                 + "      @Provides Object"
                 + " test.Child.ChildModule.object()")
         .inFile(parent)
-        .onLine(8);
+        .onLineContaining("interface Parent {");
   }
 
   @Test
@@ -2444,7 +2444,7 @@ public class GraphValidationTest {
                 + "      @Provides String"
                 + " test.Child.ChildModule.string()")
         .inFile(parent)
-        .onLine(8);
+        .onLineContaining("interface Parent {");
   }
 
   @Test

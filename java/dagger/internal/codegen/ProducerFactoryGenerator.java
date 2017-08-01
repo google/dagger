@@ -182,10 +182,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addModifiers(PUBLIC)
             .addParameter(futureTransform.applyArgType(), futureTransform.applyArgName())
             .addExceptions(getThrownTypeNames(binding.thrownTypes()))
-            .addStatement(
-                "assert monitor != null : $S",
-                "apply() may only be called internally from compute(); "
-                    + "if it's called explicitly, the monitor might be null")
             .addCode(
                 getInvocationCodeBlock(
                     generatedTypeName,
@@ -203,10 +199,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addAnnotation(Deprecated.class)
             .addAnnotation(Override.class)
             .addParameter(RUNNABLE, "runnable")
-            .addStatement(
-                "assert monitor != null : $S",
-                "execute() may only be called internally from compute(); "
-                    + "if it's called explicitly, the monitor might be null")
             .addStatement("monitor.ready()")
             .addStatement("executorProvider.get().execute(runnable)");
 
@@ -234,9 +226,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   }
 
   private static void assignField(MethodSpec.Builder constructorBuilder, FieldSpec field) {
-    constructorBuilder
-        .addStatement("assert $N != null", field)
-        .addStatement("this.$1N = $1N", field);
+    constructorBuilder.addStatement("this.$1N = $1N", field);
   }
 
   /** Returns a list of dependencies that are generated asynchronously. */

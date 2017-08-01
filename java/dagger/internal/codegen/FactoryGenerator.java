@@ -311,7 +311,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     factoryBuilder.addField(field);
     ParameterSpec parameter = ParameterSpec.builder(typeName, variableName).build();
     constructorBuilder.addParameter(parameter);
-    constructorBuilder.addCode("assert $1N != null; this.$2N = $1N;", parameter, field);
+    constructorBuilder.addCode("this.$N = $N;", field, parameter);
     return field;
   }
 }

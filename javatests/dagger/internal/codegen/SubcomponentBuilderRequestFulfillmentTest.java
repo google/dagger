@@ -82,7 +82,6 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  private Provider<UsesSubcomponent> usesSubcomponentProvider;",
             "",
             "  private DaggerC(Builder builder) {",
-            "    assert builder != null;",
             "    initialize(builder);",
             "  }",
             "",
@@ -132,9 +131,7 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  }",
             "",
             "  private final class SubImpl implements Sub {",
-            "    private SubImpl(SubBuilder builder) {",
-            "      assert builder != null;",
-            "    }",
+            "    private SubImpl(SubBuilder builder) {}",
             "  }",
             "}");
 

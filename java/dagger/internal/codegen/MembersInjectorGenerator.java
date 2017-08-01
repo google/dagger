@@ -180,8 +180,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
 
       FieldSpec field = fieldBuilder.build();
       injectorTypeBuilder.addField(field);
-      constructorBuilder.addStatement("assert $N != null", field);
-      constructorBuilder.addStatement("this.$N = $N", field, field);
+      constructorBuilder.addStatement("this.$1N = $1N", field);
       dependencyFieldsBuilder.put(dependencyBindingKey, field);
       constructorInvocationParameters.add(CodeBlock.of("$N", field));
     }

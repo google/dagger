@@ -320,7 +320,6 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     addBuilderClass(builder.typeSpec());
 
     constructor.addParameter(builderName(), "builder");
-    constructor.addStatement("assert builder != null");
   }
 
   /**

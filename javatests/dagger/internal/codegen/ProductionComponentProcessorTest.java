@@ -227,7 +227,6 @@ public class ProductionComponentProcessorTest {
             "  private Producer<TestClass.A> aProducer;",
             "",
             "  private DaggerTestClass_SimpleComponent(Builder builder) {",
-            "    assert builder != null;",
             "    initialize(builder);",
             "  }",
             "",

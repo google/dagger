@@ -28,6 +28,7 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.Key.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -1033,8 +1034,10 @@ abstract class BindingGraph {
           if (!cycleChecker.add(bindingKey)) {
             return false;
           }
-          return bindingKeyDependsOnLocalBindingsCache.computeIfAbsent(
-              bindingKey, this::dependsOnLocalBindingsUncached);
+          return reentrantComputeIfAbsent(
+              bindingKeyDependsOnLocalBindingsCache,
+              bindingKey,
+              this::dependsOnLocalBindingsUncached);
         }
 
         private boolean dependsOnLocalBindingsUncached(BindingKey bindingKey) {
@@ -1071,8 +1074,8 @@ abstract class BindingGraph {
           if (!cycleChecker.add(binding)) {
             return false;
           }
-          return bindingDependsOnLocalBindingsCache.computeIfAbsent(
-              binding, this::dependsOnLocalBindingsUncached);
+          return reentrantComputeIfAbsent(
+              bindingDependsOnLocalBindingsCache, binding, this::dependsOnLocalBindingsUncached);
         }
 
         private boolean dependsOnLocalBindingsUncached(Binding binding) {

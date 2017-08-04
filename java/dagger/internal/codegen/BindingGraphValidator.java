@@ -63,6 +63,7 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -187,7 +188,8 @@ final class BindingGraphValidator {
 
     /** Returns the report builder for a (sub)component. */
     private ValidationReport.Builder<TypeElement> report(BindingGraph graph) {
-      return reports.computeIfAbsent(
+      return reentrantComputeIfAbsent(
+          reports,
           graph.componentDescriptor(),
           descriptor -> ValidationReport.about(descriptor.componentDefinitionType()));
     }

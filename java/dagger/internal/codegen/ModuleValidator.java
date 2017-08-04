@@ -37,6 +37,7 @@ import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_AN
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
@@ -128,7 +129,7 @@ final class ModuleValidator {
 
   /** Returns a validation report for a module type. */
   ValidationReport<TypeElement> validate(TypeElement module) {
-    return cache.computeIfAbsent(module, this::validateUncached);
+    return reentrantComputeIfAbsent(cache, module, this::validateUncached);
   }
 
   private ValidationReport<TypeElement> validateUncached(TypeElement module) {

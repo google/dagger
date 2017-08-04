@@ -18,42 +18,52 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
+import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
+import static dagger.internal.codegen.TypeNames.PRODUCER;
+import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import dagger.internal.DelegateFactory;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import javax.lang.model.util.Elements;
 
 /** The code expressions to declare, initialize, and/or access a binding in a component. */
 final class BindingExpression extends RequestFulfillment {
   private final Optional<FieldSpec> fieldSpec;
   private final RequestFulfillment requestFulfillmentDelegate;
-  private CodeBlock initializeDeferredBindingFields;
-  private CodeBlock initializeField;
+  private final HasBindingExpressions hasBindingExpressions;
+  private final boolean isProducerFromProvider;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   private BindingExpression(
-      RequestFulfillment requestFulfillmentDelegate, Optional<FieldSpec> fieldSpec) {
+      RequestFulfillment requestFulfillmentDelegate,
+      Optional<FieldSpec> fieldSpec,
+      HasBindingExpressions hasBindingExpressions,
+      boolean isProducerFromProvider) {
     super(requestFulfillmentDelegate.bindingKey());
     this.requestFulfillmentDelegate = requestFulfillmentDelegate;
     this.fieldSpec = fieldSpec;
+    this.hasBindingExpressions = hasBindingExpressions;
+    this.isProducerFromProvider = isProducerFromProvider;
   }
 
   @Override
   CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
+    // TODO(user): We don't always have to initialize ourselves depending on the request and
+    // inlining.
+    maybeInitializeField();
     return requestFulfillmentDelegate.getSnippetForDependencyRequest(request, requestingClass);
   }
 
   @Override
   CodeBlock getSnippetForFrameworkDependency(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
+    maybeInitializeField();
     return requestFulfillmentDelegate.getSnippetForFrameworkDependency(
         frameworkDependency, requestingClass);
   }
@@ -68,41 +78,15 @@ final class BindingExpression extends RequestFulfillment {
    *
    * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
    */
-  String fieldName() {
+  private String fieldName() {
     checkHasField();
     return fieldSpec.get().name;
   }
 
-  /**
-   * Sets the code for initializing the binding's underlying field.
-   *
-   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
-   */
-  void setInitializationCode(CodeBlock initializeDeferredBindingFields, CodeBlock initializeField) {
-    checkHasField();
-    this.initializeDeferredBindingFields = checkNotNull(initializeDeferredBindingFields);
-    this.initializeField = checkNotNull(initializeField);
-  }
-
-  /**
-   * Returns the initialization code for the binding's underlying field.
-   *
-   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
-   */
-  private CodeBlock getInitializationCode() {
-    checkHasField();
-    checkState(initializeDeferredBindingFields != null && initializeField != null);
-    return CodeBlocks.concat(ImmutableList.of(initializeDeferredBindingFields, initializeField));
-  }
-
-  /**
-   * Returns the initialization state for the binding's underlying field.
-   *
-   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
-   */
-  InitializationState fieldInitializationState() {
-    checkHasField();
-    return fieldInitializationState;
+  /** Returns true if this binding expression represents a producer from provider. */
+  // TODO(user): remove this and represent this via a subtype of BindingExpression
+  boolean isProducerFromProvider() {
+    return isProducerFromProvider;
   }
 
   /**
@@ -110,17 +94,10 @@ final class BindingExpression extends RequestFulfillment {
    *
    * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
    */
-  void setFieldInitializationState(InitializationState fieldInitializationState) {
+  private void setFieldInitializationState(InitializationState fieldInitializationState) {
     checkHasField();
     checkArgument(this.fieldInitializationState.compareTo(fieldInitializationState) < 0);
     this.fieldInitializationState = fieldInitializationState;
-  }
-
-  /** Calls the consumer to initialize the binding's underlying field if it has one. */
-  void initializeField(BiConsumer<FieldSpec, CodeBlock> initializationConsumer) {
-    if (hasFieldSpec()) {
-      initializationConsumer.accept(fieldSpec.get(), getInitializationCode());
-    }
   }
 
   private void checkHasField() {
@@ -129,12 +106,69 @@ final class BindingExpression extends RequestFulfillment {
     }
   }
 
+  // Adds our field and initialization of our field to the component.
+  private void maybeInitializeField() {
+    if (!hasFieldSpec()) {
+      return;
+    }
+    switch (fieldInitializationState) {
+      case UNINITIALIZED:
+        // Change our state in case we are recursively invoked via initializeBindingExpression
+        setFieldInitializationState(InitializationState.INITIALIZING);
+        CodeBlock.Builder codeBuilder = CodeBlock.builder();
+        CodeBlock initCode =
+            CodeBlock.of(
+                "this.$L = $L;",
+                fieldName(),
+                checkNotNull(hasBindingExpressions.getFieldInitialization(this)));
+
+        if (fieldInitializationState == InitializationState.DELEGATED) {
+          // If we were recursively invoked, set the delegate factory as part of our initialization
+          String delegateFactoryVariable = fieldName() + "Delegate";
+          codeBuilder
+              .add("$1T $2L = ($1T) $3L;", DELEGATE_FACTORY, delegateFactoryVariable, fieldName())
+              .add(initCode)
+              .add("$L.setDelegatedProvider($L);", delegateFactoryVariable, fieldName())
+              .build();
+        } else {
+          codeBuilder.add(initCode);
+        }
+        hasBindingExpressions.addInitialization(codeBuilder.build());
+        hasBindingExpressions.addField(fieldSpec.get());
+
+        setFieldInitializationState(InitializationState.INITIALIZED);
+        break;
+
+      case INITIALIZING:
+        // We were recursively invoked, so create a delegate factory instead
+        hasBindingExpressions.addInitialization(
+            CodeBlock.of("this.$L = new $T();", fieldName(), DELEGATE_FACTORY));
+        setFieldInitializationState(InitializationState.DELEGATED);
+        break;
+
+      case DELEGATED:
+      case INITIALIZED:
+        break;
+      default:
+        throw new AssertionError("Unhandled initialization state: " + fieldInitializationState);
+    }
+  }
+
   /** Initialization state for a factory field. */
   enum InitializationState {
     /** The field is {@code null}. */
     UNINITIALIZED,
 
-    /** The field is set to a {@link DelegateFactory}. */
+    /**
+     * The field's dependencies are being set up. If the field is needed in this state, use a {@link
+     * DelegateFactory}.
+     */
+    INITIALIZING,
+
+    /**
+     * The field's dependencies are being set up, but the field can be used because it has already
+     * been set to a {@link DelegateFactory}.
+     */
     DELEGATED,
 
     /** The field is set to an undelegated factory. */
@@ -145,6 +179,7 @@ final class BindingExpression extends RequestFulfillment {
   static final class Factory {
     private final CompilerOptions compilerOptions;
     private final ClassName componentName;
+    private final UniqueNameSet componentFieldNames;
     private final HasBindingExpressions hasBindingExpressions;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
@@ -153,12 +188,14 @@ final class BindingExpression extends RequestFulfillment {
     Factory(
         CompilerOptions compilerOptions,
         ClassName componentName,
+        UniqueNameSet componentFieldNames,
         HasBindingExpressions hasBindingExpressions,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
         Elements elements) {
       this.compilerOptions = checkNotNull(compilerOptions);
       this.componentName = checkNotNull(componentName);
+      this.componentFieldNames = checkNotNull(componentFieldNames);
       this.hasBindingExpressions = checkNotNull(hasBindingExpressions);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
@@ -166,11 +203,24 @@ final class BindingExpression extends RequestFulfillment {
     }
 
     /** Creates a binding expression for a field. */
-    BindingExpression forField(ResolvedBindings resolvedBindings, FieldSpec fieldSpec) {
+    BindingExpression forField(ResolvedBindings resolvedBindings) {
+      FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.empty());
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
       return new BindingExpression(
           createRequestFulfillment(resolvedBindings, memberSelect),
-          Optional.of(fieldSpec));
+          Optional.of(fieldSpec),
+          hasBindingExpressions,
+          false);
+    }
+
+    BindingExpression forProducerFromProviderField(ResolvedBindings resolvedBindings) {
+      FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
+      MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
+      return new BindingExpression(
+          new ProducerFieldRequestFulfillment(resolvedBindings.bindingKey(), memberSelect),
+          Optional.of(fieldSpec),
+          hasBindingExpressions,
+          true);
     }
 
     /** Creates a binding expression for a static method call. */
@@ -180,7 +230,39 @@ final class BindingExpression extends RequestFulfillment {
           value ->
               new BindingExpression(
                   createRequestFulfillment(resolvedBindings, value),
-                  Optional.empty()));
+                  Optional.empty(),
+                  hasBindingExpressions,
+                  false));
+    }
+
+    /**
+     * Adds a field representing the resolved bindings, optionally forcing it to use a particular
+     * binding type (instead of the type the resolved bindings would typically use).
+     */
+    private FieldSpec generateFrameworkField(
+        ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
+      boolean useRawType = useRawType(resolvedBindings);
+
+      FrameworkField contributionBindingField =
+          FrameworkField.forResolvedBindings(resolvedBindings, frameworkClass);
+      FieldSpec.Builder contributionField =
+          FieldSpec.builder(
+              useRawType
+                  ? contributionBindingField.type().rawType
+                  : contributionBindingField.type(),
+              componentFieldNames.getUniqueName(contributionBindingField.name()));
+      contributionField.addModifiers(PRIVATE);
+      if (useRawType) {
+        contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
+      }
+
+      return contributionField.build();
+    }
+
+    private boolean useRawType(ResolvedBindings resolvedBindings) {
+      Optional<String> bindingPackage = resolvedBindings.bindingPackage();
+      return bindingPackage.isPresent()
+          && !bindingPackage.get().equals(componentName.packageName());
     }
 
     private RequestFulfillment createRequestFulfillment(

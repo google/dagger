@@ -137,7 +137,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
     ExecutableType resolvedMethod = resolvedSubcomponentFactoryMethod();
     componentMethod.returns(ClassName.get(resolvedMethod.getReturnType()));
     writeSubcomponentWithoutBuilder(componentMethod, resolvedMethod);
-    parent.component.addMethod(componentMethod.build());
+    parent.interfaceMethods.add(componentMethod.build());
   }
 
   private void writeSubcomponentWithoutBuilder(

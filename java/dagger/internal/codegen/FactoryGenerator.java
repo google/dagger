@@ -28,10 +28,8 @@ import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
-import static dagger.internal.codegen.Proxies.createProxy;
-import static dagger.internal.codegen.Proxies.shouldGenerateProxy;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
-import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
+import static dagger.internal.codegen.SourceFiles.frameworkFieldUsages;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
@@ -41,7 +39,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -56,15 +53,15 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.Factory;
-import dagger.internal.MembersInjectors;
 import dagger.internal.Preconditions;
+import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
+import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.Elements;
 
 /**
@@ -220,13 +217,9 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       factoryBuilder.addMethod(constructorBuilder.get().build());
     }
 
-    List<CodeBlock> parameters = Lists.newArrayList();
-    for (DependencyRequest dependency : binding.explicitDependencies()) {
-      parameters.add(
-          frameworkTypeUsageStatement(
-              CodeBlock.of("$N", fields.get(dependency.bindingKey())), dependency.kind()));
-    }
-    CodeBlock parametersCodeBlock = makeParametersCodeBlock(parameters);
+    CodeBlock parametersCodeBlock =
+        makeParametersCodeBlock(
+            frameworkFieldUsages(binding.provisionDependencies(), fields).values());
 
     MethodSpec.Builder getMethodBuilder =
         methodBuilder("get")
@@ -235,6 +228,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             .addModifiers(PUBLIC);
 
     if (binding.bindingKind().equals(PROVISION)) {
+      // TODO(dpb): take advantage of the code in InjectionMethods so this doesn't have to be
+      // duplicated
       binding
           .nullableType()
           .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethodBuilder, nullableType));
@@ -251,13 +246,17 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
           !binding.nullableType().isPresent() && compilerOptions.doCheckForNulls()
               ? checkNotNullProvidesMethod(methodCall)
               : methodCall);
-    } else if (binding.membersInjectionRequest().isPresent()) {
-      getMethodBuilder.addStatement(
-          "return $T.injectMembers($N, new $T($L))",
-          MembersInjectors.class,
-          fields.get(binding.membersInjectionRequest().get().bindingKey()),
-          providedTypeName,
-          parametersCodeBlock);
+    } else if (!binding.injectionSites().isEmpty()) {
+      CodeBlock instance = CodeBlock.of("instance");
+      getMethodBuilder
+          .addStatement("$1T $2L = new $1T($3L)", providedTypeName, instance, parametersCodeBlock)
+          .addCode(
+              InjectionSiteMethod.invokeAll(
+                  binding.injectionSites(),
+                  generatedTypeName,
+                  instance,
+                  frameworkFieldUsages(binding.dependencies(), fields)::get))
+          .addStatement("return $L", instance);
     } else {
       getMethodBuilder.addStatement("return new $T($L)", providedTypeName, parametersCodeBlock);
     }
@@ -267,7 +266,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       factoryBuilder.addMethod(createMethod.get());
     }
 
-    proxyMethodFor(binding).ifPresent(factoryBuilder::addMethod);
+    ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
 
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
@@ -284,21 +283,6 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         Preconditions.class,
         providesMethodInvocation,
         CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
-  }
-
-  /**
-   * Returns a method to proxy access to the binding's {@link Binding#bindingElement()}, which
-   * behaves according to the description in {@link Proxies}. Use here is further restricted by
-   * whether or not members injection is required, since that is not yet implemented for proxy
-   * methods, but will be added.
-   */
-  // TODO(gak): support accessibility proxies for types with injected members as well
-  private static Optional<MethodSpec> proxyMethodFor(ProvisionBinding binding) {
-    ExecutableElement executableElement = MoreElements.asExecutable(binding.bindingElement().get());
-    if (binding.membersInjectionRequest().isPresent() || !shouldGenerateProxy(executableElement)) {
-      return Optional.empty();
-    }
-    return Optional.of(createProxy(executableElement));
   }
 
   @CanIgnoreReturnValue

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
 import javax.annotation.Nullable;
 
 /** An object which associates a {@link BindingExpression} instance with a {@link BindingKey}. */
@@ -41,4 +42,9 @@ interface HasBindingExpressions {
 
   /** Adds the given code block to the initialize methods of the component. */
   void addInitialization(CodeBlock codeBlock);
+
+  /**
+   * Returns the {@code private} members injection method that injects objects with the {@code key}.
+   */
+  MethodSpec getMembersInjectionMethod(Key key);
 }

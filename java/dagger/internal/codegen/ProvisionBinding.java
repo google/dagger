@@ -24,31 +24,31 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
-import static javax.lang.model.element.ElementKind.FIELD;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
+import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import java.util.Optional;
 import javax.annotation.CheckReturnValue;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -62,14 +62,32 @@ import javax.lang.model.util.Types;
 abstract class ProvisionBinding extends ContributionBinding {
 
   @Override
-  ImmutableSet<DependencyRequest> implicitDependencies() {
-    return membersInjectionRequest().isPresent()
-        ? ImmutableSet.of(membersInjectionRequest().get())
-        : ImmutableSet.of();
+  @Memoized
+  ImmutableSet<DependencyRequest> explicitDependencies() {
+    return ImmutableSet.<DependencyRequest>builder()
+        .addAll(provisionDependencies())
+        .addAll(membersInjectionDependencies())
+        .build();
   }
 
-  /** If this provision requires members injection, this will be the corresponding request. */
-  abstract Optional<DependencyRequest> membersInjectionRequest();
+  /**
+   * Dependencies necessary to invoke an {@code @Inject} constructor or {@code @Provides} method.
+   */
+  abstract ImmutableSet<DependencyRequest> provisionDependencies();
+
+  @Memoized
+  ImmutableSet<DependencyRequest> membersInjectionDependencies() {
+    return injectionSites()
+        .stream()
+        .flatMap(i -> i.dependencies().stream())
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * {@link InjectionSite}s for all {@code @Inject} members if {@link #bindingKind()} is {@link
+   * ContributionBinding.Kind#INJECTION}, otherwise empty.
+   */
+  abstract ImmutableSortedSet<InjectionSite> injectionSites();
 
   @Override
   public BindingType bindingType() {
@@ -84,7 +102,8 @@ abstract class ProvisionBinding extends ContributionBinding {
 
   private static Builder builder() {
     return new AutoValue_ProvisionBinding.Builder()
-        .explicitDependencies(ImmutableSet.<DependencyRequest>of());
+        .provisionDependencies(ImmutableSet.of())
+        .injectionSites(ImmutableSortedSet.of());
   }
   
   abstract Builder toBuilder();
@@ -92,8 +111,10 @@ abstract class ProvisionBinding extends ContributionBinding {
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<Builder> {
+    abstract Builder provisionDependencies(DependencyRequest... provisionDependencies);
+    abstract Builder provisionDependencies(ImmutableSet<DependencyRequest> provisionDependencies);
 
-    abstract Builder membersInjectionRequest(Optional<DependencyRequest> membersInjectionRequest);
+    abstract Builder injectionSites(ImmutableSortedSet<InjectionSite> injectionSites);
 
     abstract Builder unresolved(ProvisionBinding unresolved);
 
@@ -104,17 +125,20 @@ abstract class ProvisionBinding extends ContributionBinding {
   }
 
   static final class Factory {
-    private final Elements elements;
     private final Types types;
     private final Key.Factory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
+    private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
 
-    Factory(Elements elements, Types types, Key.Factory keyFactory,
-        DependencyRequest.Factory dependencyRequestFactory) {
-      this.elements = elements;
+    Factory(
+        Types types,
+        Key.Factory keyFactory,
+        DependencyRequest.Factory dependencyRequestFactory,
+        MembersInjectionBinding.Factory membersInjectionBindingFactory) {
       this.types = types;
       this.keyFactory = keyFactory;
       this.dependencyRequestFactory = dependencyRequestFactory;
+      this.membersInjectionBindingFactory = membersInjectionBindingFactory;
     }
 
     /**
@@ -145,19 +169,23 @@ abstract class ProvisionBinding extends ContributionBinding {
 
       Key key = keyFactory.forInjectConstructorWithResolvedType(enclosingCxtorType);
       checkArgument(!key.qualifier().isPresent());
-      ImmutableSet<DependencyRequest> dependencies =
+      ImmutableSet<DependencyRequest> provisionDependencies =
           dependencyRequestFactory.forRequiredResolvedVariables(
               constructorElement.getParameters(), cxtorType.getParameterTypes());
-      Optional<DependencyRequest> membersInjectionRequest =
-          membersInjectionRequest(enclosingCxtorType);
+      // TODO(ronshapiro): instead of creating a MembersInjectionBinding just to retrieve the
+      // injection sites, create an InjectionSite.Factory and pass that in here.
+      ImmutableSortedSet<InjectionSite> injectionSites =
+          membersInjectionBindingFactory
+              .forInjectedType(enclosingCxtorType, Optional.empty())
+              .injectionSites();
 
       ProvisionBinding.Builder builder =
           ProvisionBinding.builder()
               .contributionType(ContributionType.UNIQUE)
               .bindingElement(constructorElement)
               .key(key)
-              .explicitDependencies(dependencies)
-              .membersInjectionRequest(membersInjectionRequest)
+              .provisionDependencies(provisionDependencies)
+              .injectionSites(injectionSites)
               .bindingKind(Kind.INJECTION)
               .scope(Scope.uniqueScopeOf(constructorElement.getEnclosingElement()));
 
@@ -167,24 +195,6 @@ abstract class ProvisionBinding extends ContributionBinding {
         builder.unresolved(forInjectConstructor(constructorElement, Optional.empty()));
       }
       return builder.build();
-    }
-
-    private static final ImmutableSet<ElementKind> MEMBER_KINDS =
-        Sets.immutableEnumSet(METHOD, FIELD);
-
-    private Optional<DependencyRequest> membersInjectionRequest(DeclaredType type) {
-      TypeElement typeElement = MoreElements.asType(type.asElement());
-      if (!types.isSameType(elements.getTypeElement(Object.class.getCanonicalName()).asType(),
-          typeElement.getSuperclass())) {
-        return Optional.of(dependencyRequestFactory.forMembersInjectedType(type));
-      }
-      for (Element enclosedElement : typeElement.getEnclosedElements()) {
-        if (MEMBER_KINDS.contains(enclosedElement.getKind())
-            && (isAnnotationPresent(enclosedElement, Inject.class))) {
-          return Optional.of(dependencyRequestFactory.forMembersInjectedType(type));
-        }
-      }
-      return Optional.empty();
     }
 
     ProvisionBinding forProvidesMethod(
@@ -203,7 +213,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(providesMethod)
           .contributingModule(contributedBy)
           .key(key)
-          .explicitDependencies(dependencies)
+          .provisionDependencies(dependencies)
           .nullableType(ConfigurationAnnotations.getNullableType(providesMethod))
           .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(providesMethod)))
           .bindingKind(Kind.PROVISION)
@@ -221,7 +231,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(mapOfValuesKey)
-          .explicitDependencies(requestForMapOfProviders)
+          .provisionDependencies(requestForMapOfProviders)
           .bindingKind(Kind.SYNTHETIC_MAP)
           .build();
     }
@@ -237,7 +247,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(key)
-          .explicitDependencies(
+          .provisionDependencies(
               dependencyRequestFactory.forMultibindingContributions(multibindingContributions))
           .bindingKind(Kind.forMultibindingKey(key))
           .build();
@@ -327,7 +337,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(delegateDeclaration.bindingElement().get())
           .contributingModule(delegateDeclaration.contributingModule().get())
           .key(keyFactory.forDelegateBinding(delegateDeclaration, Provider.class))
-          .explicitDependencies(delegateDeclaration.delegateRequest())
+          .provisionDependencies(delegateDeclaration.delegateRequest())
           .wrappedMapKey(delegateDeclaration.wrappedMapKey())
           .bindingKind(Kind.SYNTHETIC_DELEGATE_BINDING)
           .scope(Scope.uniqueScopeOf(delegateDeclaration.bindingElement().get()));
@@ -396,7 +406,7 @@ abstract class ProvisionBinding extends ContributionBinding {
     ProvisionBinding syntheticPresentBinding(Key key, DependencyRequest.Kind kind) {
       return syntheticAbsentBinding(key)
           .toBuilder()
-          .explicitDependencies(
+          .provisionDependencies(
               dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, kind))
           .build();
     }

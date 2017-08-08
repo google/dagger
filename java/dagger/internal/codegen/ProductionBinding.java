@@ -109,6 +109,10 @@ abstract class ProductionBinding extends ContributionBinding {
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<Builder> {
+    abstract Builder explicitDependencies(Iterable<DependencyRequest> dependencies);
+
+    abstract Builder explicitDependencies(DependencyRequest... dependencies);
+
     abstract Builder productionKind(ProductionKind productionKind);
 
     abstract Builder thrownTypes(Iterable<? extends TypeMirror> thrownTypes);

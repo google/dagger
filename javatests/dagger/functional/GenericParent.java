@@ -24,17 +24,28 @@ class GenericParent<X, Y> {
   Provider<X> registeredX;
   Y registeredY;
   B registeredB;
+  Parameterized<Y> registerParameterizedOfY;
   
   @Inject GenericParent() {}
   
   @Inject Provider<X> x;
   @Inject Y y;
   @Inject B b;
-  
+  @Inject Parameterized<X> parameterizedOfX;
+
   @Inject
   void registerX(Provider<X> x) {
     this.registeredX = x;
   }
   @Inject void registerY(Y y) { this.registeredY = y; }
   @Inject void registerB(B b) { this.registeredB = b; }
+  @Inject void registerParameterizedOfY(Parameterized<Y> parameterizedOfY) {
+    this.registerParameterizedOfY = parameterizedOfY;
+  }
+
+  static class Parameterized<P> {
+    @Inject P p;
+
+    @Inject Parameterized() {}
+  }
 }

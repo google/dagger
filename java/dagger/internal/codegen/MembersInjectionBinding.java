@@ -124,10 +124,6 @@ abstract class MembersInjectionBinding extends Binding {
      * Returns the index of {@link #element()} in its parents {@code @Inject} members that have the
      * same simple name. This method filters out private elements so that the results will be
      * consistent independent of whether the build system uses header jars or not.
-     *
-     * <p>This allows {@link MembersInjectorGenerator} to generate unique {@linkplain
-     * MembersInjectorGenerator#injectionSiteDelegateMethodName(InjectionSite)} delegate injection
-     * methods}.
      */
     @Memoized
     int indexAmongAtInjectMembersWithSameSimpleName() {

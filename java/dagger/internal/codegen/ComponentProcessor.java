@@ -104,6 +104,20 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements, types, moduleValidator, subcomponentValidator, builderValidator);
     MapKeyValidator mapKeyValidator = new MapKeyValidator(elements);
 
+    DependencyRequest.Factory dependencyRequestFactory =
+        new DependencyRequest.Factory(keyFactory);
+    MembersInjectionBinding.Factory membersInjectionBindingFactory =
+        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
+    ProvisionBinding.Factory provisionBindingFactory =
+        new ProvisionBinding.Factory(
+            types, keyFactory, dependencyRequestFactory, membersInjectionBindingFactory);
+    ProductionBinding.Factory productionBindingFactory =
+        new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
+    MultibindingDeclaration.Factory multibindingDeclarationFactory =
+        new MultibindingDeclaration.Factory(elements, types, keyFactory);
+    SubcomponentDeclaration.Factory subcomponentDeclarationFactory =
+        new SubcomponentDeclaration.Factory(keyFactory);
+
     this.factoryGenerator =
         new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
     this.membersInjectorGenerator =
@@ -116,20 +130,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new MonitoringModuleGenerator(filer, elements);
     ProductionExecutorModuleGenerator productionExecutorModuleGenerator =
         new ProductionExecutorModuleGenerator(filer, elements);
-
-    DependencyRequest.Factory dependencyRequestFactory =
-        new DependencyRequest.Factory(keyFactory);
-    ProvisionBinding.Factory provisionBindingFactory =
-        new ProvisionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
-    ProductionBinding.Factory productionBindingFactory =
-        new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
-    MultibindingDeclaration.Factory multibindingDeclarationFactory =
-        new MultibindingDeclaration.Factory(elements, types, keyFactory);
-    SubcomponentDeclaration.Factory subcomponentDeclarationFactory =
-        new SubcomponentDeclaration.Factory(keyFactory);
-
-    MembersInjectionBinding.Factory membersInjectionBindingFactory =
-        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
 
     DelegateDeclaration.Factory bindingDelegateDeclarationFactory =
         new DelegateDeclaration.Factory(types, keyFactory, dependencyRequestFactory);

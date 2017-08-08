@@ -151,8 +151,8 @@ maven_jar(
 
 maven_jar(
     name = "com_squareup_javapoet",
-    artifact = "com.squareup:javapoet:1.7.0",
-    sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",
+    artifact = "com.squareup:javapoet:1.8.0",
+    sha1 = "e858dc62ef484048540d27d36f3ec2177a3fa9b1",
 )
 
 maven_jar(

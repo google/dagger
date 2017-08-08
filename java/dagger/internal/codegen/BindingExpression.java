@@ -199,7 +199,7 @@ final class BindingExpression extends RequestFulfillment {
       this.hasBindingExpressions = checkNotNull(hasBindingExpressions);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
-      this.elements = elements;
+      this.elements = checkNotNull(elements);
     }
 
     /** Creates a binding expression for a field. */
@@ -300,8 +300,7 @@ final class BindingExpression extends RequestFulfillment {
                   hasBindingExpressions);
             case INJECTION:
             case PROVISION:
-              if (provisionBinding.implicitDependencies().isEmpty()
-                  && !provisionBinding.scope().isPresent()
+              if (!provisionBinding.scope().isPresent()
                   && !provisionBinding.requiresModuleInstance()
                   && provisionBinding.bindingElement().isPresent()) {
                 return new SimpleMethodRequestFulfillment(

@@ -53,8 +53,12 @@ public final class MembersInjectors {
     INSTANCE;
 
     @Override public void injectMembers(Object instance) {
-      checkNotNull(instance);
+      checkInstanceNotNull(instance);
     }
+  }
+
+  public static void checkInstanceNotNull(Object instance) {
+    checkNotNull(instance, "Cannot inject members into a null reference");
   }
 
   private MembersInjectors() {}

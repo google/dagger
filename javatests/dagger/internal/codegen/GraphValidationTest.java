@@ -1160,7 +1160,7 @@ public class GraphValidationTest {
             "",
             "  static class C {",
             "    @Inject B b;",
-            "    @Inject C(X x, B b) {}",
+            "    @Inject C(X x) {}",
             "  }",
             "",
             "  interface D { }",

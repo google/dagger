@@ -44,8 +44,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
@@ -161,6 +163,19 @@ class SourceFiles {
       default: // including PRODUCED
         throw new AssertionError(dependencyKind);
     }
+  }
+
+  /**
+   * Returns a mapping of {@link DependencyRequest}s to {@link CodeBlock}s that {@linkplain
+   * #frameworkTypeUsageStatement(CodeBlock, DependencyRequest.Kind) use them}.
+   */
+  static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
+      ImmutableSet<DependencyRequest> dependencies, ImmutableMap<BindingKey, FieldSpec> fields) {
+    return Maps.toMap(
+        dependencies,
+        dep ->
+            frameworkTypeUsageStatement(
+                CodeBlock.of("$N", fields.get(dep.bindingKey())), dep.kind()));
   }
 
   /**

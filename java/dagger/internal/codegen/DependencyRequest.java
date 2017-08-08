@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.Optionals.firstPresent;
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
+import static dagger.internal.codegen.TypeNames.membersInjectorOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
@@ -153,6 +154,9 @@ abstract class DependencyRequest {
         case FUTURE:
           return listenableFutureOf(keyType);
 
+        case MEMBERS_INJECTOR:
+          return membersInjectorOf(keyType);
+
         default:
           throw new AssertionError(this);
       }
@@ -181,6 +185,17 @@ abstract class DependencyRequest {
 
   /** The element that declares this dependency request. Absent for synthetic requests. */
   abstract Optional<Element> requestElement();
+
+  /**
+   * Returns {@code true} if {@code requestElement}'s type is a primitive type.
+   *
+   * <p>Because the {@link #key()} of a {@link DependencyRequest} is {@linkplain
+   * Key.Factory#boxPrimitives(TypeMirror) boxed} to normalize it with other keys, this inspects the
+   * {@link #requestElement()} directly.
+   */
+  boolean requestsPrimitiveType() {
+    return requestElement().map(element -> element.asType().getKind().isPrimitive()).orElse(false);
+  }
 
   /** Returns true if this request allows null objects. */
   abstract boolean isNullable();

@@ -285,10 +285,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
     abstract B key(Key key);
 
-    abstract B explicitDependencies(Iterable<DependencyRequest> dependencies);
-
-    abstract B explicitDependencies(DependencyRequest... dependencies);
-
     abstract B nullableType(Optional<DeclaredType> nullableType);
 
     abstract B wrappedMapKey(Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey);

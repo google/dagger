@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -26,6 +27,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
@@ -62,8 +64,10 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -79,6 +83,8 @@ import dagger.internal.InstanceFactory;
 import dagger.internal.Preconditions;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
+import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -118,6 +124,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   protected final ImmutableMap<ComponentDescriptor, String> subcomponentNames;
   protected final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
+  private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   // TODO(user): Merge these two maps if we refactor BindingKey to allow us to unify
   // these two key spaces
   private final Map<BindingKey, BindingExpression> bindingExpressions = new LinkedHashMap<>();
@@ -126,6 +133,8 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   private final List<CodeBlock> initializations = new ArrayList<>();
   protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
   private final BindingExpression.Factory bindingExpressionFactory;
+
+  private final Map<Key, MethodSpec> membersInjectionMethods = new LinkedHashMap<>();
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
   private final OptionalFactories optionalFactories;
   private ComponentBuilder builder;
@@ -297,12 +306,18 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     if (hasBuilder()) {
       addBuilder();
     }
+
+    getLocalAndInheritedMethods(
+            graph.componentDescriptor().componentDefinitionType(), types, elements)
+        .forEach(method -> componentMethodNames.claim(method.getSimpleName()));
+
     addFactoryMethods();
     addReferenceReleasingProviderManagerFields();
     createBindingExpressions();
     implementInterfaceMethods();
     addSubcomponents();
     writeInitializeAndInterfaceMethods();
+    writeMembersInjectionMethods();
     component.addMethod(constructor.build());
     if (graph.componentDescriptor().kind().isTopLevel()) {
       optionalFactories.addMembers(component);
@@ -473,17 +488,29 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
           interfaceMethodSignatures.add(signature);
           MethodSpec.Builder interfaceMethod =
               methodSpecForComponentMethod(methodElement, requestType);
-          CodeBlock codeBlock = getRequestFulfillment(interfaceRequest);
           List<? extends VariableElement> parameters = methodElement.getParameters();
           if (interfaceRequest.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR)
               && !parameters.isEmpty() /* i.e. it's not a request for a MembersInjector<T> */) {
-            Name parameterName = getOnlyElement(parameters).getSimpleName();
-            interfaceMethod.addStatement("$L.injectMembers($L)", codeBlock, parameterName);
-            if (!requestType.getReturnType().getKind().equals(VOID)) {
-              interfaceMethod.addStatement("return $L", parameterName);
+            ParameterSpec parameter = ParameterSpec.get(getOnlyElement(parameters));
+            MembersInjectionBinding binding =
+                graph
+                    .resolvedBindings()
+                    .get(interfaceRequest.bindingKey())
+                    .membersInjectionBinding()
+                    .get();
+            if (requestType.getReturnType().getKind().equals(VOID)) {
+              if (!binding.injectionSites().isEmpty()) {
+                interfaceMethod.addStatement(
+                    "$N($N)", getMembersInjectionMethod(binding.key()), parameter);
+              }
+            } else if (binding.injectionSites().isEmpty()) {
+              interfaceMethod.addStatement("return $N", parameter);
+            } else {
+              interfaceMethod.addStatement(
+                  "return $N($N)", getMembersInjectionMethod(binding.key()), parameter);
             }
           } else {
-            interfaceMethod.addStatement("return $L", codeBlock);
+            interfaceMethod.addStatement("return $L", getRequestFulfillment(interfaceRequest));
           }
           interfaceMethods.add(interfaceMethod.build());
         }
@@ -494,7 +521,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   private MethodSpec.Builder methodSpecForComponentMethod(
       ExecutableElement method, ExecutableType methodType) {
     String methodName = method.getSimpleName().toString();
-    MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName);
+    MethodSpec.Builder methodBuilder = methodBuilder(methodName);
 
     methodBuilder.addAnnotation(Override.class);
 
@@ -612,6 +639,60 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
       default:
         throw new AssertionError();
     }
+  }
+
+  private void writeMembersInjectionMethods() {
+    component.addMethods(membersInjectionMethods.values());
+  }
+
+  @Override
+  public MethodSpec getMembersInjectionMethod(Key key) {
+    return membersInjectionMethods.computeIfAbsent(key, this::membersInjectionMethod);
+  }
+
+  private MethodSpec membersInjectionMethod(Key key) {
+    Binding binding =
+        MoreObjects.firstNonNull(
+                graph.resolvedBindings().get(BindingKey.membersInjection(key)),
+                graph.resolvedBindings().get(BindingKey.contribution(key)))
+            .binding();
+    TypeMirror keyType = binding.key().type();
+    TypeName membersInjectedType =
+        isTypeAccessibleFrom(keyType, name.packageName()) ? TypeName.get(keyType) : TypeName.OBJECT;
+    Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
+    // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
+    // simple names Foo.Builder -> injectFooBuilder
+    String methodName = componentMethodNames.getUniqueName("inject" + bindingTypeName);
+    ParameterSpec parameter =
+        ParameterSpec.builder(
+                membersInjectedType, UPPER_CAMEL.to(LOWER_CAMEL, bindingTypeName.toString()))
+            .build();
+    MethodSpec.Builder method =
+        methodBuilder(methodName)
+            .addModifiers(PRIVATE)
+            .returns(membersInjectedType)
+            .addParameter(parameter);
+    TypeElement canIgnoreReturnValue =
+        elements.getTypeElement("com.google.errorprone.annotations.CanIgnoreReturnValue");
+    if (canIgnoreReturnValue != null) {
+      method.addAnnotation(ClassName.get(canIgnoreReturnValue));
+    }
+    CodeBlock instance = CodeBlock.of("$N", parameter);
+    method.addCode(
+        InjectionSiteMethod.invokeAll(
+            injectionSites(binding), name, instance, this::getRequestFulfillment));
+    method.addStatement("return $L", instance);
+
+    return method.build();
+  }
+
+  static ImmutableSet<InjectionSite> injectionSites(Binding binding) {
+    if (binding instanceof ProvisionBinding) {
+      return ((ProvisionBinding) binding).injectionSites();
+    } else if (binding instanceof MembersInjectionBinding) {
+      return ((MembersInjectionBinding) binding).injectionSites();
+    }
+    throw new IllegalArgumentException(binding.key().toString());
   }
 
   private CodeBlock membersInjectionBindingInitialization(BindingExpression bindingExpression) {

@@ -77,6 +77,7 @@ of your `pom.xml` and the `dagger-compiler` artifact as an
 
 If you are using a version of the `maven-compiler-plugin` lower than `3.5`, add
 the `dagger-compiler` artifact with the `provided` scope:
+
 ```xml
 <dependencies>
   <dependency>

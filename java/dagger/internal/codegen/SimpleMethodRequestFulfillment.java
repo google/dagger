@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
@@ -35,7 +34,6 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * A request fulfillment implementation that invokes methods or constructors directly to fulfill
@@ -118,15 +116,8 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    CodeBlock snippet = getDependencySnippet(requestingClass, dependency);
-    TypeMirror requestElementType = dependency.requestElement().get().asType();
-    /* If the type is accessible, use the snippet.  If only the raw type is accessible, cast it to
-     * the raw type.  If the type is completely inaccessible, the proxy will have an Object method
-     * parameter, so we can again, just use the snippet. */
-    return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
-        || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
-        ? snippet
-        : CodeBlock.of("($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
+    return hasBindingExpressions.getRequestFulfillmentWithPossibleRawtypeCast(
+        dependency, requestingClass);
   }
 
   private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
@@ -153,11 +144,5 @@ final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfil
         "$N($L)",
         hasBindingExpressions.getMembersInjectionMethod(provisionBinding.key()),
         instance);
-  }
-
-  private CodeBlock getDependencySnippet(ClassName requestingClass, DependencyRequest request) {
-    return hasBindingExpressions
-        .getBindingExpression(request.bindingKey())
-        .getSnippetForDependencyRequest(request, requestingClass);
   }
 }

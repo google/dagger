@@ -63,6 +63,7 @@ import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
@@ -72,16 +73,18 @@ import javax.lang.model.util.Elements;
  * @since 2.0
  */
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
-
+  private final Types types;
   private final CompilerOptions compilerOptions;
   private final InjectValidator injectValidator;
 
   FactoryGenerator(
       Filer filer,
       Elements elements,
+      Types types,
       CompilerOptions compilerOptions,
       InjectValidator injectValidator) {
     super(filer, elements);
+    this.types = types;
     this.compilerOptions = compilerOptions;
     this.injectValidator = injectValidator;
   }
@@ -255,6 +258,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
                   binding.injectionSites(),
                   generatedTypeName,
                   instance,
+                  binding.key().type(),
+                  types,
                   frameworkFieldUsages(binding.dependencies(), fields)::get))
           .addStatement("return $L", instance);
     } else {

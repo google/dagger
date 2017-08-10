@@ -119,9 +119,10 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new SubcomponentDeclaration.Factory(keyFactory);
 
     this.factoryGenerator =
-        new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
+        new FactoryGenerator(
+            filer, elements, types, compilerOptions, injectValidatorWhenGeneratingCode);
     this.membersInjectorGenerator =
-        new MembersInjectorGenerator(filer, elements, injectValidatorWhenGeneratingCode);
+        new MembersInjectorGenerator(filer, elements, types, injectValidatorWhenGeneratingCode);
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =

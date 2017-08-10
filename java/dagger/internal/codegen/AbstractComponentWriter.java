@@ -27,6 +27,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingKey.contribution;
@@ -54,6 +55,7 @@ import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MAN
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -657,20 +659,20 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
                 graph.resolvedBindings().get(BindingKey.contribution(key)))
             .binding();
     TypeMirror keyType = binding.key().type();
-    TypeName membersInjectedType =
-        isTypeAccessibleFrom(keyType, name.packageName()) ? TypeName.get(keyType) : TypeName.OBJECT;
+    TypeMirror membersInjectedType =
+        isTypeAccessibleFrom(keyType, name.packageName())
+            ? keyType
+            : elements.getTypeElement("java.lang.Object").asType();
+    TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
     Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
     // simple names Foo.Builder -> injectFooBuilder
     String methodName = componentMethodNames.getUniqueName("inject" + bindingTypeName);
-    ParameterSpec parameter =
-        ParameterSpec.builder(
-                membersInjectedType, UPPER_CAMEL.to(LOWER_CAMEL, bindingTypeName.toString()))
-            .build();
+    ParameterSpec parameter = ParameterSpec.builder(membersInjectedTypeName, "instance").build();
     MethodSpec.Builder method =
         methodBuilder(methodName)
             .addModifiers(PRIVATE)
-            .returns(membersInjectedType)
+            .returns(membersInjectedTypeName)
             .addParameter(parameter);
     TypeElement canIgnoreReturnValue =
         elements.getTypeElement("com.google.errorprone.annotations.CanIgnoreReturnValue");
@@ -680,7 +682,12 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     CodeBlock instance = CodeBlock.of("$N", parameter);
     method.addCode(
         InjectionSiteMethod.invokeAll(
-            injectionSites(binding), name, instance, this::getRequestFulfillment));
+            injectionSites(binding),
+            name,
+            instance,
+            membersInjectedType,
+            types,
+            request -> getRequestFulfillmentWithPossibleRawtypeCast(request, name)));
     method.addStatement("return $L", instance);
 
     return method.build();
@@ -1182,5 +1189,22 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   private CodeBlock getRequestFulfillment(DependencyRequest dependencyRequest) {
     return getBindingExpression(dependencyRequest.bindingKey())
         .getSnippetForDependencyRequest(dependencyRequest, name);
+  }
+
+  // TODO(b/64024402) Consider if this can be merged with getRequestFulfillment(DR) above
+  @Override
+  public CodeBlock getRequestFulfillmentWithPossibleRawtypeCast(
+      DependencyRequest dependencyRequest, ClassName requestingClass) {
+    // This is not simply getRequestFulfillment(dependencyRequest), as that method always uses
+    // `name` as `requestingClass`, while this one does not.
+    CodeBlock snippet =
+        getBindingExpression(dependencyRequest.bindingKey())
+            .getSnippetForDependencyRequest(dependencyRequest, requestingClass);
+
+    TypeMirror requestElementType = dependencyRequest.requestElement().get().asType();
+    return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
+        || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
+        ? snippet
+        : CodeBlock.of("($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
   }
 }

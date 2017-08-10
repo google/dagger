@@ -55,6 +55,7 @@ import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
@@ -63,10 +64,13 @@ import javax.lang.model.util.Elements;
  * @since 2.0
  */
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
+  private final Types types;
   private final InjectValidator injectValidator;
 
-  MembersInjectorGenerator(Filer filer, Elements elements, InjectValidator injectValidator) {
+  MembersInjectorGenerator(
+      Filer filer, Elements elements, Types types, InjectValidator injectValidator) {
     super(filer, elements);
+    this.types = types;
     this.injectValidator = injectValidator;
   }
 
@@ -178,6 +182,8 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
             binding.injectionSites(),
             generatedTypeName,
             CodeBlock.of("instance"),
+            binding.key().type(),
+            types,
             frameworkFieldUsages(binding.dependencies(), dependencyFields)::get));
 
     if (usesRawFrameworkTypes) {

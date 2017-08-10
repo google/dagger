@@ -57,6 +57,7 @@ import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /**
  * Injection methods are static methods that implement provision and/or injection in one step:
@@ -242,19 +243,37 @@ final class InjectionMethods {
     /**
      * Invokes each of the injection methods for {@code injectionSites}, with the dependencies
      * transformed using the {@code dependencyUsage} function.
+     *
+     * @param instanceType the type of the {@code instance} parameter
      */
     static CodeBlock invokeAll(
         ImmutableSet<InjectionSite> injectionSites,
         ClassName generatedTypeName,
         CodeBlock instanceCodeBlock,
+        TypeMirror instanceType,
+        Types types,
         Function<DependencyRequest, CodeBlock> dependencyUsage) {
       return injectionSites
           .stream()
           .map(
-              injectionSite ->
-                  CodeBlock.of(
-                      "$L;",
-                      invoke(injectionSite, generatedTypeName, instanceCodeBlock, dependencyUsage)))
+              injectionSite -> {
+                TypeMirror injectSiteType =
+                    types.erasure(injectionSite.element().getEnclosingElement().asType());
+
+                // If instance has been declared as Object because it is not accessible from the
+                // component, but the injectionSite is in a supertype of instanceType that is
+                // publicly accessible, the InjectionSiteMethod will request the actual type and not
+                // Object as the first parameter. If so, cast to the supertype which is accessible
+                // from within generatedTypeName
+                CodeBlock maybeCastedInstance =
+                    !types.isSubtype(instanceType, injectSiteType)
+                            && isTypeAccessibleFrom(injectSiteType, generatedTypeName.packageName())
+                        ? CodeBlock.of("($T) $L", injectSiteType, instanceCodeBlock)
+                        : instanceCodeBlock;
+                return CodeBlock.of(
+                    "$L;",
+                    invoke(injectionSite, generatedTypeName, maybeCastedInstance, dependencyUsage));
+              })
           .collect(toConcatenatedCodeBlock());
     }
 

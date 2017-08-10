@@ -178,9 +178,9 @@ public class MembersInjectionTest {
             "  }",
             "",
             "  @CanIgnoreReturnValue",
-            "  private Child injectChild(Child child) {",
-            "    Parent_MembersInjector.injectDep(child, new Dep());",
-            "    return child;",
+            "  private Child injectChild(Child instance) {",
+            "    Parent_MembersInjector.injectDep(instance, new Dep());",
+            "    return instance;",
             "  }",
             "",
             "  public static final class Builder {",
@@ -1296,12 +1296,270 @@ public class MembersInjectionTest {
                 "        injectInaccessible(Inaccessible_Factory.newInaccessible()));",
                 "  }",
                 "",
+                // TODO(ronshapiro): if possible, it would be great to rename "instance", but we
+                // need to make sure that this doesn't conflict with any framework field in this or
+                // any parent component
                 "  @CanIgnoreReturnValue",
-                "  private Object injectInaccessible(Object inaccessible) {",
-                "    Inaccessible_MembersInjector.injectFoo(inaccessible, Foo_Factory.newFoo());",
+                "  private Object injectInaccessible(Object instance) {",
+                "    Inaccessible_MembersInjector.injectFoo(instance, Foo_Factory.newFoo());",
                 "    Inaccessible_MembersInjector.injectMethod(",
-                "        inaccessible, Foo_Factory.newFoo());",
-                "    return inaccessible;",
+                "        instance, Foo_Factory.newFoo());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void accessibleRawType_ofInaccessibleType() {
+    JavaFileObject inaccessible =
+        JavaFileObjects.forSourceLines(
+            "other.Inaccessible",
+            "package other;",
+            "",
+            "class Inaccessible {}");
+    JavaFileObject inaccessiblesModule =
+        JavaFileObjects.forSourceLines(
+            "other.InaccessiblesModule",
+            "package other;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.ArrayList;",
+            "import java.util.List;",
+            "import javax.inject.Provider;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "public class InaccessiblesModule {",
+            // force Provider initialization
+            "  @Provides @Singleton static List<Inaccessible> inaccessibles() {",
+            "    return new ArrayList<>();",
+            "  }",
+            "}");
+    JavaFileObject usesInaccessibles =
+        JavaFileObjects.forSourceLines(
+            "other.UsesInaccessibles",
+            "package other;",
+            "",
+            "import java.util.List;",
+            "import javax.inject.Inject;",
+            "",
+            "public class UsesInaccessibles {",
+            "  @Inject UsesInaccessibles() {}",
+            "  @Inject List<Inaccessible> inaccessibles;",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "import other.UsesInaccessibles;",
+            "",
+            "@Singleton",
+            "@Component(modules = other.InaccessiblesModule.class)",
+            "interface TestComponent {",
+            "  UsesInaccessibles usesInaccessibles();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "other.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import java.util.List;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "import other.InaccessiblesModule;",
+                "import other.InaccessiblesModule_InaccessiblesFactory;",
+                "import other.UsesInaccessibles;",
+                "import other.UsesInaccessibles_Factory;",
+                "import other.UsesInaccessibles_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider inaccessiblesProvider;",
+                "",
+                "  private Provider<UsesInaccessibles> usesInaccessiblesProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.inaccessiblesProvider =",
+                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+                "    this.usesInaccessiblesProvider = ",
+                "        UsesInaccessibles_Factory.create(inaccessiblesProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessibles usesInaccessibles() {",
+                "    return injectUsesInaccessibles(",
+                "        UsesInaccessibles_Factory.newUsesInaccessibles());",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private UsesInaccessibles injectUsesInaccessibles(",
+                "        UsesInaccessibles instance) {",
+                "    UsesInaccessibles_MembersInjector.injectInaccessibles(",
+                "        instance, (List) inaccessiblesProvider.get());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Deprecated",
+                "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
+                "      Preconditions.checkNotNull(inaccessiblesModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void publicSupertypeHiddenSubtype() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "other.Foo",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "other.Supertype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Supertype<T> {",
+            "  @Inject T t;",
+            "}");
+    JavaFileObject subtype =
+        JavaFileObjects.forSourceLines(
+            "other.Subtype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Subtype extends Supertype<Foo> {",
+            "  @Inject Subtype() {}",
+            "}");
+    JavaFileObject injectsSubtype =
+        JavaFileObjects.forSourceLines(
+            "other.InjectsSubtype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class InjectsSubtype {",
+            "  @Inject InjectsSubtype(Subtype s) {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  other.InjectsSubtype injectsSubtype();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(foo, supertype, subtype, injectsSubtype, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "import other.Foo_Factory;",
+                "import other.InjectsSubtype;",
+                "import other.InjectsSubtype_Factory;",
+                "import other.Subtype_Factory;",
+                "import other.Supertype;",
+                "import other.Supertype_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider subtypeProvider;",
+                "",
+                "  private Provider<InjectsSubtype> injectsSubtypeProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.subtypeProvider = Subtype_Factory.create(Foo_Factory.create());",
+                "    this.injectsSubtypeProvider = InjectsSubtype_Factory.create(subtypeProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public InjectsSubtype injectsSubtype() {",
+                "    return InjectsSubtype_Factory.newInjectsSubtype(",
+                "        injectSubtype(Subtype_Factory.newSubtype()));",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Object injectSubtype(Object instance) {",
+                "    Supertype_MembersInjector.injectT(",
+                "        (Supertype) instance, Foo_Factory.newFoo());",
+                "    return instance;",
                 "  }",
                 "",
                 "  public static final class Builder {",

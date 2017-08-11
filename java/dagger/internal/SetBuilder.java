@@ -16,6 +16,8 @@
 
 package dagger.internal;
 
+import static dagger.internal.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +30,8 @@ import java.util.Set;
  * must be created in one fluent statement for inlined request fulfillments.
  */
 public final class SetBuilder<T> {
+  private static final String SET_CONTRIBUTIONS_CANNOT_BE_NULL =
+      "Set contributions cannot be null";
   private final List<T> contributions;
 
   private SetBuilder(int estimatedSize) {
@@ -44,11 +48,14 @@ public final class SetBuilder<T> {
   }
 
   public SetBuilder<T> add(T t) {
-    contributions.add(t);
+    contributions.add(checkNotNull(t, SET_CONTRIBUTIONS_CANNOT_BE_NULL));
     return this;
   }
 
   public SetBuilder<T> addAll(Collection<? extends T> collection) {
+    for (T item : collection) {
+      checkNotNull(item, SET_CONTRIBUTIONS_CANNOT_BE_NULL);
+    }
     contributions.addAll(collection);
     return this;
   }

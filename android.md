@@ -207,7 +207,7 @@ public class YourActivity extends Activity
   }
 
   @Override
-  public AndroidInjector<Fragment> activityInjector() {
+  public AndroidInjector<Fragment> fragmentInjector() {
     return fragmentInjector;
   }
 }

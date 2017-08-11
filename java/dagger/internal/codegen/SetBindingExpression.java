@@ -32,23 +32,22 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /**
- * A {@link RequestFulfillment} for {@link
- * dagger.internal.codegen.ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_SET}
+ * A {@link BindingExpression} for {@link
+ * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_SET}
  */
-final class SetBindingRequestFulfillment extends SimpleInvocationRequestFulfillment {
+final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final HasBindingExpressions hasBindingExpressions;
   private final Elements elements;
 
-  SetBindingRequestFulfillment(
-      BindingKey bindingKey,
+  SetBindingExpression(
       ProvisionBinding binding,
       BindingGraph graph,
       HasBindingExpressions hasBindingExpressions,
-      RequestFulfillment delegate,
+      BindingExpression delegate,
       Elements elements) {
-    super(bindingKey, delegate);
+    super(delegate);
     this.binding = binding;
     this.graph = graph;
     this.hasBindingExpressions = hasBindingExpressions;

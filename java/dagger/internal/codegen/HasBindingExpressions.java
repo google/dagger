@@ -44,7 +44,7 @@ interface HasBindingExpressions {
       DependencyRequest dependencyRequest, ClassName requestingClass);
 
   /** Returns the expression used to initialize a binding expression field. */
-  CodeBlock getFieldInitialization(BindingExpression bindingExpression);
+  CodeBlock getFieldInitialization(FrameworkInstanceBindingExpression bindingExpression);
 
   /** Adds the given field to the component. */
   void addField(FieldSpec fieldSpec);

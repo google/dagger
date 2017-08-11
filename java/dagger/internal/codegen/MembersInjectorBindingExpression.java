@@ -17,34 +17,38 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.BindingKey.Kind.MEMBERS_INJECTION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import dagger.internal.codegen.DependencyRequest.Kind;
+import java.util.Optional;
 
-/** Fulfills requests for {@link MembersInjectionBinding} instances. */
-final class MembersInjectorRequestFulfillment extends RequestFulfillment {
-  private final MemberSelect membersInjectorFieldSelect;
-
-  MembersInjectorRequestFulfillment(
-      BindingKey bindingKey, MemberSelect membersInjectorFieldSelect) {
-    super(bindingKey);
-    checkArgument(bindingKey.kind().equals(MEMBERS_INJECTION));
-    this.membersInjectorFieldSelect = membersInjectorFieldSelect;
+final class MembersInjectorBindingExpression extends FrameworkInstanceBindingExpression {
+  MembersInjectorBindingExpression(
+      BindingKey bindingKey,
+      Optional<FieldSpec> fieldSpec,
+      HasBindingExpressions hasBindingExpressions,
+      MemberSelect memberSelect) {
+    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
   }
 
   @Override
   public CodeBlock getSnippetForDependencyRequest(
       DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.kind().equals(Kind.MEMBERS_INJECTOR));
-    return membersInjectorFieldSelect.getExpressionFor(requestingClass);
+    return getFrameworkTypeInstance(requestingClass);
   }
 
   @Override
   CodeBlock getSnippetForFrameworkDependency(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     checkArgument(frameworkDependency.bindingType().equals(BindingType.MEMBERS_INJECTION));
-    return membersInjectorFieldSelect.getExpressionFor(requestingClass);
+    return getFrameworkTypeInstance(requestingClass);
+  }
+
+  @Override
+  boolean isProducerFromProvider() {
+    return false;
   }
 }

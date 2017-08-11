@@ -19,12 +19,11 @@ package dagger.internal.codegen;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 
-final class SubcomponentBuilderRequestFulfillment extends SimpleInvocationRequestFulfillment {
+final class SubcomponentBuilderBindingExpression extends SimpleInvocationBindingExpression {
   private final String subcomponentBuilderName;
 
-  SubcomponentBuilderRequestFulfillment(
-      BindingKey bindingKey, RequestFulfillment delegate, String subcomponentBuilderName) {
-    super(bindingKey, delegate);
+  SubcomponentBuilderBindingExpression(BindingExpression delegate, String subcomponentBuilderName) {
+    super(delegate);
     this.subcomponentBuilderName = subcomponentBuilderName;
   }
 

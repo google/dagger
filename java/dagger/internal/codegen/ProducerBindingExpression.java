@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,30 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.BindingKey.Kind.CONTRIBUTION;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
+import java.util.Optional;
 
-/** Fulfills requests for {@link ProductionBinding} instances. */
-final class ProducerFieldRequestFulfillment extends RequestFulfillment {
-  private final MemberSelect producerFieldSelect;
+final class ProducerBindingExpression extends FrameworkInstanceBindingExpression {
+  private final boolean isProducerFromProvider;
 
-  ProducerFieldRequestFulfillment(BindingKey bindingKey, MemberSelect producerFieldSelect) {
-    super(bindingKey);
-    checkArgument(bindingKey.kind().equals(CONTRIBUTION));
-    this.producerFieldSelect = producerFieldSelect;
+  ProducerBindingExpression(
+      BindingKey bindingKey,
+      Optional<FieldSpec> fieldSpec,
+      HasBindingExpressions hasBindingExpressions,
+      MemberSelect memberSelect,
+      boolean isProducerFromProvider) {
+    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+    this.isProducerFromProvider = isProducerFromProvider;
   }
 
   @Override
-  public CodeBlock getSnippetForDependencyRequest(
+  CodeBlock getSnippetForDependencyRequest(
       DependencyRequest request, ClassName requestingClass) {
-    return FrameworkType.PRODUCER.to(
-        request.kind(), producerFieldSelect.getExpressionFor(requestingClass));
+    return FrameworkType.PRODUCER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
   }
 
   @Override
@@ -47,6 +50,11 @@ final class ProducerFieldRequestFulfillment extends RequestFulfillment {
         frameworkDependency.bindingType().equals(PRODUCTION),
         "%s is not a production dependency",
         frameworkDependency);
-    return producerFieldSelect.getExpressionFor(requestingClass);
+    return getFrameworkTypeInstance(requestingClass);
+  }
+
+  @Override
+  boolean isProducerFromProvider() {
+    return isProducerFromProvider;
   }
 }

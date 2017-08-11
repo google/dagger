@@ -24,19 +24,18 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
 
 /**
- * A {@link RequestFulfillment} for {@link
- * dagger.internal.codegen.ContributionBinding.Kind#SYNTHETIC_OPTIONAL_BINDING}
+ * A {@link BindingExpression} for {@link
+ * ContributionBinding.Kind#SYNTHETIC_OPTIONAL_BINDING}
  */
-final class OptionalBindingRequestFulfillment extends SimpleInvocationRequestFulfillment {
+final class OptionalBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final HasBindingExpressions hasBindingExpressions;
 
-  OptionalBindingRequestFulfillment(
-      BindingKey bindingKey,
+  OptionalBindingExpression(
       ProvisionBinding binding,
-      RequestFulfillment delegate,
+      BindingExpression delegate,
       HasBindingExpressions hasBindingExpressions) {
-    super(bindingKey, delegate);
+    super(delegate);
     this.binding = binding;
     this.hasBindingExpressions = hasBindingExpressions;
   }

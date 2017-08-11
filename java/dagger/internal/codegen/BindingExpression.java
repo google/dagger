@@ -16,11 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
-import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
@@ -28,152 +26,35 @@ import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import dagger.internal.DelegateFactory;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
 
 /** The code expressions to declare, initialize, and/or access a binding in a component. */
-final class BindingExpression extends RequestFulfillment {
-  private final Optional<FieldSpec> fieldSpec;
-  private final RequestFulfillment requestFulfillmentDelegate;
-  private final HasBindingExpressions hasBindingExpressions;
-  private final boolean isProducerFromProvider;
-  private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
+abstract class BindingExpression {
+  private final BindingKey bindingKey;
 
-  private BindingExpression(
-      RequestFulfillment requestFulfillmentDelegate,
-      Optional<FieldSpec> fieldSpec,
-      HasBindingExpressions hasBindingExpressions,
-      boolean isProducerFromProvider) {
-    super(requestFulfillmentDelegate.bindingKey());
-    this.requestFulfillmentDelegate = requestFulfillmentDelegate;
-    this.fieldSpec = fieldSpec;
-    this.hasBindingExpressions = hasBindingExpressions;
-    this.isProducerFromProvider = isProducerFromProvider;
+  BindingExpression(BindingKey bindingKey) {
+    this.bindingKey = checkNotNull(bindingKey);
   }
 
-  @Override
-  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
-    // TODO(user): We don't always have to initialize ourselves depending on the request and
-    // inlining.
-    maybeInitializeField();
-    return requestFulfillmentDelegate.getSnippetForDependencyRequest(request, requestingClass);
-  }
-
-  @Override
-  CodeBlock getSnippetForFrameworkDependency(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    maybeInitializeField();
-    return requestFulfillmentDelegate.getSnippetForFrameworkDependency(
-        frameworkDependency, requestingClass);
-  }
-
-  /** Returns {@code true} if this binding expression has a field. */
-  boolean hasFieldSpec() {
-    return fieldSpec.isPresent();
+  /** The key for which this instance can fulfill requests. */
+  final BindingKey bindingKey() {
+    return bindingKey;
   }
 
   /**
-   * Returns the name of the binding's underlying field.
-   *
-   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   * Returns the {@link CodeBlock} that implements the operation represented by the {@link
+   * DependencyRequest request} from the {@code requestingClass}.
    */
-  private String fieldName() {
-    checkHasField();
-    return fieldSpec.get().name;
-  }
-
-  /** Returns true if this binding expression represents a producer from provider. */
-  // TODO(user): remove this and represent this via a subtype of BindingExpression
-  boolean isProducerFromProvider() {
-    return isProducerFromProvider;
-  }
+  abstract CodeBlock getSnippetForDependencyRequest(
+      DependencyRequest request, ClassName requestingClass);
 
   /**
-   * Sets the initialization state for the binding's underlying field. Only valid for field types.
-   *
-   * @throws UnsupportedOperationException if {@link #hasFieldSpec()} is {@code false}
+   * Returns the {@link CodeBlock} that references the {@link FrameworkDependency} as accessed from
+   * the {@code requestingClass}.
    */
-  private void setFieldInitializationState(InitializationState fieldInitializationState) {
-    checkHasField();
-    checkArgument(this.fieldInitializationState.compareTo(fieldInitializationState) < 0);
-    this.fieldInitializationState = fieldInitializationState;
-  }
-
-  private void checkHasField() {
-    if (!hasFieldSpec()) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  // Adds our field and initialization of our field to the component.
-  private void maybeInitializeField() {
-    if (!hasFieldSpec()) {
-      return;
-    }
-    switch (fieldInitializationState) {
-      case UNINITIALIZED:
-        // Change our state in case we are recursively invoked via initializeBindingExpression
-        setFieldInitializationState(InitializationState.INITIALIZING);
-        CodeBlock.Builder codeBuilder = CodeBlock.builder();
-        CodeBlock initCode =
-            CodeBlock.of(
-                "this.$L = $L;",
-                fieldName(),
-                checkNotNull(hasBindingExpressions.getFieldInitialization(this)));
-
-        if (fieldInitializationState == InitializationState.DELEGATED) {
-          // If we were recursively invoked, set the delegate factory as part of our initialization
-          String delegateFactoryVariable = fieldName() + "Delegate";
-          codeBuilder
-              .add("$1T $2L = ($1T) $3L;", DELEGATE_FACTORY, delegateFactoryVariable, fieldName())
-              .add(initCode)
-              .add("$L.setDelegatedProvider($L);", delegateFactoryVariable, fieldName())
-              .build();
-        } else {
-          codeBuilder.add(initCode);
-        }
-        hasBindingExpressions.addInitialization(codeBuilder.build());
-        hasBindingExpressions.addField(fieldSpec.get());
-
-        setFieldInitializationState(InitializationState.INITIALIZED);
-        break;
-
-      case INITIALIZING:
-        // We were recursively invoked, so create a delegate factory instead
-        hasBindingExpressions.addInitialization(
-            CodeBlock.of("this.$L = new $T();", fieldName(), DELEGATE_FACTORY));
-        setFieldInitializationState(InitializationState.DELEGATED);
-        break;
-
-      case DELEGATED:
-      case INITIALIZED:
-        break;
-      default:
-        throw new AssertionError("Unhandled initialization state: " + fieldInitializationState);
-    }
-  }
-
-  /** Initialization state for a factory field. */
-  enum InitializationState {
-    /** The field is {@code null}. */
-    UNINITIALIZED,
-
-    /**
-     * The field's dependencies are being set up. If the field is needed in this state, use a {@link
-     * DelegateFactory}.
-     */
-    INITIALIZING,
-
-    /**
-     * The field's dependencies are being set up, but the field can be used because it has already
-     * been set to a {@link DelegateFactory}.
-     */
-    DELEGATED,
-
-    /** The field is set to an undelegated factory. */
-    INITIALIZED;
-  }
+  abstract CodeBlock getSnippetForFrameworkDependency(
+      FrameworkDependency frameworkDependency, ClassName requestingClass);
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {
@@ -206,33 +87,26 @@ final class BindingExpression extends RequestFulfillment {
     BindingExpression forField(ResolvedBindings resolvedBindings) {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.empty());
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
-      return new BindingExpression(
-          createRequestFulfillment(resolvedBindings, memberSelect),
-          Optional.of(fieldSpec),
-          hasBindingExpressions,
-          false);
+      return create(resolvedBindings, Optional.of(fieldSpec), memberSelect);
     }
 
     BindingExpression forProducerFromProviderField(ResolvedBindings resolvedBindings) {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
-      return new BindingExpression(
-          new ProducerFieldRequestFulfillment(resolvedBindings.bindingKey(), memberSelect),
+      return new ProducerBindingExpression(
+          resolvedBindings.bindingKey(),
           Optional.of(fieldSpec),
           hasBindingExpressions,
+          memberSelect,
           true);
     }
 
-    /** Creates a binding expression for a static method call. */
+    /**
+     * Creates a binding expression for a static method call.
+     */
     Optional<BindingExpression> forStaticMethod(ResolvedBindings resolvedBindings) {
-      Optional<MemberSelect> memberSelect = staticMemberSelect(resolvedBindings);
-      return memberSelect.map(
-          value ->
-              new BindingExpression(
-                  createRequestFulfillment(resolvedBindings, value),
-                  Optional.empty(),
-                  hasBindingExpressions,
-                  false));
+      return staticMemberSelect(resolvedBindings)
+          .map(memberSelect -> create(resolvedBindings, Optional.empty(), memberSelect));
     }
 
     /**
@@ -265,54 +139,54 @@ final class BindingExpression extends RequestFulfillment {
           && !bindingPackage.get().equals(componentName.packageName());
     }
 
-    private RequestFulfillment createRequestFulfillment(
-        ResolvedBindings resolvedBindings, MemberSelect memberSelect) {
+    private BindingExpression create(
+        ResolvedBindings resolvedBindings,
+        Optional<FieldSpec> fieldSpec,
+        MemberSelect memberSelect) {
       BindingKey bindingKey = resolvedBindings.bindingKey();
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
-          return new MembersInjectorRequestFulfillment(bindingKey, memberSelect);
+          return new MembersInjectorBindingExpression(
+              bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
         case PRODUCTION:
-          return new ProducerFieldRequestFulfillment(bindingKey, memberSelect);
+          return new ProducerBindingExpression(
+              bindingKey, fieldSpec, hasBindingExpressions, memberSelect, false);
         case PROVISION:
           ProvisionBinding provisionBinding =
               (ProvisionBinding) resolvedBindings.contributionBinding();
 
-          ProviderFieldRequestFulfillment providerFieldRequestFulfillment =
-              new ProviderFieldRequestFulfillment(bindingKey, memberSelect);
+          ProviderBindingExpression providerBindingExpression =
+              new ProviderBindingExpression(
+                  bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
 
           switch (provisionBinding.bindingKind()) {
             case SUBCOMPONENT_BUILDER:
-              return new SubcomponentBuilderRequestFulfillment(
-                  bindingKey, providerFieldRequestFulfillment, subcomponentNames.get(bindingKey));
+              return new SubcomponentBuilderBindingExpression(
+                  providerBindingExpression, subcomponentNames.get(bindingKey));
             case SYNTHETIC_MULTIBOUND_SET:
-              return new SetBindingRequestFulfillment(
-                  bindingKey,
+              return new SetBindingExpression(
                   provisionBinding,
                   graph,
                   hasBindingExpressions,
-                  providerFieldRequestFulfillment,
+                  providerBindingExpression,
                   elements);
             case SYNTHETIC_OPTIONAL_BINDING:
-              return new OptionalBindingRequestFulfillment(
-                  bindingKey,
-                  provisionBinding,
-                  providerFieldRequestFulfillment,
-                  hasBindingExpressions);
+              return new OptionalBindingExpression(
+                  provisionBinding, providerBindingExpression, hasBindingExpressions);
             case INJECTION:
             case PROVISION:
               if (!provisionBinding.scope().isPresent()
                   && !provisionBinding.requiresModuleInstance()
                   && provisionBinding.bindingElement().isPresent()) {
-                return new SimpleMethodRequestFulfillment(
+                return new SimpleMethodBindingExpression(
                     compilerOptions,
-                    bindingKey,
                     provisionBinding,
-                    providerFieldRequestFulfillment,
+                    providerBindingExpression,
                     hasBindingExpressions);
               }
               // fall through
             default:
-              return providerFieldRequestFulfillment;
+              return providerBindingExpression;
           }
         default:
           throw new AssertionError();

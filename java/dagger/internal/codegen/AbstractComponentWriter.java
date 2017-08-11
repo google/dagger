@@ -595,21 +595,13 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     component.addMethods(interfaceMethods);
   }
 
-  // TODO(user): Instead of this method knowing about all BindingExpression types, move this
-  // onto a method on different BindingExpression subtypes.
+  // TODO(user): Move this method onto FieldBasedBindingExpression or subtypes of it.
   @Override
-  public CodeBlock getFieldInitialization(BindingExpression bindingExpression) {
-    // If there is no field, don't initialize it.
-    checkState(bindingExpression.hasFieldSpec());
-
+  public CodeBlock getFieldInitialization(FrameworkInstanceBindingExpression bindingExpression) {
     if (bindingExpression.isProducerFromProvider()) {
       return getRequestFulfillment(
           FrameworkDependency.create(bindingExpression.bindingKey(), PRODUCTION));
     }
-
-    // We don't have to check whether we own the field because this method is called only for
-    // the bindingExpressions map values). That map is only populated for bindings we own, while
-    // getBindingExpression(BindingKey) may return those owned by parents.
 
     switch (bindingExpression.bindingKey().kind()) {
       case CONTRIBUTION:

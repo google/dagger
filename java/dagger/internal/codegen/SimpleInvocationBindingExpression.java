@@ -21,14 +21,14 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 
 /**
- * A {@link RequestFulfillment} that can fulfill its request with a simple call when possible, and
+ * A {@link BindingExpression} that can fulfill its request with a simple call when possible, and
  * otherwise delegates to a backing provider field.
  */
-abstract class SimpleInvocationRequestFulfillment extends RequestFulfillment {
-  private final RequestFulfillment delegate;
+abstract class SimpleInvocationBindingExpression extends BindingExpression {
+  private final BindingExpression delegate;
 
-  SimpleInvocationRequestFulfillment(BindingKey bindingKey, RequestFulfillment delegate) {
-    super(bindingKey);
+  SimpleInvocationBindingExpression(BindingExpression delegate) {
+    super(delegate.bindingKey());
     this.delegate = delegate;
   }
 

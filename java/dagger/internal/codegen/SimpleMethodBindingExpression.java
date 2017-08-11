@@ -40,18 +40,17 @@ import javax.lang.model.type.DeclaredType;
  * requests whenever possible. In cases where direct invocation is not possible, this implementation
  * delegates to one that uses a {@link javax.inject.Provider}.
  */
-final class SimpleMethodRequestFulfillment extends SimpleInvocationRequestFulfillment {
+final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpression {
   private final CompilerOptions compilerOptions;
   private final ProvisionBinding provisionBinding;
   private final HasBindingExpressions hasBindingExpressions;
 
-  SimpleMethodRequestFulfillment(
+  SimpleMethodBindingExpression(
       CompilerOptions compilerOptions,
-      BindingKey bindingKey,
       ProvisionBinding provisionBinding,
-      RequestFulfillment providerDelegate,
+      BindingExpression delegate,
       HasBindingExpressions hasBindingExpressions) {
-    super(bindingKey, providerDelegate);
+    super(delegate);
     this.compilerOptions = compilerOptions;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),

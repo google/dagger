@@ -16,28 +16,24 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.BindingKey.Kind.CONTRIBUTION;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import dagger.producers.internal.Producers;
+import java.util.Optional;
 
-/** Fulfills requests for {@link ProvisionBinding} instances. */
-final class ProviderFieldRequestFulfillment extends RequestFulfillment {
-  private final MemberSelect providerFieldSelect;
-
-  ProviderFieldRequestFulfillment(BindingKey bindingKey, MemberSelect frameworkFieldSelect) {
-    super(bindingKey);
-    checkArgument(bindingKey.kind().equals(CONTRIBUTION));
-    this.providerFieldSelect = frameworkFieldSelect;
+final class ProviderBindingExpression extends FrameworkInstanceBindingExpression {
+  ProviderBindingExpression(
+      BindingKey bindingKey,
+      Optional<FieldSpec> fieldSpec,
+      HasBindingExpressions hasBindingExpressions,
+      MemberSelect memberSelect) {
+    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
   }
 
   @Override
-  public CodeBlock getSnippetForDependencyRequest(
-      DependencyRequest request, ClassName requestingClass) {
-    return FrameworkType.PROVIDER.to(
-        request.kind(), providerFieldSelect.getExpressionFor(requestingClass));
+  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
+    return FrameworkType.PROVIDER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
   }
 
   @Override
@@ -45,16 +41,21 @@ final class ProviderFieldRequestFulfillment extends RequestFulfillment {
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     switch (frameworkDependency.bindingType()) {
       case PROVISION:
-        return providerFieldSelect.getExpressionFor(requestingClass);
+        return getFrameworkTypeInstance(requestingClass);
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
       case PRODUCTION:
         return CodeBlock.of(
             "$T.producerFromProvider($L)",
             Producers.class,
-            providerFieldSelect.getExpressionFor(requestingClass));
+            getFrameworkTypeInstance(requestingClass));
       default:
         throw new AssertionError();
     }
+  }
+
+  @Override
+  boolean isProducerFromProvider() {
+    return false;
   }
 }

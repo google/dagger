@@ -17,13 +17,16 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
@@ -2525,6 +2528,77 @@ public class GraphValidationTest {
                 "dagger.releasablereferences"))
         .in(component)
         .onLine(19);
+  }
+
+  @Test
+  public void abstractModuleWithInstanceMethod() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides int i() { return 1; }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  int i();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("TestModule is abstract and has instance @Provides methods")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void abstractModuleWithInstanceMethod_subclassedIsAllowed() {
+    JavaFileObject abstractModule =
+        JavaFileObjects.forSourceLines(
+            "test.AbstractModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class AbstractModule {",
+            "  @Provides int i() { return 1; }",
+            "}");
+    JavaFileObject subclassedModule =
+        JavaFileObjects.forSourceLines(
+            "test.SubclassedModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "class SubclassedModule extends AbstractModule {}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = SubclassedModule.class)",
+            "interface TestComponent {",
+            "  int i();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(abstractModule, subclassedModule, component);
+    assertThat(compilation).succeeded();
   }
 
   private String error(String... lines) {

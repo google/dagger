@@ -52,6 +52,7 @@ import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCT
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_OR_PRODUCER_FORMAT;
+import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
 import static dagger.internal.codegen.ErrorMessages.inconsistentMapKeyAnnotationsError;
 import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
@@ -112,6 +113,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -198,6 +200,7 @@ final class BindingGraphValidator {
     protected void visitComponent(BindingGraph graph) {
       validateDependencyScopes(graph);
       validateComponentDependencyHierarchy(graph);
+      validateModules(graph);
       validateBuilders(graph);
       super.visitComponent(graph);
       checkScopedBindings(graph);
@@ -340,6 +343,19 @@ final class BindingGraphValidator {
                   message.toString(),
                   descriptor.componentDefinitionType(),
                   descriptor.componentAnnotation());
+        }
+      }
+    }
+
+    private void validateModules(BindingGraph graph) {
+      for (ModuleDescriptor module : graph.componentDescriptor().transitiveModules()) {
+        if (module.moduleElement().getModifiers().contains(Modifier.ABSTRACT)) {
+          for (ContributionBinding binding : module.bindings()) {
+            if (binding.requiresModuleInstance()) {
+              report(graph).addError(abstractModuleHasInstanceBindingMethods(module));
+              break;
+            }
+          }
         }
       }
     }

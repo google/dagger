@@ -78,6 +78,8 @@ abstract class ModuleDescriptor {
   /** The {@link BindsOptionalOf} method declarations that define optional bindings. */
   abstract ImmutableSet<OptionalBindingDeclaration> optionalDeclarations();
 
+  abstract Kind kind();
+
   enum Kind {
     MODULE(Module.class, Provides.class),
     PRODUCER_MODULE(ProducerModule.class, Produces.class);
@@ -196,7 +198,8 @@ abstract class ModuleDescriptor {
           multibindingDeclarations.build(),
           subcomponentDeclarationFactory.forModule(moduleElement),
           delegates.build(),
-          optionalDeclarations.build());
+          optionalDeclarations.build(),
+          Kind.forAnnotatedElement(moduleElement).get());
     }
 
     @CanIgnoreReturnValue

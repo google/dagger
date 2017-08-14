@@ -416,6 +416,24 @@ final class ErrorMessages {
         methodAnnotations.stream().map(Class::getCanonicalName).collect(joining(", ")));
   }
 
+  static String abstractModuleHasInstanceBindingMethods(ModuleDescriptor module) {
+    String methodAnnotations;
+    switch (module.kind()) {
+      case MODULE:
+        methodAnnotations = "@Provides";
+        break;
+      case PRODUCER_MODULE:
+        methodAnnotations = "@Provides or @Produces";
+        break;
+      default:
+        throw new AssertionError(module.kind());
+    }
+    return String.format(
+        "%s is abstract and has instance %s methods. Consider making the methods static or "
+            + "including a non-abstract subclass of the module instead.",
+        module.moduleElement(), methodAnnotations);
+  }
+
   static class ComponentBuilderMessages {
     static final ComponentBuilderMessages INSTANCE = new ComponentBuilderMessages();
 

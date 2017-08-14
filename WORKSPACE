@@ -115,8 +115,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_testing_compile_compile_testing",
-    artifact = "com.google.testing.compile:compile-testing:0.10",
-    sha1 = "51e6189be9d2861d1eb22b4009c8f3430319490c",
+    artifact = "com.google.testing.compile:compile-testing:0.11",
+    sha1 = "bff5d5aa61e6384b9dd4f5f7bb97a921081f4e1c",
 )
 
 maven_jar(

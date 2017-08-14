@@ -34,14 +34,13 @@ final class MembersInjectorBindingExpression extends FrameworkInstanceBindingExp
   }
 
   @Override
-  public CodeBlock getSnippetForDependencyRequest(
-      DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.kind().equals(Kind.MEMBERS_INJECTOR));
     return getFrameworkTypeInstance(requestingClass);
   }
 
   @Override
-  CodeBlock getSnippetForFrameworkDependency(
+  CodeBlock getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     checkArgument(frameworkDependency.bindingType().equals(BindingType.MEMBERS_INJECTION));
     return getFrameworkTypeInstance(requestingClass);

@@ -63,7 +63,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   @Override
-  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     return requiresInjectionMethod(provisionBinding, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);
@@ -115,8 +115,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    return hasBindingExpressions.getRequestFulfillmentWithPossibleRawtypeCast(
-        dependency, requestingClass);
+    return hasBindingExpressions
+        .getBindingExpression(dependency.bindingKey())
+        .getDependencyArgumentExpression(dependency, requestingClass);
   }
 
   private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {

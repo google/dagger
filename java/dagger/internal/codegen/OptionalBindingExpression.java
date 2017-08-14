@@ -41,7 +41,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
   }
 
   @Override
-  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
@@ -58,7 +58,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
     CodeBlock dependencyExpression =
         hasBindingExpressions
             .getBindingExpression(dependency.bindingKey())
-            .getSnippetForDependencyRequest(dependency, requestingClass);
+            .getDependencyExpression(dependency, requestingClass);
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.

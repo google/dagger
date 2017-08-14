@@ -17,16 +17,21 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
+import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.TypeName;
 import java.util.Optional;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /** The code expressions to declare, initialize, and/or access a binding in a component. */
@@ -43,18 +48,44 @@ abstract class BindingExpression {
   }
 
   /**
-   * Returns the {@link CodeBlock} that implements the operation represented by the {@link
-   * DependencyRequest request} from the {@code requestingClass}.
+   * Returns an expression that evaluates to the value of a dependency request.
+   *
+   * @param requestingClass the class that will contain the expression
    */
-  abstract CodeBlock getSnippetForDependencyRequest(
-      DependencyRequest request, ClassName requestingClass);
+  abstract CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass);
 
   /**
-   * Returns the {@link CodeBlock} that references the {@link FrameworkDependency} as accessed from
-   * the {@code requestingClass}.
+   * Returns an expression that evaluates to the value of a framework dependency.
+   *
+   * @param requestingClass the class that will contain the expression
    */
-  abstract CodeBlock getSnippetForFrameworkDependency(
+  abstract CodeBlock getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass);
+
+  /**
+   * Returns an expression that evaluates to the value of a dependency request, for passing to a
+   * binding method, an {@code @Inject}-annotated constructor or member, or a proxy for one.
+   *
+   * <p>If the method is a generated static {@link InjectionMethods injection method}, each
+   * parameter will be {@link Object} if the dependency's raw type is inaccessible. If that is the
+   * case for this dependency, the returned expression will use a cast to evaluate to the raw type.
+   *
+   * @param requestingClass the class that will contain the expression
+   */
+  // TODO(b/64024402) Merge with getDependencyExpression(DependencyRequest, ClassName) if possible.
+  CodeBlock getDependencyArgumentExpression(
+      DependencyRequest dependencyRequest, ClassName requestingClass) {
+    CodeBlock.Builder argument = CodeBlock.builder();
+
+    TypeMirror dependencyType = dependencyRequest.key().type();
+    if (!isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
+        && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
+      argument.add("($T) ", rawTypeName(TypeName.get(dependencyType)));
+    }
+
+    argument.add(getDependencyExpression(dependencyRequest, requestingClass));
+    return argument.build();
+  }
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {

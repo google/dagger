@@ -27,7 +27,6 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.SetBuilder;
 import java.util.Collections;
 import java.util.Set;
-import java.util.function.Function;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -55,13 +54,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
-    Function<DependencyRequest, CodeBlock> getRequestFulfillmentForDependency =
-        dependency ->
-            hasBindingExpressions
-                .getBindingExpression(dependency.bindingKey())
-                .getSnippetForDependencyRequest(dependency, requestingClass);
-
+  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
@@ -74,7 +67,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
               binding
                   .dependencies()
                   .stream()
-                  .map(getRequestFulfillmentForDependency)
+                  .map(dependency -> getContributionExpression(dependency, requestingClass))
                   .collect(toParametersCodeBlock()))
           .build();
     }
@@ -85,16 +78,15 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
       case 1:
         {
           DependencyRequest dependency = getOnlyElement(binding.dependencies());
-          CodeBlock dependencySnippet =
-              getRequestFulfillmentForDependency(dependency, requestingClass);
+          CodeBlock contributionExpression = getContributionExpression(dependency, requestingClass);
           if (isSingleValue(dependency)) {
             return collectionsStaticFactoryInvocation(
-                request, requestingClass, CodeBlock.of("singleton($L)", dependencySnippet));
+                request, requestingClass, CodeBlock.of("singleton($L)", contributionExpression));
           } else if (isImmutableSetAvailable) {
             return CodeBlock.builder()
                 .add("$T.", ImmutableSet.class)
                 .add(maybeTypeParameter(request, requestingClass))
-                .add("copyOf($L)", dependencySnippet)
+                .add("copyOf($L)", contributionExpression)
                 .build();
           }
         }
@@ -112,19 +104,17 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         for (DependencyRequest dependency : binding.dependencies()) {
           String builderMethod = isSingleValue(dependency) ? "add" : "addAll";
           instantiation.add(
-              ".$L($L)",
-              builderMethod,
-              getRequestFulfillmentForDependency(dependency, requestingClass));
+              ".$L($L)", builderMethod, getContributionExpression(dependency, requestingClass));
         }
         return instantiation.add(".build()").build();
     }
   }
 
-  private CodeBlock getRequestFulfillmentForDependency(
+  private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
     return hasBindingExpressions
         .getBindingExpression(dependency.bindingKey())
-        .getSnippetForDependencyRequest(dependency, requestingClass);
+        .getDependencyExpression(dependency, requestingClass);
   }
 
   private static CodeBlock collectionsStaticFactoryInvocation(

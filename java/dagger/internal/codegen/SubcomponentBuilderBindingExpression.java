@@ -28,7 +28,7 @@ final class SubcomponentBuilderBindingExpression extends SimpleInvocationBinding
   }
 
   @Override
-  CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     return CodeBlock.of("new $LBuilder()", subcomponentBuilderName);
   }
 }

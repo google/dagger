@@ -38,13 +38,12 @@ final class ProducerBindingExpression extends FrameworkInstanceBindingExpression
   }
 
   @Override
-  CodeBlock getSnippetForDependencyRequest(
-      DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     return FrameworkType.PRODUCER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
   }
 
   @Override
-  CodeBlock getSnippetForFrameworkDependency(
+  CodeBlock getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     checkArgument(
         frameworkDependency.bindingType().equals(PRODUCTION),

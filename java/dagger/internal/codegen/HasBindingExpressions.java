@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -34,14 +33,6 @@ interface HasBindingExpressions {
   // This should remove the need for HasBindingExpressions
   @Nullable
   BindingExpression getBindingExpression(BindingKey bindingKey);
-
-  /**
-   * If the type is accessible, use the snippet. If only the raw type is accessible, cast it to the
-   * raw type. If the raw type is inaccessible, the proxy will have an Object method
-   * parameter, so we can again, just use the snippet.
-   */
-  CodeBlock getRequestFulfillmentWithPossibleRawtypeCast(
-      DependencyRequest dependencyRequest, ClassName requestingClass);
 
   /** Returns the expression used to initialize a binding expression field. */
   CodeBlock getFieldInitialization(FrameworkInstanceBindingExpression bindingExpression);

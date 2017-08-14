@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import dagger.producers.internal.Producers;
 import java.util.Optional;
 
 final class ProviderBindingExpression extends FrameworkInstanceBindingExpression {
@@ -32,12 +31,12 @@ final class ProviderBindingExpression extends FrameworkInstanceBindingExpression
   }
 
   @Override
-  CodeBlock getSnippetForDependencyRequest(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     return FrameworkType.PROVIDER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
   }
 
   @Override
-  CodeBlock getSnippetForFrameworkDependency(
+  CodeBlock getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     switch (frameworkDependency.bindingType()) {
       case PROVISION:
@@ -45,10 +44,8 @@ final class ProviderBindingExpression extends FrameworkInstanceBindingExpression
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
       case PRODUCTION:
-        return CodeBlock.of(
-            "$T.producerFromProvider($L)",
-            Producers.class,
-            getFrameworkTypeInstance(requestingClass));
+        return FrameworkType.PROVIDER.to(
+            DependencyRequest.Kind.PRODUCER, getFrameworkTypeInstance(requestingClass));
       default:
         throw new AssertionError();
     }

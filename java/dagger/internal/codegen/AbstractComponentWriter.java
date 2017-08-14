@@ -27,7 +27,6 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
-import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingKey.contribution;
@@ -55,7 +54,6 @@ import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MAN
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.providerOf;
-import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -512,7 +510,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
                   "return $N($N)", getMembersInjectionMethod(binding.key()), parameter);
             }
           } else {
-            interfaceMethod.addStatement("return $L", getRequestFulfillment(interfaceRequest));
+            interfaceMethod.addStatement("return $L", getDependencyExpression(interfaceRequest));
           }
           interfaceMethods.add(interfaceMethod.build());
         }
@@ -599,7 +597,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   @Override
   public CodeBlock getFieldInitialization(FrameworkInstanceBindingExpression bindingExpression) {
     if (bindingExpression.isProducerFromProvider()) {
-      return getRequestFulfillment(
+      return getDependencyExpression(
           FrameworkDependency.create(bindingExpression.bindingKey(), PRODUCTION));
     }
 
@@ -622,7 +620,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
             CodeBlock.of(
                 "($T) $L",
                 binding.bindingType().frameworkClass(),
-                getRequestFulfillment(getOnlyElement(binding.frameworkDependencies())));
+                getDependencyExpression(getOnlyElement(binding.frameworkDependencies())));
         return decorateForScope(delegatingCodeBlock, binding.scope());
       case SINGLETON_INSTANCE:
         checkState(binding.scope().isPresent());
@@ -679,7 +677,9 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
             instance,
             membersInjectedType,
             types,
-            request -> getRequestFulfillmentWithPossibleRawtypeCast(request, name)));
+            request ->
+                getBindingExpression(request.bindingKey())
+                    .getDependencyArgumentExpression(request, name)));
     method.addStatement("return $L", instance);
 
     return method.build();
@@ -885,7 +885,7 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
         return CodeBlock.of(
             "$T.create($L)",
             mapFactoryClassName(binding),
-            getRequestFulfillment(frameworkDependency));
+            getDependencyExpression(frameworkDependency));
 
       case SYNTHETIC_MULTIBOUND_SET:
         return factoryForSetMultibindingInitialization(binding);
@@ -951,8 +951,8 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
   private CodeBlock getDependencyArgument(FrameworkDependency frameworkDependency) {
     return isProducerFromProvider(frameworkDependency)
         ? getProducerFromProviderBindingExpression(frameworkDependency)
-            .getSnippetForFrameworkDependency(frameworkDependency, name)
-        : getRequestFulfillment(frameworkDependency);
+            .getDependencyExpression(frameworkDependency, name)
+        : getDependencyExpression(frameworkDependency);
   }
 
   private CodeBlock factoryForSetMultibindingInitialization(ContributionBinding binding) {
@@ -1173,30 +1173,13 @@ abstract class AbstractComponentWriter implements HasBindingExpressions {
     }
   }
 
-  private CodeBlock getRequestFulfillment(FrameworkDependency frameworkDependency) {
+  private CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
     return getBindingExpression(frameworkDependency.bindingKey())
-        .getSnippetForFrameworkDependency(frameworkDependency, name);
+        .getDependencyExpression(frameworkDependency, name);
   }
 
-  private CodeBlock getRequestFulfillment(DependencyRequest dependencyRequest) {
+  private CodeBlock getDependencyExpression(DependencyRequest dependencyRequest) {
     return getBindingExpression(dependencyRequest.bindingKey())
-        .getSnippetForDependencyRequest(dependencyRequest, name);
-  }
-
-  // TODO(b/64024402) Consider if this can be merged with getRequestFulfillment(DR) above
-  @Override
-  public CodeBlock getRequestFulfillmentWithPossibleRawtypeCast(
-      DependencyRequest dependencyRequest, ClassName requestingClass) {
-    // This is not simply getRequestFulfillment(dependencyRequest), as that method always uses
-    // `name` as `requestingClass`, while this one does not.
-    CodeBlock snippet =
-        getBindingExpression(dependencyRequest.bindingKey())
-            .getSnippetForDependencyRequest(dependencyRequest, requestingClass);
-
-    TypeMirror requestElementType = dependencyRequest.requestElement().get().asType();
-    return isTypeAccessibleFrom(requestElementType, requestingClass.packageName())
-        || !isRawTypeAccessible(requestElementType, requestingClass.packageName())
-        ? snippet
-        : CodeBlock.of("($T) $L", rawTypeName(TypeName.get(requestElementType)), snippet);
+        .getDependencyExpression(dependencyRequest, name);
   }
 }

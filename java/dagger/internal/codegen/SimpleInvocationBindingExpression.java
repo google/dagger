@@ -32,7 +32,13 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
     this.delegate = delegate;
   }
 
-  abstract CodeBlock getSimpleInvocation(DependencyRequest request, ClassName requestingClass);
+  /**
+   * Returns an expression that evaluates to an instance of a dependency.
+   *
+   * @param requestingClass the class that will contain the expression
+   */
+  abstract CodeBlock getInstanceDependencyExpression(
+      DependencyRequest request, ClassName requestingClass);
 
   /**
    * Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
@@ -46,25 +52,24 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   }
 
   @Override
-  final CodeBlock getSnippetForDependencyRequest(
-      DependencyRequest request, ClassName requestingClass) {
+  final CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
     switch (request.kind()) {
       case INSTANCE:
-        return getSimpleInvocation(request, requestingClass);
+        return getInstanceDependencyExpression(request, requestingClass);
       case FUTURE:
         return CodeBlock.builder()
             .add("$T.", Futures.class)
             .add(explicitTypeParameter(requestingClass))
-            .add("immediateFuture($L)", getSimpleInvocation(request, requestingClass))
+            .add("immediateFuture($L)", getInstanceDependencyExpression(request, requestingClass))
             .build();
       default:
-        return delegate.getSnippetForDependencyRequest(request, requestingClass);
+        return delegate.getDependencyExpression(request, requestingClass);
     }
   }
 
   @Override
-  final CodeBlock getSnippetForFrameworkDependency(
+  final CodeBlock getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return delegate.getSnippetForFrameworkDependency(frameworkDependency, requestingClass);
+    return delegate.getDependencyExpression(frameworkDependency, requestingClass);
   }
 }

@@ -23,31 +23,29 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
 
-/**
- * A {@link BindingExpression} for {@link
- * ContributionBinding.Kind#SYNTHETIC_OPTIONAL_BINDING}
- */
+/** A binding expression for optional bindings. */
 final class OptionalBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
-  private final HasBindingExpressions hasBindingExpressions;
+  private final ComponentBindingExpressions componentBindingExpressions;
 
   OptionalBindingExpression(
       ProvisionBinding binding,
       BindingExpression delegate,
-      HasBindingExpressions hasBindingExpressions) {
+      ComponentBindingExpressions componentBindingExpressions) {
     super(delegate);
     this.binding = binding;
-    this.hasBindingExpressions = hasBindingExpressions;
+    this.componentBindingExpressions = componentBindingExpressions;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
       // When compiling with -source 7, javac's type inference isn't strong enough to detect
       // Futures.immediateFuture(Optional.absent()) for keys that aren't Object
-      if (request.kind().equals(DependencyRequest.Kind.FUTURE)
+      if (requestKind.equals(DependencyRequest.Kind.FUTURE)
           && isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
         return optionalKind.parameterizedAbsentValueExpression(optionalType);
       }
@@ -56,9 +54,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
     CodeBlock dependencyExpression =
-        hasBindingExpressions
-            .getBindingExpression(dependency.bindingKey())
-            .getDependencyExpression(dependency, requestingClass);
+        componentBindingExpressions.getDependencyExpression(dependency, requestingClass);
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.

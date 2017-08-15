@@ -24,25 +24,19 @@ import com.squareup.javapoet.FieldSpec;
 import dagger.internal.codegen.DependencyRequest.Kind;
 import java.util.Optional;
 
+/** A binding expression that uses a {@link dagger.MembersInjector} instance. */
 final class MembersInjectorBindingExpression extends FrameworkInstanceBindingExpression {
   MembersInjectorBindingExpression(
       BindingKey bindingKey,
       Optional<FieldSpec> fieldSpec,
-      HasBindingExpressions hasBindingExpressions,
+      GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect) {
-    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+    super(bindingKey, fieldSpec, generatedComponentModel, memberSelect);
   }
 
   @Override
-  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    checkArgument(request.kind().equals(Kind.MEMBERS_INJECTOR));
-    return getFrameworkTypeInstance(requestingClass);
-  }
-
-  @Override
-  CodeBlock getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    checkArgument(frameworkDependency.bindingType().equals(BindingType.MEMBERS_INJECTION));
+  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    checkArgument(requestKind.equals(Kind.MEMBERS_INJECTOR));
     return getFrameworkTypeInstance(requestingClass);
   }
 

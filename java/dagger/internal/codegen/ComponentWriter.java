@@ -64,7 +64,8 @@ final class ComponentWriter extends AbstractComponentWriter {
         name,
         graph,
         new UniqueSubcomponentNamesGenerator(graph).generate(),
-        new OptionalFactories());
+        new OptionalFactories(),
+        new ComponentBindingExpressions());
   }
 
   /**

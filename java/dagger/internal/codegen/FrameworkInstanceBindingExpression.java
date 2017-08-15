@@ -26,33 +26,30 @@ import com.squareup.javapoet.FieldSpec;
 import dagger.internal.DelegateFactory;
 import java.util.Optional;
 
-/**
- * A {@link BindingExpression} that is always satisfied in components by using an instance of a
- * {@link FrameworkType}.
- */
+/** A binding expression that uses an instance of a {@link FrameworkType}. */
 // TODO(user): consider removing this class and making it a strategy that is created by
 // {Provider,Producer,MembersInjector}BindingExpression
 abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   private final Optional<FieldSpec> fieldSpec;
-  private final HasBindingExpressions hasBindingExpressions;
+  private final GeneratedComponentModel generatedComponentModel;
   private final MemberSelect memberSelect;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   protected FrameworkInstanceBindingExpression(
       BindingKey bindingKey,
       Optional<FieldSpec> fieldSpec,
-      HasBindingExpressions hasBindingExpressions,
+      GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect) {
     super(bindingKey);
-    this.hasBindingExpressions = hasBindingExpressions;
+    this.generatedComponentModel = generatedComponentModel;
     this.memberSelect = memberSelect;
     this.fieldSpec = fieldSpec;
   }
 
   /**
    * The expression for the framework instance for this binding. If the instance comes from a
-   * component field, it will be {@link HasBindingExpressions#addInitialization(CodeBlock)
-   * initialized} and {@link HasBindingExpressions#addField(FieldSpec) added} to the component the
+   * component field, it will be {@link GeneratedComponentModel#addInitialization(CodeBlock)
+   * initialized} and {@link GeneratedComponentModel#addField(FieldSpec) added} to the component the
    * first time this method is invoked.
    */
   final CodeBlock getFrameworkTypeInstance(ClassName requestingClass) {
@@ -106,7 +103,7 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
             CodeBlock.of(
                 "this.$L = $L;",
                 fieldName(),
-                checkNotNull(hasBindingExpressions.getFieldInitialization(this)));
+                checkNotNull(generatedComponentModel.getFieldInitialization(this)));
 
         if (fieldInitializationState == InitializationState.DELEGATED) {
           // If we were recursively invoked, set the delegate factory as part of our initialization
@@ -119,15 +116,15 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
         } else {
           codeBuilder.add(initCode);
         }
-        hasBindingExpressions.addInitialization(codeBuilder.build());
-        hasBindingExpressions.addField(fieldSpec.get());
+        generatedComponentModel.addInitialization(codeBuilder.build());
+        generatedComponentModel.addField(fieldSpec.get());
 
         setFieldInitializationState(InitializationState.INITIALIZED);
         break;
 
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
-        hasBindingExpressions.addInitialization(
+        generatedComponentModel.addInitialization(
             CodeBlock.of("this.$L = new $T();", fieldName(), DELEGATE_FACTORY));
         setFieldInitializationState(InitializationState.DELEGATED);
         break;

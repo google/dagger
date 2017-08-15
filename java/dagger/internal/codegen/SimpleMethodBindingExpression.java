@@ -36,34 +36,37 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
 /**
- * A request fulfillment implementation that invokes methods or constructors directly to fulfill
- * requests whenever possible. In cases where direct invocation is not possible, this implementation
- * delegates to one that uses a {@link javax.inject.Provider}.
+ * A binding expression that invokes methods or constructors directly for a provision binding when
+ * possible.
  */
 final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpression {
   private final CompilerOptions compilerOptions;
   private final ProvisionBinding provisionBinding;
-  private final HasBindingExpressions hasBindingExpressions;
+  private final ComponentBindingExpressions componentBindingExpressions;
+  private final GeneratedComponentModel generatedComponentModel;
 
   SimpleMethodBindingExpression(
       CompilerOptions compilerOptions,
       ProvisionBinding provisionBinding,
       BindingExpression delegate,
-      HasBindingExpressions hasBindingExpressions) {
+      ComponentBindingExpressions componentBindingExpressions,
+      GeneratedComponentModel generatedComponentModel) {
     super(delegate);
-    this.compilerOptions = compilerOptions;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
     checkArgument(!provisionBinding.scope().isPresent());
     checkArgument(!provisionBinding.requiresModuleInstance());
     checkArgument(provisionBinding.bindingElement().isPresent());
+    this.compilerOptions = compilerOptions;
     this.provisionBinding = provisionBinding;
-    this.hasBindingExpressions = hasBindingExpressions;
+    this.componentBindingExpressions = componentBindingExpressions;
+    this.generatedComponentModel = generatedComponentModel;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     return requiresInjectionMethod(provisionBinding, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);
@@ -115,9 +118,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    return hasBindingExpressions
-        .getBindingExpression(dependency.bindingKey())
-        .getDependencyArgumentExpression(dependency, requestingClass);
+    return componentBindingExpressions.getDependencyArgumentExpression(dependency, requestingClass);
   }
 
   private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
@@ -141,7 +142,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
     return CodeBlock.of(
         "$N($L)",
-        hasBindingExpressions.getMembersInjectionMethod(provisionBinding.key()),
+        generatedComponentModel.getMembersInjectionMethod(provisionBinding.key()),
         instance);
   }
 }

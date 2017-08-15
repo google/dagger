@@ -21,34 +21,19 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import java.util.Optional;
 
+/** A binding expression that uses a {@link javax.inject.Provider} instance. */
 final class ProviderBindingExpression extends FrameworkInstanceBindingExpression {
   ProviderBindingExpression(
       BindingKey bindingKey,
       Optional<FieldSpec> fieldSpec,
-      HasBindingExpressions hasBindingExpressions,
+      GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect) {
-    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+    super(bindingKey, fieldSpec, generatedComponentModel, memberSelect);
   }
 
   @Override
-  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    return FrameworkType.PROVIDER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
-  }
-
-  @Override
-  CodeBlock getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    switch (frameworkDependency.bindingType()) {
-      case PROVISION:
-        return getFrameworkTypeInstance(requestingClass);
-      case MEMBERS_INJECTION:
-        throw new IllegalArgumentException();
-      case PRODUCTION:
-        return FrameworkType.PROVIDER.to(
-            DependencyRequest.Kind.PRODUCER, getFrameworkTypeInstance(requestingClass));
-      default:
-        throw new AssertionError();
-    }
+  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return FrameworkType.PROVIDER.to(requestKind, getFrameworkTypeInstance(requestingClass));
   }
 
   @Override

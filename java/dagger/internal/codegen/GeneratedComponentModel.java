@@ -19,22 +19,12 @@ package dagger.internal.codegen;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import javax.annotation.Nullable;
 
-/** An object which associates a {@link BindingExpression} instance with a {@link BindingKey}. */
-// TODO(dpb): Rename and/or split up this type.
-interface HasBindingExpressions {
-
-  /**
-   * Returns the {@link BindingExpression} associated with the given {@link BindingKey} or {@code
-   * null} if no association exists.
-   */
-  // TODO(dpb): Move the hierarchical map of binding expressions out into a separate class.
-  // This should remove the need for HasBindingExpressions
-  @Nullable
-  BindingExpression getBindingExpression(BindingKey bindingKey);
+/** The model of the component being generated. */
+interface GeneratedComponentModel {
 
   /** Returns the expression used to initialize a binding expression field. */
+  // TODO(user): Move this method onto FrameworkInstanceBindingExpression and subtypes.
   CodeBlock getFieldInitialization(FrameworkInstanceBindingExpression bindingExpression);
 
   /** Adds the given field to the component. */

@@ -30,38 +30,36 @@ import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-/**
- * A {@link BindingExpression} for {@link
- * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_SET}
- */
+/** A binding expression for multibound sets. */
 final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
-  private final HasBindingExpressions hasBindingExpressions;
+  private final ComponentBindingExpressions componentBindingExpressions;
   private final Elements elements;
 
   SetBindingExpression(
       ProvisionBinding binding,
       BindingGraph graph,
-      HasBindingExpressions hasBindingExpressions,
+      ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
       Elements elements) {
     super(delegate);
     this.binding = binding;
     this.graph = graph;
-    this.hasBindingExpressions = hasBindingExpressions;
+    this.componentBindingExpressions = componentBindingExpressions;
     this.elements = elements;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getInstanceDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
     if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
       return CodeBlock.builder()
           .add("$T.", ImmutableSet.class)
-          .add(maybeTypeParameter(request, requestingClass))
+          .add(maybeTypeParameter(requestingClass))
           .add(
               "of($L)",
               binding
@@ -73,19 +71,18 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
     }
     switch (binding.dependencies().size()) {
       case 0:
-        return collectionsStaticFactoryInvocation(
-            request, requestingClass, CodeBlock.of("emptySet()"));
+        return collectionsStaticFactoryInvocation(requestingClass, CodeBlock.of("emptySet()"));
       case 1:
         {
           DependencyRequest dependency = getOnlyElement(binding.dependencies());
           CodeBlock contributionExpression = getContributionExpression(dependency, requestingClass);
           if (isSingleValue(dependency)) {
             return collectionsStaticFactoryInvocation(
-                request, requestingClass, CodeBlock.of("singleton($L)", contributionExpression));
+                requestingClass, CodeBlock.of("singleton($L)", contributionExpression));
           } else if (isImmutableSetAvailable) {
             return CodeBlock.builder()
                 .add("$T.", ImmutableSet.class)
-                .add(maybeTypeParameter(request, requestingClass))
+                .add(maybeTypeParameter(requestingClass))
                 .add("copyOf($L)", contributionExpression)
                 .build();
           }
@@ -95,7 +92,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         CodeBlock.Builder instantiation = CodeBlock.builder();
         instantiation
             .add("$T.", isImmutableSetAvailable ? ImmutableSet.class : SetBuilder.class)
-            .add(maybeTypeParameter(request, requestingClass));
+            .add(maybeTypeParameter(requestingClass));
         if (isImmutableSetAvailable) {
           instantiation.add("builder()");
         } else {
@@ -112,23 +109,20 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
-    return hasBindingExpressions
-        .getBindingExpression(dependency.bindingKey())
-        .getDependencyExpression(dependency, requestingClass);
+    return componentBindingExpressions.getDependencyExpression(dependency, requestingClass);
   }
 
-  private static CodeBlock collectionsStaticFactoryInvocation(
-      DependencyRequest request, ClassName requestingClass, CodeBlock methodInvocation) {
+  private CodeBlock collectionsStaticFactoryInvocation(
+      ClassName requestingClass, CodeBlock methodInvocation) {
     return CodeBlock.builder()
         .add("$T.", Collections.class)
-        .add(maybeTypeParameter(request, requestingClass))
+        .add(maybeTypeParameter(requestingClass))
         .add(methodInvocation)
         .build();
   }
 
-  private static CodeBlock maybeTypeParameter(
-      DependencyRequest request, ClassName requestingClass) {
-    TypeMirror elementType = SetType.from(request.key()).elementType();
+  private CodeBlock maybeTypeParameter(ClassName requestingClass) {
+    TypeMirror elementType = SetType.from(binding.key()).elementType();
     return isTypeAccessibleFrom(elementType, requestingClass.packageName())
         ? CodeBlock.of("<$T>", elementType)
         : CodeBlock.of("");

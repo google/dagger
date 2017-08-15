@@ -51,6 +51,23 @@ abstract class FrameworkDependency {
   /** The binding type of the framework dependency. */
   abstract BindingType bindingType();
 
+  /** The dependency request kind that is equivalent to requesting the framework dependency. */
+  DependencyRequest.Kind dependencyRequestKind() {
+    switch (bindingType()) {
+      case PROVISION:
+        return DependencyRequest.Kind.PROVIDER;
+
+      case PRODUCTION:
+        return DependencyRequest.Kind.PRODUCER;
+
+      case MEMBERS_INJECTION:
+        return DependencyRequest.Kind.MEMBERS_INJECTOR;
+
+      default:
+        throw new AssertionError(bindingType());
+    }
+  }
+
   /** The framework class to use for these requests. */
   final Class<?> frameworkClass() {
     return bindingType().frameworkClass();

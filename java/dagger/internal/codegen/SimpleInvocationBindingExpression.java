@@ -21,8 +21,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 
 /**
- * A {@link BindingExpression} that can fulfill its request with a simple call when possible, and
- * otherwise delegates to a backing provider field.
+ * A binding expression that can use a simple expression for instance requests, and delegates to
+ * another expression for other requests.
  */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final BindingExpression delegate;
@@ -38,7 +38,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
    * @param requestingClass the class that will contain the expression
    */
   abstract CodeBlock getInstanceDependencyExpression(
-      DependencyRequest request, ClassName requestingClass);
+      DependencyRequest.Kind requestKind, ClassName requestingClass);
 
   /**
    * Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
@@ -52,24 +52,21 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   }
 
   @Override
-  final CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    switch (request.kind()) {
+  final CodeBlock getDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    switch (requestKind) {
       case INSTANCE:
-        return getInstanceDependencyExpression(request, requestingClass);
+        return getInstanceDependencyExpression(requestKind, requestingClass);
       case FUTURE:
         return CodeBlock.builder()
             .add("$T.", Futures.class)
             .add(explicitTypeParameter(requestingClass))
-            .add("immediateFuture($L)", getInstanceDependencyExpression(request, requestingClass))
+            .add(
+                "immediateFuture($L)",
+                getInstanceDependencyExpression(requestKind, requestingClass))
             .build();
       default:
-        return delegate.getDependencyExpression(request, requestingClass);
+        return delegate.getDependencyExpression(requestKind, requestingClass);
     }
-  }
-
-  @Override
-  final CodeBlock getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return delegate.getDependencyExpression(frameworkDependency, requestingClass);
   }
 }

@@ -17,24 +17,19 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
-import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.TypeName;
 import java.util.Optional;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-/** The code expressions to declare, initialize, and/or access a binding in a component. */
+/** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
   private final BindingKey bindingKey;
 
@@ -48,51 +43,21 @@ abstract class BindingExpression {
   }
 
   /**
-   * Returns an expression that evaluates to the value of a dependency request.
-   *
-   * @param requestingClass the class that will contain the expression
-   */
-  abstract CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass);
-
-  /**
-   * Returns an expression that evaluates to the value of a framework dependency.
+   * Returns an expression that evaluates to the value of a request for a given kind of dependency
+   * on this binding.
    *
    * @param requestingClass the class that will contain the expression
    */
   abstract CodeBlock getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass);
-
-  /**
-   * Returns an expression that evaluates to the value of a dependency request, for passing to a
-   * binding method, an {@code @Inject}-annotated constructor or member, or a proxy for one.
-   *
-   * <p>If the method is a generated static {@link InjectionMethods injection method}, each
-   * parameter will be {@link Object} if the dependency's raw type is inaccessible. If that is the
-   * case for this dependency, the returned expression will use a cast to evaluate to the raw type.
-   *
-   * @param requestingClass the class that will contain the expression
-   */
-  // TODO(b/64024402) Merge with getDependencyExpression(DependencyRequest, ClassName) if possible.
-  CodeBlock getDependencyArgumentExpression(
-      DependencyRequest dependencyRequest, ClassName requestingClass) {
-    CodeBlock.Builder argument = CodeBlock.builder();
-
-    TypeMirror dependencyType = dependencyRequest.key().type();
-    if (!isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
-        && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
-      argument.add("($T) ", rawTypeName(TypeName.get(dependencyType)));
-    }
-
-    argument.add(getDependencyExpression(dependencyRequest, requestingClass));
-    return argument.build();
-  }
+      DependencyRequest.Kind requestKind, ClassName requestingClass);
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {
     private final CompilerOptions compilerOptions;
     private final ClassName componentName;
     private final UniqueNameSet componentFieldNames;
-    private final HasBindingExpressions hasBindingExpressions;
+    private final ComponentBindingExpressions componentBindingExpressions;
+    private final GeneratedComponentModel generatedComponentModel;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
     private final Elements elements;
@@ -101,14 +66,16 @@ abstract class BindingExpression {
         CompilerOptions compilerOptions,
         ClassName componentName,
         UniqueNameSet componentFieldNames,
-        HasBindingExpressions hasBindingExpressions,
+        ComponentBindingExpressions componentBindingExpressions,
+        GeneratedComponentModel generatedComponentModel,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
         Elements elements) {
       this.compilerOptions = checkNotNull(compilerOptions);
       this.componentName = checkNotNull(componentName);
       this.componentFieldNames = checkNotNull(componentFieldNames);
-      this.hasBindingExpressions = checkNotNull(hasBindingExpressions);
+      this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+      this.generatedComponentModel = checkNotNull(generatedComponentModel);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
       this.elements = checkNotNull(elements);
@@ -121,20 +88,18 @@ abstract class BindingExpression {
       return create(resolvedBindings, Optional.of(fieldSpec), memberSelect);
     }
 
-    BindingExpression forProducerFromProviderField(ResolvedBindings resolvedBindings) {
+    ProducerBindingExpression forProducerFromProviderField(ResolvedBindings resolvedBindings) {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
       return new ProducerBindingExpression(
           resolvedBindings.bindingKey(),
           Optional.of(fieldSpec),
-          hasBindingExpressions,
+          generatedComponentModel,
           memberSelect,
           true);
     }
 
-    /**
-     * Creates a binding expression for a static method call.
-     */
+    /** Creates a binding expression for a static method call. */
     Optional<BindingExpression> forStaticMethod(ResolvedBindings resolvedBindings) {
       return staticMemberSelect(resolvedBindings)
           .map(memberSelect -> create(resolvedBindings, Optional.empty(), memberSelect));
@@ -178,17 +143,17 @@ abstract class BindingExpression {
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
           return new MembersInjectorBindingExpression(
-              bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+              bindingKey, fieldSpec, generatedComponentModel, memberSelect);
         case PRODUCTION:
           return new ProducerBindingExpression(
-              bindingKey, fieldSpec, hasBindingExpressions, memberSelect, false);
+              bindingKey, fieldSpec, generatedComponentModel, memberSelect, false);
         case PROVISION:
           ProvisionBinding provisionBinding =
               (ProvisionBinding) resolvedBindings.contributionBinding();
 
           ProviderBindingExpression providerBindingExpression =
               new ProviderBindingExpression(
-                  bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+                  bindingKey, fieldSpec, generatedComponentModel, memberSelect);
 
           switch (provisionBinding.bindingKind()) {
             case SUBCOMPONENT_BUILDER:
@@ -198,12 +163,12 @@ abstract class BindingExpression {
               return new SetBindingExpression(
                   provisionBinding,
                   graph,
-                  hasBindingExpressions,
+                  componentBindingExpressions,
                   providerBindingExpression,
                   elements);
             case SYNTHETIC_OPTIONAL_BINDING:
               return new OptionalBindingExpression(
-                  provisionBinding, providerBindingExpression, hasBindingExpressions);
+                  provisionBinding, providerBindingExpression, componentBindingExpressions);
             case INJECTION:
             case PROVISION:
               if (!provisionBinding.scope().isPresent()
@@ -213,7 +178,8 @@ abstract class BindingExpression {
                     compilerOptions,
                     provisionBinding,
                     providerBindingExpression,
-                    hasBindingExpressions);
+                    componentBindingExpressions,
+                    generatedComponentModel);
               }
               // fall through
             default:

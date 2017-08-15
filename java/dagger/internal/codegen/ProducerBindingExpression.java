@@ -16,40 +16,28 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.BindingType.PRODUCTION;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import java.util.Optional;
 
+/** A binding expression that uses a {@link dagger.producers.Producer} instance. */
 final class ProducerBindingExpression extends FrameworkInstanceBindingExpression {
   private final boolean isProducerFromProvider;
 
   ProducerBindingExpression(
       BindingKey bindingKey,
       Optional<FieldSpec> fieldSpec,
-      HasBindingExpressions hasBindingExpressions,
+      GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
       boolean isProducerFromProvider) {
-    super(bindingKey, fieldSpec, hasBindingExpressions, memberSelect);
+    super(bindingKey, fieldSpec, generatedComponentModel, memberSelect);
     this.isProducerFromProvider = isProducerFromProvider;
   }
 
   @Override
-  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    return FrameworkType.PRODUCER.to(request.kind(), getFrameworkTypeInstance(requestingClass));
-  }
-
-  @Override
-  CodeBlock getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    checkArgument(
-        frameworkDependency.bindingType().equals(PRODUCTION),
-        "%s is not a production dependency",
-        frameworkDependency);
-    return getFrameworkTypeInstance(requestingClass);
+  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return FrameworkType.PRODUCER.to(requestKind, getFrameworkTypeInstance(requestingClass));
   }
 
   @Override

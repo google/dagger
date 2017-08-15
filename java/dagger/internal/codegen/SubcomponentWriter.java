@@ -84,12 +84,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  public BindingExpression getBindingExpression(BindingKey key) {
-    BindingExpression bindingExpression = super.getBindingExpression(key);
-    return bindingExpression == null ? parent.getBindingExpression(key) : bindingExpression;
-  }
-
-  @Override
   protected CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
     return parent.getReferenceReleasingProviderManagerExpression(scope);
   }

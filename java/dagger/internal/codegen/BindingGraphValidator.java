@@ -663,6 +663,10 @@ final class BindingGraphValidator {
        * ContributionBinding}s with present {@linkplain BindingDeclaration#bindingElement() binding
        * elements}.
        *
+       * <p>Includes {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGER} or
+       * {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS} bindings, even
+       * though they have no binding elements, because they will be reported via the declared
+       * scopes.
        *
        * <p>For other bindings without binding elements, such as the {@link
        * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_KINDS}, includes the conflicting declarations

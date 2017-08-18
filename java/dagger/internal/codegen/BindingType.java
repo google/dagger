@@ -25,18 +25,17 @@ import dagger.MembersInjector;
 import dagger.producers.Producer;
 import javax.inject.Provider;
 
-/**
- * Whether a binding or declaration is for provision, production, or a {@link MembersInjector}.
- */
+/** Whether a binding or declaration is for provision, production, or a {@link MembersInjector}. */
+// TODO(dpb): Merge with FrameworkType?
 enum BindingType {
   /** A binding with this type is a {@link ProvisionBinding}. */
-  PROVISION(Provider.class),
+  PROVISION(Provider.class, FrameworkType.PROVIDER),
 
   /** A binding with this type is a {@link MembersInjectionBinding}. */
-  MEMBERS_INJECTION(MembersInjector.class),
+  MEMBERS_INJECTION(MembersInjector.class, FrameworkType.MEMBERS_INJECTOR),
 
   /** A binding with this type is a {@link ProductionBinding}. */
-  PRODUCTION(Producer.class),
+  PRODUCTION(Producer.class, FrameworkType.PRODUCER),
   ;
 
   boolean isOfType(HasBindingType hasBindingType) {
@@ -48,19 +47,26 @@ enum BindingType {
 
   /** An object that is associated with a {@link BindingType}. */
   interface HasBindingType {
+
     /** The binding type of this object. */
     BindingType bindingType();
   }
-
   private final Class<?> frameworkClass;
+  private final FrameworkType frameworkType;
 
-  BindingType(Class<?> frameworkClass) {
+  private BindingType(Class<?> frameworkClass, FrameworkType frameworkType) {
     this.frameworkClass = frameworkClass;
+    this.frameworkType = frameworkType;
   }
 
   /** The framework class associated with bindings of this type. */
   Class<?> frameworkClass() {
     return frameworkClass;
+  }
+
+  /** The framework type used to represent bindings of this type. */
+  FrameworkType frameworkType() {
+    return frameworkType;
   }
 
   /** Returns the {@link #frameworkClass()} parameterized with a type. */

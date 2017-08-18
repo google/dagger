@@ -127,8 +127,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final ComponentBindingExpressions bindingExpressions;
   // TODO(user): Merge into ComponentBindingExpressions after we refactor BindingKey.
-  private final Map<BindingKey, ProducerBindingExpression> producerFromProviderBindingExpressions =
-      new LinkedHashMap<>();
+  private final Map<BindingKey, FrameworkInstanceBindingExpression>
+      producerFromProviderBindingExpressions = new LinkedHashMap<>();
   private final List<CodeBlock> initializations = new ArrayList<>();
   protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
   private final BindingExpression.Factory bindingExpressionFactory;
@@ -700,7 +700,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     return membersInjectorForBindingInitialization(binding);
   }
 
-  private ProducerBindingExpression getProducerFromProviderBindingExpression(
+  private FrameworkInstanceBindingExpression getProducerFromProviderBindingExpression(
       FrameworkDependency frameworkDependency) {
     checkState(isProducerFromProvider(frameworkDependency));
     return producerFromProviderBindingExpressions.computeIfAbsent(

@@ -27,23 +27,60 @@ import dagger.internal.DelegateFactory;
 import java.util.Optional;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
-// TODO(user): consider removing this class and making it a strategy that is created by
-// {Provider,Producer,MembersInjector}BindingExpression
-abstract class FrameworkInstanceBindingExpression extends BindingExpression {
+final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final Optional<FieldSpec> fieldSpec;
   private final GeneratedComponentModel generatedComponentModel;
   private final MemberSelect memberSelect;
+  private final FrameworkType frameworkType;
+  private final boolean isProducerFromProvider;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
-  protected FrameworkInstanceBindingExpression(
+  /** Returns a binding expression for a binding. */
+  static FrameworkInstanceBindingExpression create(
+      ResolvedBindings resolvedBindings,
+      Optional<FieldSpec> fieldSpec,
+      GeneratedComponentModel generatedComponentModel,
+      MemberSelect memberSelect) {
+    return new FrameworkInstanceBindingExpression(
+        resolvedBindings.bindingKey(),
+        fieldSpec,
+        generatedComponentModel,
+        memberSelect,
+        resolvedBindings.bindingType().frameworkType(),
+        false);
+  }
+
+  /**
+   * Returns a binding expression that uses a {@link dagger.producers.Producer} instance derived
+   * from a {@link javax.inject.Provider}.
+   */
+  static FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
       BindingKey bindingKey,
       Optional<FieldSpec> fieldSpec,
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect) {
+    return new FrameworkInstanceBindingExpression(
+        bindingKey, fieldSpec, generatedComponentModel, memberSelect, FrameworkType.PRODUCER, true);
+  }
+
+  private FrameworkInstanceBindingExpression(
+      BindingKey bindingKey,
+      Optional<FieldSpec> fieldSpec,
+      GeneratedComponentModel generatedComponentModel,
+      MemberSelect memberSelect,
+      FrameworkType frameworkType,
+      boolean isProducerFromProvider) {
     super(bindingKey);
     this.generatedComponentModel = generatedComponentModel;
     this.memberSelect = memberSelect;
     this.fieldSpec = fieldSpec;
+    this.frameworkType = frameworkType;
+    this.isProducerFromProvider = isProducerFromProvider;
+  }
+
+  @Override
+  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return frameworkType.to(requestKind, getFrameworkTypeInstance(requestingClass));
   }
 
   /**
@@ -69,8 +106,9 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   }
 
   /** Returns true if this binding expression represents a producer from provider. */
-  // TODO(user): remove this and represent this via a subtype of BindingExpression
-  abstract boolean isProducerFromProvider();
+  boolean isProducerFromProvider() {
+    return isProducerFromProvider;
+  }
 
   /**
    * Sets the initialization state for the binding's underlying field. Only valid for field types.

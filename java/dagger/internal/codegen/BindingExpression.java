@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
+import static dagger.internal.codegen.FrameworkInstanceBindingExpression.producerFromProviderBindingExpression;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -31,6 +32,7 @@ import javax.lang.model.util.Elements;
 
 /** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
+  // TODO(dpb): Put the Binding or ResolvedBindings itself here.
   private final BindingKey bindingKey;
 
   BindingExpression(BindingKey bindingKey) {
@@ -88,15 +90,15 @@ abstract class BindingExpression {
       return create(resolvedBindings, Optional.of(fieldSpec), memberSelect);
     }
 
-    ProducerBindingExpression forProducerFromProviderField(ResolvedBindings resolvedBindings) {
+    FrameworkInstanceBindingExpression forProducerFromProviderField(
+        ResolvedBindings resolvedBindings) {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
-      return new ProducerBindingExpression(
+      return producerFromProviderBindingExpression(
           resolvedBindings.bindingKey(),
           Optional.of(fieldSpec),
           generatedComponentModel,
-          memberSelect,
-          true);
+          memberSelect);
     }
 
     /** Creates a binding expression for a static method call. */
@@ -139,54 +141,40 @@ abstract class BindingExpression {
         ResolvedBindings resolvedBindings,
         Optional<FieldSpec> fieldSpec,
         MemberSelect memberSelect) {
-      BindingKey bindingKey = resolvedBindings.bindingKey();
-      switch (resolvedBindings.bindingType()) {
-        case MEMBERS_INJECTION:
-          return new MembersInjectorBindingExpression(
-              bindingKey, fieldSpec, generatedComponentModel, memberSelect);
-        case PRODUCTION:
-          return new ProducerBindingExpression(
-              bindingKey, fieldSpec, generatedComponentModel, memberSelect, false);
-        case PROVISION:
-          ProvisionBinding provisionBinding =
-              (ProvisionBinding) resolvedBindings.contributionBinding();
+      FrameworkInstanceBindingExpression bindingExpression =
+          FrameworkInstanceBindingExpression.create(
+              resolvedBindings, fieldSpec, generatedComponentModel, memberSelect);
 
-          ProviderBindingExpression providerBindingExpression =
-              new ProviderBindingExpression(
-                  bindingKey, fieldSpec, generatedComponentModel, memberSelect);
+      if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
+        return bindingExpression;
+      }
 
-          switch (provisionBinding.bindingKind()) {
-            case SUBCOMPONENT_BUILDER:
-              return new SubcomponentBuilderBindingExpression(
-                  providerBindingExpression, subcomponentNames.get(bindingKey));
-            case SYNTHETIC_MULTIBOUND_SET:
-              return new SetBindingExpression(
-                  provisionBinding,
-                  graph,
-                  componentBindingExpressions,
-                  providerBindingExpression,
-                  elements);
-            case SYNTHETIC_OPTIONAL_BINDING:
-              return new OptionalBindingExpression(
-                  provisionBinding, providerBindingExpression, componentBindingExpressions);
+      ProvisionBinding provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
+      switch (provisionBinding.bindingKind()) {
+        case SUBCOMPONENT_BUILDER:
+          return new SubcomponentBuilderBindingExpression(
+              bindingExpression, subcomponentNames.get(resolvedBindings.bindingKey()));
+        case SYNTHETIC_MULTIBOUND_SET:
+          return new SetBindingExpression(
+              provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
+        case SYNTHETIC_OPTIONAL_BINDING:
+          return new OptionalBindingExpression(
+              provisionBinding, bindingExpression, componentBindingExpressions);
             case INJECTION:
-            case PROVISION:
-              if (!provisionBinding.scope().isPresent()
-                  && !provisionBinding.requiresModuleInstance()
-                  && provisionBinding.bindingElement().isPresent()) {
-                return new SimpleMethodBindingExpression(
-                    compilerOptions,
-                    provisionBinding,
-                    providerBindingExpression,
-                    componentBindingExpressions,
-                    generatedComponentModel);
-              }
-              // fall through
-            default:
-              return providerBindingExpression;
+        case PROVISION:
+          if (!provisionBinding.scope().isPresent()
+              && !provisionBinding.requiresModuleInstance()
+              && provisionBinding.bindingElement().isPresent()) {
+            return new SimpleMethodBindingExpression(
+                compilerOptions,
+                provisionBinding,
+                bindingExpression,
+                componentBindingExpressions,
+                generatedComponentModel);
           }
+          // fall through
         default:
-          throw new AssertionError();
+          return bindingExpression;
       }
     }
   }

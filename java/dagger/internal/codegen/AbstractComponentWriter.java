@@ -76,7 +76,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.InstanceFactory;
@@ -852,12 +851,12 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
                       "  }",
                       "}"),
               /* 1 */ PRODUCER,
-              /* 2 */ TypeName.get(binding.key().type()),
+              /* 2 */ binding.key().type(),
               /* 3 */ LISTENABLE_FUTURE,
               /* 4 */ getComponentContributionExpression(
                   ComponentRequirement.forDependency(dependencyType.asType())),
               /* 5 */ binding.bindingElement().get().getSimpleName(),
-              /* 6 */ TypeName.get(dependencyType.asType()),
+              /* 6 */ dependencyType,
               /* 7 */ simpleVariableName(dependencyType));
         }
 
@@ -1007,8 +1006,10 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         CodeBlock.builder().add("$T.", frameworkMapFactoryClassName(binding.bindingType()));
     boolean useRawTypes = useRawType(binding);
     if (!useRawTypes) {
-      builderCall.add("<$T, $T>", TypeName.get(mapType.keyType()),
-          TypeName.get(mapType.unwrappedValueType(binding.bindingType().frameworkClass())));
+      builderCall.add(
+          "<$T, $T>",
+          mapType.keyType(),
+          mapType.unwrappedValueType(binding.bindingType().frameworkClass()));
     }
     builderCall.add("builder($L)", frameworkDependencies.size());
     codeBlocks.add(builderCall.build());
@@ -1139,10 +1140,9 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   private CodeBlock typedReleasableReferenceManagerDecoratorExpression(
       CodeBlock managerExpression, AnnotationMirror metadata) {
     return CodeBlock.of(
-        "new $T($L, $L)",
-        ParameterizedTypeName.get(
-            TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR,
-            TypeName.get(metadata.getAnnotationType())),
+        "new $T<$T>($L, $L)",
+        TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR,
+        metadata.getAnnotationType(),
         managerExpression,
         new AnnotationExpression(metadata).getAnnotationInstanceExpression());
   }

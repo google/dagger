@@ -23,7 +23,6 @@ import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeName;
 import dagger.internal.SetBuilder;
 import java.util.Collections;
 import java.util.Set;
@@ -147,9 +146,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
       TypeMirror keyType = binding.key().type();
       return CodeBlock.of(
           "<$T>",
-          isTypeAccessibleFrom(keyType, requestingClass.packageName())
-              ? TypeName.get(keyType)
-              : ClassName.get(Set.class));
+          isTypeAccessibleFrom(keyType, requestingClass.packageName()) ? keyType : Set.class);
     }
     return CodeBlock.of("");
   }

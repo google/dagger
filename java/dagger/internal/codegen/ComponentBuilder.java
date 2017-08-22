@@ -251,7 +251,7 @@ final class ComponentBuilder {
                   .returns(builderName)
                   .addModifiers(PUBLIC)
                   .addParameter(
-                      ClassName.get(componentRequirement.type()), componentRequirementName);
+                      TypeName.get(componentRequirement.type()), componentRequirementName);
           if (componentRequirements.contains(componentRequirement)) {
             builderMethod.addStatement(
                 "this.$N = $T.checkNotNull($L)",

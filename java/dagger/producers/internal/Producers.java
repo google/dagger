@@ -123,9 +123,9 @@ public final class Producers {
    */
   public static <T> Producer<T> producerFromProvider(final Provider<T> provider) {
     checkNotNull(provider);
-    return new AbstractProducer<T>() {
+    return new Producer<T>() {
       @Override
-      protected ListenableFuture<T> compute() {
+      public ListenableFuture<T> get() {
         return Futures.immediateFuture(provider.get());
       }
     };

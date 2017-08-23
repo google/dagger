@@ -46,13 +46,13 @@ import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
-import static dagger.internal.codegen.TypeNames.LISTENABLE_FUTURE;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
-import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
+import static dagger.internal.codegen.TypeNames.listenableFutureOf;
+import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -63,7 +63,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -755,22 +754,22 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
       case SUBCOMPONENT_BUILDER:
         String subcomponentName =
             subcomponentNames.get(
-                graph.componentDescriptor()
+                graph
+                    .componentDescriptor()
                     .subcomponentsByBuilderType()
                     .get(MoreTypes.asTypeElement(binding.key().type())));
         return CodeBlock.of(
-            Joiner.on('\n')
-                .join(
-                    "new $1L<$2T>() {",
-                    "  @Override public $2T get() {",
-                    "    return new $3LBuilder();",
-                    "  }",
-                    "}"),
-            // TODO(ronshapiro): Until we remove Factory, fully qualify the import so it doesn't
-            // conflict with dagger.android.ActivityInjector.Factory
-            /* 1 */ "dagger.internal.Factory",
-            /* 2 */ bindingKeyTypeName,
-            /* 3 */ subcomponentName);
+            "$L",
+            anonymousClassBuilder("")
+                .superclass(providerOf(bindingKeyTypeName))
+                .addMethod(
+                    methodBuilder("get")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(bindingKeyTypeName)
+                        .addStatement("return new $LBuilder()", subcomponentName)
+                        .build())
+                .build());
 
       case BUILDER_BINDING:
         return CodeBlock.of(
@@ -813,23 +812,32 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
       case COMPONENT_PRODUCTION:
         {
           TypeElement dependencyType = dependencyTypeForBinding(binding);
+          FieldSpec dependencyField =
+              FieldSpec.builder(
+                      ClassName.get(dependencyType),
+                      simpleVariableName(dependencyType),
+                      PRIVATE,
+                      FINAL)
+                  .initializer(
+                      componentRequirementFields.getExpressionDuringInitialization(
+                          ComponentRequirement.forDependency(dependencyType.asType()), name))
+                  .build();
           return CodeBlock.of(
-              Joiner.on('\n')
-                  .join(
-                      "new $1T<$2T>() {",
-                      "  private final $6T $7L = $4L;",
-                      "  @Override public $3T<$2T> get() {",
-                      "    return $7L.$5L();",
-                      "  }",
-                      "}"),
-              /* 1 */ PRODUCER,
-              /* 2 */ binding.key().type(),
-              /* 3 */ LISTENABLE_FUTURE,
-              /* 4 */ componentRequirementFields.getExpressionDuringInitialization(
-                  ComponentRequirement.forDependency(dependencyType.asType()), name),
-              /* 5 */ binding.bindingElement().get().getSimpleName(),
-              /* 6 */ dependencyType,
-              /* 7 */ simpleVariableName(dependencyType));
+              "$L",
+              anonymousClassBuilder("")
+                  .superclass(producerOf(bindingKeyTypeName))
+                  .addField(dependencyField)
+                  .addMethod(
+                      methodBuilder("get")
+                          .addAnnotation(Override.class)
+                          .addModifiers(PUBLIC)
+                          .returns(listenableFutureOf(bindingKeyTypeName))
+                          .addStatement(
+                              "return $N.$L()",
+                              dependencyField,
+                              binding.bindingElement().get().getSimpleName())
+                          .build())
+                  .build());
         }
 
       case PRODUCTION:

@@ -129,6 +129,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     /** A provision method on a component's {@linkplain Component#dependencies() dependency}. */
     COMPONENT_PROVISION,
 
+    /** An instance of a {@linkplain Component#dependencies() dependency}. */
+    COMPONENT_DEPENDENCY,
+
     /**
      * A subcomponent builder method on a component or subcomponent.
      */

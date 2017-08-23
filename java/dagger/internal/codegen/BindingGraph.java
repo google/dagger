@@ -230,7 +230,8 @@ abstract class BindingGraph {
 
       // Collect Component dependencies.
       for (TypeElement componentDependency : componentDescriptor.dependencies()) {
-        explicitBindingsBuilder.add(provisionBindingFactory.forComponent(componentDependency));
+        explicitBindingsBuilder.add(
+            provisionBindingFactory.forComponentDependency(componentDependency));
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
         for (ExecutableElement method : dependencyMethods) {

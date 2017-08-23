@@ -246,7 +246,7 @@ public class ProductionComponentProcessorTest {
             "         DoubleCheck.provider(",
             "             TestClass_SimpleComponent_ProductionExecutorModule_ExecutorFactory",
             "                 .create(executorProvider));",
-            "    this.simpleComponentProvider =",
+            "    this.simpleComponentProvider = ",
             "        InstanceFactory.<TestClass.SimpleComponent>create(this);",
             "    this.monitorProvider =",
             "        DoubleCheck.provider(",

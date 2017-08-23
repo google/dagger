@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.collect.ImmutableList;
@@ -30,7 +31,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class MapBindingComponentProcessorTest {
-
   @Test
   public void mapBindingsWithEnumKey() {
     JavaFileObject mapModuleOneFile =
@@ -715,11 +715,10 @@ public class MapBindingComponentProcessorTest {
         "import dagger.internal.Preconditions;",
         "import java.util.Map;",
         "import javax.annotation.Generated;",
-        "import javax.inject.Provider;",
         "",
         GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
-        "  private Provider<Map<String, String>> provideAMapProvider;",
+        "  private MapModule mapModule;",
         "",
         "  private DaggerTestComponent(Builder builder) {",
         "    initialize(builder);",
@@ -735,12 +734,13 @@ public class MapBindingComponentProcessorTest {
         "",
         "  @SuppressWarnings(\"unchecked\")",
         "  private void initialize(final Builder builder) {",
-        "    this.provideAMapProvider = MapModule_ProvideAMapFactory.create(builder.mapModule);",
+        "    this.mapModule = builder.mapModule;",
         "  }",
         "",
         "  @Override",
         "  public Map<String, String> dispatcher() {",
-        "    return provideAMapProvider.get();",
+        "    return Preconditions.checkNotNull(",
+        "        mapModule.provideAMap(), " + NPE_FROM_PROVIDES_METHOD + ");",
         "  }",
         "",
         "  public static final class Builder {",

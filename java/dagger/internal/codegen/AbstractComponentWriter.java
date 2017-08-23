@@ -69,7 +69,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -125,12 +124,14 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final ComponentBindingExpressions bindingExpressions;
+  protected final ComponentRequirementFields componentRequirementFields;
   // TODO(user): Merge into ComponentBindingExpressions after we refactor BindingKey.
   private final Map<BindingKey, FrameworkInstanceBindingExpression>
       producerFromProviderBindingExpressions = new LinkedHashMap<>();
   private final List<CodeBlock> initializations = new ArrayList<>();
   protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
   private final BindingExpression.Factory bindingExpressionFactory;
+  private final ComponentRequirementField.Factory componentRequirementFieldFactory;
 
   private final Map<Key, MethodSpec> membersInjectionMethods = new LinkedHashMap<>();
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
@@ -142,16 +143,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
    * For each component requirement, the builder field. This map is empty for subcomponents that do
    * not use a builder.
    */
-  private ImmutableMap<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.of();
-
-  /**
-   * For each component requirement, the member select for the component field that holds it.
-   *
-   * <p>Fields are written for all requirements for subcomponents that do not use a builder, and for
-   * any requirement that is reused from a subcomponent of this component.
-   */
-  protected final Map<ComponentRequirement, MemberSelect> componentContributionFields =
-      Maps.newHashMap();
+  private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
   /**
    * The member-selects for {@link dagger.internal.ReferenceReleasingProviderManager} fields,
@@ -168,7 +160,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
       BindingGraph graph,
       ImmutableMap<ComponentDescriptor, String> subcomponentNames,
       OptionalFactories optionalFactories,
-      ComponentBindingExpressions bindingExpressions) {
+      ComponentBindingExpressions bindingExpressions,
+      ComponentRequirementFields componentRequirementFields) {
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
@@ -179,16 +172,27 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     this.subcomponentNames = subcomponentNames;
     this.optionalFactories = optionalFactories;
     this.bindingExpressions = bindingExpressions;
+    // TODO(dpb): Allow ComponentBuilder.create to return a no-op object
+    if (hasBuilder(graph)) {
+      builder = ComponentBuilder.create(name, graph, subcomponentNames, elements, types);
+      builderFields = builder.builderFields();
+    } else {
+      builderFields = ImmutableMap.of();
+    }
+    this.componentRequirementFields = componentRequirementFields;
     this.bindingExpressionFactory =
         new BindingExpression.Factory(
             compilerOptions,
             name,
             componentFieldNames,
             bindingExpressions,
+            componentRequirementFields,
             this,
             childComponentNames(keyFactory, subcomponentNames),
             graph,
             elements);
+    this.componentRequirementFieldFactory =
+        new ComponentRequirementField.Factory(this, componentFieldNames, name, builderFields);
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(
@@ -216,53 +220,12 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         graph,
         parent.subcomponentNames,
         parent.optionalFactories,
-        parent.bindingExpressions.forChildComponent());
+        parent.bindingExpressions.forChildComponent(),
+        parent.componentRequirementFields.forChildComponent());
   }
 
   protected final ClassName componentDefinitionTypeName() {
     return ClassName.get(graph.componentType());
-  }
-
-  /**
-   * Returns an expression that evaluates to an instance of the requirement, looking for either a
-   * builder field or a component field.
-   */
-  private CodeBlock getComponentContributionExpression(ComponentRequirement componentRequirement) {
-    if (builderFields.containsKey(componentRequirement)) {
-      return CodeBlock.of("builder.$N", builderFields.get(componentRequirement));
-    } else {
-      Optional<CodeBlock> codeBlock =
-          getOrCreateComponentRequirementFieldExpression(componentRequirement);
-      checkState(
-          codeBlock.isPresent(), "no builder or component field for %s", componentRequirement);
-      return codeBlock.get();
-    }
-  }
-
-  /**
-   * Returns an expression for a component requirement field. Adds a field the first time one is
-   * requested for a requirement if this component's builder has a field for it.
-   */
-  protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
-      ComponentRequirement componentRequirement) {
-    MemberSelect fieldSelect = componentContributionFields.get(componentRequirement);
-    if (fieldSelect == null) {
-      if (!builderFields.containsKey(componentRequirement)) {
-        return Optional.empty();
-      }
-      FieldSpec componentField =
-          componentField(
-                  TypeName.get(componentRequirement.type()),
-                  simpleVariableName(componentRequirement.typeElement()))
-              .addModifiers(PRIVATE, FINAL)
-              .build();
-      component.addField(componentField);
-      constructor.addCode(
-          "this.$N = builder.$N;", componentField, builderFields.get(componentRequirement));
-      fieldSelect = localField(name, componentField.name);
-      componentContributionFields.put(componentRequirement, fieldSelect);
-    }
-    return Optional.of(fieldSelect.getExpressionFor(name));
   }
 
   /**
@@ -300,7 +263,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   final TypeSpec.Builder write() {
     checkState(!done, "ComponentWriter has already been generated.");
     decorateComponent();
-    if (hasBuilder()) {
+    if (hasBuilder(graph)) {
       addBuilder();
     }
 
@@ -311,6 +274,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     addFactoryMethods();
     addReferenceReleasingProviderManagerFields();
     createBindingExpressions();
+    createComponentRequirementFields();
     implementInterfaceMethods();
     addSubcomponents();
     writeInitializeAndInterfaceMethods();
@@ -329,7 +293,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
    */
   protected abstract void decorateComponent();
 
-  private boolean hasBuilder() {
+  private static boolean hasBuilder(BindingGraph graph) {
     ComponentDescriptor component = graph.componentDescriptor();
     return component.kind().isTopLevel() || component.builderSpec().isPresent();
   }
@@ -338,9 +302,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
    * Adds a builder type.
    */
   private void addBuilder() {
-    builder = ComponentBuilder.create(name, graph, subcomponentNames, elements, types);
-    builderFields = builder.builderFields();
-
     addBuilderClass(builder.typeSpec());
 
     constructor.addParameter(builderName(), "builder");
@@ -455,6 +416,14 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
 
     // TODO(gak): get rid of the field for unscoped delegated bindings
     bindingExpressions.addBindingExpression(bindingExpressionFactory.forField(resolvedBindings));
+  }
+
+  private void createComponentRequirementFields() {
+    builderFields
+        .keySet()
+        .stream()
+        .map(componentRequirementFieldFactory::forBuilderField)
+        .forEach(componentRequirementFields::add);
   }
 
   private boolean useRawType(Binding binding) {
@@ -578,7 +547,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
                * separate fields and initilization as we do now. */
               .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
               .addCode(CodeBlocks.concat(partition));
-      if (hasBuilder()) {
+      if (hasBuilder(graph)) {
         initializeMethod.addParameter(builderName(), "builder", FINAL);
         constructor.addStatement("$L(builder)", methodName);
       } else {
@@ -720,14 +689,15 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     TypeName bindingKeyTypeName = TypeName.get(binding.key().type());
     switch (binding.bindingKind()) {
       case COMPONENT:
+        // This bindingKeyTypeName type parameter can be removed when we drop java 7 source support
+        return CodeBlock.of("$T.<$T>create(this)", INSTANCE_FACTORY, bindingKeyTypeName);
+
+      case COMPONENT_DEPENDENCY:
         return CodeBlock.of(
-            "$T.<$T>create($L)",
+            "$T.create($L)",
             INSTANCE_FACTORY,
-            bindingKeyTypeName,
-            bindingKeyTypeName.equals(componentDefinitionTypeName())
-                ? "this"
-                : getComponentContributionExpression(
-                    ComponentRequirement.forDependency(binding.key().type())));
+            componentRequirementFields.getExpressionDuringInitialization(
+                ComponentRequirement.forDependency(binding.key().type()), name));
 
       case COMPONENT_PROVISION:
         {
@@ -778,8 +748,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
           return CodeBlock.of(
               "new $L($L)",
               factoryName,
-              getComponentContributionExpression(
-                  ComponentRequirement.forDependency(dependencyType.asType())));
+              componentRequirementFields.getExpressionDuringInitialization(
+                  ComponentRequirement.forDependency(dependencyType.asType()), name));
         }
 
       case SUBCOMPONENT_BUILDER:
@@ -807,7 +777,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             "$T.$L($L)",
             InstanceFactory.class,
             binding.nullableType().isPresent() ? "createNullable" : "create",
-            getComponentContributionExpression(ComponentRequirement.forBinding(binding)));
+            componentRequirementFields.getExpressionDuringInitialization(
+                ComponentRequirement.forBinding(binding), name));
 
       case INJECTION:
       case PROVISION:
@@ -816,8 +787,9 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
               Lists.newArrayListWithCapacity(binding.explicitDependencies().size() + 1);
           if (binding.requiresModuleInstance()) {
             arguments.add(
-                getComponentContributionExpression(
-                    ComponentRequirement.forModule(binding.contributingModule().get().asType())));
+                componentRequirementFields.getExpressionDuringInitialization(
+                    ComponentRequirement.forModule(binding.contributingModule().get().asType()),
+                    name));
           }
           arguments.addAll(getDependencyArguments(binding));
 
@@ -853,8 +825,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
               /* 1 */ PRODUCER,
               /* 2 */ binding.key().type(),
               /* 3 */ LISTENABLE_FUTURE,
-              /* 4 */ getComponentContributionExpression(
-                  ComponentRequirement.forDependency(dependencyType.asType())),
+              /* 4 */ componentRequirementFields.getExpressionDuringInitialization(
+                  ComponentRequirement.forDependency(dependencyType.asType()), name),
               /* 5 */ binding.bindingElement().get().getSimpleName(),
               /* 6 */ dependencyType,
               /* 7 */ simpleVariableName(dependencyType));
@@ -866,8 +838,9 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
               Lists.newArrayListWithCapacity(binding.dependencies().size() + 2);
           if (binding.requiresModuleInstance()) {
             arguments.add(
-                getComponentContributionExpression(
-                    ComponentRequirement.forModule(binding.contributingModule().get().asType())));
+                componentRequirementFields.getExpressionDuringInitialization(
+                    ComponentRequirement.forModule(binding.contributingModule().get().asType()),
+                    name));
           }
           arguments.addAll(getDependencyArguments(binding));
 

@@ -18,20 +18,19 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.FactoryGenerator.checkNotNullProvidesMethod;
 import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
+import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
@@ -44,24 +43,29 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ProvisionBinding provisionBinding;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final GeneratedComponentModel generatedComponentModel;
+  private final Optional<ComponentRequirement> moduleRequirement;
+  private final ComponentRequirementFields componentRequirementFields;
 
   SimpleMethodBindingExpression(
       CompilerOptions compilerOptions,
       ProvisionBinding provisionBinding,
       BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
-      GeneratedComponentModel generatedComponentModel) {
+      GeneratedComponentModel generatedComponentModel,
+      Optional<ComponentRequirement> moduleRequirement,
+      ComponentRequirementFields componentRequirementFields) {
     super(delegate);
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
     checkArgument(!provisionBinding.scope().isPresent());
-    checkArgument(!provisionBinding.requiresModuleInstance());
     checkArgument(provisionBinding.bindingElement().isPresent());
     this.compilerOptions = compilerOptions;
     this.provisionBinding = provisionBinding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.generatedComponentModel = generatedComponentModel;
+    this.moduleRequirement = moduleRequirement;
+    this.componentRequirementFields = componentRequirementFields;
   }
 
   @Override
@@ -85,13 +89,11 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       case CONSTRUCTOR:
         return CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
       case METHOD:
-        checkState(method.getModifiers().contains(STATIC));
+        CodeBlock module =
+            moduleReference(requestingClass)
+                .orElse(CodeBlock.of("$T", provisionBinding.bindingTypeElement().get()));
         return maybeCheckForNulls(
-            CodeBlock.of(
-                "$T.$L($L)",
-                provisionBinding.bindingTypeElement().get(),
-                method.getSimpleName(),
-                arguments));
+            CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments));
       default:
         throw new IllegalStateException();
     }
@@ -114,7 +116,8 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             ProvisionMethod.invoke(
                 provisionBinding,
                 request -> dependencyArgument(request, requestingClass),
-                requestingClass)));
+                requestingClass,
+                moduleReference(requestingClass))));
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
@@ -144,5 +147,10 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         "$N($L)",
         generatedComponentModel.getMembersInjectionMethod(provisionBinding.key()),
         instance);
+  }
+
+  private Optional<CodeBlock> moduleReference(ClassName requestingClass) {
+    return moduleRequirement.map(
+        requirement -> componentRequirementFields.getExpression(requirement, requestingClass));
   }
 }

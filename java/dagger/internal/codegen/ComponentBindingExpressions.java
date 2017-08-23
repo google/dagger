@@ -29,11 +29,12 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
 
-/** A factory of code expressions used to access any binding available to a component. */
+/** A central repository of code expressions used to access any binding available to a component. */
 final class ComponentBindingExpressions {
 
-  // TODO(dpb): Can this use a flattened ImmutableMap, built from its parents? Maybe make
-  // BindingExpression.Factory create it.
+  // TODO(dpb,ronshapiro): refactor this and ComponentRequirementFields into a
+  // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
+  // parents? If so, maybe make BindingExpression.Factory create it.
 
   /**
    * A list of binding expression maps. The first element contains the bindings owned by this

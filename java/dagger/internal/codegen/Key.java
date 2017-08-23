@@ -503,7 +503,8 @@ abstract class Key {
       return builder(type).build();
     }
 
-    Key forComponent(TypeMirror type) {
+    // TODO(ronshapiro): Remove these conveniences which are simple wrappers around Key.Builder
+    Key forType(TypeMirror type) {
       return builder(type).build();
     }
 

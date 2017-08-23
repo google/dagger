@@ -18,10 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Sets.difference;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -29,7 +27,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -71,16 +71,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   private static ClassName subcomponentName(AbstractComponentWriter parent, BindingGraph subgraph) {
     return parent.name.nestedClass(
         parent.subcomponentNames.get(subgraph.componentDescriptor()) + "Impl");
-  }
-
-  @Override
-  protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
-      ComponentRequirement componentRequirement) {
-    Optional<CodeBlock> expression =
-        super.getOrCreateComponentRequirementFieldExpression(componentRequirement);
-    return expression.isPresent()
-        ? expression
-        : parent.getOrCreateComponentRequirementFieldExpression(componentRequirement);
   }
 
   @Override
@@ -147,7 +137,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
           ComponentRequirement.forModule(moduleTypeElement.asType());
       TypeName moduleType = TypeName.get(paramTypes.get(i));
       componentMethod.addParameter(moduleType, moduleVariable.getSimpleName().toString());
-      if (!componentContributionFields.containsKey(componentRequirement)) {
+      if (!componentRequirementFields.contains(componentRequirement)) {
         String preferredModuleName =
             CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL, moduleTypeElement.getSimpleName().toString());
         FieldSpec contributionField =
@@ -156,23 +146,23 @@ final class SubcomponentWriter extends AbstractComponentWriter {
                 .build();
         component.addField(contributionField);
 
-        String actualModuleName = contributionField.name;
         constructor
-            .addParameter(moduleType, actualModuleName)
+            .addParameter(moduleType, contributionField.name)
             .addStatement(
-                "this.$1L = $2T.checkNotNull($1L)",
-                actualModuleName,
-                Preconditions.class);
+                "this.$1N = $2T.checkNotNull($1N)", contributionField, Preconditions.class);
 
-        MemberSelect moduleSelect = localField(name, actualModuleName);
-        componentContributionFields.put(componentRequirement, moduleSelect);
+        componentRequirementFields.add(
+            ComponentRequirementField.componentField(
+                componentRequirement, contributionField, name));
         subcomponentConstructorParameters.add(
             CodeBlock.of("$L", moduleVariable.getSimpleName()));
       }
     }
 
     Set<ComponentRequirement> uninitializedModules =
-        difference(graph.componentRequirements(), componentContributionFields.keySet());
+        Sets.filter(
+            graph.componentRequirements(),
+            Predicates.not(componentRequirementFields::contains));
 
     for (ComponentRequirement componentRequirement : uninitializedModules) {
       checkState(componentRequirement.kind().equals(ComponentRequirement.Kind.MODULE));
@@ -184,11 +174,10 @@ final class SubcomponentWriter extends AbstractComponentWriter {
               .addModifiers(PRIVATE, FINAL)
               .build();
       component.addField(contributionField);
-      String actualModuleName = contributionField.name;
-      constructor.addStatement(
-          "this.$L = new $T()", actualModuleName, ClassName.get(moduleType));
-      MemberSelect moduleSelect = localField(name, actualModuleName);
-      componentContributionFields.put(componentRequirement, moduleSelect);
+      constructor.addStatement("this.$N = new $T()", contributionField, ClassName.get(moduleType));
+      componentRequirementFields.add(
+          ComponentRequirementField.componentField(
+              componentRequirement, contributionField, name));
     }
 
     componentMethod.addStatement("return new $T($L)",

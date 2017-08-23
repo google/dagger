@@ -59,6 +59,7 @@ abstract class BindingExpression {
     private final ClassName componentName;
     private final UniqueNameSet componentFieldNames;
     private final ComponentBindingExpressions componentBindingExpressions;
+    private final ComponentRequirementFields componentRequirementFields;
     private final GeneratedComponentModel generatedComponentModel;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
@@ -69,6 +70,7 @@ abstract class BindingExpression {
         ClassName componentName,
         UniqueNameSet componentFieldNames,
         ComponentBindingExpressions componentBindingExpressions,
+        ComponentRequirementFields componentRequirementFields,
         GeneratedComponentModel generatedComponentModel,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
@@ -77,6 +79,7 @@ abstract class BindingExpression {
       this.componentName = checkNotNull(componentName);
       this.componentFieldNames = checkNotNull(componentFieldNames);
       this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+      this.componentRequirementFields = checkNotNull(componentRequirementFields);
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
@@ -151,6 +154,13 @@ abstract class BindingExpression {
 
       ProvisionBinding provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
       switch (provisionBinding.bindingKind()) {
+        case COMPONENT:
+          return new ComponentInstanceBindingExpression(bindingExpression, componentName);
+        case COMPONENT_DEPENDENCY:
+          return new BoundInstanceBindingExpression(
+              bindingExpression,
+              ComponentRequirement.forDependency(provisionBinding.key().type()),
+              componentRequirementFields);
         case SUBCOMPONENT_BUILDER:
           return new SubcomponentBuilderBindingExpression(
               bindingExpression, subcomponentNames.get(resolvedBindings.bindingKey()));
@@ -160,17 +170,29 @@ abstract class BindingExpression {
         case SYNTHETIC_OPTIONAL_BINDING:
           return new OptionalBindingExpression(
               provisionBinding, bindingExpression, componentBindingExpressions);
-            case INJECTION:
+        case BUILDER_BINDING:
+              return new BoundInstanceBindingExpression(
+                  bindingExpression,
+                  ComponentRequirement.forBinding(provisionBinding),
+                  componentRequirementFields);
+        case INJECTION:
         case PROVISION:
           if (!provisionBinding.scope().isPresent()
-              && !provisionBinding.requiresModuleInstance()
               && provisionBinding.bindingElement().isPresent()) {
+            Optional<ComponentRequirement> moduleRequirement =
+                provisionBinding.requiresModuleInstance()
+                    ? Optional.of(
+                        ComponentRequirement.forModule(
+                            provisionBinding.contributingModule().get().asType()))
+                    : Optional.empty();
             return new SimpleMethodBindingExpression(
                 compilerOptions,
                 provisionBinding,
                 bindingExpression,
                 componentBindingExpressions,
-                generatedComponentModel);
+                generatedComponentModel,
+                moduleRequirement,
+                componentRequirementFields);
           }
           // fall through
         default:

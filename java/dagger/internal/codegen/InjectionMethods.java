@@ -25,11 +25,11 @@ import static dagger.internal.codegen.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toConcatenatedCodeBlock;
-import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
+import static dagger.internal.codegen.Util.toImmutableList;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -136,13 +136,16 @@ final class InjectionMethods {
     static CodeBlock invoke(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        ClassName requestingClass) {
+        ClassName requestingClass,
+        Optional<CodeBlock> moduleReference) {
+      ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
+      moduleReference.ifPresent(arguments::add);
+      arguments.addAll(
+          injectionMethodArguments(
+              binding.provisionDependencies(), dependencyUsage, requestingClass));
       return callInjectionMethod(
           create(binding).get().name,
-          // TODO(dpb): would this be simpler if injectionMethodArguments returned a List?
-          ImmutableList.of(
-              injectionMethodArguments(
-                  binding.provisionDependencies(), dependencyUsage, requestingClass)),
+          arguments.build(),
           generatedClassNameForBinding(binding),
           requestingClass);
     }
@@ -336,13 +339,13 @@ final class InjectionMethods {
    * @param dependencyUsage function to apply on each of {@code dependencies} before casting
    * @param requestingClass the class calling the injection method
    */
-  private static CodeBlock injectionMethodArguments(
+  private static ImmutableList<CodeBlock> injectionMethodArguments(
       ImmutableSet<DependencyRequest> dependencies,
       Function<DependencyRequest, CodeBlock> dependencyUsage,
       ClassName requestingClass) {
     return dependencies.stream()
         .map(dep -> injectionMethodArgument(dep, dependencyUsage.apply(dep), requestingClass))
-        .collect(toParametersCodeBlock());
+        .collect(toImmutableList());
   }
 
   private static CodeBlock injectionMethodArgument(

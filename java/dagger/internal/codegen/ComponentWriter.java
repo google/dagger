@@ -229,4 +229,9 @@ final class ComponentWriter extends AbstractComponentWriter {
         graph.componentRequirements(),
         dependency -> dependency.requiresAPassedInstance(elements, types));
   }
+
+  @Override
+  protected boolean requiresReleasableReferences(Scope scope) {
+    return graph.scopesRequiringReleasableReferenceManagers().contains(scope);
+  }
 }

@@ -78,6 +78,11 @@ final class SubcomponentWriter extends AbstractComponentWriter {
     return parent.getReferenceReleasingProviderManagerExpression(scope);
   }
 
+  @Override
+  protected boolean requiresReleasableReferences(Scope scope) {
+    return parent.requiresReleasableReferences(scope);
+  }
+
   private ExecutableType resolvedSubcomponentFactoryMethod() {
     checkState(
         subcomponentFactoryMethod.isPresent(),

@@ -29,7 +29,6 @@ import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
-import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
@@ -322,60 +321,24 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   protected abstract void addFactoryMethods();
 
   /**
-   * Adds a {@link dagger.internal.ReferenceReleasingProviderManager} field for every {@link
-   * CanReleaseReferences @ReleasableReferences} scope for which {@linkplain
-   * #requiresReleasableReferences(Scope) one is required}.
+   * Adds a {@link dagger.internal.ReferenceReleasingProviderManager} field for every scope for
+   * which {@linkplain BindingGraph#scopesRequiringReleasableReferenceManagers() one is required}.
    */
   private void addReferenceReleasingProviderManagerFields() {
     ImmutableMap.Builder<Scope, MemberSelect> fields = ImmutableMap.builder();
-    for (Scope scope : graph.componentDescriptor().releasableReferencesScopes()) {
-      if (requiresReleasableReferences(scope)) {
-        FieldSpec field = referenceReleasingProxyManagerField(scope);
-        component.addField(field);
-        fields.put(scope, localField(name, field.name));
-      }
+    for (Scope scope : graph.scopesRequiringReleasableReferenceManagers()) {
+      FieldSpec field = referenceReleasingProxyManagerField(scope);
+      component.addField(field);
+      fields.put(scope, localField(name, field.name));
     }
     referenceReleasingProviderManagerFields = fields.build();
   }
 
   /**
-   * Returns {@code true} if {@code scope} {@linkplain CanReleaseReferences can release its
-   * references} and there is a dependency request in the component for any of
-   *
-   * <ul>
-   * <li>{@code @ForReleasableReferences(scope)} {@link ReleasableReferenceManager}
-   * <li>{@code @ForReleasableReferences(scope)} {@code TypedReleasableReferenceManager<M>}, where
-   *     {@code M} is the releasable-references metatadata type for {@code scope}
-   * <li>{@code Set<ReleasableReferenceManager>}
-   * <li>{@code Set<TypedReleasableReferenceManager<M>>}, where {@code M} is the metadata type for
-   *     the scope
-   * </ul>
+   * Returns {@code true} if {@code scope} is in {@link
+   * BindingGraph#scopesRequiringReleasableReferenceManagers()} for the root graph.
    */
-  private boolean requiresReleasableReferences(Scope scope) {
-    if (!scope.canReleaseReferences()) {
-      return false;
-    }
-
-    if (graphHasContributionBinding(keyFactory.forReleasableReferenceManager(scope))
-        || graphHasContributionBinding(keyFactory.forSetOfReleasableReferenceManagers())) {
-      return true;
-    }
-
-    for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
-      if (graphHasContributionBinding(
-              keyFactory.forTypedReleasableReferenceManager(scope, metadata.getAnnotationType()))
-          || graphHasContributionBinding(
-              keyFactory.forSetOfTypedReleasableReferenceManagers(metadata.getAnnotationType()))) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean graphHasContributionBinding(Key key) {
-    return graph.resolvedBindings().containsKey(contribution(key));
-  }
+  protected abstract boolean requiresReleasableReferences(Scope scope);
 
   private FieldSpec referenceReleasingProxyManagerField(Scope scope) {
     return componentField(

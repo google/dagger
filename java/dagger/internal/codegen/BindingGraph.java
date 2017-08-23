@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
-import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
@@ -55,6 +54,8 @@ import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Key.HasKey;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.releasablereferences.CanReleaseReferences;
+import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -86,6 +87,23 @@ abstract class BindingGraph {
   abstract ComponentDescriptor componentDescriptor();
   abstract ImmutableMap<BindingKey, ResolvedBindings> resolvedBindings();
   abstract ImmutableSet<BindingGraph> subgraphs();
+
+  /**
+   * The scopes in the graph that {@linkplain CanReleaseReferences can release their references} for
+   * which there is a dependency request for any of the following:
+   *
+   * <ul>
+   *   <li>{@code @ForReleasableReferences(scope)} {@link ReleasableReferenceManager}
+   *   <li>{@code @ForReleasableReferences(scope)} {@code TypedReleasableReferenceManager<M>}, where
+   *       {@code M} is the releasable-references metatadata type for {@code scope}
+   *   <li>{@code Set<ReleasableReferenceManager>}
+   *   <li>{@code Set<TypedReleasableReferenceManager<M>>}, where {@code M} is the metadata type for
+   *       the scope
+   * </ul>
+   *
+   * <p>This set is always empty for subcomponent graphs.
+   */
+  abstract ImmutableSet<Scope> scopesRequiringReleasableReferenceManagers();
 
   /** Returns the resolved bindings for the dependencies of {@code binding}. */
   ImmutableSet<ResolvedBindings> resolvedDependencies(ContributionBinding binding) {
@@ -283,33 +301,9 @@ abstract class BindingGraph {
         optionalsBuilder.addAll(moduleDescriptor.optionalDeclarations());
       }
 
-      // TODO(dpb,gak): Do we need to bind an empty Set<ReleasableReferenceManager> if there are
-      // none?
-      for (Scope scope : componentDescriptor.releasableReferencesScopes()) {
-        // Add a binding for @ForReleasableReferences(scope) ReleasableReferenceManager.
-        explicitBindingsBuilder.add(
-            provisionBindingFactory.provideReleasableReferenceManager(scope));
-
-        /* Add a binding for Set<ReleasableReferenceManager>. Even if these are added more than
-         * once, each instance will be equal to the rest. Since they're being added to a set, there
-         * will be only one instance. */
-        explicitBindingsBuilder.add(
-            provisionBindingFactory.provideSetOfReleasableReferenceManagers());
-
-        for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
-          // Add a binding for @ForReleasableReferences(scope) TypedReleasableReferenceManager<M>.
-          explicitBindingsBuilder.add(
-              provisionBindingFactory.provideTypedReleasableReferenceManager(
-                  scope, metadata.getAnnotationType()));
-
-          /* Add a binding for Set<TypedReleasableReferenceManager<M>>. Even if these are added more
-           * than once, each instance will be equal to the rest. Since they're being added to a set,
-           * there will be only one instance. */
-          explicitBindingsBuilder.add(
-              provisionBindingFactory.provideSetOfTypedReleasableReferenceManagers(
-                  metadata.getAnnotationType()));
-        }
-      }
+      ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings =
+          getReleasableReferenceManagerBindings(componentDescriptor);
+      explicitBindingsBuilder.addAll(releasableReferenceManagerBindings.values());
 
       final Resolver requestResolver =
           new Resolver(
@@ -341,7 +335,9 @@ abstract class BindingGraph {
         }
       }
 
-      for (ResolvedBindings resolvedBindings : requestResolver.getResolvedBindings().values()) {
+      ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap =
+          requestResolver.getResolvedBindings();
+      for (ResolvedBindings resolvedBindings : resolvedBindingsMap.values()) {
         verify(
             resolvedBindings.owningComponent().equals(componentDescriptor),
             "%s is not owned by %s",
@@ -351,9 +347,75 @@ abstract class BindingGraph {
 
       return new AutoValue_BindingGraph(
           componentDescriptor,
-          requestResolver.getResolvedBindings(),
+          resolvedBindingsMap,
           subgraphs.build(),
+          getScopesRequiringReleasableReferenceManagers(
+              releasableReferenceManagerBindings, resolvedBindingsMap),
           requestResolver.getOwnedModules());
+    }
+
+    /**
+     * Returns the bindings for {@link ReleasableReferenceManager}s for all {@link
+     * CanReleaseReferences @CanReleaseReferences} scopes.
+     */
+    private ImmutableSetMultimap<Scope, ProvisionBinding> getReleasableReferenceManagerBindings(
+        ComponentDescriptor componentDescriptor) {
+      ImmutableSetMultimap.Builder<Scope, ProvisionBinding> bindings =
+          ImmutableSetMultimap.builder();
+      // TODO(dpb,gak): Do we need to bind an empty Set<ReleasableReferenceManager> if there are
+      // none?
+      for (Scope scope : componentDescriptor.releasableReferencesScopes()) {
+        // Add a binding for @ForReleasableReferences(scope) ReleasableReferenceManager.
+        bindings.put(scope, provisionBindingFactory.provideReleasableReferenceManager(scope));
+
+        /* Add a binding for Set<ReleasableReferenceManager>. Even if these are added more than
+         * once, each instance will be equal to the rest. Since they're being added to a set, there
+         * will be only one instance. */
+        bindings.put(scope, provisionBindingFactory.provideSetOfReleasableReferenceManagers());
+
+        for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
+          // Add a binding for @ForReleasableReferences(scope) TypedReleasableReferenceManager<M>.
+          bindings.put(
+              scope,
+              provisionBindingFactory.provideTypedReleasableReferenceManager(
+                  scope, metadata.getAnnotationType()));
+
+          /* Add a binding for Set<TypedReleasableReferenceManager<M>>. Even if these are added more
+           * than once, each instance will be equal to the rest. Since they're being added to a set,
+           * there will be only one instance. */
+          bindings.put(
+              scope,
+              provisionBindingFactory.provideSetOfTypedReleasableReferenceManagers(
+                  metadata.getAnnotationType()));
+        }
+      }
+      return bindings.build();
+    }
+
+    /**
+     * Returns the set of scopes that will be returned by {@link
+     * BindingGraph#scopesRequiringReleasableReferenceManagers()}.
+     *
+     * @param releasableReferenceManagerBindings the {@link ReleasableReferenceManager} bindings for
+     *     each scope
+     * @param resolvedBindingsMap the resolved bindings for the component
+     */
+    private ImmutableSet<Scope> getScopesRequiringReleasableReferenceManagers(
+        ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings,
+        ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap) {
+      ImmutableSet.Builder<Scope> scopes = ImmutableSet.builder();
+      releasableReferenceManagerBindings
+          .asMap()
+          .forEach(
+              (scope, bindings) -> {
+                for (Binding binding : bindings) {
+                  if (resolvedBindingsMap.containsKey(BindingKey.contribution(binding.key()))) {
+                    scopes.add(scope);
+                    return;
+                  }
+                }
+              });
+      return scopes.build();
     }
 
     private final class Resolver {
@@ -659,7 +721,7 @@ abstract class BindingGraph {
         DependencyRequest.Kind kind =
             DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).kind();
         ResolvedBindings underlyingKeyBindings =
-            lookUpBindings(contribution(keyFactory.unwrapOptional(key).get()));
+            lookUpBindings(BindingKey.contribution(keyFactory.unwrapOptional(key).get()));
         if (underlyingKeyBindings.isEmpty()) {
           return Optional.of(provisionBindingFactory.syntheticAbsentBinding(key));
         } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)

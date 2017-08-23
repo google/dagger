@@ -384,7 +384,7 @@ abstract class ProvisionBinding extends ContributionBinding {
      * TypedReleasableReferenceManager<metadataType>} that provides the component-instantiated
      * object.
      */
-    ContributionBinding provideTypedReleasableReferenceManager(
+    ProvisionBinding provideTypedReleasableReferenceManager(
         Scope scope, DeclaredType metadataType) {
       return provideReleasableReferenceManager(scope)
           .toBuilder()
@@ -404,7 +404,7 @@ abstract class ProvisionBinding extends ContributionBinding {
     /**
      * Returns a synthetic binding for {@code Set<TypedReleasableReferenceManager<metadataType>}.
      */
-    ContributionBinding provideSetOfTypedReleasableReferenceManagers(DeclaredType metadataType) {
+    ProvisionBinding provideSetOfTypedReleasableReferenceManagers(DeclaredType metadataType) {
       return provideSetOfReleasableReferenceManagers()
           .toBuilder()
           .key(keyFactory.forSetOfTypedReleasableReferenceManagers(metadataType))

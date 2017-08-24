@@ -161,6 +161,13 @@ abstract class BindingExpression {
               bindingExpression,
               ComponentRequirement.forDependency(provisionBinding.key().type()),
               componentRequirementFields);
+        case COMPONENT_PROVISION:
+          return new ComponentProvisionBindingExpression(
+              bindingExpression,
+              provisionBinding,
+              graph,
+              componentRequirementFields,
+              compilerOptions);
         case SUBCOMPONENT_BUILDER:
           return new SubcomponentBuilderBindingExpression(
               bindingExpression, subcomponentNames.get(resolvedBindings.bindingKey()));

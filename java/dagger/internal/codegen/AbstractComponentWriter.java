@@ -32,7 +32,6 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
@@ -76,7 +75,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.InstanceFactory;
-import dagger.internal.Preconditions;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
@@ -666,22 +664,17 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
           TypeElement dependencyType = dependencyTypeForBinding(binding);
           String dependencyVariable = simpleVariableName(dependencyType);
           String componentMethod = binding.bindingElement().get().getSimpleName().toString();
-          CodeBlock callFactoryMethod =
-              CodeBlock.of("$L.$L()", dependencyVariable, componentMethod);
-          // TODO(sameb): This throws a very vague NPE right now.  The stack trace doesn't
+          // TODO(sameb): The Provider.get() throws a very vague NPE.  The stack trace doesn't
           // help to figure out what the method or return type is.  If we include a string
           // of the return type or method name in the error message, that can defeat obfuscation.
           // We can easily include the raw type (no generics) + annotation type (no values),
           // using .class & String.format -- but that wouldn't be the whole story.
           // What should we do?
-          CodeBlock getMethodBody =
-              !binding.nullableType().isPresent() && compilerOptions.doCheckForNulls()
-                  ? CodeBlock.of(
-                      "return $T.checkNotNull($L, $S);", // TODO(dpb): Extract these checkNotNulls.
-                      Preconditions.class,
-                      callFactoryMethod,
-                      CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD)
-                  : CodeBlock.of("return $L;", callFactoryMethod);
+          CodeBlock invocation =
+              ComponentProvisionBindingExpression.maybeCheckForNull(
+                  (ProvisionBinding) binding,
+                  compilerOptions,
+                  CodeBlock.of("$L.$L()", dependencyVariable, componentMethod));
           ClassName dependencyClassName = ClassName.get(dependencyType);
           String factoryName =
               dependencyClassName.toString().replace('.', '_') + "_" + componentMethod;
@@ -690,7 +683,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
                   .addAnnotation(Override.class)
                   .addModifiers(PUBLIC)
                   .returns(bindingKeyTypeName)
-                  .addCode(getMethodBody);
+                  .addStatement("return $L", invocation);
           if (binding.nullableType().isPresent()) {
             getMethod.addAnnotation(
                 ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));

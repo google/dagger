@@ -34,8 +34,8 @@ import dagger.internal.codegen.Key.HasKey;
 import java.util.Optional;
 
 /**
- * The collection of bindings that have been resolved for a binding key. For valid graphs, contains
- * exactly one binding.
+ * The collection of bindings that have been resolved for a {@link BindingKey}. For valid graphs,
+ * contains exactly one binding.
  *
  * @author Gregory Kick
  */

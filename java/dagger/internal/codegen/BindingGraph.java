@@ -1019,8 +1019,7 @@ abstract class BindingGraph {
           /* Resolve in the parent in case there are multibinding contributions or conflicts in some
            * component between this one and the previously-resolved one. */
           parentResolver.get().resolve(bindingKey);
-          if (!new LocalDependencyChecker().dependsOnLocalBindings(bindingKey)
-              && getLocalExplicitBindings(bindingKey.key()).isEmpty()) {
+          if (!new LocalDependencyChecker().dependsOnLocalBindings(bindingKey)) {
             /* Cache the inherited parent component's bindings in case resolving at the parent found
              * bindings in some component between this one and the previously-resolved one. */
             ResolvedBindings inheritedBindings =
@@ -1068,7 +1067,7 @@ abstract class BindingGraph {
                     parentResolver.get().getInheritedModules(),
                     parentResolver.get().componentDescriptor.transitiveModules())
                 .immutableCopy()
-            : ImmutableSet.<ModuleDescriptor>of();
+            : ImmutableSet.of();
       }
 
       ImmutableSet<ModuleDescriptor> getOwnedModules() {
@@ -1080,10 +1079,8 @@ abstract class BindingGraph {
         private final Set<Object> cycleChecker = new HashSet<>();
 
         /**
-         * Returns {@code true} if any of the bindings resolved for {@code bindingKey} are
-         * multibindings with contributions declared within this component's modules or optional
-         * bindings with present values declared within this component's modules, or if any of its
-         * unscoped dependencies depend on such bindings.
+         * Returns {@code true} if the binding or its transitive dependencies, as resolved in this
+         * component, will be different than what was resolved in the parent.
          *
          * <p>We don't care about scoped dependencies because they will never depend on bindings
          * from subcomponents.
@@ -1112,7 +1109,8 @@ abstract class BindingGraph {
           ResolvedBindings previouslyResolvedBindings =
               getPreviouslyResolvedBindings(bindingKey).get();
           if (hasLocalMultibindingContributions(previouslyResolvedBindings)
-              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
+              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)
+              || hasLocalContributionBinding(previouslyResolvedBindings)) {
             return true;
           }
 
@@ -1156,30 +1154,70 @@ abstract class BindingGraph {
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a synthetic multibinding with
+         * Returns {@code true} if {@code parentBindings} contains a synthetic multibinding with
          * at least one contribution declared within this component's modules.
          */
-        private boolean hasLocalMultibindingContributions(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
+        private boolean hasLocalMultibindingContributions(ResolvedBindings parentBindings) {
+          return parentBindings
                   .contributionBindings()
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
-              && !getLocalExplicitMultibindings(resolvedBindings.key()).isEmpty();
+              && !getLocalExplicitMultibindings(parentBindings.key()).isEmpty();
         }
 
         /**
-         * Returns {@code true} if {@code resolvedBindings} contains a synthetic optional binding
+         * Returns {@code true} if {@code parentBindings} contains a synthetic optional binding
          * for which there is an explicit present binding in this component.
          */
-        private boolean hasLocallyPresentOptionalBinding(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
+        private boolean hasLocallyPresentOptionalBinding(ResolvedBindings parentBindings) {
+          return parentBindings
                   .contributionBindings()
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(isEqual(SYNTHETIC_OPTIONAL_BINDING))
-              && !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
+              && !getLocalExplicitBindings(keyFactory.unwrapOptional(parentBindings.key()).get())
                   .isEmpty();
+        }
+
+        /**
+         * Returns {@code true} if {@code parentBindings} contains a binding for which there is
+         * an explicit binding in this component that was resolved previously in a parent component.
+         */
+        boolean hasLocalContributionBinding(ResolvedBindings parentBindings) {
+          return parentBindings
+                .contributionBindings()
+                .stream()
+                .anyMatch(contributionBinding ->
+                    !getLocalExplicitBindings(parentBindings.key()).isEmpty()
+                    // TO BE REMOVED BEFORE COMMITTING:
+                    //
+                    // Checks that the owning component is not this component.
+                    //
+                    // If the owning component is this component this means the binding that
+                    // requires {@code parentBindings} as a dependency can't be satisfied in the
+                    // parent. This will be reported as a "Cannot be provided" error when the
+                    // graph is validated.
+                    //
+                    // If the owning component isn't this component we have a local contribution
+                    // binding that's a duplicate and will result in a duplicate binding error
+                    // when the graph is validated.
+                    //
+                    // Without this check, GraphValidationTest.bindingUsedOnlyInSubcomponentDependsOnBindingOnlyInSubcomponent()
+                    // fails with the stacktrace below.
+                    //
+                    // java.util.NoSuchElementException
+	                  // at com.google.common.collect.Iterators$1.next(Iterators.java:81)
+	                  // at com.google.common.collect.Iterators.getOnlyElement(Iterators.java:308)
+	                  // at com.google.common.collect.Iterables.getOnlyElement(Iterables.java:263)
+	                  // at dagger.internal.codegen.ResolvedBindings.contributionBinding(ResolvedBindings.java:285)
+	                  // at dagger.internal.codegen.MemberSelect.staticMemberSelect(MemberSelect.java:86)
+	                  // at dagger.internal.codegen.BindingExpression$Factory.forStaticMethod(BindingExpression.java:86)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.createBindingExpression(AbstractComponentWriter.java:419)
+	                  // at com.google.common.collect.ImmutableList.forEach(ImmutableList.java:408)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.createBindingExpressions(AbstractComponentWriter.java:411)
+	                  // at dagger.internal.codegen.AbstractComponentWriter.write(AbstractComponentWriter.java:286)
+                    && parentBindings.owningComponent() != componentDescriptor);
         }
       }
     }

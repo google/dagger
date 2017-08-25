@@ -23,6 +23,7 @@ import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -2074,6 +2075,141 @@ public class GraphValidationTest {
         .onLine(8);
   }
 
+
+  @Test
+  public void subcomponentBindingConflictsWithParentWhenSubcomponentPerformsMembersInjection() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object object() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static Object object() {",
+            "      return \"child\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject injected =
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Injected {",
+            "  @Inject Object object;",
+            "}");
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.Child.inject(test.Injected)] "
+                + "java.lang.Object is bound multiple times:\n"
+                + "      @Provides Object"
+                + " test.Parent.ParentModule.object()\n"
+                + "      @Provides Object"
+                + " test.Child.ChildModule.object()")
+        .inFile(parent)
+        .onLineContaining("interface Parent {");
+  }
+
+  @Test
+  public void subcomponentBindingConflictsWithParentWhenBothComponentsPerformMembersInjection() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object object() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static Object object() {",
+            "      return \"child\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject injected =
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Injected {",
+            "  @Inject Object object;",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.Child.inject(test.Injected)] "
+                + "java.lang.Object is bound multiple times:\n"
+                + "      @Provides Object"
+                + " test.Parent.ParentModule.object()\n"
+                + "      @Provides Object"
+                + " test.Child.ChildModule.object()")
+        .inFile(parent)
+        .onLineContaining("interface Parent {");
+  }
+
   @Test
   public void subcomponentBindingConflictsWithParentWithNullableViolationAsWarning() {
     JavaFileObject parentConflictsWithChild =
@@ -2131,6 +2267,184 @@ public class GraphValidationTest {
                 + " test.Child.ChildModule.nonNullableParentChildConflict()")
         .in(parentConflictsWithChild)
         .onLine(9);
+  }
+
+  @Test
+  public void subcomponentGeneratedCorrectlyWhenBothComponentsPerformMembersInjection() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "  void inject(Injected injected);",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object object() {",
+            "      return \"parent\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child {",
+            "  void inject(Injected injected);",
+            "}");
+    JavaFileObject injected =
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Injected {",
+            "  @Inject Object object;",
+            "}");
+    JavaFileObject generatedComponent =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerParent",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.Preconditions;",
+            "import javax.annotation.Generated;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerParent implements Parent {",
+            "  private MembersInjector<Injected> injectedMembersInjector;",
+            "",
+            "  private DaggerParent(Builder builder) {",
+            "    assert builder != null;",
+            "    initialize(builder);",
+            "  }",
+            "",
+            "  public static Builder builder() {",
+            "    return new Builder()",
+            "  }",
+            "",
+            "  public static Parent create() {",
+            "    return new Builder().build();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.injectedMembersInjector = Injected_MembersInjector",
+            "        .create(Parent_ParentModule_ObjectFactory.create());",
+            "  }",
+            "",
+            "  @Override",
+            "  public void inject(Injected injected) {",
+            "    injectedMembersInjector.injectMembers(injected);",
+            "  }",
+            "",
+            "  @Override",
+            "  public Child child() {",
+            "    return new ChildImpl();",
+            "  }",
+            "",
+            "  public static final class Builder {",
+            "    private Builder() {}",
+            "",
+            "    public Parent build() {",
+            "      return new DaggerParent(this);",
+            "    }",
+            "",
+            "    @Deprecated",
+            "    public Builder parentModule(Parent.ParentModule parentModule) {",
+            "      Preconditions.checkNotNull(parentModule);",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  private final class ChildImpl implements Child {",
+            "    private ChildImpl() {}",
+            "",
+            "    @Override",
+            "    public void inject(Injected injected) {",
+            "      DaggerParent.this.injectedMembersInjector.injectMembers(injected);",
+            "    }",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, child, injected);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .hasSourceEquivalentTo(generatedComponent);
+  }
+
+  @Test
+  public void subcomponentTransitiveBindingConflictsWithParent() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = Parent.ParentModule.class)",
+            "interface Parent {",
+            "  Object object();",
+            "  Child child();",
+            "",
+            "  @Module",
+            "  static class ParentModule {",
+            "    @Provides static Object object(String string) {",
+            "      return \"parent\";",
+            "    }",
+            "",
+            "    @Provides static String string() {",
+            "      return \"transitive\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child.ChildModule.class)",
+            "interface Child {",
+            "  Object object();",
+            "",
+            "  @Module",
+            "  static class ChildModule {",
+            "    @Provides static String string() {",
+            "      return \"transitive\";",
+            "    }",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, child);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.Child.object()] java.lang.String is bound multiple times:\n"
+                + "      @Provides String"
+                + " test.Parent.ParentModule.string()\n"
+                + "      @Provides String"
+                + " test.Child.ChildModule.string()")
+        .inFile(parent)
+        .onLineContaining("interface Parent {");
   }
 
   @Test

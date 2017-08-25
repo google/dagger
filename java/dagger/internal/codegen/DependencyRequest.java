@@ -103,7 +103,7 @@ abstract class DependencyRequest {
     final Optional<Class<?>> frameworkClass;
 
     Kind(Class<?> frameworkClass) {
-      this.frameworkClass = Optional.<Class<?>>of(frameworkClass);
+      this.frameworkClass = Optional.of(frameworkClass);
     }
 
     Kind() {

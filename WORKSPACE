@@ -14,7 +14,7 @@
 
 android_sdk_repository(
     name = "androidsdk",
-    api_level = 26,
+    api_level = 25,
     build_tools_version = "26.0.1",
 )
 

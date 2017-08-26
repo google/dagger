@@ -83,7 +83,7 @@ javadoc_library = rule(
         "doctitle": attr.string(default = ""),
         "root_packages": attr.string_list(),
         "exclude_packages": attr.string_list(),
-        "android_api_level": attr.int(default = 26),
+        "android_api_level": attr.int(default = -1),
         "_android_jar": attr.label(
             default = _android_jar,
             allow_single_file = True,

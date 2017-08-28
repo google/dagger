@@ -74,7 +74,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
+  public CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
     return parent.getReferenceReleasingProviderManagerExpression(scope);
   }
 

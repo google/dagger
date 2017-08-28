@@ -32,16 +32,22 @@ import javax.lang.model.util.Elements;
 
 /** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
-  // TODO(dpb): Put the Binding or ResolvedBindings itself here.
-  private final BindingKey bindingKey;
+  private final ResolvedBindings resolvedBindings;
+  private final ClassName componentName;
 
-  BindingExpression(BindingKey bindingKey) {
-    this.bindingKey = checkNotNull(bindingKey);
+  BindingExpression(ResolvedBindings resolvedBindings, ClassName componentName) {
+    this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.componentName = checkNotNull(componentName);
   }
 
-  /** The key for which this instance can fulfill requests. */
-  final BindingKey bindingKey() {
-    return bindingKey;
+  /** The binding this instance uses to fulfill requests. */
+  final ResolvedBindings resolvedBindings() {
+    return resolvedBindings;
+  }
+
+  /** The name of the component owning this binding expression. */
+  final ClassName componentName() {
+    return componentName;
   }
 
   /**
@@ -64,6 +70,7 @@ abstract class BindingExpression {
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
     private final Elements elements;
+    private final OptionalFactories optionalFactories;
 
     Factory(
         CompilerOptions compilerOptions,
@@ -74,7 +81,8 @@ abstract class BindingExpression {
         GeneratedComponentModel generatedComponentModel,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
-        Elements elements) {
+        Elements elements,
+        OptionalFactories optionalFactories) {
       this.compilerOptions = checkNotNull(compilerOptions);
       this.componentName = checkNotNull(componentName);
       this.componentFieldNames = checkNotNull(componentFieldNames);
@@ -84,6 +92,7 @@ abstract class BindingExpression {
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
       this.elements = checkNotNull(elements);
+      this.optionalFactories = checkNotNull(optionalFactories);
     }
 
     /** Creates a binding expression for a field. */
@@ -98,10 +107,16 @@ abstract class BindingExpression {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
       MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
       return producerFromProviderBindingExpression(
-          resolvedBindings.bindingKey(),
+          resolvedBindings,
+          componentName,
           Optional.of(fieldSpec),
           generatedComponentModel,
-          memberSelect);
+          memberSelect,
+          componentBindingExpressions,
+          componentRequirementFields,
+          compilerOptions,
+          graph,
+          optionalFactories);
     }
 
     /** Creates a binding expression for a static method call. */
@@ -146,7 +161,16 @@ abstract class BindingExpression {
         MemberSelect memberSelect) {
       FrameworkInstanceBindingExpression bindingExpression =
           FrameworkInstanceBindingExpression.create(
-              resolvedBindings, fieldSpec, generatedComponentModel, memberSelect);
+              resolvedBindings,
+              componentName,
+              fieldSpec,
+              generatedComponentModel,
+              memberSelect,
+              componentBindingExpressions,
+              componentRequirementFields,
+              compilerOptions,
+              graph,
+              optionalFactories);
 
       if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
         return bindingExpression;

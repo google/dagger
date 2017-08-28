@@ -115,7 +115,9 @@ final class ComponentBindingExpressions {
 
   /** Adds a binding expression for a single binding owned by this component. */
   void addBindingExpression(BindingExpression bindingExpression) {
-    bindingExpressionsMaps.get(0).put(bindingExpression.bindingKey(), bindingExpression);
+    bindingExpressionsMaps
+        .get(0)
+        .put(bindingExpression.resolvedBindings().bindingKey(), bindingExpression);
   }
 
   /**

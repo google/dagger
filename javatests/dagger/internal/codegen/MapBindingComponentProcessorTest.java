@@ -107,7 +107,7 @@ public class MapBindingComponentProcessorTest {
         "",
         "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
         "interface TestComponent {",
-        "  Map<PathEnum, Provider<Handler>> dispatcher();",
+        "  Provider<Map<PathEnum, Provider<Handler>>> dispatcher();",
         "}");
     JavaFileObject generatedComponent =
         JavaFileObjects.forSourceLines(
@@ -153,8 +153,8 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "",
             "  @Override",
-            "  public Map<PathEnum, Provider<Handler>> dispatcher() {",
-            "    return mapOfPathEnumAndProviderOfHandlerProvider.get();",
+            "  public Provider<Map<PathEnum, Provider<Handler>>> dispatcher() {",
+            "    return mapOfPathEnumAndProviderOfHandlerProvider;",
             "  }",
             "",
             "  public static final class Builder {",
@@ -259,7 +259,7 @@ public class MapBindingComponentProcessorTest {
         "",
         "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
         "interface TestComponent {",
-        "  Map<String, Provider<Handler>> dispatcher();",
+        "  Provider<Map<String, Provider<Handler>>> dispatcher();",
         "}");
     JavaFileObject generatedComponent =
         JavaFileObjects.forSourceLines(
@@ -305,8 +305,8 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "",
             "  @Override",
-            "  public Map<String, Provider<Handler>> dispatcher() {",
-            "    return mapOfStringAndProviderOfHandlerProvider.get();",
+            "  public Provider<Map<String, Provider<Handler>>> dispatcher() {",
+            "    return mapOfStringAndProviderOfHandlerProvider;",
             "  }",
             "",
             "  public static final class Builder {",
@@ -420,7 +420,7 @@ public class MapBindingComponentProcessorTest {
         "",
         "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
         "interface TestComponent {",
-        "  Map<WrappedClassKey, Provider<Handler>> dispatcher();",
+        "  Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher();",
         "}");
     JavaFileObject generatedComponent =
         JavaFileObjects.forSourceLines(
@@ -468,8 +468,8 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "",
             "  @Override",
-            "  public Map<WrappedClassKey, Provider<Handler>> dispatcher() {",
-            "    return mapOfWrappedClassKeyAndProviderOfHandlerProvider.get();",
+            "  public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {",
+            "    return mapOfWrappedClassKeyAndProviderOfHandlerProvider;",
             "  }",
             "",
             "  public static final class Builder {",
@@ -585,7 +585,7 @@ public class MapBindingComponentProcessorTest {
         "",
         "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
         "interface TestComponent {",
-        "  Map<PathEnum, Handler> dispatcher();",
+        "  Provider<Map<PathEnum, Handler>> dispatcher();",
         "}");
     JavaFileObject generatedComponent =
         JavaFileObjects.forSourceLines(
@@ -593,7 +593,6 @@ public class MapBindingComponentProcessorTest {
             "package test;",
             "",
             "import dagger.internal.MapFactory;",
-            "import dagger.internal.MapProviderFactory;",
             "import dagger.internal.Preconditions;",
             "import java.util.Map;",
             "import javax.annotation.Generated;",
@@ -603,8 +602,6 @@ public class MapBindingComponentProcessorTest {
             "public final class DaggerTestComponent implements TestComponent {",
             "  private Provider<Handler> provideAdminHandlerProvider;",
             "  private Provider<Handler> provideLoginHandlerProvider;",
-            "  private Provider<Map<PathEnum, Provider<Handler>>>",
-            "      mapOfPathEnumAndProviderOfHandlerProvider;",
             "  private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;",
             "",
             "  private DaggerTestComponent(Builder builder) {",
@@ -625,18 +622,16 @@ public class MapBindingComponentProcessorTest {
             "        MapModuleOne_ProvideAdminHandlerFactory.create(builder.mapModuleOne);",
             "    this.provideLoginHandlerProvider =",
             "        MapModuleTwo_ProvideLoginHandlerFactory.create(builder.mapModuleTwo);",
-            "    this.mapOfPathEnumAndProviderOfHandlerProvider =",
-            "        MapProviderFactory.<PathEnum, Handler>builder(2)",
+            "    this.mapOfPathEnumAndHandlerProvider =",
+            "        MapFactory.<PathEnum, Handler>builder(2)",
             "            .put(PathEnum.ADMIN, provideAdminHandlerProvider)",
             "            .put(PathEnum.LOGIN, provideLoginHandlerProvider)",
             "            .build();",
-            "    this.mapOfPathEnumAndHandlerProvider =",
-            "        MapFactory.create(mapOfPathEnumAndProviderOfHandlerProvider);",
             "  }",
             "",
             "  @Override",
-            "  public Map<PathEnum, Handler> dispatcher() {",
-            "    return mapOfPathEnumAndHandlerProvider.get();",
+            "  public Provider<Map<PathEnum, Handler>> dispatcher() {",
+            "    return mapOfPathEnumAndHandlerProvider;",
             "  }",
             "",
             "  public static final class Builder {",

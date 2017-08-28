@@ -20,17 +20,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toTypeNamesCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
-import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.TypeNames.FACTORY;
+import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
+import static dagger.internal.codegen.TypeNames.PRODUCER;
+import static dagger.internal.codegen.TypeNames.PRODUCERS;
+import static dagger.internal.codegen.TypeNames.PROVIDER;
 import static javax.lang.model.type.TypeKind.DECLARED;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -88,7 +90,7 @@ abstract class MemberSelect {
             && !contributionBinding.scope().isPresent()) {
           switch (contributionBinding.bindingKind()) {
             case SYNTHETIC_MULTIBOUND_MAP:
-              return Optional.of(emptyFrameworkMapFactory(contributionBinding));
+              return Optional.of(emptyMapFactory(contributionBinding));
 
             case SYNTHETIC_MULTIBOUND_SET:
               return Optional.of(emptySetFactory(contributionBinding));
@@ -166,20 +168,19 @@ abstract class MemberSelect {
         MEMBERS_INJECTOR);
   }
 
-  /**
-   * A {@link MemberSelect} for a factory of an empty map of factory types, where a factory can be
-   * either a {@link javax.inject.Provider} or {@link dagger.producers.Producer}.
-   */
-  private static MemberSelect emptyFrameworkMapFactory(ContributionBinding contributionBinding) {
+  /** A {@link MemberSelect} for a factory of an empty map. */
+  private static MemberSelect emptyMapFactory(ContributionBinding contributionBinding) {
     BindingType bindingType = contributionBinding.bindingType();
-    MapType mapType = MapType.from(contributionBinding.key());
-
-    return new ParameterizedStaticMethod(
-        frameworkMapFactoryClassName(bindingType),
-        ImmutableList.of(
-            mapType.keyType(), mapType.unwrappedValueType(bindingType.frameworkClass())),
-        CodeBlock.of("empty()"),
-        ClassName.get(bindingType.frameworkClass()));
+    ImmutableList<TypeMirror> typeParameters =
+        ImmutableList.copyOf(
+            MoreTypes.asDeclared(contributionBinding.key().type()).getTypeArguments());
+    if (bindingType.equals(BindingType.PRODUCTION)) {
+      return new ParameterizedStaticMethod(
+          PRODUCERS, typeParameters, CodeBlock.of("emptyMapProducer()"), PRODUCER);
+    } else {
+      return new ParameterizedStaticMethod(
+          MAP_FACTORY, typeParameters, CodeBlock.of("emptyMapProvider()"), PROVIDER);
+    }
   }
 
   /**

@@ -16,11 +16,16 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
+import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompilerWithoutGuava;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static java.util.stream.Collectors.joining;
 
+import com.google.common.base.Splitter;
 import com.google.testing.compile.Compilation;
+import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
 import com.squareup.javapoet.CodeBlock;
 import javax.tools.JavaFileObject;
@@ -131,8 +136,7 @@ public class SetBindingRequestFulfillmentTest {
             "    }",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompilerWithoutGuava().compile(emptySetModuleFile, setModuleFile, componentFile);
+    Compilation compilation = compiler().compile(emptySetModuleFile, setModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -247,8 +251,7 @@ public class SetBindingRequestFulfillmentTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompilerWithoutGuava()
-            .compile(module, inaccessible, inaccessible2, usesInaccessible, componentFile);
+        compiler().compile(module, inaccessible, inaccessible2, usesInaccessible, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -276,12 +279,17 @@ public class SetBindingRequestFulfillmentTest {
             "import dagger.Module;",
             "import dagger.Provides;",
             "import dagger.multibindings.IntoSet;",
+            "import dagger.multibindings.IntoMap;",
             "import dagger.multibindings.StringKey;",
             "",
             "@Module",
             "class ParentModule {",
             "  @Provides @IntoSet static Object parentObject() {",
             "    return \"parent object\";",
+            "  }",
+            "",
+            "  @Provides @IntoMap @StringKey(\"parent key\") Object parentKeyObject() {",
+            "    return \"parent value\";",
             "  }",
             "}");
     JavaFileObject child =
@@ -290,25 +298,35 @@ public class SetBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import dagger.Subcomponent;",
+            "import java.util.Map;",
             "import java.util.Set;",
             "",
             "@Subcomponent",
             "interface Child {",
             "  Set<Object> objectSet();",
+            "  Map<String, Object> objectMap();",
             "}");
     JavaFileObject expected =
         JavaFileObjects.forSourceLines(
             "test.DaggerParent",
             "package test;",
             "",
+            "import dagger.internal.MapFactory;",
+            "import dagger.internal.MapProviderFactory;",
             "import dagger.internal.Preconditions;",
             "import java.util.Collections;",
+            "import java.util.Map;",
             "import java.util.Set;",
             "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
-            "  private DaggerParent(Builder builder) {}",
+            "  private Provider<Object> parentKeyObjectProvider;",
+            "",
+            "  private DaggerParent(Builder builder) {",
+            "    initialize(builder);",
+            "  }",
             "",
             "  public static Builder builder() {",
             "    return new Builder();",
@@ -318,40 +336,84 @@ public class SetBindingRequestFulfillmentTest {
             "    return new Builder().build();",
             "  }",
             "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.parentKeyObjectProvider =",
+            "        ParentModule_ParentKeyObjectFactory.create(builder.parentModule);",
+            "  }",
+            "",
             "  @Override",
             "  public Child child() {",
             "    return new ChildImpl();",
             "  }",
             "",
             "  public static final class Builder {",
+            "    private ParentModule parentModule;",
+            "",
             "    private Builder() {}",
             "",
             "    public Parent build() {",
+            "      if (parentModule == null) {",
+            "        this.parentModule = new ParentModule();",
+            "      }",
             "      return new DaggerParent(this);",
             "    }",
             "",
-            "    @Deprecated",
             "    public Builder parentModule(ParentModule parentModule) {",
-            "      Preconditions.checkNotNull(parentModule);",
+            "      this.parentModule = Preconditions.checkNotNull(parentModule);",
             "      return this;",
             "    }",
             "  }",
             "",
             "  private final class ChildImpl implements Child {",
-            "    private ChildImpl() {}",
+            "    private Provider<Map<String, Provider<Object>>>",
+            "        mapOfStringAndProviderOfObjectProvider;",
+            "    private Provider<Map<String, Object>> mapOfStringAndObjectProvider;",
+            "",
+            "    private ChildImpl() {",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() {",
+            "      this.mapOfStringAndProviderOfObjectProvider =",
+            "          MapProviderFactory.<String, Object>builder(1)",
+            "              .put(\"parent key\", DaggerParent.this.parentKeyObjectProvider)",
+            "              .build();",
+            "      this.mapOfStringAndObjectProvider = MapFactory.create(",
+            "          mapOfStringAndProviderOfObjectProvider);",
+            "    }",
             "",
             "    @Override",
             "    public Set<Object> objectSet() {",
             "      return Collections.<Object>singleton(Preconditions.checkNotNull(",
             "          ParentModule.parentObject(), " + NPE_FROM_PROVIDES + "));",
             "    }",
+            "",
+            "    @Override",
+            "    public Map<String, Object> objectMap() {",
+            "      return mapOfStringAndObjectProvider.get();",
+            "    }",
             "  }",
             "}");
-    Compilation compilation = daggerCompilerWithoutGuava().compile(parent, parentModule, child);
+    Compilation compilation = compiler().compile(parent, parentModule, child);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
         .hasSourceEquivalentTo(expected);
   }
 
+  private Compiler compiler() {
+    return daggerCompiler().withOptions("-classpath", classpathWithoutGuava());
+  }
+
+  private static final String GUAVA = "guava";
+
+  private String classpathWithoutGuava() {
+    return Splitter.on(PATH_SEPARATOR.value())
+        .splitToList(JAVA_CLASS_PATH.value())
+        .stream()
+        .filter(jar -> !jar.contains(GUAVA))
+        .collect(joining(":"));
+  }
 }

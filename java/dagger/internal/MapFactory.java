@@ -17,11 +17,8 @@
 package dagger.internal;
 
 import static dagger.internal.DaggerCollections.newLinkedHashMapWithExpectedSize;
-import static dagger.internal.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableMap;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.inject.Provider;
@@ -35,28 +32,18 @@ import javax.inject.Provider;
  *
  */
 public final class MapFactory<K, V> implements Factory<Map<K, V>> {
-  private static final Provider<Map<Object, Object>> EMPTY =
-      InstanceFactory.create(Collections.emptyMap());
-
   private final Map<K, Provider<V>> contributingMap;
-
-  /**
-   * Returns a new {@link Builder}
-   */
-  public static <K, V> Builder<K, V> builder(int size) {
-    return new Builder<>(size);
-  }
-
-  /**
-   * Returns a factory of an empty map.
-   */
-  @SuppressWarnings("unchecked") // safe contravariant cast
-  public static <K, V> Provider<Map<K, V>> emptyMapProvider() {
-    return (Provider<Map<K, V>>) (Provider) EMPTY;
-  }
 
   private MapFactory(Map<K, Provider<V>> map) {
     this.contributingMap = unmodifiableMap(map);
+  }
+
+  /**
+   * Returns a new MapFactory.
+   */
+  public static <K, V> MapFactory<K, V> create(Provider<Map<K, Provider<V>>> mapProviderFactory) {
+    Map<K, Provider<V>> map = mapProviderFactory.get();
+    return new MapFactory<K, V>(map);
   }
 
   /**
@@ -70,26 +57,5 @@ public final class MapFactory<K, V> implements Factory<Map<K, V>> {
       result.put(entry.getKey(), entry.getValue().get());
     }
     return unmodifiableMap(result);
-  }
-
-  // TODO(ronshapiro): can we merge the builders? Or maybe just use a (Immutable)MapBuilder?
-  /** A builder for {@link MapFactory}. */
-  public static final class Builder<K, V> {
-    private final LinkedHashMap<K, Provider<V>> map;
-
-    private Builder(int size) {
-      this.map = newLinkedHashMapWithExpectedSize(size);
-    }
-
-    /** Associates {@code key} with {@code providerOfValue}. */
-    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
-      map.put(checkNotNull(key, "key"), checkNotNull(providerOfValue, "provider"));
-      return this;
-    }
-
-    /** Returns a new {@link MapProviderFactory}. */
-    public MapFactory<K, V> build() {
-      return new MapFactory<>(map);
-    }
   }
 }

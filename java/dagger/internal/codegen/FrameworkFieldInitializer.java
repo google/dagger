@@ -29,6 +29,7 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
+import static dagger.internal.codegen.SourceFiles.frameworkMapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
@@ -47,7 +48,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -328,6 +328,14 @@ final class FrameworkFieldInitializer {
               makeParametersCodeBlock(arguments));
         }
 
+      case SYNTHETIC_MAP:
+        FrameworkDependency frameworkDependency = getOnlyElement(binding.frameworkDependencies());
+        return CodeBlock.of(
+            "$T.create($L)",
+            mapFactoryClassName(binding),
+            componentBindingExpressions.getDependencyExpression(
+                frameworkDependency, componentName));
+
       case SYNTHETIC_MULTIBOUND_SET:
         return factoryForSetMultibindingInitialization(binding);
 
@@ -402,27 +410,16 @@ final class FrameworkFieldInitializer {
 
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     MapType mapType = MapType.from(binding.key().type());
-    CodeBlock.Builder builderCall = CodeBlock.builder().add("$T.", mapFactoryClassName(binding));
+    CodeBlock.Builder builderCall =
+        CodeBlock.builder().add("$T.", frameworkMapFactoryClassName(binding.bindingType()));
     boolean useRawTypes = useRawType();
     if (!useRawTypes) {
-      // TODO(ronshapiro): either inline this into mapFactoryClassName, or add a
-      // mapType.unwrappedValueType() method that doesn't require a framework type
-      TypeMirror valueType = mapType.valueType();
-      for (Class<?> frameworkClass :
-          ImmutableSet.of(Provider.class, Producer.class, Produced.class)) {
-        if (mapType.valuesAreTypeOf(frameworkClass)) {
-          valueType = mapType.unwrappedValueType(frameworkClass);
-          break;
-        }
-      }
-      builderCall.add("<$T, $T>", mapType.keyType(), valueType);
+      builderCall.add(
+          "<$T, $T>",
+          mapType.keyType(),
+          mapType.unwrappedValueType(binding.bindingType().frameworkClass()));
     }
-
-    if (binding.bindingType().equals(BindingType.PROVISION)) {
-      builderCall.add("builder($L)", frameworkDependencies.size());
-    } else {
-      builderCall.add("builder()");
-    }
+    builderCall.add("builder($L)", frameworkDependencies.size());
     codeBlocks.add(builderCall.build());
 
     for (FrameworkDependency frameworkDependency : frameworkDependencies) {

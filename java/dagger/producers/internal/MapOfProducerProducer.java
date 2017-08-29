@@ -17,6 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.newLinkedHashMapWithExpectedSize;
 import static dagger.producers.internal.Producers.producerFromProvider;
 
 import com.google.common.collect.ImmutableMap;
@@ -33,11 +34,20 @@ import javax.inject.Provider;
  * @author Jesse Beder
  */
 public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, Producer<V>>> {
+  private static final MapOfProducerProducer<Object, Object> EMPTY =
+      new MapOfProducerProducer<Object, Object>(ImmutableMap.<Object, Producer<Object>>of());
+
   private final ImmutableMap<K, Producer<V>> contributingMap;
 
   /** Returns a new {@link Builder}. */
-  public static <K, V> Builder<K, V> builder() {
-    return new Builder<>();
+  public static <K, V> Builder<K, V> builder(int size) {
+    return new Builder<K, V>(size);
+  }
+
+  /** Returns a producer of an empty map. */
+  @SuppressWarnings("unchecked") // safe contravariant cast
+  public static <K, V> MapOfProducerProducer<K, V> empty() {
+    return (MapOfProducerProducer<K, V>) EMPTY;
   }
 
   private MapOfProducerProducer(ImmutableMap<K, Producer<V>> contributingMap) {
@@ -49,11 +59,22 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
     return Futures.<Map<K, Producer<V>>>immediateFuture(contributingMap);
   }
 
-  /** A builder for {@link MapOfProducerProducer} */
+  /**
+   * A builder to help build the {@link MapOfProducerProducer}
+   */
   public static final class Builder<K, V> {
-    private final ImmutableMap.Builder<K, Producer<V>> mapBuilder = ImmutableMap.builder();
+    private final Map<K, Producer<V>> mapBuilder;
 
-    /** Associates {@code key} with {@code producerOfValue}. */
+    private Builder(int size) {
+      this.mapBuilder = newLinkedHashMapWithExpectedSize(size);
+    }
+
+    /** Returns a new {@link MapOfProducerProducer}. */
+    public MapOfProducerProducer<K, V> build() {
+      return new MapOfProducerProducer<K, V>(ImmutableMap.copyOf(mapBuilder));
+    }
+
+    /** Associates key with producerOfValue in {@code Builder}. */
     public Builder<K, V> put(K key, Producer<V> producerOfValue) {
       checkNotNull(key, "key");
       checkNotNull(producerOfValue, "producer of value");
@@ -61,17 +82,12 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
       return this;
     }
 
-    /** Associates {@code key} with {@code providerOfValue}. */
+    /** Associates key with providerOfValue in {@code Builder}. */
     public Builder<K, V> put(K key, Provider<V> providerOfValue) {
       checkNotNull(key, "key");
       checkNotNull(providerOfValue, "provider of value");
       mapBuilder.put(key, producerFromProvider(providerOfValue));
       return this;
-    }
-
-    /** Returns a new {@link MapOfProducerProducer}. */
-    public MapOfProducerProducer<K, V> build() {
-      return new MapOfProducerProducer<>(mapBuilder.build());
     }
   }
 }

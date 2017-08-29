@@ -73,6 +73,12 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
    */
   enum Kind {
     /**
+     * The synthetic binding for {@code Map<K, V>} that depends on either
+     * {@code Map<K, Provider<V>>} or {@code Map<K, Producer<V>>}.
+     */
+    SYNTHETIC_MAP,
+
+    /**
      * A synthetic binding for a multibound set that depends on the individual multibinding
      * {@link Provides @Provides} or {@link Produces @Produces} methods.
      */

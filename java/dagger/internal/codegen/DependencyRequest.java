@@ -344,15 +344,32 @@ abstract class DependencyRequest {
      * Creates a synthetic dependency request for one individual {@code multibindingContribution}.
      */
     private DependencyRequest forMultibindingContribution(
-        ContributionBinding multibindingContribution, Kind requestKind) {
+        ContributionBinding multibindingContribution) {
       checkArgument(
           multibindingContribution.key().multibindingContributionIdentifier().isPresent(),
           "multibindingContribution's key must have a multibinding contribution identifier: %s",
           multibindingContribution);
       return DependencyRequest.builder()
-          .kind(requestKind)
+          .kind(multibindingContributionRequestKind(multibindingContribution))
           .key(multibindingContribution.key())
           .build();
+    }
+
+    private Kind multibindingContributionRequestKind(ContributionBinding multibindingContribution) {
+      switch (multibindingContribution.contributionType()) {
+        case MAP:
+          return multibindingContribution.bindingType().equals(BindingType.PRODUCTION)
+              ? Kind.PRODUCER
+              : Kind.PROVIDER;
+        case SET:
+        case SET_VALUES:
+          return Kind.INSTANCE;
+        case UNIQUE:
+          throw new IllegalArgumentException(
+              "multibindingContribution must be a multibinding: " + multibindingContribution);
+        default:
+          throw new AssertionError(multibindingContribution.toString());
+      }
     }
 
     /**
@@ -360,10 +377,10 @@ abstract class DependencyRequest {
      * multibindingContributions}.
      */
     ImmutableSet<DependencyRequest> forMultibindingContributions(
-        Iterable<ContributionBinding> multibindingContributions, Kind requestKind) {
+        Iterable<ContributionBinding> multibindingContributions) {
       ImmutableSet.Builder<DependencyRequest> requests = ImmutableSet.builder();
       for (ContributionBinding multibindingContribution : multibindingContributions) {
-        requests.add(forMultibindingContribution(multibindingContribution, requestKind));
+        requests.add(forMultibindingContribution(multibindingContribution));
       }
       return requests.build();
     }

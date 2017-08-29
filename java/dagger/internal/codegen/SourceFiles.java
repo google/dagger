@@ -19,10 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
@@ -53,15 +51,17 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.MapFactory;
+import dagger.internal.MapProviderFactory;
 import dagger.internal.SetFactory;
 import dagger.producers.Produced;
-import dagger.producers.Producer;
+import dagger.producers.internal.MapOfProducerProducer;
+import dagger.producers.internal.MapProducer;
 import dagger.producers.internal.SetOfProducedProducer;
 import dagger.producers.internal.SetProducer;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import javax.inject.Provider;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -264,22 +264,39 @@ class SourceFiles {
     }
   }
 
-  /** The {@link java.util.Map} factory class name appropriate for map bindings. */
+  /**
+   * The {@link java.util.Map}-of-value factory class name appropriate for map bindings.
+   *
+   * <ul>
+   * <li>{@link MapFactory} for provision bindings.
+   * <li>{@link MapProducer} for production bindings.
+   * </ul>
+   */
   static ClassName mapFactoryClassName(ContributionBinding binding) {
-    checkState(binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP), binding.bindingKind());
-    MapType mapType = MapType.from(binding.key());
     switch (binding.bindingType()) {
-      case PROVISION:
-        return mapType.valuesAreTypeOf(Provider.class) ? MAP_PROVIDER_FACTORY : MAP_FACTORY;
       case PRODUCTION:
-        return mapType.valuesAreFrameworkType()
-            ? mapType.valuesAreTypeOf(Producer.class)
-                ? MAP_OF_PRODUCER_PRODUCER
-                : MAP_OF_PRODUCED_PRODUCER
-            : MAP_PRODUCER;
+        return MapType.from(binding.key()).valuesAreTypeOf(Produced.class)
+            ? MAP_OF_PRODUCED_PRODUCER : MAP_PRODUCER;
+
+      case PROVISION:
+        return MAP_FACTORY;
+
       default:
-        throw new IllegalArgumentException(binding.bindingType().toString());
+        throw new AssertionError(binding.toString());
     }
+  }
+
+  /**
+   * The {@link java.util.Map}-of-framework factory class name appropriate for map bindings.
+   *
+   * <ul>
+   * <li>{@link MapProviderFactory} for provision bindings.
+   * <li>{@link MapOfProducerProducer} for production bindings.
+   * </ul>
+   */
+  static ClassName frameworkMapFactoryClassName(BindingType bindingType) {
+    return bindingType.equals(BindingType.PRODUCTION)
+        ? MAP_OF_PRODUCER_PRODUCER : MAP_PROVIDER_FACTORY;
   }
 
   private static String factoryPrefix(ContributionBinding binding) {

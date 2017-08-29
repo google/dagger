@@ -198,9 +198,6 @@ abstract class BindingExpression {
         case SYNTHETIC_MULTIBOUND_SET:
           return new SetBindingExpression(
               provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
-        case SYNTHETIC_MULTIBOUND_MAP:
-          return new MapBindingExpression(
-              provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
         case SYNTHETIC_OPTIONAL_BINDING:
           return new OptionalBindingExpression(
               provisionBinding, bindingExpression, componentBindingExpressions);

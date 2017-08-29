@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.DependencyRequest.Kind.PRODUCER;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Util.toImmutableSet;
@@ -180,6 +179,28 @@ abstract class ProductionBinding extends ContributionBinding {
     }
 
     /**
+     * A synthetic binding of {@code Map<K, V>} or {@code Map<K, Produced<V>>} that depends on
+     * {@code Map<K, Producer<V>>}.
+     */
+    ProductionBinding syntheticMapOfValuesOrProducedBinding(Key mapOfValuesOrProducedKey) {
+      checkNotNull(mapOfValuesOrProducedKey);
+      Optional<Key> mapOfProducersKey =
+          keyFactory.implicitMapProducerKeyFrom(mapOfValuesOrProducedKey);
+      checkArgument(
+          mapOfProducersKey.isPresent(),
+          "%s is not a key for of Map<K, V> or Map<K, Produced<V>>",
+          mapOfValuesOrProducedKey);
+      DependencyRequest requestForMapOfProducers =
+          dependencyRequestFactory.producerForImplicitMapBinding(mapOfProducersKey.get());
+      return ProductionBinding.builder()
+          .contributionType(ContributionType.UNIQUE)
+          .key(mapOfValuesOrProducedKey)
+          .explicitDependencies(requestForMapOfProducers)
+          .bindingKind(Kind.SYNTHETIC_MAP)
+          .build();
+    }
+
+    /**
      * A synthetic binding that depends explicitly on a set of individual provision or production
      * multibinding contribution methods.
      *
@@ -191,8 +212,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .key(key)
           .explicitDependencies(
-              dependencyRequestFactory.forMultibindingContributions(
-                  multibindingContributions, PRODUCER))
+              dependencyRequestFactory.forMultibindingContributions(multibindingContributions))
           .bindingKind(Kind.forMultibindingKey(key))
           .build();
     }

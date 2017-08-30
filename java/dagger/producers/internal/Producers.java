@@ -22,6 +22,7 @@ import static com.google.common.util.concurrent.Futures.transform;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -29,6 +30,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
 
@@ -149,6 +151,14 @@ public final class Producers {
         return Futures.immediateFailedFuture(throwable);
       }
     };
+  }
+
+  private static final Producer<Map<Object, Object>> EMPTY_MAP_PRODUCER =
+      Producers.<Map<Object, Object>>immediateProducer(ImmutableMap.of());
+
+  @SuppressWarnings("unchecked") // safe contravariant cast
+  public static <K, V> Producer<Map<K, V>> emptyMapProducer() {
+    return (Producer<Map<K, V>>) (Producer) EMPTY_MAP_PRODUCER;
   }
 
   private Producers() {}

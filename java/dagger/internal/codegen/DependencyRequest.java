@@ -341,26 +341,48 @@ abstract class DependencyRequest {
     }
 
     /**
+     * Creates synthetic dependency requests for each individual multibinding contribution in {@code
+     * multibindingContributions}.
+     */
+    ImmutableSet<DependencyRequest> forMultibindingContributions(
+        Key multibindingKey, Iterable<ContributionBinding> multibindingContributions) {
+      ImmutableSet.Builder<DependencyRequest> requests = ImmutableSet.builder();
+      for (ContributionBinding multibindingContribution : multibindingContributions) {
+        requests.add(forMultibindingContribution(multibindingKey, multibindingContribution));
+      }
+      return requests.build();
+    }
+
+    /**
      * Creates a synthetic dependency request for one individual {@code multibindingContribution}.
      */
     private DependencyRequest forMultibindingContribution(
-        ContributionBinding multibindingContribution) {
+        Key multibindingKey, ContributionBinding multibindingContribution) {
       checkArgument(
           multibindingContribution.key().multibindingContributionIdentifier().isPresent(),
           "multibindingContribution's key must have a multibinding contribution identifier: %s",
           multibindingContribution);
       return DependencyRequest.builder()
-          .kind(multibindingContributionRequestKind(multibindingContribution))
+          .kind(multibindingContributionRequestKind(multibindingKey, multibindingContribution))
           .key(multibindingContribution.key())
           .build();
     }
 
-    private Kind multibindingContributionRequestKind(ContributionBinding multibindingContribution) {
+    // TODO(b/28555349): support PROVIDER_OF_LAZY here too
+    private static final ImmutableSet<Kind> WRAPPING_MAP_VALUE_FRAMEWORK_TYPES =
+        ImmutableSet.of(Kind.PROVIDER, Kind.PRODUCER);
+
+    private Kind multibindingContributionRequestKind(
+        Key multibindingKey, ContributionBinding multibindingContribution) {
       switch (multibindingContribution.contributionType()) {
         case MAP:
-          return multibindingContribution.bindingType().equals(BindingType.PRODUCTION)
-              ? Kind.PRODUCER
-              : Kind.PROVIDER;
+          MapType mapType = MapType.from(multibindingKey);
+          for (Kind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
+            if (mapType.valuesAreTypeOf(kind.frameworkClass.get())) {
+              return kind;
+            }
+          }
+          // fall through
         case SET:
         case SET_VALUES:
           return Kind.INSTANCE;
@@ -370,19 +392,6 @@ abstract class DependencyRequest {
         default:
           throw new AssertionError(multibindingContribution.toString());
       }
-    }
-
-    /**
-     * Creates synthetic dependency requests for each individual multibinding contribution in {@code
-     * multibindingContributions}.
-     */
-    ImmutableSet<DependencyRequest> forMultibindingContributions(
-        Iterable<ContributionBinding> multibindingContributions) {
-      ImmutableSet.Builder<DependencyRequest> requests = ImmutableSet.builder();
-      for (ContributionBinding multibindingContribution : multibindingContributions) {
-        requests.add(forMultibindingContribution(multibindingContribution));
-      }
-      return requests.build();
     }
 
     DependencyRequest forRequiredVariable(VariableElement variableElement) {

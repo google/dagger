@@ -124,7 +124,7 @@ public class ProducersTest {
     }
   }
 
-  @Test public void producerFromProvider() throws Exception {
+  @Test public void producerFromProvider_doesntCache() throws Exception {
     Producer<Integer> producer = Producers.producerFromProvider(new Provider<Integer>() {
       int i = 0;
 
@@ -133,7 +133,7 @@ public class ProducersTest {
       }
     });
     assertThat(producer.get().get()).isEqualTo(0);
-    assertThat(producer.get().get()).isEqualTo(0);
-    assertThat(producer.get().get()).isEqualTo(0);
+    assertThat(producer.get().get()).isEqualTo(1);
+    assertThat(producer.get().get()).isEqualTo(2);
   }
 }

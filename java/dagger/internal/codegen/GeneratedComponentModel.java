@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -54,13 +53,4 @@ interface GeneratedComponentModel {
    * object for a scope.
    */
   CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope);
-
-  // TODO(user): this and getDependencyArguments should go on ComponentBindingExpressions
-  // once producerFromProvider fields are pushed into their corresponding binding expressions.
-  // This cannot be done currently due to these expressions being created lazily.
-  /** Returns a code block referencing the given dependency. */
-  CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency);
-
-  /** Returns a list of code blocks for referencing all of the given binding's dependencies. */
-  ImmutableList<CodeBlock> getBindingDependencyExpressions(Binding binding);
 }

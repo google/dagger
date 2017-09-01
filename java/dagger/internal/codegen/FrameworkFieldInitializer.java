@@ -24,7 +24,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
-import static dagger.internal.codegen.BindingType.PRODUCTION;
+import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
@@ -39,6 +39,7 @@ import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAG
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -82,8 +83,8 @@ final class FrameworkFieldInitializer {
   // TODO(ronshapiro): add Binding.bindingKey() and use that instead of taking a ResolvedBindings
   private final ResolvedBindings resolvedBindings;
   private final CompilerOptions compilerOptions;
-  private final boolean isProducerFromProvider;
   private final BindingGraph graph;
+  private final boolean isProducerFromProvider;
   private final OptionalFactories optionalFactories;
   private final ClassName componentName;
 
@@ -93,8 +94,29 @@ final class FrameworkFieldInitializer {
       ComponentRequirementFields componentRequirementFields,
       ResolvedBindings resolvedBindings,
       CompilerOptions compilerOptions,
-      boolean isProducerFromProvider,
       BindingGraph graph,
+      OptionalFactories optionalFactories,
+      ClassName componentName) {
+    this(
+        generatedComponentModel,
+        componentBindingExpressions,
+        componentRequirementFields,
+        resolvedBindings,
+        compilerOptions,
+        graph,
+        false,
+        optionalFactories,
+        componentName);
+  }
+
+  private FrameworkFieldInitializer(
+      GeneratedComponentModel generatedComponentModel,
+      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequirementFields componentRequirementFields,
+      ResolvedBindings resolvedBindings,
+      CompilerOptions compilerOptions,
+      BindingGraph graph,
+      boolean isProducerFromProvider,
       OptionalFactories optionalFactories,
       ClassName componentName) {
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
@@ -102,17 +124,19 @@ final class FrameworkFieldInitializer {
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.compilerOptions = checkNotNull(compilerOptions);
-    this.isProducerFromProvider = isProducerFromProvider;
     this.graph = checkNotNull(graph);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.componentName = checkNotNull(componentName);
+    this.isProducerFromProvider = isProducerFromProvider;
   }
 
   /** Returns the expression to use to initialize the field. */
   CodeBlock getFieldInitialization() {
     if (isProducerFromProvider) {
-      return componentBindingExpressions.getDependencyExpression(
-          FrameworkDependency.create(resolvedBindings.bindingKey(), PRODUCTION), componentName);
+      return FrameworkType.PROVIDER.to(
+          DependencyRequest.Kind.PRODUCER,
+          componentBindingExpressions.getDependencyExpression(
+              FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION), componentName));
     }
 
     switch (resolvedBindings.bindingKey().kind()) {
@@ -133,8 +157,8 @@ final class FrameworkFieldInitializer {
             CodeBlock.of(
                 "($T) $L",
                 contributionBinding.bindingType().frameworkClass(),
-                componentBindingExpressions.getDependencyExpression(
-                    getOnlyElement(contributionBinding.frameworkDependencies()), componentName));
+                getDependencyExpression(
+                    getOnlyElement(contributionBinding.frameworkDependencies())));
         return generatedComponentModel.decorateForScope(
             delegatingCodeBlock, contributionBinding.scope());
       case SINGLETON_INSTANCE:
@@ -154,8 +178,7 @@ final class FrameworkFieldInitializer {
     return CodeBlock.of(
         "$T.create($L)",
         membersInjectorNameForType(membersInjectionBinding.membersInjectedType()),
-        makeParametersCodeBlock(
-            generatedComponentModel.getBindingDependencyExpressions(membersInjectionBinding)));
+        makeParametersCodeBlock(getBindingDependencyExpressions(membersInjectionBinding)));
   }
 
   private CodeBlock factoryForContributionBindingInitialization(ContributionBinding binding) {
@@ -259,7 +282,7 @@ final class FrameworkFieldInitializer {
                     ComponentRequirement.forModule(binding.contributingModule().get().asType()),
                     componentName));
           }
-          arguments.addAll(generatedComponentModel.getBindingDependencyExpressions(binding));
+          arguments.addAll(getBindingDependencyExpressions(binding));
 
           CodeBlock factoryCreate =
               CodeBlock.of(
@@ -320,7 +343,7 @@ final class FrameworkFieldInitializer {
                     ComponentRequirement.forModule(binding.contributingModule().get().asType()),
                     componentName));
           }
-          arguments.addAll(generatedComponentModel.getBindingDependencyExpressions(binding));
+          arguments.addAll(getBindingDependencyExpressions(binding));
 
           return CodeBlock.of(
               "new $T($L)",
@@ -390,7 +413,7 @@ final class FrameworkFieldInitializer {
           potentiallyCast(
               useRawTypes,
               frameworkDependency.frameworkClass(),
-              generatedComponentModel.getDependencyExpression(frameworkDependency)));
+              getDependencyExpression(frameworkDependency)));
     }
     builder.add("builder($L, $L)", individualProviders, setProviders);
     builder.add(builderMethodCalls.build());
@@ -433,7 +456,7 @@ final class FrameworkFieldInitializer {
           potentiallyCast(
               useRawTypes,
               frameworkDependency.frameworkClass(),
-              generatedComponentModel.getDependencyExpression(frameworkDependency));
+              getDependencyExpression(frameworkDependency));
       codeBlocks.add(
           CodeBlock.of(
               ".put($L, $L)", getMapKeyExpression(contributionBinding.mapKey().get()), value));
@@ -583,8 +606,31 @@ final class FrameworkFieldInitializer {
       return optionalFactories.absentOptionalProvider(binding);
     } else {
       return optionalFactories.presentOptionalFactory(
-          binding,
-          getOnlyElement(generatedComponentModel.getBindingDependencyExpressions(binding)));
+          binding, getDependencyExpression(getOnlyElement(binding.frameworkDependencies())));
     }
+  }
+
+  /** Returns a list of code blocks for referencing all of the given binding's dependencies. */
+  private ImmutableList<CodeBlock> getBindingDependencyExpressions(Binding binding) {
+    ImmutableList<FrameworkDependency> dependencies = binding.frameworkDependencies();
+    return dependencies.stream().map(this::getDependencyExpression).collect(toImmutableList());
+  }
+
+  /** Returns a code block referencing the given dependency. */
+  private CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
+    return componentBindingExpressions.getDependencyExpression(frameworkDependency, componentName);
+  }
+
+  FrameworkFieldInitializer forProducerFromProvider() {
+    return new FrameworkFieldInitializer(
+        generatedComponentModel,
+        componentBindingExpressions,
+        componentRequirementFields,
+        resolvedBindings,
+        compilerOptions,
+        graph,
+        true,
+        optionalFactories,
+        componentName);
   }
 }

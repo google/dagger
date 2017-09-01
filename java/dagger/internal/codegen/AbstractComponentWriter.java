@@ -34,7 +34,6 @@ import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
-import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -42,7 +41,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -57,7 +55,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
-import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -66,7 +63,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Provider;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
@@ -92,9 +88,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final ComponentBindingExpressions bindingExpressions;
   protected final ComponentRequirementFields componentRequirementFields;
-  // TODO(user): Merge into ComponentBindingExpressions after we refactor BindingKey.
-  private final Map<BindingKey, FrameworkInstanceBindingExpression>
-      producerFromProviderBindingExpressions = new LinkedHashMap<>();
   private final List<CodeBlock> initializations = new ArrayList<>();
   protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
   private final BindingExpression.Factory bindingExpressionFactory;
@@ -190,10 +183,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         parent.optionalFactories,
         parent.bindingExpressions.forChildComponent(),
         parent.componentRequirementFields.forChildComponent());
-  }
-
-  protected final ClassName componentDefinitionTypeName() {
-    return ClassName.get(graph.componentType());
   }
 
   /**
@@ -568,36 +557,5 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
           scope.equals(reusableScope(elements)) ? SINGLE_CHECK : DOUBLE_CHECK,
           factoryCreate);
     }
-  }
-
-  @Override
-  public ImmutableList<CodeBlock> getBindingDependencyExpressions(Binding binding) {
-    ImmutableList<FrameworkDependency> dependencies = binding.frameworkDependencies();
-    return dependencies.stream().map(this::getDependencyExpression).collect(toImmutableList());
-  }
-
-  @Override
-  public CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
-    return isProducerFromProvider(frameworkDependency)
-        ? getProducerFromProviderBindingExpression(frameworkDependency)
-            .getDependencyExpression(frameworkDependency.dependencyRequestKind(), name)
-        : bindingExpressions.getDependencyExpression(frameworkDependency, name);
-  }
-
-  private FrameworkInstanceBindingExpression getProducerFromProviderBindingExpression(
-      FrameworkDependency frameworkDependency) {
-    checkState(isProducerFromProvider(frameworkDependency));
-    return producerFromProviderBindingExpressions.computeIfAbsent(
-        frameworkDependency.bindingKey(),
-        dependencyKey ->
-            bindingExpressionFactory.forProducerFromProviderField(
-                graph.resolvedBindings().get(dependencyKey)));
-  }
-
-  private boolean isProducerFromProvider(FrameworkDependency frameworkDependency) {
-    ResolvedBindings resolvedBindings =
-        graph.resolvedBindings().get(frameworkDependency.bindingKey());
-    return resolvedBindings.frameworkClass().equals(Provider.class)
-        && frameworkDependency.frameworkClass().equals(Producer.class);
   }
 }

@@ -28,7 +28,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final BindingExpression delegate;
 
   SimpleInvocationBindingExpression(BindingExpression delegate) {
-    super(delegate.resolvedBindings(), delegate.componentName());
+    super(delegate.resolvedBindings());
     this.delegate = delegate;
   }
 

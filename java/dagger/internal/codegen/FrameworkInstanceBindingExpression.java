@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 
 import com.squareup.javapoet.ClassName;
@@ -38,86 +39,44 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   /** Returns a binding expression for a binding. */
   static FrameworkInstanceBindingExpression create(
       ResolvedBindings resolvedBindings,
-      ClassName componentName,
       Optional<FieldSpec> fieldSpec,
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
-      ComponentBindingExpressions componentBindingExpressions,
-      ComponentRequirementFields componentRequirementFields,
-      CompilerOptions compilerOptions,
-      BindingGraph graph,
-      OptionalFactories optionalFactories) {
+      FrameworkFieldInitializer frameworkFieldInitializer) {
     return new FrameworkInstanceBindingExpression(
         resolvedBindings,
-        componentName,
         fieldSpec,
         generatedComponentModel,
         memberSelect,
         resolvedBindings.bindingType().frameworkType(),
-        // TODO(user): When producerFromProvider is moved, this initialization can be moved
-        // to BindingExpression.Factory
-        new FrameworkFieldInitializer(
-            generatedComponentModel,
-            componentBindingExpressions,
-            componentRequirementFields,
-            resolvedBindings,
-            compilerOptions,
-            false,
-            graph,
-            optionalFactories,
-            componentName));
-  }
-
-  /**
-   * Returns a binding expression that uses a {@link dagger.producers.Producer} instance derived
-   * from a {@link javax.inject.Provider}.
-   */
-  static FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
-      ResolvedBindings resolvedBindings,
-      ClassName componentName,
-      Optional<FieldSpec> fieldSpec,
-      GeneratedComponentModel generatedComponentModel,
-      MemberSelect memberSelect,
-      ComponentBindingExpressions componentBindingExpressions,
-      ComponentRequirementFields componentRequirementFields,
-      CompilerOptions compilerOptions,
-      BindingGraph graph,
-      OptionalFactories optionalFactories) {
-    return new FrameworkInstanceBindingExpression(
-        resolvedBindings,
-        componentName,
-        fieldSpec,
-        generatedComponentModel,
-        memberSelect,
-        FrameworkType.PRODUCER,
-        // TODO(user): When producerFromProvider is moved, this initialization can be moved
-        // to BindingExpression.Factory
-        new FrameworkFieldInitializer(
-            generatedComponentModel,
-            componentBindingExpressions,
-            componentRequirementFields,
-            resolvedBindings,
-            compilerOptions,
-            true,
-            graph,
-            optionalFactories,
-            componentName));
+        frameworkFieldInitializer);
   }
 
   private FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
-      ClassName componentName,
       Optional<FieldSpec> fieldSpec,
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
       FrameworkType frameworkType,
       FrameworkFieldInitializer fieldInitializer) {
-    super(resolvedBindings, componentName);
+    super(resolvedBindings);
     this.generatedComponentModel = generatedComponentModel;
     this.memberSelect = memberSelect;
     this.fieldSpec = fieldSpec;
     this.frameworkType = frameworkType;
     this.fieldInitializer = fieldInitializer;
+  }
+
+  FrameworkInstanceBindingExpression producerFromProvider(
+      FieldSpec fieldSpec, ClassName componentName) {
+    checkState(frameworkType.equals(FrameworkType.PROVIDER));
+    return new FrameworkInstanceBindingExpression(
+        resolvedBindings(),
+        Optional.of(fieldSpec),
+        generatedComponentModel,
+        MemberSelect.localField(componentName, fieldSpec.name),
+        FrameworkType.PRODUCER,
+        fieldInitializer.forProducerFromProvider());
   }
 
   @Override

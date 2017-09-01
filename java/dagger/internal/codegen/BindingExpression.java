@@ -18,9 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
-import static dagger.internal.codegen.FrameworkInstanceBindingExpression.producerFromProviderBindingExpression;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
-import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
@@ -33,21 +31,14 @@ import javax.lang.model.util.Elements;
 /** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
   private final ResolvedBindings resolvedBindings;
-  private final ClassName componentName;
 
-  BindingExpression(ResolvedBindings resolvedBindings, ClassName componentName) {
+  BindingExpression(ResolvedBindings resolvedBindings) {
     this.resolvedBindings = checkNotNull(resolvedBindings);
-    this.componentName = checkNotNull(componentName);
   }
 
   /** The binding this instance uses to fulfill requests. */
   final ResolvedBindings resolvedBindings() {
     return resolvedBindings;
-  }
-
-  /** The name of the component owning this binding expression. */
-  final ClassName componentName() {
-    return componentName;
   }
 
   /**
@@ -102,23 +93,6 @@ abstract class BindingExpression {
       return create(resolvedBindings, Optional.of(fieldSpec), memberSelect);
     }
 
-    FrameworkInstanceBindingExpression forProducerFromProviderField(
-        ResolvedBindings resolvedBindings) {
-      FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.of(PRODUCER));
-      MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
-      return producerFromProviderBindingExpression(
-          resolvedBindings,
-          componentName,
-          Optional.of(fieldSpec),
-          generatedComponentModel,
-          memberSelect,
-          componentBindingExpressions,
-          componentRequirementFields,
-          compilerOptions,
-          graph,
-          optionalFactories);
-    }
-
     /** Creates a binding expression for a static method call. */
     Optional<BindingExpression> forStaticMethod(ResolvedBindings resolvedBindings) {
       return staticMemberSelect(resolvedBindings)
@@ -159,22 +133,34 @@ abstract class BindingExpression {
         ResolvedBindings resolvedBindings,
         Optional<FieldSpec> fieldSpec,
         MemberSelect memberSelect) {
-      FrameworkInstanceBindingExpression bindingExpression =
+      FrameworkFieldInitializer frameworkFieldInitializer =
+          new FrameworkFieldInitializer(
+              generatedComponentModel,
+              componentBindingExpressions,
+              componentRequirementFields,
+              resolvedBindings,
+              compilerOptions,
+              graph,
+              optionalFactories,
+              componentName);
+      FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
           FrameworkInstanceBindingExpression.create(
               resolvedBindings,
-              componentName,
               fieldSpec,
               generatedComponentModel,
               memberSelect,
-              componentBindingExpressions,
-              componentRequirementFields,
-              compilerOptions,
-              graph,
-              optionalFactories);
+              frameworkFieldInitializer);
 
       if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
-        return bindingExpression;
+        return frameworkInstanceBindingExpression;
       }
+
+      BindingExpression bindingExpression =
+          new ProviderOrProducerBindingExpression(
+              frameworkInstanceBindingExpression,
+              frameworkInstanceBindingExpression.producerFromProvider(
+                  generateFrameworkField(resolvedBindings, Optional.of(TypeNames.PRODUCER)),
+                  componentName));
 
       ProvisionBinding provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
       switch (provisionBinding.bindingKind()) {

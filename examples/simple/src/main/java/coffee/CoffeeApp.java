@@ -6,12 +6,12 @@ import javax.inject.Singleton;
 public class CoffeeApp {
   @Singleton
   @Component(modules = { DripCoffeeModule.class })
-  public interface Coffee {
+  public interface CoffeeShop {
     CoffeeMaker maker();
   }
 
   public static void main(String[] args) {
-    Coffee coffee = DaggerCoffeeApp_Coffee.builder().build();
-    coffee.maker().brew();
+    CoffeeShop coffeeShop = DaggerCoffeeApp_CoffeeShop.builder().build();
+    coffeeShop.maker().brew();
   }
 }

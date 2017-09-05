@@ -31,7 +31,7 @@ public final class MapOfProducerProducerTest {
   @Test
   public void success() throws Exception {
     MapOfProducerProducer<Integer, String> mapOfProducerProducer =
-        MapOfProducerProducer.<Integer, String>builder(2)
+        MapOfProducerProducer.<Integer, String>builder()
             .put(15, Producers.<String>immediateProducer("fifteen"))
             .put(42, Producers.<String>immediateProducer("forty two"))
             .build();
@@ -47,7 +47,7 @@ public final class MapOfProducerProducerTest {
   public void failingContributionDoesNotFailMap() throws Exception {
     RuntimeException cause = new RuntimeException("monkey");
     MapOfProducerProducer<Integer, String> mapOfProducerProducer =
-        MapOfProducerProducer.<Integer, String>builder(2)
+        MapOfProducerProducer.<Integer, String>builder()
             .put(15, Producers.<String>immediateProducer("fifteen"))
             .put(42, Producers.<String>immediateFailedProducer(cause))
             .build();

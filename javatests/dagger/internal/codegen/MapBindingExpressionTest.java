@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompilerWithoutGuava;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -29,65 +30,58 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class SetBindingRequestFulfillmentTest {
-
+public class MapBindingExpressionTest {
   public static final CodeBlock NPE_FROM_PROVIDES =
       CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
 
   @Test
-  public void setBindings() {
-    JavaFileObject emptySetModuleFile = JavaFileObjects.forSourceLines("test.EmptySetModule",
+  public void mapBindings() {
+    JavaFileObject mapModuleFile = JavaFileObjects.forSourceLines("test.MapModule",
         "package test;",
         "",
         "import dagger.Module;",
         "import dagger.Provides;",
-        "import dagger.multibindings.ElementsIntoSet;",
+        "import dagger.multibindings.IntKey;",
+        "import dagger.multibindings.IntoMap;",
+        "import dagger.multibindings.LongKey;",
         "import dagger.multibindings.Multibinds;",
-        "import java.util.Collections;",
-        "import java.util.Set;",
+        "import java.util.Map;",
         "",
         "@Module",
-        "abstract class EmptySetModule {",
-        "  @Multibinds abstract Set<Object> objects();",
-        "",
-        "  @Provides @ElementsIntoSet",
-        "  static Set<String> emptySet() { ",
-        "    return Collections.emptySet();",
-        "  }",
-        "}");
-    JavaFileObject setModuleFile = JavaFileObjects.forSourceLines("test.SetModule",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import dagger.multibindings.IntoSet;",
-        "",
-        "@Module",
-        "final class SetModule {",
-        "  @Provides @IntoSet static String string() { return \"\"; }",
+        "interface MapModule {",
+        "  @Multibinds Map<String, String> stringMap();",
+        "  @Provides @IntoMap @IntKey(0) static int provideInt() { return 0; }",
+        "  @Provides @IntoMap @LongKey(0) static long provideLong0() { return 0; }",
+        "  @Provides @IntoMap @LongKey(1) static long provideLong1() { return 1; }",
+        "  @Provides @IntoMap @LongKey(2) static long provideLong2() { return 2; }",
         "}");
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
-        "import java.util.Set;",
+        "import java.util.Map;",
         "import javax.inject.Provider;",
         "",
-        "@Component(modules = {EmptySetModule.class, SetModule.class})",
+        "@Component(modules = MapModule.class)",
         "interface TestComponent {",
-        "  Set<String> strings();",
-        "  Set<Object> objects();",
+        "  Map<String, String> strings();",
+        "  Map<String, Provider<String>> providerStrings();",
+        "",
+        "  Map<Integer, Integer> ints();",
+        "  Map<Integer, Provider<Integer>> providerInts();",
+        "  Map<Long, Long> longs();",
+        "  Map<Long, Provider<Long>> providerLongs();",
         "}");
     JavaFileObject generatedComponent =
         JavaFileObjects.forSourceLines(
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import dagger.internal.Preconditions;",
-            "import dagger.internal.SetBuilder;",
+            "import dagger.internal.MapBuilder;",
             "import java.util.Collections;",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
@@ -102,18 +96,42 @@ public class SetBindingRequestFulfillmentTest {
             "  }",
             "",
             "  @Override",
-            "  public Set<String> strings() {",
-            "    return SetBuilder.<String>newSetBuilder(2)",
-            "        .addAll(Preconditions.checkNotNull(",
-            "            EmptySetModule.emptySet(), " + NPE_FROM_PROVIDES + "))",
-            "        .add(Preconditions.checkNotNull(",
-            "            SetModule.string(), " + NPE_FROM_PROVIDES + "))",
-            "        .build();",
+            "  public Map<String, String> strings() {",
+            "    return Collections.<String, String>emptyMap();",
             "  }",
             "",
             "  @Override",
-            "  public Set<Object> objects() {",
-            "    return Collections.<Object>emptySet();",
+            "  public Map<String, Provider<String>> providerStrings() {",
+            "    return Collections.<String, Provider<String>>emptyMap();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<Integer, Integer> ints() {",
+            "    return Collections.<Integer, Integer>singletonMap(0, MapModule.provideInt());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<Integer, Provider<Integer>> providerInts() {",
+            "    return Collections.<Integer, Provider<Integer>>singletonMap(",
+            "        0, MapModule_ProvideIntFactory.create());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<Long, Long> longs() {",
+            "    return MapBuilder.<Long, Long>newMapBuilder(3)",
+            "      .put(0L, MapModule.provideLong0())",
+            "      .put(1L, MapModule.provideLong1())",
+            "      .put(2L, MapModule.provideLong2())",
+            "      .build();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<Long, Provider<Long>> providerLongs() {",
+            "    return MapBuilder.<Long, Provider<Long>>newMapBuilder(3)",
+            "      .put(0L, MapModule_ProvideLong0Factory.create())",
+            "      .put(1L, MapModule_ProvideLong1Factory.create())",
+            "      .put(2L, MapModule_ProvideLong2Factory.create())",
+            "      .build();",
             "  }",
             "",
             "  public static final class Builder {",
@@ -123,16 +141,9 @@ public class SetBindingRequestFulfillmentTest {
             "    public TestComponent build() {",
             "      return new DaggerTestComponent(this);",
             "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder setModule(SetModule setModule) {",
-            "      Preconditions.checkNotNull(setModule);",
-            "      return this;",
-            "    }",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompilerWithoutGuava().compile(emptySetModuleFile, setModuleFile, componentFile);
+    Compilation compilation = daggerCompilerWithoutGuava().compile(mapModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -147,22 +158,16 @@ public class SetBindingRequestFulfillmentTest {
             "package other;",
             "",
             "class Inaccessible {}");
-    JavaFileObject inaccessible2 =
-        JavaFileObjects.forSourceLines(
-            "other.Inaccessible2",
-            "package other;",
-            "",
-            "class Inaccessible2 {}");
     JavaFileObject usesInaccessible =
         JavaFileObjects.forSourceLines(
             "other.UsesInaccessible",
             "package other;",
             "",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "import javax.inject.Inject;",
             "",
             "public class UsesInaccessible {",
-            "  @Inject UsesInaccessible(Set<Inaccessible> set1, Set<Inaccessible2> set2) {}",
+            "  @Inject UsesInaccessible(Map<Integer, Inaccessible> map) {}",
             "}");
 
     JavaFileObject module =
@@ -171,20 +176,12 @@ public class SetBindingRequestFulfillmentTest {
             "package other;",
             "",
             "import dagger.Module;",
-            "import dagger.Provides;",
-            "import dagger.multibindings.ElementsIntoSet;",
             "import dagger.multibindings.Multibinds;",
-            "import java.util.Collections;",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "",
             "@Module",
             "public abstract class TestModule {",
-            "  @Multibinds abstract Set<Inaccessible> objects();",
-            "",
-            "  @Provides @ElementsIntoSet",
-            "  static Set<Inaccessible2> emptySet() { ",
-            "    return Collections.emptySet();",
-            "  }",
+            "  @Multibinds abstract Map<Integer, Inaccessible> ints();",
             "}");
     JavaFileObject componentFile =
         JavaFileObjects.forSourceLines(
@@ -192,7 +189,7 @@ public class SetBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import dagger.Component;",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "import javax.inject.Provider;",
             "import other.TestModule;",
             "import other.UsesInaccessible;",
@@ -206,12 +203,9 @@ public class SetBindingRequestFulfillmentTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import dagger.internal.Preconditions;",
-            "import dagger.internal.SetBuilder;",
             "import java.util.Collections;",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "import javax.annotation.Generated;",
-            "import other.TestModule_EmptySetFactory;",
             "import other.UsesInaccessible;",
             "import other.UsesInaccessible_Factory;",
             "",
@@ -230,12 +224,7 @@ public class SetBindingRequestFulfillmentTest {
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newUsesInaccessible(",
-            "        (Set) Collections.emptySet(),",
-            "        (Set) SetBuilder.newSetBuilder(1)",
-            "            .addAll(Preconditions.checkNotNull(",
-            "                TestModule_EmptySetFactory.proxyEmptySet(),",
-            "                " + NPE_FROM_PROVIDES + "))",
-            "            .build());",
+            "        (Map) Collections.emptyMap());",
             "  }",
             "",
             "  public static final class Builder {",
@@ -247,8 +236,7 @@ public class SetBindingRequestFulfillmentTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompilerWithoutGuava()
-            .compile(module, inaccessible, inaccessible2, usesInaccessible, componentFile);
+        daggerCompilerWithoutGuava().compile(module, inaccessible, usesInaccessible, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -275,13 +263,13 @@ public class SetBindingRequestFulfillmentTest {
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
-            "import dagger.multibindings.IntoSet;",
+            "import dagger.multibindings.IntoMap;",
             "import dagger.multibindings.StringKey;",
             "",
             "@Module",
             "class ParentModule {",
-            "  @Provides @IntoSet static Object parentObject() {",
-            "    return \"parent object\";",
+            "  @Provides @IntoMap @StringKey(\"parent key\") Object parentKeyObject() {",
+            "    return \"parent value\";",
             "  }",
             "}");
     JavaFileObject child =
@@ -290,11 +278,12 @@ public class SetBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import dagger.Subcomponent;",
-            "import java.util.Set;",
+            "import java.util.Map;",
+            "import java.util.Map;",
             "",
             "@Subcomponent",
             "interface Child {",
-            "  Set<Object> objectSet();",
+            "  Map<String, Object> objectMap();",
             "}");
     JavaFileObject expected =
         JavaFileObjects.forSourceLines(
@@ -303,12 +292,16 @@ public class SetBindingRequestFulfillmentTest {
             "",
             "import dagger.internal.Preconditions;",
             "import java.util.Collections;",
-            "import java.util.Set;",
+            "import java.util.Map;",
             "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
-            "  private DaggerParent(Builder builder) {}",
+            "  private ParentModule parentModule;",
+            "",
+            "  private DaggerParent(Builder builder) {",
+            "    initialize(builder);",
+            "  }",
             "",
             "  public static Builder builder() {",
             "    return new Builder();",
@@ -318,21 +311,30 @@ public class SetBindingRequestFulfillmentTest {
             "    return new Builder().build();",
             "  }",
             "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.parentModule = builder.parentModule;",
+            "  }",
+            "",
             "  @Override",
             "  public Child child() {",
             "    return new ChildImpl();",
             "  }",
             "",
             "  public static final class Builder {",
+            "    private ParentModule parentModule;",
+            "",
             "    private Builder() {}",
             "",
             "    public Parent build() {",
+            "      if (parentModule == null) {",
+            "        this.parentModule = new ParentModule();",
+            "      }",
             "      return new DaggerParent(this);",
             "    }",
             "",
-            "    @Deprecated",
             "    public Builder parentModule(ParentModule parentModule) {",
-            "      Preconditions.checkNotNull(parentModule);",
+            "      this.parentModule = Preconditions.checkNotNull(parentModule);",
             "      return this;",
             "    }",
             "  }",
@@ -341,9 +343,12 @@ public class SetBindingRequestFulfillmentTest {
             "    private ChildImpl() {}",
             "",
             "    @Override",
-            "    public Set<Object> objectSet() {",
-            "      return Collections.<Object>singleton(Preconditions.checkNotNull(",
-            "          ParentModule.parentObject(), " + NPE_FROM_PROVIDES + "));",
+            "    public Map<String, Object> objectMap() {",
+            "      return Collections.<String, Object>singletonMap(",
+            "          \"parent key\",",
+            "          Preconditions.checkNotNull(",
+            "              DaggerParent.this.parentModule.parentKeyObject(),",
+            "              " + NPE_FROM_PROVIDES_METHOD + ");",
             "    }",
             "  }",
             "}");

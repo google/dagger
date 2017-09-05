@@ -30,7 +30,6 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
@@ -994,8 +993,7 @@ final class BindingGraphValidator {
             .stream()
             .map(ContributionBinding::bindingKind)
             // TODO(dpb): Kill with fire.
-            .anyMatch(
-                kind -> SYNTHETIC_MULTIBOUND_KINDS.contains(kind) || SYNTHETIC_MAP.equals(kind))) {
+            .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)) {
           reportMultipleContributionTypes();
           return;
         }

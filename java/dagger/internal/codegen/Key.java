@@ -546,12 +546,15 @@ abstract class Key {
     }
 
     /**
-     * Optionally extract a {@link Key} for the underlying provision binding(s) if such a
-     * valid key can be inferred from the given key.  Specifically, if the key represents a
-     * {@link Map}{@code <K, V>}, a key of {@code Map<K, Provider<V>>} will be returned.
+     * Optionally extract a {@link Key} for the underlying provision binding(s) if such a valid key
+     * can be inferred from the given key. Specifically, if the key represents a {@link Map}{@code
+     * <K, V>} or {@code Map<K, Producer<V>>}, a key of {@code Map<K, Provider<V>>} will be
+     * returned.
      */
     Optional<Key> implicitMapProviderKeyFrom(Key possibleMapKey) {
-      return wrapMapKey(possibleMapKey, Provider.class);
+      return firstPresent(
+          rewrapMapKey(possibleMapKey, Produced.class, Provider.class),
+          wrapMapKey(possibleMapKey, Provider.class));
     }
 
     /**

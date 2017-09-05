@@ -19,7 +19,6 @@ package dagger.producers.internal;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableMap;
 import dagger.producers.Producer;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -32,13 +31,10 @@ public final class MapProducerTest {
   @Test
   public void success() throws Exception {
     Producer<Map<Integer, String>> mapProducer =
-        MapProducer.create(
-            Producers.<Map<Integer, Producer<String>>>immediateProducer(
-                ImmutableMap.<Integer, Producer<String>>of(
-                    15,
-                    Producers.<String>immediateProducer("fifteen"),
-                    42,
-                    Producers.<String>immediateProducer("forty two"))));
+        MapProducer.<Integer, String>builder()
+            .put(15, Producers.immediateProducer("fifteen"))
+            .put(42, Producers.immediateProducer("forty two"))
+            .build();
     Map<Integer, String> map = mapProducer.get().get();
     assertThat(map).hasSize(2);
     assertThat(map).containsEntry(15, "fifteen");
@@ -49,27 +45,11 @@ public final class MapProducerTest {
   public void failingContribution() throws Exception {
     RuntimeException cause = new RuntimeException("monkey");
     Producer<Map<Integer, String>> mapProducer =
-        MapProducer.create(
-            Producers.<Map<Integer, Producer<String>>>immediateProducer(
-                ImmutableMap.<Integer, Producer<String>>of(
-                    15,
-                    Producers.<String>immediateProducer("fifteen"),
-                    42,
-                    Producers.<String>immediateFailedProducer(cause))));
-    try {
-      mapProducer.get().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e.getCause()).isSameAs(cause);
-    }
-  }
-
-  @Test
-  public void failingInput() throws Exception {
-    RuntimeException cause = new RuntimeException("monkey");
-    Producer<Map<Integer, String>> mapProducer =
-        MapProducer.create(
-            Producers.<Map<Integer, Producer<String>>>immediateFailedProducer(cause));
+        MapProducer.<Integer, String>builder()
+            .put(15, Producers.immediateProducer("fifteen"))
+            // TODO(ronshapiro): remove the type parameter when we drop java7 support
+            .put(42, Producers.<String>immediateFailedProducer(cause))
+            .build();
     try {
       mapProducer.get().get();
       fail();

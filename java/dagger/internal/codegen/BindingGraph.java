@@ -35,7 +35,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.VerifyException;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -519,7 +518,6 @@ abstract class BindingGraph {
 
             ImmutableSet.Builder<Optional<ContributionBinding>> maybeContributionBindings =
                 ImmutableSet.builder();
-            maybeContributionBindings.add(syntheticMapOfValuesBinding(requestKey));
             maybeContributionBindings.add(
                 syntheticMultibinding(
                     requestKey, multibindingContributions, multibindingDeclarations));
@@ -585,68 +583,14 @@ abstract class BindingGraph {
             owningResolver.componentDescriptor.subcomponentsByBuilderType().get(builderType));
       }
 
-      private Iterable<Key> keysMatchingRequest(Key requestKey) {
+      private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
         ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
         keys.add(requestKey);
         keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);
         keyFactory.rewrapMapKey(requestKey, Producer.class, Provider.class).ifPresent(keys::add);
         keyFactory.rewrapMapKey(requestKey, Provider.class, Producer.class).ifPresent(keys::add);
+        keys.addAll(keyFactory.implicitFrameworkMapKeys(requestKey));
         return keys.build();
-      }
-
-      /**
-       * If {@code key} is a {@code Map<K, V>} or {@code Map<K, Produced<V>>}, and there are any
-       * multibinding contributions or declarations that apply to that map, returns a synthetic
-       * binding for the {@code key} that depends on an {@linkplain #syntheticMultibinding(Key,
-       * Iterable, Iterable) underlying synthetic multibinding}.
-       *
-       * <p>The returned binding has the same {@link BindingType} as the underlying synthetic
-       * multibinding.
-       */
-      private Optional<ContributionBinding> syntheticMapOfValuesBinding(final Key key) {
-        return syntheticMultibinding(
-                key,
-                multibindingContributionsForValueMap(key),
-                multibindingDeclarationsForValueMap(key))
-            .map(
-                syntheticMultibinding -> {
-                  switch (syntheticMultibinding.bindingType()) {
-                    case PROVISION:
-                      return provisionBindingFactory.syntheticMapOfValuesBinding(key);
-
-                    case PRODUCTION:
-                      return productionBindingFactory.syntheticMapOfValuesOrProducedBinding(key);
-
-                    default:
-                      throw new VerifyException(syntheticMultibinding.toString());
-                  }
-                });
-      }
-
-      /**
-       * If {@code key} is for {@code Map<K, V>} or {@code Map<K, Produced<V>>}, returns all
-       * multibinding contributions whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
-       * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
-       */
-      private ImmutableSet<ContributionBinding> multibindingContributionsForValueMap(Key key) {
-        return keyFactory
-            .implicitFrameworkMapKeys(key)
-            .stream()
-            .flatMap(mapKey -> getExplicitMultibindings(mapKey).stream())
-            .collect(toImmutableSet());
-      }
-
-      /**
-       * If {@code key} is for {@code Map<K, V>} or {@code Map<K, Produced<V>>}, returns all
-       * multibinding declarations whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
-       * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
-       */
-      private ImmutableSet<MultibindingDeclaration> multibindingDeclarationsForValueMap(Key key) {
-        return keyFactory
-            .implicitFrameworkMapKeys(key)
-            .stream()
-            .flatMap(mapKey -> getMultibindingDeclarations(mapKey).stream())
-            .collect(toImmutableSet());
       }
 
       /**
@@ -1165,7 +1109,9 @@ abstract class BindingGraph {
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
-              && !getLocalExplicitMultibindings(resolvedBindings.key()).isEmpty();
+              && keysMatchingRequest(resolvedBindings.key())
+                  .stream()
+                  .anyMatch(key -> !getLocalExplicitMultibindings(key).isEmpty());
         }
 
         /**

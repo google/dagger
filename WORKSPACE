@@ -61,14 +61,14 @@ maven_jar(
 
 maven_jar(
     name = "com_google_errorprone_javac",
-    artifact = "com.google.errorprone:javac:9-dev-r3297-1-shaded",
-    sha1 = "0f6d4998965282068a3feecddc21578d23f17275",
+    artifact = "com.google.errorprone:javac-shaded:9-dev-r4023-3",
+    sha1 = "72b688efd290280a0afde5f9892b0fde6f362d1d",
 )
 
 maven_jar(
     name = "com_google_googlejavaformat_google_java_format",
-    artifact = "com.google.googlejavaformat:google-java-format:1.3",
-    sha1 = "949e85e75b3160ce1446aa99d806d5b509631b02",
+    artifact = "com.google.googlejavaformat:google-java-format:1.4",
+    sha1 = "c2f8925850e17caa6da0ed1891a9e9de9414c062",
 )
 
 maven_jar(

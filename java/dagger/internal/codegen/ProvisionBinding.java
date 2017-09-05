@@ -235,21 +235,6 @@ abstract class ProvisionBinding extends ContributionBinding {
           .build();
     }
 
-    /** A synthetic binding of {@code Map<K, V>} that depends on {@code Map<K, Provider<V>>}. */
-    ProvisionBinding syntheticMapOfValuesBinding(Key mapOfValuesKey) {
-      checkNotNull(mapOfValuesKey);
-      Optional<Key> mapOfProvidersKey = keyFactory.implicitMapProviderKeyFrom(mapOfValuesKey);
-      checkArgument(mapOfProvidersKey.isPresent(), "%s is not a key for Map<K, V>", mapOfValuesKey);
-      DependencyRequest requestForMapOfProviders =
-          dependencyRequestFactory.providerForImplicitMapBinding(mapOfProvidersKey.get());
-      return ProvisionBinding.builder()
-          .contributionType(ContributionType.UNIQUE)
-          .key(mapOfValuesKey)
-          .provisionDependencies(requestForMapOfProviders)
-          .bindingKind(Kind.SYNTHETIC_MAP)
-          .build();
-    }
-
     /**
      * A synthetic binding that depends explicitly on a set of individual provision multibinding
      * contribution methods.
@@ -262,7 +247,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .key(key)
           .provisionDependencies(
-              dependencyRequestFactory.forMultibindingContributions(multibindingContributions))
+              dependencyRequestFactory.forMultibindingContributions(key, multibindingContributions))
           .bindingKind(Kind.forMultibindingKey(key))
           .build();
     }

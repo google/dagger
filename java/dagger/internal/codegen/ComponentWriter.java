@@ -216,7 +216,7 @@ final class ComponentWriter extends AbstractComponentWriter {
               : "build";
       component.addMethod(
           methodBuilder("create")
-              .returns(componentDefinitionTypeName())
+              .returns(ClassName.get(graph.componentType()))
               .addModifiers(PUBLIC, STATIC)
               .addStatement("return new Builder().$L()", buildMethodName)
               .build());

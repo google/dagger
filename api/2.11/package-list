@@ -1,6 +1,8 @@
 dagger
 dagger.android
 dagger.android.support
+dagger.grpc.server
+dagger.grpc.server.processor
 dagger.multibindings
 dagger.producers
 dagger.producers.monitoring

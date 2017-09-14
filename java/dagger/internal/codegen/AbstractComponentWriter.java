@@ -34,6 +34,7 @@ import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -485,7 +486,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
 
   @Override
   public MethodSpec getMembersInjectionMethod(Key key) {
-    return membersInjectionMethods.computeIfAbsent(key, this::membersInjectionMethod);
+    return reentrantComputeIfAbsent(
+        membersInjectionMethods, key, this::membersInjectionMethod);
   }
 
   private MethodSpec membersInjectionMethod(Key key) {

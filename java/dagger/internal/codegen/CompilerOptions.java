@@ -32,6 +32,22 @@ import javax.tools.Diagnostic.Kind;
 @AutoValue
 abstract class CompilerOptions {
   abstract boolean usesProducers();
+
+  /**
+   * Returns true if the experimental Android mode is enabled.
+   *
+   * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
+   *
+   * <p> Issues related to this flag will not be supported. This flag could break your build, cause
+   * memory leaks in your app, or cause other unknown issues at runtime.
+   *
+   * <p>If enabled, the generated code will attempt to more aggressively inline creation logic for
+   * bindings inside of the component rather than in a separate factory class. Enabling this flag
+   * should reduced the class loading and the number of eagerly initialized fields, at the cost of
+   * potential memory leaks and higher per-provision instantiation time. Due to very slow
+   * classloading on Android, these trade-offs are potentially advantageous.
+   */
+  abstract boolean experimentalAndroidMode();
   abstract boolean writeProducerNameInToken();
   abstract Diagnostic.Kind nullableValidationKind();
 
@@ -52,6 +68,8 @@ abstract class CompilerOptions {
   static CompilerOptions create(ProcessingEnvironment processingEnv, Elements elements) {
     return builder()
         .usesProducers(elements.getTypeElement(Produces.class.getCanonicalName()) != null)
+        .experimentalAndroidMode(experimentalAndroidMode(processingEnv)
+            .equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
             writeProducerNameInToken(processingEnv).equals(FeatureStatus.ENABLED))
         .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
@@ -71,6 +89,7 @@ abstract class CompilerOptions {
   @AutoValue.Builder
   interface Builder {
     Builder usesProducers(boolean usesProduces);
+    Builder experimentalAndroidMode(boolean experimentalAndroidMode);
     Builder writeProducerNameInToken(boolean writeProducerNameInToken);
     Builder nullableValidationKind(Diagnostic.Kind kind);
     Builder privateMemberValidationKind(Diagnostic.Kind kind);
@@ -82,6 +101,8 @@ abstract class CompilerOptions {
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
     CompilerOptions build();
   }
+
+  static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
 
   static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
 
@@ -107,14 +128,24 @@ abstract class CompilerOptions {
   static final String IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT =
       "dagger.ignorePrivateAndStaticInjectionForComponent";
 
-  static final ImmutableSet<String> SUPPORTED_OPTIONS = ImmutableSet.of(
-        WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
-        DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
-        NULLABLE_VALIDATION_KEY,
-        PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
-        STATIC_MEMBER_VALIDATION_TYPE_KEY,
-        WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
-        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
+  static final ImmutableSet<String> SUPPORTED_OPTIONS =
+      ImmutableSet.of(
+          EXPERIMENTAL_ANDROID_MODE,
+          WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
+          DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
+          NULLABLE_VALIDATION_KEY,
+          PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
+          STATIC_MEMBER_VALIDATION_TYPE_KEY,
+          WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
+          IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
+
+  private static FeatureStatus experimentalAndroidMode(ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        EXPERIMENTAL_ANDROID_MODE,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
 
   private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
     return valueOf(

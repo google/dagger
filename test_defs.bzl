@@ -12,11 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Defines a set of build variants and the list of extra javacopts to build with.
+# The key will be appended to the generated test names to ensure uniqueness.
+BUILD_VARIANTS = {
+    "_ExperimentalAndroidMode": ["-Adagger.experimentalAndroidMode=enabled"]
+}
+
+# TODO(user): split into two functions for functional vs non-functional tests?
 def GenJavaTests(name, srcs, deps, test_only_deps=None, plugins=None, javacopts=None,
-                 lib_javacopts=None, test_javacopts=None):
-  _GenTests(native.java_library, native.java_test, name, srcs, deps, test_only_deps=test_only_deps,
-            plugins=plugins, javacopts=javacopts, lib_javacopts=lib_javacopts,
-            test_javacopts=test_javacopts)
+                 lib_javacopts=None, test_javacopts=None, functional=True):
+  _GenTests(native.java_library, native.java_test, name, srcs, deps, test_only_deps,
+            plugins, javacopts, lib_javacopts, test_javacopts, functional)
 
 def GenRobolectricTests(name, srcs, deps, test_only_deps=None, plugins=None, javacopts=None,
                         lib_javacopts=None, test_javacopts=None):
@@ -24,7 +30,20 @@ def GenRobolectricTests(name, srcs, deps, test_only_deps=None, plugins=None, jav
   pass
 
 def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps=None,
-              plugins=None, javacopts=None, lib_javacopts=None, test_javacopts=None):
+              plugins=None, javacopts=None, lib_javacopts=None, test_javacopts=None,
+              functional=True):
+  _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
+             plugins, javacopts, lib_javacopts, test_javacopts)
+
+  if functional:
+    for (suffix, extra_javacopts) in BUILD_VARIANTS.items():
+      _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
+                 plugins, javacopts, lib_javacopts, test_javacopts, suffix, extra_javacopts)
+
+
+def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
+               plugins, javacopts, lib_javacopts, test_javacopts, suffix="",
+               extra_javacopts=None):
   test_files = []
   supporting_files = []
   for src in srcs:
@@ -36,16 +55,19 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
   if not test_only_deps:
     test_only_deps = []
 
+  if not extra_javacopts:
+    extra_javacopts = []
+
   test_deps = test_only_deps + deps
-  if len(supporting_files) > 0:
-    supporting_files_name = name + "_lib"
+  if supporting_files:
+    supporting_files_name = name + suffix + "_lib"
     test_deps.append(":" + supporting_files_name)
     library_rule_type(
         name = supporting_files_name,
         deps = deps,
         srcs = supporting_files,
         plugins = plugins,
-        javacopts = (javacopts or []) + (lib_javacopts or []),
+        javacopts = extra_javacopts + (javacopts or []) + (lib_javacopts or []),
         testonly = 1,
     )
 
@@ -56,10 +78,10 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
       prefix_path = "javatests/"
     test_class = (PACKAGE_NAME + "/" + test_name).rpartition(prefix_path)[2].replace("/",".")
     test_rule_type(
-        name = test_name,
+        name = test_name + suffix,
         deps = test_deps,
         srcs = [test_file],
         plugins = plugins,
-        javacopts = (javacopts or []) + (test_javacopts or []),
+        javacopts = extra_javacopts + (javacopts or []) + (test_javacopts or []),
         test_class = test_class,
     )

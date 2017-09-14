@@ -160,7 +160,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
         generatedComponentModel.addInitialization(
-            CodeBlock.of("this.$L = new $T();", fieldName(), DELEGATE_FACTORY));
+            CodeBlock.of("this.$L = new $T<>();", fieldName(), DELEGATE_FACTORY));
         setFieldInitializationState(InitializationState.DELEGATED);
         break;
 

@@ -28,7 +28,7 @@ import javax.inject.Inject;
  * members will be injected again.
  */
 @Beta
-public abstract class DaggerDialogFragment extends Fragment implements HasFragmentInjector {
+public abstract class DaggerDialogFragment extends DialogFragment implements HasFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
 

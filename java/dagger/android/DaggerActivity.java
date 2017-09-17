@@ -19,6 +19,7 @@ package dagger.android;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
@@ -32,7 +33,7 @@ public abstract class DaggerActivity extends Activity implements HasFragmentInje
   @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     AndroidInjection.inject(this);
     super.onCreate(savedInstanceState);
   }

@@ -17,6 +17,7 @@
 package dagger.android.support;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import dagger.android.AndroidInjection;
@@ -38,7 +39,7 @@ public abstract class DaggerAppCompatActivity extends AppCompatActivity
   @Inject DispatchingAndroidInjector<android.app.Fragment> frameworkFragmentInjector;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     AndroidInjection.inject(this);
     super.onCreate(savedInstanceState);
   }

@@ -25,7 +25,7 @@ import dagger.internal.Beta;
 import javax.inject.Inject;
 
 /**
- * A {@link AppCompatDialogFragment} that injects its members in {@link #onAttach(Context)} and can be used to
+ * An {@link AppCompatDialogFragment} that injects its members in {@link #onAttach(Context)} and can be used to
  * inject child {@link Fragment}s attached to it. Note that when this fragment gets reattached, its
  * members will be injected again.
  */

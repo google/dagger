@@ -16,10 +16,10 @@
 
 package dagger.android.support.functional;
 
-import dagger.android.DaggerDialogFragment;
+import dagger.android.support.DaggerAppCompatDialogFragment;
 import java.util.Set;
 import javax.inject.Inject;
 
-public class TestDialogFragment extends DaggerDialogFragment {
+public class TestDialogFragment extends DaggerAppCompatDialogFragment {
   @Inject Set<Class<?>> componentHierarchy;
 }

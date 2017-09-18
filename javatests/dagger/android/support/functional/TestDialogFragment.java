@@ -16,24 +16,10 @@
 
 package dagger.android.support.functional;
 
-import android.os.Bundle;
-import dagger.android.support.DaggerAppCompatActivity;
+import dagger.android.support.DaggerAppCompatDialogFragment;
 import java.util.Set;
 import javax.inject.Inject;
 
-public final class TestActivity extends DaggerAppCompatActivity {
+public class TestDialogFragment extends DaggerAppCompatDialogFragment {
   @Inject Set<Class<?>> componentHierarchy;
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-
-    setContentView(R.layout.activity_layout);
-
-    getSupportFragmentManager()
-        .beginTransaction()
-        .add(new TestParentFragment(), "parent-fragment")
-        .add(new TestDialogFragment(), "dialog-fragment")
-        .commit();
-  }
 }

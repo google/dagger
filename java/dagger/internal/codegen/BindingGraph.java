@@ -801,6 +801,7 @@ abstract class BindingGraph {
 
         for (Resolver requestResolver : getResolverLineage().reverse()) {
           if (requestResolver.explicitBindingsSet.contains(binding)
+              || requestResolver.delegateDeclarations.containsKey(binding.key())
               || requestResolver.subcomponentDeclarations.containsKey(binding.key())) {
             return Optional.of(requestResolver);
           }

@@ -255,14 +255,6 @@ public class OptionalBindingRequestFulfillmentTest {
             "    public TestComponent build() {",
             "      return new DaggerTestComponent(this);",
             "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder testComponent_ProductionExecutorModule(",
-            "        TestComponent_ProductionExecutorModule",
-            "            testComponent_ProductionExecutorModule) {",
-            "      Preconditions.checkNotNull(testComponent_ProductionExecutorModule);",
-            "      return this;",
-            "    }",
             "  }",
             "}");
     Compilation compilation =

@@ -166,11 +166,13 @@ abstract class BindingExpression {
       switch (provisionBinding.bindingKind()) {
         case COMPONENT:
           return new ComponentInstanceBindingExpression(bindingExpression, componentName);
+
         case COMPONENT_DEPENDENCY:
           return new BoundInstanceBindingExpression(
               bindingExpression,
               ComponentRequirement.forDependency(provisionBinding.key().type()),
               componentRequirementFields);
+
         case COMPONENT_PROVISION:
           return new ComponentProvisionBindingExpression(
               bindingExpression,
@@ -178,23 +180,29 @@ abstract class BindingExpression {
               graph,
               componentRequirementFields,
               compilerOptions);
+
         case SUBCOMPONENT_BUILDER:
           return new SubcomponentBuilderBindingExpression(
               bindingExpression, subcomponentNames.get(resolvedBindings.bindingKey()));
+
         case SYNTHETIC_MULTIBOUND_SET:
           return new SetBindingExpression(
               provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
+
         case SYNTHETIC_MULTIBOUND_MAP:
           return new MapBindingExpression(
               provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
+
         case SYNTHETIC_OPTIONAL_BINDING:
           return new OptionalBindingExpression(
               provisionBinding, bindingExpression, componentBindingExpressions);
+
         case BUILDER_BINDING:
               return new BoundInstanceBindingExpression(
                   bindingExpression,
                   ComponentRequirement.forBinding(provisionBinding),
                   componentRequirementFields);
+
         case INJECTION:
         case PROVISION:
           if (!provisionBinding.scope().isPresent()
@@ -215,6 +223,7 @@ abstract class BindingExpression {
                 componentRequirementFields);
           }
           // fall through
+
         default:
           return bindingExpression;
       }

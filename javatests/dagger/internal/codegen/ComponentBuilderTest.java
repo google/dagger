@@ -16,15 +16,11 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
-import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -99,12 +95,11 @@ public class ComponentBuilderTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(injectableTypeFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    Compilation compilation = daggerCompiler().compile(injectableTypeFile, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerSimpleComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -192,12 +187,11 @@ public class ComponentBuilderTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    Compilation compilation = daggerCompiler().compile(moduleFile, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -310,12 +304,11 @@ public class ComponentBuilderTest {
             "    }",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(module1, module2, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    Compilation compilation = daggerCompiler().compile(module1, module2, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -340,15 +333,14 @@ public class ComponentBuilderTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.moreThanOne(),
                 "[test.SimpleComponent.Builder, test.SimpleComponent.Builder2]"))
-        .in(componentFile);
+        .inFile(componentFile);
   }
 
   @Test
@@ -368,12 +360,9 @@ public class ComponentBuilderTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.generics())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.generics()).inFile(componentFile);
   }
 
   @Test
@@ -387,12 +376,9 @@ public class ComponentBuilderTest {
             "",
             "@Component.Builder",
             "interface Builder {}");
-    assertAbout(javaSource())
-        .that(builder)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeInComponent())
-        .in(builder);
+    Compilation compilation = daggerCompiler().compile(builder);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeInComponent()).inFile(builder);
   }
 
   @Test
@@ -410,12 +396,9 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.missingBuildMethod())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.missingBuildMethod()).inFile(componentFile);
   }
 
   @Test
@@ -512,12 +495,9 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  private interface Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.isPrivate())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.isPrivate()).inFile(componentFile);
   }
 
   @Test
@@ -535,12 +515,9 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  abstract class Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeStatic())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeStatic()).inFile(componentFile);
   }
 
   @Test
@@ -558,11 +535,9 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  static class Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeAbstract());
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeAbstract()).inFile(componentFile);
   }
 
   @Test
@@ -582,12 +557,9 @@ public class ComponentBuilderTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs()).inFile(componentFile);
   }
 
   @Test
@@ -608,12 +580,9 @@ public class ComponentBuilderTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs()).inFile(componentFile);
   }
 
   @Test
@@ -631,12 +600,9 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  enum Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeClassOrInterface())
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeClassOrInterface()).inFile(componentFile);
   }
 
   @Test
@@ -656,13 +622,12 @@ public class ComponentBuilderTest {
             "    String build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.buildMustReturnComponentType())
-        .in(componentFile)
-        .onLine(10);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.buildMustReturnComponentType())
+        .inFile(componentFile)
+        .onLineContaining("String build();");
   }
 
   @Test
@@ -684,13 +649,12 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
-        .in(componentFile)
-        .onLine(13);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -711,13 +675,12 @@ public class ComponentBuilderTest {
             "    SimpleComponent create();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.twoBuildMethods(), "build"))
+        .inFile(componentFile)
+        .onLineContaining("SimpleComponent create();");
   }
 
   @Test
@@ -740,13 +703,12 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
-        .in(componentFile)
-        .onLine(14);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -768,17 +730,16 @@ public class ComponentBuilderTest {
             "    Builder set(Number n, Double d);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustTakeOneArg())
-        .in(componentFile)
-        .onLine(11)
-        .and()
-        .withErrorContaining(MSGS.methodsMustTakeOneArg())
-        .in(componentFile)
-        .onLine(12);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(componentFile)
+        .onLineContaining("Builder set(String s, Integer i);");
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(componentFile)
+        .onLineContaining("Builder set(Number n, Double d);");
   }
 
   @Test
@@ -801,15 +762,14 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.inheritedMethodsMustTakeOneArg(), "set1(java.lang.String,java.lang.Integer)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -830,13 +790,12 @@ public class ComponentBuilderTest {
             "    String set(Integer i);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
+        .inFile(componentFile)
+        .onLineContaining("String set(Integer i);");
   }
 
   @Test
@@ -859,14 +818,13 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -887,13 +845,12 @@ public class ComponentBuilderTest {
             "    <T> Builder set(T t);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
+        .inFile(componentFile)
+        .onLineContaining("<T> Builder set(T t);");
   }
 
   @Test
@@ -916,14 +873,13 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -959,17 +915,16 @@ public class ComponentBuilderTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(moduleFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(),
                 "test.TestModule",
                 "[set1(test.TestModule), set2(test.TestModule)]"))
-        .in(componentFile)
-        .onLine(11);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1008,15 +963,14 @@ public class ComponentBuilderTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(moduleFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
-        .in(componentFile)
-        .onLine(15);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1027,7 +981,6 @@ public class ComponentBuilderTest {
             "package test;",
             "",
             "import dagger.Component;",
-            "",
             "import javax.inject.Provider;",
             "",
             "@Component(modules = AbstractModule.class)",
@@ -1048,17 +1001,16 @@ public class ComponentBuilderTest {
             "",
             "@Module",
             "abstract class AbstractModule {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, abstractModule))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile, abstractModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.extraSetters(),
                 "[void test.SimpleComponent.Builder.abstractModule(test.AbstractModule), "
                     + "void test.SimpleComponent.Builder.other(String)]"))
-        .in(componentFile)
-        .onLine(10);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1128,17 +1080,18 @@ public class ComponentBuilderTest {
             "",
             "@Component",
             "interface OtherComponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, module2File, module3File, componentFile, otherComponent))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(moduleFile, module2File, module3File, componentFile, otherComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             // Ignores Test2Module because we can construct it ourselves.
             // TODO(sameb): Ignore Test3Module because it's not used within transitive dependencies.
             String.format(
                 MSGS.missingSetters(), "[test.TestModule, test.Test3Module, test.OtherComponent]"))
-        .in(componentFile)
-        .onLine(12);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test

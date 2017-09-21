@@ -21,7 +21,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -58,17 +57,16 @@ import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.releasablereferences.CanReleaseReferences;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -193,13 +191,11 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     return FieldSpec.builder(type, componentFieldNames.getUniqueName(name));
   }
 
-  /** Adds the given code block to the initialize methods of the component. */
   @Override
   public void addInitialization(CodeBlock codeBlock) {
     initializations.add(codeBlock);
   }
 
-  /** Adds the given field to the component. */
   @Override
   public void addField(FieldSpec fieldSpec) {
     component.addField(fieldSpec);
@@ -357,6 +353,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
 
   private void implementInterfaceMethods() {
     Set<MethodSignature> interfaceMethodSignatures = Sets.newHashSet();
+    DeclaredType componentType = MoreTypes.asDeclared(graph.componentType().asType());
     for (ComponentMethodDescriptor componentMethod :
         graph.componentDescriptor().componentMethods()) {
       if (componentMethod.dependencyRequest().isPresent()) {
@@ -364,16 +361,14 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         ExecutableElement methodElement =
             MoreElements.asExecutable(componentMethod.methodElement());
         ExecutableType requestType =
-            MoreTypes.asExecutable(
-                types.asMemberOf(
-                    MoreTypes.asDeclared(graph.componentType().asType()), methodElement));
+            MoreTypes.asExecutable(types.asMemberOf(componentType, methodElement));
         MethodSignature signature =
             MethodSignature.fromExecutableType(
                 methodElement.getSimpleName().toString(), requestType);
         if (!interfaceMethodSignatures.contains(signature)) {
           interfaceMethodSignatures.add(signature);
           MethodSpec.Builder interfaceMethod =
-              methodSpecForComponentMethod(methodElement, requestType);
+              MethodSpec.overriding(methodElement, componentType, types);
           List<? extends VariableElement> parameters = methodElement.getParameters();
           if (interfaceRequest.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR)
               && !parameters.isEmpty() /* i.e. it's not a request for a MembersInjector<T> */) {
@@ -403,38 +398,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         }
       }
     }
-  }
-
-  private MethodSpec.Builder methodSpecForComponentMethod(
-      ExecutableElement method, ExecutableType methodType) {
-    String methodName = method.getSimpleName().toString();
-    MethodSpec.Builder methodBuilder = methodBuilder(methodName);
-
-    methodBuilder.addAnnotation(Override.class);
-
-    Set<Modifier> modifiers = EnumSet.copyOf(method.getModifiers());
-    modifiers.remove(Modifier.ABSTRACT);
-    methodBuilder.addModifiers(modifiers);
-
-    methodBuilder.returns(TypeName.get(methodType.getReturnType()));
-
-    List<? extends VariableElement> parameters = method.getParameters();
-    List<? extends TypeMirror> resolvedParameterTypes = methodType.getParameterTypes();
-    verify(parameters.size() == resolvedParameterTypes.size());
-    for (int i = 0; i < parameters.size(); i++) {
-      VariableElement parameter = parameters.get(i);
-      TypeName type = TypeName.get(resolvedParameterTypes.get(i));
-      String name = parameter.getSimpleName().toString();
-      Set<Modifier> parameterModifiers = parameter.getModifiers();
-      ParameterSpec.Builder parameterBuilder =
-          ParameterSpec.builder(type, name)
-              .addModifiers(parameterModifiers.toArray(new Modifier[0]));
-      methodBuilder.addParameter(parameterBuilder.build());
-    }
-    for (TypeMirror thrownType : method.getThrownTypes()) {
-      methodBuilder.addException(TypeName.get(thrownType));
-    }
-    return methodBuilder;
   }
 
   private void addSubcomponents() {

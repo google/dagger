@@ -15,11 +15,6 @@
 package(default_visibility = ["//visibility:public"])
 
 java_library(
-    name = "jsr250_annotations",
-    exports = ["@javax_annotation_jsr250_api//jar"],
-)
-
-java_library(
     name = "jsr305_annotations",
     exports = ["@com_google_code_findbugs_jsr305//jar"],
 )
@@ -113,7 +108,6 @@ java_library(
     ],
     tags = ["maven:compile_only"],
     exports = [
-        ":jsr250_annotations",
         "@com_google_auto_value_auto_value//jar",
     ],
 )

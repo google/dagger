@@ -28,6 +28,7 @@ import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
+import static dagger.internal.codegen.MapKeys.mapKeyFactoryMethod;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkFieldUsages;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
@@ -272,8 +273,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     }
 
     ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
-
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
+    mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
 
     return Optional.of(factoryBuilder);
   }

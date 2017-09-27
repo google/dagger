@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
-import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
+import static dagger.internal.codegen.MapKeys.mapKeyType;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Optionals.firstPresent;
@@ -460,11 +460,10 @@ abstract class Key {
         case SET:
           return setOf(returnType);
         case MAP:
-          if (frameworkType.isPresent()) {
-            return mapOfFrameworkType(mapKeyType(method), frameworkType.get(), returnType);
-          } else {
-            return mapOf(mapKeyType(method), returnType);
-          }
+          TypeMirror mapKeyType = mapKeyType(getMapKey(method).get(), types);
+          return frameworkType.isPresent()
+              ? mapOfFrameworkType(mapKeyType, frameworkType.get(), returnType)
+              : mapOf(mapKeyType, returnType);
         case SET_VALUES:
           // TODO(gak): do we want to allow people to use "covariant return" here?
           checkArgument(SetType.isSet(returnType));
@@ -486,13 +485,6 @@ abstract class Key {
       return delegateDeclaration.contributionType().equals(ContributionType.MAP)
           ? wrapMapValue(delegateDeclaration.key(), frameworkType)
           : delegateDeclaration.key();
-    }
-
-    private TypeMirror mapKeyType(ExecutableElement method) {
-      AnnotationMirror mapKeyAnnotation = getMapKey(method).get();
-      return MapKeys.unwrapValue(mapKeyAnnotation).isPresent()
-          ? getUnwrappedMapKeyType(mapKeyAnnotation.getAnnotationType(), types)
-          : mapKeyAnnotation.getAnnotationType();
     }
 
     private Key forMethod(ExecutableElement method, TypeMirror keyType) {

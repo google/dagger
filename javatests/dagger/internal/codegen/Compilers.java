@@ -21,6 +21,7 @@ import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static com.google.testing.compile.Compiler.javac;
 import static java.util.stream.Collectors.joining;
 
+import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
 import com.google.testing.compile.Compiler;
 
@@ -29,7 +30,7 @@ final class Compilers {
 
   /** Returns a compiler that runs the Dagger processor. */
   static Compiler daggerCompiler() {
-    return javac().withProcessors(new ComponentProcessor());
+    return javac().withProcessors(new ComponentProcessor(), new AutoAnnotationProcessor());
   }
 
   static Compiler daggerCompilerWithoutGuava() {

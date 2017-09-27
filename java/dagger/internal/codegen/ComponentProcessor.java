@@ -126,7 +126,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =
-        new ProducerFactoryGenerator(filer, elements, compilerOptions);
+        new ProducerFactoryGenerator(filer, elements, types, compilerOptions);
     MonitoringModuleGenerator monitoringModuleGenerator =
         new MonitoringModuleGenerator(filer, elements);
     ProductionExecutorModuleGenerator productionExecutorModuleGenerator =

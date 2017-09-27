@@ -459,7 +459,7 @@ final class FrameworkFieldInitializer {
               getDependencyExpression(frameworkDependency));
       codeBlocks.add(
           CodeBlock.of(
-              ".put($L, $L)", getMapKeyExpression(contributionBinding.mapKey().get()), value));
+              ".put($L, $L)", getMapKeyExpression(contributionBinding, componentName), value));
     }
     codeBlocks.add(CodeBlock.of(".build()"));
 

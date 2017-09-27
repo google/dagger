@@ -40,7 +40,7 @@ public final class OptionalBindingComponentsPresentTest {
           {DaggerOptionalBindingComponents_PresentOptionalProvisionBindingComponent.create()}
         });
   }
-  
+
   private final OptionalBindingComponent component;
 
   public OptionalBindingComponentsPresentTest(OptionalBindingComponent component) {
@@ -76,5 +76,15 @@ public final class OptionalBindingComponentsPresentTest {
   @Test
   public void qualifiedOptionalProduced() throws Exception {
     assertThat(component.qualifiedOptionalProduced().get().get().get()).isEqualTo(QUALIFIED_VALUE);
+  }
+
+  @Test
+  public void optionalNullableProducer() throws Exception {
+    assertThat(component.optionalNullableProducer().get().get().get().get()).isNull();
+  }
+
+  @Test
+  public void optionalNullableProduced() throws Exception {
+    assertThat(component.optionalNullableProduced().get().get().get()).isNull();
   }
 }

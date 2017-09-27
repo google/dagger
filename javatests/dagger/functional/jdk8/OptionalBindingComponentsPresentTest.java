@@ -83,4 +83,19 @@ public final class OptionalBindingComponentsPresentTest {
     assertThat(component.qualifiedValues().optionalLazyProvider().get().get().get())
         .isEqualTo(QUALIFIED_VALUE);
   }
+
+  @Test
+  public void optionalNullableProvider() {
+    assertThat(component.optionalNullableProvider().get().get()).isNull();
+  }
+
+  @Test
+  public void optionalNullableLazy() {
+    assertThat(component.optionalNullableLazy().get().get()).isNull();
+  }
+
+  @Test
+  public void optionalNullableLazyProvider() {
+    assertThat(component.optionalNullableLazyProvider().get().get().get()).isNull();
+  }
 }

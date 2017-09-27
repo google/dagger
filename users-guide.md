@@ -498,13 +498,19 @@ binding for `CoffeeCozy`, the `Optional` will be absent.
 
 Specifically, you can inject any of the following:
 
-*   `Optional<CoffeeCozy>`
+*   `Optional<CoffeeCozy>` (unless there is a `@Nullable` binding for
+    `CoffeeCozy`; see below)
 *   `Optional<Provider<CoffeeCozy>>`
 *   `Optional<Lazy<CoffeeCozy>>`
 *   `Optional<Provider<Lazy<CoffeeCozy>>>`
 
 (You could also inject a `Provider` or `Lazy` or `Provider` of `Lazy` of any of
 those, but that isn't very useful.)
+
+If there is a binding for `CoffeeCozy`, and that binding is `@Nullable`, then it
+is a compile-time error to inject `Optional<CoffeeCozy>`, because `Optional`
+cannot contain `null`. You can always inject the other forms, because `Provider`
+and `Lazy` can always return `null` from their `get()` methods.
 
 An optional binding that is absent in one component can be present in a
 subcomponent if the subcomponent includes a binding for the underlying type.

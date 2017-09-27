@@ -104,7 +104,7 @@ public final class ComponentStructureFollowsControllerStructureApplication
 
     @Subcomponent(modules = ActivitySubcomponent.ActivityModule.class)
     interface ActivitySubcomponent extends AndroidInjector<TestActivity> {
-      @Module(subcomponents = ParentFragmentSubcomponent.class)
+      @Module(subcomponents = {ParentFragmentSubcomponent.class, DialogFragmentSubcomponent.class})
       abstract class ActivityModule {
         @Provides
         @IntoSet
@@ -117,6 +117,12 @@ public final class ComponentStructureFollowsControllerStructureApplication
         @FragmentKey(TestParentFragment.class)
         abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForParentFragment(
             ParentFragmentSubcomponent.Builder builder);
+
+        @Binds
+        @IntoMap
+        @FragmentKey(TestDialogFragment.class)
+        abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForDialogFragment(
+            DialogFragmentSubcomponent.Builder builder);
       }
 
       @Subcomponent.Builder
@@ -156,6 +162,21 @@ public final class ComponentStructureFollowsControllerStructureApplication
           @Subcomponent.Builder
           abstract class Builder extends AndroidInjector.Builder<TestChildFragment> {}
         }
+      }
+
+      @Subcomponent(modules = DialogFragmentSubcomponent.DialogFragmentModule.class)
+      interface DialogFragmentSubcomponent extends AndroidInjector<TestDialogFragment> {
+        @Module
+        abstract class DialogFragmentModule {
+          @Provides
+          @IntoSet
+          static Class<?> addToComponentHierarchy() {
+            return DialogFragmentSubcomponent.class;
+          }
+        }
+
+        @Subcomponent.Builder
+        abstract class Builder extends AndroidInjector.Builder<TestDialogFragment> {}
       }
     }
 

@@ -22,13 +22,26 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class ElidedFactoriesTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public ElidedFactoriesTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void simpleComponent() {
     JavaFileObject injectedType =
@@ -63,41 +76,89 @@ public class ElidedFactoriesTest {
             "interface SimpleComponent {",
             "  DependsOnInjected dependsOnInjected();",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private DaggerSimpleComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static SimpleComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public DependsOnInjected dependsOnInjected() {",
-            "    return new DependsOnInjected(new InjectedType());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public SimpleComponent build() {",
-            "      return new DaggerSimpleComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private DaggerSimpleComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private InjectedType getInjectedTypeInstance() {",
+                "    return new InjectedType();",
+                "  }",
+                "",
+                "  private DependsOnInjected getDependsOnInjectedInstance() {",
+                "    return new DependsOnInjected(getInjectedTypeInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public DependsOnInjected dependsOnInjected() {",
+                "    return getDependsOnInjectedInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private DaggerSimpleComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public DependsOnInjected dependsOnInjected() {",
+                "    return new DependsOnInjected(new InjectedType());",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     Compilation compilation =
-        daggerCompiler().compile(injectedType, dependsOnInjected, componentFile);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(injectedType, dependsOnInjected, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -155,54 +216,113 @@ public class ElidedFactoriesTest {
             "interface SimpleComponent {",
             "  NeedsProvider needsProvider();",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            "import dagger.internal.DoubleCheck;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private Provider<ScopedType> scopedTypeProvider;",
-            "  private Provider<DependsOnScoped> dependsOnScopedProvider;",
-            "  private DaggerSimpleComponent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static SimpleComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
-            "    this.dependsOnScopedProvider = ",
-            "        DependsOnScoped_Factory.create(scopedTypeProvider);",
-            "  }",
-            "",
-            "  @Override",
-            "  public NeedsProvider needsProvider() {",
-            "    return new NeedsProvider(dependsOnScopedProvider);",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public SimpleComponent build() {",
-            "      return new DaggerSimpleComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private Provider<ScopedType> scopedTypeProvider;",
+                "",
+                "  private Provider<DependsOnScoped> dependsOnScopedProvider;",
+                "",
+                "  private DaggerSimpleComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private NeedsProvider getNeedsProviderInstance() {",
+                "    return new NeedsProvider(dependsOnScopedProvider);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
+                "    this.dependsOnScopedProvider = ",
+                "        DependsOnScoped_Factory.create(scopedTypeProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public NeedsProvider needsProvider() {",
+                "    return getNeedsProviderInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private Provider<ScopedType> scopedTypeProvider;",
+                "  private Provider<DependsOnScoped> dependsOnScopedProvider;",
+                "  private DaggerSimpleComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
+                "    this.dependsOnScopedProvider = ",
+                "        DependsOnScoped_Factory.create(scopedTypeProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public NeedsProvider needsProvider() {",
+                "    return new NeedsProvider(dependsOnScopedProvider);",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     Compilation compilation =
-        daggerCompiler().compile(scopedType, dependsOnScoped, componentFile, needsProvider);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(scopedType, dependsOnScoped, componentFile, needsProvider);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -260,61 +380,126 @@ public class ElidedFactoriesTest {
             "  DependsOnScoped dependsOnScoped();",
             "}");
 
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            "import dagger.internal.DoubleCheck;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private Provider<ScopedType> scopedTypeProvider;",
-            "",
-            "  private DaggerSimpleComponent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static SimpleComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
-            "  }",
-            "",
-            "  @Override",
-            "  public Sub sub() {",
-            "    return new SubImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public SimpleComponent build() {",
-            "      return new DaggerSimpleComponent(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class SubImpl implements Sub {",
-            "    private SubImpl() {}",
-            "",
-            "    @Override",
-            "    public DependsOnScoped dependsOnScoped() {",
-            "      return new DependsOnScoped(",
-            "          DaggerSimpleComponent.this.scopedTypeProvider.get());",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private Provider<ScopedType> scopedTypeProvider;",
+                "",
+                "  private DaggerSimpleComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Sub sub() {",
+                "    return new SubImpl();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubImpl implements Sub {",
+                "    private SubImpl() {}",
+                "",
+                "    private DependsOnScoped getDependsOnScopedInstance() {",
+                "      return new DependsOnScoped(",
+                "          DaggerSimpleComponent.this.scopedTypeProvider.get());",
+                "    }",
+                "",
+                "    @Override",
+                "    public DependsOnScoped dependsOnScoped() {",
+                "      return getDependsOnScopedInstance();",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private Provider<ScopedType> scopedTypeProvider;",
+                "",
+                "  private DaggerSimpleComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Sub sub() {",
+                "    return new SubImpl();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubImpl implements Sub {",
+                "    private SubImpl() {}",
+                "",
+                "    @Override",
+                "    public DependsOnScoped dependsOnScoped() {",
+                "      return new DependsOnScoped(",
+                "          DaggerSimpleComponent.this.scopedTypeProvider.get());",
+                "    }",
+                "  }",
+                "}");
+    }
     Compilation compilation =
-        daggerCompiler().compile(scopedType, dependsOnScoped, componentFile, subcomponentFile);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(scopedType, dependsOnScoped, componentFile, subcomponentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")

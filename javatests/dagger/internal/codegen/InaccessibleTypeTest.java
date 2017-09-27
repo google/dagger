@@ -22,13 +22,26 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class InaccessibleTypeTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public InaccessibleTypeTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test public void basicInjectedType() {
     JavaFileObject noDepClassFile = JavaFileObjects.forSourceLines("foreign.NoDepClass",
         "package foreign;",
@@ -74,49 +87,112 @@ public class InaccessibleTypeTest {
         "interface TestComponent {",
         "  PublicClass publicClass();",
         "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import foreign.NoDepClass_Factory;",
-            "import foreign.NonPublicClass1_Factory;",
-            "import foreign.NonPublicClass2_Factory;",
-            "import foreign.PublicClass;",
-            "import foreign.PublicClass_Factory;",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public PublicClass publicClass() {",
-            "    return PublicClass_Factory.newPublicClass(",
-            "        NonPublicClass1_Factory.newNonPublicClass1(",
-            "            NoDepClass_Factory.newNoDepClass()),",
-            "        NonPublicClass2_Factory.newNonPublicClass2(",
-            "            NoDepClass_Factory.newNoDepClass()),",
-            "        NoDepClass_Factory.newNoDepClass());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import foreign.NoDepClass;",
+                "import foreign.NoDepClass_Factory;",
+                "import foreign.NonPublicClass1_Factory;",
+                "import foreign.NonPublicClass2_Factory;",
+                "import foreign.PublicClass;",
+                "import foreign.PublicClass_Factory;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private NoDepClass getNoDepClassInstance() {",
+                "    return NoDepClass_Factory.newNoDepClass();",
+                "  }",
+                "",
+                "  private Object getNonPublicClass1Instance() {",
+                "    return NonPublicClass1_Factory.newNonPublicClass1(getNoDepClassInstance());",
+                "  }",
+                "",
+                "  private Object getNonPublicClass2Instance() {",
+                "    return NonPublicClass2_Factory.newNonPublicClass2(getNoDepClassInstance());",
+                "  }",
+                "",
+                "  private PublicClass getPublicClassInstance() {",
+                "    return PublicClass_Factory.newPublicClass(",
+                "        getNonPublicClass1Instance(), ",
+                "        getNonPublicClass2Instance(), ",
+                "        getNoDepClassInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public PublicClass publicClass() {",
+                "    return getPublicClassInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import foreign.NoDepClass_Factory;",
+                "import foreign.NonPublicClass1_Factory;",
+                "import foreign.NonPublicClass2_Factory;",
+                "import foreign.PublicClass;",
+                "import foreign.PublicClass_Factory;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public PublicClass publicClass() {",
+                "    return PublicClass_Factory.newPublicClass(",
+                "        NonPublicClass1_Factory.newNonPublicClass1(",
+                "            NoDepClass_Factory.newNoDepClass()),",
+                "        NonPublicClass2_Factory.newNonPublicClass2(",
+                "            NoDepClass_Factory.newNoDepClass()),",
+                "        NoDepClass_Factory.newNoDepClass());",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(
             ImmutableList.of(
@@ -126,10 +202,13 @@ public class InaccessibleTypeTest {
                 nonPublicClass2File,
                 componentFile))
         .withCompilerOptions(
-            "-Xlint:-processing",
-            "-Xlint:rawtypes",
-            "-Xlint:unchecked",
-            "-Werror")
+            compilerMode
+                .javacopts()
+                .append(
+                    "-Xlint:-processing",
+                    "-Xlint:rawtypes",
+                    "-Xlint:unchecked",
+                    "-Werror"))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -192,60 +271,117 @@ public class InaccessibleTypeTest {
         "interface TestComponent {",
         "  void injectA(A a);",
         "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
-            "import foreign.B_MembersInjector;",
-            "import foreign.C_MembersInjector;",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public void injectA(A a) {",
-            "    injectA2(a);",
-            "  }",
-            "",
-            "  @CanIgnoreReturnValue",
-            "  private A injectA2(A instance) {",
-            "    D_MembersInjector.injectDep(instance, new NoDepClass());",
-            "    C_MembersInjector.injectDep(instance, new NoDepClass());",
-            "    B_MembersInjector.injectDep(instance, new NoDepClass());",
-            "    A_MembersInjector.injectDep(instance, new NoDepClass());",
-            "    return instance;",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import foreign.B_MembersInjector;",
+                "import foreign.C_MembersInjector;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private NoDepClass getNoDepClassInstance() {",
+                "    return new NoDepClass();",
+                "  }",
+                "",
+                "  @Override",
+                "  public void injectA(A a) {",
+                "    injectA2(a);",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private A injectA2(A instance) {",
+                "    D_MembersInjector.injectDep(instance, getNoDepClassInstance());",
+                "    C_MembersInjector.injectDep(instance, getNoDepClassInstance());",
+                "    B_MembersInjector.injectDep(instance, getNoDepClassInstance());",
+                "    A_MembersInjector.injectDep(instance, getNoDepClassInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import foreign.B_MembersInjector;",
+                "import foreign.C_MembersInjector;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public void injectA(A a) {",
+                "    injectA2(a);",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private A injectA2(A instance) {",
+                "    D_MembersInjector.injectDep(instance, new NoDepClass());",
+                "    C_MembersInjector.injectDep(instance, new NoDepClass());",
+                "    B_MembersInjector.injectDep(instance, new NoDepClass());",
+                "    A_MembersInjector.injectDep(instance, new NoDepClass());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(
             ImmutableList.of(
                 noDepClassFile, aClassFile, bClassFile, cClassFile, dClassFile, componentFile))
         .withCompilerOptions(
-            "-Xlint:-processing",
-            "-Xlint:rawtypes",
-            "-Xlint:unchecked",
-            "-Werror")
+            compilerMode
+                .javacopts()
+                .append(
+                    "-Xlint:-processing",
+                    "-Xlint:rawtypes",
+                    "-Xlint:unchecked",
+                    "-Werror"))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()

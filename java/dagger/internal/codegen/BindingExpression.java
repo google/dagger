@@ -207,13 +207,21 @@ abstract class BindingExpression {
         case PROVISION:
           if (!provisionBinding.scope().isPresent()
               && provisionBinding.bindingElement().isPresent()) {
-            return new SimpleMethodBindingExpression(
-                compilerOptions,
-                provisionBinding,
-                bindingExpression,
-                componentBindingExpressions,
-                generatedComponentModel,
-                componentRequirementFields);
+            BindingExpression simpleMethodBindingExpression =
+                new SimpleMethodBindingExpression(
+                    compilerOptions,
+                    provisionBinding,
+                    bindingExpression,
+                    componentBindingExpressions,
+                    generatedComponentModel,
+                    componentRequirementFields);
+            return compilerOptions.experimentalAndroidMode()
+                ? new PrivateMethodBindingExpression(
+                    resolvedBindings,
+                    componentName,
+                    generatedComponentModel,
+                    simpleMethodBindingExpression)
+                : simpleMethodBindingExpression;
           }
           // fall through
 

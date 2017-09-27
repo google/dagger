@@ -23,27 +23,24 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
 
 /** {@link Compiler} instances for testing Dagger. */
 final class Compilers {
+  private static final String GUAVA = "guava";
+
+  static final ImmutableList<String> CLASS_PATH_WITHOUT_GUAVA_OPTION =
+      ImmutableList.of(
+          "-classpath",
+          Splitter.on(PATH_SEPARATOR.value())
+              .splitToList(JAVA_CLASS_PATH.value())
+              .stream()
+              .filter(jar -> !jar.contains(GUAVA))
+              .collect(joining(PATH_SEPARATOR.value())));
 
   /** Returns a compiler that runs the Dagger processor. */
   static Compiler daggerCompiler() {
     return javac().withProcessors(new ComponentProcessor(), new AutoAnnotationProcessor());
-  }
-
-  static Compiler daggerCompilerWithoutGuava() {
-    return daggerCompiler().withOptions("-classpath", classpathWithoutGuava());
-  }
-
-  private static final String GUAVA = "guava";
-
-  private static String classpathWithoutGuava() {
-    return Splitter.on(PATH_SEPARATOR.value())
-        .splitToList(JAVA_CLASS_PATH.value())
-        .stream()
-        .filter(jar -> !jar.contains(GUAVA))
-        .collect(joining(PATH_SEPARATOR.value()));
   }
 }

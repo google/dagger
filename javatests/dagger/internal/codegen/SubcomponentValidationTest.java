@@ -24,13 +24,26 @@ import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
-public final class SubcomponentValidationTest {
+@RunWith(Parameterized.class)
+public class SubcomponentValidationTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public SubcomponentValidationTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test public void factoryMethod_missingModulesWithParameters() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
         "package test;",
@@ -68,14 +81,17 @@ public final class SubcomponentValidationTest {
         "    return object;",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile, moduleFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(componentFile, childComponentFile, moduleFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
             "test.ChildComponent requires modules which have no visible default constructors. "
                 + "Add the following modules as parameters to this method: "
                 + "test.ModuleWithParameters")
-        .in(componentFile).onLine(7);
+        .in(componentFile)
+        .onLine(7);
   }
 
   @Test public void factoryMethod_nonModuleParameter() {
@@ -95,12 +111,16 @@ public final class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(componentFile, childComponentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
             "Subcomponent factory methods may only accept modules, but java.lang.String is not.")
-        .in(componentFile).onLine(7).atColumn(43);
+        .in(componentFile)
+        .onLine(7)
+        .atColumn(43);
   }
 
   @Test public void factoryMethod_duplicateParameter() {
@@ -127,13 +147,17 @@ public final class SubcomponentValidationTest {
         "",
         "@Subcomponent(modules = TestModule.class)",
         "interface ChildComponent {}");
-    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
             "A module may only occur once an an argument in a Subcomponent factory method, "
                 + "but test.TestModule was already passed.")
-        .in(componentFile).onLine(7).atColumn(71);
+        .in(componentFile)
+        .onLine(7)
+        .atColumn(71);
   }
 
   @Test public void factoryMethod_superflouousModule() {
@@ -160,13 +184,16 @@ public final class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-    .processedWith(new ComponentProcessor())
-    .failsToCompile()
-    .withErrorContaining(
-        "test.TestModule is present as an argument to the test.ChildComponent factory method, but "
-            + "is not one of the modules used to implement the subcomponent.")
-                .in(componentFile).onLine(7);
+    assertAbout(javaSources())
+        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
+        .withCompilerOptions(compilerMode.javacopts())
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(
+            "test.TestModule is present as an argument to the test.ChildComponent factory method, "
+                + "but is not one of the modules used to implement the subcomponent.")
+        .in(componentFile)
+        .onLine(7);
   }
 
   @Test public void missingBinding() {
@@ -202,6 +229,7 @@ public final class SubcomponentValidationTest {
         "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
@@ -220,7 +248,9 @@ public final class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "final class NotASubcomponent {}");
-    assertAbout(javaSources()).that(ImmutableList.of(subcomponentFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(subcomponentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("interface");
@@ -258,7 +288,9 @@ public final class SubcomponentValidationTest {
         "final class ChildModule {",
         "  @Provides @Singleton Object provideObject() { return null; }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, subcomponentFile, moduleFile))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(componentFile, subcomponentFile, moduleFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("@Singleton");
@@ -352,90 +384,191 @@ public final class SubcomponentValidationTest {
             "  @Inject public void dep2Method() { }",
             "}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerParentComponent",
-            "package test;",
-            "",
-            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
-            "import dagger.internal.DoubleCheck;",
-            "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerParentComponent implements ParentComponent {",
-            "  private Provider<Dep1> dep1Provider;",
-            "  private Provider<Dep2> dep2Provider;",
-            "",
-            "  private DaggerParentComponent(Builder builder) {  ",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {  ",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {  ",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {  ",
-            "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
-            "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
-            "  }",
-            "",
-            "  @Override",
-            "  public Dep1 getDep1() {  ",
-            "    return dep1Provider.get();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Dep2 getDep2() {  ",
-            "    return dep2Provider.get();",
-            "  }",
-            "",
-            "  @Override",
-            "  public ChildComponent childComponent() {  ",
-            "    return new ChildComponentImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {  ",
-            "    }",
-            "  ",
-            "    public ParentComponent build() {  ",
-            "      return new DaggerParentComponent(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class ChildComponentImpl implements ChildComponent {",
-            "    private final ChildModule childModule;",
-            "  ",
-            "    private ChildComponentImpl() {  ",
-            "      this.childModule = new ChildModule();",
-            "    }",
-            "  ",
-            "    @Override",
-            "    public Object getObject() {  ",
-            "      return Preconditions.checkNotNull(",
-            "          childModule.provideObject(",
-            "              injectA(",
-            "                  A_Factory.newA(",
-            "                      new NeedsDep1(DaggerParentComponent.this.dep1Provider.get()),",
-            "                      DaggerParentComponent.this.dep1Provider.get(),",
-            "                      DaggerParentComponent.this.dep2Provider.get()))),",
-            "          " + NPE_FROM_PROVIDES_METHOD + ");",
-            "    }",
-            "",
-            "    @CanIgnoreReturnValue",
-            "    private A injectA(A instance) {",
-            "      A_MembersInjector.injectMethodA(instance);",
-            "      return instance;",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerParentComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerParentComponent implements ParentComponent {",
+                "  private Provider<Dep1> dep1Provider;",
+                "  private Provider<Dep2> dep2Provider;",
+                "",
+                "  private DaggerParentComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static ParentComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
+                "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Dep1 getDep1() {",
+                "    return dep1Provider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Dep2 getDep2() {",
+                "    return dep2Provider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ChildComponent childComponent() {",
+                "    return new ChildComponentImpl();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public ParentComponent build() {",
+                "      return new DaggerParentComponent(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class ChildComponentImpl implements ChildComponent {",
+                "    private final ChildModule childModule;",
+                "",
+                "    private ChildComponentImpl() {",
+                "      this.childModule = new ChildModule();",
+                "    }",
+                "",
+                "    private NeedsDep1 getNeedsDep1Instance() {",
+                "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());",
+                "    }",
+                "",
+                "    private A getAInstance() {",
+                "      return injectA(",
+                "          A_Factory.newA(",
+                "              getNeedsDep1Instance(),",
+                "              DaggerParentComponent.this.dep1Provider.get(),",
+                "              DaggerParentComponent.this.dep2Provider.get()));",
+                "    }",
+                "",
+                "    private Object getObjectInstance() {",
+                "      return Preconditions.checkNotNull(",
+                "          childModule.provideObject(getAInstance()),",
+                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    @Override",
+                "    public Object getObject() {",
+                "      return getObjectInstance();",
+                "    }",
+                "",
+                "    @CanIgnoreReturnValue",
+                "    private A injectA(A instance) {",
+                "      A_MembersInjector.injectMethodA(instance);",
+                "      return instance;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerParentComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerParentComponent implements ParentComponent {",
+                "  private Provider<Dep1> dep1Provider;",
+                "  private Provider<Dep2> dep2Provider;",
+                "",
+                "  private DaggerParentComponent(Builder builder) {  ",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {  ",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static ParentComponent create() {  ",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {  ",
+                "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
+                "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Dep1 getDep1() {  ",
+                "    return dep1Provider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Dep2 getDep2() {  ",
+                "    return dep2Provider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ChildComponent childComponent() {  ",
+                "    return new ChildComponentImpl();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {  ",
+                "    }",
+                "  ",
+                "    public ParentComponent build() {  ",
+                "      return new DaggerParentComponent(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class ChildComponentImpl implements ChildComponent {",
+                "    private final ChildModule childModule;",
+                "  ",
+                "    private ChildComponentImpl() {  ",
+                "      this.childModule = new ChildModule();",
+                "    }",
+                "  ",
+                "    @Override",
+                "    public Object getObject() {  ",
+                "      return Preconditions.checkNotNull(",
+                "          childModule.provideObject(",
+                "              injectA(",
+                "                  A_Factory.newA(",
+                "                      new NeedsDep1(",
+                "                          DaggerParentComponent.this.dep1Provider.get()),",
+                "                      DaggerParentComponent.this.dep1Provider.get(),",
+                "                      DaggerParentComponent.this.dep2Provider.get()))),",
+                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    @CanIgnoreReturnValue",
+                "    private A injectA(A instance) {",
+                "      A_MembersInjector.injectMethodA(instance);",
+                "      return instance;",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(
             ImmutableList.of(
@@ -446,10 +579,11 @@ public final class SubcomponentValidationTest {
                 needsDep1File,
                 dep1File,
                 dep2File))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
-        .generatesSources(componentGeneratedFile);
+        .generatesSources(generatedComponent);
   }
 
   @Test
@@ -576,6 +710,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent, foo, bar, baz, noConflict))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -664,6 +799,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent, sub, deepSub))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -746,6 +882,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent, sub, deepSub))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -839,6 +976,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent, top1, top2))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -908,6 +1046,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent, subcomponentWithSameSimpleNameAsParent))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -1012,6 +1151,7 @@ public final class SubcomponentValidationTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(parent))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -1064,6 +1204,7 @@ public final class SubcomponentValidationTest {
             "}");
 
     assertThat(module, component, subcomponent)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("test.Sub.Builder is bound multiple times:")

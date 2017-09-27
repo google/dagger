@@ -23,13 +23,26 @@ import static dagger.internal.codegen.GeneratedLines.NPE_FROM_COMPONENT_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class ComponentRequirementFieldTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public ComponentRequirementFieldTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void bindsInstance() {
     JavaFileObject component =
@@ -53,7 +66,8 @@ public class ComponentRequirementFieldTest {
             "    TestComponent build();",
             "  }",
             "}");
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -166,11 +180,95 @@ public class ComponentRequirementFieldTest {
             "  int i();",
             "  long l();",
             "}");
-    Compilation compilation = daggerCompiler().compile(module, otherPackageModule, component);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module, otherPackageModule, component);
     assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "import other.OtherPackageModule;",
+                "import other.OtherPackageModule_LFactory;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private ParentModule parentModule;",
+                "  private OtherPackageModule otherPackageModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private int getIntegerInstance() {",
+                "    return parentModule.i();",
+                "  }",
+                "",
+                "  private long getLongInstance() {",
+                "    return OtherPackageModule_LFactory.proxyL(otherPackageModule);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.parentModule = builder.parentModule;",
+                "    this.otherPackageModule = builder.otherPackageModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public int i() {",
+                "    return getIntegerInstance();",
+                "  }",
+                "",
+                "  @Override",
+                "  public long l() {",
+                "    return getLongInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private ParentModule parentModule;",
+                "    private OtherPackageModule otherPackageModule;",
+                "",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      if (parentModule == null) {",
+                "        this.parentModule = new ParentModule();",
+                "      }",
+                "      if (otherPackageModule == null) {",
+                "        this.otherPackageModule = new OtherPackageModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    public Builder parentModule(ParentModule parentModule) {",
+                "      this.parentModule = Preconditions.checkNotNull(parentModule);",
+                "      return this;",
+                "    }",
+                "",
+                "    public Builder otherPackageModule(OtherPackageModule otherPackageModule) {",
+                "      this.otherPackageModule = Preconditions.checkNotNull(otherPackageModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
@@ -239,7 +337,11 @@ public class ComponentRequirementFieldTest {
                 "      return this;",
                 "    }",
                 "  }",
-                "}"));
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -283,7 +385,10 @@ public class ComponentRequirementFieldTest {
             "  Dep depFromSubcomponent();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(dependency, component, subcomponent);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(dependency, component, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -438,7 +543,9 @@ public class ComponentRequirementFieldTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(parentModule, childModule, component, subcomponent);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(parentModule, childModule, component, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")

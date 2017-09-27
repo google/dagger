@@ -27,13 +27,26 @@ import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MapBindingComponentProcessorTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public MapBindingComponentProcessorTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void mapBindingsWithEnumKey() {
     JavaFileObject mapModuleOneFile =
@@ -189,14 +202,17 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(mapModuleOneFile,
-            mapModuleTwoFile,
-            enumKeyFile,
-            pathEnumFile,
-            HandlerFile,
-            LoginHandlerFile,
-            AdminHandlerFile,
-            componentFile))
+        .that(
+            ImmutableList.of(
+                mapModuleOneFile,
+                mapModuleTwoFile,
+                enumKeyFile,
+                pathEnumFile,
+                HandlerFile,
+                LoginHandlerFile,
+                AdminHandlerFile,
+                componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -623,12 +639,15 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(mapModuleOneFile,
-            mapModuleTwoFile,
-            HandlerFile,
-            LoginHandlerFile,
-            AdminHandlerFile,
-            componentFile))
+        .that(
+            ImmutableList.of(
+                mapModuleOneFile,
+                mapModuleTwoFile,
+                HandlerFile,
+                LoginHandlerFile,
+                AdminHandlerFile,
+                componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -786,13 +805,16 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(mapModuleOneFile,
-            mapModuleTwoFile,
-            wrappedClassKeyFile,
-            HandlerFile,
-            LoginHandlerFile,
-            AdminHandlerFile,
-            componentFile))
+        .that(
+            ImmutableList.of(
+                mapModuleOneFile,
+                mapModuleTwoFile,
+                wrappedClassKeyFile,
+                HandlerFile,
+                LoginHandlerFile,
+                AdminHandlerFile,
+                componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor(), new AutoAnnotationProcessor())
         .compilesWithoutError()
         .and()
@@ -948,17 +970,21 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "}");
     assertAbout(javaSources())
-        .that(ImmutableList.of(mapModuleOneFile,
-            mapModuleTwoFile,
-            enumKeyFile,
-            pathEnumFile,
-            HandlerFile,
-            LoginHandlerFile,
-            AdminHandlerFile,
-            componentFile)).
-        processedWith(new ComponentProcessor())
-            .compilesWithoutError()
-            .and().generatesSources(generatedComponent);
+        .that(
+            ImmutableList.of(
+                mapModuleOneFile,
+                mapModuleTwoFile,
+                enumKeyFile,
+                pathEnumFile,
+                HandlerFile,
+                LoginHandlerFile,
+                AdminHandlerFile,
+                componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(generatedComponent);
   }
 
   @Test
@@ -989,62 +1015,132 @@ public class MapBindingComponentProcessorTest {
         "interface TestComponent {",
         "  Map<String, String> dispatcher();",
         "}");
-    JavaFileObject generatedComponent = JavaFileObjects.forSourceLines("test.DaggerTestComponent",
-        "package test;",
-        "",
-        "import dagger.internal.Preconditions;",
-        "import java.util.Map;",
-        "import javax.annotation.Generated;",
-        "",
-        GENERATED_ANNOTATION,
-        "public final class DaggerTestComponent implements TestComponent {",
-        "  private MapModule mapModule;",
-        "",
-        "  private DaggerTestComponent(Builder builder) {",
-        "    initialize(builder);",
-        "  }",
-        "",
-        "  public static Builder builder() {",
-        "    return new Builder();",
-        "  }",
-        "",
-        "  public static TestComponent create() {",
-        "    return new Builder().build();",
-        "  }",
-        "",
-        "  @SuppressWarnings(\"unchecked\")",
-        "  private void initialize(final Builder builder) {",
-        "    this.mapModule = builder.mapModule;",
-        "  }",
-        "",
-        "  @Override",
-        "  public Map<String, String> dispatcher() {",
-        "    return Preconditions.checkNotNull(",
-        "        mapModule.provideAMap(), " + NPE_FROM_PROVIDES_METHOD + ");",
-        "  }",
-        "",
-        "  public static final class Builder {",
-        "    private MapModule mapModule;",
-        "",
-        "    private Builder() {",
-        "    }",
-        "",
-        "    public TestComponent build() {",
-        "      if (mapModule == null) {",
-        "        this.mapModule = new MapModule();",
-        "      }",
-        "      return new DaggerTestComponent(this);",
-        "    }",
-        "",
-        "    public Builder mapModule(MapModule mapModule) {",
-        "      this.mapModule = Preconditions.checkNotNull(mapModule);",
-        "      return this;",
-        "    }",
-        "  }",
-        "}");
-    assertAbout(javaSources()).that(ImmutableList.of(mapModuleFile,componentFile))
-        .processedWith(new ComponentProcessor()).compilesWithoutError()
-        .and().generatesSources(generatedComponent);
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import java.util.Map;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private MapModule mapModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Map<String, String> getMapOfStringAndStringInstance() {",
+                "    return Preconditions.checkNotNull(",
+                "        mapModule.provideAMap(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.mapModule = builder.mapModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Map<String, String> dispatcher() {",
+                "    return getMapOfStringAndStringInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private MapModule mapModule;",
+                "",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      if (mapModule == null) {",
+                "        this.mapModule = new MapModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    public Builder mapModule(MapModule mapModule) {",
+                "      this.mapModule = Preconditions.checkNotNull(mapModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import java.util.Map;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private MapModule mapModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.mapModule = builder.mapModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Map<String, String> dispatcher() {",
+                "    return Preconditions.checkNotNull(",
+                "        mapModule.provideAMap(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private MapModule mapModule;",
+                "",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public TestComponent build() {",
+                "      if (mapModule == null) {",
+                "        this.mapModule = new MapModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    public Builder mapModule(MapModule mapModule) {",
+                "      this.mapModule = Preconditions.checkNotNull(mapModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+    }
+    assertAbout(javaSources())
+        .that(ImmutableList.of(mapModuleFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
+        .processedWith(new ComponentProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(generatedComponent);
   }
 
   @Test
@@ -1084,6 +1180,7 @@ public class MapBindingComponentProcessorTest {
             "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(module, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("The same map key is bound more than once")
@@ -1142,6 +1239,7 @@ public class MapBindingComponentProcessorTest {
             "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(module, stringKeyTwoFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining("uses more than one @MapKey annotation type")

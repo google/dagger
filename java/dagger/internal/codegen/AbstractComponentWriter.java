@@ -201,6 +201,16 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   }
 
   @Override
+  public void addMethod(MethodSpec methodSpec) {
+    component.addMethod(methodSpec);
+  }
+
+  @Override
+  public String getUniqueMethodName(String name) {
+    return componentMethodNames.getUniqueName(name);
+  }
+
+  @Override
   public void addType(TypeSpec typeSpec) {
     component.addType(typeSpec);
   }

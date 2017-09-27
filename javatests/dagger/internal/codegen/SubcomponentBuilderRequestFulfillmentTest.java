@@ -22,13 +22,26 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class SubcomponentBuilderRequestFulfillmentTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public SubcomponentBuilderRequestFulfillmentTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void testInlinedSubcomponentBuilders_componentMethod() {
     JavaFileObject subcomponent =
@@ -68,56 +81,117 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  UsesSubcomponent usesSubcomponent();",
             "}");
 
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerC",
-            "package test;",
-            "",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerC implements C {",
-            "  private DaggerC(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static C create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Sub.Builder sBuilder() {",
-            "    return new SubBuilder();",
-            "  }",
-            "",
-            "  @Override",
-            "  public UsesSubcomponent usesSubcomponent() {",
-            "    return new UsesSubcomponent(new SubBuilder());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public C build() {",
-            "      return new DaggerC(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class SubBuilder implements Sub.Builder {",
-            "    @Override",
-            "    public Sub build() {",
-            "      return new SubImpl(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class SubImpl implements Sub {",
-            "    private SubImpl(SubBuilder builder) {}",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerC",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerC implements C {",
+                "  private DaggerC(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static C create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private UsesSubcomponent getUsesSubcomponentInstance() {",
+                "    return new UsesSubcomponent(new SubBuilder());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Sub.Builder sBuilder() {",
+                "    return new SubBuilder();",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesSubcomponent usesSubcomponent() {",
+                "    return getUsesSubcomponentInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public C build() {",
+                "      return new DaggerC(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubBuilder implements Sub.Builder {",
+                "    @Override",
+                "    public Sub build() {",
+                "      return new SubImpl(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubImpl implements Sub {",
+                "    private SubImpl(SubBuilder builder) {}",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerC",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerC implements C {",
+                "  private DaggerC(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static C create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Sub.Builder sBuilder() {",
+                "    return new SubBuilder();",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesSubcomponent usesSubcomponent() {",
+                "    return new UsesSubcomponent(new SubBuilder());",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public C build() {",
+                "      return new DaggerC(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubBuilder implements Sub.Builder {",
+                "    @Override",
+                "    public Sub build() {",
+                "      return new SubImpl(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class SubImpl implements Sub {",
+                "    private SubImpl(SubBuilder builder) {}",
+                "  }",
+                "}");
+    }
 
-    Compilation compilation = daggerCompiler().compile(subcomponent, usesSubcomponent, component);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(subcomponent, usesSubcomponent, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerC")

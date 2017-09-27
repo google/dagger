@@ -33,6 +33,7 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -40,10 +41,22 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MembersInjectionTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public MembersInjectionTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void parentClass_noInjectedMembers() {
     JavaFileObject childFile = JavaFileObjects.forSourceLines("test.Child",
@@ -68,43 +81,88 @@ public class MembersInjectionTest {
         "interface TestComponent {",
         "  Child child();",
         "}");
-    JavaFileObject generatedComponent = JavaFileObjects.forSourceLines(
-        "test.DaggerTestComponent",
-        "package test;",
-        "",
-        "import javax.annotation.Generated;",
-        "",
-        GENERATED_ANNOTATION,
-        "public final class DaggerTestComponent implements TestComponent {",
-        "  private DaggerTestComponent(Builder builder) {}",
-        "",
-        "  public static Builder builder() {",
-        "    return new Builder();",
-        "  }",
-        "",
-        "  public static TestComponent create() {",
-        "    return new Builder().build();",
-        "  }",
-        "",
-        "  @Override",
-        "  public Child child() {",
-        "    return new Child();",
-        "  }",
-        "",
-        "  public static final class Builder {",
-        "    private Builder() {",
-        "    }",
-        "",
-        "    public TestComponent build() {",
-        "      return new DaggerTestComponent(this);",
-        "    }",
-        "  }",
-        "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Child getChildInstance() {",
+                "    return new Child();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return getChildInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return new Child();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(ImmutableList.of(childFile, parentFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(generatedComponent);
+        .and()
+        .generatesSources(generatedComponent);
   }
 
   @Test
@@ -142,47 +200,101 @@ public class MembersInjectionTest {
         "interface TestComponent {",
         "  Child child();",
         "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Child child() {",
-            "    return injectChild(Child_Factory.newChild());",
-            "  }",
-            "",
-            "  @CanIgnoreReturnValue",
-            "  private Child injectChild(Child instance) {",
-            "    Parent_MembersInjector.injectDep(instance, new Dep());",
-            "    return instance;",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Dep getDepInstance() {",
+                "    return new Dep();",
+                "  }",
+                "",
+                "  private Child getChildInstance() {",
+                "    return injectChild(Child_Factory.newChild());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return getChildInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Child injectChild(Child instance) {",
+                "    Parent_MembersInjector.injectDep(instance, getDepInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return injectChild(Child_Factory.newChild());",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Child injectChild(Child instance) {",
+                "    Parent_MembersInjector.injectDep(instance, new Dep());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(ImmutableList.of(childFile, parentFile, depFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -242,6 +354,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -334,6 +447,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(a, a2, parent, child))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -400,6 +514,7 @@ public class MembersInjectionTest {
             "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -475,6 +590,7 @@ public class MembersInjectionTest {
             "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -552,6 +668,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -610,6 +727,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -660,6 +778,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(aFile, bFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -719,6 +838,7 @@ public class MembersInjectionTest {
           "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(nestedTypesFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -782,6 +902,7 @@ public class MembersInjectionTest {
             "}");
     assertAbout(javaSource())
         .that(nestedTypesFile)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(
             new ComponentProcessor(),
             new AbstractProcessor() {
@@ -798,10 +919,10 @@ public class MembersInjectionTest {
                 if (!done) {
                   done = true;
                   try (Writer writer =
-                          processingEnv
-                              .getFiler()
-                              .createSourceFile("test.GeneratedType")
-                              .openWriter()) {
+                      processingEnv
+                          .getFiler()
+                          .createSourceFile("test.GeneratedType")
+                          .openWriter()) {
                     writer.write(
                         Joiner.on('\n')
                             .join(
@@ -862,9 +983,11 @@ public class MembersInjectionTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(foo, fooModule, fooComponent))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesFileNamed(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
+        .and()
+        .generatesFileNamed(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
   }
 
   @Test
@@ -959,9 +1082,11 @@ public class MembersInjectionTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(foo, bar, parent, child, component))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(expectedMembersInjector);
+        .and()
+        .generatesSources(expectedMembersInjector);
   }
 
   @Test public void privateNestedClassError() {
@@ -977,8 +1102,12 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+        .withCompilerOptions(compilerMode.javacopts())
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS)
+        .in(file)
+        .onLine(6);
   }
 
   @Test public void privateNestedClassWarning() {
@@ -994,10 +1123,13 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .withCompilerOptions(
+            compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS)
+        .in(file)
+        .onLine(6);
   }
 
   @Test public void privateSuperclassIsOkIfNotInjectedInto() {
@@ -1015,6 +1147,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError();
   }
@@ -1043,11 +1176,16 @@ public class MembersInjectionTest {
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
     assertThat(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
-        .withErrorContaining("javax.inject.Provider cannot be provided").in(file).onLine(17)
+        .withErrorContaining("javax.inject.Provider cannot be provided")
+        .in(file)
+        .onLine(17)
         .and()
-        .withErrorContaining("javax.inject.Provider cannot be provided").in(file).onLine(18);
+        .withErrorContaining("javax.inject.Provider cannot be provided")
+        .in(file)
+        .onLine(18);
   }
 
   @Test
@@ -1139,7 +1277,8 @@ public class MembersInjectionTest {
             "    return new InjectedType();",
             "  }",
             "}");
-    Compilation compilation = daggerCompiler().compile(injectedType);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(injectedType);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.InjectedType_MembersInjector")
@@ -1197,7 +1336,9 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(foo, inaccessible, usesInaccessible, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, inaccessible, usesInaccessible, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("other.Inaccessible_MembersInjector")
@@ -1237,9 +1378,73 @@ public class MembersInjectionTest {
                 "    ((Inaccessible) instance).method((Foo) foo);",
                 "  }",
                 "}"));
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.Inaccessible_Factory;",
+                "import other.Inaccessible_MembersInjector;",
+                "import other.UsesInaccessible;",
+                "import other.UsesInaccessible_Factory;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Object getFooInstance() {",
+                "    return Foo_Factory.newFoo();",
+                "  }",
+                "",
+                "  private Object getInaccessibleInstance() {",
+                "    return injectInaccessible(Inaccessible_Factory.newInaccessible());",
+                "  }",
+                "",
+                "  private UsesInaccessible getUsesInaccessibleInstance() {",
+                "    return UsesInaccessible_Factory.newUsesInaccessible(",
+                "        getInaccessibleInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessible usesInaccessible() {",
+                "    return getUsesInaccessibleInstance();",
+                "  }",
+                "",
+                // TODO(ronshapiro): if possible, it would be great to rename "instance", but we
+                // need to make sure that this doesn't conflict with any framework field in this or
+                // any parent component
+                "  @CanIgnoreReturnValue",
+                "  private Object injectInaccessible(Object instance) {",
+                "    Inaccessible_MembersInjector.injectFoo(instance, getFooInstance());",
+                "    Inaccessible_MembersInjector.injectMethod(instance, getFooInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
@@ -1288,7 +1493,11 @@ public class MembersInjectionTest {
                 "      return new DaggerTestComponent(this);",
                 "    }",
                 "  }",
-                "}"));
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -1346,11 +1555,87 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
     assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "other.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import java.util.List;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "import other.InaccessiblesModule;",
+                "import other.InaccessiblesModule_InaccessiblesFactory;",
+                "import other.UsesInaccessibles;",
+                "import other.UsesInaccessibles_Factory;",
+                "import other.UsesInaccessibles_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider inaccessiblesProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private UsesInaccessibles getUsesInaccessiblesInstance() {",
+                "    return injectUsesInaccessibles(",
+                "        UsesInaccessibles_Factory.newUsesInaccessibles());",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.inaccessiblesProvider =",
+                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessibles usesInaccessibles() {",
+                "    return getUsesInaccessiblesInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {",
+                "    UsesInaccessibles_MembersInjector.injectInaccessibles(",
+                "        instance, (List) inaccessiblesProvider.get());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Deprecated",
+                "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
+                "      Preconditions.checkNotNull(inaccessiblesModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
             JavaFileObjects.forSourceLines(
                 "other.DaggerTestComponent",
                 "package test;",
@@ -1417,7 +1702,11 @@ public class MembersInjectionTest {
                 "      return this;",
                 "    }",
                 "  }",
-                "}"));
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -1475,11 +1764,73 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(foo, supertype, subtype, injectsSubtype, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, supertype, subtype, injectsSubtype, component);
     assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.InjectsSubtype;",
+                "import other.InjectsSubtype_Factory;",
+                "import other.Subtype_Factory;",
+                "import other.Supertype;",
+                "import other.Supertype_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Object getFooInstance() {",
+                "    return Foo_Factory.newFoo();",
+                "  }",
+                "",
+                "  private Object getSubtypeInstance() {",
+                "    return injectSubtype(Subtype_Factory.newSubtype());",
+                "  }",
+                "",
+                "  private InjectsSubtype getInjectsSubtypeInstance() {",
+                "    return InjectsSubtype_Factory.newInjectsSubtype(getSubtypeInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public InjectsSubtype injectsSubtype() {",
+                "    return getInjectsSubtypeInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Object injectSubtype(Object instance) {",
+                "    Supertype_MembersInjector.injectT((Supertype) instance, getFooInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
@@ -1525,6 +1876,10 @@ public class MembersInjectionTest {
                 "      return new DaggerTestComponent(this);",
                 "    }",
                 "  }",
-                "}"));
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 }

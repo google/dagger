@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,9 @@
 
 package dagger.functional.multipackage.a;
 
-import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 
-@SuppressWarnings("unused")
-public class UsesInaccessible {
+final class InaccessibleGeneric<T> {
   @Inject
-  public UsesInaccessible(
-      Inaccessible inaccessible,
-      Set<Inaccessible> inaccessibleSet,
-      Map<String, Inaccessible> inaccessibleMap,
-      InaccessibleGeneric<Integer> inaccessibleGeneric) {}
+  InaccessibleGeneric() {}
 }

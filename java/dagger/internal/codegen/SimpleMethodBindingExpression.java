@@ -31,6 +31,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import java.util.Optional;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
@@ -43,7 +44,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ProvisionBinding provisionBinding;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final GeneratedComponentModel generatedComponentModel;
-  private final Optional<ComponentRequirement> moduleRequirement;
   private final ComponentRequirementFields componentRequirementFields;
 
   SimpleMethodBindingExpression(
@@ -52,7 +52,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
       GeneratedComponentModel generatedComponentModel,
-      Optional<ComponentRequirement> moduleRequirement,
       ComponentRequirementFields componentRequirementFields) {
     super(delegate);
     checkArgument(
@@ -64,7 +63,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.provisionBinding = provisionBinding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.generatedComponentModel = generatedComponentModel;
-    this.moduleRequirement = moduleRequirement;
     this.componentRequirementFields = componentRequirementFields;
   }
 
@@ -150,7 +148,14 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {
-    return moduleRequirement.map(
-        requirement -> componentRequirementFields.getExpression(requirement, requestingClass));
+    return provisionBinding.requiresModuleInstance()
+        ? provisionBinding
+            .contributingModule()
+            .map(Element::asType)
+            .map(ComponentRequirement::forModule)
+            .map(
+                requirement ->
+                    componentRequirementFields.getExpression(requirement, requestingClass))
+        : Optional.empty();
   }
 }

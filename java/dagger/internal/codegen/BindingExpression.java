@@ -207,19 +207,12 @@ abstract class BindingExpression {
         case PROVISION:
           if (!provisionBinding.scope().isPresent()
               && provisionBinding.bindingElement().isPresent()) {
-            Optional<ComponentRequirement> moduleRequirement =
-                provisionBinding.requiresModuleInstance()
-                    ? Optional.of(
-                        ComponentRequirement.forModule(
-                            provisionBinding.contributingModule().get().asType()))
-                    : Optional.empty();
             return new SimpleMethodBindingExpression(
                 compilerOptions,
                 provisionBinding,
                 bindingExpression,
                 componentBindingExpressions,
                 generatedComponentModel,
-                moduleRequirement,
                 componentRequirementFields);
           }
           // fall through

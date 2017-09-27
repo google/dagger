@@ -38,7 +38,6 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.VOID;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
@@ -358,15 +357,13 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         graph.componentDescriptor().componentMethods()) {
       if (componentMethod.dependencyRequest().isPresent()) {
         DependencyRequest interfaceRequest = componentMethod.dependencyRequest().get();
-        ExecutableElement methodElement =
-            MoreElements.asExecutable(componentMethod.methodElement());
+        ExecutableElement methodElement = componentMethod.methodElement();
         ExecutableType requestType =
             MoreTypes.asExecutable(types.asMemberOf(componentType, methodElement));
         MethodSignature signature =
             MethodSignature.fromExecutableType(
                 methodElement.getSimpleName().toString(), requestType);
-        if (!interfaceMethodSignatures.contains(signature)) {
-          interfaceMethodSignatures.add(signature);
+        if (interfaceMethodSignatures.add(signature)) {
           MethodSpec.Builder interfaceMethod =
               MethodSpec.overriding(methodElement, componentType, types);
           List<? extends VariableElement> parameters = methodElement.getParameters();

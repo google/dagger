@@ -105,21 +105,13 @@ abstract class ProvisionBinding extends ContributionBinding {
         .provisionDependencies(ImmutableSet.of())
         .injectionSites(ImmutableSortedSet.of());
   }
-  
+
   abstract Builder toBuilder();
 
   boolean shouldCheckForNull(CompilerOptions compilerOptions) {
-    return !providesPrimitiveType()
+    return !contributesPrimitiveType()
         && !nullableType().isPresent()
         && compilerOptions.doCheckForNulls();
-  }
-
-  private boolean providesPrimitiveType() {
-    return bindingElement().isPresent()
-        && MoreElements.asExecutable(bindingElement().get())
-            .getReturnType()
-            .getKind()
-            .isPrimitive();
   }
 
   @AutoValue.Builder

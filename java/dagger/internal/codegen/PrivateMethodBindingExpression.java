@@ -86,14 +86,9 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   private TypeName returnType() {
-    // TODO(user): pull ProvisionBinding.providesPrimitiveType() up to ContributionBinding.
-    if (binding.bindingElement().isPresent()) {
-      TypeMirror moduleReturnType = asExecutable(binding.bindingElement().get()).getReturnType();
-      if (moduleReturnType.getKind().isPrimitive()) {
-        return TypeName.get(moduleReturnType);
-      }
-    }
-    return instanceType;
+    return binding.contributesPrimitiveType()
+        ? TypeName.get(asExecutable(binding.bindingElement().get()).getReturnType())
+        : instanceType;
   }
 
   /** Returns the canonical name for a no-arg dependency expression method. */

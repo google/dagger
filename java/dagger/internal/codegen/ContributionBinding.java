@@ -25,6 +25,7 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquiva
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
@@ -180,6 +181,18 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     }
     Set<Modifier> modifiers = bindingElement().get().getModifiers();
     return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
+  }
+
+  /**
+   * Returns {@code true} if {@link #bindingElement()} is present and is a method that returns a
+   * primitive type.
+   */
+  boolean contributesPrimitiveType() {
+    return bindingElement().isPresent()
+        && MoreElements.asExecutable(bindingElement().get())
+            .getReturnType()
+            .getKind()
+            .isPrimitive();
   }
 
   /**

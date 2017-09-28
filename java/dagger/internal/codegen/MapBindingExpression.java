@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A {@link BindingExpression} for multibound maps. */
 final class MapBindingExpression extends SimpleInvocationBindingExpression {
@@ -48,8 +49,9 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
+      Types types,
       Elements elements) {
-    super(delegate);
+    super(delegate, types, elements);
     ContributionBinding.Kind bindingKind = binding.bindingKind();
     checkArgument(bindingKind.equals(SYNTHETIC_MULTIBOUND_MAP), bindingKind);
     this.binding = binding;
@@ -62,8 +64,12 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return Expression.create(binding.key().type(), mapExpression(requestingClass));
+  }
+
+  private CodeBlock mapExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableMap version of MapFactory
     boolean isImmutableMapAvailable = isImmutableMapAvailable();
     // TODO(ronshapiro, gak): Use Maps.immutableEnumMap() if it's available?
@@ -111,7 +117,9 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
     return CodeBlock.of(
         "$L, $L",
         getMapKeyExpression(dependencies.get(dependency), requestingClass),
-        componentBindingExpressions.getDependencyExpression(dependency, requestingClass));
+        componentBindingExpressions
+            .getDependencyExpression(dependency, requestingClass)
+            .codeBlock());
   }
 
   private CodeBlock collectionsStaticFactoryInvocation(

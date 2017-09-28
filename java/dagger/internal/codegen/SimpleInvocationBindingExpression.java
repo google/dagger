@@ -16,9 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.DaggerTypes.wrapType;
+
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * A binding expression that can use a simple expression for instance requests, and delegates to
@@ -26,10 +31,14 @@ import com.squareup.javapoet.CodeBlock;
  */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final BindingExpression delegate;
+  private final Types types;
+  private final Elements elements;
 
-  SimpleInvocationBindingExpression(BindingExpression delegate) {
+  SimpleInvocationBindingExpression(BindingExpression delegate, Types types, Elements elements) {
     super(delegate.resolvedBindings());
     this.delegate = delegate;
+    this.types = types;
+    this.elements = elements;
   }
 
   /**
@@ -37,7 +46,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
    *
    * @param requestingClass the class that will contain the expression
    */
-  abstract CodeBlock getInstanceDependencyExpression(
+  abstract Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass);
 
   /**
@@ -52,19 +61,20 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   }
 
   @Override
-  final CodeBlock getDependencyExpression(
+  final Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     switch (requestKind) {
       case INSTANCE:
         return getInstanceDependencyExpression(requestKind, requestingClass);
       case FUTURE:
-        return CodeBlock.builder()
-            .add("$T.", Futures.class)
-            .add(explicitTypeParameter(requestingClass))
-            .add(
-                "immediateFuture($L)",
-                getInstanceDependencyExpression(requestKind, requestingClass))
-            .build();
+        Expression expression = getInstanceDependencyExpression(requestKind, requestingClass);
+        return Expression.create(
+            wrapType(expression.type(), ListenableFuture.class, types, elements),
+            CodeBlock.builder()
+                .add("$T.", Futures.class)
+                .add(explicitTypeParameter(requestingClass))
+                .add("immediateFuture($L)", expression.codeBlock())
+                .build());
       default:
         return delegate.getDependencyExpression(requestKind, requestingClass);
     }

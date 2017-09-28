@@ -18,16 +18,14 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.TypeNames.rawTypeName;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeName;
 import java.util.HashMap;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 /** A central repository of code expressions used to access any binding available to a component. */
 final class ComponentBindingExpressions {
@@ -41,14 +39,16 @@ final class ComponentBindingExpressions {
    * component; the second contains the bindings owned by its parent; and so on.
    */
   private final ImmutableList<Map<BindingKey, BindingExpression>> bindingExpressionsMaps;
+  private final Types types;
 
   private ComponentBindingExpressions(
-      ImmutableList<Map<BindingKey, BindingExpression>> bindingExpressionsMaps) {
+      ImmutableList<Map<BindingKey, BindingExpression>> bindingExpressionsMaps, Types types) {
     this.bindingExpressionsMaps = bindingExpressionsMaps;
+    this.types = types;
   }
 
-  ComponentBindingExpressions() {
-    this(ImmutableList.of(newBindingExpressionMap()));
+  ComponentBindingExpressions(Types types) {
+    this(ImmutableList.of(newBindingExpressionMap()), types);
   }
 
   /**
@@ -59,9 +59,21 @@ final class ComponentBindingExpressions {
    * @throws IllegalStateException if there is no binding expression that satisfies the dependency
    *     request
    */
-  CodeBlock getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    return getBindingExpression(request.bindingKey())
-        .getDependencyExpression(request.kind(), requestingClass);
+  Expression getDependencyExpression(
+      BindingKey bindingKey, DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return getBindingExpression(bindingKey).getDependencyExpression(requestKind, requestingClass);
+  }
+
+  /**
+   * Returns an expression that evaluates to the value of a dependency request for a binding owned
+   * by this component or an ancestor.
+   *
+   * @param requestingClass the class that will contain the expression
+   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
+   *     request
+   */
+  Expression getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
+    return getDependencyExpression(request.bindingKey(), request.kind(), requestingClass);
   }
 
   /**
@@ -72,10 +84,12 @@ final class ComponentBindingExpressions {
    * @throws IllegalStateException if there is no binding expression that satisfies the dependency
    *     request
    */
-  CodeBlock getDependencyExpression(
+  Expression getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return getBindingExpression(frameworkDependency.bindingKey())
-        .getDependencyExpression(frameworkDependency.dependencyRequestKind(), requestingClass);
+    return getDependencyExpression(
+        frameworkDependency.bindingKey(),
+        frameworkDependency.dependencyRequestKind(),
+        requestingClass);
   }
 
   /**
@@ -89,18 +103,18 @@ final class ComponentBindingExpressions {
    * @param requestingClass the class that will contain the expression
    */
   // TODO(b/64024402) Merge with getDependencyExpression(DependencyRequest, ClassName) if possible.
-  CodeBlock getDependencyArgumentExpression(
+  Expression getDependencyArgumentExpression(
       DependencyRequest dependencyRequest, ClassName requestingClass) {
-    CodeBlock.Builder argument = CodeBlock.builder();
 
     TypeMirror dependencyType = dependencyRequest.key().type();
+    Expression dependencyExpression = getDependencyExpression(dependencyRequest, requestingClass);
+
     if (!isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
         && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
-      argument.add("($T) ", rawTypeName(TypeName.get(dependencyType)));
+      return dependencyExpression.castTo(types.erasure(dependencyType));
     }
 
-    argument.add(getDependencyExpression(dependencyRequest, requestingClass));
-    return argument.build();
+    return dependencyExpression;
   }
 
   private BindingExpression getBindingExpression(BindingKey bindingKey) {
@@ -125,7 +139,8 @@ final class ComponentBindingExpressions {
    */
   ComponentBindingExpressions forChildComponent() {
     return new ComponentBindingExpressions(
-        FluentIterable.of(newBindingExpressionMap()).append(bindingExpressionsMaps).toList());
+        FluentIterable.of(newBindingExpressionMap()).append(bindingExpressionsMaps).toList(),
+        types);
   }
 
   private static Map<BindingKey, BindingExpression> newBindingExpressionMap() {

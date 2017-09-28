@@ -28,12 +28,16 @@ import static dagger.internal.codegen.TypeNames.rawTypeName;
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * A binding expression that invokes methods or constructors directly for a provision binding when
@@ -45,6 +49,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ComponentBindingExpressions componentBindingExpressions;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentRequirementFields componentRequirementFields;
+  private final Elements elements;
 
   SimpleMethodBindingExpression(
       CompilerOptions compilerOptions,
@@ -52,8 +57,10 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
       GeneratedComponentModel generatedComponentModel,
-      ComponentRequirementFields componentRequirementFields) {
-    super(delegate);
+      ComponentRequirementFields componentRequirementFields,
+      Types types,
+      Elements elements) {
+    super(delegate, types, elements);
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
@@ -64,17 +71,18 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.componentBindingExpressions = componentBindingExpressions;
     this.generatedComponentModel = generatedComponentModel;
     this.componentRequirementFields = componentRequirementFields;
+    this.elements = elements;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     return requiresInjectionMethod(provisionBinding, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);
   }
 
-  private CodeBlock invokeMethod(ClassName requestingClass) {
+  private Expression invokeMethod(ClassName requestingClass) {
     // TODO(dpb): align this with the contents of InlineMethods.create
     CodeBlock arguments =
         provisionBinding
@@ -83,18 +91,22 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             .map(request -> dependencyArgument(request, requestingClass))
             .collect(toParametersCodeBlock());
     ExecutableElement method = asExecutable(provisionBinding.bindingElement().get());
+    CodeBlock invocation;
     switch (method.getKind()) {
       case CONSTRUCTOR:
-        return CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
+        invocation = CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
+        break;
       case METHOD:
         CodeBlock module =
             moduleReference(requestingClass)
                 .orElse(CodeBlock.of("$T", provisionBinding.bindingTypeElement().get()));
-        return maybeCheckForNulls(
+        invocation = maybeCheckForNulls(
             CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments));
+        break;
       default:
         throw new IllegalStateException();
     }
+    return Expression.create(provisionBinding.key().type(), invocation);
   }
 
   private TypeName constructorTypeName(ClassName requestingClass) {
@@ -108,7 +120,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     return rawTypeName(typeName);
   }
 
-  private CodeBlock invokeInjectionMethod(ClassName requestingClass) {
+  private Expression invokeInjectionMethod(ClassName requestingClass) {
     return injectMembers(
         maybeCheckForNulls(
             ProvisionMethod.invoke(
@@ -119,7 +131,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    return componentBindingExpressions.getDependencyArgumentExpression(dependency, requestingClass);
+    return componentBindingExpressions
+        .getDependencyArgumentExpression(dependency, requestingClass)
+        .codeBlock();
   }
 
   private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
@@ -129,9 +143,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         : methodCall;
   }
 
-  private CodeBlock injectMembers(CodeBlock instance) {
+  private Expression injectMembers(CodeBlock instance) {
     if (provisionBinding.injectionSites().isEmpty()) {
-      return instance;
+      return Expression.create(provisionBinding.key().type(), instance);
     }
     // Java 7 type inference can't figure out that instance in
     // injectParameterized(Parameterized_Factory.newParameterized()) is Parameterized<T> and not
@@ -141,10 +155,13 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
     }
 
-    return CodeBlock.of(
-        "$N($L)",
-        generatedComponentModel.getMembersInjectionMethod(provisionBinding.key()),
-        instance);
+    MethodSpec membersInjectionMethod =
+        generatedComponentModel.getMembersInjectionMethod(provisionBinding.key());
+    TypeMirror returnType =
+        membersInjectionMethod.returnType.equals(TypeName.OBJECT)
+            ? elements.getTypeElement(Object.class.getCanonicalName()).asType()
+            : provisionBinding.key().type();
+    return Expression.create(returnType, CodeBlock.of("$N($L)", membersInjectionMethod, instance));
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {

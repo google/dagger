@@ -18,21 +18,32 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A binding expression for the instance of the component itself, i.e. {@code this}. */
 final class ComponentInstanceBindingExpression extends SimpleInvocationBindingExpression {
   private final ClassName componentName;
+  private final ContributionBinding binding;
 
-  ComponentInstanceBindingExpression(BindingExpression delegate, ClassName componentName) {
-    super(delegate);
+  ComponentInstanceBindingExpression(
+      BindingExpression delegate,
+      ContributionBinding binding,
+      ClassName componentName,
+      Types types,
+      Elements elements) {
+    super(delegate, types, elements);
     this.componentName = componentName;
+    this.binding = binding;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    return componentName.equals(requestingClass)
-        ? CodeBlock.of("this")
-        : CodeBlock.of("$T.this", componentName);
+    return Expression.create(
+        binding.key().type(),
+        componentName.equals(requestingClass)
+            ? CodeBlock.of("this")
+            : CodeBlock.of("$T.this", componentName));
   }
 }

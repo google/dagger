@@ -22,23 +22,29 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A binding expression for optional bindings. */
 final class OptionalBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final ComponentBindingExpressions componentBindingExpressions;
+  private final Types types;
 
   OptionalBindingExpression(
       ProvisionBinding binding,
       BindingExpression delegate,
-      ComponentBindingExpressions componentBindingExpressions) {
-    super(delegate);
+      ComponentBindingExpressions componentBindingExpressions,
+      Types types,
+      Elements elements) {
+    super(delegate, types, elements);
     this.binding = binding;
     this.componentBindingExpressions = componentBindingExpressions;
+    this.types = types;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
@@ -47,20 +53,27 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
       // Futures.immediateFuture(Optional.absent()) for keys that aren't Object
       if (requestKind.equals(DependencyRequest.Kind.FUTURE)
           && isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
-        return optionalKind.parameterizedAbsentValueExpression(optionalType);
+        return Expression.create(
+            binding.key().type(),
+            optionalKind.parameterizedAbsentValueExpression(optionalType));
       }
-      return optionalKind.absentValueExpression();
+      return Expression.create(binding.key().type(), optionalKind.absentValueExpression());
     }
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
     CodeBlock dependencyExpression =
-        componentBindingExpressions.getDependencyExpression(dependency, requestingClass);
+        componentBindingExpressions
+            .getDependencyExpression(dependency, requestingClass)
+            .codeBlock();
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.
     // TODO(user): Do we need presentObjectExpression in androidExperimentalMode?
     return isTypeAccessibleFrom(dependency.key().type(), requestingClass.packageName())
-        ? optionalKind.presentExpression(dependencyExpression)
-        : optionalKind.presentObjectExpression(dependencyExpression);
+        ? Expression.create(
+            binding.key().type(), optionalKind.presentExpression(dependencyExpression))
+        : Expression.create(
+            types.erasure(binding.key().type()),
+            optionalKind.presentObjectExpression(dependencyExpression));
   }
 }

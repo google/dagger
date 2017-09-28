@@ -148,6 +148,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             this,
             childComponentNames(keyFactory, subcomponentNames),
             graph,
+            types,
             elements,
             optionalFactories);
     this.componentRequirementFieldFactory =
@@ -399,7 +400,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             }
           } else {
             interfaceMethod.addStatement(
-                "return $L", bindingExpressions.getDependencyExpression(interfaceRequest, name));
+                "return $L",
+                bindingExpressions.getDependencyExpression(interfaceRequest, name).codeBlock());
           }
           interfaceMethods.add(interfaceMethod.build());
         }
@@ -495,7 +497,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             instance,
             membersInjectedType,
             types,
-            request -> bindingExpressions.getDependencyArgumentExpression(request, name)));
+            request ->
+                bindingExpressions.getDependencyArgumentExpression(request, name).codeBlock()));
     method.addStatement("return $L", instance);
 
     return method.build();

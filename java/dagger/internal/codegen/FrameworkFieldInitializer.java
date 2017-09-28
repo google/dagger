@@ -135,8 +135,11 @@ final class FrameworkFieldInitializer {
     if (isProducerFromProvider) {
       return FrameworkType.PROVIDER.to(
           DependencyRequest.Kind.PRODUCER,
-          componentBindingExpressions.getDependencyExpression(
-              FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION), componentName));
+          componentBindingExpressions
+              .getDependencyExpression(
+                  FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION),
+                  componentName)
+              .codeBlock());
     }
 
     switch (resolvedBindings.bindingKey().kind()) {
@@ -466,6 +469,7 @@ final class FrameworkFieldInitializer {
     return CodeBlocks.concat(codeBlocks.build());
   }
 
+  // TODO(ronshapiro): Use functionality from Expression
   private CodeBlock potentiallyCast(boolean shouldCast, Class<?> classToCast, CodeBlock notCasted) {
     if (!shouldCast) {
       return notCasted;
@@ -618,7 +622,9 @@ final class FrameworkFieldInitializer {
 
   /** Returns a code block referencing the given dependency. */
   private CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
-    return componentBindingExpressions.getDependencyExpression(frameworkDependency, componentName);
+    return componentBindingExpressions
+        .getDependencyExpression(frameworkDependency, componentName)
+        .codeBlock();
   }
 
   FrameworkFieldInitializer forProducerFromProvider() {

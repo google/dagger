@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A binding expression for multibound sets. */
 final class SetBindingExpression extends SimpleInvocationBindingExpression {
@@ -41,8 +42,9 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
+      Types types,
       Elements elements) {
-    super(delegate);
+    super(delegate, types, elements);
     this.binding = binding;
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
@@ -50,8 +52,12 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    return Expression.create(binding.key().type(), setExpression(requestingClass));
+  }
+
+  private CodeBlock setExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
@@ -108,7 +114,9 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
-    return componentBindingExpressions.getDependencyExpression(dependency, requestingClass);
+    return componentBindingExpressions
+        .getDependencyExpression(dependency, requestingClass)
+        .codeBlock();
   }
 
   private CodeBlock collectionsStaticFactoryInvocation(

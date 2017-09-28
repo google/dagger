@@ -17,8 +17,9 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import dagger.Component;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * A binding expression for instances bound with {@link dagger.BindsInstance} and instances of
@@ -31,15 +32,19 @@ final class BoundInstanceBindingExpression extends SimpleInvocationBindingExpres
   BoundInstanceBindingExpression(
       BindingExpression delegate,
       ComponentRequirement componentRequirement,
-      ComponentRequirementFields componentRequirementFields) {
-    super(delegate);
+      ComponentRequirementFields componentRequirementFields,
+      Types types,
+      Elements elements) {
+    super(delegate, types, elements);
     this.componentRequirement = componentRequirement;
     this.componentRequirementFields = componentRequirementFields;
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    return componentRequirementFields.getExpression(componentRequirement, requestingClass);
+    return Expression.create(
+        componentRequirement.type(),
+        componentRequirementFields.getExpression(componentRequirement, requestingClass));
   }
 }

@@ -23,10 +23,10 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
@@ -47,7 +47,7 @@ abstract class BindingExpression {
    *
    * @param requestingClass the class that will contain the expression
    */
-  abstract CodeBlock getDependencyExpression(
+  abstract Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass);
 
   /** Factory for building a {@link BindingExpression}. */
@@ -60,6 +60,7 @@ abstract class BindingExpression {
     private final GeneratedComponentModel generatedComponentModel;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
+    private final Types types;
     private final Elements elements;
     private final OptionalFactories optionalFactories;
 
@@ -72,6 +73,7 @@ abstract class BindingExpression {
         GeneratedComponentModel generatedComponentModel,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
+        Types types,
         Elements elements,
         OptionalFactories optionalFactories) {
       this.compilerOptions = checkNotNull(compilerOptions);
@@ -82,6 +84,7 @@ abstract class BindingExpression {
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
+      this.types = checkNotNull(types);
       this.elements = checkNotNull(elements);
       this.optionalFactories = checkNotNull(optionalFactories);
     }
@@ -149,7 +152,9 @@ abstract class BindingExpression {
               fieldSpec,
               generatedComponentModel,
               memberSelect,
-              frameworkFieldInitializer);
+              frameworkFieldInitializer,
+              types,
+              elements);
 
       if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
         return frameworkInstanceBindingExpression;
@@ -165,13 +170,16 @@ abstract class BindingExpression {
       ProvisionBinding provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
       switch (provisionBinding.bindingKind()) {
         case COMPONENT:
-          return new ComponentInstanceBindingExpression(bindingExpression, componentName);
+          return new ComponentInstanceBindingExpression(
+              bindingExpression, provisionBinding, componentName, types, elements);
 
         case COMPONENT_DEPENDENCY:
           return new BoundInstanceBindingExpression(
               bindingExpression,
               ComponentRequirement.forDependency(provisionBinding.key().type()),
-              componentRequirementFields);
+              componentRequirementFields,
+              types,
+              elements);
 
         case COMPONENT_PROVISION:
           return new ComponentProvisionBindingExpression(
@@ -179,29 +187,47 @@ abstract class BindingExpression {
               provisionBinding,
               graph,
               componentRequirementFields,
-              compilerOptions);
+              compilerOptions,
+              types,
+              elements);
 
         case SUBCOMPONENT_BUILDER:
           return new SubcomponentBuilderBindingExpression(
-              bindingExpression, subcomponentNames.get(resolvedBindings.bindingKey()));
+              bindingExpression,
+              provisionBinding,
+              subcomponentNames.get(resolvedBindings.bindingKey()),
+              types,
+              elements);
 
         case SYNTHETIC_MULTIBOUND_SET:
           return new SetBindingExpression(
-              provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
+              provisionBinding,
+              graph,
+              componentBindingExpressions,
+              bindingExpression,
+              types,
+              elements);
 
         case SYNTHETIC_MULTIBOUND_MAP:
           return new MapBindingExpression(
-              provisionBinding, graph, componentBindingExpressions, bindingExpression, elements);
+              provisionBinding,
+              graph,
+              componentBindingExpressions,
+              bindingExpression,
+              types,
+              elements);
 
         case SYNTHETIC_OPTIONAL_BINDING:
           return new OptionalBindingExpression(
-              provisionBinding, bindingExpression, componentBindingExpressions);
+              provisionBinding, bindingExpression, componentBindingExpressions, types, elements);
 
         case BUILDER_BINDING:
-              return new BoundInstanceBindingExpression(
-                  bindingExpression,
-                  ComponentRequirement.forBinding(provisionBinding),
-                  componentRequirementFields);
+          return new BoundInstanceBindingExpression(
+              bindingExpression,
+              ComponentRequirement.forBinding(provisionBinding),
+              componentRequirementFields,
+              types,
+              elements);
 
         case INJECTION:
         case PROVISION:
@@ -214,13 +240,17 @@ abstract class BindingExpression {
                     bindingExpression,
                     componentBindingExpressions,
                     generatedComponentModel,
-                    componentRequirementFields);
+                    componentRequirementFields,
+                    types,
+                    elements);
             return compilerOptions.experimentalAndroidMode()
                 ? new PrivateMethodBindingExpression(
                     resolvedBindings,
                     componentName,
                     generatedComponentModel,
-                    simpleMethodBindingExpression)
+                    simpleMethodBindingExpression,
+                    types,
+                    elements)
                 : simpleMethodBindingExpression;
           }
           // fall through

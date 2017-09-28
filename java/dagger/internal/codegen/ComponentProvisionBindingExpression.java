@@ -24,6 +24,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A binding expression for component provision methods. */
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {
@@ -37,8 +39,10 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
       ProvisionBinding binding,
       BindingGraph bindingGraph,
       ComponentRequirementFields componentRequirementFields,
-      CompilerOptions compilerOptions) {
-    super(providerBindingExpression);
+      CompilerOptions compilerOptions,
+      Types types,
+      Elements elements) {
+    super(providerBindingExpression, types, elements);
     this.binding = checkNotNull(binding);
     this.bindingGraph = checkNotNull(bindingGraph);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
@@ -46,14 +50,15 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   }
 
   @Override
-  CodeBlock getInstanceDependencyExpression(
+  Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     CodeBlock invocation =
         CodeBlock.of(
             "$L.$L()",
             componentRequirementFields.getExpression(componentRequirement(), requestingClass),
             binding.bindingElement().get().getSimpleName());
-    return maybeCheckForNull(binding, compilerOptions, invocation);
+    return Expression.create(
+        binding.key().type(), maybeCheckForNull(binding, compilerOptions, invocation));
   }
 
   private ComponentRequirement componentRequirement() {

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 
 /**
  * A {@link FrameworkInstanceBindingExpression} that is expressed with a {@link
@@ -39,7 +38,8 @@ final class ProviderOrProducerBindingExpression extends BindingExpression {
   }
 
   @Override
-  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     switch (requestKind) {
       case PRODUCER:
         return producerBindingExpression.getDependencyExpression(requestKind, requestingClass);

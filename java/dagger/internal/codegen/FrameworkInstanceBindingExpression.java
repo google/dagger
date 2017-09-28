@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.DaggerTypes.wrapType;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 
 import com.squareup.javapoet.ClassName;
@@ -26,6 +28,10 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import dagger.internal.DelegateFactory;
 import java.util.Optional;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
@@ -34,6 +40,8 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final MemberSelect memberSelect;
   private final FrameworkType frameworkType;
   private final FrameworkFieldInitializer fieldInitializer;
+  private final Types types;
+  private final Elements elements;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   /** Returns a binding expression for a binding. */
@@ -42,14 +50,18 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       Optional<FieldSpec> fieldSpec,
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
-      FrameworkFieldInitializer frameworkFieldInitializer) {
+      FrameworkFieldInitializer frameworkFieldInitializer,
+      Types types,
+      Elements elements) {
     return new FrameworkInstanceBindingExpression(
         resolvedBindings,
         fieldSpec,
         generatedComponentModel,
         memberSelect,
         resolvedBindings.bindingType().frameworkType(),
-        frameworkFieldInitializer);
+        frameworkFieldInitializer,
+        types,
+        elements);
   }
 
   private FrameworkInstanceBindingExpression(
@@ -58,13 +70,17 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
       FrameworkType frameworkType,
-      FrameworkFieldInitializer fieldInitializer) {
+      FrameworkFieldInitializer fieldInitializer,
+      Types types,
+      Elements elements) {
     super(resolvedBindings);
     this.generatedComponentModel = generatedComponentModel;
     this.memberSelect = memberSelect;
     this.fieldSpec = fieldSpec;
     this.frameworkType = frameworkType;
     this.fieldInitializer = fieldInitializer;
+    this.types = types;
+    this.elements = elements;
   }
 
   FrameworkInstanceBindingExpression producerFromProvider(
@@ -76,12 +92,9 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
         generatedComponentModel,
         MemberSelect.localField(componentName, fieldSpec.name),
         FrameworkType.PRODUCER,
-        fieldInitializer.forProducerFromProvider());
-  }
-
-  @Override
-  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    return frameworkType.to(requestKind, getFrameworkTypeInstance(requestingClass));
+        fieldInitializer.forProducerFromProvider(),
+        types,
+        elements);
   }
 
   /**
@@ -90,9 +103,37 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    * initialized} and {@link GeneratedComponentModel#addField(FieldSpec) added} to the component the
    * first time this method is invoked.
    */
-  final CodeBlock getFrameworkTypeInstance(ClassName requestingClass) {
+  @Override
+  Expression getDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     maybeInitializeField();
-    return memberSelect.getExpressionFor(requestingClass);
+    TypeMirror expressionType =
+        isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
+            ? wrapType(instanceType(), resolvedBindings().frameworkClass(), types, elements)
+            : rawFrameworkType();
+
+    return frameworkType.to(
+        requestKind,
+        Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass)),
+        types,
+        elements);
+  }
+
+  /**
+   * The instance type {@code T} of this {@code FrameworkType<T>}. For {@link
+   * MembersInjectionBinding}s, this is the {@linkplain Key#type() key type}; for {@link
+   * ContributionBinding}s, this the {@link ContributionBinding#contributedType()}.
+   */
+  private TypeMirror instanceType() {
+    return resolvedBindings()
+        .membersInjectionBinding()
+        .map(binding -> binding.key().type())
+        .orElseGet(() -> resolvedBindings().contributionBinding().contributedType());
+  }
+
+  private DeclaredType rawFrameworkType() {
+    return types.getDeclaredType(
+        elements.getTypeElement(resolvedBindings().frameworkClass().getCanonicalName()));
   }
 
   /**

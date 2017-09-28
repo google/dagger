@@ -23,13 +23,17 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.EnumMap;
 import java.util.Map;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.
@@ -43,30 +47,37 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private final Map<DependencyRequest.Kind, MethodSpec> methods =
       new EnumMap<>(DependencyRequest.Kind.class);
   private final ContributionBinding binding;
-  private final TypeName instanceType;
+  private final Types types;
+  private final Elements elements;
 
   PrivateMethodBindingExpression(
       ResolvedBindings resolvedBindings,
       ClassName componentName,
       GeneratedComponentModel generatedComponentModel,
-      BindingExpression delegate) {
+      BindingExpression delegate,
+      Types types,
+      Elements elements) {
     super(resolvedBindings);
     this.componentName = componentName;
     this.generatedComponentModel = generatedComponentModel;
     this.delegate = delegate;
     binding = resolvedBindings.contributionBinding();
-    instanceType = accessibleType(binding.contributedType(), componentName);
+    this.types = types;
+    this.elements = elements;
   }
 
   @Override
-  CodeBlock getDependencyExpression(DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getDependencyExpression(
+      DependencyRequest.Kind requestKind, ClassName requestingClass) {
     // TODO(user): we should just use the component method if one matches instead of creating one.
     switch (requestKind) {
       case INSTANCE:
         MethodSpec method = methods.computeIfAbsent(requestKind, this::createMethod);
-        return componentName.equals(requestingClass)
-            ? CodeBlock.of("$N()", method)
-            : CodeBlock.of("$T.this.$N()", componentName, method);
+        CodeBlock invocation =
+            componentName.equals(requestingClass)
+                ? CodeBlock.of("$N()", method)
+                : CodeBlock.of("$T.this.$N()", componentName, method);
+        return Expression.create(returnType(), invocation);
       default:
         return delegate.getDependencyExpression(requestKind, requestingClass);
     }
@@ -77,18 +88,20 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     MethodSpec method =
         methodBuilder(generatedComponentModel.getUniqueMethodName(methodName(requestKind)))
             .addModifiers(PRIVATE)
-            .returns(returnType())
-            .addStatement("return $L", delegate.getDependencyExpression(requestKind, componentName))
+            .returns(TypeName.get(returnType()))
+            .addStatement(
+                "return $L",
+                delegate.getDependencyExpression(requestKind, componentName).codeBlock())
             .build();
 
     generatedComponentModel.addMethod(method);
     return method;
   }
 
-  private TypeName returnType() {
+  private TypeMirror returnType() {
     return binding.contributesPrimitiveType()
-        ? TypeName.get(asExecutable(binding.bindingElement().get()).getReturnType())
-        : instanceType;
+        ? asExecutable(binding.bindingElement().get()).getReturnType()
+        : accessibleType(binding.contributedType(), componentName);
   }
 
   /** Returns the canonical name for a no-arg dependency expression method. */
@@ -107,15 +120,15 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     return UPPER_UNDERSCORE.to(UPPER_CAMEL, kind.name());
   }
 
-  // TODO(ronshapiro): Move this logic to some common place.
   /** Returns a {@link TypeName} for the binding that is accessible to the component. */
-  private static TypeName accessibleType(TypeMirror typeMirror, ClassName componentName) {
+  private TypeMirror accessibleType(TypeMirror typeMirror, ClassName componentName) {
     if (Accessibility.isTypeAccessibleFrom(typeMirror, componentName.packageName())) {
-      return TypeName.get(typeMirror);
-    } else if (Accessibility.isRawTypeAccessible(typeMirror, componentName.packageName())) {
-      return TypeNames.rawTypeName(TypeName.get(typeMirror));
+      return typeMirror;
+    } else if (Accessibility.isRawTypeAccessible(typeMirror, componentName.packageName())
+        && typeMirror.getKind().equals(TypeKind.DECLARED)) {
+      return types.getDeclaredType(MoreTypes.asTypeElement(typeMirror));
     } else {
-      return TypeName.OBJECT;
+      return elements.getTypeElement(Object.class.getCanonicalName()).asType();
     }
   }
 }

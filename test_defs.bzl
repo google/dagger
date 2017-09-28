@@ -15,7 +15,7 @@
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
 BUILD_VARIANTS = {
-    "_ExperimentalAndroidMode": ["-Adagger.experimentalAndroidMode=enabled"]
+    "ExperimentalAndroidMode": ["-Adagger.experimentalAndroidMode=enabled"],
 }
 
 # TODO(user): split into two functions for functional vs non-functional tests?
@@ -36,16 +36,24 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
              plugins, javacopts, lib_javacopts, test_javacopts)
 
   if functional:
-    for (suffix, extra_javacopts) in BUILD_VARIANTS.items():
+    for (variant_name, extra_javacopts) in BUILD_VARIANTS.items():
       _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-                 plugins, javacopts, lib_javacopts, test_javacopts, suffix, extra_javacopts)
-
+                 plugins, javacopts, lib_javacopts, test_javacopts, variant_name,
+                 extra_javacopts)
 
 def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-               plugins, javacopts, lib_javacopts, test_javacopts, suffix="",
+               plugins, javacopts, lib_javacopts, test_javacopts, variant_name=None,
                extra_javacopts=None):
+  if variant_name:
+    suffix = "_" + variant_name
+    tags = [variant_name]
+  else:
+    suffix = ""
+    tags = []
+
   test_files = []
   supporting_files = []
+
   for src in srcs:
     if src.endswith("Test.java"):
       test_files.append(src)
@@ -68,6 +76,7 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
         srcs = supporting_files,
         plugins = plugins,
         javacopts = extra_javacopts + (javacopts or []) + (lib_javacopts or []),
+        tags = tags,
         testonly = 1,
     )
 
@@ -83,5 +92,6 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
         srcs = [test_file],
         plugins = plugins,
         javacopts = extra_javacopts + (javacopts or []) + (test_javacopts or []),
+        tags = tags,
         test_class = test_class,
     )

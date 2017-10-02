@@ -21,7 +21,6 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -59,9 +58,7 @@ final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeEl
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement componentElement) {
     return Optional.of(
         classBuilder(generatedTypeName)
-            .addAnnotation(
-                AnnotationSpec.builder(Module.class)
-                    .build())
+            .addAnnotation(Module.class)
             .addModifiers(FINAL)
             .addMethod(
                 methodBuilder("executor")

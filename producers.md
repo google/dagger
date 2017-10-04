@@ -331,7 +331,7 @@ for `Foo`, then a `@Produces` method can depend on any of:
 [`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
 [Component]: https://google.github.io/dagger/api/latest/dagger/Component.html
 [Dagger 2]: http://google.github.io/dagger/
-[ListenableFuture]: http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html
+[ListenableFuture]: https://github.com/google/guava/wiki/ListenableFutureExplained
 [Module]: https://google.github.io/dagger/api/latest/dagger/Module.html
 [Produced]: https://google.github.io/dagger/api/latest/dagger/producers/Produced.html
 [Producer]: https://google.github.io/dagger/api/latest/dagger/producers/Producer.html

@@ -20,7 +20,6 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.DaggerTypes.nonObjectSuperclass;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -141,11 +140,14 @@ abstract class MembersInjectionBinding extends Binding {
 
   static final class Factory {
     private final Elements elements;
-    private final Types types;
+    private final DaggerTypes types;
     private final Key.Factory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
 
-    Factory(Elements elements, Types types, Key.Factory keyFactory,
+    Factory(
+        Elements elements,
+        DaggerTypes types,
+        Key.Factory keyFactory,
         DependencyRequest.Factory dependencyRequestFactory) {
       this.elements = checkNotNull(elements);
       this.types = checkNotNull(types);
@@ -209,8 +211,7 @@ abstract class MembersInjectionBinding extends Binding {
               .toSet();
 
       Optional<Key> parentKey =
-          nonObjectSuperclass(types, elements, declaredType)
-              .map(keyFactory::forMembersInjectedType);
+          types.nonObjectSuperclass(declaredType).map(keyFactory::forMembersInjectedType);
 
       Key key = keyFactory.forMembersInjectedType(declaredType);
       TypeElement typeElement = MoreElements.asType(declaredType.asElement());
@@ -232,7 +233,7 @@ abstract class MembersInjectionBinding extends Binding {
       SetMultimap<String, ExecutableElement> overriddenMethodMap = LinkedHashMultimap.create();
       for (Optional<DeclaredType> currentType = Optional.of(declaredType);
           currentType.isPresent();
-          currentType = nonObjectSuperclass(types, elements, currentType.get())) {
+          currentType = types.nonObjectSuperclass(currentType.get())) {
         final DeclaredType type = currentType.get();
         ancestors.add(MoreElements.asType(type.asElement()));
         for (Element enclosedElement : type.asElement().getEnclosedElements()) {

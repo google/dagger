@@ -42,7 +42,6 @@ import java.util.Map.Entry;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Creates the implementation class for a component.
@@ -50,7 +49,7 @@ import javax.lang.model.util.Types;
 final class ComponentWriter extends AbstractComponentWriter {
 
   ComponentWriter(
-      Types types,
+      DaggerTypes types,
       Elements elements,
       Key.Factory keyFactory,
       CompilerOptions compilerOptions,

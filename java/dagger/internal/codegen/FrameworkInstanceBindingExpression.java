@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.DaggerTypes.wrapType;
 import static dagger.internal.codegen.TypeNames.DELEGATE_FACTORY;
 
 import com.squareup.javapoet.ClassName;
@@ -31,7 +30,6 @@ import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
@@ -40,7 +38,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final MemberSelect memberSelect;
   private final FrameworkType frameworkType;
   private final FrameworkFieldInitializer fieldInitializer;
-  private final Types types;
+  private final DaggerTypes types;
   private final Elements elements;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
@@ -51,7 +49,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       GeneratedComponentModel generatedComponentModel,
       MemberSelect memberSelect,
       FrameworkFieldInitializer frameworkFieldInitializer,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
     return new FrameworkInstanceBindingExpression(
         resolvedBindings,
@@ -71,7 +69,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       MemberSelect memberSelect,
       FrameworkType frameworkType,
       FrameworkFieldInitializer fieldInitializer,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
     this.generatedComponentModel = generatedComponentModel;
@@ -109,14 +107,13 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     maybeInitializeField();
     TypeMirror expressionType =
         isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
-            ? wrapType(instanceType(), resolvedBindings().frameworkClass(), types, elements)
+            ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
             : rawFrameworkType();
 
     return frameworkType.to(
         requestKind,
         Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass)),
-        types,
-        elements);
+        types);
   }
 
   /**

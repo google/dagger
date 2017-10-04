@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A binding expression for multibound sets. */
 final class SetBindingExpression extends SimpleInvocationBindingExpression {
@@ -42,9 +41,9 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
-    super(delegate, types, elements);
+    super(delegate, types);
     this.binding = binding;
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;

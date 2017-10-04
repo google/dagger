@@ -22,7 +22,6 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /** A binding expression for optional bindings. */
@@ -35,9 +34,8 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
       ProvisionBinding binding,
       BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
-      Types types,
-      Elements elements) {
-    super(delegate, types, elements);
+      DaggerTypes types) {
+    super(delegate, types);
     this.binding = binding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;

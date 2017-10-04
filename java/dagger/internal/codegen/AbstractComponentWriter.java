@@ -69,13 +69,12 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** Creates the implementation class for a component or subcomponent. */
 abstract class AbstractComponentWriter implements GeneratedComponentModel {
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
-  protected final Types types;
+  protected final DaggerTypes types;
   protected final Key.Factory keyFactory;
   protected final CompilerOptions compilerOptions;
   protected final ClassName name;
@@ -110,7 +109,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   private ImmutableMap<Scope, MemberSelect> referenceReleasingProviderManagerFields;
 
   AbstractComponentWriter(
-      Types types,
+      DaggerTypes types,
       Elements elements,
       Key.Factory keyFactory,
       CompilerOptions compilerOptions,

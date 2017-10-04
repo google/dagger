@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerTypes.wrapType;
-
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * A binding expression that can use a simple expression for instance requests, and delegates to
@@ -31,14 +27,12 @@ import javax.lang.model.util.Types;
  */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final BindingExpression delegate;
-  private final Types types;
-  private final Elements elements;
+  private final DaggerTypes types;
 
-  SimpleInvocationBindingExpression(BindingExpression delegate, Types types, Elements elements) {
+  SimpleInvocationBindingExpression(BindingExpression delegate, DaggerTypes types) {
     super(delegate.resolvedBindings());
     this.delegate = delegate;
     this.types = types;
-    this.elements = elements;
   }
 
   /**
@@ -69,7 +63,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
       case FUTURE:
         Expression expression = getInstanceDependencyExpression(requestKind, requestingClass);
         return Expression.create(
-            wrapType(expression.type(), ListenableFuture.class, types, elements),
+            types.wrapType(expression.type(), ListenableFuture.class),
             CodeBlock.builder()
                 .add("$T.", Futures.class)
                 .add(explicitTypeParameter(requestingClass))

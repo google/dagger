@@ -18,9 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.DaggerTypes.rewrapType;
-import static dagger.internal.codegen.DaggerTypes.unwrapTypeOrObject;
-import static dagger.internal.codegen.DaggerTypes.wrapType;
 import static dagger.internal.codegen.DependencyRequest.Kind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
@@ -35,8 +32,6 @@ import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** One of the core types initialized as fields in a generated component. */
 enum FrameworkType {
@@ -73,28 +68,26 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(
-        DependencyRequest.Kind requestKind, Expression from, Types types, Elements elements) {
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
       CodeBlock codeBlock = to(requestKind, from.codeBlock());
       switch (requestKind) {
         case INSTANCE:
-          return Expression.create(unwrapTypeOrObject(from.type(), elements), codeBlock);
+          return Expression.create(types.unwrapTypeOrObject(from.type()), codeBlock);
 
         case PROVIDER:
           return from;
 
         case PROVIDER_OF_LAZY:
-          TypeMirror lazyType = rewrapType(from.type(), Lazy.class, types, elements);
-          return Expression.create(wrapType(lazyType, Provider.class, types, elements), codeBlock);
+          TypeMirror lazyType = types.rewrapType(from.type(), Lazy.class);
+          return Expression.create(types.wrapType(lazyType, Provider.class), codeBlock);
 
         case FUTURE:
           return Expression.create(
-              rewrapType(from.type(), ListenableFuture.class, types, elements), codeBlock);
+              types.rewrapType(from.type(), ListenableFuture.class), codeBlock);
 
         default:
           return Expression.create(
-              rewrapType(from.type(), requestKind.frameworkClass.get(), types, elements),
-              codeBlock);
+              types.rewrapType(from.type(), requestKind.frameworkClass.get()), codeBlock);
       }
     }
   },
@@ -117,12 +110,11 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(
-        DependencyRequest.Kind requestKind, Expression from, Types types, Elements elements) {
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
       switch (requestKind) {
         case FUTURE:
           return Expression.create(
-              rewrapType(from.type(), ListenableFuture.class, types, elements),
+              types.rewrapType(from.type(), ListenableFuture.class),
               to(requestKind, from.codeBlock()));
 
         case PRODUCER:
@@ -150,8 +142,7 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(
-        DependencyRequest.Kind requestKind, Expression from, Types types, Elements elements) {
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
       switch (requestKind) {
         case MEMBERS_INJECTOR:
           return from;
@@ -186,8 +177,7 @@ enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  abstract Expression to(
-      DependencyRequest.Kind requestKind, Expression from, Types types, Elements elements);
+  abstract Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types);
 
   @Override
   public String toString() {

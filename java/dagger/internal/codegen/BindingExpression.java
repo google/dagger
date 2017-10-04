@@ -26,7 +26,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A factory of code expressions used to access a single binding in a component. */
 abstract class BindingExpression {
@@ -60,7 +59,7 @@ abstract class BindingExpression {
     private final GeneratedComponentModel generatedComponentModel;
     private final ImmutableMap<BindingKey, String> subcomponentNames;
     private final BindingGraph graph;
-    private final Types types;
+    private final DaggerTypes types;
     private final Elements elements;
     private final OptionalFactories optionalFactories;
 
@@ -73,7 +72,7 @@ abstract class BindingExpression {
         GeneratedComponentModel generatedComponentModel,
         ImmutableMap<BindingKey, String> subcomponentNames,
         BindingGraph graph,
-        Types types,
+        DaggerTypes types,
         Elements elements,
         OptionalFactories optionalFactories) {
       this.compilerOptions = checkNotNull(compilerOptions);
@@ -171,15 +170,14 @@ abstract class BindingExpression {
       switch (provisionBinding.bindingKind()) {
         case COMPONENT:
           return new ComponentInstanceBindingExpression(
-              bindingExpression, provisionBinding, componentName, types, elements);
+              bindingExpression, provisionBinding, componentName, types);
 
         case COMPONENT_DEPENDENCY:
           return new BoundInstanceBindingExpression(
               bindingExpression,
               ComponentRequirement.forDependency(provisionBinding.key().type()),
               componentRequirementFields,
-              types,
-              elements);
+              types);
 
         case COMPONENT_PROVISION:
           return new ComponentProvisionBindingExpression(
@@ -188,16 +186,14 @@ abstract class BindingExpression {
               graph,
               componentRequirementFields,
               compilerOptions,
-              types,
-              elements);
+              types);
 
         case SUBCOMPONENT_BUILDER:
           return new SubcomponentBuilderBindingExpression(
               bindingExpression,
               provisionBinding,
               subcomponentNames.get(resolvedBindings.bindingKey()),
-              types,
-              elements);
+              types);
 
         case SYNTHETIC_MULTIBOUND_SET:
           return new SetBindingExpression(
@@ -219,15 +215,14 @@ abstract class BindingExpression {
 
         case SYNTHETIC_OPTIONAL_BINDING:
           return new OptionalBindingExpression(
-              provisionBinding, bindingExpression, componentBindingExpressions, types, elements);
+              provisionBinding, bindingExpression, componentBindingExpressions, types);
 
         case BUILDER_BINDING:
           return new BoundInstanceBindingExpression(
               bindingExpression,
               ComponentRequirement.forBinding(provisionBinding),
               componentRequirementFields,
-              types,
-              elements);
+              types);
 
         case INJECTION:
         case PROVISION:

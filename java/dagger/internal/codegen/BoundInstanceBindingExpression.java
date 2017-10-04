@@ -18,8 +18,6 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import dagger.Component;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * A binding expression for instances bound with {@link dagger.BindsInstance} and instances of
@@ -33,9 +31,8 @@ final class BoundInstanceBindingExpression extends SimpleInvocationBindingExpres
       BindingExpression delegate,
       ComponentRequirement componentRequirement,
       ComponentRequirementFields componentRequirementFields,
-      Types types,
-      Elements elements) {
-    super(delegate, types, elements);
+      DaggerTypes types) {
+    super(delegate, types);
     this.componentRequirement = componentRequirement;
     this.componentRequirementFields = componentRequirementFields;
   }

@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A {@link BindingExpression} for multibound maps. */
 final class MapBindingExpression extends SimpleInvocationBindingExpression {
@@ -49,9 +48,9 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
-    super(delegate, types, elements);
+    super(delegate, types);
     ContributionBinding.Kind bindingKind = binding.bindingKind();
     checkArgument(bindingKind.equals(SYNTHETIC_MULTIBOUND_MAP), bindingKind);
     this.binding = binding;

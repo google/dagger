@@ -24,8 +24,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A binding expression for component provision methods. */
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {
@@ -40,9 +38,8 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
       BindingGraph bindingGraph,
       ComponentRequirementFields componentRequirementFields,
       CompilerOptions compilerOptions,
-      Types types,
-      Elements elements) {
-    super(providerBindingExpression, types, elements);
+      DaggerTypes types) {
+    super(providerBindingExpression, types);
     this.binding = checkNotNull(binding);
     this.bindingGraph = checkNotNull(bindingGraph);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);

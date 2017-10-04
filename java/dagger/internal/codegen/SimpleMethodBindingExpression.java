@@ -37,7 +37,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * A binding expression that invokes methods or constructors directly for a provision binding when
@@ -58,9 +57,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ComponentBindingExpressions componentBindingExpressions,
       GeneratedComponentModel generatedComponentModel,
       ComponentRequirementFields componentRequirementFields,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
-    super(delegate, types, elements);
+    super(delegate, types);
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");

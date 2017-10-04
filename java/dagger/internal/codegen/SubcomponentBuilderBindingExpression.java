@@ -18,8 +18,6 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A binding expression for a subcomponent builder that just invokes the constructor. */
 final class SubcomponentBuilderBindingExpression extends SimpleInvocationBindingExpression {
@@ -30,9 +28,8 @@ final class SubcomponentBuilderBindingExpression extends SimpleInvocationBinding
       BindingExpression delegate,
       ContributionBinding binding,
       String subcomponentBuilderName,
-      Types types,
-      Elements elements) {
-    super(delegate, types, elements);
+      DaggerTypes types) {
+    super(delegate, types);
     this.subcomponentBuilderName = subcomponentBuilderName;
     this.binding = binding;
   }

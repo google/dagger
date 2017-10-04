@@ -29,8 +29,6 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * The annotation processor responsible for generating the classes that drive the Dagger 2.0
@@ -60,8 +58,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   @Override
   protected Iterable<? extends ProcessingStep> initSteps() {
     Messager messager = processingEnv.getMessager();
-    Types types = processingEnv.getTypeUtils();
-    Elements elements = processingEnv.getElementUtils();
+    DaggerTypes types = new DaggerTypes(processingEnv);
+    DaggerElements elements = new DaggerElements(processingEnv);
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
     Filer filer =  new FormattingFiler(processingEnv.getFiler());
 

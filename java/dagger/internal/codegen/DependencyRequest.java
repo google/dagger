@@ -24,7 +24,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
-import static dagger.internal.codegen.DaggerTypes.wrapType;
 import static dagger.internal.codegen.Optionals.firstPresent;
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
@@ -59,9 +58,7 @@ import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor7;
-import javax.lang.model.util.Types;
 
 /**
  * Represents a request for a key at an injection point. Parameters to {@link Inject} constructors
@@ -162,23 +159,6 @@ abstract class DependencyRequest {
 
         default:
           throw new AssertionError(this);
-      }
-    }
-
-    /** Returns the type of a request of this kind for the given {@code type}. */
-    TypeMirror type(TypeMirror type, Types types, Elements elements) {
-      switch (this) {
-        case INSTANCE:
-          return type;
-
-        case PROVIDER_OF_LAZY:
-          return wrapType(LAZY.type(type, types, elements), Provider.class, types, elements);
-
-        case FUTURE:
-          return wrapType(type, ListenableFuture.class, types, elements);
-
-        default:
-          return wrapType(type, frameworkClass.get(), types, elements);
       }
     }
   }

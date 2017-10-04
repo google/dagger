@@ -117,7 +117,10 @@ final class OptionalBindingComponents {
       return Value.QUALIFIED_VALUE;
     }
 
-    @Produces
+    // @Produces @Nullable has no effect (and ProducesMethodValidator warns when the two are used
+    // together. Use a @Provides method and let it be wrapped into a producerFromProvider for the
+    // purposes of the test
+    @Provides
     @Nullable
     static Object nullableObject() {
       return null;

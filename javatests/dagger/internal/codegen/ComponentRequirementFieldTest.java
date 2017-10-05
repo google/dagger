@@ -20,6 +20,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.NPE_FROM_COMPONENT_METHOD;
+import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -541,15 +542,128 @@ public class ComponentRequirementFieldTest {
             "interface TestSubcomponent {",
             "  Provider<Object> dependsOnMultibinding();",
             "}");
-
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(parentModule, childModule, component, subcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.common.collect.ImmutableSet;",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private ParentModule parentModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Object getObjectInstance2() {",
+                "    return Preconditions.checkNotNull(",
+                "        ParentModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  private Object getObjectInstance() {",
+                "    return Preconditions.checkNotNull(",
+                "        parentModule.reliesOnMultibinding(",
+                "            ImmutableSet.<Object>of(getObjectInstance2())),",
+                "        " + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  private Provider<Object> getObjectProvider() {",
+                "    return new Provider<Object>() {",
+                "      @Override",
+                "      public Object get() {",
+                "        return getObjectInstance();",
+                "      }",
+                "    };",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.parentModule = builder.parentModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Object> dependsOnMultibinding() {",
+                "    return getObjectProvider();",
+                "  }",
+                "",
+                "  @Override",
+                "  public TestSubcomponent subcomponent() {",
+                "    return new TestSubcomponentImpl();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private ParentModule parentModule;",
+                "",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      if (parentModule == null) {",
+                "        this.parentModule = new ParentModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    public Builder parentModule(ParentModule parentModule) {",
+                "      this.parentModule = Preconditions.checkNotNull(parentModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "",
+                "  private final class TestSubcomponentImpl implements TestSubcomponent {",
+                "    private TestSubcomponentImpl() {}",
+                "",
+                "    private Object getObjectInstance2() {",
+                "      return Preconditions.checkNotNull(",
+                "          ParentModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    private Object getObjectInstance3() {",
+                "      return Preconditions.checkNotNull(",
+                "          ChildModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    private Object getObjectInstance() {",
+                "      return Preconditions.checkNotNull(",
+                "          DaggerTestComponent.this.parentModule.reliesOnMultibinding(",
+                "              ImmutableSet.<Object>of(",
+                "                  getObjectInstance2(), getObjectInstance3())),",
+                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    private Provider<Object> getObjectProvider() {",
+                "      return new Provider<Object>() {",
+                "        @Override",
+                "        public Object get() {",
+                "          return getObjectInstance();",
+                "        }",
+                "      };",
+                "    }",
+                "",
+                "    @Override",
+                "    public Provider<Object> dependsOnMultibinding() {",
+                "      return getObjectProvider();",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
@@ -644,6 +758,15 @@ public class ComponentRequirementFieldTest {
                 "      return reliesOnMultibindingProvider;",
                 "    }",
                 "  }",
-                "}"));
+                "}");
+    }
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(parentModule, childModule, component, subcomponent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 }

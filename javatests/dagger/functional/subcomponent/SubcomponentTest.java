@@ -18,6 +18,7 @@ package dagger.functional.subcomponent;
 
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,23 +33,22 @@ public class SubcomponentTest {
   private static final ParentComponent parentComponent = DaggerParentComponent.create();
   private static final ParentOfGenericComponent parentOfGenericComponent =
       DaggerParentOfGenericComponent.create();
-  
+
   @Parameters
   public static Collection<Object[]> parameters() {
     return Arrays.asList(new Object[][] {
         { parentComponent, parentComponent.newChildComponent() },
         { parentComponent, parentComponent.newChildAbstractClassComponent() },
         { parentOfGenericComponent, parentOfGenericComponent.subcomponent() }});
-  }        
-  
+  }
+
   private final ParentGetters parentGetters;
   private final ChildComponent childComponent;
-  
+
   public SubcomponentTest(ParentGetters parentGetters, ChildComponent childComponent) {
     this.parentGetters = parentGetters;
     this.childComponent = childComponent;
   }
-  
 
   @Test
   public void scopePropagatesUpward_class() {
@@ -86,6 +86,7 @@ public class SubcomponentTest {
 
   @Test
   public void unscopedProviders() {
+    assume().that(System.getProperty("dagger.mode")).isNotEqualTo("ExperimentalAndroidMode");
     assertThat(parentGetters.getUnscopedTypeProvider())
         .isSameAs(childComponent.getUnscopedTypeProvider());
     assertThat(parentGetters.getUnscopedTypeProvider())

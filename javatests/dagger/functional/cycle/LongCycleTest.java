@@ -17,6 +17,7 @@
 package dagger.functional.cycle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import dagger.functional.cycle.LongCycle.LongCycleComponent;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class LongCycleTest {
-  
+
   /**
    * Tests a cycle long enough that the real factory is created in a separate initialize method from
    * the delegate factory.
@@ -42,6 +43,7 @@ public class LongCycleTest {
    */
   @Test
   public void longCycleHasMoreThanOneInitializeMethod() throws NoSuchMethodException {
+    assume().that(System.getProperty("dagger.mode")).isNotEqualTo("ExperimentalAndroidMode");
     DaggerLongCycle_LongCycleComponent.class
         .getDeclaredMethod("initialize2", DaggerLongCycle_LongCycleComponent.Builder.class);
   }

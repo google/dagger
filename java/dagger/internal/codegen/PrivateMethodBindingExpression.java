@@ -21,19 +21,20 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.
@@ -44,10 +45,10 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private final ClassName componentName;
   private final GeneratedComponentModel generatedComponentModel;
   private final BindingExpression delegate;
-  private final Map<DependencyRequest.Kind, MethodSpec> methods =
+  private final Map<DependencyRequest.Kind, String> methodNames =
       new EnumMap<>(DependencyRequest.Kind.class);
   private final ContributionBinding binding;
-  private final Types types;
+  private final DaggerTypes types;
   private final Elements elements;
 
   PrivateMethodBindingExpression(
@@ -55,7 +56,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       ClassName componentName,
       GeneratedComponentModel generatedComponentModel,
       BindingExpression delegate,
-      Types types,
+      DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
     this.componentName = componentName;
@@ -70,43 +71,100 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     // TODO(user): we should just use the component method if one matches instead of creating one.
+    if (!methodNames.containsKey(requestKind)) {
+      String name = generatedComponentModel.getUniqueMethodName(methodName(requestKind));
+      methodNames.put(requestKind, name);
+      createMethod(name, requestKind);
+    }
+
+    CodeBlock invocation =
+        componentName.equals(requestingClass)
+            ? CodeBlock.of("$N()", methodNames.get(requestKind))
+            : CodeBlock.of("$T.this.$N()", componentName, methodNames.get(requestKind));
+    return Expression.create(returnType(requestKind), invocation);
+  }
+
+  /** Creates the no-arg method used for dependency expressions. */
+  private void createMethod(String name, DependencyRequest.Kind requestKind) {
+    // TODO(user): Consider when we can make this method static.
+    // TODO(user): Fix the order that these generated methods are written to the component.
+    generatedComponentModel.addMethod(
+        methodBuilder(name)
+            .addModifiers(PRIVATE)
+            .returns(TypeName.get(returnType(requestKind)))
+            .addStatement("return $L", methodBody(requestKind))
+            .build());
+  }
+
+  /** Returns the return type for the dependency request. */
+  private TypeMirror returnType(DependencyRequest.Kind requestKind) {
+    // TODO(user): use DR.Kind.type() when that CL is submitted.
     switch (requestKind) {
       case INSTANCE:
-        MethodSpec method = methods.computeIfAbsent(requestKind, this::createMethod);
-        CodeBlock invocation =
-            componentName.equals(requestingClass)
-                ? CodeBlock.of("$N()", method)
-                : CodeBlock.of("$T.this.$N()", componentName, method);
-        return Expression.create(returnType(), invocation);
+        return binding.contributesPrimitiveType()
+            ? asExecutable(binding.bindingElement().get()).getReturnType()
+            : instanceType();
+      case LAZY:
+        return accessibleType(types.lazyOf(instanceType()));
+      case PROVIDER_OF_LAZY:
+        return accessibleType(types.providerOfLazyOf(instanceType()));
+      case PROVIDER:
+        return accessibleType(types.providerOf(instanceType()));
+      case PRODUCER:
+        return accessibleType(types.producerOf(instanceType()));
       default:
-        return delegate.getDependencyExpression(requestKind, requestingClass);
+        throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
     }
   }
 
-  /** Creates the no-arg method used for dependency expressions and returns the method's name. */
-  private MethodSpec createMethod(DependencyRequest.Kind requestKind) {
-    MethodSpec method =
-        methodBuilder(generatedComponentModel.getUniqueMethodName(methodName(requestKind)))
-            .addModifiers(PRIVATE)
-            .returns(TypeName.get(returnType()))
-            .addStatement(
-                "return $L",
-                delegate.getDependencyExpression(requestKind, componentName).codeBlock())
-            .build();
-
-    generatedComponentModel.addMethod(method);
-    return method;
+  private TypeMirror instanceType() {
+    return accessibleType(binding.contributedType());
   }
 
-  private TypeMirror returnType() {
-    return binding.contributesPrimitiveType()
-        ? asExecutable(binding.bindingElement().get()).getReturnType()
-        : accessibleType(binding.contributedType(), componentName);
+  /** Returns the method body for the dependency request. */
+  private CodeBlock methodBody(DependencyRequest.Kind requestKind) {
+    switch (requestKind) {
+      case PROVIDER:
+        // TODO(user): Cache provider field instead of recreating each time.
+        return CodeBlock.of("$L", providerTypeSpec());
+      case LAZY:
+      case PROVIDER_OF_LAZY:
+        // TODO(user): Refactor the delegate BindingExpression to handle these cases?
+        // Don't use delegate.getDependencyExpression() because that will inline the provider
+        // dependency instead of delegating to the private method. To use the private method,
+        // recursively call this.getDependencyExpression().
+        return FrameworkType.PROVIDER.to(
+            requestKind,
+            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock());
+      case INSTANCE:
+      case PRODUCER:
+        return delegate.getDependencyExpression(requestKind, componentName).codeBlock();
+      default:
+        throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
+    }
+  }
+
+  /** Returns a {@link TypeSpec} for an anonymous provider class. */
+  private TypeSpec providerTypeSpec() {
+    return anonymousClassBuilder("")
+        .addSuperinterface(TypeName.get(returnType(DependencyRequest.Kind.PROVIDER)))
+        .addMethod(
+            methodBuilder("get")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(TypeName.get(instanceType()))
+                .addStatement(
+                    "return $L",
+                    getDependencyExpression(DependencyRequest.Kind.INSTANCE, componentName)
+                        .codeBlock())
+                .build())
+        .build();
   }
 
   /** Returns the canonical name for a no-arg dependency expression method. */
   private String methodName(DependencyRequest.Kind dependencyKind) {
     // TODO(user): Use a better name for @MapKey binding instances.
+    // TODO(user): Include the binding method as part of the method name.
     return String.format("get%s%s", bindingName(), dependencyKindName(dependencyKind));
   }
 
@@ -121,7 +179,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   /** Returns a {@link TypeName} for the binding that is accessible to the component. */
-  private TypeMirror accessibleType(TypeMirror typeMirror, ClassName componentName) {
+  private TypeMirror accessibleType(TypeMirror typeMirror) {
     if (Accessibility.isTypeAccessibleFrom(typeMirror, componentName.packageName())) {
       return typeMirror;
     } else if (Accessibility.isRawTypeAccessible(typeMirror, componentName.packageName())

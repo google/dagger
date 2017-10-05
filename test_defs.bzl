@@ -47,9 +47,12 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
   if variant_name:
     suffix = "_" + variant_name
     tags = [variant_name]
+    # Add jvm_flags so that the mode can be accessed from within tests.
+    jvm_flags = ["-Ddagger.mode=" + variant_name]
   else:
     suffix = ""
     tags = []
+    jvm_flags = []
 
   test_files = []
   supporting_files = []
@@ -92,6 +95,7 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
         srcs = [test_file],
         plugins = plugins,
         javacopts = extra_javacopts + (javacopts or []) + (test_javacopts or []),
+        jvm_flags = jvm_flags,
         tags = tags,
         test_class = test_class,
     )

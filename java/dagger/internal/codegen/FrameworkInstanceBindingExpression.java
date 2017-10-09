@@ -107,6 +107,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     maybeInitializeField();
     TypeMirror expressionType =
         isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
+                || isInlinedFactoryCreation()
             ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
             : rawFrameworkType();
 
@@ -126,6 +127,21 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
         .membersInjectionBinding()
         .map(binding -> binding.key().type())
         .orElseGet(() -> resolvedBindings().contributionBinding().contributedType());
+  }
+
+  /**
+   * Returns {@code true} if a factory is created inline each time it is requested. For example, in
+   * the initialization {@code this.fooProvider = Foo_Factory.create(Bar_Factory.create());}, {@code
+   * Bar_Factory} is considered to be inline.
+   *
+   * <p>This is used in {@link #getDependencyExpression(Kind, ClassName)} when determining the type
+   * of a factory. Normally if the {@link #instanceType()} is not accessible from the component, the
+   * type of the expression will be a raw {@link javax.inject.Provider}. However, if the factory is
+   * created inline, even if contributed type is not accessible, javac will still be able to
+   * determine the type that is returned from the {@code Foo_Factory.create()} method.
+   */
+  private boolean isInlinedFactoryCreation() {
+    return memberSelect.staticMember();
   }
 
   private DeclaredType rawFrameworkType() {

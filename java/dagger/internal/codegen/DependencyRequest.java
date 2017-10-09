@@ -161,6 +161,23 @@ abstract class DependencyRequest {
           throw new AssertionError(this);
       }
     }
+
+    /** Returns the type of a request of this kind for the given {@code type}. */
+    TypeMirror type(TypeMirror type, DaggerTypes types) {
+      switch (this) {
+        case INSTANCE:
+          return type;
+
+        case PROVIDER_OF_LAZY:
+          return types.wrapType(LAZY.type(type, types), Provider.class);
+
+        case FUTURE:
+          return types.wrapType(type, ListenableFuture.class);
+
+        default:
+          return types.wrapType(type, frameworkClass.get());
+      }
+    }
   }
 
   abstract Kind kind();

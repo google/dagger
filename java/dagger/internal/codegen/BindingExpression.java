@@ -217,6 +217,10 @@ abstract class BindingExpression {
           return new OptionalBindingExpression(
               provisionBinding, bindingExpression, componentBindingExpressions, types);
 
+        case SYNTHETIC_DELEGATE_BINDING:
+          return DelegateBindingExpression.create(
+              graph, bindingExpression, componentBindingExpressions, types, elements);
+
         case BUILDER_BINDING:
           return new BoundInstanceBindingExpression(
               bindingExpression,

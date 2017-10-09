@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
@@ -48,6 +49,15 @@ abstract class BindingExpression {
    */
   abstract Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass);
+
+  /** Returns an expression for the implementation of a component method with the given request. */
+  // TODO(dpb): Consider using ComponentMethodDescriptor instead of DependencyRequest?
+  // TODO(dpb): Consider renaming to getComponentMethodImplementation and include "return ... ;"?
+  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+    checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
+    // By default, just delegate to #getDependencyExpression().
+    return getDependencyExpression(request.kind(), requestingClass);
+  }
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {

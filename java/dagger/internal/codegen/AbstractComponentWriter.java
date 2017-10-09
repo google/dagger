@@ -400,7 +400,9 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
           } else {
             interfaceMethod.addStatement(
                 "return $L",
-                bindingExpressions.getDependencyExpression(interfaceRequest, name).codeBlock());
+                bindingExpressions
+                    .getComponentMethodExpression(interfaceRequest, name)
+                    .codeBlock());
           }
           interfaceMethods.add(interfaceMethod.build());
         }

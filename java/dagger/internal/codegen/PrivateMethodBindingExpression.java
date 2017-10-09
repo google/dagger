@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -30,8 +31,10 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -68,13 +71,28 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   @Override
+  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+    checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
+    return findComponentMethod(request.kind())
+            .map(method -> method.dependencyRequest().get().equals(request))
+            .orElse(false)
+        ? Expression.create(returnType(request.kind()), methodBody(request.kind()))
+        : getDependencyExpression(request.kind(), requestingClass);
+  }
+
+  @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    // TODO(user): we should just use the component method if one matches instead of creating one.
     if (!methodNames.containsKey(requestKind)) {
-      String name = generatedComponentModel.getUniqueMethodName(methodName(requestKind));
+      Optional<ComponentMethodDescriptor> componentMethod = findComponentMethod(requestKind);
+      String name =
+          componentMethod.isPresent()
+              ? componentMethod.get().methodElement().getSimpleName().toString()
+              : generatedComponentModel.getUniqueMethodName(methodName(requestKind));
       methodNames.put(requestKind, name);
-      createMethod(name, requestKind);
+      if (!componentMethod.isPresent()) {
+        createMethod(name, requestKind);
+      }
     }
 
     CodeBlock invocation =
@@ -82,6 +100,29 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             ? CodeBlock.of("$N()", methodNames.get(requestKind))
             : CodeBlock.of("$T.this.$N()", componentName, methodNames.get(requestKind));
     return Expression.create(returnType(requestKind), invocation);
+  }
+
+  /** Returns the first component method associated with this request kind, if one exists. */
+  private Optional<ComponentMethodDescriptor> findComponentMethod(
+      DependencyRequest.Kind requestKind) {
+    // There could be multiple component methods with the same request key and kind.
+    // We arbitrarily choose the first one, and designate it to contain the implementation code.
+    return resolvedBindings()
+        .owningComponent()
+        .componentMethods()
+        .stream()
+        .filter(method -> componentMethodMatchesRequestBindingKeyAndKind(method, requestKind))
+        .findFirst();
+  }
+
+  /** Returns true if the component method matches the dependency request binding key and kind. */
+  private boolean componentMethodMatchesRequestBindingKeyAndKind(
+      ComponentMethodDescriptor componentMethod, DependencyRequest.Kind requestKind) {
+    return componentMethod
+        .dependencyRequest()
+        .filter(request -> request.bindingKey().equals(resolvedBindings().bindingKey()))
+        .filter(request -> request.kind().equals(requestKind))
+        .isPresent();
   }
 
   /** Creates the no-arg method used for dependency expressions. */

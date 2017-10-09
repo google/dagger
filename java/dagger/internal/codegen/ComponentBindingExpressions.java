@@ -117,6 +117,17 @@ final class ComponentBindingExpressions {
     return dependencyExpression;
   }
 
+  /**
+   * Returns an expression for the implementation of a component method with the given request.
+   *
+   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
+   *     request
+   */
+  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+    return getBindingExpression(request.bindingKey())
+        .getComponentMethodExpression(request, requestingClass);
+  }
+
   private BindingExpression getBindingExpression(BindingKey bindingKey) {
     for (Map<BindingKey, BindingExpression> bindingExpressionsMap : bindingExpressionsMaps) {
       BindingExpression expression = bindingExpressionsMap.get(bindingKey);

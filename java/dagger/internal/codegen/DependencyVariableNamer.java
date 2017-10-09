@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Function;
 import dagger.Lazy;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,11 +35,10 @@ import javax.inject.Provider;
  * @since 2.0
  */
 //TODO(gak): develop the heuristics to get better names
-final class DependencyVariableNamer implements Function<DependencyRequest, String> {
+final class DependencyVariableNamer {
   private static final Pattern LAZY_PROVIDER_PATTERN = Pattern.compile("lazy(\\w+)Provider");
 
-  @Override
-  public String apply(DependencyRequest dependency) {
+  static String name(DependencyRequest dependency) {
     if (dependency.overriddenVariableName().isPresent()) {
       return dependency.overriddenVariableName().get();
     }
@@ -83,7 +81,7 @@ final class DependencyVariableNamer implements Function<DependencyRequest, Strin
     }
   }
 
-  private String toLowerCamel(String name) {
+  private static String toLowerCamel(String name) {
     return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
   }
 }

@@ -36,12 +36,12 @@ import static dagger.internal.codegen.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.Util.toImmutableList;
+import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -126,7 +126,7 @@ class SourceFiles {
   private static String fieldNameForDependency(ImmutableSet<DependencyRequest> dependencyRequests) {
     // collect together all of the names that we would want to call the provider
     ImmutableSet<String> dependencyNames =
-        FluentIterable.from(dependencyRequests).transform(new DependencyVariableNamer()).toSet();
+        dependencyRequests.stream().map(DependencyVariableNamer::name).collect(toImmutableSet());
 
     if (dependencyNames.size() == 1) {
       // if there's only one name, great! use it!

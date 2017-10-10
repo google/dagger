@@ -49,9 +49,15 @@ rm -rf api/$version_name/META-INF/
 git add api/$version_name
 sed -i -r \
   s/"2\.[[:digit:]]+(-rc[[:digit:]]+)?"/"${version_name}"/g \
-  public_docs/_layouts/default.html
-git add public_docs/_layouts/default.html
+  _layouts/default.html
+git add _layouts/default.html
 git commit -m "$version_name docs"
 git push origin gh-pages
 cd ..
 rm -rf gh-pages
+for generated_pom_file in dagger*pom.xml; do
+  rm "${generated_pom_file}"
+  rm "${generated_pom_file}.asc"
+done
+
+

@@ -240,8 +240,7 @@ abstract class BindingExpression {
 
         case INJECTION:
         case PROVISION:
-          if (!provisionBinding.scope().isPresent()
-              && provisionBinding.bindingElement().isPresent()) {
+          if (!provisionBinding.scope().isPresent()) {
             BindingExpression simpleMethodBindingExpression =
                 new SimpleMethodBindingExpression(
                     compilerOptions,

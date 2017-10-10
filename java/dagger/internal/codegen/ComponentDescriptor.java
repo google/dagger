@@ -739,11 +739,18 @@ abstract class ComponentDescriptor {
     }
   }
 
+  /**
+   * No-argument methods defined on {@link Object} that are ignored for contribution.
+   */
+  private static final ImmutableSet<String> NON_CONTRIBUTING_OBJECT_METHOD_NAMES =
+      ImmutableSet.of("toString", "hashCode", "clone", "getClass");
+
   static boolean isComponentContributionMethod(Elements elements, ExecutableElement method) {
     return method.getParameters().isEmpty()
         && !method.getReturnType().getKind().equals(VOID)
         && !elements.getTypeElement(Object.class.getCanonicalName())
-            .equals(method.getEnclosingElement());
+            .equals(method.getEnclosingElement())
+        && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
   }
 
   static boolean isComponentProductionMethod(Elements elements, ExecutableElement method) {

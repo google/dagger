@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
-import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
+import static dagger.internal.codegen.MapKeys.mapKeyType;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Optionals.firstPresent;
@@ -460,11 +460,10 @@ abstract class Key {
         case SET:
           return setOf(returnType);
         case MAP:
-          if (frameworkType.isPresent()) {
-            return mapOfFrameworkType(mapKeyType(method), frameworkType.get(), returnType);
-          } else {
-            return mapOf(mapKeyType(method), returnType);
-          }
+          TypeMirror mapKeyType = mapKeyType(getMapKey(method).get(), types);
+          return frameworkType.isPresent()
+              ? mapOfFrameworkType(mapKeyType, frameworkType.get(), returnType)
+              : mapOf(mapKeyType, returnType);
         case SET_VALUES:
           // TODO(gak): do we want to allow people to use "covariant return" here?
           checkArgument(SetType.isSet(returnType));
@@ -488,13 +487,6 @@ abstract class Key {
           : delegateDeclaration.key();
     }
 
-    private TypeMirror mapKeyType(ExecutableElement method) {
-      AnnotationMirror mapKeyAnnotation = getMapKey(method).get();
-      return MapKeys.unwrapValue(mapKeyAnnotation).isPresent()
-          ? getUnwrappedMapKeyType(mapKeyAnnotation.getAnnotationType(), types)
-          : mapKeyAnnotation.getAnnotationType();
-    }
-
     private Key forMethod(ExecutableElement method, TypeMirror keyType) {
       return forQualifiedType(getQualifier(method), keyType);
     }
@@ -503,7 +495,8 @@ abstract class Key {
       return builder(type).build();
     }
 
-    Key forComponent(TypeMirror type) {
+    // TODO(ronshapiro): Remove these conveniences which are simple wrappers around Key.Builder
+    Key forType(TypeMirror type) {
       return builder(type).build();
     }
 
@@ -545,12 +538,15 @@ abstract class Key {
     }
 
     /**
-     * Optionally extract a {@link Key} for the underlying provision binding(s) if such a
-     * valid key can be inferred from the given key.  Specifically, if the key represents a
-     * {@link Map}{@code <K, V>}, a key of {@code Map<K, Provider<V>>} will be returned.
+     * Optionally extract a {@link Key} for the underlying provision binding(s) if such a valid key
+     * can be inferred from the given key. Specifically, if the key represents a {@link Map}{@code
+     * <K, V>} or {@code Map<K, Producer<V>>}, a key of {@code Map<K, Provider<V>>} will be
+     * returned.
      */
     Optional<Key> implicitMapProviderKeyFrom(Key possibleMapKey) {
-      return wrapMapKey(possibleMapKey, Provider.class);
+      return firstPresent(
+          rewrapMapKey(possibleMapKey, Produced.class, Provider.class),
+          wrapMapKey(possibleMapKey, Provider.class));
     }
 
     /**

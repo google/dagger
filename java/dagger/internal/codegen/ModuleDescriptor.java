@@ -24,7 +24,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
-import static dagger.internal.codegen.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.SourceFiles.classFileName;
@@ -55,7 +54,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 @AutoValue
 abstract class ModuleDescriptor {
@@ -77,6 +75,8 @@ abstract class ModuleDescriptor {
 
   /** The {@link BindsOptionalOf} method declarations that define optional bindings. */
   abstract ImmutableSet<OptionalBindingDeclaration> optionalDeclarations();
+
+  abstract Kind kind();
 
   enum Kind {
     MODULE(Module.class, Provides.class),
@@ -136,7 +136,7 @@ abstract class ModuleDescriptor {
   }
 
   static final class Factory {
-    private final Elements elements;
+    private final DaggerElements elements;
     private final ProvisionBinding.Factory provisionBindingFactory;
     private final ProductionBinding.Factory productionBindingFactory;
     private final MultibindingDeclaration.Factory multibindingDeclarationFactory;
@@ -145,7 +145,7 @@ abstract class ModuleDescriptor {
     private final OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory;
 
     Factory(
-        Elements elements,
+        DaggerElements elements,
         ProvisionBinding.Factory provisionBindingFactory,
         ProductionBinding.Factory productionBindingFactory,
         MultibindingDeclaration.Factory multibindingDeclarationFactory,
@@ -196,7 +196,8 @@ abstract class ModuleDescriptor {
           multibindingDeclarations.build(),
           subcomponentDeclarationFactory.forModule(moduleElement),
           delegates.build(),
-          optionalDeclarations.build());
+          optionalDeclarations.build(),
+          Kind.forAnnotatedElement(moduleElement).get());
     }
 
     @CanIgnoreReturnValue
@@ -235,7 +236,7 @@ abstract class ModuleDescriptor {
       for (ExecutableElement method : methodsIn(moduleElement.getEnclosedElements())) {
         if (isAnnotationPresent(method, contributesAndroidInjector.asType())) {
           includedModules.add(
-              create(checkTypePresent(implicitlyIncludedModuleName(method), elements)));
+              create(elements.checkTypePresent(implicitlyIncludedModuleName(method))));
         }
       }
     }

@@ -47,6 +47,10 @@ cd gh-pages
 unzip ../bazel-genfiles/user-docs.jar -d api/$version_name
 rm -rf api/$version_name/META-INF/
 git add api/$version_name
+sed -i -r \
+  s/"2\.[[:digit:]]+(-rc[[:digit:]]+)?"/"${version_name}"/g \
+  public_docs/_layouts/default.html
+git add public_docs/_layouts/default.html
 git commit -m "$version_name docs"
 git push origin gh-pages
 cd ..

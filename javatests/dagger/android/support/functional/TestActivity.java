@@ -33,6 +33,7 @@ public final class TestActivity extends DaggerAppCompatActivity {
     getSupportFragmentManager()
         .beginTransaction()
         .add(new TestParentFragment(), "parent-fragment")
+        .add(new TestDialogFragment(), "dialog-fragment")
         .commit();
   }
 }

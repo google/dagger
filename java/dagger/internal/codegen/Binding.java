@@ -76,20 +76,27 @@ abstract class Binding extends BindingDeclaration implements HasBindingType {
    * user-defined injection site. This returns an unmodifiable set.
    */
   // TODO(gak): this will eventually get changed to return a set of FrameworkDependency
-  Set<DependencyRequest> implicitDependencies() {
+  ImmutableSet<DependencyRequest> implicitDependencies() {
     return ImmutableSet.of();
   }
+
+  private final Supplier<ImmutableSet<DependencyRequest>> dependencies =
+      memoize(
+          () -> {
+            ImmutableSet<DependencyRequest> implicitDependencies = implicitDependencies();
+            return ImmutableSet.copyOf(
+                implicitDependencies.isEmpty()
+                    ? explicitDependencies()
+                    : Sets.union(implicitDependencies, explicitDependencies()));
+          });
 
   /**
    * The set of {@link DependencyRequest dependencies} required to satisfy this binding. This is the
    * union of {@link #explicitDependencies()} and {@link #implicitDependencies()}. This returns an
    * unmodifiable set.
    */
-  final Set<DependencyRequest> dependencies() {
-    Set<DependencyRequest> implicitDependencies = implicitDependencies();
-    return implicitDependencies.isEmpty()
-        ? explicitDependencies()
-        : Sets.union(implicitDependencies, explicitDependencies());
+  final ImmutableSet<DependencyRequest> dependencies() {
+    return dependencies.get();
   }
 
   private final Supplier<ImmutableList<FrameworkDependency>> frameworkDependencies =

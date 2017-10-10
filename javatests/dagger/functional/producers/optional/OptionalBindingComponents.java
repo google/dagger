@@ -34,6 +34,7 @@ import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Retention;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import javax.annotation.Nullable;
 import javax.inject.Provider;
 import javax.inject.Qualifier;
 
@@ -79,6 +80,9 @@ final class OptionalBindingComponents {
     @SomeQualifier
     abstract Value qualifiedValue();
 
+    @BindsOptionalOf
+    abstract Object nullableObject();
+
     @Produces
     static Values values(
         Optional<Value> optionalInstance,
@@ -112,6 +116,15 @@ final class OptionalBindingComponents {
     static Value qualifiedValue() {
       return Value.QUALIFIED_VALUE;
     }
+
+    // @Produces @Nullable has no effect (and ProducesMethodValidator warns when the two are used
+    // together. Use a @Provides method and let it be wrapped into a producerFromProvider for the
+    // purposes of the test
+    @Provides
+    @Nullable
+    static Object nullableObject() {
+      return null;
+    }
   }
 
   /** Binds {@link Value} using {@link Provider}s. */
@@ -126,6 +139,12 @@ final class OptionalBindingComponents {
     @SomeQualifier
     static Value qualifiedValue() {
       return Value.QUALIFIED_VALUE;
+    }
+
+    @Provides
+    @Nullable
+    static Object nullableObject() {
+      return null;
     }
   }
 
@@ -149,6 +168,11 @@ final class OptionalBindingComponents {
 
     @SomeQualifier
     ListenableFuture<Optional<Produced<Value>>> qualifiedOptionalProduced();
+
+    // Nullable bindings can satisfy optional bindings except for Optional<Foo>.
+    ListenableFuture<Optional<Producer<Object>>> optionalNullableProducer();
+
+    ListenableFuture<Optional<Produced<Object>>> optionalNullableProduced();
   }
 
   @ProductionComponent(modules = {ExecutorModule.class, OptionalBindingModule.class})

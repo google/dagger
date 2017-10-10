@@ -58,6 +58,7 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
         ActivitySubcomponent.class,
         ParentFragmentSubcomponent.class,
         ChildFragmentSubcomponent.class,
+        DialogFragmentSubcomponent.class,
         ServiceSubcomponent.class,
         IntentServiceSubcomponent.class,
         BroadcastReceiverSubcomponent.class,
@@ -88,6 +89,12 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
       @FragmentKey(TestChildFragment.class)
       abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForChildFragment(
           ChildFragmentSubcomponent.Builder builder);
+
+      @Binds
+      @IntoMap
+      @FragmentKey(TestDialogFragment.class)
+      abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForDialogFragment(
+          DialogFragmentSubcomponent.Builder builder);
 
       @Binds
       @IntoMap
@@ -157,6 +164,21 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
 
       @Subcomponent.Builder
       abstract class Builder extends AndroidInjector.Builder<TestChildFragment> {}
+    }
+
+    @Subcomponent(modules = DialogFragmentSubcomponent.DialogFragmentModule.class)
+    interface DialogFragmentSubcomponent extends AndroidInjector<TestDialogFragment> {
+      @Module
+      abstract class DialogFragmentModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return DialogFragmentSubcomponent.class;
+        }
+      }
+
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<TestDialogFragment> {}
     }
 
     @Subcomponent(modules = ServiceModule.class)

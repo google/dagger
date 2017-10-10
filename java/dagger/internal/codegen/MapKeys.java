@@ -20,11 +20,19 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static dagger.internal.codegen.MapKeyAccessibility.isMapKeyPubliclyAccessible;
+import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import dagger.MapKey;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -81,6 +89,12 @@ final class MapKeys {
         : Optional.empty();
   }
 
+  static TypeMirror mapKeyType(AnnotationMirror mapKeyAnnotation, Types types) {
+    return unwrapValue(mapKeyAnnotation).isPresent()
+        ? getUnwrappedMapKeyType(mapKeyAnnotation.getAnnotationType(), types)
+        : mapKeyAnnotation.getAnnotationType();
+  }
+
   /**
    * Returns the map key type for an unwrapped {@link MapKey} annotation type. If the single member
    * type is primitive, returns the boxed type.
@@ -89,7 +103,7 @@ final class MapKeys {
    *     has more than one member, or if its single member is an array
    * @throws NoSuchElementException if the annotation has no members
    */
-  public static DeclaredType getUnwrappedMapKeyType(
+  static DeclaredType getUnwrappedMapKeyType(
       final DeclaredType mapKeyAnnotationType, final Types types) {
     checkArgument(
         MoreTypes.asTypeElement(mapKeyAnnotationType).getKind() == ElementKind.ANNOTATION_TYPE,
@@ -122,15 +136,35 @@ final class MapKeys {
   }
 
   /**
-   * Returns a code block for the map key specified by the {@link MapKey} annotation on
-   * {@code bindingElement}.
+   * Returns a code block for {@code binding}'s {@link ContributionBinding#mapKey() map key}. If for
+   * whatever reason the map key is not accessible from within {@code requestingClass} (i.e. it has
+   * a package-private {@code enum} from a different package), this will return an invocation of a
+   * proxy-method giving it access.
+   *
+   * @throws IllegalStateException if {@code binding} is not a {@link dagger.multibindings.IntoMap
+   *     map} contribution.
+   */
+  static CodeBlock getMapKeyExpression(ContributionBinding binding, ClassName requestingClass) {
+    AnnotationMirror mapKeyAnnotation = binding.mapKey().get();
+    return MapKeyAccessibility.isMapKeyAccessibleFrom(
+            mapKeyAnnotation, requestingClass.packageName())
+        ? directMapKeyExpression(mapKeyAnnotation)
+        : CodeBlock.of("$T.mapKey()", generatedClassNameForBinding(binding));
+  }
+
+  /**
+   * Returns a code block for the map key annotation {@code mapKey}.
+   *
+   * <p>This method assumes the map key will be accessible in the context that the returned {@link
+   * CodeBlock} is used. Use {@link #getMapKeyExpression(ContributionBinding, ClassName)} when that
+   * assumption is not guaranteed.
    *
    * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
    *     annotation
    * @throws IllegalStateException if {@code bindingElement} is not annotated with a {@code MapKey}
    *     annotation
    */
-  static CodeBlock getMapKeyExpression(AnnotationMirror mapKey) {
+  private static CodeBlock directMapKeyExpression(AnnotationMirror mapKey) {
     Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
     AnnotationExpression annotationExpression = new AnnotationExpression(mapKey);
     if (unwrappedValue.isPresent()) {
@@ -140,6 +174,23 @@ final class MapKeys {
     } else {
       return annotationExpression.getAnnotationInstanceExpression();
     }
+  }
+
+  /**
+   * A {@code static mapKey()} method to be added to generated factories when the {@code @MapKey}
+   * annotation is not publicly accessible.
+   */
+  static Optional<MethodSpec> mapKeyFactoryMethod(ContributionBinding binding, Types types) {
+    return binding
+        .mapKey()
+        .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
+        .map(
+            mapKey ->
+                methodBuilder("mapKey")
+                    .addModifiers(PUBLIC, STATIC)
+                    .returns(TypeName.get(mapKeyType(mapKey, types)))
+                    .addStatement("return $L", directMapKeyExpression(mapKey))
+                    .build());
   }
 
   private MapKeys() {}

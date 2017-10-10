@@ -26,5 +26,6 @@ public class UsesInaccessible {
   public UsesInaccessible(
       Inaccessible inaccessible,
       Set<Inaccessible> inaccessibleSet,
-      Map<String, Inaccessible> inaccessibleMap) {}
+      Map<String, Inaccessible> inaccessibleMap,
+      InaccessibleGeneric<Integer> inaccessibleGeneric) {}
 }

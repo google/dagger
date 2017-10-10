@@ -20,14 +20,17 @@ import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static java.util.stream.StreamSupport.stream;
 
 import com.google.auto.common.MoreElements;
+import com.google.auto.common.MoreTypes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.CodeBlock.Builder;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.stream.Collector;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 
 final class CodeBlocks {
   /**
@@ -74,6 +77,11 @@ final class CodeBlocks {
   /** Returns a comma-separated version of {@code codeBlocks} as one unified {@link CodeBlock}. */
   static CodeBlock makeParametersCodeBlock(Iterable<CodeBlock> codeBlocks) {
     return stream(codeBlocks.spliterator(), false).collect(toParametersCodeBlock());
+  }
+
+  /** Adds an annotation to a method. */
+  static void addAnnotation(MethodSpec.Builder method, DeclaredType nullableType) {
+    method.addAnnotation(ClassName.get(MoreTypes.asTypeElement(nullableType)));
   }
 
   private static final class CodeBlockJoiner {

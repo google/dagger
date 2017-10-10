@@ -16,6 +16,10 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.CodeBlocks.stringLiteral;
+
+import com.squareup.javapoet.CodeBlock;
+
 /**
  * Common lines outputted during code generation.
  */
@@ -24,4 +28,11 @@ public final class GeneratedLines {
       "@Generated("
           + "value = \"dagger.internal.codegen.ComponentProcessor\", "
           + "comments = \"https://google.github.io/dagger\")";
+
+  public static final CodeBlock NPE_FROM_PROVIDES_METHOD =
+      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+
+  public static final CodeBlock NPE_FROM_COMPONENT_METHOD =
+      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
+
 }

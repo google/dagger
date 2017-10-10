@@ -19,28 +19,49 @@ package dagger.internal.codegen;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
+import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
+import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCED_PRODUCER;
+import static dagger.internal.codegen.TypeNames.MAP_OF_PRODUCER_PRODUCER;
+import static dagger.internal.codegen.TypeNames.MAP_PRODUCER;
+import static dagger.internal.codegen.TypeNames.MAP_PROVIDER_FACTORY;
 import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
+import static dagger.internal.codegen.TypeNames.SET_FACTORY;
+import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
+import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
+import static dagger.internal.codegen.Util.toImmutableList;
+import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.SetFactory;
+import dagger.producers.Produced;
+import dagger.producers.Producer;
+import dagger.producers.internal.SetOfProducedProducer;
+import dagger.producers.internal.SetProducer;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
+import javax.inject.Provider;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -105,7 +126,7 @@ class SourceFiles {
   private static String fieldNameForDependency(ImmutableSet<DependencyRequest> dependencyRequests) {
     // collect together all of the names that we would want to call the provider
     ImmutableSet<String> dependencyNames =
-        FluentIterable.from(dependencyRequests).transform(new DependencyVariableNamer()).toSet();
+        dependencyRequests.stream().map(DependencyVariableNamer::name).collect(toImmutableSet());
 
     if (dependencyNames.size() == 1) {
       // if there's only one name, great! use it!
@@ -142,6 +163,19 @@ class SourceFiles {
       default: // including PRODUCED
         throw new AssertionError(dependencyKind);
     }
+  }
+
+  /**
+   * Returns a mapping of {@link DependencyRequest}s to {@link CodeBlock}s that {@linkplain
+   * #frameworkTypeUsageStatement(CodeBlock, DependencyRequest.Kind) use them}.
+   */
+  static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
+      ImmutableSet<DependencyRequest> dependencies, ImmutableMap<BindingKey, FieldSpec> fields) {
+    return Maps.toMap(
+        dependencies,
+        dep ->
+            frameworkTypeUsageStatement(
+                CodeBlock.of("$N", fields.get(dep.bindingKey())), dep.kind()));
   }
 
   /**
@@ -211,6 +245,43 @@ class SourceFiles {
     return className.topLevelClassName().peerClass(classFileName(className) + suffix);
   }
 
+  /**
+   * The {@link java.util.Set} factory class name appropriate for set bindings.
+   *
+   * <ul>
+   * <li>{@link SetFactory} for provision bindings.
+   * <li>{@link SetProducer} for production bindings for {@code Set<T>}.
+   * <li>{@link SetOfProducedProducer} for production bindings for {@code Set<Produced<T>>}.
+   * </ul>
+   */
+  static ClassName setFactoryClassName(ContributionBinding binding) {
+    checkArgument(binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_SET));
+    if (binding.bindingType().equals(BindingType.PROVISION)) {
+      return SET_FACTORY;
+    } else {
+      SetType setType = SetType.from(binding.key());
+      return setType.elementsAreTypeOf(Produced.class) ? SET_OF_PRODUCED_PRODUCER : SET_PRODUCER;
+    }
+  }
+
+  /** The {@link java.util.Map} factory class name appropriate for map bindings. */
+  static ClassName mapFactoryClassName(ContributionBinding binding) {
+    checkState(binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP), binding.bindingKind());
+    MapType mapType = MapType.from(binding.key());
+    switch (binding.bindingType()) {
+      case PROVISION:
+        return mapType.valuesAreTypeOf(Provider.class) ? MAP_PROVIDER_FACTORY : MAP_FACTORY;
+      case PRODUCTION:
+        return mapType.valuesAreFrameworkType()
+            ? mapType.valuesAreTypeOf(Producer.class)
+                ? MAP_OF_PRODUCER_PRODUCER
+                : MAP_OF_PRODUCED_PRODUCER
+            : MAP_PRODUCER;
+      default:
+        throw new IllegalArgumentException(binding.bindingType().toString());
+    }
+  }
+
   private static String factoryPrefix(ContributionBinding binding) {
     switch (binding.bindingKind()) {
       case INJECTION:
@@ -234,12 +305,9 @@ class SourceFiles {
         return ImmutableList.of();
       }
     }
-    ImmutableList.Builder<TypeVariableName> builder = ImmutableList.builder();
-    for (TypeParameterElement typeParameter :
-        binding.bindingTypeElement().get().getTypeParameters()) {
-      builder.add(TypeVariableName.get(typeParameter));
-    }
-    return builder.build();
+    List<? extends TypeParameterElement> typeParameters =
+        binding.bindingTypeElement().get().getTypeParameters();
+    return typeParameters.stream().map(TypeVariableName::get).collect(toImmutableList());
   }
 
   /**

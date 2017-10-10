@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -42,7 +41,6 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -52,10 +50,10 @@ import javax.lang.model.util.Types;
  */
 class BuilderValidator {
 
-  private final Elements elements;
+  private final DaggerElements elements;
   private final Types types;
 
-  BuilderValidator(Elements elements, Types types) {
+  BuilderValidator(DaggerElements elements, Types types) {
     this.elements = elements;
     this.types = types;
   }
@@ -109,7 +107,7 @@ class BuilderValidator {
     }
 
     ExecutableElement buildMethod = null;
-    for (ExecutableElement method : getUnimplementedMethods(subject, types, elements)) {
+    for (ExecutableElement method : elements.getUnimplementedMethods(subject)) {
       ExecutableType resolvedMethodType =
           MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
       TypeMirror returnType = resolvedMethodType.getReturnType();

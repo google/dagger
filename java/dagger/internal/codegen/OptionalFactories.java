@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
@@ -190,11 +191,10 @@ final class OptionalFactories {
     }
 
     private static PresentFactorySpec of(ContributionBinding binding) {
-      OptionalKind optionalKind = OptionalType.from(binding.key()).kind();
-      DependencyRequest.Kind valueKind =
-          DependencyRequest.extractKindAndType(OptionalType.from(binding.key()).valueType()).kind();
       return new AutoValue_OptionalFactories_PresentFactorySpec(
-          binding.bindingType(), optionalKind, valueKind);
+          binding.bindingType(),
+          OptionalType.from(binding.key()).kind(),
+          getOnlyElement(binding.dependencies()).kind());
     }
   }
   

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
@@ -26,7 +25,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableListMultimap;
@@ -44,7 +42,6 @@ import java.util.Map.Entry;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Creates the implementation class for a component.
@@ -52,7 +49,7 @@ import javax.lang.model.util.Types;
 final class ComponentWriter extends AbstractComponentWriter {
 
   ComponentWriter(
-      Types types,
+      DaggerTypes types,
       Elements elements,
       Key.Factory keyFactory,
       CompilerOptions compilerOptions,
@@ -66,7 +63,9 @@ final class ComponentWriter extends AbstractComponentWriter {
         name,
         graph,
         new UniqueSubcomponentNamesGenerator(graph).generate(),
-        new OptionalFactories());
+        new OptionalFactories(),
+        new ComponentBindingExpressions(types),
+        new ComponentRequirementFields());
   }
 
   /**
@@ -76,7 +75,6 @@ final class ComponentWriter extends AbstractComponentWriter {
   private static class UniqueSubcomponentNamesGenerator {
 
     private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
-    private static final Joiner QUALIFIED_NAME_JOINER = Joiner.on('_');
 
     private final BindingGraph graph;
     private final ImmutableListMultimap<String, ComponentDescriptor>
@@ -186,15 +184,7 @@ final class ComponentWriter extends AbstractComponentWriter {
     addSupertype(component, graph.componentType());
   }
 
-  @Override
-  protected ClassName builderName() {
-    return name.nestedClass("Builder");
-  }
-
-  @Override
-  protected TypeSpec.Builder createBuilder(String builderSimpleName) {
-    TypeSpec.Builder builder = classBuilder(builderSimpleName).addModifiers(STATIC);
-
+  private void addBuilderFactoryMethod() {
     // Only top-level components have the factory builder() method.
     // Mirror the user's builder API type if they had one.
     MethodSpec builderFactoryMethod =
@@ -203,12 +193,11 @@ final class ComponentWriter extends AbstractComponentWriter {
             .returns(
                 graph.componentDescriptor().builderSpec().isPresent()
                     ? ClassName.get(
-                        graph.componentDescriptor().builderSpec().get().builderDefinitionType())
-                    : builderName.get())
-            .addStatement("return new $T()", builderName.get())
+                    graph.componentDescriptor().builderSpec().get().builderDefinitionType())
+                    : builderName())
+            .addStatement("return new $T()", builderName())
             .build();
     component.addMethod(builderFactoryMethod);
-    return builder;
   }
 
   @Override
@@ -218,6 +207,7 @@ final class ComponentWriter extends AbstractComponentWriter {
 
   @Override
   protected void addFactoryMethods() {
+    addBuilderFactoryMethod();
     if (canInstantiateAllRequirements()) {
       CharSequence buildMethodName =
           graph.componentDescriptor().builderSpec().isPresent()
@@ -225,7 +215,7 @@ final class ComponentWriter extends AbstractComponentWriter {
               : "build";
       component.addMethod(
           methodBuilder("create")
-              .returns(componentDefinitionTypeName())
+              .returns(ClassName.get(graph.componentType()))
               .addModifiers(PUBLIC, STATIC)
               .addStatement("return new Builder().$L()", buildMethodName)
               .build());
@@ -237,5 +227,10 @@ final class ComponentWriter extends AbstractComponentWriter {
     return !Iterables.any(
         graph.componentRequirements(),
         dependency -> dependency.requiresAPassedInstance(elements, types));
+  }
+
+  @Override
+  protected boolean requiresReleasableReferences(Scope scope) {
+    return graph.scopesRequiringReleasableReferenceManagers().contains(scope);
   }
 }

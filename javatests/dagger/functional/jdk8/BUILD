@@ -32,5 +32,6 @@ GenJavaTests(
     deps = [
         "//:dagger_with_compiler",
         "//third_party:auto_value",
+        "//third_party:jsr305_annotations",
     ],
 )

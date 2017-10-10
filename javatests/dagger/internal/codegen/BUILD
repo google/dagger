@@ -23,6 +23,7 @@ load("//:test_defs.bzl", "GenJavaTests")
 GenJavaTests(
     name = "compiler_tests",
     srcs = glob(["*.java"]),
+    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger:core",
@@ -33,6 +34,7 @@ GenJavaTests(
         "//third_party:compile_testing",
         "//third_party:guava",
         "//third_party:javapoet",
+        "//third_party:jsr250_annotations",
         "//third_party:jsr330_inject",
         "//third_party:junit",
         "//third_party:mockito",

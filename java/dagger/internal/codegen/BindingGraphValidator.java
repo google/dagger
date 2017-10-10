@@ -30,7 +30,6 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
@@ -52,6 +51,7 @@ import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCT
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_OR_PRODUCER_FORMAT;
+import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
 import static dagger.internal.codegen.ErrorMessages.inconsistentMapKeyAnnotationsError;
 import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
@@ -63,6 +63,7 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -111,6 +112,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -134,7 +136,6 @@ final class BindingGraphValidator {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFormatter dependencyRequestFormatter;
-  private final KeyFormatter keyFormatter;
   private final Key.Factory keyFactory;
 
   BindingGraphValidator(
@@ -146,7 +147,6 @@ final class BindingGraphValidator {
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFormatter dependencyRequestFormatter,
-      KeyFormatter keyFormatter,
       Key.Factory keyFactory) {
     this.elements = elements;
     this.types = types;
@@ -156,7 +156,6 @@ final class BindingGraphValidator {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
-    this.keyFormatter = keyFormatter;
     this.keyFactory = keyFactory;
   }
 
@@ -190,7 +189,8 @@ final class BindingGraphValidator {
 
     /** Returns the report builder for a (sub)component. */
     private ValidationReport.Builder<TypeElement> report(BindingGraph graph) {
-      return reports.computeIfAbsent(
+      return reentrantComputeIfAbsent(
+          reports,
           graph.componentDescriptor(),
           descriptor -> ValidationReport.about(descriptor.componentDefinitionType()));
     }
@@ -199,6 +199,7 @@ final class BindingGraphValidator {
     protected void visitComponent(BindingGraph graph) {
       validateDependencyScopes(graph);
       validateComponentDependencyHierarchy(graph);
+      validateModules(graph);
       validateBuilders(graph);
       super.visitComponent(graph);
       checkScopedBindings(graph);
@@ -341,6 +342,19 @@ final class BindingGraphValidator {
                   message.toString(),
                   descriptor.componentDefinitionType(),
                   descriptor.componentAnnotation());
+        }
+      }
+    }
+
+    private void validateModules(BindingGraph graph) {
+      for (ModuleDescriptor module : graph.componentDescriptor().transitiveModules()) {
+        if (module.moduleElement().getModifiers().contains(Modifier.ABSTRACT)) {
+          for (ContributionBinding binding : module.bindings()) {
+            if (binding.requiresModuleInstance()) {
+              report(graph).addError(abstractModuleHasInstanceBindingMethods(module));
+              break;
+            }
+          }
         }
       }
     }
@@ -648,6 +662,10 @@ final class BindingGraphValidator {
        * ContributionBinding}s with present {@linkplain BindingDeclaration#bindingElement() binding
        * elements}.
        *
+       * <p>Includes {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGER} or
+       * {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS} bindings, even
+       * though they have no binding elements, because they will be reported via the declared
+       * scopes.
        *
        * <p>For other bindings without binding elements, such as the {@link
        * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_KINDS}, includes the conflicting declarations
@@ -975,8 +993,7 @@ final class BindingGraphValidator {
             .stream()
             .map(ContributionBinding::bindingKind)
             // TODO(dpb): Kill with fire.
-            .anyMatch(
-                kind -> SYNTHETIC_MULTIBOUND_KINDS.contains(kind) || SYNTHETIC_MAP.equals(kind))) {
+            .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)) {
           reportMultipleContributionTypes();
           return;
         }
@@ -1165,7 +1182,7 @@ final class BindingGraphValidator {
       }
 
       private String formatCurrentDependencyRequestKey() {
-        return keyFormatter.format(dependencyRequest().key());
+        return dependencyRequest().key().toString();
       }
     }
   }

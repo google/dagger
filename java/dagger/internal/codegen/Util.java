@@ -25,6 +25,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -100,6 +102,22 @@ final class Util {
    */
   static <T> Collector<T, ?, ImmutableSet<T>> toImmutableSet() {
     return collectingAndThen(toList(), ImmutableSet::copyOf);
+  }
+
+  /**
+   * A version of {@link Map#computeIfAbsent(Object, Function)} that allows {@code mappingFunction}
+   * to update {@code map}.
+   */
+  static <K, V> V reentrantComputeIfAbsent(
+      Map<K, V> map, K key, Function<? super K, ? extends V> mappingFunction) {
+    V value = map.get(key);
+    if (value == null) {
+      value = mappingFunction.apply(key);
+      if (value != null) {
+        map.put(key, value);
+      }
+    }
+    return value;
   }
 
   private Util() {}

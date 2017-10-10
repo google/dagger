@@ -24,7 +24,6 @@ import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Generates the implementation of the abstract types annotated with {@link Component}.
@@ -33,7 +32,7 @@ import javax.lang.model.util.Types;
  * @since 2.0
  */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
-  private final Types types;
+  private final DaggerTypes types;
   private final Elements elements;
   private final Key.Factory keyFactory;
   private final CompilerOptions compilerOptions;
@@ -41,7 +40,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   ComponentGenerator(
       Filer filer,
       Elements elements,
-      Types types,
+      DaggerTypes types,
       Key.Factory keyFactory,
       CompilerOptions compilerOptions) {
     super(filer, elements);

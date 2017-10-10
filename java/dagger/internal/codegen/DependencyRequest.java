@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.Optionals.firstPresent;
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
+import static dagger.internal.codegen.TypeNames.membersInjectorOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
@@ -153,15 +154,35 @@ abstract class DependencyRequest {
         case FUTURE:
           return listenableFutureOf(keyType);
 
+        case MEMBERS_INJECTOR:
+          return membersInjectorOf(keyType);
+
         default:
           throw new AssertionError(this);
+      }
+    }
+
+    /** Returns the type of a request of this kind for the given {@code type}. */
+    TypeMirror type(TypeMirror type, DaggerTypes types) {
+      switch (this) {
+        case INSTANCE:
+          return type;
+
+        case PROVIDER_OF_LAZY:
+          return types.wrapType(LAZY.type(type, types), Provider.class);
+
+        case FUTURE:
+          return types.wrapType(type, ListenableFuture.class);
+
+        default:
+          return types.wrapType(type, frameworkClass.get());
       }
     }
   }
 
   abstract Kind kind();
   abstract Key key();
-  
+
   BindingKey bindingKey() {
     switch (kind()) {
       case INSTANCE:
@@ -181,6 +202,17 @@ abstract class DependencyRequest {
 
   /** The element that declares this dependency request. Absent for synthetic requests. */
   abstract Optional<Element> requestElement();
+
+  /**
+   * Returns {@code true} if {@code requestElement}'s type is a primitive type.
+   *
+   * <p>Because the {@link #key()} of a {@link DependencyRequest} is {@linkplain
+   * Key.Factory#boxPrimitives(TypeMirror) boxed} to normalize it with other keys, this inspects the
+   * {@link #requestElement()} directly.
+   */
+  boolean requestsPrimitiveType() {
+    return requestElement().map(element -> element.asType().getKind().isPrimitive()).orElse(false);
+  }
 
   /** Returns true if this request allows null objects. */
   abstract boolean isNullable();
@@ -326,26 +358,48 @@ abstract class DependencyRequest {
     }
 
     /**
+     * Creates synthetic dependency requests for each individual multibinding contribution in {@code
+     * multibindingContributions}.
+     */
+    ImmutableSet<DependencyRequest> forMultibindingContributions(
+        Key multibindingKey, Iterable<ContributionBinding> multibindingContributions) {
+      ImmutableSet.Builder<DependencyRequest> requests = ImmutableSet.builder();
+      for (ContributionBinding multibindingContribution : multibindingContributions) {
+        requests.add(forMultibindingContribution(multibindingKey, multibindingContribution));
+      }
+      return requests.build();
+    }
+
+    /**
      * Creates a synthetic dependency request for one individual {@code multibindingContribution}.
      */
     private DependencyRequest forMultibindingContribution(
-        ContributionBinding multibindingContribution) {
+        Key multibindingKey, ContributionBinding multibindingContribution) {
       checkArgument(
           multibindingContribution.key().multibindingContributionIdentifier().isPresent(),
           "multibindingContribution's key must have a multibinding contribution identifier: %s",
           multibindingContribution);
       return DependencyRequest.builder()
-          .kind(multibindingContributionRequestKind(multibindingContribution))
+          .kind(multibindingContributionRequestKind(multibindingKey, multibindingContribution))
           .key(multibindingContribution.key())
           .build();
     }
 
-    private Kind multibindingContributionRequestKind(ContributionBinding multibindingContribution) {
+    // TODO(b/28555349): support PROVIDER_OF_LAZY here too
+    private static final ImmutableSet<Kind> WRAPPING_MAP_VALUE_FRAMEWORK_TYPES =
+        ImmutableSet.of(Kind.PROVIDER, Kind.PRODUCER);
+
+    private Kind multibindingContributionRequestKind(
+        Key multibindingKey, ContributionBinding multibindingContribution) {
       switch (multibindingContribution.contributionType()) {
         case MAP:
-          return multibindingContribution.bindingType().equals(BindingType.PRODUCTION)
-              ? Kind.PRODUCER
-              : Kind.PROVIDER;
+          MapType mapType = MapType.from(multibindingKey);
+          for (Kind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
+            if (mapType.valuesAreTypeOf(kind.frameworkClass.get())) {
+              return kind;
+            }
+          }
+          // fall through
         case SET:
         case SET_VALUES:
           return Kind.INSTANCE;
@@ -355,19 +409,6 @@ abstract class DependencyRequest {
         default:
           throw new AssertionError(multibindingContribution.toString());
       }
-    }
-
-    /**
-     * Creates synthetic dependency requests for each individual multibinding contribution in {@code
-     * multibindingContributions}.
-     */
-    ImmutableSet<DependencyRequest> forMultibindingContributions(
-        Iterable<ContributionBinding> multibindingContributions) {
-      ImmutableSet.Builder<DependencyRequest> requests = ImmutableSet.builder();
-      for (ContributionBinding multibindingContribution : multibindingContributions) {
-        requests.add(forMultibindingContribution(multibindingContribution));
-      }
-      return requests.build();
     }
 
     DependencyRequest forRequiredVariable(VariableElement variableElement) {

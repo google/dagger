@@ -24,6 +24,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
+import static dagger.internal.codegen.MapKeys.mapKeyFactoryMethod;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -63,6 +64,7 @@ import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * Generates {@link Producer} implementations from {@link ProductionBinding} instances.
@@ -71,10 +73,13 @@ import javax.lang.model.util.Elements;
  * @since 2.0
  */
 final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
+  private final Types types;
   private final CompilerOptions compilerOptions;
 
-  ProducerFactoryGenerator(Filer filer, Elements elements, CompilerOptions compilerOptions) {
+  ProducerFactoryGenerator(
+      Filer filer, Elements elements, Types types, CompilerOptions compilerOptions) {
     super(filer, elements);
+    this.types = types;
     this.compilerOptions = compilerOptions;
   }
 
@@ -182,10 +187,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addModifiers(PUBLIC)
             .addParameter(futureTransform.applyArgType(), futureTransform.applyArgName())
             .addExceptions(getThrownTypeNames(binding.thrownTypes()))
-            .addStatement(
-                "assert monitor != null : $S",
-                "apply() may only be called internally from compute(); "
-                    + "if it's called explicitly, the monitor might be null")
             .addCode(
                 getInvocationCodeBlock(
                     generatedTypeName,
@@ -203,10 +204,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addAnnotation(Deprecated.class)
             .addAnnotation(Override.class)
             .addParameter(RUNNABLE, "runnable")
-            .addStatement(
-                "assert monitor != null : $S",
-                "execute() may only be called internally from compute(); "
-                    + "if it's called explicitly, the monitor might be null")
             .addStatement("monitor.ready()")
             .addStatement("executorProvider.get().execute(runnable)");
 
@@ -216,6 +213,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     factoryBuilder.addMethod(executeMethodBuilder.build());
 
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
+    mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
 
     // TODO(gak): write a sensible toString
     return Optional.of(factoryBuilder);
@@ -234,9 +232,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   }
 
   private static void assignField(MethodSpec.Builder constructorBuilder, FieldSpec field) {
-    constructorBuilder
-        .addStatement("assert $N != null", field)
-        .addStatement("this.$1N = $1N", field);
+    constructorBuilder.addStatement("this.$1N = $1N", field);
   }
 
   /** Returns a list of dependencies that are generated asynchronously. */

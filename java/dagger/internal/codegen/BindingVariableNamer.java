@@ -22,8 +22,11 @@ import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBui
 
 import java.util.Iterator;
 import javax.lang.model.element.Element;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.SimpleTypeVisitor6;
 
 /**
@@ -34,6 +37,44 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  * @since 2.0
  */
 final class BindingVariableNamer {
+  private static final TypeVisitor<Void, StringBuilder> TYPE_NAMER =
+      new SimpleTypeVisitor6<Void, StringBuilder>() {
+        @Override
+        public Void visitDeclared(DeclaredType declaredType, StringBuilder builder) {
+          Element element = declaredType.asElement();
+          if (isSubcomponentBuilder(element)) {
+            // Most Subcomponent builders are named "Builder", so add their associated
+            // Subcomponent type so that they're not all "builderProvider{N}"
+            builder.append(element.getEnclosingElement().getSimpleName());
+          }
+          builder.append(element.getSimpleName());
+          Iterator<? extends TypeMirror> argumentIterator =
+              declaredType.getTypeArguments().iterator();
+          if (argumentIterator.hasNext()) {
+            builder.append("Of");
+            TypeMirror first = argumentIterator.next();
+            first.accept(this, builder);
+            while (argumentIterator.hasNext()) {
+              builder.append("And");
+              argumentIterator.next().accept(this, builder);
+            }
+          }
+          return null;
+        }
+
+        @Override
+        public Void visitPrimitive(PrimitiveType type, StringBuilder builder) {
+          builder.append(LOWER_CAMEL.to(UPPER_CAMEL, type.toString()));
+          return null;
+        }
+
+        @Override
+        public Void visitArray(ArrayType type, StringBuilder builder) {
+          type.getComponentType().accept(this, builder);
+          builder.append("Array");
+          return null;
+        }
+      };
 
   private BindingVariableNamer() {}
 
@@ -47,32 +88,7 @@ final class BindingVariableNamer {
     }
 
     TypeMirror type = typeToName(binding);
-    type.accept(
-        new SimpleTypeVisitor6<Void, StringBuilder>() {
-          @Override
-          public Void visitDeclared(DeclaredType declaredType, StringBuilder builder) {
-            Element element = declaredType.asElement();
-            if (isSubcomponentBuilder(element)) {
-              // Most Subcomponent builders are named "Builder", so add their associated
-              // Subcomponent type so that they're not all "builderProvider{N}"
-              builder.append(element.getEnclosingElement().getSimpleName());
-            }
-            builder.append(element.getSimpleName());
-            Iterator<? extends TypeMirror> argumentIterator =
-                declaredType.getTypeArguments().iterator();
-            if (argumentIterator.hasNext()) {
-              builder.append("Of");
-              TypeMirror first = argumentIterator.next();
-              first.accept(this, builder);
-              while (argumentIterator.hasNext()) {
-                builder.append("And");
-                argumentIterator.next().accept(this, builder);
-              }
-            }
-            return null;
-          }
-        },
-        builder);
+    type.accept(TYPE_NAMER, builder);
 
     return UPPER_CAMEL.to(LOWER_CAMEL, builder.toString());
   }

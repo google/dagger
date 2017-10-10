@@ -27,6 +27,7 @@ import dagger.Provides;
 import dagger.Subcomponent;
 import java.lang.annotation.Retention;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Qualifier;
@@ -75,6 +76,9 @@ public final class OptionalBindingComponents {
     @BindsOptionalOf
     @SomeQualifier abstract InjectedThing qualifiedInjectedThing();
 
+    @BindsOptionalOf
+    abstract Object nullableObject();
+
     @Provides
     static Values values(
         Optional<Value> optionalInstance,
@@ -110,6 +114,12 @@ public final class OptionalBindingComponents {
     @SomeQualifier static Value qualifiedValue() {
       return Value.QUALIFIED_VALUE;
     }
+
+    @Provides
+    @Nullable
+    static Object nullableObject() {
+      return null;
+    }
   }
 
   /** Interface for components used to test optional bindings. */
@@ -118,6 +128,14 @@ public final class OptionalBindingComponents {
 
     @SomeQualifier
     Values qualifiedValues();
+
+    // Nullable bindings can satisfy optional bindings except for Optional<Foo>.
+
+    Optional<Provider<Object>> optionalNullableProvider();
+
+    Optional<Lazy<Object>> optionalNullableLazy();
+
+    Optional<Provider<Lazy<Object>>> optionalNullableLazyProvider();
   }
 
   @Component(modules = OptionalBindingModule.class)

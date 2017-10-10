@@ -16,24 +16,33 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
-import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /** Tests for {@link dagger.Component.Builder} */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class ComponentBuilderTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public ComponentBuilderTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
 
   private static final ErrorMessages.ComponentBuilderMessages MSGS =
       ErrorMessages.ComponentBuilderMessages.INSTANCE;
@@ -67,45 +76,86 @@ public class ComponentBuilderTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            "import javax.annotation.Generated;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private DaggerSimpleComponent(Builder builder) {",
-            "    assert builder != null;",
-            "  }",
-            "",
-            "  public static SimpleComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static SimpleComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public SomeInjectableType someInjectableType() {",
-            "    return new SomeInjectableType();",
-            "  }",
-            "",
-            "  private static final class Builder implements SimpleComponent.Builder {",
-            "    @Override",
-            "    public SimpleComponent build() {",
-            "      return new DaggerSimpleComponent(this);",
-            "    }",
-            "  }",
-            "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(injectableTypeFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private DaggerSimpleComponent(Builder builder) {}",
+                "",
+                "  public static SimpleComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private SomeInjectableType getSomeInjectableTypeInstance() {",
+                "    return new SomeInjectableType();",
+                "  }",
+                "",
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return getSomeInjectableTypeInstance();",
+                "  }",
+                "",
+                "  private static final class Builder implements SimpleComponent.Builder {",
+                "    @Override",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerSimpleComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private DaggerSimpleComponent(Builder builder) {}",
+                "",
+                "  public static SimpleComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static SimpleComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return new SomeInjectableType();",
+                "  }",
+                "",
+                "  private static final class Builder implements SimpleComponent.Builder {",
+                "    @Override",
+                "    public SimpleComponent build() {",
+                "      return new DaggerSimpleComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(injectableTypeFile, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerSimpleComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -140,66 +190,128 @@ public class ComponentBuilderTest {
             "    TestComponent create();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private Provider<String> stringProvider;",
-            "",
-            "  private DaggerTestComponent(Builder builder) {",
-            "    assert builder != null;",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static TestComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().create();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.stringProvider = TestModule_StringFactory.create(builder.testModule);",
-            "  }",
-            "",
-            "  @Override",
-            "  public String string() {",
-            "    return stringProvider.get();",
-            "  }",
-            "",
-            "  private static final class Builder implements TestComponent.Builder {",
-            "    private TestModule testModule;",
-            "",
-            "    @Override",
-            "    public TestComponent create() {",
-            "      if (testModule == null) {",
-            "        this.testModule = new TestModule();",
-            "      }",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Override",
-            "    public Builder setTestModule(TestModule testModule) {",
-            "      this.testModule = Preconditions.checkNotNull(testModule);",
-            "      return this;",
-            "    }",
-            "  }",
-            "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private TestModule testModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static TestComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().create();",
+                "  }",
+                "",
+                "  private String getStringInstance() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.testModule = builder.testModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public String string() {",
+                "    return getStringInstance();",
+                "  }",
+                "",
+                "  private static final class Builder implements TestComponent.Builder {",
+                "    private TestModule testModule;",
+                "",
+                "    @Override",
+                "    public TestComponent create() {",
+                "      if (testModule == null) {",
+                "        this.testModule = new TestModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Override",
+                "    public Builder setTestModule(TestModule testModule) {",
+                "      this.testModule = Preconditions.checkNotNull(testModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private TestModule testModule;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static TestComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().create();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.testModule = builder.testModule;",
+                "  }",
+                "",
+                "  @Override",
+                "  public String string() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  private static final class Builder implements TestComponent.Builder {",
+                "    private TestModule testModule;",
+                "",
+                "    @Override",
+                "    public TestComponent create() {",
+                "      if (testModule == null) {",
+                "        this.testModule = new TestModule();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Override",
+                "    public Builder setTestModule(TestModule testModule) {",
+                "      this.testModule = Preconditions.checkNotNull(testModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+    }
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -247,77 +359,158 @@ public class ComponentBuilderTest {
             "    TestComponent build();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private Provider<String> stringProvider;",
-            "  private Provider<Integer> integerProvider;",
-            "",
-            "  private DaggerTestComponent(Builder builder) {",
-            "    assert builder != null;",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static TestComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.stringProvider = TestModule1_StringFactory.create(builder.testModule1);",
-            "    this.integerProvider = TestModule2_IntegerFactory.create(builder.testModule2);",
-            "  }",
-            "",
-            "  @Override",
-            "  public String string() {",
-            "    return stringProvider.get();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Integer integer() {",
-            "    return integerProvider.get();",
-            "  }",
-            "",
-            "  private static final class Builder implements TestComponent.Builder {",
-            "    private TestModule1 testModule1;",
-            "    private TestModule2 testModule2;",
-            "",
-            "    @Override",
-            "    public TestComponent build() {",
-            "      if (testModule1 == null) {",
-            "        this.testModule1 = new TestModule1();",
-            "      }",
-            "      if (testModule2 == null) {",
-            "        this.testModule2 = new TestModule2();",
-            "      }",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Override",
-            "    public Builder testModule1(TestModule1 testModule1) {",
-            "      this.testModule1 = Preconditions.checkNotNull(testModule1);",
-            "      return this;",
-            "    }",
-            "  }",
-            "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(module1, module2, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private TestModule1 testModule1;",
+                "  private TestModule2 testModule2;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static TestComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private String getStringInstance() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule1.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  private Integer getIntegerInstance() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule2.integer()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.testModule1 = builder.testModule1;",
+                "    this.testModule2 = builder.testModule2;",
+                "  }",
+                "",
+                "  @Override",
+                "  public String string() {",
+                "    return getStringInstance();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Integer integer() {",
+                "    return getIntegerInstance();",
+                "  }",
+                "",
+                "  private static final class Builder implements TestComponent.Builder {",
+                "    private TestModule1 testModule1;",
+                "    private TestModule2 testModule2;",
+                "",
+                "    @Override",
+                "    public TestComponent build() {",
+                "      if (testModule1 == null) {",
+                "        this.testModule1 = new TestModule1();",
+                "      }",
+                "      if (testModule2 == null) {",
+                "        this.testModule2 = new TestModule2();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Override",
+                "    public Builder testModule1(TestModule1 testModule1) {",
+                "      this.testModule1 = Preconditions.checkNotNull(testModule1);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private TestModule1 testModule1;",
+                "  private TestModule2 testModule2;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static TestComponent.Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.testModule1 = builder.testModule1;",
+                "    this.testModule2 = builder.testModule2;",
+                "  }",
+                "",
+                "  @Override",
+                "  public String string() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule1.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  @Override",
+                "  public Integer integer() {",
+                "    return Preconditions.checkNotNull(",
+                "        testModule2.integer()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "  }",
+                "",
+                "  private static final class Builder implements TestComponent.Builder {",
+                "    private TestModule1 testModule1;",
+                "    private TestModule2 testModule2;",
+                "",
+                "    @Override",
+                "    public TestComponent build() {",
+                "      if (testModule1 == null) {",
+                "        this.testModule1 = new TestModule1();",
+                "      }",
+                "      if (testModule2 == null) {",
+                "        this.testModule2 = new TestModule2();",
+                "      }",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Override",
+                "    public Builder testModule1(TestModule1 testModule1) {",
+                "      this.testModule1 = Preconditions.checkNotNull(testModule1);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+    }
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module1, module2, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 
   @Test
@@ -342,15 +535,15 @@ public class ComponentBuilderTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.moreThanOne(),
                 "[test.SimpleComponent.Builder, test.SimpleComponent.Builder2]"))
-        .in(componentFile);
+        .inFile(componentFile);
   }
 
   @Test
@@ -370,12 +563,10 @@ public class ComponentBuilderTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.generics())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.generics()).inFile(componentFile);
   }
 
   @Test
@@ -389,12 +580,10 @@ public class ComponentBuilderTest {
             "",
             "@Component.Builder",
             "interface Builder {}");
-    assertAbout(javaSource())
-        .that(builder)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeInComponent())
-        .in(builder);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(builder);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeInComponent()).inFile(builder);
   }
 
   @Test
@@ -412,12 +601,10 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.missingBuildMethod())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.missingBuildMethod()).inFile(componentFile);
   }
 
   @Test
@@ -447,17 +634,14 @@ public class ComponentBuilderTest {
             "test.DaggerSimpleComponent",
             "package test;",
             "",
-            "import dagger.internal.InstanceFactory;",
             "import dagger.internal.Preconditions;",
             "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private Provider<Object> objectProvider;",
+            "  private Object object;",
             "",
             "  private DaggerSimpleComponent(Builder builder) {",
-            "    assert builder != null;",
             "    initialize(builder);",
             "  }",
             "",
@@ -467,12 +651,12 @@ public class ComponentBuilderTest {
             "",
             "  @SuppressWarnings(\"unchecked\")",
             "  private void initialize(final Builder builder) {",
-            "    this.objectProvider = InstanceFactory.create(builder.object);",
+            "    this.object = builder.object;",
             "  }",
             "",
             "  @Override",
             "  public Object object() {",
-            "    return objectProvider.get();",
+            "    return object;",
             "  }",
             "",
             "  private static final class Builder implements SimpleComponent.Builder {",
@@ -495,7 +679,8 @@ public class ComponentBuilderTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -517,12 +702,10 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  private interface Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.isPrivate())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.isPrivate()).inFile(componentFile);
   }
 
   @Test
@@ -540,12 +723,10 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  abstract class Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeStatic())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeStatic()).inFile(componentFile);
   }
 
   @Test
@@ -563,11 +744,10 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  static class Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeAbstract());
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeAbstract()).inFile(componentFile);
   }
 
   @Test
@@ -587,12 +767,10 @@ public class ComponentBuilderTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs()).inFile(componentFile);
   }
 
   @Test
@@ -613,12 +791,10 @@ public class ComponentBuilderTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs()).inFile(componentFile);
   }
 
   @Test
@@ -636,12 +812,10 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  enum Builder {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeClassOrInterface())
-        .in(componentFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeClassOrInterface()).inFile(componentFile);
   }
 
   @Test
@@ -661,13 +835,13 @@ public class ComponentBuilderTest {
             "    String build();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.buildMustReturnComponentType())
-        .in(componentFile)
-        .onLine(10);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.buildMustReturnComponentType())
+        .inFile(componentFile)
+        .onLineContaining("String build();");
   }
 
   @Test
@@ -689,13 +863,13 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
-        .in(componentFile)
-        .onLine(13);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -716,13 +890,13 @@ public class ComponentBuilderTest {
             "    SimpleComponent create();",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.twoBuildMethods(), "build"))
+        .inFile(componentFile)
+        .onLineContaining("SimpleComponent create();");
   }
 
   @Test
@@ -745,13 +919,13 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
-        .in(componentFile)
-        .onLine(14);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -773,17 +947,17 @@ public class ComponentBuilderTest {
             "    Builder set(Number n, Double d);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustTakeOneArg())
-        .in(componentFile)
-        .onLine(11)
-        .and()
-        .withErrorContaining(MSGS.methodsMustTakeOneArg())
-        .in(componentFile)
-        .onLine(12);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(componentFile)
+        .onLineContaining("Builder set(String s, Integer i);");
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(componentFile)
+        .onLineContaining("Builder set(Number n, Double d);");
   }
 
   @Test
@@ -806,15 +980,15 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.inheritedMethodsMustTakeOneArg(), "set1(java.lang.String,java.lang.Integer)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -835,13 +1009,13 @@ public class ComponentBuilderTest {
             "    String set(Integer i);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
+        .inFile(componentFile)
+        .onLineContaining("String set(Integer i);");
   }
 
   @Test
@@ -864,14 +1038,14 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -892,13 +1066,13 @@ public class ComponentBuilderTest {
             "    <T> Builder set(T t);",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-        .in(componentFile)
-        .onLine(11);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
+        .inFile(componentFile)
+        .onLineContaining("<T> Builder set(T t);");
   }
 
   @Test
@@ -921,14 +1095,14 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-        .in(componentFile)
-        .onLine(14);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -964,17 +1138,17 @@ public class ComponentBuilderTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(),
                 "test.TestModule",
                 "[set1(test.TestModule), set2(test.TestModule)]"))
-        .in(componentFile)
-        .onLine(11);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1013,15 +1187,15 @@ public class ComponentBuilderTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
-        .in(componentFile)
-        .onLine(15);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1032,7 +1206,6 @@ public class ComponentBuilderTest {
             "package test;",
             "",
             "import dagger.Component;",
-            "",
             "import javax.inject.Provider;",
             "",
             "@Component(modules = AbstractModule.class)",
@@ -1053,17 +1226,19 @@ public class ComponentBuilderTest {
             "",
             "@Module",
             "abstract class AbstractModule {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, abstractModule))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(componentFile, abstractModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.extraSetters(),
                 "[void test.SimpleComponent.Builder.abstractModule(test.AbstractModule), "
                     + "void test.SimpleComponent.Builder.other(String)]"))
-        .in(componentFile)
-        .onLine(10);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1133,17 +1308,18 @@ public class ComponentBuilderTest {
             "",
             "@Component",
             "interface OtherComponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, module2File, module3File, componentFile, otherComponent))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(moduleFile, module2File, module3File, componentFile, otherComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             // Ignores Test2Module because we can construct it ourselves.
             // TODO(sameb): Ignore Test3Module because it's not used within transitive dependencies.
             String.format(
                 MSGS.missingSetters(), "[test.TestModule, test.Test3Module, test.OtherComponent]"))
-        .in(componentFile)
-        .onLine(12);
+        .inFile(componentFile)
+        .onLineContaining("interface Builder");
   }
 
   @Test
@@ -1182,7 +1358,8 @@ public class ComponentBuilderTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(foo, supertype, component);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(foo, supertype, component);
     assertThat(compilation).succeededWithoutWarnings();
   }
 
@@ -1234,7 +1411,10 @@ public class ComponentBuilderTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(foo, bar, supertype, component);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, bar, supertype, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining(
@@ -1301,7 +1481,9 @@ public class ComponentBuilderTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(foo, bar, supertype, builderSupertype, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, bar, supertype, builderSupertype, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining(

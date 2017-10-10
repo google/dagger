@@ -39,6 +39,7 @@ import static dagger.internal.codegen.ErrorMessages.MULTIBINDING_ANNOTATION_CONF
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.ARRAY;
@@ -135,7 +136,7 @@ abstract class BindingMethodValidator {
 
   /** Returns a {@link ValidationReport} for {@code method}. */
   final ValidationReport<ExecutableElement> validate(ExecutableElement method) {
-    return cache.computeIfAbsent(method, this::validateUncached);
+    return reentrantComputeIfAbsent(cache, method, this::validateUncached);
   }
 
   private ValidationReport<ExecutableElement> validateUncached(ExecutableElement m) {

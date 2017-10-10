@@ -25,6 +25,7 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquiva
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
@@ -72,12 +73,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
    * of contribution.
    */
   enum Kind {
-    /**
-     * The synthetic binding for {@code Map<K, V>} that depends on either
-     * {@code Map<K, Provider<V>>} or {@code Map<K, Producer<V>>}.
-     */
-    SYNTHETIC_MAP,
-
     /**
      * A synthetic binding for a multibound set that depends on the individual multibinding
      * {@link Provides @Provides} or {@link Produces @Produces} methods.
@@ -128,6 +123,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
     /** A provision method on a component's {@linkplain Component#dependencies() dependency}. */
     COMPONENT_PROVISION,
+
+    /** An instance of a {@linkplain Component#dependencies() dependency}. */
+    COMPONENT_DEPENDENCY,
 
     /**
      * A subcomponent builder method on a component or subcomponent.
@@ -183,6 +181,18 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     }
     Set<Modifier> modifiers = bindingElement().get().getModifiers();
     return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
+  }
+
+  /**
+   * Returns {@code true} if {@link #bindingElement()} is present and is a method that returns a
+   * primitive type.
+   */
+  boolean contributesPrimitiveType() {
+    return bindingElement().isPresent()
+        && MoreElements.asExecutable(bindingElement().get())
+            .getReturnType()
+            .getKind()
+            .isPrimitive();
   }
 
   /**
@@ -284,10 +294,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     abstract B contributingModule(TypeElement contributingModule);
 
     abstract B key(Key key);
-
-    abstract B explicitDependencies(Iterable<DependencyRequest> dependencies);
-
-    abstract B explicitDependencies(DependencyRequest... dependencies);
 
     abstract B nullableType(Optional<DeclaredType> nullableType);
 

@@ -20,13 +20,14 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.DaggerTypes.nonObjectSuperclass;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -43,6 +44,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -112,23 +114,40 @@ abstract class MembersInjectionBinding extends Binding {
     abstract Element element();
 
     abstract ImmutableSet<DependencyRequest> dependencies();
-    
-    static int indexAmongSiblingMembers(InjectionSite injectionSite) {
-      return injectionSite
-          .element()
+
+    int indexAmongSiblingMembers() {
+      return element().getEnclosingElement().getEnclosedElements().indexOf(element());
+    }
+
+    /**
+     * Returns the index of {@link #element()} in its parents {@code @Inject} members that have the
+     * same simple name. This method filters out private elements so that the results will be
+     * consistent independent of whether the build system uses header jars or not.
+     */
+    @Memoized
+    int indexAmongAtInjectMembersWithSameSimpleName() {
+      return element()
           .getEnclosingElement()
           .getEnclosedElements()
-          .indexOf(injectionSite.element());
+          .stream()
+          .filter(element -> isAnnotationPresent(element, Inject.class))
+          .filter(element -> !element.getModifiers().contains(Modifier.PRIVATE))
+          .filter(element -> element.getSimpleName().equals(this.element().getSimpleName()))
+          .collect(toList())
+          .indexOf(element());
     }
   }
 
   static final class Factory {
     private final Elements elements;
-    private final Types types;
+    private final DaggerTypes types;
     private final Key.Factory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
 
-    Factory(Elements elements, Types types, Key.Factory keyFactory,
+    Factory(
+        Elements elements,
+        DaggerTypes types,
+        Key.Factory keyFactory,
         DependencyRequest.Factory dependencyRequestFactory) {
       this.elements = checkNotNull(elements);
       this.types = checkNotNull(types);
@@ -192,8 +211,7 @@ abstract class MembersInjectionBinding extends Binding {
               .toSet();
 
       Optional<Key> parentKey =
-          nonObjectSuperclass(types, elements, declaredType)
-              .map(keyFactory::forMembersInjectedType);
+          types.nonObjectSuperclass(declaredType).map(keyFactory::forMembersInjectedType);
 
       Key key = keyFactory.forMembersInjectedType(declaredType);
       TypeElement typeElement = MoreElements.asType(declaredType.asElement());
@@ -215,7 +233,7 @@ abstract class MembersInjectionBinding extends Binding {
       SetMultimap<String, ExecutableElement> overriddenMethodMap = LinkedHashMultimap.create();
       for (Optional<DeclaredType> currentType = Optional.of(declaredType);
           currentType.isPresent();
-          currentType = nonObjectSuperclass(types, elements, currentType.get())) {
+          currentType = types.nonObjectSuperclass(currentType.get())) {
         final DeclaredType type = currentType.get();
         ancestors.add(MoreElements.asType(type.asElement()));
         for (Element enclosedElement : type.asElement().getEnclosedElements()) {

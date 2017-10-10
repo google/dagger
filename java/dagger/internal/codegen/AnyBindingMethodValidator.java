@@ -21,6 +21,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Maps.uniqueIndex;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.ErrorMessages.tooManyBindingMethodAnnotations;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.Arrays.asList;
 
@@ -69,7 +70,7 @@ final class AnyBindingMethodValidator {
    *     #methodAnnotations() binding method annotation}
    */
   ValidationReport<ExecutableElement> validate(ExecutableElement method) {
-    return reports.computeIfAbsent(method, this::validateUncached);
+    return reentrantComputeIfAbsent(reports, method, this::validateUncached);
   }
 
   /**

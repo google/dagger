@@ -37,6 +37,7 @@ import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_AN
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
@@ -67,6 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -93,6 +95,20 @@ final class ModuleValidator {
       ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
   private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_BUILDER_TYPES =
       ImmutableSet.of(Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+  private static final Optional<Class<?>> ANDROID_PROCESSOR;
+  private static final String CONTRIBUTES_ANDROID_INJECTOR_NAME =
+      "dagger.android.ContributesAndroidInjector";
+  private static final String ANDROID_PROCESSOR_NAME = "dagger.android.processor.AndroidProcessor";
+
+  static {
+    Class<?> clazz;
+    try {
+      clazz = Class.forName(ANDROID_PROCESSOR_NAME, false, ModuleValidator.class.getClassLoader());
+    } catch (ClassNotFoundException ignored) {
+      clazz = null;
+    }
+    ANDROID_PROCESSOR = Optional.ofNullable(clazz);
+  }
 
   private final Types types;
   private final Elements elements;
@@ -128,7 +144,7 @@ final class ModuleValidator {
 
   /** Returns a validation report for a module type. */
   ValidationReport<TypeElement> validate(TypeElement module) {
-    return cache.computeIfAbsent(module, this::validateUncached);
+    return reentrantComputeIfAbsent(cache, module, this::validateUncached);
   }
 
   private ValidationReport<TypeElement> validateUncached(TypeElement module) {
@@ -139,6 +155,12 @@ final class ModuleValidator {
     ListMultimap<String, ExecutableElement> bindingMethodsByName = ArrayListMultimap.create();
 
     Set<ModuleMethodKind> methodKinds = noneOf(ModuleMethodKind.class);
+    TypeElement contributesAndroidInjectorElement =
+        elements.getTypeElement(CONTRIBUTES_ANDROID_INJECTOR_NAME);
+    TypeMirror contributesAndroidInjector =
+        contributesAndroidInjectorElement != null
+            ? contributesAndroidInjectorElement.asType()
+            : null;
     for (ExecutableElement moduleMethod : methodsIn(module.getEnclosedElements())) {
       if (anyBindingMethodValidator.isBindingMethod(moduleMethod)) {
         builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
@@ -150,6 +172,21 @@ final class ModuleValidator {
         methodKinds.add(ModuleMethodKind.ofMethod(moduleMethod));
       }
       allMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
+
+      for (AnnotationMirror annotation : moduleMethod.getAnnotationMirrors()) {
+        if (!ANDROID_PROCESSOR.isPresent()
+            && MoreTypes.equivalence()
+                .equivalent(contributesAndroidInjector, annotation.getAnnotationType())) {
+          builder.addSubreport(
+              ValidationReport.about(moduleMethod)
+                  .addError(
+                      String.format(
+                          "@%s was used, but %s was not found on the processor path",
+                          CONTRIBUTES_ANDROID_INJECTOR_NAME, ANDROID_PROCESSOR_NAME))
+                  .build());
+          break;
+        }
+      }
     }
 
     if (methodKinds.containsAll(

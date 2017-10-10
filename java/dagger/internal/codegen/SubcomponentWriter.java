@@ -18,13 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Sets.difference;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.classBuilder;
-import static dagger.internal.codegen.AbstractComponentWriter.InitializationState.UNINITIALIZED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -32,7 +27,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -77,32 +74,13 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected InitializationState getInitializationState(BindingKey bindingKey) {
-    InitializationState initializationState = super.getInitializationState(bindingKey);
-    return initializationState.equals(UNINITIALIZED)
-        ? parent.getInitializationState(bindingKey)
-        : initializationState;
-  }
-
-  @Override
-  protected Optional<CodeBlock> getOrCreateComponentRequirementFieldExpression(
-      ComponentRequirement componentRequirement) {
-    Optional<CodeBlock> expression =
-        super.getOrCreateComponentRequirementFieldExpression(componentRequirement);
-    return expression.isPresent()
-        ? expression
-        : parent.getOrCreateComponentRequirementFieldExpression(componentRequirement);
-  }
-
-  @Override
-  public MemberSelect getMemberSelect(BindingKey key) {
-    MemberSelect memberSelect = super.getMemberSelect(key);
-    return memberSelect == null ? parent.getMemberSelect(key) : memberSelect;
-  }
-
-  @Override
-  protected CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
+  public CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
     return parent.getReferenceReleasingProviderManagerExpression(scope);
+  }
+
+  @Override
+  protected boolean requiresReleasableReferences(Scope scope) {
+    return parent.requiresReleasableReferences(scope);
   }
 
   private ExecutableType resolvedSubcomponentFactoryMethod() {
@@ -129,26 +107,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected void addBuilder() {
-    // Only write subcomponent builders if there is a spec.
-    if (graph.componentDescriptor().builderSpec().isPresent()) {
-      super.addBuilder();
-    }
-  }
-
-  @Override
-  protected ClassName builderName() {
-    return name.peerClass(subcomponentNames.get(graph.componentDescriptor()) + "Builder");
-  }
-
-  @Override
-  protected TypeSpec.Builder createBuilder(String builderSimpleName) {
-    // Only write subcomponent builders if there is a spec.
-    verify(graph.componentDescriptor().builderSpec().isPresent());
-    return classBuilder(builderSimpleName);
-  }
-
-  @Override
   protected void addBuilderClass(TypeSpec builder) {
     parent.component.addType(builder);
   }
@@ -168,7 +126,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
     ExecutableType resolvedMethod = resolvedSubcomponentFactoryMethod();
     componentMethod.returns(ClassName.get(resolvedMethod.getReturnType()));
     writeSubcomponentWithoutBuilder(componentMethod, resolvedMethod);
-    parent.component.addMethod(componentMethod.build());
+    parent.interfaceMethods.add(componentMethod.build());
   }
 
   private void writeSubcomponentWithoutBuilder(
@@ -184,7 +142,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
           ComponentRequirement.forModule(moduleTypeElement.asType());
       TypeName moduleType = TypeName.get(paramTypes.get(i));
       componentMethod.addParameter(moduleType, moduleVariable.getSimpleName().toString());
-      if (!componentContributionFields.containsKey(componentRequirement)) {
+      if (!componentRequirementFields.contains(componentRequirement)) {
         String preferredModuleName =
             CaseFormat.UPPER_CAMEL.to(LOWER_CAMEL, moduleTypeElement.getSimpleName().toString());
         FieldSpec contributionField =
@@ -193,23 +151,23 @@ final class SubcomponentWriter extends AbstractComponentWriter {
                 .build();
         component.addField(contributionField);
 
-        String actualModuleName = contributionField.name;
         constructor
-            .addParameter(moduleType, actualModuleName)
+            .addParameter(moduleType, contributionField.name)
             .addStatement(
-                "this.$1L = $2T.checkNotNull($1L)",
-                actualModuleName,
-                Preconditions.class);
+                "this.$1N = $2T.checkNotNull($1N)", contributionField, Preconditions.class);
 
-        MemberSelect moduleSelect = localField(name, actualModuleName);
-        componentContributionFields.put(componentRequirement, moduleSelect);
+        componentRequirementFields.add(
+            ComponentRequirementField.componentField(
+                componentRequirement, contributionField, name));
         subcomponentConstructorParameters.add(
             CodeBlock.of("$L", moduleVariable.getSimpleName()));
       }
     }
 
     Set<ComponentRequirement> uninitializedModules =
-        difference(graph.componentRequirements(), componentContributionFields.keySet());
+        Sets.filter(
+            graph.componentRequirements(),
+            Predicates.not(componentRequirementFields::contains));
 
     for (ComponentRequirement componentRequirement : uninitializedModules) {
       checkState(componentRequirement.kind().equals(ComponentRequirement.Kind.MODULE));
@@ -221,11 +179,10 @@ final class SubcomponentWriter extends AbstractComponentWriter {
               .addModifiers(PRIVATE, FINAL)
               .build();
       component.addField(contributionField);
-      String actualModuleName = contributionField.name;
-      constructor.addStatement(
-          "this.$L = new $T()", actualModuleName, ClassName.get(moduleType));
-      MemberSelect moduleSelect = localField(name, actualModuleName);
-      componentContributionFields.put(componentRequirement, moduleSelect);
+      constructor.addStatement("this.$N = new $T()", contributionField, ClassName.get(moduleType));
+      componentRequirementFields.add(
+          ComponentRequirementField.componentField(
+              componentRequirement, contributionField, name));
     }
 
     componentMethod.addStatement("return new $T($L)",

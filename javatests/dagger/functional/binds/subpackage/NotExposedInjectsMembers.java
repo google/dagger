@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.functional.binds.subpackage;
 
-/** Formats a {@link Key} into a {@link String} suitable for use in error messages. */
-final class KeyFormatter extends Formatter<Key> {
-  @Override
-  public String format(Key key) {
-    return key.toString();
-  }
+import javax.inject.Inject;
+
+final class NotExposedInjectsMembers implements ExposedInjectsMembers {
+  @Inject Exposed exposed;
+
+  @Inject NotExposedInjectsMembers() {}
 }

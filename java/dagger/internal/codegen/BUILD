@@ -35,6 +35,7 @@ CODEGEN_SHARED_DEPS = [
     "//third_party:google_java_format",
     "//third_party:javapoet",
     "@local_jdk//:lib/tools.jar",
+    "//third_party:jsr250_annotations",
     "//third_party:jsr305_annotations",
     "//third_party:jsr330_inject",
     "//java/dagger:core",

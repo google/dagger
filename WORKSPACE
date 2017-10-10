@@ -61,14 +61,14 @@ maven_jar(
 
 maven_jar(
     name = "com_google_errorprone_javac",
-    artifact = "com.google.errorprone:javac:9-dev-r3297-1-shaded",
-    sha1 = "0f6d4998965282068a3feecddc21578d23f17275",
+    artifact = "com.google.errorprone:javac-shaded:9-dev-r4023-3",
+    sha1 = "72b688efd290280a0afde5f9892b0fde6f362d1d",
 )
 
 maven_jar(
     name = "com_google_googlejavaformat_google_java_format",
-    artifact = "com.google.googlejavaformat:google-java-format:1.3",
-    sha1 = "949e85e75b3160ce1446aa99d806d5b509631b02",
+    artifact = "com.google.googlejavaformat:google-java-format:1.4",
+    sha1 = "c2f8925850e17caa6da0ed1891a9e9de9414c062",
 )
 
 maven_jar(
@@ -115,8 +115,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_testing_compile_compile_testing",
-    artifact = "com.google.testing.compile:compile-testing:0.10",
-    sha1 = "51e6189be9d2861d1eb22b4009c8f3430319490c",
+    artifact = "com.google.testing.compile:compile-testing:0.11",
+    sha1 = "bff5d5aa61e6384b9dd4f5f7bb97a921081f4e1c",
 )
 
 maven_jar(
@@ -151,8 +151,8 @@ maven_jar(
 
 maven_jar(
     name = "com_squareup_javapoet",
-    artifact = "com.squareup:javapoet:1.7.0",
-    sha1 = "4fdcf1fc27c1a8f55d1109df986c923152f07759",
+    artifact = "com.squareup:javapoet:1.8.0",
+    sha1 = "e858dc62ef484048540d27d36f3ec2177a3fa9b1",
 )
 
 maven_jar(

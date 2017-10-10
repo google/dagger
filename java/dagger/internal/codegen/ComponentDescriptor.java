@@ -25,9 +25,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
-import static dagger.internal.codegen.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.DaggerElements.getUnimplementedMethods;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.type.TypeKind.DECLARED;
@@ -445,13 +443,13 @@ abstract class ComponentDescriptor {
   }
 
   static final class Factory {
-    private final Elements elements;
+    private final DaggerElements elements;
     private final Types types;
     private final DependencyRequest.Factory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
     Factory(
-        Elements elements,
+        DaggerElements elements,
         Types types,
         DependencyRequest.Factory dependencyRequestFactory,
         ModuleDescriptor.Factory moduleDescriptorFactory) {
@@ -522,7 +520,7 @@ abstract class ComponentDescriptor {
         }
       }
       ImmutableSet<ExecutableElement> unimplementedMethods =
-          getUnimplementedMethods(componentDefinitionType, types, elements);
+          elements.getUnimplementedMethods(componentDefinitionType);
 
       ImmutableSet.Builder<ComponentMethodDescriptor> componentMethodsBuilder =
           ImmutableSet.builder();
@@ -668,7 +666,7 @@ abstract class ComponentDescriptor {
         return Optional.empty();
       }
       TypeElement element = MoreTypes.asTypeElement(builderType.get());
-      ImmutableSet<ExecutableElement> methods = getUnimplementedMethods(element, types, elements);
+      ImmutableSet<ExecutableElement> methods = elements.getUnimplementedMethods(element);
       ImmutableSet.Builder<BuilderRequirementMethod> requirementMethods = ImmutableSet.builder();
       ExecutableElement buildMethod = null;
       for (ExecutableElement method : methods) {
@@ -719,7 +717,7 @@ abstract class ComponentDescriptor {
     private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
       ClassName monitoringModuleName =
           SourceFiles.generatedMonitoringModuleName(componentDefinitionType);
-      TypeElement monitoringModule = checkTypePresent(monitoringModuleName.toString(), elements);
+      TypeElement monitoringModule = elements.checkTypePresent(monitoringModuleName.toString());
       return moduleDescriptorFactory.create(monitoringModule);
     }
 
@@ -736,7 +734,7 @@ abstract class ComponentDescriptor {
       ClassName productionExecutorModuleName =
           SourceFiles.generatedProductionExecutorModuleName(componentDefinitionType);
       TypeElement productionExecutorModule =
-          checkTypePresent(productionExecutorModuleName.toString(), elements);
+          elements.checkTypePresent(productionExecutorModuleName.toString());
       return moduleDescriptorFactory.create(productionExecutorModule);
     }
   }

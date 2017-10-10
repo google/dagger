@@ -19,9 +19,7 @@ package dagger.internal.codegen;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * A collector for names to be used in the same namespace that should not conflict.
- */
+/** A collector for names to be used in the same namespace that should not conflict. */
 final class UniqueNameSet {
   private final Set<String> uniqueNames = new HashSet<>();
 
@@ -35,5 +33,13 @@ final class UniqueNameSet {
       name = base.toString() + differentiator;
     }
     return name;
+  }
+
+  /**
+   * Adds {@code name} without any modification to the name set. Has no effect if {@code name} is
+   * already present in the set.
+   */
+  void claim(CharSequence name) {
+    uniqueNames.add(name.toString());
   }
 }

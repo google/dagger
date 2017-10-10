@@ -17,9 +17,11 @@
 package dagger;
 
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import dagger.internal.Beta;
 import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
@@ -41,23 +43,29 @@ import javax.inject.Qualifier;
  * <p>A {@code @BindsOptionalOf} method:
  *
  * <ul>
- * <li>must be {@code abstract}
- * <li>may have a {@linkplain Qualifier qualifier} annotation
- * <li>must not return {@code void}
- * <li>must not have parameters
- * <li>must not throw exceptions
- * <li>must not return an unqualified type with an {@link Inject @Inject}-annotated constructor,
- *     since such a type is always present
+ *   <li>must be {@code abstract}
+ *   <li>may have a {@linkplain Qualifier qualifier} annotation
+ *   <li>must not return {@code void}
+ *   <li>must not have parameters
+ *   <li>must not throw exceptions
+ *   <li>must not return an unqualified type with an {@link Inject @Inject}-annotated constructor,
+ *       since such a type is always present
  * </ul>
  *
  * <p>Other bindings may inject any of:
  *
  * <ul>
- * <li>{@code Optional<Foo>}
- * <li>{@code Optional<Provider<Foo>>}
- * <li>{@code Optional<Lazy<Foo>>}
- * <li>{@code Optional<Provider<Lazy<Foo>>>}
+ *   <li>{@code Optional<Foo>} (unless there is a {@code @Nullable} binding for {@code Foo}; see
+ *       below)
+ *   <li>{@code Optional<Provider<Foo>>}
+ *   <li>{@code Optional<Lazy<Foo>>}
+ *   <li>{@code Optional<Provider<Lazy<Foo>>>}
  * </ul>
+ *
+ * <p>If there is a binding for {@code Foo}, and that binding is {@code @Nullable}, then it is a
+ * compile-time error to inject {@code Optional<Foo>}, because {@code Optional} cannot contain
+ * {@code null}. You can always inject the other forms, because {@link Provider} and {@link Lazy}
+ * can always return {@code null} from their {@code get()} methods.
  *
  * <p>Explicit bindings for any of the above will conflict with a {@code @BindsOptionalOf} binding.
  *
@@ -65,14 +73,16 @@ import javax.inject.Qualifier;
  * binding can depend on any of:
  *
  * <ul>
- * <li>{@code Optional<Foo>}
- * <li>{@code Optional<Producer<Foo>>}
- * <li>{@code Optional<Produced<Foo>>}
+ *   <li>{@code Optional<Foo>}
+ *       <!-- TODO(dpb): Update this once producers support nullability checks -->
+ *   <li>{@code Optional<Producer<Foo>>}
+ *   <li>{@code Optional<Produced<Foo>>}
  * </ul>
  *
  * <p>You can inject either {@code com.google.common.base.Optional} or {@code java.util.Optional}.
  */
 @Documented
 @Beta
+@Retention(RUNTIME)
 @Target(METHOD)
 public @interface BindsOptionalOf {}

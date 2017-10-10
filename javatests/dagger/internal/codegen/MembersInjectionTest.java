@@ -17,9 +17,11 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
@@ -27,9 +29,11 @@ import static javax.tools.StandardLocation.CLASS_OUTPUT;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -37,10 +41,22 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MembersInjectionTest {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public MembersInjectionTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void parentClass_noInjectedMembers() {
     JavaFileObject childFile = JavaFileObjects.forSourceLines("test.Child",
@@ -61,61 +77,92 @@ public class MembersInjectionTest {
         "",
         "import dagger.Component;",
         "",
-        "",
         "@Component",
         "interface TestComponent {",
         "  Child child();",
         "}");
-    JavaFileObject generatedComponent = JavaFileObjects.forSourceLines(
-        "test.DaggerTestComponent",
-        "package test;",
-        "",
-        "import dagger.internal.MembersInjectors;",
-        "import javax.annotation.Generated;",
-        "import javax.inject.Provider;",
-        "",
-        GENERATED_ANNOTATION,
-        "public final class DaggerTestComponent implements TestComponent {",
-        "  private Provider<Child> childProvider;",
-        "",
-        "  private DaggerTestComponent(Builder builder) {",
-        "    assert builder != null;",
-        "    initialize(builder);",
-        "  }",
-        "",
-        "  public static Builder builder() {",
-        "    return new Builder();",
-        "  }",
-        "",
-        "  public static TestComponent create() {",
-        "    return new Builder().build();",
-        "  }",
-        "",
-        "  @SuppressWarnings(\"unchecked\")",
-        "  private void initialize(final Builder builder) {",
-        "    this.childProvider =",
-        "        Child_Factory.create(MembersInjectors.<Child>noOp());",
-        "  }",
-        "",
-        "  @Override",
-        "  public Child child() {",
-        "    return childProvider.get();",
-        "  }",
-        "",
-        "  public static final class Builder {",
-        "    private Builder() {",
-        "    }",
-        "",
-        "    public TestComponent build() {",
-        "      return new DaggerTestComponent(this);",
-        "    }",
-        "  }",
-        "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Child getChildInstance() {",
+                "    return new Child();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return getChildInstance();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return new Child();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {",
+                "    }",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(ImmutableList.of(childFile, parentFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(generatedComponent);
+        .and()
+        .generatesSources(generatedComponent);
   }
 
   @Test
@@ -149,59 +196,105 @@ public class MembersInjectionTest {
         "",
         "import dagger.Component;",
         "",
-        "",
         "@Component",
         "interface TestComponent {",
         "  Child child();",
         "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import dagger.MembersInjector;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  private MembersInjector<Child> childMembersInjector;",
-            "  private Provider<Child> childProvider;",
-            "",
-            "  private DaggerTestComponent(Builder builder) {",
-            "    assert builder != null;",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.childMembersInjector = Child_MembersInjector.create(Dep_Factory.create());",
-            "    this.childProvider = Child_Factory.create(childMembersInjector);",
-            "  }",
-            "",
-            "  @Override",
-            "  public Child child() {",
-            "    return childProvider.get();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
-            "}");
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Dep getDepInstance() {",
+                "    return new Dep();",
+                "  }",
+                "",
+                "  private Child getChildInstance() {",
+                "    return injectChild(Child_Factory.newChild());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return getChildInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Child injectChild(Child instance) {",
+                "    Parent_MembersInjector.injectDep(instance, getDepInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Child child() {",
+                "    return injectChild(Child_Factory.newChild());",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Child injectChild(Child instance) {",
+                "    Parent_MembersInjector.injectDep(instance, new Dep());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
     assertAbout(javaSources())
         .that(ImmutableList.of(childFile, parentFile, depFile, componentFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -236,9 +329,7 @@ public class MembersInjectionTest {
         "  private final Provider<B> bProvider;",
         "",
         "  public GenericClass_MembersInjector(Provider<A> aProvider, Provider<B> bProvider) {",
-        "    assert aProvider != null;",
         "    this.aProvider = aProvider;",
-        "    assert bProvider != null;",
         "    this.bProvider = bProvider;",
         "  }",
         "",
@@ -249,25 +340,21 @@ public class MembersInjectionTest {
         "",
         "  @Override",
         "  public void injectMembers(GenericClass<A, B> instance) {",
-        "    if (instance == null) {",
-        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-        "    }",
-        "    instance.a = aProvider.get();",
-        "    instance.register(bProvider.get());",
+        "    injectA(instance, aProvider.get());",
+        "    injectRegister(instance, bProvider.get());",
         "  }",
         "",
-        "  public static <A, B> void injectA(GenericClass<A, B> instance, Provider<A> aProvider) {",
-        "    instance.a = aProvider.get();",
+        "  public static <A, B> void injectA(Object instance, A a) {",
+        "    ((GenericClass<A, B>) instance).a = a;",
         "  }",
         "",
-        "  public static <A, B> void injectRegister(",
-        "      GenericClass<A, B> instance, Provider<B> bProvider) {",
-        "    instance.register(bProvider.get());",
+        "  public static <A, B> void injectRegister(Object instance, B b) {",
+        "    ((GenericClass<A, B>) instance).register(b);",
         "  }",
-        "",
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -331,11 +418,8 @@ public class MembersInjectionTest {
         "",
         "  public Child_MembersInjector(",
         "      Provider<T> tAndXProvider, Provider<A> aAndYProvider, Provider<A2> a2Provider) {",
-        "    assert tAndXProvider != null;",
         "    this.tAndXProvider = tAndXProvider;",
-        "    assert aAndYProvider != null;",
         "    this.aAndYProvider = aAndYProvider;",
-        "    assert a2Provider != null;",
         "    this.a2Provider = a2Provider;",
         "  }",
         "",
@@ -346,26 +430,24 @@ public class MembersInjectionTest {
         "",
         "  @Override",
         "  public void injectMembers(Child<T> instance) {",
-        "    if (instance == null) {",
-        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-        "    }",
-        "    ((Parent) instance).x = tAndXProvider.get();",
-        "    ((Parent) instance).y = aAndYProvider.get();",
-        "    ((Parent) instance).a2 = a2Provider.get();",
-        "    instance.a = aAndYProvider.get();",
-        "    instance.t = tAndXProvider.get();",
+        "    Parent_MembersInjector.injectX(instance, tAndXProvider.get());",
+        "    Parent_MembersInjector.injectY(instance, aAndYProvider.get());",
+        "    Parent_MembersInjector.injectA2(instance, a2Provider.get());",
+        "    injectA(instance, aAndYProvider.get());",
+        "    injectT(instance, tAndXProvider.get());",
         "  }",
         "",
-        "  public static <T> void injectA(Child<T> instance, Provider<A> aProvider) {",
-        "    instance.a = aProvider.get();",
+        "  public static <T> void injectA(Object instance, Object a) {",
+        "    ((Child<T>) instance).a = (A) a;",
         "  }",
         "",
-        "  public static <T> void injectT(Child<T> instance, Provider<T> tProvider) {",
-        "    instance.t = tProvider.get();",
+        "  public static <T> void injectT(Object instance, T t) {",
+        "    ((Child<T>) instance).t = t;",
         "  }",
         "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(a, a2, parent, child))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -390,6 +472,7 @@ public class MembersInjectionTest {
             "test.FieldInjection_MembersInjector",
             "package test;",
             "",
+            "import dagger.Lazy;",
             "import dagger.MembersInjector;",
             "import dagger.internal.DoubleCheck;",
             "import javax.annotation.Generated;",
@@ -401,41 +484,37 @@ public class MembersInjectionTest {
             "  private final Provider<String> stringProvider;",
             "",
             "  public FieldInjection_MembersInjector(Provider<String> stringProvider) {",
-            "    assert stringProvider != null;",
             "    this.stringProvider = stringProvider;",
             "  }",
             "",
-            "  public static MembersInjector<FieldInjection> create(Provider<String> stringProvider) {",
+            "  public static MembersInjector<FieldInjection> create(",
+            "      Provider<String> stringProvider) {",
             "    return new FieldInjection_MembersInjector(stringProvider);",
             "  }",
             "",
             "  @Override",
             "  public void injectMembers(FieldInjection instance) {",
-            "    if (instance == null) {",
-            "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-            "    }",
-            "    instance.string = stringProvider.get();",
-            "    instance.lazyString = DoubleCheck.lazy(stringProvider);",
-            "    instance.stringProvider = stringProvider;",
+            "    injectString(instance, stringProvider.get());",
+            "    injectLazyString(instance, DoubleCheck.lazy(stringProvider));",
+            "    injectStringProvider(instance, stringProvider);",
             "  }",
             "",
-            "  public static void injectString(",
-            "      FieldInjection instance, Provider<String> stringProvider) {",
-            "    instance.string = stringProvider.get();",
+            "  public static void injectString(Object instance, String string) {",
+            "    ((FieldInjection) instance).string = string;",
             "  }",
             "",
-            "  public static void injectLazyString(",
-            "      FieldInjection instance, Provider<String> lazyStringProvider) {",
-            "    instance.lazyString = DoubleCheck.lazy(lazyStringProvider);",
+            "  public static void injectLazyString(Object instance, Lazy<String> lazyString) {",
+            "    ((FieldInjection) instance).lazyString = lazyString;",
             "  }",
             "",
             "  public static void injectStringProvider(",
-            "      FieldInjection instance, Provider<String> stringProvider) {",
-            "    instance.stringProvider = stringProvider;",
+            "      Object instance, Provider<String> stringProvider) {",
+            "    ((FieldInjection) instance).stringProvider = stringProvider;",
             "  }",
             "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -461,6 +540,7 @@ public class MembersInjectionTest {
             "test.MethodInjection_MembersInjector",
             "package test;",
             "",
+            "import dagger.Lazy;",
             "import dagger.MembersInjector;",
             "import dagger.internal.DoubleCheck;",
             "import javax.annotation.Generated;",
@@ -473,7 +553,6 @@ public class MembersInjectionTest {
             "  private final Provider<String> stringProvider;",
             "",
             "  public MethodInjection_MembersInjector(Provider<String> stringProvider) {",
-            "    assert stringProvider != null;",
             "    this.stringProvider = stringProvider;",
             "  }",
             "",
@@ -484,39 +563,34 @@ public class MembersInjectionTest {
             "",
             "  @Override",
             "  public void injectMembers(MethodInjection instance) {",
-            "    if (instance == null) {",
-            "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-            "    }",
-            "    instance.noArgs();",
-            "    instance.oneArg(stringProvider.get());",
-            "    instance.manyArgs(",
+            "    injectNoArgs(instance);",
+            "    injectOneArg(instance, stringProvider.get());",
+            "    injectManyArgs(",
+            "        instance,",
             "        stringProvider.get(),",
             "        DoubleCheck.lazy(stringProvider),",
             "        stringProvider);",
             "  }",
             "",
-            "  public static void injectNoArgs(MethodInjection instance) {",
-            "    instance.noArgs();",
+            "  public static void injectNoArgs(Object instance) {",
+            "    ((MethodInjection) instance).noArgs();",
             "  }",
             "",
-            "  public static void injectOneArg(",
-            "      MethodInjection instance, Provider<String> stringProvider) {",
-            "    instance.oneArg(stringProvider.get());",
+            "  public static void injectOneArg(Object instance, String string) {",
+            "    ((MethodInjection) instance).oneArg(string);",
             "  }",
             "",
             "  public static void injectManyArgs(",
-            "      MethodInjection instance,",
-            "      Provider<String> stringProvider,",
-            "      Provider<String> lazyStringProvider,",
-            "      Provider<String> stringProvider2) {",
-            "    instance.manyArgs(",
-            "        stringProvider.get(),",
-            "        DoubleCheck.lazy(lazyStringProvider),",
-            "        stringProvider2);",
+            "      Object instance,",
+            "      String string,",
+            "      Lazy<String> lazyString,",
+            "      Provider<String> stringProvider) {",
+            "    ((MethodInjection) instance).manyArgs(string, lazyString, stringProvider);",
             "  }",
             "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -557,9 +631,7 @@ public class MembersInjectionTest {
         "  public MixedMemberInjection_MembersInjector(",
         "      Provider<String> stringAndSProvider,",
         "      Provider<Object> objectAndOProvider) {",
-        "    assert stringAndSProvider != null;",
         "    this.stringAndSProvider = stringAndSProvider;",
-        "    assert objectAndOProvider != null;",
         "    this.objectAndOProvider = objectAndOProvider;",
         "  }",
         "",
@@ -572,37 +644,31 @@ public class MembersInjectionTest {
         "",
         "  @Override",
         "  public void injectMembers(MixedMemberInjection instance) {",
-        "    if (instance == null) {",
-        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-        "    }",
-        "    instance.string = stringAndSProvider.get();",
-        "    instance.object = objectAndOProvider.get();",
-        "    instance.setString(stringAndSProvider.get());",
-        "    instance.setObject(objectAndOProvider.get());",
+        "    injectString(instance, stringAndSProvider.get());",
+        "    injectObject(instance, objectAndOProvider.get());",
+        "    injectSetString(instance, stringAndSProvider.get());",
+        "    injectSetObject(instance, objectAndOProvider.get());",
         "  }",
         "",
-        "  public static void injectString(",
-        "      MixedMemberInjection instance, Provider<String> stringProvider) {",
-        "    instance.string = stringProvider.get();",
+        "  public static void injectString(Object instance, String string) {",
+        "    ((MixedMemberInjection) instance).string = string;",
         "  }",
         "",
-        "  public static void injectObject(",
-        "      MixedMemberInjection instance, Provider<Object> objectProvider) {",
-        "    instance.object = objectProvider.get();",
+        "  public static void injectObject(Object instance, Object object) {",
+        "    ((MixedMemberInjection) instance).object = object;",
         "  }",
         "",
-        "  public static void injectSetString(",
-        "      MixedMemberInjection instance, Provider<String> sProvider) {",
-        "    instance.setString(sProvider.get());",
+        "  public static void injectSetString(Object instance, String s) {",
+        "    ((MixedMemberInjection) instance).setString(s);",
         "  }",
         "",
-        "  public static void injectSetObject(",
-        "      MixedMemberInjection instance, Provider<Object> oProvider) {",
-        "    instance.setObject(oProvider.get());",
+        "  public static void injectSetObject(Object instance, Object o) {",
+        "    ((MixedMemberInjection) instance).setObject(o);",
         "  }",
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -635,7 +701,6 @@ public class MembersInjectionTest {
         "  private final Provider<String> sProvider;",
         "",
         "  public AllInjections_MembersInjector(Provider<String> sProvider) {",
-        "    assert sProvider != null;",
         "    this.sProvider = sProvider;",
         "  }",
         "",
@@ -645,19 +710,24 @@ public class MembersInjectionTest {
         "",
         "  @Override",
         "  public void injectMembers(AllInjections instance) {",
-        "    if (instance == null) {",
-        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-        "    }",
-        "    instance.s = sProvider.get();",
-        "    instance.s(sProvider.get());",
+        "    injectS(instance, sProvider.get());",
+        "    injectS2(instance, sProvider.get());",
         "  }",
         "",
-        "  public static void injectS(AllInjections instance, Provider<String> sProvider) {",
-        "    instance.s = sProvider.get();",
+        // TODO(b/64477506): now that these all take "object", it would be nice to rename "instance"
+        // to the type name
+        "  public static void injectS(Object instance, String s) {",
+        "    ((AllInjections) instance).s = s;",
         "  }",
+        "",
+        "  public static void injectS2(Object instance, String s) {",
+        "    ((AllInjections) instance).s(s);",
+        "  }",
+        "",
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -690,7 +760,6 @@ public class MembersInjectionTest {
         "  private final Provider<String> sProvider;",
         "",
         "  public B_MembersInjector(Provider<String> sProvider) {",
-        "    assert sProvider != null;",
         "    this.sProvider = sProvider;",
         "  }",
         "",
@@ -700,18 +769,16 @@ public class MembersInjectionTest {
         "",
         "  @Override",
         "  public void injectMembers(B instance) {",
-        "    if (instance == null) {",
-        "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-        "    }",
-        "    instance.s = sProvider.get();",
+        "    injectS(instance, sProvider.get());",
         "  }",
         "",
-        "  public static void injectS(B instance, Provider<String> sProvider) {",
-        "    instance.s = sProvider.get();",
+        "  public static void injectS(Object instance, String s) {",
+        "    ((B) instance).s = s;",
         "  }",
         "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(aFile, bFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -753,7 +820,6 @@ public class MembersInjectionTest {
           "  private final Provider<OuterType.A> aProvider;",
           "",
           "  public OuterType_B_MembersInjector(Provider<OuterType.A> aProvider) {",
-          "    assert aProvider != null;",
           "    this.aProvider = aProvider;",
           "  }",
           "",
@@ -763,18 +829,16 @@ public class MembersInjectionTest {
           "",
           "  @Override",
           "  public void injectMembers(OuterType.B instance) {",
-          "    if (instance == null) {",
-          "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-          "    }",
-          "    instance.a = aProvider.get();",
+          "    injectA(instance, aProvider.get());",
           "  }",
           "",
-          "  public static void injectA(OuterType.B instance, Provider<OuterType.A> aProvider) {",
-          "    instance.a = aProvider.get();",
+          "  public static void injectA(Object instance, Object a) {",
+          "    ((OuterType.B) instance).a = (OuterType.A) a;",
           "  }",
           "}");
     assertAbout(javaSources())
         .that(ImmutableList.of(nestedTypesFile))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and()
@@ -819,28 +883,26 @@ public class MembersInjectionTest {
             "  private final Provider<OuterType.A> aProvider;",
             "",
             "  public OuterType_B_MembersInjector(Provider<OuterType.A> aProvider) {",
-            "    assert aProvider != null;",
             "    this.aProvider = aProvider;",
             "  }",
             "",
-            "  public static MembersInjector<OuterType.B> create(Provider<OuterType.A> aProvider) {",
+            "  public static MembersInjector<OuterType.B> create(",
+            "      Provider<OuterType.A> aProvider) {",
             "    return new OuterType_B_MembersInjector(aProvider);",
             "  }",
             "",
             "  @Override",
             "  public void injectMembers(OuterType.B instance) {",
-            "    if (instance == null) {",
-            "      throw new NullPointerException(\"Cannot inject members into a null reference\");",
-            "    }",
-            "    instance.a = aProvider.get();",
+            "    injectA(instance, aProvider.get());",
             "  }",
             "",
-            "  public static void injectA(OuterType.B instance, Provider<OuterType.A> aProvider) {",
-            "    instance.a = aProvider.get();",
+            "  public static void injectA(Object instance, Object a) {",
+            "    ((OuterType.B) instance).a = (OuterType.A) a;",
             "  }",
             "}");
     assertAbout(javaSource())
         .that(nestedTypesFile)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(
             new ComponentProcessor(),
             new AbstractProcessor() {
@@ -857,10 +919,10 @@ public class MembersInjectionTest {
                 if (!done) {
                   done = true;
                   try (Writer writer =
-                          processingEnv
-                              .getFiler()
-                              .createSourceFile("test.GeneratedType")
-                              .openWriter()) {
+                      processingEnv
+                          .getFiler()
+                          .createSourceFile("test.GeneratedType")
+                          .openWriter()) {
                     writer.write(
                         Joiner.on('\n')
                             .join(
@@ -921,9 +983,11 @@ public class MembersInjectionTest {
 
     assertAbout(javaSources())
         .that(ImmutableList.of(foo, fooModule, fooComponent))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesFileNamed(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
+        .and()
+        .generatesFileNamed(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
   }
 
   @Test
@@ -996,9 +1060,7 @@ public class MembersInjectionTest {
             "",
             "  public Child_MembersInjector(",
             "        Provider<Foo> objectProvider, Provider<Bar> objectProvider2) {",
-            "    assert objectProvider != null;",
             "    this.objectProvider = objectProvider;",
-            "    assert objectProvider2 != null;",
             "    this.objectProvider2 = objectProvider2;",
             "  }",
             "",
@@ -1009,24 +1071,22 @@ public class MembersInjectionTest {
             "",
             "  @Override",
             "  public void injectMembers(Child instance) {",
-            "    if (instance == null) {",
-            "      throw new NullPointerException(",
-            "          \"Cannot inject members into a null reference\");",
-            "    }",
-            "    ((Parent) instance).object = objectProvider.get();",
-            "    instance.object = objectProvider2.get();",
+            "    Parent_MembersInjector.injectObject(instance, objectProvider.get());",
+            "    injectObject(instance, objectProvider2.get());",
             "  }",
             "",
-            "  public static void injectObject(Child instance, Provider<Bar> objectProvider) {",
-            "    instance.object = objectProvider.get();",
+            "  public static void injectObject(Object instance, Object object) {",
+            "    ((Child) instance).object = (Bar) object;",
             "  }",
             "}");
 
     assertAbout(javaSources())
         .that(ImmutableList.of(foo, bar, parent, child, component))
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .and().generatesSources(expectedMembersInjector);
+        .and()
+        .generatesSources(expectedMembersInjector);
   }
 
   @Test public void privateNestedClassError() {
@@ -1042,8 +1102,12 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+        .withCompilerOptions(compilerMode.javacopts())
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS)
+        .in(file)
+        .onLine(6);
   }
 
   @Test public void privateNestedClassWarning() {
@@ -1059,10 +1123,13 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
+        .withCompilerOptions(
+            compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
-        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(6);
+        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS)
+        .in(file)
+        .onLine(6);
   }
 
   @Test public void privateSuperclassIsOkIfNotInjectedInto() {
@@ -1080,6 +1147,7 @@ public class MembersInjectionTest {
         "}");
     assertAbout(javaSource())
         .that(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .compilesWithoutError();
   }
@@ -1108,10 +1176,710 @@ public class MembersInjectionTest {
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
     assertThat(file)
+        .withCompilerOptions(compilerMode.javacopts())
         .processedWith(new ComponentProcessor())
         .failsToCompile()
-        .withErrorContaining("javax.inject.Provider cannot be provided").in(file).onLine(17)
+        .withErrorContaining("javax.inject.Provider cannot be provided")
+        .in(file)
+        .onLine(17)
         .and()
-        .withErrorContaining("javax.inject.Provider cannot be provided").in(file).onLine(18);
+        .withErrorContaining("javax.inject.Provider cannot be provided")
+        .in(file)
+        .onLine(18);
+  }
+
+  @Test
+  public void injectsPrimitive() {
+    JavaFileObject injectedType =
+        JavaFileObjects.forSourceLines(
+            "test.InjectedType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectedType {",
+            "  @Inject InjectedType() {}",
+            "",
+            "  @Inject int primitiveInt;",
+            "  @Inject Integer boxedInt;",
+            "}");
+    JavaFileObject membersInjector =
+        JavaFileObjects.forSourceLines(
+            "test.InjectedType_MembersInjector",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class InjectedType_MembersInjector ",
+            "    implements MembersInjector<InjectedType> {",
+            "  private final Provider<Integer> boxedIntAndPrimitiveIntProvider;",
+            "",
+            "  public InjectedType_MembersInjector(",
+            "      Provider<Integer> boxedIntAndPrimitiveIntProvider) {",
+            "    this.boxedIntAndPrimitiveIntProvider = boxedIntAndPrimitiveIntProvider;",
+            "  }",
+            "",
+            "  public static MembersInjector<InjectedType> create(",
+            "      Provider<Integer> boxedIntAndPrimitiveIntProvider) {",
+            "    return new InjectedType_MembersInjector(boxedIntAndPrimitiveIntProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public void injectMembers(InjectedType instance) {",
+            "    injectPrimitiveInt(instance, boxedIntAndPrimitiveIntProvider.get());",
+            "    injectBoxedInt(instance, boxedIntAndPrimitiveIntProvider.get());",
+            "  }",
+            "",
+            "  public static void injectPrimitiveInt(Object instance, int primitiveInt) {",
+            "    ((InjectedType) instance).primitiveInt = primitiveInt;",
+            "  }",
+            "",
+            "  public static void injectBoxedInt(Object instance, Integer boxedInt) {",
+            "    ((InjectedType) instance).boxedInt = boxedInt;",
+            "  }",
+            "}");
+    JavaFileObject factory =
+        JavaFileObjects.forSourceLines(
+            "test.InjectedType_Factory",
+            "package test;",
+            "",
+            "import dagger.internal.Factory;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class InjectedType_Factory implements Factory<InjectedType> {",
+            "  private final Provider<Integer> boxedIntAndPrimitiveIntProvider;",
+            "",
+            "  public InjectedType_Factory(Provider<Integer> boxedIntAndPrimitiveIntProvider) {",
+            "    this.boxedIntAndPrimitiveIntProvider = boxedIntAndPrimitiveIntProvider;",
+            "  }",
+            "",
+            "  @Override",
+            "  public InjectedType get() {",
+            "    InjectedType instance = new InjectedType();",
+            "    InjectedType_MembersInjector.injectPrimitiveInt(",
+            "        instance, boxedIntAndPrimitiveIntProvider.get());",
+            "    InjectedType_MembersInjector.injectBoxedInt(",
+            "        instance, boxedIntAndPrimitiveIntProvider.get());",
+            "    return instance;",
+            "  }",
+            "",
+            "  public static Factory<InjectedType> create(",
+            "      Provider<Integer> boxedIntAndPrimitiveIntProvider) {",
+            "    return new InjectedType_Factory(boxedIntAndPrimitiveIntProvider);",
+            "  }",
+            "",
+            "  public static InjectedType newInjectedType() {",
+            "    return new InjectedType();",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(injectedType);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.InjectedType_MembersInjector")
+        .hasSourceEquivalentTo(membersInjector);
+    assertThat(compilation)
+        .generatedSourceFile("test.InjectedType_Factory")
+        .hasSourceEquivalentTo(factory);
+  }
+
+  @Test
+  public void accessibility() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "other.Foo",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject inaccessible =
+        JavaFileObjects.forSourceLines(
+            "other.Inaccessible",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Inaccessible {",
+            "  @Inject Inaccessible() {}",
+            "  @Inject Foo foo;",
+            "  @Inject void method(Foo foo) {}",
+            "}");
+    JavaFileObject usesInaccessible =
+        JavaFileObjects.forSourceLines(
+            "other.UsesInaccessible",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class UsesInaccessible {",
+            "  @Inject UsesInaccessible(Inaccessible inaccessible) {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import other.UsesInaccessible;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  UsesInaccessible usesInaccessible();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, inaccessible, usesInaccessible, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("other.Inaccessible_MembersInjector")
+        .hasSourceEquivalentTo(
+            JavaFileObjects.forSourceLines(
+                "other.Inaccessible_MembersInjector",
+                "package other;",
+                "",
+                "import dagger.MembersInjector;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class Inaccessible_MembersInjector",
+                "    implements MembersInjector<Inaccessible> {",
+                "  private final Provider<Foo> fooProvider;",
+                "",
+                "  public Inaccessible_MembersInjector(Provider<Foo> fooProvider) {",
+                "    this.fooProvider = fooProvider;",
+                "  }",
+                "",
+                "  public static MembersInjector<Inaccessible> create(Provider<Foo> fooProvider) {",
+                "    return new Inaccessible_MembersInjector(fooProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public void injectMembers(Inaccessible instance) {",
+                "    injectFoo(instance, fooProvider.get());",
+                "    injectMethod(instance, fooProvider.get());",
+                "  }",
+                "",
+                "  public static void injectFoo(Object instance, Object foo) {",
+                "    ((Inaccessible) instance).foo = (Foo) foo;",
+                "  }",
+                "",
+                "  public static void injectMethod(Object instance, Object foo) {",
+                "    ((Inaccessible) instance).method((Foo) foo);",
+                "  }",
+                "}"));
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.Inaccessible_Factory;",
+                "import other.Inaccessible_MembersInjector;",
+                "import other.UsesInaccessible;",
+                "import other.UsesInaccessible_Factory;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Object getFooInstance() {",
+                "    return Foo_Factory.newFoo();",
+                "  }",
+                "",
+                "  private Object getInaccessibleInstance() {",
+                "    return injectInaccessible(Inaccessible_Factory.newInaccessible());",
+                "  }",
+                "",
+                "  private UsesInaccessible getUsesInaccessibleInstance() {",
+                "    return UsesInaccessible_Factory.newUsesInaccessible(",
+                "        getInaccessibleInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessible usesInaccessible() {",
+                "    return getUsesInaccessibleInstance();",
+                "  }",
+                "",
+                // TODO(ronshapiro): if possible, it would be great to rename "instance", but we
+                // need to make sure that this doesn't conflict with any framework field in this or
+                // any parent component
+                "  @CanIgnoreReturnValue",
+                "  private Object injectInaccessible(Object instance) {",
+                "    Inaccessible_MembersInjector.injectFoo(instance, getFooInstance());",
+                "    Inaccessible_MembersInjector.injectMethod(instance, getFooInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.Inaccessible_Factory;",
+                "import other.Inaccessible_MembersInjector;",
+                "import other.UsesInaccessible;",
+                "import other.UsesInaccessible_Factory;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessible usesInaccessible() {",
+                "    return UsesInaccessible_Factory.newUsesInaccessible(",
+                "        injectInaccessible(Inaccessible_Factory.newInaccessible()));",
+                "  }",
+                "",
+                // TODO(ronshapiro): if possible, it would be great to rename "instance", but we
+                // need to make sure that this doesn't conflict with any framework field in this or
+                // any parent component
+                "  @CanIgnoreReturnValue",
+                "  private Object injectInaccessible(Object instance) {",
+                "    Inaccessible_MembersInjector.injectFoo(instance, Foo_Factory.newFoo());",
+                "    Inaccessible_MembersInjector.injectMethod(",
+                "        instance, Foo_Factory.newFoo());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
+  }
+
+  @Test
+  public void accessibleRawType_ofInaccessibleType() {
+    JavaFileObject inaccessible =
+        JavaFileObjects.forSourceLines(
+            "other.Inaccessible",
+            "package other;",
+            "",
+            "class Inaccessible {}");
+    JavaFileObject inaccessiblesModule =
+        JavaFileObjects.forSourceLines(
+            "other.InaccessiblesModule",
+            "package other;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.ArrayList;",
+            "import java.util.List;",
+            "import javax.inject.Provider;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "public class InaccessiblesModule {",
+            // force Provider initialization
+            "  @Provides @Singleton static List<Inaccessible> inaccessibles() {",
+            "    return new ArrayList<>();",
+            "  }",
+            "}");
+    JavaFileObject usesInaccessibles =
+        JavaFileObjects.forSourceLines(
+            "other.UsesInaccessibles",
+            "package other;",
+            "",
+            "import java.util.List;",
+            "import javax.inject.Inject;",
+            "",
+            "public class UsesInaccessibles {",
+            "  @Inject UsesInaccessibles() {}",
+            "  @Inject List<Inaccessible> inaccessibles;",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "import other.UsesInaccessibles;",
+            "",
+            "@Singleton",
+            "@Component(modules = other.InaccessiblesModule.class)",
+            "interface TestComponent {",
+            "  UsesInaccessibles usesInaccessibles();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
+    assertThat(compilation).succeeded();
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "other.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import java.util.List;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "import other.InaccessiblesModule;",
+                "import other.InaccessiblesModule_InaccessiblesFactory;",
+                "import other.UsesInaccessibles;",
+                "import other.UsesInaccessibles_Factory;",
+                "import other.UsesInaccessibles_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider inaccessiblesProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private UsesInaccessibles getUsesInaccessiblesInstance() {",
+                "    return injectUsesInaccessibles(",
+                "        UsesInaccessibles_Factory.newUsesInaccessibles());",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.inaccessiblesProvider =",
+                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessibles usesInaccessibles() {",
+                "    return getUsesInaccessiblesInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {",
+                "    UsesInaccessibles_MembersInjector.injectInaccessibles(",
+                "        instance, (List) inaccessiblesProvider.get());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Deprecated",
+                "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
+                "      Preconditions.checkNotNull(inaccessiblesModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "other.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.Preconditions;",
+                "import java.util.List;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "import other.InaccessiblesModule;",
+                "import other.InaccessiblesModule_InaccessiblesFactory;",
+                "import other.UsesInaccessibles;",
+                "import other.UsesInaccessibles_Factory;",
+                "import other.UsesInaccessibles_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider inaccessiblesProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.inaccessiblesProvider =",
+                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public UsesInaccessibles usesInaccessibles() {",
+                "    return injectUsesInaccessibles(",
+                "        UsesInaccessibles_Factory.newUsesInaccessibles());",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private UsesInaccessibles injectUsesInaccessibles(",
+                "        UsesInaccessibles instance) {",
+                "    UsesInaccessibles_MembersInjector.injectInaccessibles(",
+                "        instance, (List) inaccessiblesProvider.get());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "",
+                "    @Deprecated",
+                "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
+                "      Preconditions.checkNotNull(inaccessiblesModule);",
+                "      return this;",
+                "    }",
+                "  }",
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
+  }
+
+  @Test
+  public void publicSupertypeHiddenSubtype() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "other.Foo",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "other.Supertype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Supertype<T> {",
+            "  @Inject T t;",
+            "}");
+    JavaFileObject subtype =
+        JavaFileObjects.forSourceLines(
+            "other.Subtype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Subtype extends Supertype<Foo> {",
+            "  @Inject Subtype() {}",
+            "}");
+    JavaFileObject injectsSubtype =
+        JavaFileObjects.forSourceLines(
+            "other.InjectsSubtype",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class InjectsSubtype {",
+            "  @Inject InjectsSubtype(Subtype s) {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  other.InjectsSubtype injectsSubtype();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, supertype, subtype, injectsSubtype, component);
+    assertThat(compilation).succeeded();
+    JavaFileObject generatedComponent;
+    switch (compilerMode) {
+      case EXPERIMENTAL_ANDROID:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.InjectsSubtype;",
+                "import other.InjectsSubtype_Factory;",
+                "import other.Subtype_Factory;",
+                "import other.Supertype;",
+                "import other.Supertype_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  private Object getFooInstance() {",
+                "    return Foo_Factory.newFoo();",
+                "  }",
+                "",
+                "  private Object getSubtypeInstance() {",
+                "    return injectSubtype(Subtype_Factory.newSubtype());",
+                "  }",
+                "",
+                "  private InjectsSubtype getInjectsSubtypeInstance() {",
+                "    return InjectsSubtype_Factory.newInjectsSubtype(getSubtypeInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public InjectsSubtype injectsSubtype() {",
+                "    return getInjectsSubtypeInstance();",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Object injectSubtype(Object instance) {",
+                "    Supertype_MembersInjector.injectT((Supertype) instance, getFooInstance());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+        break;
+      default:
+        generatedComponent =
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+                "import javax.annotation.Generated;",
+                "import other.Foo_Factory;",
+                "import other.InjectsSubtype;",
+                "import other.InjectsSubtype_Factory;",
+                "import other.Subtype_Factory;",
+                "import other.Supertype;",
+                "import other.Supertype_MembersInjector;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private DaggerTestComponent(Builder builder) {}",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @Override",
+                "  public InjectsSubtype injectsSubtype() {",
+                "    return InjectsSubtype_Factory.newInjectsSubtype(",
+                "        injectSubtype(Subtype_Factory.newSubtype()));",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Object injectSubtype(Object instance) {",
+                "    Supertype_MembersInjector.injectT(",
+                "        (Supertype) instance, Foo_Factory.newFoo());",
+                "    return instance;",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}");
+    }
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(generatedComponent);
   }
 }

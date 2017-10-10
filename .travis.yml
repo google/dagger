@@ -6,14 +6,10 @@ sudo: required
 addons:
   apt:
     sources:
-      # https://github.com/bazelbuild/bazel/issues/1821#issuecomment-262870638
-      - sourceline: "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8"
-        key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
       - ubuntu-toolchain-r-test
     packages:
       - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
-      - bazel=0.4.5
       - gcc-4.8
       - g++-4.8
 
@@ -30,6 +26,8 @@ android:
     - extra-android-m2repository
 
 before_install:
+  - wget https://github.com/bazelbuild/bazel/releases/download/"${BAZEL_VERSION}"/bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
+  - sudo dpkg -i bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
   - sudo rm -f /etc/mavenrc
   - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
   - tar -zxf apache-maven-3.1.1-bin.tar.gz
@@ -47,6 +45,7 @@ env:
     - secure: LTzrlqcSNeZTOV52D3ibY9RBdxY4Yu8dUOYhAonrWLE+eDTzuoyCzcPw8pEcYVNUi1rG6Q7v3QBDTnBztsPoCbcN5tEGjw5cQEbfEzSTkWaNCFjncWn36cLwx9lgbF+5Db/L0mYJ36unDKUpKVC8AgOtxQibfv/ffugfxxj8ohY=
     - secure: PEdRiHTy+xVFPnlBwOhr7RVW/QIFSgd4hO0LESRBeF7KGIjxTZWtKPjnYrysZFm6tozMk6WBVJO6avOss0v7L64nemwpCnSspNYBa6pRGPgQ3rv/wgdPSzqDDmABmpPC18EHbUtF94KVdRX3Cr4kmwKQyD+YUKNRCY11Txt+xfo=
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
+    - BAZEL_VERSION="0.5.1"
 
 after_success:
   - util/generate-latest-docs.sh

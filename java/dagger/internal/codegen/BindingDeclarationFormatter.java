@@ -48,12 +48,9 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
               SYNTHETIC_RELEASABLE_REFERENCE_MANAGER, SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS);
 
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final KeyFormatter keyFormatter;
 
-  BindingDeclarationFormatter(
-      MethodSignatureFormatter methodSignatureFormatter, KeyFormatter keyFormatter) {
+  BindingDeclarationFormatter(MethodSignatureFormatter methodSignatureFormatter) {
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.keyFormatter = keyFormatter;
   }
 
   /**
@@ -93,11 +90,11 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
         case SYNTHETIC_RELEASABLE_REFERENCE_MANAGER:
           return String.format(
               "binding for %s from the scope declaration",
-              stripCommonTypePrefixes(keyFormatter.format(binding.key())));
+              stripCommonTypePrefixes(binding.key().toString()));
         case SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS:
           return String.format(
               "Dagger-generated binding for %s",
-              stripCommonTypePrefixes(keyFormatter.format(binding.key())));
+              stripCommonTypePrefixes(binding.key().toString()));
         default:
           break;
       }

@@ -29,8 +29,6 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * The annotation processor responsible for generating the classes that drive the Dagger 2.0
@@ -60,15 +58,14 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   @Override
   protected Iterable<? extends ProcessingStep> initSteps() {
     Messager messager = processingEnv.getMessager();
-    Types types = processingEnv.getTypeUtils();
-    Elements elements = processingEnv.getElementUtils();
+    DaggerTypes types = new DaggerTypes(processingEnv);
+    DaggerElements elements = new DaggerElements(processingEnv);
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
     Filer filer =  new FormattingFiler(processingEnv.getFiler());
 
-    KeyFormatter keyFormatter = new KeyFormatter();
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
-        new BindingDeclarationFormatter(methodSignatureFormatter, keyFormatter);
+        new BindingDeclarationFormatter(methodSignatureFormatter);
     DependencyRequestFormatter dependencyRequestFormatter =
         new DependencyRequestFormatter(types, elements);
 
@@ -105,23 +102,13 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements, types, moduleValidator, subcomponentValidator, builderValidator);
     MapKeyValidator mapKeyValidator = new MapKeyValidator(elements);
 
-    this.factoryGenerator =
-        new FactoryGenerator(filer, elements, compilerOptions, injectValidatorWhenGeneratingCode);
-    this.membersInjectorGenerator =
-        new MembersInjectorGenerator(filer, elements, injectValidatorWhenGeneratingCode);
-    ComponentGenerator componentGenerator =
-        new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
-    ProducerFactoryGenerator producerFactoryGenerator =
-        new ProducerFactoryGenerator(filer, elements, compilerOptions);
-    MonitoringModuleGenerator monitoringModuleGenerator =
-        new MonitoringModuleGenerator(filer, elements);
-    ProductionExecutorModuleGenerator productionExecutorModuleGenerator =
-        new ProductionExecutorModuleGenerator(filer, elements);
-
     DependencyRequest.Factory dependencyRequestFactory =
         new DependencyRequest.Factory(keyFactory);
+    MembersInjectionBinding.Factory membersInjectionBindingFactory =
+        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
     ProvisionBinding.Factory provisionBindingFactory =
-        new ProvisionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
+        new ProvisionBinding.Factory(
+            types, keyFactory, dependencyRequestFactory, membersInjectionBindingFactory);
     ProductionBinding.Factory productionBindingFactory =
         new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
     MultibindingDeclaration.Factory multibindingDeclarationFactory =
@@ -129,8 +116,19 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     SubcomponentDeclaration.Factory subcomponentDeclarationFactory =
         new SubcomponentDeclaration.Factory(keyFactory);
 
-    MembersInjectionBinding.Factory membersInjectionBindingFactory =
-        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
+    this.factoryGenerator =
+        new FactoryGenerator(
+            filer, elements, types, compilerOptions, injectValidatorWhenGeneratingCode);
+    this.membersInjectorGenerator =
+        new MembersInjectorGenerator(filer, elements, types, injectValidatorWhenGeneratingCode);
+    ComponentGenerator componentGenerator =
+        new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
+    ProducerFactoryGenerator producerFactoryGenerator =
+        new ProducerFactoryGenerator(filer, elements, types, compilerOptions);
+    MonitoringModuleGenerator monitoringModuleGenerator =
+        new MonitoringModuleGenerator(filer, elements);
+    ProductionExecutorModuleGenerator productionExecutorModuleGenerator =
+        new ProductionExecutorModuleGenerator(filer, elements);
 
     DelegateDeclaration.Factory bindingDelegateDeclarationFactory =
         new DelegateDeclaration.Factory(types, keyFactory, dependencyRequestFactory);
@@ -187,7 +185,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindingDeclarationFormatter,
             methodSignatureFormatter,
             dependencyRequestFormatter,
-            keyFormatter,
             keyFactory);
 
     return ImmutableList.of(

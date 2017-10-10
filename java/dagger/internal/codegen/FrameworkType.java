@@ -21,7 +21,9 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static dagger.internal.codegen.DependencyRequest.Kind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.CodeBlock;
+import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
@@ -29,6 +31,7 @@ import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
 import javax.inject.Provider;
+import javax.lang.model.type.TypeMirror;
 
 /** One of the core types initialized as fields in a generated component. */
 enum FrameworkType {
@@ -63,6 +66,30 @@ enum FrameworkType {
               String.format("Cannot request a %s from a %s", requestKind, this));
       }
     }
+
+    @Override
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+      CodeBlock codeBlock = to(requestKind, from.codeBlock());
+      switch (requestKind) {
+        case INSTANCE:
+          return Expression.create(types.unwrapTypeOrObject(from.type()), codeBlock);
+
+        case PROVIDER:
+          return from;
+
+        case PROVIDER_OF_LAZY:
+          TypeMirror lazyType = types.rewrapType(from.type(), Lazy.class);
+          return Expression.create(types.wrapType(lazyType, Provider.class), codeBlock);
+
+        case FUTURE:
+          return Expression.create(
+              types.rewrapType(from.type(), ListenableFuture.class), codeBlock);
+
+        default:
+          return Expression.create(
+              types.rewrapType(from.type(), requestKind.frameworkClass.get()), codeBlock);
+      }
+    }
   },
 
   /** A {@link Producer}. */
@@ -72,6 +99,23 @@ enum FrameworkType {
       switch (requestKind) {
         case FUTURE:
           return CodeBlock.of("$L.get()", from);
+
+        case PRODUCER:
+          return from;
+
+        default:
+          throw new IllegalArgumentException(
+              String.format("Cannot request a %s from a %s", requestKind, this));
+      }
+    }
+
+    @Override
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+      switch (requestKind) {
+        case FUTURE:
+          return Expression.create(
+              types.rewrapType(from.type(), ListenableFuture.class),
+              to(requestKind, from.codeBlock()));
 
         case PRODUCER:
           return from;
@@ -96,12 +140,36 @@ enum FrameworkType {
               String.format("Cannot request a %s from a %s", requestKind, this));
       }
     }
+
+    @Override
+    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+      switch (requestKind) {
+        case MEMBERS_INJECTOR:
+          return from;
+
+        default:
+          throw new IllegalArgumentException(
+              String.format("Cannot request a %s from a %s", requestKind, this));
+      }
+    }
   },
   ;
 
   /**
-   * Returns an expression that evaluates to a requested object given an expression that evaluates
-   * to an instance of this framework type.
+   * Returns a {@link CodeBlock} that evaluates to a requested object given an expression that
+   * evaluates to an instance of this framework type.
+   *
+   * @param requestKind the kind of {@link DependencyRequest} that the returned expression can
+   *     satisfy
+   * @param from a {@link CodeBlock} that evaluates to an instance of this framework type
+   * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
+   *     requestKind}
+   */
+  abstract CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from);
+
+  /**
+   * Returns an {@link Expression} that evaluates to a requested object given an expression that
+   * evaluates to an instance of this framework type.
    *
    * @param requestKind the kind of {@link DependencyRequest} that the returned expression can
    *     satisfy
@@ -109,7 +177,7 @@ enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  abstract CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from);
+  abstract Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types);
 
   @Override
   public String toString() {

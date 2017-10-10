@@ -39,6 +39,7 @@ public class InjectorsTest {
   private TestActivity activity;
   private TestParentFragment parentFragment;
   private TestChildFragment childFragment;
+  private TestDialogFragment dialogFragment;
   private TestService service;
   private TestIntentService intentService;
   private TestBroadcastReceiver broadcastReceiver;
@@ -54,6 +55,9 @@ public class InjectorsTest {
     childFragment =
         (TestChildFragment)
             parentFragment.getChildFragmentManager().findFragmentByTag("child-fragment");
+    dialogFragment =
+        (TestDialogFragment)
+            activity.getSupportFragmentManager().findFragmentByTag("dialog-fragment");
 
     service = Robolectric.buildService(TestService.class).create().get();
     intentService = Robolectric.buildIntentService(TestIntentService.class).create().get();
@@ -91,6 +95,13 @@ public class InjectorsTest {
                 .ActivitySubcomponent.ParentFragmentSubcomponent.class,
             ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
                 .ActivitySubcomponent.ParentFragmentSubcomponent.ChildFragmentSubcomponent.class);
+    assertThat(dialogFragment.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .ActivitySubcomponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .ActivitySubcomponent.DialogFragmentSubcomponent.class);
 
     assertThat(service.componentHierarchy)
         .containsExactly(
@@ -136,6 +147,11 @@ public class InjectorsTest {
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
             AllControllersAreDirectChildrenOfApplication.ApplicationComponent
                 .ChildFragmentSubcomponent.class);
+    assertThat(dialogFragment.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .DialogFragmentSubcomponent.class);
 
     assertThat(service.componentHierarchy)
         .containsExactly(
@@ -178,6 +194,10 @@ public class InjectorsTest {
         .containsExactly(
             UsesGeneratedModulesApplication.ApplicationComponent.class,
             UsesGeneratedModulesApplication.DummyChildFragmentSubcomponent.class);
+    assertThat(dialogFragment.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyDialogFragmentSubcomponent.class);
 
     assertThat(service.componentHierarchy)
         .containsExactly(

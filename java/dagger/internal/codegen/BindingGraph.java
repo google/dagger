@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
-import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
@@ -28,6 +27,7 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.Key.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -35,9 +35,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.VerifyException;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,9 +53,12 @@ import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Key.HasKey;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.releasablereferences.CanReleaseReferences;
+import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,7 +66,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
@@ -87,6 +86,23 @@ abstract class BindingGraph {
   abstract ComponentDescriptor componentDescriptor();
   abstract ImmutableMap<BindingKey, ResolvedBindings> resolvedBindings();
   abstract ImmutableSet<BindingGraph> subgraphs();
+
+  /**
+   * The scopes in the graph that {@linkplain CanReleaseReferences can release their references} for
+   * which there is a dependency request for any of the following:
+   *
+   * <ul>
+   *   <li>{@code @ForReleasableReferences(scope)} {@link ReleasableReferenceManager}
+   *   <li>{@code @ForReleasableReferences(scope)} {@code TypedReleasableReferenceManager<M>}, where
+   *       {@code M} is the releasable-references metatadata type for {@code scope}
+   *   <li>{@code Set<ReleasableReferenceManager>}
+   *   <li>{@code Set<TypedReleasableReferenceManager<M>>}, where {@code M} is the metadata type for
+   *       the scope
+   * </ul>
+   *
+   * <p>This set is always empty for subcomponent graphs.
+   */
+  abstract ImmutableSet<Scope> scopesRequiringReleasableReferenceManagers();
 
   /** Returns the resolved bindings for the dependencies of {@code binding}. */
   ImmutableSet<ResolvedBindings> resolvedDependencies(ContributionBinding binding) {
@@ -231,7 +247,8 @@ abstract class BindingGraph {
 
       // Collect Component dependencies.
       for (TypeElement componentDependency : componentDescriptor.dependencies()) {
-        explicitBindingsBuilder.add(provisionBindingFactory.forComponent(componentDependency));
+        explicitBindingsBuilder.add(
+            provisionBindingFactory.forComponentDependency(componentDependency));
         List<ExecutableElement> dependencyMethods =
             ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
         for (ExecutableElement method : dependencyMethods) {
@@ -283,33 +300,9 @@ abstract class BindingGraph {
         optionalsBuilder.addAll(moduleDescriptor.optionalDeclarations());
       }
 
-      // TODO(dpb,gak): Do we need to bind an empty Set<ReleasableReferenceManager> if there are
-      // none?
-      for (Scope scope : componentDescriptor.releasableReferencesScopes()) {
-        // Add a binding for @ForReleasableReferences(scope) ReleasableReferenceManager.
-        explicitBindingsBuilder.add(
-            provisionBindingFactory.provideReleasableReferenceManager(scope));
-
-        /* Add a binding for Set<ReleasableReferenceManager>. Even if these are added more than
-         * once, each instance will be equal to the rest. Since they're being added to a set, there
-         * will be only one instance. */
-        explicitBindingsBuilder.add(
-            provisionBindingFactory.provideSetOfReleasableReferenceManagers());
-
-        for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
-          // Add a binding for @ForReleasableReferences(scope) TypedReleasableReferenceManager<M>.
-          explicitBindingsBuilder.add(
-              provisionBindingFactory.provideTypedReleasableReferenceManager(
-                  scope, metadata.getAnnotationType()));
-
-          /* Add a binding for Set<TypedReleasableReferenceManager<M>>. Even if these are added more
-           * than once, each instance will be equal to the rest. Since they're being added to a set,
-           * there will be only one instance. */
-          explicitBindingsBuilder.add(
-              provisionBindingFactory.provideSetOfTypedReleasableReferenceManagers(
-                  metadata.getAnnotationType()));
-        }
-      }
+      ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings =
+          getReleasableReferenceManagerBindings(componentDescriptor);
+      explicitBindingsBuilder.addAll(releasableReferenceManagerBindings.values());
 
       final Resolver requestResolver =
           new Resolver(
@@ -341,7 +334,9 @@ abstract class BindingGraph {
         }
       }
 
-      for (ResolvedBindings resolvedBindings : requestResolver.getResolvedBindings().values()) {
+      ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap =
+          requestResolver.getResolvedBindings();
+      for (ResolvedBindings resolvedBindings : resolvedBindingsMap.values()) {
         verify(
             resolvedBindings.owningComponent().equals(componentDescriptor),
             "%s is not owned by %s",
@@ -351,9 +346,75 @@ abstract class BindingGraph {
 
       return new AutoValue_BindingGraph(
           componentDescriptor,
-          requestResolver.getResolvedBindings(),
+          resolvedBindingsMap,
           subgraphs.build(),
+          getScopesRequiringReleasableReferenceManagers(
+              releasableReferenceManagerBindings, resolvedBindingsMap),
           requestResolver.getOwnedModules());
+    }
+
+    /**
+     * Returns the bindings for {@link ReleasableReferenceManager}s for all {@link
+     * CanReleaseReferences @CanReleaseReferences} scopes.
+     */
+    private ImmutableSetMultimap<Scope, ProvisionBinding> getReleasableReferenceManagerBindings(
+        ComponentDescriptor componentDescriptor) {
+      ImmutableSetMultimap.Builder<Scope, ProvisionBinding> bindings =
+          ImmutableSetMultimap.builder();
+      // TODO(dpb,gak): Do we need to bind an empty Set<ReleasableReferenceManager> if there are
+      // none?
+      for (Scope scope : componentDescriptor.releasableReferencesScopes()) {
+        // Add a binding for @ForReleasableReferences(scope) ReleasableReferenceManager.
+        bindings.put(scope, provisionBindingFactory.provideReleasableReferenceManager(scope));
+
+        /* Add a binding for Set<ReleasableReferenceManager>. Even if these are added more than
+         * once, each instance will be equal to the rest. Since they're being added to a set, there
+         * will be only one instance. */
+        bindings.put(scope, provisionBindingFactory.provideSetOfReleasableReferenceManagers());
+
+        for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
+          // Add a binding for @ForReleasableReferences(scope) TypedReleasableReferenceManager<M>.
+          bindings.put(
+              scope,
+              provisionBindingFactory.provideTypedReleasableReferenceManager(
+                  scope, metadata.getAnnotationType()));
+
+          /* Add a binding for Set<TypedReleasableReferenceManager<M>>. Even if these are added more
+           * than once, each instance will be equal to the rest. Since they're being added to a set,
+           * there will be only one instance. */
+          bindings.put(
+              scope,
+              provisionBindingFactory.provideSetOfTypedReleasableReferenceManagers(
+                  metadata.getAnnotationType()));
+        }
+      }
+      return bindings.build();
+    }
+
+    /**
+     * Returns the set of scopes that will be returned by {@link
+     * BindingGraph#scopesRequiringReleasableReferenceManagers()}.
+     *
+     * @param releasableReferenceManagerBindings the {@link ReleasableReferenceManager} bindings for
+     *     each scope
+     * @param resolvedBindingsMap the resolved bindings for the component
+     */
+    private ImmutableSet<Scope> getScopesRequiringReleasableReferenceManagers(
+        ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings,
+        ImmutableMap<BindingKey, ResolvedBindings> resolvedBindingsMap) {
+      ImmutableSet.Builder<Scope> scopes = ImmutableSet.builder();
+      releasableReferenceManagerBindings
+          .asMap()
+          .forEach(
+              (scope, bindings) -> {
+                for (Binding binding : bindings) {
+                  if (resolvedBindingsMap.containsKey(BindingKey.contribution(binding.key()))) {
+                    scopes.add(scope);
+                    return;
+                  }
+                }
+              });
+      return scopes.build();
     }
 
     private final class Resolver {
@@ -369,10 +430,8 @@ abstract class BindingGraph {
       final ImmutableSetMultimap<Key, DelegateDeclaration> delegateMultibindingDeclarations;
       final Map<BindingKey, ResolvedBindings> resolvedBindings;
       final Deque<BindingKey> cycleStack = new ArrayDeque<>();
-      final Cache<BindingKey, Boolean> bindingKeyDependsOnLocalBindingsCache =
-          CacheBuilder.newBuilder().build();
-      final Cache<Binding, Boolean> bindingDependsOnLocalBindingsCache =
-          CacheBuilder.newBuilder().build();
+      final Map<BindingKey, Boolean> bindingKeyDependsOnLocalBindingsCache = new HashMap<>();
+      final Map<Binding, Boolean> bindingDependsOnLocalBindingsCache = new HashMap<>();
       final Queue<ComponentDescriptor> subcomponentsToResolve = new ArrayDeque<>();
 
       Resolver(
@@ -459,7 +518,6 @@ abstract class BindingGraph {
 
             ImmutableSet.Builder<Optional<ContributionBinding>> maybeContributionBindings =
                 ImmutableSet.builder();
-            maybeContributionBindings.add(syntheticMapOfValuesBinding(requestKey));
             maybeContributionBindings.add(
                 syntheticMultibinding(
                     requestKey, multibindingContributions, multibindingDeclarations));
@@ -525,68 +583,14 @@ abstract class BindingGraph {
             owningResolver.componentDescriptor.subcomponentsByBuilderType().get(builderType));
       }
 
-      private Iterable<Key> keysMatchingRequest(Key requestKey) {
+      private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
         ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
         keys.add(requestKey);
         keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);
         keyFactory.rewrapMapKey(requestKey, Producer.class, Provider.class).ifPresent(keys::add);
         keyFactory.rewrapMapKey(requestKey, Provider.class, Producer.class).ifPresent(keys::add);
+        keys.addAll(keyFactory.implicitFrameworkMapKeys(requestKey));
         return keys.build();
-      }
-
-      /**
-       * If {@code key} is a {@code Map<K, V>} or {@code Map<K, Produced<V>>}, and there are any
-       * multibinding contributions or declarations that apply to that map, returns a synthetic
-       * binding for the {@code key} that depends on an {@linkplain #syntheticMultibinding(Key,
-       * Iterable, Iterable) underlying synthetic multibinding}.
-       *
-       * <p>The returned binding has the same {@link BindingType} as the underlying synthetic
-       * multibinding.
-       */
-      private Optional<ContributionBinding> syntheticMapOfValuesBinding(final Key key) {
-        return syntheticMultibinding(
-                key,
-                multibindingContributionsForValueMap(key),
-                multibindingDeclarationsForValueMap(key))
-            .map(
-                syntheticMultibinding -> {
-                  switch (syntheticMultibinding.bindingType()) {
-                    case PROVISION:
-                      return provisionBindingFactory.syntheticMapOfValuesBinding(key);
-
-                    case PRODUCTION:
-                      return productionBindingFactory.syntheticMapOfValuesOrProducedBinding(key);
-
-                    default:
-                      throw new VerifyException(syntheticMultibinding.toString());
-                  }
-                });
-      }
-
-      /**
-       * If {@code key} is for {@code Map<K, V>} or {@code Map<K, Produced<V>>}, returns all
-       * multibinding contributions whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
-       * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
-       */
-      private ImmutableSet<ContributionBinding> multibindingContributionsForValueMap(Key key) {
-        return keyFactory
-            .implicitFrameworkMapKeys(key)
-            .stream()
-            .flatMap(mapKey -> getExplicitMultibindings(mapKey).stream())
-            .collect(toImmutableSet());
-      }
-
-      /**
-       * If {@code key} is for {@code Map<K, V>} or {@code Map<K, Produced<V>>}, returns all
-       * multibinding declarations whose key is for {@code Map<K, Provider<V>>} or {@code Map<K,
-       * Producer<V>>} with the same qualifier and {@code K} and {@code V}.
-       */
-      private ImmutableSet<MultibindingDeclaration> multibindingDeclarationsForValueMap(Key key) {
-        return keyFactory
-            .implicitFrameworkMapKeys(key)
-            .stream()
-            .flatMap(mapKey -> getMultibindingDeclarations(mapKey).stream())
-            .collect(toImmutableSet());
       }
 
       /**
@@ -658,14 +662,19 @@ abstract class BindingGraph {
         if (optionalBindingDeclarations.isEmpty()) {
           return Optional.empty();
         }
+        DependencyRequest.Kind kind =
+            DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).kind();
         ResolvedBindings underlyingKeyBindings =
-            lookUpBindings(contribution(keyFactory.unwrapOptional(key).get()));
+            lookUpBindings(BindingKey.contribution(keyFactory.unwrapOptional(key).get()));
         if (underlyingKeyBindings.isEmpty()) {
           return Optional.of(provisionBindingFactory.syntheticAbsentBinding(key));
-        } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)) {
-          return Optional.of(productionBindingFactory.syntheticPresentBinding(key));
+        } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)
+            // handles producerFromProvider cases
+            || kind.equals(DependencyRequest.Kind.PRODUCER)
+            || kind.equals(DependencyRequest.Kind.PRODUCED)) {
+          return Optional.of(productionBindingFactory.syntheticPresentBinding(key, kind));
         } else {
-          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key));
+          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key, kind));
         }
       }
 
@@ -1027,37 +1036,36 @@ abstract class BindingGraph {
          *     empty
          */
         boolean dependsOnLocalBindings(BindingKey bindingKey) {
-          checkArgument(
-              getPreviouslyResolvedBindings(bindingKey).isPresent(),
-              "no previously resolved bindings in %s for %s",
-              Resolver.this,
-              bindingKey);
           // Don't recur infinitely if there are valid cycles in the dependency graph.
           // http://b/23032377
           if (!cycleChecker.add(bindingKey)) {
             return false;
           }
-          try {
-            return bindingKeyDependsOnLocalBindingsCache.get(
-                bindingKey,
-                () -> {
-                  ResolvedBindings previouslyResolvedBindings =
-                      getPreviouslyResolvedBindings(bindingKey).get();
-                  if (hasLocalMultibindingContributions(previouslyResolvedBindings)
-                      || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
-                    return true;
-                  }
+          return reentrantComputeIfAbsent(
+              bindingKeyDependsOnLocalBindingsCache,
+              bindingKey,
+              this::dependsOnLocalBindingsUncached);
+        }
 
-                  for (Binding binding : previouslyResolvedBindings.bindings()) {
-                    if (dependsOnLocalBindings(binding)) {
-                      return true;
-                    }
-                  }
-                  return false;
-                });
-          } catch (ExecutionException e) {
-            throw new AssertionError(e);
+        private boolean dependsOnLocalBindingsUncached(BindingKey bindingKey) {
+          checkArgument(
+              getPreviouslyResolvedBindings(bindingKey).isPresent(),
+              "no previously resolved bindings in %s for %s",
+              Resolver.this,
+              bindingKey);
+          ResolvedBindings previouslyResolvedBindings =
+              getPreviouslyResolvedBindings(bindingKey).get();
+          if (hasLocalMultibindingContributions(previouslyResolvedBindings)
+              || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
+            return true;
           }
+
+          for (Binding binding : previouslyResolvedBindings.bindings()) {
+            if (dependsOnLocalBindings(binding)) {
+              return true;
+            }
+          }
+          return false;
         }
 
         /**
@@ -1073,25 +1081,22 @@ abstract class BindingGraph {
           if (!cycleChecker.add(binding)) {
             return false;
           }
-          try {
-            return bindingDependsOnLocalBindingsCache.get(
-                binding,
-                () -> {
-                  if ((!binding.scope().isPresent()
-                          || binding.scope().get().equals(reusableScope(elements)))
-                      // TODO(beder): Figure out what happens with production subcomponents.
-                      && !binding.bindingType().equals(BindingType.PRODUCTION)) {
-                    for (DependencyRequest dependency : binding.dependencies()) {
-                      if (dependsOnLocalBindings(dependency.bindingKey())) {
-                        return true;
-                      }
-                    }
-                  }
-                  return false;
-                });
-          } catch (ExecutionException e) {
-            throw new AssertionError(e);
+          return reentrantComputeIfAbsent(
+              bindingDependsOnLocalBindingsCache, binding, this::dependsOnLocalBindingsUncached);
+        }
+
+        private boolean dependsOnLocalBindingsUncached(Binding binding) {
+          if ((!binding.scope().isPresent()
+                  || binding.scope().get().equals(reusableScope(elements)))
+              // TODO(beder): Figure out what happens with production subcomponents.
+              && !binding.bindingType().equals(BindingType.PRODUCTION)) {
+            for (DependencyRequest dependency : binding.dependencies()) {
+              if (dependsOnLocalBindings(dependency.bindingKey())) {
+                return true;
+              }
+            }
           }
+          return false;
         }
 
         /**
@@ -1104,7 +1109,9 @@ abstract class BindingGraph {
                   .stream()
                   .map(ContributionBinding::bindingKind)
                   .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
-              && !getLocalExplicitMultibindings(resolvedBindings.key()).isEmpty();
+              && keysMatchingRequest(resolvedBindings.key())
+                  .stream()
+                  .anyMatch(key -> !getLocalExplicitMultibindings(key).isEmpty());
         }
 
         /**

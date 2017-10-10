@@ -109,6 +109,10 @@ abstract class ProductionBinding extends ContributionBinding {
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<Builder> {
+    abstract Builder explicitDependencies(Iterable<DependencyRequest> dependencies);
+
+    abstract Builder explicitDependencies(DependencyRequest... dependencies);
+
     abstract Builder productionKind(ProductionKind productionKind);
 
     abstract Builder thrownTypes(Iterable<? extends TypeMirror> thrownTypes);
@@ -175,28 +179,6 @@ abstract class ProductionBinding extends ContributionBinding {
     }
 
     /**
-     * A synthetic binding of {@code Map<K, V>} or {@code Map<K, Produced<V>>} that depends on
-     * {@code Map<K, Producer<V>>}.
-     */
-    ProductionBinding syntheticMapOfValuesOrProducedBinding(Key mapOfValuesOrProducedKey) {
-      checkNotNull(mapOfValuesOrProducedKey);
-      Optional<Key> mapOfProducersKey =
-          keyFactory.implicitMapProducerKeyFrom(mapOfValuesOrProducedKey);
-      checkArgument(
-          mapOfProducersKey.isPresent(),
-          "%s is not a key for of Map<K, V> or Map<K, Produced<V>>",
-          mapOfValuesOrProducedKey);
-      DependencyRequest requestForMapOfProducers =
-          dependencyRequestFactory.producerForImplicitMapBinding(mapOfProducersKey.get());
-      return ProductionBinding.builder()
-          .contributionType(ContributionType.UNIQUE)
-          .key(mapOfValuesOrProducedKey)
-          .explicitDependencies(requestForMapOfProducers)
-          .bindingKind(Kind.SYNTHETIC_MAP)
-          .build();
-    }
-
-    /**
      * A synthetic binding that depends explicitly on a set of individual provision or production
      * multibinding contribution methods.
      *
@@ -208,7 +190,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .key(key)
           .explicitDependencies(
-              dependencyRequestFactory.forMultibindingContributions(multibindingContributions))
+              dependencyRequestFactory.forMultibindingContributions(key, multibindingContributions))
           .bindingKind(Kind.forMultibindingKey(key))
           .build();
     }
@@ -245,14 +227,13 @@ abstract class ProductionBinding extends ContributionBinding {
      * Returns a synthetic binding for an {@linkplain dagger.BindsOptionalOf optional binding} in a
      * component with a binding for the underlying key.
      */
-    ProductionBinding syntheticPresentBinding(Key key) {
+    ProductionBinding syntheticPresentBinding(Key key, DependencyRequest.Kind kind) {
       return ProductionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(key)
           .bindingKind(Kind.SYNTHETIC_OPTIONAL_BINDING)
           .explicitDependencies(
-              dependencyRequestFactory.forSyntheticPresentOptionalBinding(
-                  key, DependencyRequest.Kind.PRODUCER))
+              dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, kind))
           .build();
     }
   }

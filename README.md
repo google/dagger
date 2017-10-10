@@ -77,6 +77,7 @@ of your `pom.xml` and the `dagger-compiler` artifact as an
 
 If you are using a version of the `maven-compiler-plugin` lower than `3.5`, add
 the `dagger-compiler` artifact with the `provided` scope:
+
 ```xml
 <dependencies>
   <dependency>
@@ -143,7 +144,8 @@ https://bitbucket.org/hvisser/android-apt.
 If you're using the [Android Databinding library][databinding], you may want to
 increase the number of errors that `javac` will print. When Dagger prints an
 error, databinding compilation will halt and sometimes print more than 100
-errors, which is the default amount for `javac`. For more information, see #306.
+errors, which is the default amount for `javac`. For more information, see
+[Issue 306](https://github.com/google/dagger/issues/306).
 
 ```groovy
 gradle.projectsEvaluated {

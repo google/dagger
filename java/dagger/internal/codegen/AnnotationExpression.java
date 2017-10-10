@@ -91,7 +91,7 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
 
   @Override
   public CodeBlock visitEnumConstant(VariableElement c, AnnotationValue p) {
-    return CodeBlock.of("$T.$L", TypeName.get(c.getEnclosingElement().asType()), c.getSimpleName());
+    return CodeBlock.of("$T.$L", c.getEnclosingElement(), c.getSimpleName());
   }
 
   @Override
@@ -101,7 +101,7 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
 
   @Override
   public CodeBlock visitType(TypeMirror t, AnnotationValue p) {
-    return CodeBlock.of("$T.class", TypeName.get(t));
+    return CodeBlock.of("$T.class", t);
   }
 
   @Override

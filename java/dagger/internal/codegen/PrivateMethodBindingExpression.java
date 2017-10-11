@@ -139,27 +139,9 @@ final class PrivateMethodBindingExpression extends BindingExpression {
 
   /** Returns the return type for the dependency request. */
   private TypeMirror returnType(DependencyRequest.Kind requestKind) {
-    // TODO(user): use DR.Kind.type() when that CL is submitted.
-    switch (requestKind) {
-      case INSTANCE:
-        return binding.contributesPrimitiveType()
-            ? asExecutable(binding.bindingElement().get()).getReturnType()
-            : instanceType();
-      case LAZY:
-        return accessibleType(types.lazyOf(instanceType()));
-      case PROVIDER_OF_LAZY:
-        return accessibleType(types.providerOfLazyOf(instanceType()));
-      case PROVIDER:
-        return accessibleType(types.providerOf(instanceType()));
-      case PRODUCER:
-        return accessibleType(types.producerOf(instanceType()));
-      default:
-        throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
-    }
-  }
-
-  private TypeMirror instanceType() {
-    return accessibleType(binding.contributedType());
+    return binding.contributesPrimitiveType() && requestKind.equals(DependencyRequest.Kind.INSTANCE)
+        ? asExecutable(binding.bindingElement().get()).getReturnType()
+        : accessibleType(requestKind.type(binding.contributedType(), types));
   }
 
   /** Returns the method body for the dependency request. */
@@ -179,6 +161,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock());
       case INSTANCE:
       case PRODUCER:
+      case FUTURE:
         return delegate.getDependencyExpression(requestKind, componentName).codeBlock();
       default:
         throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
@@ -193,7 +176,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             methodBuilder("get")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(TypeName.get(instanceType()))
+                .returns(TypeName.get(accessibleType(binding.contributedType())))
                 .addStatement(
                     "return $L",
                     getDependencyExpression(DependencyRequest.Kind.INSTANCE, componentName)

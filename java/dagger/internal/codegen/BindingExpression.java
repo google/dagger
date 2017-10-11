@@ -169,6 +169,40 @@ abstract class BindingExpression {
         return frameworkInstanceBindingExpression;
       }
 
+      BindingExpression inlineBindingExpression =
+          inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
+
+      // TODO(user): Implement private methods for scoped bindings
+      if (compilerOptions.experimentalAndroidMode() && !resolvedBindings.scope().isPresent()) {
+        switch (resolvedBindings.contributionBinding().bindingKind()) {
+          // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
+          case SYNTHETIC_MULTIBOUND_SET:
+          case SYNTHETIC_MULTIBOUND_MAP:
+            // TODO(user): Consider also inlining SET and Map INSTANCE bindings with only 1 dep.
+            if (resolvedBindings.contributionBinding().dependencies().isEmpty()) {
+              // Empty multibindings should just inline static singleton instances.
+              break;
+            }
+            // fall through
+          case INJECTION:
+          case PROVISION:
+            return new PrivateMethodBindingExpression(
+                resolvedBindings,
+                componentName,
+                generatedComponentModel,
+                inlineBindingExpression,
+                types,
+                elements);
+          default:
+            break;
+        }
+      }
+      return inlineBindingExpression;
+    }
+
+    private BindingExpression inlineProvisionBindingExpression(
+        FrameworkInstanceBindingExpression frameworkInstanceBindingExpression) {
+      ResolvedBindings resolvedBindings = frameworkInstanceBindingExpression.resolvedBindings();
       BindingExpression bindingExpression =
           new ProviderOrProducerBindingExpression(
               frameworkInstanceBindingExpression,
@@ -241,25 +275,15 @@ abstract class BindingExpression {
         case INJECTION:
         case PROVISION:
           if (!provisionBinding.scope().isPresent()) {
-            BindingExpression simpleMethodBindingExpression =
-                new SimpleMethodBindingExpression(
-                    compilerOptions,
-                    provisionBinding,
-                    bindingExpression,
-                    componentBindingExpressions,
-                    generatedComponentModel,
-                    componentRequirementFields,
-                    types,
-                    elements);
-            return compilerOptions.experimentalAndroidMode()
-                ? new PrivateMethodBindingExpression(
-                    resolvedBindings,
-                    componentName,
-                    generatedComponentModel,
-                    simpleMethodBindingExpression,
-                    types,
-                    elements)
-                : simpleMethodBindingExpression;
+            return new SimpleMethodBindingExpression(
+                compilerOptions,
+                provisionBinding,
+                bindingExpression,
+                componentBindingExpressions,
+                generatedComponentModel,
+                componentRequirementFields,
+                types,
+                elements);
           }
           // fall through
 

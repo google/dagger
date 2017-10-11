@@ -22,12 +22,9 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import dagger.Lazy;
-import dagger.producers.Producer;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.inject.Provider;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
@@ -117,26 +114,6 @@ final class DaggerTypes implements Types {
       default:
         throw new IllegalArgumentException(type + " has more than 1 type argument");
     }
-  }
-
-  /** Returns a type mirror for {@code Lazy<T>} given a type mirror for {@code T}. */
-  TypeMirror lazyOf(TypeMirror typeMirror) {
-    return wrapType(typeMirror, Lazy.class);
-  }
-
-  /** Returns a type mirror for {@code Provider<T>} given a type mirror for {@code T}. */
-  TypeMirror providerOf(TypeMirror typeMirror) {
-    return wrapType(typeMirror, Provider.class);
-  }
-
-  /** Returns a type mirror for {@code Producer<T>} given a type mirror for {@code T}. */
-  TypeMirror producerOf(TypeMirror typeMirror) {
-    return wrapType(typeMirror, Producer.class);
-  }
-
-  /** Returns a type mirror for {@code Provider<Lazy<T>>} given a type mirror for {@code T}. */
-  TypeMirror providerOfLazyOf(TypeMirror typeMirror) {
-    return providerOf(lazyOf(typeMirror));
   }
 
   // Implementation of Types methods, delegating to types.

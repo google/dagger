@@ -78,7 +78,7 @@ public class ElidedFactoriesTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerSimpleComponent",
@@ -214,7 +214,7 @@ public class ElidedFactoriesTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerSimpleComponent",
@@ -383,7 +383,7 @@ public class ElidedFactoriesTest {
 
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerSimpleComponent",

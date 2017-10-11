@@ -21,14 +21,14 @@ import com.google.common.collect.ImmutableList;
 
 /** The configuration options for compiler modes. */
 enum CompilerMode {
-  DEFAULT,
-  EXPERIMENTAL_ANDROID("-Adagger.experimentalAndroidMode=enabled");
+  DEFAULT_MODE,
+  EXPERIMENTAL_ANDROID_MODE("-Adagger.experimentalAndroidMode=enabled");
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   static final ImmutableList<Object[]> TEST_PARAMETERS =
       ImmutableList.copyOf(
           new Object[][] {
-            {CompilerMode.DEFAULT}, {CompilerMode.EXPERIMENTAL_ANDROID},
+            {CompilerMode.DEFAULT_MODE}, {CompilerMode.EXPERIMENTAL_ANDROID_MODE},
           });
 
   private final ImmutableList<String> javacopts;
@@ -40,5 +40,13 @@ enum CompilerMode {
   /** Returns the javacopts for this compiler mode. */
   FluentIterable<String> javacopts() {
     return FluentIterable.from(javacopts);
+  }
+
+  /**
+   * Returns a {@link JavaFileBuilder} that builds {@link javax.tools.JavaFileObject}s for this
+   * mode.
+   */
+  JavaFileBuilder javaFileBuilder(String qualifiedName) {
+    return new JavaFileBuilder(this, qualifiedName);
   }
 }

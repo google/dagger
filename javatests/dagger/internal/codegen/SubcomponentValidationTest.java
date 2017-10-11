@@ -386,7 +386,7 @@ public class SubcomponentValidationTest {
 
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerParentComponent",

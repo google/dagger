@@ -122,7 +122,7 @@ public class MapBindingExpressionWithGuavaTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
@@ -601,7 +601,7 @@ public class MapBindingExpressionWithGuavaTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID:
+      case EXPERIMENTAL_ANDROID_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerParent",

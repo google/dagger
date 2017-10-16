@@ -302,35 +302,35 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public SomeInjectableType someInjectableType() {",
                 "    return new SomeInjectableType();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
+            .addLines(
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
                 "    return new Provider<SomeInjectableType>() {",
                 "      @Override",
                 "      public SomeInjectableType get() {",
                 "        return someInjectableType();",
                 "      }",
-                "    };",
-                "  }")
+                "    };")
             .addLinesIn(
                 DEFAULT_MODE,
-                "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
+                "    return SomeInjectableType_Factory.create();")
+            .addLines(
                 "  }",
                 "",
-                "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
-                "    return SomeInjectableType_Factory.create();",
-                "  }")
-            .addLines(
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",
@@ -492,22 +492,14 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(OuterType.B b) {",
                 "    injectB(b);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private OuterType.B injectB(OuterType.B instance) {",
                 "    OuterType_B_MembersInjector.injectA(instance, a());",
                 "    return instance;",
-                "}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private OuterType.B injectB(OuterType.B instance) {",
-                "    OuterType_B_MembersInjector.injectA(instance, new OuterType.A());",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "}",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -594,9 +586,8 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  private B getBInstance() {",
                 "    return Preconditions.checkNotNull(",
                 "        testModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
@@ -610,20 +601,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public A a() {",
                 "    return new A(getBInstance());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.testModule = builder.testModule;",
                 "  }",
                 "",
-                "  @Override",
-                "  public A a() {",
-                "    return new A(Preconditions.checkNotNull(",
-                "        testModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
-                "  }")
-            .addLines(
                 "  public static final class Builder {",
                 "    private TestModule testModule;",
                 "",
@@ -726,9 +705,8 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  private B getBInstance() {",
                 "    return Preconditions.checkNotNull(",
                 "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
@@ -737,15 +715,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public A a() {",
                 "    return new A(getBInstance());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @Override",
-                "  public A a() {",
-                "    return new A(Preconditions.checkNotNull(",
-                "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + "));",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -1869,9 +1840,7 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
                 "  private B getBInstance() {",
                 "    return new B(c());",
                 "  }",
@@ -1888,24 +1857,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public X x() {",
                 "    return new X(c());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @Override",
-                "  public A a() {",
-                "    return new A(new B(new C()));",
                 "  }",
                 "",
-                "  @Override",
-                "  public C c() {",
-                "    return new C();",
-                "  }",
-                "",
-                "  @Override",
-                "  public X x() {",
-                "    return new X(new C());",
-                "  }")
-            .addLines(
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -2919,25 +2872,13 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(InjectsMember member) {",
                 "    injectInjectsMember(member);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
                 "    InjectsMember_MembersInjector.injectMember(instance, nonNullableString());",
                 "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(",
-                "        instance,",
-                "        Preconditions.checkNotNull(",
-                "            TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + "));",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",
@@ -3050,23 +2991,14 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(InjectsMember member) {",
                 "    injectInjectsMember(member);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
                 "    InjectsMember_MembersInjector.injectMember(instance, nonNullableInteger());",
                 "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(",
-                "        instance, TestModule.primitiveInteger());",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",

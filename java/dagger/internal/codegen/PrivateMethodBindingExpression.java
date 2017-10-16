@@ -83,8 +83,14 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
+    Optional<ComponentMethodDescriptor> componentMethod = findComponentMethod(requestKind);
+    if (requestKind.equals(DependencyRequest.Kind.INSTANCE)
+        && binding.dependencies().isEmpty()
+        && !componentMethod.isPresent()) {
+      return delegate.getDependencyExpression(requestKind, requestingClass);
+    }
+
     if (!methodNames.containsKey(requestKind)) {
-      Optional<ComponentMethodDescriptor> componentMethod = findComponentMethod(requestKind);
       String name =
           componentMethod.isPresent()
               ? componentMethod.get().methodElement().getSimpleName().toString()

@@ -597,13 +597,9 @@ public class ComponentProcessorTest {
                 "  }")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
-                "  private C getCInstance() {",
-                "    return new C();",
-                "  }",
-                "",
                 "  private B getBInstance() {",
                 "    return Preconditions.checkNotNull(",
-                "        testModule.b(getCInstance()), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "        testModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
                 "  }",
                 "",
                 "  @SuppressWarnings(\"unchecked\")",
@@ -733,13 +729,9 @@ public class ComponentProcessorTest {
                 "  }")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
-                "  private C getCInstance() {",
-                "    return new C();",
-                "  }",
-                "",
                 "  private B getBInstance() {",
                 "    return Preconditions.checkNotNull(",
-                "        TestModule.b(getCInstance()), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
                 "  }",
                 "",
                 "  @Override",
@@ -1174,31 +1166,8 @@ public class ComponentProcessorTest {
                 "",
                 "  public static SimpleComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private SomeInjectableType getSomeInjectableTypeInstance() {",
-                "    return new SomeInjectableType();",
                 "  }",
                 "",
-                "  @Override",
-                "  public void inject(SomeInjectedType instance) {",
-                "    injectSomeInjectedType(instance);",
-                "  }",
-                "",
-                "  @Override",
-                "  public SomeInjectedType injectAndReturn(SomeInjectedType instance) {",
-                "    return injectSomeInjectedType(instance);",
-                "  }",
-                "",
-                "  @CanIgnoreReturnValue",
-                "  private SomeInjectedType injectSomeInjectedType(SomeInjectedType instance) {",
-                "    SomeInjectedType_MembersInjector.injectInjectedField(",
-                "        instance, getSomeInjectableTypeInstance());",
-                "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
                 "  @Override",
                 "  public void inject(SomeInjectedType instance) {",
                 "    injectSomeInjectedType(instance);",
@@ -1214,8 +1183,7 @@ public class ComponentProcessorTest {
                 "    SomeInjectedType_MembersInjector.injectInjectedField(",
                 "        instance, new SomeInjectableType());",
                 "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -1364,27 +1332,8 @@ public class ComponentProcessorTest {
                 "",
                 "  public static SimpleComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private SomeInjectableType getSomeInjectableTypeInstance() {",
-                "    return new SomeInjectableType();",
                 "  }",
                 "",
-                "  @Override",
-                "  public SomeInjectedType createAndInject() {",
-                "    return injectSomeInjectedType(",
-                "        SomeInjectedType_Factory.newSomeInjectedType());",
-                "  }",
-                "",
-                "  @CanIgnoreReturnValue",
-                "  private SomeInjectedType injectSomeInjectedType(SomeInjectedType instance) {",
-                "    SomeInjectedType_MembersInjector.injectInjectedField(",
-                "        instance, getSomeInjectableTypeInstance());",
-                "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
                 "  @Override",
                 "  public SomeInjectedType createAndInject() {",
                 "    return injectSomeInjectedType(",
@@ -1396,8 +1345,8 @@ public class ComponentProcessorTest {
                 "    SomeInjectedType_MembersInjector.injectInjectedField(",
                 "        instance, new SomeInjectableType());",
                 "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",

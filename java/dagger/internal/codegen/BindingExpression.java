@@ -170,7 +170,7 @@ abstract class BindingExpression {
           inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
 
       // TODO(user): Implement private methods for scoped bindings
-      if (compilerOptions.experimentalAndroidMode() && !resolvedBindings.scope().isPresent()) {
+      if (!resolvedBindings.scope().isPresent()) {
         switch (resolvedBindings.contributionBinding().bindingKind()) {
           // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
           case SYNTHETIC_MULTIBOUND_SET:
@@ -188,6 +188,7 @@ abstract class BindingExpression {
                 componentName,
                 generatedComponentModel,
                 inlineBindingExpression,
+                compilerOptions,
                 types,
                 elements);
           default:

@@ -51,6 +51,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private final Map<DependencyRequest.Kind, String> methodNames =
       new EnumMap<>(DependencyRequest.Kind.class);
   private final ContributionBinding binding;
+  private final CompilerOptions compilerOptions;
   private final DaggerTypes types;
   private final Elements elements;
 
@@ -59,6 +60,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       ClassName componentName,
       GeneratedComponentModel generatedComponentModel,
       BindingExpression delegate,
+      CompilerOptions compilerOptions,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
@@ -66,6 +68,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     this.generatedComponentModel = generatedComponentModel;
     this.delegate = delegate;
     binding = resolvedBindings.contributionBinding();
+    this.compilerOptions = compilerOptions;
     this.types = types;
     this.elements = elements;
   }
@@ -73,6 +76,10 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   @Override
   Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
+    if (ignorePrivateMethodStrategy(request.kind())) {
+      return delegate.getDependencyExpression(request.kind(), requestingClass);
+    }
+
     return findComponentMethod(request.kind())
             .map(method -> method.dependencyRequest().get().equals(request))
             .orElse(false)
@@ -83,14 +90,12 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    Optional<ComponentMethodDescriptor> componentMethod = findComponentMethod(requestKind);
-    if (requestKind.equals(DependencyRequest.Kind.INSTANCE)
-        && binding.dependencies().isEmpty()
-        && !componentMethod.isPresent()) {
+    if (ignorePrivateMethodStrategy(requestKind) || isNullaryProvisionMethod(requestKind)) {
       return delegate.getDependencyExpression(requestKind, requestingClass);
     }
 
     if (!methodNames.containsKey(requestKind)) {
+      Optional<ComponentMethodDescriptor> componentMethod = findComponentMethod(requestKind);
       String name =
           componentMethod.isPresent()
               ? componentMethod.get().methodElement().getSimpleName().toString()
@@ -106,6 +111,17 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             ? CodeBlock.of("$N()", methodNames.get(requestKind))
             : CodeBlock.of("$T.this.$N()", componentName, methodNames.get(requestKind));
     return Expression.create(returnType(requestKind), invocation);
+  }
+
+  private boolean ignorePrivateMethodStrategy(DependencyRequest.Kind requestKind) {
+    return !compilerOptions.experimentalAndroidMode()
+        && !requestKind.equals(DependencyRequest.Kind.INSTANCE);
+  }
+
+  private boolean isNullaryProvisionMethod(DependencyRequest.Kind requestKind) {
+    return requestKind.equals(DependencyRequest.Kind.INSTANCE)
+        && binding.dependencies().isEmpty()
+        && !findComponentMethod(requestKind).isPresent();
   }
 
   /** Returns the first component method associated with this request kind, if one exists. */

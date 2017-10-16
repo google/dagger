@@ -874,7 +874,9 @@ abstract class BindingGraph {
       private ImmutableSet<ContributionBinding> getLocalExplicitMultibindings(Key key) {
         ImmutableSet.Builder<ContributionBinding> multibindings = ImmutableSet.builder();
         multibindings.addAll(explicitMultibindings.get(key));
-        if (!MapType.isMap(key) || MapType.from(key).valuesAreFrameworkType()) {
+        if (!MapType.isMap(key)
+            || MapType.from(key).isRawType()
+            || MapType.from(key).valuesAreFrameworkType()) {
           // There are no @Binds @IntoMap delegate declarations for Map<K, V> requests. All
           // @IntoMap requests must be for Map<K, Framework<V>>.
           multibindings.addAll(

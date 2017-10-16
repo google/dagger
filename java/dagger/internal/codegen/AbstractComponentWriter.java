@@ -141,7 +141,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         new BindingExpression.Factory(
             compilerOptions,
             name,
-            componentFieldNames,
             bindingExpressions,
             componentRequirementFields,
             this,
@@ -151,7 +150,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             elements,
             optionalFactories);
     this.componentRequirementFieldFactory =
-        new ComponentRequirementField.Factory(this, componentFieldNames, name, builderFields);
+        new ComponentRequirementField.Factory(this, name, builderFields);
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(
@@ -187,7 +186,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
    * Creates a {@link FieldSpec.Builder} with a unique name based off of {@code name}.
    */
   protected final FieldSpec.Builder componentField(TypeName type, String name) {
-    return FieldSpec.builder(type, componentFieldNames.getUniqueName(name));
+    return FieldSpec.builder(type, getUniqueFieldName(name));
   }
 
   @Override
@@ -203,6 +202,11 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   @Override
   public void addMethod(MethodSpec methodSpec) {
     component.addMethod(methodSpec);
+  }
+
+  @Override
+  public String getUniqueFieldName(String name) {
+    return componentFieldNames.getUniqueName(name);
   }
 
   @Override

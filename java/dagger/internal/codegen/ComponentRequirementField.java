@@ -64,7 +64,6 @@ abstract class ComponentRequirementField {
    */
   private static final class BuilderField extends ComponentRequirementField {
     private final GeneratedComponentModel generatedComponentModel;
-    private final UniqueNameSet componentFieldNames;
     private final ClassName owningComponent;
     private final FieldSpec builderField;
     private MemberSelect field;
@@ -72,12 +71,10 @@ abstract class ComponentRequirementField {
     private BuilderField(
         ComponentRequirement componentRequirement,
         GeneratedComponentModel generatedComponentModel,
-        UniqueNameSet componentFieldNames,
         ClassName owningComponent,
         FieldSpec builderField) {
       super(componentRequirement);
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
-      this.componentFieldNames = checkNotNull(componentFieldNames);
       this.owningComponent = checkNotNull(owningComponent);
       this.builderField = checkNotNull(builderField);
     }
@@ -102,7 +99,8 @@ abstract class ComponentRequirementField {
       if (field == null) {
         // TODO(dpb,ronshapiro): think about whether GeneratedComponentModel.addField should make a
         // unique name for the field.
-        String fieldName = componentFieldNames.getUniqueName(componentRequirement().variableName());
+        String fieldName =
+            generatedComponentModel.getUniqueFieldName(componentRequirement().variableName());
         FieldSpec componentField =
             FieldSpec.builder(TypeName.get(componentRequirement().type()), fieldName, PRIVATE)
                 .build();
@@ -143,17 +141,14 @@ abstract class ComponentRequirementField {
 
   static final class Factory {
     private final GeneratedComponentModel generatedComponentModel;
-    private final UniqueNameSet componentFieldNames;
     private final ClassName owningComponent;
     private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
     Factory(
         GeneratedComponentModel generatedComponentModel,
-        UniqueNameSet componentFieldNames,
         ClassName owningComponent,
         ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
-      this.componentFieldNames = checkNotNull(componentFieldNames);
       this.owningComponent = checkNotNull(owningComponent);
       this.builderFields = checkNotNull(builderFields);
     }
@@ -166,7 +161,6 @@ abstract class ComponentRequirementField {
       return new BuilderField(
           componentRequirement,
           generatedComponentModel,
-          componentFieldNames,
           owningComponent,
           builderFields.get(componentRequirement));
     }

@@ -37,9 +37,10 @@ interface GeneratedComponentModel {
   /** Adds the given type to the component. */
   void addType(TypeSpec typeSpec);
 
-  // TODO(user): add getUniqueFieldName(String name).
+  /** Returns a new, unique field name for the component based on the given name. */
+  String getUniqueFieldName(String name);
 
-  /** Returns a unique method name for the component based on the given name. */
+  /** Returns a new, unique method name for the component based on the given name. */
   String getUniqueMethodName(String name);
 
   /** Returns the corresponding subcomponent name for the given subcomponent descriptor. */

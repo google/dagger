@@ -63,7 +63,6 @@ abstract class BindingExpression {
   static final class Factory {
     private final CompilerOptions compilerOptions;
     private final ClassName componentName;
-    private final UniqueNameSet componentFieldNames;
     private final ComponentBindingExpressions componentBindingExpressions;
     private final ComponentRequirementFields componentRequirementFields;
     private final GeneratedComponentModel generatedComponentModel;
@@ -76,7 +75,6 @@ abstract class BindingExpression {
     Factory(
         CompilerOptions compilerOptions,
         ClassName componentName,
-        UniqueNameSet componentFieldNames,
         ComponentBindingExpressions componentBindingExpressions,
         ComponentRequirementFields componentRequirementFields,
         GeneratedComponentModel generatedComponentModel,
@@ -87,7 +85,6 @@ abstract class BindingExpression {
         OptionalFactories optionalFactories) {
       this.compilerOptions = checkNotNull(compilerOptions);
       this.componentName = checkNotNull(componentName);
-      this.componentFieldNames = checkNotNull(componentFieldNames);
       this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
       this.componentRequirementFields = checkNotNull(componentRequirementFields);
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
@@ -126,7 +123,7 @@ abstract class BindingExpression {
               useRawType
                   ? contributionBindingField.type().rawType
                   : contributionBindingField.type(),
-              componentFieldNames.getUniqueName(contributionBindingField.name()));
+              generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
       contributionField.addModifiers(PRIVATE);
       if (useRawType) {
         contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));

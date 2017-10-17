@@ -223,7 +223,10 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private String methodName(DependencyRequest.Kind dependencyKind) {
     // TODO(user): Use a better name for @MapKey binding instances.
     // TODO(user): Include the binding method as part of the method name.
-    return String.format("get%s%s", bindingName(), dependencyKindName(dependencyKind));
+    if (dependencyKind.equals(DependencyRequest.Kind.INSTANCE)) {
+      return "get" + bindingName();
+    }
+    return "get" + bindingName() + dependencyKindName(dependencyKind);
   }
 
   /** Returns the canonical name for the {@link Binding}. */

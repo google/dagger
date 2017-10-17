@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CodeBlocks.stringLiteral;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.auto.common.MoreElements;
@@ -305,30 +303,13 @@ public class ComponentProcessorTest {
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
-            .addLines(
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return new Provider<SomeInjectableType>() {",
-                "      @Override",
-                "      public SomeInjectableType get() {",
-                "        return someInjectableType();",
-                "      }",
-                "    };")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return SomeInjectableType_Factory.create();")
-            .addLines(
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+                "    return SomeInjectableType_Factory.create();",
                 "  }",
                 "",
                 "  public static final class Builder {",
@@ -498,7 +479,7 @@ public class ComponentProcessorTest {
                 "  private OuterType.B injectB(OuterType.B instance) {",
                 "    OuterType_B_MembersInjector.injectA(instance, a());",
                 "    return instance;",
-                "}",
+                "  }",
                 "",
                 "  public static final class Builder {",
                 "    private Builder() {",

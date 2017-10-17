@@ -23,6 +23,7 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
+import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
@@ -114,12 +115,23 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   private boolean ignorePrivateMethodStrategy(DependencyRequest.Kind requestKind) {
-    return !compilerOptions.experimentalAndroidMode()
-        && !requestKind.equals(DependencyRequest.Kind.INSTANCE);
+    switch (requestKind) {
+      case INSTANCE:
+      case FUTURE:
+        return false;
+      case PROVIDER:
+      case LAZY:
+      case PROVIDER_OF_LAZY:
+        return !compilerOptions.experimentalAndroidMode()
+            || binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE);
+      default:
+        return !compilerOptions.experimentalAndroidMode();
+    }
   }
 
   private boolean isNullaryProvisionMethod(DependencyRequest.Kind requestKind) {
-    return requestKind.equals(DependencyRequest.Kind.INSTANCE)
+    return (requestKind.equals(DependencyRequest.Kind.INSTANCE)
+            || requestKind.equals(DependencyRequest.Kind.FUTURE))
         && binding.dependencies().isEmpty()
         && !findComponentMethod(requestKind).isPresent();
   }

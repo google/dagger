@@ -175,12 +175,6 @@ abstract class BindingExpression {
           // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
           case SYNTHETIC_MULTIBOUND_SET:
           case SYNTHETIC_MULTIBOUND_MAP:
-            // TODO(user): Consider also inlining SET and Map INSTANCE bindings with only 1 dep.
-            if (resolvedBindings.contributionBinding().dependencies().isEmpty()) {
-              // Empty multibindings should just inline static singleton instances.
-              break;
-            }
-            // fall through
           case INJECTION:
           case PROVISION:
             return new PrivateMethodBindingExpression(

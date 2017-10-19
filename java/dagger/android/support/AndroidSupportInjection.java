@@ -16,6 +16,7 @@
 
 package dagger.android.support;
 
+import static android.util.Log.DEBUG;
 import static dagger.internal.Preconditions.checkNotNull;
 
 import android.app.Activity;
@@ -54,19 +55,21 @@ public final class AndroidSupportInjection {
   public static void inject(Fragment fragment) {
     checkNotNull(fragment, "fragment");
     HasSupportFragmentInjector hasSupportFragmentInjector = findHasFragmentInjector(fragment);
-    Log.d(
-        TAG,
-        String.format(
-            "An injector for %s was found in %s",
-            fragment.getClass().getCanonicalName(),
-            hasSupportFragmentInjector.getClass().getCanonicalName()));
+    if (Log.isLoggable(TAG, DEBUG)) {
+      Log.d(
+          TAG,
+          String.format(
+              "An injector for %s was found in %s",
+              fragment.getClass().getCanonicalName(),
+              hasSupportFragmentInjector.getClass().getCanonicalName()));
+    }
 
     AndroidInjector<Fragment> fragmentInjector =
         hasSupportFragmentInjector.supportFragmentInjector();
     checkNotNull(
         fragmentInjector,
         "%s.supportFragmentInjector() returned null",
-        hasSupportFragmentInjector.getClass().getCanonicalName());
+        hasSupportFragmentInjector.getClass());
 
     fragmentInjector.inject(fragment);
   }

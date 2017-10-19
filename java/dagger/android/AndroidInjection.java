@@ -16,6 +16,7 @@
 
 package dagger.android;
 
+import static android.util.Log.DEBUG;
 import static dagger.internal.Preconditions.checkNotNull;
 
 import android.app.Activity;
@@ -53,10 +54,7 @@ public final class AndroidInjection {
 
     AndroidInjector<Activity> activityInjector =
         ((HasActivityInjector) application).activityInjector();
-    checkNotNull(
-        activityInjector,
-        "%s.activityInjector() returned null",
-        application.getClass().getCanonicalName());
+    checkNotNull(activityInjector, "%s.activityInjector() returned null", application.getClass());
 
     activityInjector.inject(activity);
   }
@@ -85,18 +83,18 @@ public final class AndroidInjection {
   public static void inject(Fragment fragment) {
     checkNotNull(fragment, "fragment");
     HasFragmentInjector hasFragmentInjector = findHasFragmentInjector(fragment);
-    Log.d(
-        TAG,
-        String.format(
-            "An injector for %s was found in %s",
-            fragment.getClass().getCanonicalName(),
-            hasFragmentInjector.getClass().getCanonicalName()));
+    if (Log.isLoggable(TAG, DEBUG)) {
+      Log.d(
+          TAG,
+          String.format(
+              "An injector for %s was found in %s",
+              fragment.getClass().getCanonicalName(),
+              hasFragmentInjector.getClass().getCanonicalName()));
+    }
 
     AndroidInjector<Fragment> fragmentInjector = hasFragmentInjector.fragmentInjector();
     checkNotNull(
-        fragmentInjector,
-        "%s.fragmentInjector() returned null",
-        hasFragmentInjector.getClass().getCanonicalName());
+        fragmentInjector, "%s.fragmentInjector() returned null", hasFragmentInjector.getClass());
 
     fragmentInjector.inject(fragment);
   }
@@ -138,10 +136,7 @@ public final class AndroidInjection {
     }
 
     AndroidInjector<Service> serviceInjector = ((HasServiceInjector) application).serviceInjector();
-    checkNotNull(
-        serviceInjector,
-        "%s.serviceInjector() returned null",
-        application.getClass().getCanonicalName());
+    checkNotNull(serviceInjector, "%s.serviceInjector() returned null", application.getClass());
 
     serviceInjector.inject(service);
   }
@@ -170,7 +165,7 @@ public final class AndroidInjection {
     checkNotNull(
         broadcastReceiverInjector,
         "%s.broadcastReceiverInjector() returned null",
-        application.getClass().getCanonicalName());
+        application.getClass());
 
     broadcastReceiverInjector.inject(broadcastReceiver);
   }
@@ -198,7 +193,7 @@ public final class AndroidInjection {
     checkNotNull(
         contentProviderInjector,
         "%s.contentProviderInjector() returned null",
-        application.getClass().getCanonicalName());
+        application.getClass());
 
     contentProviderInjector.inject(contentProvider);
   }

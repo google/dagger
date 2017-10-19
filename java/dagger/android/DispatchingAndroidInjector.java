@@ -76,9 +76,7 @@ public final class DispatchingAndroidInjector<T> implements AndroidInjector<T> {
     try {
       AndroidInjector<T> injector =
           checkNotNull(
-              factory.create(instance),
-              "%s.create(I) should not return null.",
-              factory.getClass().getCanonicalName());
+              factory.create(instance), "%s.create(I) should not return null.", factory.getClass());
 
       injector.inject(instance);
       return true;

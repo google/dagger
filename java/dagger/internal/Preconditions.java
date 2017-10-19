@@ -58,7 +58,8 @@ public final class Preconditions {
    *     message is formed by replacing the single {@code %s} placeholder in the template with
    *     {@code errorMessageArg}.
    * @param errorMessageArg the argument to be substituted into the message template. Converted to a
-   *     string using {@link String#valueOf(Object)}.
+   *     string using {@link String#valueOf(Object)}, except for {@link Class} objects, which use
+   *     {@link Class#getCanonicalName()}.
    * @return the non-null reference that was validated
    * @throws NullPointerException if {@code reference} is null
    * @throws IllegalArgumentException if {@code errorMessageTemplate} doesn't contain exactly one
@@ -67,7 +68,7 @@ public final class Preconditions {
   public static <T> T checkNotNull(
       T reference, String errorMessageTemplate, Object errorMessageArg) {
     if (reference == null) {
-      // Poor-persons version of String.format, which is not GWT-compatible
+      // Simple implementation of String.format, which is not GWT-compatible
       if (!errorMessageTemplate.contains("%s")) {
         throw new IllegalArgumentException("errorMessageTemplate has no format specifiers");
       }
@@ -75,8 +76,11 @@ public final class Preconditions {
         throw new IllegalArgumentException(
             "errorMessageTemplate has more than one format specifier");
       }
-      throw new NullPointerException(
-          errorMessageTemplate.replaceFirst("%s", String.valueOf(errorMessageArg)));
+      String argString =
+          errorMessageArg instanceof Class
+              ? ((Class) errorMessageArg).getCanonicalName()
+              : String.valueOf(errorMessageArg);
+      throw new NullPointerException(errorMessageTemplate.replace("%s", argString));
     }
     return reference;
   }

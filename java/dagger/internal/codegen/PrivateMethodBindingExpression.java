@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -173,9 +172,11 @@ final class PrivateMethodBindingExpression extends BindingExpression {
 
   /** Returns the return type for the dependency request. */
   private TypeMirror returnType(DependencyRequest.Kind requestKind) {
-    return binding.contributesPrimitiveType() && requestKind.equals(DependencyRequest.Kind.INSTANCE)
-        ? asExecutable(binding.bindingElement().get()).getReturnType()
-        : accessibleType(requestKind.type(binding.contributedType(), types));
+    if (requestKind.equals(DependencyRequest.Kind.INSTANCE)
+        && binding.contributedPrimitiveType().isPresent()) {
+      return binding.contributedPrimitiveType().get();
+    }
+    return accessibleType(requestKind.type(binding.contributedType(), types));
   }
 
   /** Returns the method body for the dependency request. */

@@ -183,16 +183,11 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
   }
 
-  /**
-   * Returns {@code true} if {@link #bindingElement()} is present and is a method that returns a
-   * primitive type.
-   */
-  boolean contributesPrimitiveType() {
-    return bindingElement().isPresent()
-        && MoreElements.asExecutable(bindingElement().get())
-            .getReturnType()
-            .getKind()
-            .isPrimitive();
+  /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
+  Optional<TypeMirror> contributedPrimitiveType() {
+    return bindingElement()
+        .map(bindingElement -> MoreElements.asExecutable(bindingElement).getReturnType())
+        .filter(type -> type.getKind().isPrimitive());
   }
 
   /**

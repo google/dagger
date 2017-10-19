@@ -109,7 +109,7 @@ abstract class ProvisionBinding extends ContributionBinding {
   abstract Builder toBuilder();
 
   boolean shouldCheckForNull(CompilerOptions compilerOptions) {
-    return !contributesPrimitiveType()
+    return !contributedPrimitiveType().isPresent()
         && !nullableType().isPresent()
         && compilerOptions.doCheckForNulls();
   }

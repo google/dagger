@@ -8,7 +8,6 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - oracle-java8-installer
       - libstdc++-4.9-dev # https://github.com/nodegit/nodegit/issues/853
       - gcc-4.8
       - g++-4.8

@@ -575,7 +575,9 @@ abstract class Key {
       }
       MapType mapType = MapType.from(possibleMapKey);
       TypeMirror wrappedValueType;
-      if (mapType.valuesAreTypeOf(Provider.class)) {
+      if (mapType.isRawType()) {
+        return possibleMapKey;
+      } else if (mapType.valuesAreTypeOf(Provider.class)) {
         wrappedValueType = mapType.unwrappedValueType(Provider.class);
       } else if (mapType.valuesAreTypeOf(Producer.class)) {
         wrappedValueType = mapType.unwrappedValueType(Producer.class);
@@ -610,7 +612,7 @@ abstract class Key {
       checkArgument(!currentWrappingClass.equals(newWrappingClass));
       if (MapType.isMap(possibleMapKey)) {
         MapType mapType = MapType.from(possibleMapKey);
-        if (mapType.valuesAreTypeOf(currentWrappingClass)) {
+        if (!mapType.isRawType() && mapType.valuesAreTypeOf(currentWrappingClass)) {
           TypeElement wrappingElement = getClassElement(newWrappingClass);
           if (wrappingElement == null) {
             // This target might not be compiled with Producers, so wrappingClass might not have an
@@ -637,7 +639,7 @@ abstract class Key {
     private Optional<Key> wrapMapKey(Key possibleMapKey, Class<?> wrappingClass) {
       if (MapType.isMap(possibleMapKey)) {
         MapType mapType = MapType.from(possibleMapKey);
-        if (!mapType.valuesAreTypeOf(wrappingClass)) {
+        if (!mapType.isRawType() && !mapType.valuesAreTypeOf(wrappingClass)) {
           TypeElement wrappingElement = getClassElement(wrappingClass);
           if (wrappingElement == null) {
             // This target might not be compiled with Producers, so wrappingClass might not have an
@@ -660,7 +662,7 @@ abstract class Key {
     Optional<Key> unwrapSetKey(Key key, Class<?> wrappingClass) {
       if (SetType.isSet(key)) {
         SetType setType = SetType.from(key);
-        if (setType.elementsAreTypeOf(wrappingClass)) {
+        if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClass)) {
           return Optional.of(
               key.toBuilder().type(setOf(setType.unwrappedElementType(wrappingClass))).build());
         }

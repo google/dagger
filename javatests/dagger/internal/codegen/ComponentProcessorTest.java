@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CodeBlocks.stringLiteral;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.auto.common.MoreElements;
@@ -302,25 +300,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public SomeInjectableType someInjectableType() {",
                 "    return new SomeInjectableType();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
                 "  }",
                 "",
-                "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
-                "    return new Provider<SomeInjectableType>() {",
-                "      @Override",
-                "      public SomeInjectableType get() {",
-                "        return someInjectableType();",
-                "      }",
-                "    };",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
                 "  @Override",
                 "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
                 "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
@@ -329,8 +310,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
                 "    return SomeInjectableType_Factory.create();",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",
@@ -492,22 +473,14 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(OuterType.B b) {",
                 "    injectB(b);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private OuterType.B injectB(OuterType.B instance) {",
                 "    OuterType_B_MembersInjector.injectA(instance, a());",
                 "    return instance;",
-                "}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private OuterType.B injectB(OuterType.B instance) {",
-                "    OuterType_B_MembersInjector.injectA(instance, new OuterType.A());",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -594,10 +567,9 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private B getBInstance() {",
+                "  }",
+                "",
+                "  private B getB() {",
                 "    return Preconditions.checkNotNull(",
                 "        testModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
                 "  }",
@@ -609,21 +581,9 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public A a() {",
-                "    return new A(getBInstance());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.testModule = builder.testModule;",
+                "    return new A(getB());",
                 "  }",
                 "",
-                "  @Override",
-                "  public A a() {",
-                "    return new A(Preconditions.checkNotNull(",
-                "        testModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
-                "  }")
-            .addLines(
                 "  public static final class Builder {",
                 "    private TestModule testModule;",
                 "",
@@ -726,26 +686,18 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private B getBInstance() {",
+                "  }",
+                "",
+                "  private B getB() {",
                 "    return Preconditions.checkNotNull(",
                 "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + ");",
                 "  }",
                 "",
                 "  @Override",
                 "  public A a() {",
-                "    return new A(getBInstance());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @Override",
-                "  public A a() {",
-                "    return new A(Preconditions.checkNotNull(",
-                "        TestModule.b(new C()), " + NPE_FROM_PROVIDES_METHOD + "));",
-                "  }")
-            .addLines(
+                "    return new A(getB());",
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -1869,15 +1821,13 @@ public class ComponentProcessorTest {
                 "",
                 "  public static TestComponent create() {",
                 "    return new Builder().build();",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private B getBInstance() {",
+                "  }",
+                "  private B getB() {",
                 "    return new B(c());",
                 "  }",
                 "  @Override",
                 "  public A a() {",
-                "    return new A(getBInstance());",
+                "    return new A(getB());",
                 "  }",
                 "",
                 "  @Override",
@@ -1888,24 +1838,8 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public X x() {",
                 "    return new X(c());",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @Override",
-                "  public A a() {",
-                "    return new A(new B(new C()));",
                 "  }",
                 "",
-                "  @Override",
-                "  public C c() {",
-                "    return new C();",
-                "  }",
-                "",
-                "  @Override",
-                "  public X x() {",
-                "    return new X(new C());",
-                "  }")
-            .addLines(
                 "  public static final class Builder {",
                 "    private Builder() {",
                 "    }",
@@ -2919,25 +2853,13 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(InjectsMember member) {",
                 "    injectInjectsMember(member);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
                 "    InjectsMember_MembersInjector.injectMember(instance, nonNullableString());",
                 "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(",
-                "        instance,",
-                "        Preconditions.checkNotNull(",
-                "            TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + "));",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",
@@ -3050,23 +2972,14 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public void inject(InjectsMember member) {",
                 "    injectInjectsMember(member);",
-                "  }")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "  }",
+                "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
                 "    InjectsMember_MembersInjector.injectMember(instance, nonNullableInteger());",
                 "    return instance;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(",
-                "        instance, TestModule.primitiveInteger());",
-                "    return instance;",
-                "  }")
-            .addLines(
+                "  }",
+                "",
                 "  public static final class Builder {",
                 "    private Builder() {}",
                 "",

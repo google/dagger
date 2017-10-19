@@ -170,17 +170,11 @@ abstract class BindingExpression {
           inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
 
       // TODO(user): Implement private methods for scoped bindings
-      if (compilerOptions.experimentalAndroidMode() && !resolvedBindings.scope().isPresent()) {
+      if (!resolvedBindings.scope().isPresent()) {
         switch (resolvedBindings.contributionBinding().bindingKind()) {
           // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
           case SYNTHETIC_MULTIBOUND_SET:
           case SYNTHETIC_MULTIBOUND_MAP:
-            // TODO(user): Consider also inlining SET and Map INSTANCE bindings with only 1 dep.
-            if (resolvedBindings.contributionBinding().dependencies().isEmpty()) {
-              // Empty multibindings should just inline static singleton instances.
-              break;
-            }
-            // fall through
           case INJECTION:
           case PROVISION:
             return new PrivateMethodBindingExpression(
@@ -188,6 +182,7 @@ abstract class BindingExpression {
                 componentName,
                 generatedComponentModel,
                 inlineBindingExpression,
+                compilerOptions,
                 types,
                 elements);
           default:

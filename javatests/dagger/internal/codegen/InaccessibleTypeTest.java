@@ -152,9 +152,9 @@ public class InaccessibleTypeTest {
                     "-Xlint:-processing",
                     "-Xlint:rawtypes",
                     "-Xlint:unchecked",
-                    "-Werror"))
+                    "-Xlint:-classfile"))
         .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
+        .compilesWithoutWarnings()
         .and()
         .generatesSources(generatedComponent);
   }
@@ -271,9 +271,9 @@ public class InaccessibleTypeTest {
                     "-Xlint:-processing",
                     "-Xlint:rawtypes",
                     "-Xlint:unchecked",
-                    "-Werror"))
+                    "-Xlint:-classfile"))
         .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
+        .compilesWithoutWarnings()
         .and()
         .generatesSources(generatedComponent);
   }

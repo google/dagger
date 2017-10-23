@@ -48,7 +48,7 @@ load("//tools:javadoc.bzl", "javadoc_library")
 javadoc_library(
     name = "android-javadoc",
     srcs = [":android-srcs"],
-    android_api_level = 25,
+    android_api_level = 26,
     root_packages = ["dagger.android"],
     deps = [":android"],
 )

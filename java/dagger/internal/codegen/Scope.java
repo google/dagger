@@ -121,6 +121,11 @@ abstract class Scope {
   /**
    * Returns {@code true} for scopes that are annotated with {@link CanReleaseReferences} or some
    * other annotation that is itself annotated with {@link CanReleaseReferences}.
+   *
+   * <p>Note that you need to check
+   * {@link BindingGraph#scopesRequiringReleasableReferenceManagers()} to see if a given binding
+   * graph actually binds a {@link dagger.releasablereferences.ReleasableReferenceManager} for this
+   * scope.
    */
   boolean canReleaseReferences() {
     return isAnnotationPresent(scopeAnnotationElement(), CanReleaseReferences.class)

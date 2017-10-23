@@ -179,6 +179,12 @@ Developer snapshots are available from Sonatype's
 [snapshot repository][dagger-snap], and are built on a clean build of
 the GitHub project's master branch.
 
+## Building Dagger
+
+Dagger is built with [`bazel`]. The tests can be run with `bazel test //...`.
+`util/install-local-snapshot.sh` will build all of the Dagger libraries and
+install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
+
 ## License
 
     Copyright 2012 The Dagger Authors
@@ -196,6 +202,7 @@ the GitHub project's master branch.
     limitations under the License.
 
 [20api]: https://google.github.io/dagger/api/2.0/
+[`bazel`]: https://bazel.build
 [community]: https://plus.google.com/communities/111933036769103367883
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/

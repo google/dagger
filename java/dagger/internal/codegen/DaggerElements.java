@@ -20,7 +20,7 @@ import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
-import static dagger.internal.codegen.Util.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 

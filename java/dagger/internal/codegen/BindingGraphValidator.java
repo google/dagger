@@ -36,6 +36,7 @@ import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnno
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_INJECT_WILDCARD_TYPE;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
@@ -64,7 +65,6 @@ import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;

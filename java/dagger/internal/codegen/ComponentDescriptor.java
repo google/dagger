@@ -26,8 +26,8 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModul
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 

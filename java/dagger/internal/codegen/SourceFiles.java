@@ -24,6 +24,8 @@ import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
@@ -35,8 +37,6 @@ import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.internal.codegen.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
-import static dagger.internal.codegen.Util.toImmutableList;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 

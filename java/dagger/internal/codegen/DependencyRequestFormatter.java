@@ -17,9 +17,9 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.asExecutable;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.ErrorMessages.DOUBLE_INDENT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
-import static dagger.internal.codegen.Util.toImmutableList;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;

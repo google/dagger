@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Suppliers.memoize;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Util.toImmutableList;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreElements;

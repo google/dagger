@@ -26,6 +26,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
 import static dagger.internal.codegen.ErrorMessages.INCOMPATIBLE_MODULE_METHODS;
 import static dagger.internal.codegen.ErrorMessages.METHOD_OVERRIDES_PROVIDES_METHOD;
@@ -38,7 +39,6 @@ import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_H
 import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;

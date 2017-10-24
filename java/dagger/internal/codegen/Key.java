@@ -23,13 +23,13 @@ import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.mapKeyType;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Optionals.firstPresent;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.AnnotationMirrors;

@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Util.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.FluentIterable;

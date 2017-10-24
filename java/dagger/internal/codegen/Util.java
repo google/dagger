@@ -16,18 +16,13 @@
 
 package dagger.internal.codegen;
 
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -86,22 +81,6 @@ final class Util {
         throw new AssertionError(
             "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
     }
-  }
-
-  /**
-   * Returns a {@link Collector} that accumulates the input elements into a new {@link
-   * ImmutableList}, in encounter order.
-   */
-  static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
-    return collectingAndThen(toList(), ImmutableList::copyOf);
-  }
-
-  /**
-   * Returns a {@link Collector} that accumulates the input elements into a new {@link
-   * ImmutableSet}, in encounter order.
-   */
-  static <T> Collector<T, ?, ImmutableSet<T>> toImmutableSet() {
-    return collectingAndThen(toList(), ImmutableSet::copyOf);
   }
 
   /**

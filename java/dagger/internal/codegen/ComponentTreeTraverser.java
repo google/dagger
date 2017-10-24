@@ -25,7 +25,7 @@ import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Multimaps.asMap;
 import static dagger.internal.codegen.BindingKey.contribution;
-import static dagger.internal.codegen.Util.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
 

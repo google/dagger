@@ -25,10 +25,10 @@ import static dagger.internal.codegen.ComponentDescriptor.isComponentContributio
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Key.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 

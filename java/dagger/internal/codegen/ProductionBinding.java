@@ -18,9 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
-import static dagger.internal.codegen.Util.toImmutableSet;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;

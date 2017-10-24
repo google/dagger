@@ -27,6 +27,7 @@ import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -39,7 +40,6 @@ import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAG
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
-import static dagger.internal.codegen.Util.toImmutableList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;

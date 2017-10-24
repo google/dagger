@@ -15,7 +15,7 @@
 android_sdk_repository(
     name = "androidsdk",
     api_level = 25,
-    build_tools_version = "25.0.2",
+    build_tools_version = "26.0.1",
 )
 
 bind(

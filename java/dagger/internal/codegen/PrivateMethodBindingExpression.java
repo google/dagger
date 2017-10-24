@@ -74,17 +74,17 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
     if (ignorePrivateMethodStrategy(request.kind())) {
-      return delegate.getDependencyExpression(request.kind(), requestingClass);
+      return delegate.getComponentMethodImplementation(request, requestingClass);
     }
 
     return findComponentMethod(request.kind())
             .map(method -> method.dependencyRequest().get().equals(request))
             .orElse(false)
-        ? Expression.create(returnType(request.kind()), methodBody(request.kind()))
-        : getDependencyExpression(request.kind(), requestingClass);
+        ? methodBody(request.kind())
+        : super.getComponentMethodImplementation(request, requestingClass);
   }
 
   @Override
@@ -166,7 +166,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         methodBuilder(name)
             .addModifiers(PRIVATE)
             .returns(TypeName.get(returnType(requestKind)))
-            .addStatement("return $L", methodBody(requestKind))
+            .addCode(methodBody(requestKind))
             .build());
   }
 
@@ -184,20 +184,21 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     switch (requestKind) {
       case PROVIDER:
         // TODO(user): Cache provider field instead of recreating each time.
-        return CodeBlock.of("$L", providerTypeSpec());
+        return CodeBlock.of("return $L;", providerTypeSpec());
       case LAZY:
       case PROVIDER_OF_LAZY:
         // TODO(user): Refactor the delegate BindingExpression to handle these cases?
         // Don't use delegate.getDependencyExpression() because that will inline the provider
         // dependency instead of delegating to the private method. To use the private method,
         // recursively call this.getDependencyExpression().
-        return FrameworkType.PROVIDER.to(
-            requestKind,
-            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock());
+        CodeBlock asProvider =
+            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock();
+        return CodeBlock.of("return $L;", FrameworkType.PROVIDER.to(requestKind, asProvider));
       case INSTANCE:
       case PRODUCER:
       case FUTURE:
-        return delegate.getDependencyExpression(requestKind, componentName).codeBlock();
+        return CodeBlock.of(
+            "return $L;", delegate.getDependencyExpression(requestKind, componentName).codeBlock());
       default:
         throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
     }

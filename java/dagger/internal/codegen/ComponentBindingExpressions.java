@@ -22,6 +22,7 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import java.util.HashMap;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
@@ -123,9 +124,9 @@ final class ComponentBindingExpressions {
    * @throws IllegalStateException if there is no binding expression that satisfies the dependency
    *     request
    */
-  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
     return getBindingExpression(request.bindingKey())
-        .getComponentMethodExpression(request, requestingClass);
+        .getComponentMethodImplementation(request, requestingClass);
   }
 
   private BindingExpression getBindingExpression(BindingKey bindingKey) {

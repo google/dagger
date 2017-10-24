@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
@@ -52,11 +53,11 @@ abstract class BindingExpression {
 
   /** Returns an expression for the implementation of a component method with the given request. */
   // TODO(dpb): Consider using ComponentMethodDescriptor instead of DependencyRequest?
-  // TODO(dpb): Consider renaming to getComponentMethodImplementation and include "return ... ;"?
-  Expression getComponentMethodExpression(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
     // By default, just delegate to #getDependencyExpression().
-    return getDependencyExpression(request.kind(), requestingClass);
+    CodeBlock expression = getDependencyExpression(request.kind(), requestingClass).codeBlock();
+    return CodeBlock.of("return $L;", expression);
   }
 
   /** Factory for building a {@link BindingExpression}. */

@@ -402,11 +402,8 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
                   "return $N($N)", getMembersInjectionMethod(binding.key()), parameter);
             }
           } else {
-            interfaceMethod.addStatement(
-                "return $L",
-                bindingExpressions
-                    .getComponentMethodExpression(interfaceRequest, name)
-                    .codeBlock());
+            interfaceMethod.addCode(
+                bindingExpressions.getComponentMethodImplementation(interfaceRequest, name));
           }
           interfaceMethods.add(interfaceMethod.build());
         }

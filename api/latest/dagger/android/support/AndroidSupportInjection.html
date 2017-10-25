@@ -132,7 +132,7 @@ extends <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>static void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../dagger/android/support/AndroidSupportInjection.html#inject-android.support.v4.app.Fragment-">inject</a></span>(<a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app">Fragment</a>&nbsp;fragment)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../dagger/android/support/AndroidSupportInjection.html#inject-android.support.v4.app.Fragment-">inject</a></span>(<a href="https://developer.android.com/reference/android/support.v4.app.Fragment.html?is-external=true" title="class or interface in android">android.support.v4.app.Fragment</a>&nbsp;fragment)</code>
 <div class="block">Injects <code>fragment</code> if an associated <a href="../../../dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> implementation
  can be found, otherwise throws an <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html?is-external=true" title="class or interface in java.lang"><code>IllegalArgumentException</code></a>.</div>
 </td>
@@ -165,7 +165,7 @@ extends <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html
 <ul class="blockListLast">
 <li class="blockList">
 <h4>inject</h4>
-<pre>public static&nbsp;void&nbsp;inject(<a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true" title="class or interface in android.support.v4.app">Fragment</a>&nbsp;fragment)</pre>
+<pre>public static&nbsp;void&nbsp;inject(<a href="https://developer.android.com/reference/android/support.v4.app.Fragment.html?is-external=true" title="class or interface in android">android.support.v4.app.Fragment</a>&nbsp;fragment)</pre>
 <div class="block">Injects <code>fragment</code> if an associated <a href="../../../dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> implementation
  can be found, otherwise throws an <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/IllegalArgumentException.html?is-external=true" title="class or interface in java.lang"><code>IllegalArgumentException</code></a>.
 
@@ -174,7 +174,7 @@ extends <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html
 
  <ol>
    <li>Walks the parent-fragment hierarchy to find the a fragment that implements <a href="../../../dagger/android/support/HasSupportFragmentInjector.html" title="interface in dagger.android.support"><code>HasSupportFragmentInjector</code></a>, and if none do
-   <li>Uses the <code>fragment</code>'s <a href="https://developer.android.com/reference/android/support/v4/app/Fragment.html?is-external=true#getActivity--" title="class or interface in android.support.v4.app"><code>activity</code></a> if it implements
+   <li>Uses the <code>fragment</code>'s <code>activity</code> if it implements
        <a href="../../../dagger/android/support/HasSupportFragmentInjector.html" title="interface in dagger.android.support"><code>HasSupportFragmentInjector</code></a>, and if not
    <li>Uses the <a href="https://developer.android.com/reference/android/app/Application.html?is-external=true" title="class or interface in android.app"><code>Application</code></a> if it implements <a href="../../../dagger/android/support/HasSupportFragmentInjector.html" title="interface in dagger.android.support"><code>HasSupportFragmentInjector</code></a>.
  </ol>

@@ -27,7 +27,8 @@ load("//:test_defs.bzl", "GenJavaTests")
 GenJavaTests(
     name = "tck_tests",
     srcs = glob(["*.java"]),
-    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES + [
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    lib_javacopts = [
         "-Adagger.privateMemberValidation=warning",
         "-Adagger.staticMemberValidation=warning",
         "-Adagger.ignorePrivateAndStaticInjectionForComponent=enabled",

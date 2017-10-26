@@ -36,14 +36,13 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
              plugins, javacopts, lib_javacopts, test_javacopts)
 
   if functional:
-    for (variant_name, extra_javacopts) in BUILD_VARIANTS.items():
+    for (variant_name, extra_lib_javacopts) in BUILD_VARIANTS.items():
+      lib_javacopts = (lib_javacopts or []) + extra_lib_javacopts
       _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-                 plugins, javacopts, lib_javacopts, test_javacopts, variant_name,
-                 extra_javacopts)
+                 plugins, javacopts, lib_javacopts, test_javacopts, variant_name)
 
 def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-               plugins, javacopts, lib_javacopts, test_javacopts, variant_name=None,
-               extra_javacopts=None):
+               plugins, javacopts, lib_javacopts, test_javacopts, variant_name=None):
   if variant_name:
     suffix = "_" + variant_name
     tags = [variant_name]
@@ -66,9 +65,6 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
   if not test_only_deps:
     test_only_deps = []
 
-  if not extra_javacopts:
-    extra_javacopts = []
-
   test_deps = test_only_deps + deps
   if supporting_files:
     supporting_files_name = name + suffix + "_lib"
@@ -78,7 +74,7 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
         deps = deps,
         srcs = supporting_files,
         plugins = plugins,
-        javacopts = extra_javacopts + (javacopts or []) + (lib_javacopts or []),
+        javacopts = (javacopts or []) + (lib_javacopts or []),
         tags = tags,
         testonly = 1,
     )
@@ -94,7 +90,7 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
         deps = test_deps,
         srcs = [test_file],
         plugins = plugins,
-        javacopts = extra_javacopts + (javacopts or []) + (test_javacopts or []),
+        javacopts = (javacopts or []) + (test_javacopts or []),
         jvm_flags = jvm_flags,
         tags = tags,
         test_class = test_class,

@@ -35,7 +35,7 @@ android_library(
         "//third_party:jsr305_annotations",
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
         "@androidsdk//com.android.support:support-annotations-25.0.0",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
+        "@androidsdk//com.android.support:support-fragment-25.0.0",
     ],
 )
 

@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CodeBlocks.stringLiteral;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.auto.common.MoreElements;
@@ -361,109 +359,60 @@ public class ComponentProcessorTest {
         "  Provider<SomeInjectableType> someInjectableTypeProvider();",
         "}");
     JavaFileObject generatedComponent =
-        compilerMode
-            .javaFileBuilder("test.DaggerSimpleComponent")
-            .addLines(
-                "package test;",
-                "",
-                "import dagger.Lazy;",
-                "import dagger.internal.DoubleCheck;")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "import dagger.internal.MemoizedSentinel;")
-            .addLines(
-                "import javax.annotation.Generated;",
-                "import javax.inject.Provider;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerSimpleComponent implements SimpleComponent {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private volatile Object someInjectableType = new MemoizedSentinel();",
-                "",
-                "  private DaggerSimpleComponent(Builder builder) {}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
-                "",
-                "  private DaggerSimpleComponent(Builder builder) {",
-                "    initialize(builder);",
-                "  }")
-            .addLines(
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static SimpleComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.someInjectableTypeProvider =",
-                "        DoubleCheck.provider(SomeInjectableType_Factory.create());",
-                "  }",
-                "")
-            .addLines(
-                "  @Override",
-                "  public SomeInjectableType someInjectableType() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    Object local = someInjectableType;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        if (local == someInjectableType) {",
-                "          someInjectableType = new SomeInjectableType();",
-                "        }",
-                "        local = someInjectableType;",
-                "      }",
-                "    }",
-                "    return (SomeInjectableType) local;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return someInjectableTypeProvider.get();")
-            .addLines(
-                "  }",
-                "",
-                "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider);")
-            .addLines(
-                "  }",
-                "",
-                "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return new Provider<SomeInjectableType>() {",
-                "      @Override",
-                "      public SomeInjectableType get() {",
-                "        return someInjectableType();",
-                "      }",
-                "    };")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return someInjectableTypeProvider;")
-            .addLines(
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public SimpleComponent build() {",
-                "      return new DaggerSimpleComponent(this);",
-                "    }",
-                "  }",
-                "}")
-            .build();
+        JavaFileObjects.forSourceLines(
+            "test.DaggerSimpleComponent",
+            "package test;",
+            "",
+            "import dagger.Lazy;",
+            "import dagger.internal.DoubleCheck;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerSimpleComponent implements SimpleComponent {",
+            "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
+            "",
+            "  private DaggerSimpleComponent(Builder builder) {",
+            "    initialize(builder);",
+            "  }",
+            "",
+            "  public static Builder builder() {",
+            "    return new Builder();",
+            "  }",
+            "",
+            "  public static SimpleComponent create() {",
+            "    return new Builder().build();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.someInjectableTypeProvider =",
+            "        DoubleCheck.provider(SomeInjectableType_Factory.create());",
+            "  }",
+            "",
+            "  @Override",
+            "  public SomeInjectableType someInjectableType() {",
+            "    return someInjectableTypeProvider.get();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+            "    return DoubleCheck.lazy(someInjectableTypeProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+            "    return someInjectableTypeProvider;",
+            "  }",
+            "",
+            "  public static final class Builder {",
+            "    private Builder() {}",
+            "",
+            "    public SimpleComponent build() {",
+            "      return new DaggerSimpleComponent(this);",
+            "    }",
+            "  }",
+            "}");
     Compilation compilation =
         daggerCompiler()
             .withOptions(compilerMode.javacopts())

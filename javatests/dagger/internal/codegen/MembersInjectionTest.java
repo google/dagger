@@ -21,12 +21,9 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 import com.google.common.base.Joiner;
@@ -1405,118 +1402,73 @@ public class MembersInjectionTest {
             .compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
     assertThat(compilation).succeeded();
     JavaFileObject generatedComponent =
-        compilerMode
-            .javaFileBuilder("test.DaggerTestComponent")
-            .addLines(
-                "package test;",
-                "",
-                "import com.google.errorprone.annotations.CanIgnoreReturnValue;")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "import dagger.internal.MemoizedSentinel;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "import dagger.internal.DoubleCheck;")
-            .addLines(
-                "import dagger.internal.Preconditions;",
-                "import java.util.List;",
-                "import javax.annotation.Generated;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "import javax.inject.Provider;")
-            .addLines(
-                "import other.InaccessiblesModule;",
-                "import other.InaccessiblesModule_InaccessiblesFactory;",
-                "import other.UsesInaccessibles;",
-                "import other.UsesInaccessibles_Factory;",
-                "import other.UsesInaccessibles_MembersInjector;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private volatile Object listOfInaccessible = new MemoizedSentinel();",
-                "",
-                "  private DaggerTestComponent(Builder builder) {}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"rawtypes\")",
-                "  private Provider inaccessiblesProvider;",
-                "",
-                "  private DaggerTestComponent(Builder builder) {",
-                "    initialize(builder);",
-                "  }")
-            .addLines(
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static TestComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private List getListOfInaccessible() {",
-                "    Object local = listOfInaccessible;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        if (local == listOfInaccessible) {",
-                "          listOfInaccessible =",
-                "              Preconditions.checkNotNull(",
-                "                  InaccessiblesModule_InaccessiblesFactory.proxyInaccessibles(),",
-                "                  " + NPE_FROM_PROVIDES_METHOD + ");",
-                "        }",
-                "        local = listOfInaccessible;",
-                "      }",
-                "    }",
-                "    return (List) local;",
-                "  }")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.inaccessiblesProvider =",
-                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
-                "  }")
-            .addLines(
-                "",
-                "  @Override",
-                "  public UsesInaccessibles usesInaccessibles() {",
-                "    return injectUsesInaccessibles(",
-                "        UsesInaccessibles_Factory.newUsesInaccessibles());",
-                "  }",
-                "",
-                "  @CanIgnoreReturnValue",
-                "  private UsesInaccessibles injectUsesInaccessibles(",
-                "        UsesInaccessibles instance) {",
-                "    UsesInaccessibles_MembersInjector.injectInaccessibles(")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "        instance, (List) getListOfInaccessible());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "        instance, (List) inaccessiblesProvider.get());")
-            .addLines(
-                "    return instance;",
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public TestComponent build() {",
-                "      return new DaggerTestComponent(this);",
-                "    }",
-                "",
-                "    @Deprecated",
-                "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
-                "      Preconditions.checkNotNull(inaccessiblesModule);",
-                "      return this;",
-                "    }",
-                "  }",
-                "}")
-            .build();
+        JavaFileObjects.forSourceLines(
+            "other.DaggerTestComponent",
+            "package test;",
+            "",
+            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
+            "import dagger.internal.DoubleCheck;",
+            "import dagger.internal.Preconditions;",
+            "import java.util.List;",
+            "import javax.annotation.Generated;",
+            "import javax.inject.Provider;",
+            "import other.InaccessiblesModule;",
+            "import other.InaccessiblesModule_InaccessiblesFactory;",
+            "import other.UsesInaccessibles;",
+            "import other.UsesInaccessibles_Factory;",
+            "import other.UsesInaccessibles_MembersInjector;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerTestComponent implements TestComponent {",
+            "  @SuppressWarnings(\"rawtypes\")",
+            "  private Provider inaccessiblesProvider;",
+            "",
+            "  private DaggerTestComponent(Builder builder) {",
+            "    initialize(builder);",
+            "  }",
+            "",
+            "  public static Builder builder() {",
+            "    return new Builder();",
+            "  }",
+            "",
+            "  public static TestComponent create() {",
+            "    return new Builder().build();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final Builder builder) {",
+            "    this.inaccessiblesProvider =",
+            "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+            "  }",
+            "",
+            "  @Override",
+            "  public UsesInaccessibles usesInaccessibles() {",
+            "    return injectUsesInaccessibles(",
+            "        UsesInaccessibles_Factory.newUsesInaccessibles());",
+            "  }",
+            "",
+            "  @CanIgnoreReturnValue",
+            "  private UsesInaccessibles injectUsesInaccessibles(",
+            "        UsesInaccessibles instance) {",
+            "    UsesInaccessibles_MembersInjector.injectInaccessibles(",
+            "        instance, (List) inaccessiblesProvider.get());",
+            "    return instance;",
+            "  }",
+            "",
+            "  public static final class Builder {",
+            "    private Builder() {}",
+            "",
+            "    public TestComponent build() {",
+            "      return new DaggerTestComponent(this);",
+            "    }",
+            "",
+            "    @Deprecated",
+            "    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {",
+            "      Preconditions.checkNotNull(inaccessiblesModule);",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(generatedComponent);

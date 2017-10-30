@@ -17,34 +17,19 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.JavaFileObjects;
-import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
 
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public class DelegateBindingExpressionTest {
-  @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
-    return CompilerMode.TEST_PARAMETERS;
-  }
-
-  private final CompilerMode compilerMode;
-
-  public DelegateBindingExpressionTest(CompilerMode compilerMode) {
-    this.compilerMode = compilerMode;
-  }
-
   private static final JavaFileObject REGULAR_SCOPED =
       JavaFileObjects.forSourceLines(
           "test.RegularScoped",
@@ -169,162 +154,100 @@ public class DelegateBindingExpressionTest {
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(
-            compilerMode
-                .javaFileBuilder("test.DaggerTestComponent")
-                .addLines(
-                    "package test;",
-                    "",
-                    "import dagger.internal.DoubleCheck;")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
-                    "",
-                    GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<Object> reusableProvider;",
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> releasableProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private RegularScoped getRegularScoped() {",
-                    "    Object local = regularScoped;",
-                    "    if (local instanceof MemoizedSentinel) {",
-                    "      synchronized (local) {",
-                    "        if (local == regularScoped) {",
-                    "          regularScoped = new RegularScoped();",
-                    "        }",
-                    "        local = regularScoped;",
-                    "      }",
-                    "    }",
-                    "    return (RegularScoped) local;",
-                    "  }",
-                    "",
-                    "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
-                    "      reusableScoped = new ReusableScoped();",
-                    "    }",
-                    "    return (ReusableScoped) reusableScoped;",
-                    "  }",
-                    "",
-                    "  private Provider<ReusableScoped> getReusableScopedProvider() {",
-                    "    return new Provider<ReusableScoped>() {",
-                    "      @Override",
-                    "      public ReusableScoped get() {",
-                    "        return getReusableScoped();",
-                    "      }",
-                    "    };",
-                    "  }",
-                    "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    this.reusableProvider = DoubleCheck.provider(",
-                    "        (Provider) getReusableScopedProvider());")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.regularScopedProvider = ",
-                    "        DoubleCheck.provider(RegularScoped_Factory.create());",
-                    "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());",
-                    "    this.reusableProvider = DoubleCheck.provider(",
-                    "        (Provider) reusableScopedProvider);")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.releasableProvider = DoubleCheck.provider(",
-                    "        (Provider) releasableScopedProvider);",
-                    "    this.unscopedProvider = DoubleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());",
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {",
-                    "    return reusableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
-                    "}")
-                .build());
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.ReferenceReleasingProvider;",
+                "import dagger.internal.ReferenceReleasingProviderManager;",
+                "import dagger.internal.SingleCheck;",
+                "import dagger.releasablereferences.ReleasableReferenceManager;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                "      new ReferenceReleasingProviderManager(ReleasableScoped.CustomScope.class);",
+                "  private Provider<RegularScoped> regularScopedProvider;",
+                "  private Provider<ReusableScoped> reusableScopedProvider;",
+                "  private Provider<Object> reusableProvider;",
+                "  private Provider<ReleasableScoped> releasableScopedProvider;",
+                "  private Provider<Object> releasableProvider;",
+                "  private Provider<Object> unscopedProvider;",
+                "  private Provider<ReleasableReferenceManager>",
+                "      forReleasableReferencesReleasableReferenceManagerProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.regularScopedProvider = ",
+                "        DoubleCheck.provider(RegularScoped_Factory.create());",
+                "    this.reusableScopedProvider = ",
+                "        SingleCheck.provider(ReusableScoped_Factory.create());",
+                "    this.reusableProvider = ",
+                "        DoubleCheck.provider((Provider) reusableScopedProvider);",
+                "    this.releasableScopedProvider =",
+                "        ReferenceReleasingProvider.create(",
+                "            ReleasableScoped_Factory.create(), customScopeReferences);",
+                "    this.releasableProvider = ",
+                "        DoubleCheck.provider((Provider) releasableScopedProvider);",
+                "    this.unscopedProvider = ",
+                "        DoubleCheck.provider((Provider) Unscoped_Factory.create());",
+                "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
+                "        new Provider<ReleasableReferenceManager>() {",
+                "          @Override",
+                "          public ReleasableReferenceManager get() {",
+                "            return customScopeReferences;",
+                "          }",
+                "        };",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object regular() {",
+                "    return regularScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object reusable() {",
+                "    return reusableProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object releasable() {",
+                "    return releasableProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object unscoped() {",
+                "    return unscopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ReleasableReferenceManager releasableReferenceManager() {",
+                "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
   }
 
   @Test
@@ -356,151 +279,97 @@ public class DelegateBindingExpressionTest {
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(
-            compilerMode
-                .javaFileBuilder("test.DaggerTestComponent")
-                .addLines(
-                    "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;",
-                    "import dagger.internal.SingleCheck;",
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
-                    "",
-                    GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> releasableProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private RegularScoped getRegularScoped() {",
-                    "    Object local = regularScoped;",
-                    "    if (local instanceof MemoizedSentinel) {",
-                    "      synchronized (local) {",
-                    "        if (local == regularScoped) {",
-                    "          regularScoped = new RegularScoped();",
-                    "        }",
-                    "        local = regularScoped;",
-                    "      }",
-                    "    }",
-                    "    return (RegularScoped) local;",
-                    "  }",
-                    "",
-                    "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
-                    "      reusableScoped = new ReusableScoped();",
-                    "    }",
-                    "    return (ReusableScoped) reusableScoped;",
-                    "  }",
-                    "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.regularScopedProvider = ",
-                    "        DoubleCheck.provider(RegularScoped_Factory.create());",
-                    "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.releasableProvider = SingleCheck.provider(",
-                    "        (Provider) releasableScopedProvider);",
-                    "    this.unscopedProvider = SingleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());",
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
-                    "}")
-                .build());
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.ReferenceReleasingProvider;",
+                "import dagger.internal.ReferenceReleasingProviderManager;",
+                "import dagger.internal.SingleCheck;",
+                "import dagger.releasablereferences.ReleasableReferenceManager;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                "      new ReferenceReleasingProviderManager(ReleasableScoped.CustomScope.class);",
+                "  private Provider<RegularScoped> regularScopedProvider;",
+                "  private Provider<ReusableScoped> reusableScopedProvider;",
+                "  private Provider<ReleasableScoped> releasableScopedProvider;",
+                "  private Provider<Object> releasableProvider;",
+                "  private Provider<Object> unscopedProvider;",
+                "  private Provider<ReleasableReferenceManager>",
+                "      forReleasableReferencesReleasableReferenceManagerProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.regularScopedProvider = ",
+                "        DoubleCheck.provider(RegularScoped_Factory.create());",
+                "    this.reusableScopedProvider = ",
+                "        SingleCheck.provider(ReusableScoped_Factory.create());",
+                "    this.releasableScopedProvider = ",
+                "       ReferenceReleasingProvider.create(",
+                "           ReleasableScoped_Factory.create(), customScopeReferences);",
+                "    this.releasableProvider = ",
+                "        SingleCheck.provider((Provider) releasableScopedProvider);",
+                "    this.unscopedProvider = ",
+                "        SingleCheck.provider((Provider) Unscoped_Factory.create());",
+                "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
+                "        new Provider<ReleasableReferenceManager>() {",
+                "          @Override",
+                "          public ReleasableReferenceManager get() {",
+                "            return customScopeReferences;",
+                "          }",
+                "        };",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object regular() {",
+                "    return regularScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object reusable() {",
+                "    return reusableScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object releasable() {",
+                "    return releasableProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object unscoped() {",
+                "    return unscopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ReleasableReferenceManager releasableReferenceManager() {",
+                "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
   }
 
   @Test
@@ -531,152 +400,95 @@ public class DelegateBindingExpressionTest {
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(
-            compilerMode
-                .javaFileBuilder("test.DaggerTestComponent")
-                .addLines(
-                    "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
-                    "",
-                    GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private RegularScoped getRegularScoped() {",
-                    "    Object local = regularScoped;",
-                    "    if (local instanceof MemoizedSentinel) {",
-                    "      synchronized (local) {",
-                    "        if (local == regularScoped) {",
-                    "          regularScoped = new RegularScoped();",
-                    "        }",
-                    "        local = regularScoped;",
-                    "      }",
-                    "    }",
-                    "    return (RegularScoped) local;",
-                    "  }",
-                    "",
-                    "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
-                    "      reusableScoped = new ReusableScoped();",
-                    "    }",
-                    "    return (ReusableScoped) reusableScoped;",
-                    "  }",
-                    "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.regularScopedProvider = ",
-                    "        DoubleCheck.provider(RegularScoped_Factory.create());",
-                    "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.unscopedProvider =",
-                    "        ReferenceReleasingProvider.create(",
-                    "            (Provider) Unscoped_Factory.create(), customScopeReferences);",
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableScopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
-                    "}")
-                .build());
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.ReferenceReleasingProvider;",
+                "import dagger.internal.ReferenceReleasingProviderManager;",
+                "import dagger.internal.SingleCheck;",
+                "import dagger.releasablereferences.ReleasableReferenceManager;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                "      new ReferenceReleasingProviderManager(ReleasableScoped.CustomScope.class);",
+                "  private Provider<RegularScoped> regularScopedProvider;",
+                "  private Provider<ReusableScoped> reusableScopedProvider;",
+                "  private Provider<ReleasableScoped> releasableScopedProvider;",
+                "  private Provider<Object> unscopedProvider;",
+                "  private Provider<ReleasableReferenceManager>",
+                "      forReleasableReferencesReleasableReferenceManagerProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.regularScopedProvider = ",
+                "        DoubleCheck.provider(RegularScoped_Factory.create());",
+                "    this.reusableScopedProvider = ",
+                "        SingleCheck.provider(ReusableScoped_Factory.create());",
+                "    this.releasableScopedProvider = ",
+                "        ReferenceReleasingProvider.create(",
+                "            ReleasableScoped_Factory.create(), customScopeReferences);",
+                "    this.unscopedProvider = ",
+                "        ReferenceReleasingProvider.create(",
+                "            (Provider) Unscoped_Factory.create(), customScopeReferences);",
+                "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
+                "        new Provider<ReleasableReferenceManager>() {",
+                "          @Override",
+                "          public ReleasableReferenceManager get() {",
+                "            return customScopeReferences;",
+                "          }",
+                "        };",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object regular() {",
+                "    return regularScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object reusable() {",
+                "    return reusableScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object releasable() {",
+                "    return releasableScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object unscoped() {",
+                "    return unscopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ReleasableReferenceManager releasableReferenceManager() {",
+                "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
   }
 
   @Test
@@ -707,148 +519,91 @@ public class DelegateBindingExpressionTest {
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(
-            compilerMode
-                .javaFileBuilder("test.DaggerTestComponent")
-                .addLines(
-                    "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
-                    "",
-                    GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private RegularScoped getRegularScoped() {",
-                    "    Object local = regularScoped;",
-                    "    if (local instanceof MemoizedSentinel) {",
-                    "      synchronized (local) {",
-                    "        if (local == regularScoped) {",
-                    "          regularScoped = new RegularScoped();",
-                    "        }",
-                    "        local = regularScoped;",
-                    "      }",
-                    "    }",
-                    "    return (RegularScoped) local;",
-                    "  }",
-                    "",
-                    "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
-                    "      reusableScoped = new ReusableScoped();",
-                    "    }",
-                    "    return (ReusableScoped) reusableScoped;",
-                    "  }",
-                    "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.regularScopedProvider = ",
-                    "        DoubleCheck.provider(RegularScoped_Factory.create());",
-                    "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableScopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return new Unscoped();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
-                    "}")
-                .build());
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                "import dagger.internal.DoubleCheck;",
+                "import dagger.internal.ReferenceReleasingProvider;",
+                "import dagger.internal.ReferenceReleasingProviderManager;",
+                "import dagger.internal.SingleCheck;",
+                "import dagger.releasablereferences.ReleasableReferenceManager;",
+                "import javax.annotation.Generated;",
+                "import javax.inject.Provider;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                "      new ReferenceReleasingProviderManager(ReleasableScoped.CustomScope.class);",
+                "  private Provider<RegularScoped> regularScopedProvider;",
+                "  private Provider<ReusableScoped> reusableScopedProvider;",
+                "  private Provider<ReleasableScoped> releasableScopedProvider;",
+                "  private Provider<ReleasableReferenceManager>",
+                "      forReleasableReferencesReleasableReferenceManagerProvider;",
+                "",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.regularScopedProvider = ",
+                "        DoubleCheck.provider(RegularScoped_Factory.create());",
+                "    this.reusableScopedProvider = ",
+                "        SingleCheck.provider(ReusableScoped_Factory.create());",
+                "    this.releasableScopedProvider = ",
+                "         ReferenceReleasingProvider.create(",
+                "             ReleasableScoped_Factory.create(), customScopeReferences);",
+                "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
+                "        new Provider<ReleasableReferenceManager>() {",
+                "          @Override",
+                "          public ReleasableReferenceManager get() {",
+                "            return customScopeReferences;",
+                "          }",
+                "        };",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object regular() {",
+                "    return regularScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object reusable() {",
+                "    return reusableScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object releasable() {",
+                "    return releasableScopedProvider.get();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Object unscoped() {",
+                "    return new Unscoped();",
+                "  }",
+                "",
+                "  @Override",
+                "  public ReleasableReferenceManager releasableReferenceManager() {",
+                "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public TestComponent build() {",
+                "      return new DaggerTestComponent(this);",
+                "    }",
+                "  }",
+                "}"));
   }
 
   @Test
@@ -1243,7 +998,6 @@ public class DelegateBindingExpressionTest {
   private CompilationSubject assertThatCompilationWithModule(JavaFileObject module) {
     Compilation compilation =
         daggerCompiler()
-            .withOptions(compilerMode.javacopts())
             .compile(
                 module,
                 COMPONENT,

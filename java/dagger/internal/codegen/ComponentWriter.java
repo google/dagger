@@ -230,7 +230,7 @@ final class ComponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  public boolean requiresReleasableReferences(Scope scope) {
+  protected boolean requiresReleasableReferences(Scope scope) {
     return graph.scopesRequiringReleasableReferenceManagers().contains(scope);
   }
 }

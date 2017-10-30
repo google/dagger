@@ -19,13 +19,19 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
+import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
+import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
+import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import java.util.EnumSet;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
 
@@ -62,6 +68,11 @@ abstract class BindingExpression {
 
   /** Factory for building a {@link BindingExpression}. */
   static final class Factory {
+    // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
+    private static final ImmutableSet<ContributionBinding.Kind> PRIVATE_METHOD_KINDS =
+        ImmutableSet.copyOf(
+            EnumSet.of(SYNTHETIC_MULTIBOUND_SET, SYNTHETIC_MULTIBOUND_MAP, INJECTION, PROVISION));
+
     private final CompilerOptions compilerOptions;
     private final ClassName componentName;
     private final ComponentBindingExpressions componentBindingExpressions;
@@ -99,14 +110,16 @@ abstract class BindingExpression {
     /** Creates a binding expression for a field. */
     BindingExpression forField(ResolvedBindings resolvedBindings) {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.empty());
-      MemberSelect memberSelect = MemberSelect.localField(componentName, fieldSpec.name);
-      return create(resolvedBindings, Optional.of(fieldSpec), memberSelect);
+      return create(
+          resolvedBindings,
+          MemberSelect.localField(componentName, fieldSpec.name),
+          Optional.of(newFrameworkFieldInitializer(fieldSpec, resolvedBindings)));
     }
 
     /** Creates a binding expression for a static method call. */
     Optional<BindingExpression> forStaticMethod(ResolvedBindings resolvedBindings) {
       return staticMemberSelect(resolvedBindings)
-          .map(memberSelect -> create(resolvedBindings, Optional.empty(), memberSelect));
+          .map(memberSelect -> create(resolvedBindings, memberSelect, Optional.empty()));
     }
 
     /**
@@ -139,71 +152,68 @@ abstract class BindingExpression {
           && !bindingPackage.get().equals(componentName.packageName());
     }
 
+    private FrameworkFieldInitializer newFrameworkFieldInitializer(
+        FieldSpec fieldSpec, ResolvedBindings resolvedBindings) {
+      return new FrameworkFieldInitializer(
+          fieldSpec,
+          resolvedBindings,
+          generatedComponentModel,
+          componentBindingExpressions,
+          componentRequirementFields,
+          compilerOptions,
+          graph,
+          optionalFactories,
+          componentName);
+    }
+
     private BindingExpression create(
         ResolvedBindings resolvedBindings,
-        Optional<FieldSpec> fieldSpec,
-        MemberSelect memberSelect) {
-      FrameworkFieldInitializer frameworkFieldInitializer =
-          new FrameworkFieldInitializer(
-              generatedComponentModel,
-              componentBindingExpressions,
-              componentRequirementFields,
-              resolvedBindings,
-              compilerOptions,
-              graph,
-              optionalFactories,
-              componentName);
+        MemberSelect memberSelect,
+        Optional<FrameworkFieldInitializer> frameworkFieldInitializer) {
       FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
           FrameworkInstanceBindingExpression.create(
-              resolvedBindings,
-              fieldSpec,
-              generatedComponentModel,
-              memberSelect,
-              frameworkFieldInitializer,
-              types,
-              elements);
+              resolvedBindings, memberSelect, frameworkFieldInitializer, types, elements);
 
       if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
         return frameworkInstanceBindingExpression;
       }
 
-      BindingExpression inlineBindingExpression =
-          inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
-
-      // TODO(user): Implement private methods for scoped bindings
-      if (!resolvedBindings.scope().isPresent()) {
-        switch (resolvedBindings.contributionBinding().bindingKind()) {
-          // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
-          case SYNTHETIC_MULTIBOUND_SET:
-          case SYNTHETIC_MULTIBOUND_MAP:
-          case INJECTION:
-          case PROVISION:
-            return new PrivateMethodBindingExpression(
-                resolvedBindings,
-                componentName,
-                generatedComponentModel,
-                inlineBindingExpression,
-                compilerOptions,
-                types,
-                elements);
-          default:
-            break;
-        }
-      }
-      return inlineBindingExpression;
-    }
-
-    private BindingExpression inlineProvisionBindingExpression(
-        FrameworkInstanceBindingExpression frameworkInstanceBindingExpression) {
-      ResolvedBindings resolvedBindings = frameworkInstanceBindingExpression.resolvedBindings();
       BindingExpression bindingExpression =
           new ProviderOrProducerBindingExpression(
               frameworkInstanceBindingExpression,
-              frameworkInstanceBindingExpression.producerFromProvider(
-                  generateFrameworkField(resolvedBindings, Optional.of(TypeNames.PRODUCER)),
-                  componentName));
+              producerFromProviderBindingExpression(frameworkInstanceBindingExpression));
 
-      ProvisionBinding provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
+      BindingExpression inlineBindingExpression =
+          inlineProvisionBindingExpression(bindingExpression);
+
+      if (usePrivateMethod(resolvedBindings)) {
+        return new PrivateMethodBindingExpression(
+            resolvedBindings,
+            componentName,
+            generatedComponentModel,
+            inlineBindingExpression,
+            compilerOptions,
+            types,
+            elements);
+      }
+
+      return inlineBindingExpression;
+    }
+
+    private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
+        FrameworkInstanceBindingExpression providerBindingExpression) {
+      ResolvedBindings resolvedBindings = providerBindingExpression.resolvedBindings();
+      FieldSpec producerField =
+          generateFrameworkField(resolvedBindings, Optional.of(TypeNames.PRODUCER));
+      return providerBindingExpression.producerFromProvider(
+          MemberSelect.localField(componentName, producerField.name),
+          newFrameworkFieldInitializer(producerField, resolvedBindings).forProducerFromProvider());
+    }
+
+    private BindingExpression inlineProvisionBindingExpression(
+        BindingExpression bindingExpression) {
+      ProvisionBinding provisionBinding =
+          (ProvisionBinding) bindingExpression.resolvedBindings().contributionBinding();
       switch (provisionBinding.bindingKind()) {
         case COMPONENT:
           return new ComponentInstanceBindingExpression(
@@ -229,7 +239,7 @@ abstract class BindingExpression {
           return new SubcomponentBuilderBindingExpression(
               bindingExpression,
               provisionBinding,
-              subcomponentNames.get(resolvedBindings.bindingKey()),
+              subcomponentNames.get(bindingExpression.resolvedBindings().bindingKey()),
               types);
 
         case SYNTHETIC_MULTIBOUND_SET:
@@ -283,6 +293,12 @@ abstract class BindingExpression {
         default:
           return bindingExpression;
       }
+    }
+
+    private boolean usePrivateMethod(ResolvedBindings resolvedBindings) {
+      // TODO(user): Implement private methods for scoped bindings
+      return !resolvedBindings.scope().isPresent()
+          && PRIVATE_METHOD_KINDS.contains(resolvedBindings.contributionBinding().bindingKind());
     }
   }
 }

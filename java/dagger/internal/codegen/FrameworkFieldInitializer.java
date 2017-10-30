@@ -56,6 +56,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.DelegateFactory;
 import dagger.internal.InstanceFactory;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.producers.Produced;
@@ -74,9 +75,10 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * An object that can initialize a framework-type component field for a binding. An instance should
- * be created for every field.
+ * be created for each field.
  */
 final class FrameworkFieldInitializer {
+  private final FieldSpec fieldSpec;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ComponentRequirementFields componentRequirementFields;
@@ -87,21 +89,24 @@ final class FrameworkFieldInitializer {
   private final boolean isProducerFromProvider;
   private final OptionalFactories optionalFactories;
   private final ClassName componentName;
+  private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   FrameworkFieldInitializer(
+      FieldSpec fieldSpec,
+      ResolvedBindings resolvedBindings,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementFields componentRequirementFields,
-      ResolvedBindings resolvedBindings,
       CompilerOptions compilerOptions,
       BindingGraph graph,
       OptionalFactories optionalFactories,
       ClassName componentName) {
     this(
+        fieldSpec,
+        resolvedBindings,
         generatedComponentModel,
         componentBindingExpressions,
         componentRequirementFields,
-        resolvedBindings,
         compilerOptions,
         graph,
         false,
@@ -110,10 +115,11 @@ final class FrameworkFieldInitializer {
   }
 
   private FrameworkFieldInitializer(
+      FieldSpec fieldSpec,
+      ResolvedBindings resolvedBindings,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementFields componentRequirementFields,
-      ResolvedBindings resolvedBindings,
       CompilerOptions compilerOptions,
       BindingGraph graph,
       boolean isProducerFromProvider,
@@ -128,10 +134,53 @@ final class FrameworkFieldInitializer {
     this.optionalFactories = checkNotNull(optionalFactories);
     this.componentName = checkNotNull(componentName);
     this.isProducerFromProvider = isProducerFromProvider;
+    this.fieldSpec = checkNotNull(fieldSpec);
+  }
+
+  /** Adds the field and its initialization code to the component. */
+  void initializeField() {
+    switch (fieldInitializationState) {
+      case UNINITIALIZED:
+        // Change our state in case we are recursively invoked via initializeBindingExpression
+        fieldInitializationState = InitializationState.INITIALIZING;
+        CodeBlock.Builder codeBuilder = CodeBlock.builder();
+        CodeBlock initCode = CodeBlock.of("this.$N = $L;", fieldSpec, getFieldInitialization());
+
+        if (fieldInitializationState == InitializationState.DELEGATED) {
+          // If we were recursively invoked, set the delegate factory as part of our initialization
+          CodeBlock delegateFactoryVariable = CodeBlock.of("$NDelegate", fieldSpec);
+          codeBuilder
+              .add(
+                  "$1T $2L = ($1T) $3N;", DelegateFactory.class, delegateFactoryVariable, fieldSpec)
+              .add(initCode)
+              .add("$L.setDelegatedProvider($N);", delegateFactoryVariable, fieldSpec);
+        } else {
+          codeBuilder.add(initCode);
+        }
+        generatedComponentModel.addInitialization(codeBuilder.build());
+        generatedComponentModel.addField(fieldSpec);
+
+        fieldInitializationState = InitializationState.INITIALIZED;
+        break;
+
+      case INITIALIZING:
+        // We were recursively invoked, so create a delegate factory instead
+        generatedComponentModel.addInitialization(
+            CodeBlock.of("this.$N = new $T<>();", fieldSpec, DelegateFactory.class));
+        fieldInitializationState = InitializationState.DELEGATED;
+        break;
+
+      case DELEGATED:
+      case INITIALIZED:
+        break;
+
+      default:
+        throw new AssertionError("Unhandled initialization state: " + fieldInitializationState);
+    }
   }
 
   /** Returns the expression to use to initialize the field. */
-  CodeBlock getFieldInitialization() {
+  private CodeBlock getFieldInitialization() {
     if (isProducerFromProvider) {
       return FrameworkType.PROVIDER.to(
           DependencyRequest.Kind.PRODUCER,
@@ -629,14 +678,36 @@ final class FrameworkFieldInitializer {
 
   FrameworkFieldInitializer forProducerFromProvider() {
     return new FrameworkFieldInitializer(
+        fieldSpec,
+        resolvedBindings,
         generatedComponentModel,
         componentBindingExpressions,
         componentRequirementFields,
-        resolvedBindings,
         compilerOptions,
         graph,
         true,
         optionalFactories,
         componentName);
+  }
+
+  /** Initialization state for a factory field. */
+  private enum InitializationState {
+    /** The field is {@code null}. */
+    UNINITIALIZED,
+
+    /**
+     * The field's dependencies are being set up. If the field is needed in this state, use a {@link
+     * DelegateFactory}.
+     */
+    INITIALIZING,
+
+    /**
+     * The field's dependencies are being set up, but the field can be used because it has already
+     * been set to a {@link DelegateFactory}.
+     */
+    DELEGATED,
+
+    /** The field is set to an undelegated factory. */
+    INITIALIZED;
   }
 }

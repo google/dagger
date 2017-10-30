@@ -32,6 +32,6 @@ GenRobolectricTests(
         "//third_party:junit",
         "//third_party:truth",
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
-        "@androidsdk//com.android.support:support-v4-25.0.0",
+        "@androidsdk//com.android.support:support-fragment-25.0.0",
     ],
 )

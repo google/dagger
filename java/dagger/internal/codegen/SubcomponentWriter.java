@@ -79,7 +79,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected boolean requiresReleasableReferences(Scope scope) {
+  public boolean requiresReleasableReferences(Scope scope) {
     return parent.requiresReleasableReferences(scope);
   }
 

@@ -277,7 +277,7 @@ abstract class BindingExpression {
 
         case INJECTION:
         case PROVISION:
-          if (!provisionBinding.scope().isPresent()) {
+          if (canUseSimpleMethod(provisionBinding)) {
             return new SimpleMethodBindingExpression(
                 compilerOptions,
                 provisionBinding,
@@ -296,9 +296,16 @@ abstract class BindingExpression {
     }
 
     private boolean usePrivateMethod(ResolvedBindings resolvedBindings) {
-      // TODO(user): Implement private methods for scoped bindings
-      return !resolvedBindings.scope().isPresent()
-          && PRIVATE_METHOD_KINDS.contains(resolvedBindings.contributionBinding().bindingKind());
+      return PRIVATE_METHOD_KINDS.contains(resolvedBindings.contributionBinding().bindingKind());
+    }
+
+    private boolean canUseSimpleMethod(ContributionBinding binding) {
+      // Use the inlined form when in experimentalAndroidMode, as PrivateMethodBindingExpression
+      // implements scoping directly
+      // TODO(user): Also inline releasable references in experimentalAndroidMode
+      return !binding.scope().isPresent()
+          || (compilerOptions.experimentalAndroidMode()
+              && !generatedComponentModel.requiresReleasableReferences(binding.scope().get()));
     }
   }
 }

@@ -173,48 +173,38 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     // If constructing a factory for @Inject or @Provides bindings, we use a static create method
     // so that generated components can avoid having to refer to the generic types
     // of the factory.  (Otherwise they may have visibility problems referring to the types.)
-    Optional<MethodSpec> createMethod;
-    switch(binding.bindingKind()) {
-      case INJECTION:
-      case PROVISION:
-        // The return type is usually the same as the implementing type, except in the case
-        // of enums with type variables (where we cast).
-        MethodSpec.Builder createMethodBuilder =
-            methodBuilder("create").addModifiers(PUBLIC, STATIC).returns(factoryTypeName);
+    MethodSpec.Builder createMethod =
+        methodBuilder("create").addModifiers(PUBLIC, STATIC).returns(factoryTypeName);
+    if (factoryHasTypeParameters) {
+      // The return type is usually the same as the implementing type, except in the case
+      // of enums with type variables (where we cast).
+      createMethod.addTypeVariables(typeParameters);
+    }
+    List<ParameterSpec> params =
+        constructorBuilder.isPresent()
+            ? constructorBuilder.get().build().parameters
+            : ImmutableList.of();
+    createMethod.addParameters(params);
+    switch (binding.factoryCreationStrategy()) {
+      case SINGLETON_INSTANCE:
         if (factoryHasTypeParameters) {
-          createMethodBuilder.addTypeVariables(typeParameters);
+          // We use an unsafe cast here because the types are different.
+          // It's safe because the type is never referenced anywhere.
+          createMethod.addStatement("return ($T) INSTANCE", TypeNames.FACTORY);
+          createMethod.addAnnotation(suppressWarnings(RAWTYPES, UNCHECKED));
+        } else {
+          createMethod.addStatement("return INSTANCE");
         }
-        List<ParameterSpec> params =
-            constructorBuilder.isPresent()
-                ? constructorBuilder.get().build().parameters
-                : ImmutableList.of();
-        createMethodBuilder.addParameters(params);
-        switch (binding.factoryCreationStrategy()) {
-          case SINGLETON_INSTANCE:
-            if (factoryHasTypeParameters) {
-              // We use an unsafe cast here because the types are different.
-              // It's safe because the type is never referenced anywhere.
-              createMethodBuilder.addStatement("return ($T) INSTANCE", TypeNames.FACTORY);
-              createMethodBuilder.addAnnotation(suppressWarnings(RAWTYPES, UNCHECKED));
-            } else {
-              createMethodBuilder.addStatement("return INSTANCE");
-            }
-            break;
+        break;
 
-          case CLASS_CONSTRUCTOR:
-            createMethodBuilder.addStatement(
-                "return new $T($L)",
-                parameterizedGeneratedTypeNameForBinding(binding),
-                makeParametersCodeBlock(
-                    Lists.transform(params, input -> CodeBlock.of("$N", input))));
-            break;
-          default:
-            throw new AssertionError();
-        }
-        createMethod = Optional.of(createMethodBuilder.build());
+      case CLASS_CONSTRUCTOR:
+        createMethod.addStatement(
+            "return new $T($L)",
+            parameterizedGeneratedTypeNameForBinding(binding),
+            makeParametersCodeBlock(Lists.transform(params, input -> CodeBlock.of("$N", input))));
         break;
       default:
-        createMethod = Optional.empty();
+        throw new AssertionError();
     }
 
     if (constructorBuilder.isPresent()) {
@@ -268,9 +258,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     }
 
     factoryBuilder.addMethod(getMethodBuilder.build());
-    if (createMethod.isPresent()) {
-      factoryBuilder.addMethod(createMethod.get());
-    }
+    factoryBuilder.addMethod(createMethod.build());
 
     ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);

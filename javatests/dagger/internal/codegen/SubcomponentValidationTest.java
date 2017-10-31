@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
+import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
@@ -385,95 +387,175 @@ public class SubcomponentValidationTest {
             "}");
 
     JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerParentComponent",
-            "package test;",
-            "",
-            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
-            "import dagger.internal.DoubleCheck;",
-            "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerParentComponent implements ParentComponent {",
-            "  private Provider<Dep1> dep1Provider;",
-            "  private Provider<Dep2> dep2Provider;",
-            "",
-            "  private DaggerParentComponent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
-            "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
-            "  }",
-            "",
-            "  @Override",
-            "  public Dep1 getDep1() {",
-            "    return dep1Provider.get();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Dep2 getDep2() {",
-            "    return dep2Provider.get();",
-            "  }",
-            "",
-            "  @Override",
-            "  public ChildComponent childComponent() {",
-            "    return new ChildComponentImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public ParentComponent build() {",
-            "      return new DaggerParentComponent(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class ChildComponentImpl implements ChildComponent {",
-            "    private final ChildModule childModule;",
-            "",
-            "    private ChildComponentImpl() {",
-            "      this.childModule = new ChildModule();",
-            "    }",
-            "",
-            "    private NeedsDep1 getNeedsDep1() {",
-            "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());",
-            "    }",
-            "",
-            "    private A getA() {",
-            "      return injectA(",
-            "          A_Factory.newA(",
-            "              getNeedsDep1(),",
-            "              DaggerParentComponent.this.dep1Provider.get(),",
-            "              DaggerParentComponent.this.dep2Provider.get()));",
-            "    }",
-            "",
-            "    @Override",
-            "    public Object getObject() {",
-            "      return Preconditions.checkNotNull(",
-            "          childModule.provideObject(getA()),",
-            "          " + NPE_FROM_PROVIDES_METHOD + ");",
-            "    }",
-            "",
-            "    @CanIgnoreReturnValue",
-            "    private A injectA(A instance) {",
-            "      A_MembersInjector.injectMethodA(instance);",
-            "      return instance;",
-            "    }",
-            "  }",
-            "}");
+        compilerMode
+            .javaFileBuilder("test.DaggerParentComponent")
+            .addLines(
+                "package test;",
+                "",
+                "import com.google.errorprone.annotations.CanIgnoreReturnValue;")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "import dagger.internal.MemoizedSentinel;")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "import dagger.internal.DoubleCheck;")
+            .addLines(
+                "import dagger.internal.Preconditions;",
+                "import javax.annotation.Generated;")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "import javax.inject.Provider;")
+            .addLines(
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerParentComponent implements ParentComponent {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private volatile Object dep1 = new MemoizedSentinel();",
+                "  private volatile Object dep2 = new MemoizedSentinel();",
+                "",
+                "  private DaggerParentComponent(Builder builder) {}")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private Provider<Dep1> dep1Provider;",
+                "  private Provider<Dep2> dep2Provider;",
+                "",
+                "  private DaggerParentComponent(Builder builder) {",
+                "    initialize(builder);",
+                "  }")
+            .addLines(
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static ParentComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
+                "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
+                "  }",
+                "")
+            .addLines(
+                "  @Override",
+                "  public Dep1 getDep1() {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "   Object local = dep1;",
+                "    if (local instanceof MemoizedSentinel) {",
+                "      synchronized (local) {",
+                "        if (local == dep1) {",
+                "          dep1 = injectDep1(Dep1_Factory.newDep1());",
+                "        }",
+                "        local = dep1;",
+                "      }",
+                "    }",
+                "    return (Dep1) local;")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    return dep1Provider.get();")
+            .addLines(
+                "  }",
+                "",
+                "  @Override",
+                "  public Dep2 getDep2() {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "   Object local = dep2;",
+                "    if (local instanceof MemoizedSentinel) {",
+                "      synchronized (local) {",
+                "        if (local == dep2) {",
+                "          dep2 = injectDep2(Dep2_Factory.newDep2());",
+                "        }",
+                "        local = dep2;",
+                "      }",
+                "    }",
+                "    return (Dep2) local;")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    return dep2Provider.get();")
+            .addLines(
+                "  }",
+                "",
+                "  @Override",
+                "  public ChildComponent childComponent() {",
+                "    return new ChildComponentImpl();",
+                "  }",
+                "")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  @CanIgnoreReturnValue",
+                "  private Dep1 injectDep1(Dep1 instance) {",
+                "    Dep1_MembersInjector.injectDep1Method(instance);",
+                "    return instance;",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Dep2 injectDep2(Dep2 instance) {",
+                "    Dep2_MembersInjector.injectDep2Method(instance);",
+                "    return instance;",
+                "  }")
+            .addLines(
+                "  public static final class Builder {",
+                "    private Builder() {}",
+                "",
+                "    public ParentComponent build() {",
+                "      return new DaggerParentComponent(this);",
+                "    }",
+                "  }",
+                "",
+                "  private final class ChildComponentImpl implements ChildComponent {",
+                "    private final ChildModule childModule;",
+                "",
+                "    private ChildComponentImpl() {",
+                "      this.childModule = new ChildModule();",
+                "    }",
+                "",
+                "    private NeedsDep1 getNeedsDep1() {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "      return new NeedsDep1(DaggerParentComponent.this.getDep1());")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());")
+            .addLines(
+                "    }",
+                "",
+                "    private A getA() {",
+                "      return injectA(",
+                "          A_Factory.newA(",
+                "              getNeedsDep1(),")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "              DaggerParentComponent.this.getDep1(),",
+                "              DaggerParentComponent.this.getDep2()));")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "              DaggerParentComponent.this.dep1Provider.get(),",
+                "              DaggerParentComponent.this.dep2Provider.get()));")
+            .addLines(
+                "    }",
+                "",
+                "    @Override",
+                "    public Object getObject() {",
+                "      return Preconditions.checkNotNull(",
+                "          childModule.provideObject(getA()),",
+                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    }",
+                "",
+                "    @CanIgnoreReturnValue",
+                "    private A injectA(A instance) {",
+                "      A_MembersInjector.injectMethodA(instance);",
+                "      return instance;",
+                "    }",
+                "  }",
+                "}")
+            .build();
     assertAbout(javaSources())
         .that(
             ImmutableList.of(

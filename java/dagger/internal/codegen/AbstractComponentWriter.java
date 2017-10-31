@@ -310,12 +310,6 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     referenceReleasingProviderManagerFields = fields.build();
   }
 
-  /**
-   * Returns {@code true} if {@code scope} is in {@link
-   * BindingGraph#scopesRequiringReleasableReferenceManagers()} for the root graph.
-   */
-  protected abstract boolean requiresReleasableReferences(Scope scope);
-
   private FieldSpec referenceReleasingProxyManagerField(Scope scope) {
     return componentField(
             REFERENCE_RELEASING_PROVIDER_MANAGER,

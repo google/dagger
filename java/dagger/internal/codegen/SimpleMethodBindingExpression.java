@@ -63,7 +63,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
-    checkArgument(!provisionBinding.scope().isPresent());
     checkArgument(provisionBinding.bindingElement().isPresent());
     this.compilerOptions = compilerOptions;
     this.provisionBinding = provisionBinding;

@@ -23,14 +23,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
+import static dagger.internal.codegen.Scope.reusableScope;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.VOLATILE;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.MemoizedSentinel;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.EnumMap;
 import java.util.Map;
@@ -49,6 +53,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final BindingExpression delegate;
   private final Map<DependencyRequest.Kind, String> methodNames =
+      new EnumMap<>(DependencyRequest.Kind.class);
+  private final Map<DependencyRequest.Kind, String> fieldNames =
       new EnumMap<>(DependencyRequest.Kind.class);
   private final ContributionBinding binding;
   private final CompilerOptions compilerOptions;
@@ -76,7 +82,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   @Override
   CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
-    if (ignorePrivateMethodStrategy(request.kind())) {
+    if (!canInlineScope() && ignorePrivateMethodStrategy(request.kind())) {
       return delegate.getComponentMethodImplementation(request, requestingClass);
     }
 
@@ -90,7 +96,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    if (ignorePrivateMethodStrategy(requestKind) || isNullaryProvisionMethod(requestKind)) {
+    if (!canInlineScope()
+        && (ignorePrivateMethodStrategy(requestKind) || isNullaryProvisionMethod(requestKind))) {
       return delegate.getDependencyExpression(requestKind, requestingClass);
     }
 
@@ -113,6 +120,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     return Expression.create(returnType(requestKind), invocation);
   }
 
+  // TODO(user): Invert this method to return true if we are using the private method strategy.
   private boolean ignorePrivateMethodStrategy(DependencyRequest.Kind requestKind) {
     switch (requestKind) {
       case INSTANCE:
@@ -133,6 +141,13 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             || requestKind.equals(DependencyRequest.Kind.FUTURE))
         && binding.dependencies().isEmpty()
         && !findComponentMethod(requestKind).isPresent();
+  }
+
+  private boolean canInlineScope() {
+    // TODO(user): Enable for releasable references
+    return compilerOptions.experimentalAndroidMode()
+        && binding.scope().isPresent()
+        && !generatedComponentModel.requiresReleasableReferences(binding.scope().get());
   }
 
   /** Returns the first component method associated with this request kind, if one exists. */
@@ -195,6 +210,12 @@ final class PrivateMethodBindingExpression extends BindingExpression {
             getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock();
         return CodeBlock.of("return $L;", FrameworkType.PROVIDER.to(requestKind, asProvider));
       case INSTANCE:
+        if (canInlineScope()) {
+          Scope scope = resolvedBindings().scope().get();
+          return scope.equals(reusableScope(elements))
+              ? singleCheck(requestKind) : doubleCheck(requestKind);
+        }
+        // fall through
       case PRODUCER:
       case FUTURE:
         return CodeBlock.of(
@@ -204,8 +225,56 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     }
   }
 
+  private CodeBlock singleCheck(DependencyRequest.Kind requestKind) {
+    String fieldName = getMemoizedFieldName(requestKind);
+    return CodeBlock.builder()
+        .beginControlFlow("if ($N instanceof $T)", fieldName, MemoizedSentinel.class)
+        .addStatement(
+            "$N = $L",
+            fieldName,
+            delegate.getDependencyExpression(requestKind, componentName).codeBlock())
+        .endControlFlow()
+        .addStatement("return ($T) $N", returnType(requestKind), fieldName)
+        .build();
+  }
+
+  private CodeBlock doubleCheck(DependencyRequest.Kind requestKind) {
+    String fieldName = getMemoizedFieldName(requestKind);
+    // add "this." if the fieldName clashes with the local variable name.
+    fieldName = fieldName.contentEquals("local") ? "this." + fieldName : fieldName;
+    return CodeBlock.builder()
+        .addStatement("$T local = $L", TypeName.OBJECT, fieldName)
+        .beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class)
+        .beginControlFlow("synchronized (local)")
+        // TODO(user): benchmark to see if this is really faster than instanceof check?
+        .beginControlFlow("if (local == $L)", fieldName)
+        .addStatement(
+            "$L = $L",
+            fieldName,
+            delegate.getDependencyExpression(requestKind, componentName).codeBlock())
+        .endControlFlow()
+        .addStatement("local = $L", fieldName)
+        .endControlFlow()
+        .endControlFlow()
+        .addStatement("return ($T) local", returnType(requestKind))
+        .build();
+  }
+
+  private String getMemoizedFieldName(DependencyRequest.Kind requestKind) {
+    if (!fieldNames.containsKey(requestKind)) {
+      String name = generatedComponentModel.getUniqueFieldName(BindingVariableNamer.name(binding));
+      generatedComponentModel.addField(
+          FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)
+              .initializer("new $T()", MemoizedSentinel.class)
+              .build());
+      fieldNames.put(requestKind, name);
+    }
+    return fieldNames.get(requestKind);
+  }
+
   /** Returns a {@link TypeSpec} for an anonymous provider class. */
   private TypeSpec providerTypeSpec() {
+    // TODO(user): For scoped bindings that have already been created, use InstanceFactory?
     return anonymousClassBuilder("")
         .addSuperinterface(TypeName.get(returnType(DependencyRequest.Kind.PROVIDER)))
         .addMethod(

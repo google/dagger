@@ -62,4 +62,10 @@ interface GeneratedComponentModel {
    * object for a scope.
    */
   CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope);
+
+  /**
+   * Returns {@code true} if {@code scope} is in {@link
+   * BindingGraph#scopesRequiringReleasableReferenceManagers()} for the root graph.
+   */
+  boolean requiresReleasableReferences(Scope scope);
 }

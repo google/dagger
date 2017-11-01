@@ -95,7 +95,7 @@ final class ProxyModuleGenerator extends SourceGenerator {
   }
 
   /**
-   * Returns he {@link io.grpc.MethodDescriptor} {@code *_METHOD} fields on the class enclosing the
+   * Returns the {@link io.grpc.MethodDescriptor} {@code *_METHOD} fields on the class enclosing the
    * service interface.
    */
   private FluentIterable<VariableElement> methodDescriptorFields() {

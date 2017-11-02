@@ -17,6 +17,7 @@
 package dagger.grpc.server.processor;
 
 import static com.google.auto.common.MoreElements.hasModifiers;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -24,16 +25,22 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.fieldsIn;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.grpc.server.GrpcService;
+import java.util.List;
+import java.util.function.Function;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * An object that generates the proxying service definition module for a {@link
@@ -83,33 +90,54 @@ final class ProxyModuleGenerator extends SourceGenerator {
                 "return $T.builder($T.SERVICE_NAME)",
                 IoGrpc.SERVER_SERVICE_DEFINITION,
                 grpcServiceModel.grpcClass());
-    for (VariableElement methodDescriptorField : methodDescriptorFields()) {
+    for (CodeBlock methodDescriptor : methodDescriptors()) {
       method.addCode(
-          ".addMethod($T.proxyMethod($T.$N, serviceDefinitionFactory))",
+          ".addMethod($T.proxyMethod($L, serviceDefinitionFactory))",
           Dagger.GrpcServer.PROXY_SERVER_CALL_HANDLER,
-          grpcServiceModel.grpcClass(),
-          methodDescriptorField.getSimpleName());
+          methodDescriptor);
     }
     method.addCode(".build();");
     return method.build();
   }
 
   /**
-   * Returns the {@link io.grpc.MethodDescriptor} {@code *_METHOD} fields on the class enclosing the
-   * service interface.
+   * Returns the {@link io.grpc.MethodDescriptor} references from the class enclosing the service
+   * interface.
+   *
+   * <p>Looks first for public static methods (new in 1.8), and then for public static fields if it
+   * finds none.
    */
-  private FluentIterable<VariableElement> methodDescriptorFields() {
-    return FluentIterable.from(fieldsIn(grpcServiceModel.grpcClass().getEnclosedElements()))
-        .filter(hasModifiers(PUBLIC, STATIC))
+  private ImmutableList<CodeBlock> methodDescriptors() {
+    ImmutableList<CodeBlock> staticMethodCalls =
+        findMethodDescriptors(
+            methodsIn(grpcServiceModel.grpcClass().getEnclosedElements()),
+            ExecutableElement::getReturnType,
+            method ->
+                CodeBlock.of("$T.$N()", grpcServiceModel.grpcClass(), method.getSimpleName()));
+    if (!staticMethodCalls.isEmpty()) {
+      return staticMethodCalls;
+    }
+    return findMethodDescriptors(
+        fieldsIn(grpcServiceModel.grpcClass().getEnclosedElements()),
+        VariableElement::asType,
+        field -> CodeBlock.of("$T.$N", grpcServiceModel.grpcClass(), field.getSimpleName()));
+  }
+
+  private <E extends Element> ImmutableList<CodeBlock> findMethodDescriptors(
+      List<E> elements,
+      Function<? super E, TypeMirror> elementType,
+      Function<? super E, CodeBlock> elementReference) {
+    return elements
+        .stream()
+        .filter(hasModifiers(PUBLIC, STATIC)::apply)
         .filter(
-            new Predicate<VariableElement>() {
-              @Override
-              public boolean apply(VariableElement element) {
-                TypeName typeName = TypeName.get(element.asType());
-                return typeName instanceof ParameterizedTypeName
-                    && ((ParameterizedTypeName) typeName).rawType.equals(IoGrpc.METHOD_DESCRIPTOR);
-              }
-            });
+            method -> {
+              TypeName typeName = TypeName.get(elementType.apply(method));
+              return typeName instanceof ParameterizedTypeName
+                  && ((ParameterizedTypeName) typeName).rawType.equals(IoGrpc.METHOD_DESCRIPTOR);
+            })
+        .map(elementReference)
+        .collect(toImmutableList());
   }
 
   /**

@@ -79,14 +79,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_auto_factory_auto_factory",
-    artifact = "com.google.auto.factory:auto-factory:1.0-beta3",
-    sha1 = "99b2ffe0e41abbd4cc42bf3836276e7174c4929d",
-)
-
-maven_jar(
-    name = "com_squareup_javawriter",
-    artifact = "com.squareup:javawriter:2.5.1",
-    sha1 = "54c87b3d91238e5b58e1a436d4916eee680ec959",
+    artifact = "com.google.auto.factory:auto-factory:1.0-beta5",
+    sha1 = "78b93b2334d0e2fb0d65c00127d4dcce261a83fc",
 )
 
 maven_jar(

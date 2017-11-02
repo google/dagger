@@ -126,9 +126,9 @@ java_plugin(
     deps = [
         ":auto_common",
         ":auto_service",
+        ":javapoet",
         "//third_party:guava",
         "@com_google_auto_factory_auto_factory//jar",
-        "@com_squareup_javawriter//jar",
     ],
 )
 

@@ -28,8 +28,8 @@ def _shell(command):
 
 def deps_of(label):
   return _shell(
-      """bazel query 'let deps = labels(deps, {0})in $deps
-      except attr(tags, "maven:(compile_only|shaded)", $deps)
+      """bazel query 'let deps = labels(deps, {0}) in $deps
+      except attr(tags, "maven:(compile_only|merged|shaded)", $deps)
       '""".format(label))
 
 def exports_for(label):
@@ -65,7 +65,7 @@ METADATA = {
             'javax.inject:javax.inject:1:jar:sources',
         ],
     },
-    '//java/dagger/internal/codegen:codegen': {
+    '//java/dagger/internal/codegen:processor': {
         'name': 'Dagger Compiler',
         'artifact': 'dagger-compiler',
     },

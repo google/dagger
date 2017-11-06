@@ -38,8 +38,8 @@ import javax.lang.model.util.ElementKindVisitor6;
 final class InjectProcessingStep implements BasicAnnotationProcessor.ProcessingStep {
   private final InjectBindingRegistry injectBindingRegistry;
 
-  InjectProcessingStep(InjectBindingRegistry factoryRegistrar) {
-    this.injectBindingRegistry = factoryRegistrar;
+  InjectProcessingStep(InjectBindingRegistry injectBindingRegistry) {
+    this.injectBindingRegistry = injectBindingRegistry;
   }
 
   @Override

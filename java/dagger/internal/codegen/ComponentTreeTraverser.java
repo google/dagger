@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Verify.verify;
@@ -29,10 +28,7 @@ import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
-import static java.util.stream.Collectors.joining;
 
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -53,7 +49,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * An object that traverses the entire component hierarchy, starting from the root component.
@@ -187,15 +182,10 @@ public class ComponentTreeTraverser {
    * component.
    */
   protected final ComponentTreePath componentTreePath() {
-    return ComponentTreePath.create(bindingGraphPath);
+    return new ComponentTreePath(bindingGraphPath);
   }
 
-  /**
-   * An object that traverses the binding graph of a component, starting from an entry point.
-   *
-   * <p>Note that the traversal includes bindings that are owned by an ancestor component, which may
-   * already have been traversed when traversing that ancestor's binding graph.
-   */
+  /** An object that traverses the binding graph starting from an entry point. */
   public static class BindingGraphTraverser {
 
     private final ComponentTreePath componentTreePath;
@@ -537,28 +527,28 @@ public class ComponentTreeTraverser {
    * A path from the root component to a component within the component tree during a {@linkplain
    * ComponentTreeTraverser traversal}.
    */
-  @AutoValue
-  public abstract static class ComponentTreePath {
+  public static final class ComponentTreePath {
+    /** The binding graph path from the root graph to the currently visited graph. */
+    private final ImmutableList<BindingGraph> bindingGraphPath;
 
-    private static ComponentTreePath create(Iterable<BindingGraph> path) {
-      return new AutoValue_ComponentTreeTraverser_ComponentTreePath(ImmutableList.copyOf(path));
+    private ComponentTreePath(Iterable<BindingGraph> path) {
+      this.bindingGraphPath = ImmutableList.copyOf(path);
     }
 
     /**
      * Returns the binding graphs in the path, starting from the {@linkplain #rootGraph() root
      * graph} and ending with the {@linkplain #currentGraph() current graph}.
      */
-    public abstract ImmutableList<BindingGraph> graphsInPath();
+    public ImmutableList<BindingGraph> graphsInPath() {
+      return bindingGraphPath;
+    }
 
     /** Returns the binding graph for the component at the end of the path. */
     public BindingGraph currentGraph() {
-      return Iterables.getLast(graphsInPath());
+      return Iterables.getLast(bindingGraphPath);
     }
 
-    /** Returns the type of the component at the end of the path. */
-    public TypeElement currentComponent() {
-      return currentGraph().componentDescriptor().componentDefinitionType();
-    }
+    // TODO(dpb): Do we also want methods that return ComponentDescriptors, like currentComponent()?
 
     /**
      * Returns the binding graph for the parent of the {@linkplain #currentGraph() current
@@ -568,12 +558,12 @@ public class ComponentTreeTraverser {
      */
     public BindingGraph parentGraph() {
       checkState(!atRoot());
-      return graphsInPath().reverse().get(1);
+      return bindingGraphPath.reverse().get(1);
     }
 
     /** Returns the binding graph for the root component. */
     public BindingGraph rootGraph() {
-      return graphsInPath().get(0);
+      return bindingGraphPath.get(0);
     }
 
     /**
@@ -581,7 +571,7 @@ public class ComponentTreeTraverser {
      * #rootGraph() root graph}.
      */
     public boolean atRoot() {
-      return graphsInPath().size() == 1;
+      return bindingGraphPath.size() == 1;
     }
 
     /** Returns the rootmost binding graph in the component path among the given components. */
@@ -592,59 +582,11 @@ public class ComponentTreeTraverser {
 
     /** Returns the binding graph within this path that represents the given component. */
     public BindingGraph graphForComponent(ComponentDescriptor component) {
-      checkNotNull(component);
       return rootmostGraph(graph -> graph.componentDescriptor().equals(component));
     }
 
-    /**
-     * Returns the subpath from the root component to the matching {@code ancestor} of the current
-     * component.
-     */
-    ComponentTreePath pathFromRootToAncestor(ComponentDescriptor ancestor) {
-      checkNotNull(ancestor);
-      ImmutableList.Builder<BindingGraph> path = ImmutableList.builder();
-      for (BindingGraph graph : graphsInPath()) {
-        path.add(graph);
-        if (graph.componentDescriptor().equals(ancestor)) {
-          return create(path.build());
-        }
-      }
-      throw new IllegalArgumentException(
-          String.format(
-              "%s is not in the current path: %s",
-              ancestor.componentDefinitionType().getQualifiedName(), this));
-    }
-
-    /**
-     * Returns the path from the root component to the child of the current component for a {@code
-     * subcomponent}.
-     *
-     * @throws IllegalArgumentException if {@code subcomponent} is not a child of the current
-     *     component
-     */
-    ComponentTreePath childPath(TypeElement subcomponent) {
-      for (BindingGraph child : currentGraph().subgraphs()) {
-        if (child.componentType().equals(subcomponent)) {
-          return create(FluentIterable.from(graphsInPath()).append(child));
-        }
-      }
-      throw new IllegalArgumentException(
-          String.format(
-              "%s is not a child of %s",
-              subcomponent.getQualifiedName(), currentGraph().componentType().getQualifiedName()));
-    }
-
     private BindingGraph rootmostGraph(Predicate<? super BindingGraph> predicate) {
-      return graphsInPath().stream().filter(predicate).findFirst().get();
-    }
-
-    @Override
-    public String toString() {
-      return graphsInPath()
-          .stream()
-          .map(BindingGraph::componentType)
-          .map(TypeElement::getQualifiedName)
-          .collect(joining(" → "));
+      return bindingGraphPath.stream().filter(predicate).findFirst().get();
     }
   }
 

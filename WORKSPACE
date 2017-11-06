@@ -49,14 +49,14 @@ maven_jar(
 
 maven_jar(
     name = "com_google_guava_guava",
-    artifact = "com.google.guava:guava:23.3-jre",
-    sha1 = "9124c2675a9de3ba953f66d62339cf62f8e1a143",
+    artifact = "com.google.guava:guava:21.0",
+    sha1 = "3a3d111be1be1b745edfa7d91678a12d7ed38709",
 )
 
 maven_jar(
     name = "com_google_guava_guava_testlib",
-    artifact = "com.google.guava:guava-testlib:23.3-jre",
-    sha1 = "5dd4cc9849497042d84b782f8a1eed2b7dae290c",
+    artifact = "com.google.guava:guava-testlib:21.0-rc1",
+    sha1 = "13f0f0dce4e710bb0bb791bd07f6e9858670a865",
 )
 
 maven_jar(

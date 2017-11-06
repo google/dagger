@@ -16,10 +16,13 @@
 
 package dagger.internal.codegen;
 
+import static javax.lang.model.util.ElementFilter.typesIn;
+
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
@@ -55,6 +58,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraph.Factory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
+  private final ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
 
   ComponentProcessingStep(
       ComponentDescriptor.Kind componentKind,
@@ -66,7 +70,8 @@ final class ComponentProcessingStep implements ProcessingStep {
       BindingGraphValidator bindingGraphValidator,
       Factory componentDescriptorFactory,
       BindingGraph.Factory bindingGraphFactory,
-      ComponentGenerator componentGenerator) {
+      ComponentGenerator componentGenerator,
+      Iterable<BindingGraphPlugin> bindingGraphPlugins) {
     this.componentKind = componentKind;
     this.messager = messager;
     this.componentValidator = componentValidator;
@@ -77,6 +82,7 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
+    this.bindingGraphPlugins = ImmutableList.copyOf(bindingGraphPlugins);
   }
 
   @Override
@@ -116,8 +122,8 @@ final class ComponentProcessingStep implements ProcessingStep {
     Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent =
         processSubcomponents(subcomponentElements, subcomponentBuilderElements);
 
-    for (Element element : elementsByAnnotation.get(componentKind.annotationType())) {
-      TypeElement componentTypeElement = MoreElements.asType(element);
+    for (TypeElement componentTypeElement :
+        typesIn(elementsByAnnotation.get(componentKind.annotationType()))) {
       try {
         ComponentValidationReport validationReport =
             componentValidator.validate(
@@ -139,6 +145,8 @@ final class ComponentProcessingStep implements ProcessingStep {
                 bindingGraphValidator.validate(bindingGraph);
             graphReport.printMessagesTo(messager);
             if (graphReport.isClean()) {
+              BindingNetwork bindingNetwork = BindingNetwork.create(bindingGraph);
+              bindingGraphPlugins.forEach(plugin -> plugin.visitGraph(bindingNetwork));
               generateComponent(bindingGraph);
             }
           }

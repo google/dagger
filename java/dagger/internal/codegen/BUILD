@@ -19,8 +19,11 @@ package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
+EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
+
 CODEGEN_SRCS = glob(
     ["*.java"],
+    exclude = EXPERIMENTAL_VISUALIZER_SRCS,
 )
 
 CODEGEN_PLUGINS = [
@@ -59,6 +62,18 @@ javadoc_library(
     srcs = CODEGEN_SRCS,
     root_packages = ["dagger.internal.codegen"],
     deps = [":codegen"],
+)
+
+java_plugin(
+    name = "dagger-experimental-visualizer",
+    srcs = EXPERIMENTAL_VISUALIZER_SRCS,
+    deps = [
+        ":codegen",
+        "//third_party:auto_service",
+        "//third_party:error_prone_annotations",
+        "//third_party:guava",
+        "//third_party:javapoet",
+    ],
 )
 
 java_plugin(

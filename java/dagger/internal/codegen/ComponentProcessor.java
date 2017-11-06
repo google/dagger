@@ -22,7 +22,10 @@ import static dagger.internal.codegen.ModuleProcessingStep.producerModuleProcess
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.googlejavaformat.java.filer.FormattingFiler;
+import java.util.ServiceLoader;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -44,6 +47,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   private InjectBindingRegistry injectBindingRegistry;
   private FactoryGenerator factoryGenerator;
   private MembersInjectorGenerator membersInjectorGenerator;
+  private ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
@@ -52,7 +56,12 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   public Set<String> getSupportedOptions() {
-    return CompilerOptions.SUPPORTED_OPTIONS;
+    ImmutableSet.Builder<String> options = ImmutableSet.builder();
+    options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
+    for (BindingGraphPlugin plugin : bindingGraphPlugins) {
+      options.addAll(plugin.getSupportedOptions());
+    }
+    return options.build();
   }
 
   @Override
@@ -61,7 +70,19 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     DaggerTypes types = new DaggerTypes(processingEnv);
     DaggerElements elements = new DaggerElements(processingEnv);
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
+
     Filer filer =  new FormattingFiler(processingEnv.getFiler());
+
+    this.bindingGraphPlugins =
+        ImmutableList.copyOf(
+            ServiceLoader.load(BindingGraphPlugin.class, getClass().getClassLoader()));
+    for (BindingGraphPlugin plugin : bindingGraphPlugins) {
+      plugin.setFiler(filer);
+      Set<String> supportedOptions = plugin.getSupportedOptions();
+      if (!supportedOptions.isEmpty()) {
+        plugin.setOptions(Maps.filterKeys(processingEnv.getOptions(), supportedOptions::contains));
+      }
+    }
 
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
@@ -209,7 +230,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindingGraphValidator,
             componentDescriptorFactory,
             bindingGraphFactory,
-            componentGenerator),
+            componentGenerator,
+            bindingGraphPlugins),
         producerModuleProcessingStep(
             messager,
             moduleValidator,
@@ -227,7 +249,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             bindingGraphValidator,
             componentDescriptorFactory,
             bindingGraphFactory,
-            componentGenerator),
+            componentGenerator,
+            bindingGraphPlugins),
         new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
   }
 

@@ -22,7 +22,7 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ComponentProcessingStep.getElementsFromAnnotations;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -42,9 +42,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
+import dagger.Component;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
+import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
@@ -74,8 +76,6 @@ import javax.lang.model.util.Types;
  * entirely.
  */
 final class ComponentHjarProcessingStep implements ProcessingStep {
-
-  private final ComponentDescriptor.Kind componentKind;
   private final Elements elements;
   private final Types types;
   private final Filer filer;
@@ -84,14 +84,12 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   private final ComponentDescriptor.Factory componentDescriptorFactory;
 
   ComponentHjarProcessingStep(
-      ComponentDescriptor.Kind componentKind,
       Elements elements,
       Types types,
       Filer filer,
       Messager messager,
       ComponentValidator componentValidator,
       Factory componentDescriptorFactory) {
-    this.componentKind = componentKind;
     this.elements = elements;
     this.types = types;
     this.filer = filer;
@@ -101,24 +99,20 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public Set<? extends Class<? extends Annotation>> annotations() {
-    return ImmutableSet.<Class<? extends Annotation>>builder()
-        .add(componentKind.annotationType())
-        .addAll(
-            componentKind
-                .subcomponentKinds()
-                .stream()
-                .flatMap(kind -> Stream.of(kind.annotationType(), kind.builderAnnotationType()))
-                .collect(toImmutableSet()))
-        .build();
+  public Set<Class<? extends Annotation>> annotations() {
+    return ImmutableSet.of(Component.class, ProductionComponent.class);
   }
 
   @Override
-  public Set<Element> process(
+  public ImmutableSet<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
 
-    for (Element element : elementsByAnnotation.get(componentKind.annotationType())) {
+    ImmutableSet<Element> componentElements =
+        getElementsFromAnnotations(
+            elementsByAnnotation, Component.class, ProductionComponent.class);
+
+    for (Element element : componentElements) {
       TypeElement componentTypeElement = MoreElements.asType(element);
       try {
         // TODO(ronshapiro): component validation might not be necessary. We should measure it and

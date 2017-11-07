@@ -19,14 +19,12 @@ package dagger.internal.codegen;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import dagger.Component;
 import dagger.Subcomponent;
-import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
@@ -36,7 +34,6 @@ import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic.Kind;
 
 /**
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
@@ -45,7 +42,6 @@ import javax.tools.Diagnostic.Kind;
  * @author Gregory Kick
  */
 final class ComponentProcessingStep implements ProcessingStep {
-  private final ComponentDescriptor.Kind componentKind;
   private final Messager messager;
   private final ComponentValidator componentValidator;
   private final ComponentValidator subcomponentValidator;
@@ -57,17 +53,15 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentGenerator componentGenerator;
 
   ComponentProcessingStep(
-      ComponentDescriptor.Kind componentKind,
       Messager messager,
       ComponentValidator componentValidator,
       ComponentValidator subcomponentValidator,
       BuilderValidator builderValidator,
       ComponentHierarchyValidator componentHierarchyValidator,
       BindingGraphValidator bindingGraphValidator,
-      Factory componentDescriptorFactory,
+      ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraph.Factory bindingGraphFactory,
       ComponentGenerator componentGenerator) {
-    this.componentKind = componentKind;
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.subcomponentValidator = subcomponentValidator;
@@ -93,30 +87,32 @@ final class ComponentProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public final ImmutableSet<Element> process(
+  public ImmutableSet<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
 
-    Map<Element, ValidationReport<TypeElement>> builderReportsByComponent =
-        processBuilders(elementsByAnnotation.get(componentKind.builderAnnotationType()));
-    Set<Element> subcomponentBuilderElements =
+    ImmutableSet<Element> componentElements =
         getElementsFromAnnotations(
-            elementsByAnnotation,
-            FluentIterable.from(componentKind.subcomponentKinds())
-                .transform(ComponentDescriptor.Kind::builderAnnotationType)
-                .toSet());
+            elementsByAnnotation, Component.class, ProductionComponent.class);
+    ImmutableSet<Element> componentBuilderElements =
+        getElementsFromAnnotations(
+            elementsByAnnotation, Component.Builder.class, ProductionComponent.Builder.class);
+
+    ImmutableSet<Element> subcomponentElements =
+        getElementsFromAnnotations(
+            elementsByAnnotation, Subcomponent.class, ProductionSubcomponent.class);
+    ImmutableSet<Element> subcomponentBuilderElements =
+        getElementsFromAnnotations(
+            elementsByAnnotation, Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+
+    Map<Element, ValidationReport<TypeElement>> builderReportsByComponent =
+        processBuilders(componentBuilderElements);
     Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent =
         processBuilders(subcomponentBuilderElements);
-    Set<Element> subcomponentElements =
-        getElementsFromAnnotations(
-            elementsByAnnotation,
-            FluentIterable.from(componentKind.subcomponentKinds())
-                .transform(ComponentDescriptor.Kind::annotationType)
-                .toSet());
     Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent =
         processSubcomponents(subcomponentElements, subcomponentBuilderElements);
 
-    for (Element element : elementsByAnnotation.get(componentKind.annotationType())) {
+    for (Element element : componentElements) {
       TypeElement componentTypeElement = MoreElements.asType(element);
       try {
         ComponentValidationReport validationReport =
@@ -154,11 +150,12 @@ final class ComponentProcessingStep implements ProcessingStep {
     componentGenerator.generate(bindingGraph, messager);
   }
 
-  private ImmutableSet<Element> getElementsFromAnnotations(
+  static ImmutableSet<Element> getElementsFromAnnotations(
       final SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation,
-      ImmutableSet<? extends Class<? extends Annotation>> annotations) {
+      Class<? extends Annotation>... annotations) {
     return ImmutableSet.copyOf(
-        Multimaps.filterKeys(elementsByAnnotation, Predicates.in(annotations)).values());
+        Multimaps.filterKeys(elementsByAnnotation, Predicates.in(ImmutableSet.copyOf(annotations)))
+            .values());
   }
 
   private Map<Element, ValidationReport<TypeElement>> processBuilders(

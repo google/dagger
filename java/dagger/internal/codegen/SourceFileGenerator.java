@@ -24,10 +24,10 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import java.util.Optional;
-import javax.annotation.Generated;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 /**
@@ -35,23 +35,50 @@ import javax.lang.model.util.Elements;
  * from an annotation processor.  Particularly, it makes a best effort to ensure that files that
  * fail to write successfully are deleted.
  *
+ * <p>In Java 9 and above, the decision, which 'Generated' annotation to use, depends on the used
+ * modules:
+ * <ul>
+ *  <li>if <tt>java.compiler</tt> is present, the new official annotation is used,
+ *  <li>if legacy <tt>java.xml.ws.annotation</tt> or <tt>jsr250</tt> are present (or we have JDK8), the legacy annotation is used,
+ *  <li>otherwise, no annotation is used.
+ * </ul>
+ *
  * @param <T> The input type from which source is to be generated.
  */
 abstract class SourceFileGenerator<T> {
   private static final String GENERATED_COMMENTS = "https://google.github.io/dagger";
-
-  private static final AnnotationSpec GENERATED =
-      AnnotationSpec.builder(Generated.class)
-          .addMember("value", "$S", ComponentProcessor.class.getName())
-          .addMember("comments", "$S", GENERATED_COMMENTS)
-          .build();
+  private static final String GENERATED_ANNOTATION_JDK9 = "javax.annotation.processing.Generated";
+  private static final String GENERATED_ANNOTATION_LEGACY = "javax.annotation.Generated";
 
   private final Filer filer;
   private final boolean generatedAnnotationAvailable;
-
+  private final AnnotationSpec generated;
+  
   SourceFileGenerator(Filer filer, Elements elements) {
     this.filer = checkNotNull(filer);
-    generatedAnnotationAvailable = elements.getTypeElement("javax.annotation.Generated") != null;
+    TypeElement generatedAnnotation = chooseAnnotation(elements);
+    if (null != generatedAnnotation) {
+      generated = createAnnotationSpec(generatedAnnotation);
+      generatedAnnotationAvailable = true;
+    } else {
+      generatedAnnotationAvailable = false;
+      generated = null;
+    }
+  }
+  
+  TypeElement chooseAnnotation(Elements elements) {
+    TypeElement element = elements.getTypeElement(GENERATED_ANNOTATION_JDK9);
+    if (null == element) {
+      element = elements.getTypeElement(GENERATED_ANNOTATION_LEGACY);
+    }
+    return element;
+  }
+  
+  AnnotationSpec createAnnotationSpec(TypeElement generatedAnnotation) {
+    return AnnotationSpec.builder(ClassName.get(generatedAnnotation))
+          .addMember("value", "$S", ComponentProcessor.class.getName())
+          .addMember("comments", "$S", GENERATED_COMMENTS)
+          .build();
   }
 
   /**
@@ -87,7 +114,7 @@ abstract class SourceFileGenerator<T> {
   private JavaFile buildJavaFile(
       ClassName generatedTypeName, TypeSpec.Builder typeSpecBuilder) {
     if (generatedAnnotationAvailable) {
-      typeSpecBuilder.addAnnotation(GENERATED);
+      typeSpecBuilder.addAnnotation(generated);
     }
     JavaFile.Builder javaFileBuilder =
         JavaFile.builder(generatedTypeName.packageName(), typeSpecBuilder.build())

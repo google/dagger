@@ -51,6 +51,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
 /**
@@ -162,6 +163,36 @@ final class ConfigurationAnnotations {
       }
     }
     return Optional.empty();
+  }
+
+  static <T extends Element> void validateComponentDependencies(
+      ValidationReport.Builder<T> report, Iterable<TypeMirror> types) {
+    validateTypesAreDeclared(report, types, "component dependency");
+    for (TypeMirror type : types) {
+      if (getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
+        report.addError(
+            String.format("%s is a module, which cannot be a component dependency", type));
+      }
+    }
+  }
+
+  private static <T extends Element> void validateTypesAreDeclared(
+      final ValidationReport.Builder<T> report, Iterable<TypeMirror> types, final String typeName) {
+    for (TypeMirror type : types) {
+      type.accept(new SimpleTypeVisitor6<Void, Void>(){
+        @Override
+        protected Void defaultAction(TypeMirror e, Void aVoid) {
+          report.addError(String.format("%s is not a valid %s type", e, typeName));
+          return null;
+        }
+
+        @Override
+        public Void visitDeclared(DeclaredType t, Void aVoid) {
+          // Declared types are valid
+          return null;
+        }
+      }, null);
+    }
   }
 
   /**

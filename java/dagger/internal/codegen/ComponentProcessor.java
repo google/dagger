@@ -116,8 +116,11 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     SubcomponentDeclaration.Factory subcomponentDeclarationFactory =
         new SubcomponentDeclaration.Factory(keyFactory);
 
-    this.factoryGenerator = new FactoryGenerator(filer, elements, types, compilerOptions);
-    this.membersInjectorGenerator = new MembersInjectorGenerator(filer, elements, types);
+    this.factoryGenerator =
+        new FactoryGenerator(
+            filer, elements, types, compilerOptions, injectValidatorWhenGeneratingCode);
+    this.membersInjectorGenerator =
+        new MembersInjectorGenerator(filer, elements, types, injectValidatorWhenGeneratingCode);
     ComponentGenerator componentGenerator =
         new ComponentGenerator(filer, elements, types, keyFactory, compilerOptions);
     ProducerFactoryGenerator producerFactoryGenerator =
@@ -133,7 +136,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new OptionalBindingDeclaration.Factory(keyFactory);
 
     this.injectBindingRegistry =
-        new InjectBindingRegistryImpl(
+        new InjectBindingRegistry(
             elements,
             types,
             messager,

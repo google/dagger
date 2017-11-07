@@ -59,24 +59,8 @@ jarjar_library(
     name = "shaded_compiler",
     rules_file = "shade_rules.txt",
     deps = [
-        "//java/dagger/internal/codegen:base",
-        "//java/dagger/internal/codegen:binding",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen:validation",
-        "//java/dagger/internal/codegen:writing",
+        "//java/dagger/internal/codegen",
         "@com_google_auto_auto_common//jar",
-    ],
-)
-
-jarjar_library(
-    name = "shaded_compiler_src",
-    rules_file = "merge_all_rules.txt",
-    deps = [
-        "//java/dagger/internal/codegen:libbase-src.jar",
-        "//java/dagger/internal/codegen:libbinding-src.jar",
-        "//java/dagger/internal/codegen:libprocessor-src.jar",
-        "//java/dagger/internal/codegen:libvalidation-src.jar",
-        "//java/dagger/internal/codegen:libwriting-src.jar",
     ],
 )
 

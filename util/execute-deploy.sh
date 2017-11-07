@@ -10,7 +10,7 @@ readonly EXTRA_MAVEN_ARGS=("$@")
 python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //java/dagger:core \
   //gwt:gwt \
-  //java/dagger/internal/codegen:processor \
+  //java/dagger/internal/codegen:codegen \
   //java/dagger/producers:producers \
   //java/dagger/android:android \
   //java/dagger/android:libandroid.jar \
@@ -43,9 +43,9 @@ deploy_library() {
 
   mvn $MVN_GOAL \
     -Dfile=$(library_output_file $library) \
-    -Djavadoc=$(library_output_file $javadoc) \
+    -Djavadoc=bazel-bin/$javadoc \
     -DpomFile=$pomfile \
-    -Dsources=$(library_output_file $srcjar) \
+    -Dsources=bazel-bin/$srcjar \
     "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
 }
 
@@ -63,7 +63,7 @@ deploy_library \
 
 deploy_library \
   shaded_compiler.jar \
-  shaded_compiler_src.jar \
+  java/dagger/internal/codegen/libcodegen-src.jar \
   java/dagger/internal/codegen/codegen-javadoc.jar \
   dagger-compiler.pom.xml
 

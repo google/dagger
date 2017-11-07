@@ -60,14 +60,16 @@ abstract class CompilerOptions {
   abstract boolean ignorePrivateAndStaticInjectionForComponent();
   abstract ValidationType scopeCycleValidationType();
   abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
+  abstract boolean headerCompilation();
 
   static Builder builder() {
-    return new AutoValue_CompilerOptions.Builder();
+    return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
   }
 
   static CompilerOptions create(ProcessingEnvironment processingEnv, Elements elements) {
     return builder()
         .usesProducers(elements.getTypeElement(Produces.class.getCanonicalName()) != null)
+        .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
         .experimentalAndroidMode(experimentalAndroidMode(processingEnv)
             .equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
@@ -89,6 +91,7 @@ abstract class CompilerOptions {
   @AutoValue.Builder
   interface Builder {
     Builder usesProducers(boolean usesProduces);
+    Builder headerCompilation(boolean headerCompilation);
     Builder experimentalAndroidMode(boolean experimentalAndroidMode);
     Builder writeProducerNameInToken(boolean writeProducerNameInToken);
     Builder nullableValidationKind(Diagnostic.Kind kind);
@@ -101,6 +104,8 @@ abstract class CompilerOptions {
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
     CompilerOptions build();
   }
+
+  private static final String HEADER_COMPILATION = "experimental_turbine_hjar";
 
   static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
 
@@ -131,6 +136,7 @@ abstract class CompilerOptions {
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
           EXPERIMENTAL_ANDROID_MODE,
+          HEADER_COMPILATION,
           WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
           DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
           NULLABLE_VALIDATION_KEY,

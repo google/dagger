@@ -16,13 +16,15 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Joiner;
+import static dagger.internal.codegen.SourceFiles.classFileName;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 /**
@@ -52,10 +54,12 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
 
   @Override
   ClassName nameGeneratedType(BindingGraph input) {
-    ClassName componentDefinitionClassName = ClassName.get(input.componentType());
-    String componentName =
-        "Dagger" + Joiner.on('_').join(componentDefinitionClassName.simpleNames());
-    return componentDefinitionClassName.topLevelClassName().peerClass(componentName);
+    return componentName(input.componentType());
+  }
+
+  static ClassName componentName(TypeElement componentDefinitionType) {
+    ClassName componentName = ClassName.get(componentDefinitionType);
+    return ClassName.get(componentName.packageName(), "Dagger" + classFileName(componentName));
   }
 
   @Override

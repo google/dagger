@@ -223,6 +223,7 @@ java_library(
     name = "processor",
     srcs = [
         "CanReleaseReferencesProcessingStep.java",
+        "ComponentHjarProcessingStep.java",
         "ComponentProcessingStep.java",
         "ComponentProcessor.java",
         "InjectBindingRegistryImpl.java",

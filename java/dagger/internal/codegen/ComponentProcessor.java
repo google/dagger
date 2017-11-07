@@ -61,7 +61,12 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     DaggerTypes types = new DaggerTypes(processingEnv);
     DaggerElements elements = new DaggerElements(processingEnv);
     CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
-    Filer filer =  new FormattingFiler(processingEnv.getFiler());
+    Filer filer;
+    if (compilerOptions.headerCompilation()) {
+      filer = processingEnv.getFiler();
+    } else {
+      filer = new FormattingFiler(processingEnv.getFiler());
+    }
 
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
@@ -184,6 +189,32 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             dependencyRequestFormatter,
             keyFactory);
 
+    class ComponentProcessingStepFactory {
+      ProcessingStep create(ComponentDescriptor.Kind componentKind) {
+        if (compilerOptions.headerCompilation()) {
+          return new ComponentHjarProcessingStep(
+              componentKind,
+              elements,
+              types,
+              filer,
+              messager,
+              componentValidator,
+              componentDescriptorFactory);
+        } else {
+          return new ComponentProcessingStep(
+              componentKind,
+              messager,
+              componentValidator,
+              subcomponentValidator,
+              builderValidator,
+              componentHierarchyValidator,
+              bindingGraphValidator,
+              componentDescriptorFactory,
+              bindingGraphFactory,
+              componentGenerator);
+        }
+      }
+    }
     return ImmutableList.of(
         new MapKeyProcessingStep(
             messager, types, mapKeyValidator, annotationCreatorGenerator, unwrappedMapKeyGenerator),
@@ -196,17 +227,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new MultibindingAnnotationsProcessingStep(messager),
         new BindsInstanceProcessingStep(messager),
         moduleProcessingStep(messager, moduleValidator, provisionBindingFactory, factoryGenerator),
-        new ComponentProcessingStep(
-            ComponentDescriptor.Kind.COMPONENT,
-            messager,
-            componentValidator,
-            subcomponentValidator,
-            builderValidator,
-            componentHierarchyValidator,
-            bindingGraphValidator,
-            componentDescriptorFactory,
-            bindingGraphFactory,
-            componentGenerator),
+        new ComponentProcessingStepFactory().create(ComponentDescriptor.Kind.COMPONENT),
         producerModuleProcessingStep(
             messager,
             moduleValidator,
@@ -214,17 +235,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             factoryGenerator,
             productionBindingFactory,
             producerFactoryGenerator),
-        new ComponentProcessingStep(
-            ComponentDescriptor.Kind.PRODUCTION_COMPONENT,
-            messager,
-            componentValidator,
-            subcomponentValidator,
-            builderValidator,
-            componentHierarchyValidator,
-            bindingGraphValidator,
-            componentDescriptorFactory,
-            bindingGraphFactory,
-            componentGenerator),
+        new ComponentProcessingStepFactory().create(ComponentDescriptor.Kind.PRODUCTION_COMPONENT),
         new BindingMethodProcessingStep(messager, anyBindingMethodValidator));
   }
 

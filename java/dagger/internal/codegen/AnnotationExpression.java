@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.SourceFiles.classFileName;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
@@ -29,6 +30,7 @@ import com.squareup.javapoet.TypeName;
 import java.util.List;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -55,7 +57,7 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
   AnnotationExpression(AnnotationMirror annotation) {
     this.annotation = annotation;
     this.creatorClass =
-        AnnotationCreatorGenerator.getAnnotationCreatorClassName(
+        getAnnotationCreatorClassName(
             MoreTypes.asTypeElement(annotation.getAnnotationType()));
   }
 
@@ -71,7 +73,7 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
     return CodeBlock.of(
         "$T.$L($L)",
         creatorClass,
-        AnnotationCreatorGenerator.createMethodName(
+        createMethodName(
             MoreElements.asType(annotation.getAnnotationType().asElement())),
         makeParametersCodeBlock(
             getAnnotationValuesWithDefaults(annotation)
@@ -79,6 +81,21 @@ class AnnotationExpression extends SimpleAnnotationValueVisitor6<CodeBlock, Anno
                 .stream()
                 .map(entry -> getValueExpression(entry.getKey().getReturnType(), entry.getValue()))
                 .collect(toList())));
+  }
+
+  /**
+   * Returns the name of the generated class that contains the static {@code create} methods for an
+   * annotation type.
+   */
+  static ClassName getAnnotationCreatorClassName(TypeElement annotationType) {
+    ClassName annotationTypeName = ClassName.get(annotationType);
+    return annotationTypeName
+        .topLevelClassName()
+        .peerClass(classFileName(annotationTypeName) + "Creator");
+  }
+
+  static String createMethodName(TypeElement annotationType) {
+    return "create" + annotationType.getSimpleName();
   }
 
   /**

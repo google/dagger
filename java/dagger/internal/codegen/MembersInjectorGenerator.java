@@ -65,13 +65,10 @@ import javax.lang.model.util.Types;
  */
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final Types types;
-  private final InjectValidator injectValidator;
 
-  MembersInjectorGenerator(
-      Filer filer, Elements elements, Types types, InjectValidator injectValidator) {
+  MembersInjectorGenerator(Filer filer, Elements elements, Types types) {
     super(filer, elements);
     this.types = types;
-    this.injectValidator = injectValidator;
   }
 
   @Override
@@ -88,9 +85,6 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, MembersInjectionBinding binding) {
     // Empty members injection bindings are special and don't need source files.
     if (binding.injectionSites().isEmpty()) {
-      return Optional.empty();
-    }
-    if (!injectValidator.isValidType(binding.key().type())) {
       return Optional.empty();
     }
     // We don't want to write out resolved bindings -- we want to write out the generic version.

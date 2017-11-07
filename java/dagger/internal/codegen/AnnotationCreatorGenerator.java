@@ -19,8 +19,9 @@ package dagger.internal.codegen;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.AnnotationExpression.createMethodName;
+import static dagger.internal.codegen.AnnotationExpression.getAnnotationCreatorClassName;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.SourceFiles.classFileName;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -77,17 +78,6 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  */
 class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
 
-  /**
-   * Returns the name of the generated class that contains the static {@code create} methods for an
-   * annotation type.
-   */
-  static ClassName getAnnotationCreatorClassName(TypeElement annotationType) {
-    ClassName annotationTypeName = ClassName.get(annotationType);
-    return annotationTypeName
-        .topLevelClassName()
-        .peerClass(classFileName(annotationTypeName) + "Creator");
-  }
-
   AnnotationCreatorGenerator(Filer filer, Elements elements) {
     super(filer, elements);
   }
@@ -138,10 +128,6 @@ class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
     createMethod.addStatement(
         "return new $T($L)", autoAnnotationClass, makeParametersCodeBlock(parameters.build()));
     return createMethod.build();
-  }
-
-  static String createMethodName(TypeElement annotationType) {
-    return "create" + annotationType.getSimpleName();
   }
 
   /**

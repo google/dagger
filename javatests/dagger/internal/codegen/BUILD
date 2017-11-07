@@ -27,7 +27,11 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/codegen",
+        "//java/dagger/internal/codegen:base",
+        "//java/dagger/internal/codegen:binding",
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen:validation",
+        "//java/dagger/internal/codegen:writing",
         "//java/dagger/producers",
         "//third_party:auto_common",
         "//third_party:auto_value",

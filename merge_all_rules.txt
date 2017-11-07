@@ -1,0 +1,1 @@
+# an empty rules file causes jarjar to merge all of the jar contents without any renaming

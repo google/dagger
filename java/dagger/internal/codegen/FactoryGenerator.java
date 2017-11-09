@@ -24,6 +24,8 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.DELEGATE;
+import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
@@ -43,13 +45,11 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
@@ -58,7 +58,6 @@ import dagger.internal.Preconditions;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
@@ -103,94 +102,111 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
 
-    TypeName providedTypeName = TypeName.get(binding.contributedType());
-    ParameterizedTypeName factoryTypeName = factoryOf(providedTypeName);
-    ImmutableList<TypeVariableName> typeParameters = bindingTypeElementTypeVariableNames(binding);
-    TypeSpec.Builder factoryBuilder = classBuilder(generatedTypeName).addModifiers(FINAL);
-    // Use type parameters from the injected type or the module instance *only* if we require it.
-    boolean factoryHasTypeParameters =
-        (binding.bindingKind().equals(INJECTION) || binding.requiresModuleInstance())
-            && !typeParameters.isEmpty();
-    if (factoryHasTypeParameters) {
-      factoryBuilder.addTypeVariables(typeParameters);
+    return binding.factoryCreationStrategy().equals(DELEGATE)
+        ? Optional.empty()
+        : Optional.of(factoryBuilder(binding));
+  }
+
+  private TypeSpec.Builder factoryBuilder(ProvisionBinding binding) {
+    TypeSpec.Builder factoryBuilder =
+        classBuilder(nameGeneratedType(binding))
+            .addModifiers(PUBLIC, FINAL)
+            .addSuperinterface(factoryTypeName(binding))
+            .addTypeVariables(typeParameters(binding));
+
+    addConstructorAndFields(binding, factoryBuilder);
+    factoryBuilder.addMethod(getMethod(binding));
+    addCreateMethod(binding, factoryBuilder);
+
+    ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
+    gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
+    mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
+
+    return factoryBuilder;
+  }
+
+  private void addConstructorAndFields(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {
+    if (binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)) {
+      return;
     }
-    Optional<MethodSpec.Builder> constructorBuilder = Optional.empty();
+    // TODO(user): Make the constructor private?
+    MethodSpec.Builder constructor = constructorBuilder().addModifiers(PUBLIC);
+    constructorParams(binding).forEach(
+        param -> {
+          constructor.addParameter(param).addStatement("this.$1N = $1N", param);
+          factoryBuilder.addField(
+              FieldSpec.builder(param.type, param.name, PRIVATE, FINAL).build());
+        });
+    factoryBuilder.addMethod(constructor.build());
+  }
+
+  private ImmutableList<ParameterSpec> constructorParams(ProvisionBinding binding) {
+    ImmutableList.Builder<ParameterSpec> params = ImmutableList.builder();
+    moduleParameter(binding).ifPresent(params::add);
+    frameworkFields(binding).values().forEach(field -> params.add(toParameter(field)));
+    return params.build();
+  }
+
+  private Optional<ParameterSpec> moduleParameter(ProvisionBinding binding) {
+    if (binding.requiresModuleInstance()) {
+      // TODO(user, dpb): Should this use contributingModule()?
+      TypeName type = TypeName.get(binding.bindingTypeElement().get().asType());
+      return Optional.of(ParameterSpec.builder(type, "module").build());
+    }
+    return Optional.empty();
+  }
+
+  private ImmutableMap<BindingKey, FieldSpec> frameworkFields(ProvisionBinding binding) {
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
-    ImmutableMap.Builder<BindingKey, FieldSpec> fieldsBuilder = ImmutableMap.builder();
+    // TODO(user, dpb): Add a test for the case when a Factory parameter is named "module".
+    if (binding.requiresModuleInstance()) {
+      uniqueFieldNames.claim("module");
+    }
+    ImmutableMap.Builder<BindingKey, FieldSpec> fields = ImmutableMap.builder();
+    generateBindingFieldsForDependencies(binding)
+        .forEach(
+            (bindingKey, frameworkField) -> {
+              TypeName type = frameworkField.type();
+              String name = uniqueFieldNames.getUniqueName(frameworkField.name());
+              fields.put(bindingKey, FieldSpec.builder(type, name, PRIVATE, FINAL).build());
+            });
+    return fields.build();
+  }
+
+  private void addCreateMethod(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {
+    // If constructing a factory for @Inject or @Provides bindings, we use a static create method
+    // so that generated components can avoid having to refer to the generic types
+    // of the factory.  (Otherwise they may have visibility problems referring to the types.)
+    MethodSpec.Builder createMethodBuilder =
+        methodBuilder("create")
+            .addModifiers(PUBLIC, STATIC)
+            .returns(factoryTypeName(binding))
+            .addTypeVariables(typeParameters(binding));
 
     switch (binding.factoryCreationStrategy()) {
       case SINGLETON_INSTANCE:
         FieldSpec.Builder instanceFieldBuilder =
-            FieldSpec.builder(generatedTypeName, "INSTANCE", PRIVATE, STATIC, FINAL)
-                .initializer("new $T()", generatedTypeName);
+            FieldSpec.builder(nameGeneratedType(binding), "INSTANCE", PRIVATE, STATIC, FINAL)
+                .initializer("new $T()", nameGeneratedType(binding));
 
-        // if the factory has type parameters, we're ignoring them in the initializer
-        if (factoryHasTypeParameters) {
+        if (!typeParameters(binding).isEmpty()) {
+          // If the factory has type parameters, ignore them in the field declaration & initializer
           instanceFieldBuilder.addAnnotation(suppressWarnings(RAWTYPES));
-        }
 
+          // We use an unsafe cast here because the types are different.
+          // It's safe because the type is never referenced anywhere.
+          createMethodBuilder
+              .addStatement("return ($T) INSTANCE", TypeNames.FACTORY)
+              .addAnnotation(suppressWarnings(RAWTYPES, UNCHECKED));
+        } else {
+          createMethodBuilder.addStatement("return INSTANCE");
+        }
         factoryBuilder.addField(instanceFieldBuilder.build());
         break;
       case CLASS_CONSTRUCTOR:
-        constructorBuilder = Optional.of(constructorBuilder().addModifiers(PUBLIC));
-        if (binding.requiresModuleInstance()) {
-          addConstructorParameterAndTypeField(
-              TypeName.get(binding.bindingTypeElement().get().asType()),
-              "module",
-              factoryBuilder,
-              constructorBuilder.get());
-        }
-        for (Map.Entry<BindingKey, FrameworkField> entry :
-            generateBindingFieldsForDependencies(binding).entrySet()) {
-          BindingKey bindingKey = entry.getKey();
-          FrameworkField bindingField = entry.getValue();
-          FieldSpec field =
-              addConstructorParameterAndTypeField(
-                  bindingField.type(),
-                  uniqueFieldNames.getUniqueName(bindingField.name()),
-                  factoryBuilder,
-                  constructorBuilder.get());
-          fieldsBuilder.put(bindingKey, field);
-        }
-        break;
-      case DELEGATE:
-        return Optional.empty();
-      default:
-        throw new AssertionError();
-    }
-    ImmutableMap<BindingKey, FieldSpec> fields = fieldsBuilder.build();
-
-    factoryBuilder.addModifiers(PUBLIC).addSuperinterface(factoryTypeName);
-
-    // If constructing a factory for @Inject or @Provides bindings, we use a static create method
-    // so that generated components can avoid having to refer to the generic types
-    // of the factory.  (Otherwise they may have visibility problems referring to the types.)
-    MethodSpec.Builder createMethod =
-        methodBuilder("create").addModifiers(PUBLIC, STATIC).returns(factoryTypeName);
-    if (factoryHasTypeParameters) {
-      // The return type is usually the same as the implementing type, except in the case
-      // of enums with type variables (where we cast).
-      createMethod.addTypeVariables(typeParameters);
-    }
-    List<ParameterSpec> params =
-        constructorBuilder.isPresent()
-            ? constructorBuilder.get().build().parameters
-            : ImmutableList.of();
-    createMethod.addParameters(params);
-    switch (binding.factoryCreationStrategy()) {
-      case SINGLETON_INSTANCE:
-        if (factoryHasTypeParameters) {
-          // We use an unsafe cast here because the types are different.
-          // It's safe because the type is never referenced anywhere.
-          createMethod.addStatement("return ($T) INSTANCE", TypeNames.FACTORY);
-          createMethod.addAnnotation(suppressWarnings(RAWTYPES, UNCHECKED));
-        } else {
-          createMethod.addStatement("return INSTANCE");
-        }
-        break;
-
-      case CLASS_CONSTRUCTOR:
-        createMethod.addStatement(
+        List<ParameterSpec> params = constructorParams(binding);
+        createMethodBuilder.addParameters(params);
+        createMethodBuilder.addStatement(
             "return new $T($L)",
             parameterizedGeneratedTypeNameForBinding(binding),
             makeParametersCodeBlock(Lists.transform(params, input -> CodeBlock.of("$N", input))));
@@ -198,20 +214,21 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       default:
         throw new AssertionError();
     }
+    factoryBuilder.addMethod(createMethodBuilder.build());
+  }
 
-    if (constructorBuilder.isPresent()) {
-      factoryBuilder.addMethod(constructorBuilder.get().build());
-    }
-
-    CodeBlock parametersCodeBlock =
-        makeParametersCodeBlock(
-            frameworkFieldUsages(binding.provisionDependencies(), fields).values());
-
+  private MethodSpec getMethod(ProvisionBinding binding) {
+    TypeName providedTypeName = providedTypeName(binding);
     MethodSpec.Builder getMethodBuilder =
         methodBuilder("get")
             .returns(providedTypeName)
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC);
+
+    ImmutableMap<BindingKey, FieldSpec> frameworkFields = frameworkFields(binding);
+    CodeBlock parametersCodeBlock =
+        makeParametersCodeBlock(
+            frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());
 
     if (binding.bindingKind().equals(PROVISION)) {
       // TODO(dpb): take advantage of the code in InjectionMethods so this doesn't have to be
@@ -239,24 +256,36 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
           .addCode(
               InjectionSiteMethod.invokeAll(
                   binding.injectionSites(),
-                  generatedTypeName,
+                  nameGeneratedType(binding),
                   instance,
                   binding.key().type(),
                   types,
-                  frameworkFieldUsages(binding.dependencies(), fields)::get))
+                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get))
           .addStatement("return $L", instance);
     } else {
       getMethodBuilder.addStatement("return new $T($L)", providedTypeName, parametersCodeBlock);
     }
+    return getMethodBuilder.build();
+  }
 
-    factoryBuilder.addMethod(getMethodBuilder.build());
-    factoryBuilder.addMethod(createMethod.build());
+  private static TypeName providedTypeName(ProvisionBinding binding) {
+    return TypeName.get(binding.contributedType());
+  }
 
-    ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
-    gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
-    mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
+  private static TypeName factoryTypeName(ProvisionBinding binding) {
+    return factoryOf(providedTypeName(binding));
+  }
 
-    return Optional.of(factoryBuilder);
+  private static ParameterSpec toParameter(FieldSpec field) {
+    return ParameterSpec.builder(field.type, field.name).build();
+  }
+
+  private static ImmutableList<TypeVariableName> typeParameters(ProvisionBinding binding) {
+    // Use type parameters from the injected type or the module instance *only* if we require it.
+    if (binding.bindingKind().equals(INJECTION) || binding.requiresModuleInstance()) {
+      return bindingTypeElementTypeVariableNames(binding);
+    }
+    return ImmutableList.of();
   }
 
   /**
@@ -269,19 +298,5 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         Preconditions.class,
         providesMethodInvocation,
         CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
-  }
-
-  @CanIgnoreReturnValue
-  private FieldSpec addConstructorParameterAndTypeField(
-      TypeName typeName,
-      String variableName,
-      TypeSpec.Builder factoryBuilder,
-      MethodSpec.Builder constructorBuilder) {
-    FieldSpec field = FieldSpec.builder(typeName, variableName, PRIVATE, FINAL).build();
-    factoryBuilder.addField(field);
-    ParameterSpec parameter = ParameterSpec.builder(typeName, variableName).build();
-    constructorBuilder.addParameter(parameter);
-    constructorBuilder.addCode("this.$N = $N;", field, parameter);
-    return field;
   }
 }

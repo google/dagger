@@ -19,8 +19,11 @@ package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
+EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
+
 CODEGEN_SRCS = glob(
     ["*.java"],
+    exclude = EXPERIMENTAL_VISUALIZER_SRCS,
 )
 
 CODEGEN_PLUGINS = [
@@ -60,6 +63,7 @@ java_library(
         "DaggerTypes.java",
         "Expression.java",
         "FeatureStatus.java",
+        "ForwardingNetwork.java",
         "InjectionAnnotations.java",
         "MapKeyAccessibility.java",
         "MethodSignature.java",
@@ -91,7 +95,9 @@ java_library(
         "Binding.java",
         "BindingDeclaration.java",
         "BindingGraph.java",
+        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to it's own spi target
         "BindingKey.java",
+        "BindingNetwork.java",
         "BindingType.java",
         "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
@@ -256,6 +262,19 @@ java_library(
     srcs = CODEGEN_SRCS,
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = CODEGEN_DEPS,
+)
+
+java_plugin(
+    name = "dagger-experimental-visualizer",
+    srcs = EXPERIMENTAL_VISUALIZER_SRCS,
+    deps = [
+        ":base",
+        ":binding",
+        "//third_party:auto_service",
+        "//third_party:error_prone_annotations",
+        "//third_party:guava",
+        "//third_party:javapoet",
+    ],
 )
 
 java_plugin(

@@ -15,7 +15,7 @@
 _EXTERNAL_JAVADOC_LINKS = [
     "https://docs.oracle.com/javase/8/docs/api/",
     "https://developer.android.com/reference/",
-    "https://google.github.io/guava/releases/21.0/api/docs/",
+    "https://google.github.io/guava/releases/23.3-jre/api/docs/",
     "https://docs.oracle.com/javaee/7/api/",
 ]
 

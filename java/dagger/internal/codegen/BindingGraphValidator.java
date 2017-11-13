@@ -890,14 +890,11 @@ final class BindingGraphValidator {
         StringBuilder errorMessage =
             new StringBuilder(
                 String.format(requiresErrorMessageFormat, formatCurrentDependencyRequestKey()));
-        if (key.isValidMembersInjectionKey()) {
-          Optional<MembersInjectionBinding> membersInjectionBinding =
-              injectBindingRegistry.getOrFindMembersInjectionBinding(key);
-          if (membersInjectionBinding.isPresent()
-              && !membersInjectionBinding.get().injectionSites().isEmpty()) {
-            errorMessage.append(" ");
-            errorMessage.append(ErrorMessages.MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION);
-          }
+        if (key.isValidMembersInjectionKey()
+            && injectBindingRegistry.getOrFindMembersInjectionBinding(key)
+                .map(binding -> !binding.injectionSites().isEmpty())
+                .orElse(false)) {
+          errorMessage.append(" ").append(ErrorMessages.MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION);
         }
         return errorMessage.append('\n');
       }

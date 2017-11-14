@@ -29,16 +29,6 @@ import javax.inject.Inject;
  */
 public final class MembersInjectors {
   /**
-   * Injects members into {@code instance} using {@code membersInjector}.  This method is a
-   * convenience for cases in which you would want to chain members injection, but can't because
-   * {@link MembersInjector#injectMembers} returns {@code void}.
-   */
-  public static <T> T injectMembers(MembersInjector<T> membersInjector, T instance) {
-    membersInjector.injectMembers(instance);
-    return instance;
-  }
-
-  /**
    * Returns a {@link MembersInjector} implementation that injects no members
    *
    * <p>Note that there is no verification that the type being injected does not have {@link Inject}
@@ -53,12 +43,8 @@ public final class MembersInjectors {
     INSTANCE;
 
     @Override public void injectMembers(Object instance) {
-      checkInstanceNotNull(instance);
+      checkNotNull(instance, "Cannot inject members into a null reference");
     }
-  }
-
-  public static void checkInstanceNotNull(Object instance) {
-    checkNotNull(instance, "Cannot inject members into a null reference");
   }
 
   private MembersInjectors() {}

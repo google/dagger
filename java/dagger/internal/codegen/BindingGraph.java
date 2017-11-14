@@ -211,6 +211,9 @@ abstract class BindingGraph {
         .collect(toImmutableSet());
   }
 
+  @Memoized
+  public abstract int hashCode();
+
   static final class Factory {
     private final Elements elements;
     private final InjectBindingRegistry injectBindingRegistry;

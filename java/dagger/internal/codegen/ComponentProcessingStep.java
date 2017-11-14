@@ -141,7 +141,6 @@ final class ComponentProcessingStep implements ProcessingStep {
             graphReport.printMessagesTo(messager);
             if (graphReport.isClean()) {
               if (!bindingGraphPlugins.isEmpty()) {
-                // TODO(b/68982932): Address performance of BindingNetwork.create().
                 BindingNetwork bindingNetwork = BindingNetwork.create(bindingGraph);
                 bindingGraphPlugins.forEach(plugin -> plugin.visitGraph(bindingNetwork));
               }

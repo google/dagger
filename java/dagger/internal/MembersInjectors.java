@@ -48,7 +48,7 @@ public final class MembersInjectors {
     }
   }
 
-  private void checkInstanceNotNull(Object instance) {
+  private static void checkInstanceNotNull(Object instance) {
     checkNotNull(instance, "Cannot inject members into a null reference");
   }
 

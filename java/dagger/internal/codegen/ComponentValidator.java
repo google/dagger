@@ -173,6 +173,10 @@ final class ComponentValidator {
               List<? extends VariableElement> parameters = method.getParameters();
               TypeMirror returnType = resolvedMethod.getReturnType();
 
+              if (!resolvedMethod.getTypeVariables().isEmpty()) {
+                builder.addError("Component methods cannot have type variables", method);
+              }
+
               // abstract methods are ones we have to implement, so they each need to be validated
               // first, check the return type. if it's a subcomponent, validate that method as such.
               Optional<AnnotationMirror> subcomponentAnnotation =

@@ -40,6 +40,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.MembersInjector;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -85,7 +86,19 @@ abstract class MemberSelect {
     BindingKey bindingKey = resolvedBindings.bindingKey();
     switch (bindingKey.kind()) {
       case CONTRIBUTION:
-        ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
+        ContributionBinding contributionBinding;
+        try {
+          contributionBinding = resolvedBindings.contributionBinding();
+        } catch (NoSuchElementException e) {
+          throw new AssertionError(
+              "Expected a contribution binding, but none found. *THIS IS A DAGGER BUG* - please "
+                  + "report it on Github with as much context as you can provide. Thanks!"
+                  + "\n\nBinding Key: " + resolvedBindings.bindingKey()
+                  + "\nMultibinding declarations: " + resolvedBindings.multibindingDeclarations()
+                  + "\nSubcomponent declarations: " + resolvedBindings.subcomponentDeclarations()
+                  + "\nOptional binding declarations: "
+                  + resolvedBindings.optionalBindingDeclarations());
+        }
         if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
             && !contributionBinding.scope().isPresent()) {
           switch (contributionBinding.bindingKind()) {

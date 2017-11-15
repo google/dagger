@@ -109,8 +109,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_testing_compile_compile_testing",
-    artifact = "com.google.testing.compile:compile-testing:0.11",
-    sha1 = "bff5d5aa61e6384b9dd4f5f7bb97a921081f4e1c",
+    artifact = "com.google.testing.compile:compile-testing:0.12",
+    sha1 = "b4c935fbb20788d462fbad7235fc9f94314d964b",
 )
 
 maven_jar(
@@ -133,14 +133,14 @@ maven_jar(
 
 maven_jar(
     name = "com_google_truth_truth",
-    artifact = "com.google.truth:truth:0.30",
-    sha1 = "9d591b5a66eda81f0b88cf1c748ab8853d99b18b",
+    artifact = "com.google.truth:truth:0.36",
+    sha1 = "7485219d2c1d341097a19382c02bde07e69ff5d2",
 )
 
 maven_jar(
     name = "com_google_truth_extensions_truth_java8_extension",
-    artifact = "com.google.truth.extensions:truth-java8-extension:0.30",
-    sha1 = "f3bb5e49001a9b575bcdef9aa8417b6d1ef35509",
+    artifact = "com.google.truth.extensions:truth-java8-extension:0.36",
+    sha1 = "dcc60988c8f9a051840766ef192a2ef41e7992f1",
 )
 
 maven_jar(

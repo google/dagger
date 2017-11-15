@@ -21,9 +21,8 @@ import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.truth.FailureStrategy;
+import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
-import com.google.common.truth.SubjectFactory;
 import com.google.common.truth.Truth;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
@@ -38,7 +37,7 @@ import javax.tools.JavaFileObject;
 final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject, String> {
 
   /** A {@link Truth} subject factory for testing Dagger module methods. */
-  static final class Factory extends SubjectFactory<DaggerModuleMethodSubject, String> {
+  static final class Factory implements Subject.Factory<DaggerModuleMethodSubject, String> {
 
     /** Starts a clause testing a Dagger {@link Module @Module} method. */
     static DaggerModuleMethodSubject assertThatModuleMethod(String method) {
@@ -68,8 +67,8 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
     private Factory() {}
 
     @Override
-    public DaggerModuleMethodSubject getSubject(FailureStrategy fs, String that) {
-      return new DaggerModuleMethodSubject(fs, that);
+    public DaggerModuleMethodSubject createSubject(FailureMetadata failureMetadata, String that) {
+      return new DaggerModuleMethodSubject(failureMetadata, that);
     }
   }
 
@@ -86,8 +85,8 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
   private String declaration;
   private ImmutableList<JavaFileObject> additionalSources = ImmutableList.of();
 
-  private DaggerModuleMethodSubject(FailureStrategy failureStrategy, String subject) {
-    super(failureStrategy, subject);
+  private DaggerModuleMethodSubject(FailureMetadata failureMetadata, String subject) {
+    super(failureMetadata, subject);
   }
 
   /**

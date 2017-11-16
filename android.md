@@ -111,7 +111,9 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     }
 
     @Component(modules = {..., YourActivityModule.class})
-    interface YourApplicationComponent {}
+    interface YourApplicationComponent {
+      void inject(YourApplication application);
+    }
     ```
 
     Pro-tip: If your subcomponent and its builder have no other methods or

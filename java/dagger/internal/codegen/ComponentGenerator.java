@@ -36,14 +36,14 @@ import javax.lang.model.util.Elements;
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final DaggerTypes types;
   private final Elements elements;
-  private final Key.Factory keyFactory;
+  private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
 
   ComponentGenerator(
       Filer filer,
       Elements elements,
       DaggerTypes types,
-      Key.Factory keyFactory,
+      KeyFactory keyFactory,
       CompilerOptions compilerOptions) {
     super(filer, elements);
     this.types = types;

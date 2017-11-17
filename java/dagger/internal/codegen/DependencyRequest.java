@@ -207,7 +207,7 @@ abstract class DependencyRequest {
    * Returns {@code true} if {@code requestElement}'s type is a primitive type.
    *
    * <p>Because the {@link #key()} of a {@link DependencyRequest} is {@linkplain
-   * Key.Factory#boxPrimitives(TypeMirror) boxed} to normalize it with other keys, this inspects the
+   * KeyFactory#boxPrimitives(TypeMirror) boxed} to normalize it with other keys, this inspects the
    * {@link #requestElement()} directly.
    */
   boolean requestsPrimitiveType() {
@@ -316,9 +316,9 @@ abstract class DependencyRequest {
    * which may mean that the type will be generated in a later round of processing.
    */
   static final class Factory {
-    private final Key.Factory keyFactory;
+    private final KeyFactory keyFactory;
 
-    Factory(Key.Factory keyFactory) {
+    Factory(KeyFactory keyFactory) {
       this.keyFactory = keyFactory;
     }
 

@@ -40,9 +40,9 @@ abstract class OptionalBindingDeclaration extends BindingDeclaration {
   public abstract Key key();
 
   static class Factory {
-    private final Key.Factory keyFactory;
+    private final KeyFactory keyFactory;
 
-    Factory(Key.Factory keyFactory) {
+    Factory(KeyFactory keyFactory) {
       this.keyFactory = keyFactory;
     }
 

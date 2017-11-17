@@ -75,7 +75,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
   protected final DaggerTypes types;
-  protected final Key.Factory keyFactory;
+  protected final KeyFactory keyFactory;
   protected final CompilerOptions compilerOptions;
   protected final ClassName name;
   protected final BindingGraph graph;
@@ -111,7 +111,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   AbstractComponentWriter(
       DaggerTypes types,
       Elements elements,
-      Key.Factory keyFactory,
+      KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,
       BindingGraph graph,
@@ -154,7 +154,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   }
 
   private static ImmutableMap<BindingKey, String> childComponentNames(
-      Key.Factory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
+      KeyFactory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
     ImmutableMap.Builder<BindingKey, String> builder = ImmutableMap.builder();
     subcomponentNames.forEach(
         (component, name) -> {

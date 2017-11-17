@@ -61,7 +61,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final Messager messager;
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
-  private final Key.Factory keyFactory;
+  private final KeyFactory keyFactory;
   private final ProvisionBinding.Factory provisionBindingFactory;
   private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
   private final CompilerOptions compilerOptions;
@@ -155,7 +155,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       Types types,
       Messager messager,
       InjectValidator injectValidator,
-      Key.Factory keyFactory,
+      KeyFactory keyFactory,
       ProvisionBinding.Factory provisionBindingFactory,
       MembersInjectionBinding.Factory membersInjectionBindingFactory,
       CompilerOptions compilerOptions) {

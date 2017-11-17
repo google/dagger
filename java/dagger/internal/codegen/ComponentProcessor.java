@@ -95,7 +95,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     DependencyRequestFormatter dependencyRequestFormatter =
         new DependencyRequestFormatter(types, elements);
 
-    Key.Factory keyFactory = new Key.Factory(types, elements);
+    KeyFactory keyFactory = new KeyFactory(types, elements);
 
     InjectValidator injectValidator = new InjectValidator(types, elements, compilerOptions);
     InjectValidator injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();

@@ -136,7 +136,7 @@ final class BindingGraphValidator {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFormatter dependencyRequestFormatter;
-  private final Key.Factory keyFactory;
+  private final KeyFactory keyFactory;
 
   BindingGraphValidator(
       Elements elements,
@@ -147,7 +147,7 @@ final class BindingGraphValidator {
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFormatter dependencyRequestFormatter,
-      Key.Factory keyFactory) {
+      KeyFactory keyFactory) {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;

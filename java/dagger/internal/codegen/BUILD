@@ -117,6 +117,7 @@ java_library(
         "FrameworkTypes.java",
         "InjectBindingRegistry.java",
         "Key.java",
+        "KeyFactory.java",
         "MapKeys.java",
         "MapType.java",
         "MembersInjectionBinding.java",

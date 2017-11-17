@@ -212,19 +212,23 @@ abstract class BindingGraph {
   }
 
   @Memoized
+  @Override
   public abstract int hashCode();
+
+  @Override // Suppresses ErrorProne warning that hashCode was overridden w/o equals
+  public abstract boolean equals(Object other);
 
   static final class Factory {
     private final Elements elements;
     private final InjectBindingRegistry injectBindingRegistry;
-    private final Key.Factory keyFactory;
+    private final KeyFactory keyFactory;
     private final ProvisionBinding.Factory provisionBindingFactory;
     private final ProductionBinding.Factory productionBindingFactory;
 
     Factory(
         Elements elements,
         InjectBindingRegistry injectBindingRegistry,
-        Key.Factory keyFactory,
+        KeyFactory keyFactory,
         ProvisionBinding.Factory provisionBindingFactory,
         ProductionBinding.Factory productionBindingFactory) {
       this.elements = elements;

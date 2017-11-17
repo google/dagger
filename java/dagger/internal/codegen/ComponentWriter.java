@@ -51,7 +51,7 @@ final class ComponentWriter extends AbstractComponentWriter {
   ComponentWriter(
       DaggerTypes types,
       Elements elements,
-      Key.Factory keyFactory,
+      KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,
       BindingGraph graph) {

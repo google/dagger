@@ -48,11 +48,11 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
 
   static final class Factory {
     private final Types types;
-    private final Key.Factory keyFactory;
+    private final KeyFactory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
 
     Factory(
-        Types types, Key.Factory keyFactory, DependencyRequest.Factory dependencyRequestFactory) {
+        Types types, KeyFactory keyFactory, DependencyRequest.Factory dependencyRequestFactory) {
       this.types = types;
       this.keyFactory = keyFactory;
       this.dependencyRequestFactory = dependencyRequestFactory;

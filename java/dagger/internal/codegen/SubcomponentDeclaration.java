@@ -54,9 +54,9 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
   abstract AnnotationMirror moduleAnnotation();
 
   static class Factory {
-    private final Key.Factory keyFactory;
+    private final KeyFactory keyFactory;
 
-    public Factory(Key.Factory keyFactory) {
+    public Factory(KeyFactory keyFactory) {
       this.keyFactory = keyFactory;
     }
 

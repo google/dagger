@@ -55,12 +55,12 @@ public class KeyTest {
 
   private Elements elements;
   private Types types;
-  private Key.Factory keyFactory;
+  private KeyFactory keyFactory;
 
   @Before public void setUp() {
     this.types = compilationRule.getTypes();
     this.elements = compilationRule.getElements();
-    this.keyFactory = new Key.Factory(types, elements);
+    this.keyFactory = new KeyFactory(types, elements);
   }
 
   @Test public void forInjectConstructorWithResolvedType() {

@@ -77,14 +77,12 @@ abstract class MultibindingDeclaration extends BindingDeclaration
   static final class Factory {
     private final Elements elements;
     private final Types types;
-    private final Key.Factory keyFactory;
-    private final TypeElement objectElement;
+    private final KeyFactory keyFactory;
 
-    Factory(Elements elements, Types types, Key.Factory keyFactory) {
+    Factory(Elements elements, Types types, KeyFactory keyFactory) {
       this.elements = elements;
       this.types = types;
       this.keyFactory = keyFactory;
-      this.objectElement = elements.getTypeElement(Object.class.getCanonicalName());
     }
 
     /** A multibinding declaration for a {@link Multibinds @Multibinds} method. */

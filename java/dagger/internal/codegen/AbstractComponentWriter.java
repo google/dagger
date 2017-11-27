@@ -75,11 +75,10 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
   protected final DaggerTypes types;
-  protected final KeyFactory keyFactory;
   protected final CompilerOptions compilerOptions;
   protected final ClassName name;
   protected final BindingGraph graph;
-  protected final ImmutableMap<ComponentDescriptor, String> subcomponentNames;
+  protected final SubcomponentNames subcomponentNames;
   protected final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
@@ -111,17 +110,15 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   AbstractComponentWriter(
       DaggerTypes types,
       Elements elements,
-      KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,
       BindingGraph graph,
-      ImmutableMap<ComponentDescriptor, String> subcomponentNames,
+      SubcomponentNames subcomponentNames,
       OptionalFactories optionalFactories,
       ComponentBindingExpressions bindingExpressions,
       ComponentRequirementFields componentRequirementFields) {
     this.types = types;
     this.elements = elements;
-    this.keyFactory = keyFactory;
     this.compilerOptions = compilerOptions;
     this.component = classBuilder(name);
     this.name = name;
@@ -144,7 +141,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
             bindingExpressions,
             componentRequirementFields,
             this,
-            childComponentNames(keyFactory, subcomponentNames),
+            subcomponentNames,
             graph,
             types,
             elements,
@@ -153,26 +150,11 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
         new ComponentRequirementField.Factory(this, name, builderFields);
   }
 
-  private static ImmutableMap<BindingKey, String> childComponentNames(
-      KeyFactory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
-    ImmutableMap.Builder<BindingKey, String> builder = ImmutableMap.builder();
-    subcomponentNames.forEach(
-        (component, name) -> {
-          if (component.builderSpec().isPresent()) {
-            TypeMirror builderType = component.builderSpec().get().builderDefinitionType().asType();
-            builder.put(
-                BindingKey.contribution(keyFactory.forSubcomponentBuilder(builderType)), name);
-          }
-        });
-    return builder.build();
-  }
-
   protected AbstractComponentWriter(
       AbstractComponentWriter parent, ClassName name, BindingGraph graph) {
     this(
         parent.types,
         parent.elements,
-        parent.keyFactory,
         parent.compilerOptions,
         name,
         graph,

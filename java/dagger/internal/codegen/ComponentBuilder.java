@@ -78,7 +78,7 @@ final class ComponentBuilder {
   static ComponentBuilder create(
       ClassName componentName,
       BindingGraph graph,
-      ImmutableMap<ComponentDescriptor, String> subcomponentNames,
+      SubcomponentNames subcomponentNames,
       Elements elements,
       Types types) {
     return new Creator(componentName, graph, subcomponentNames, elements, types).create();
@@ -99,7 +99,7 @@ final class ComponentBuilder {
     Creator(
         ClassName componentName,
         BindingGraph graph,
-        ImmutableMap<ComponentDescriptor, String> subcomponentNames,
+        SubcomponentNames subcomponentNames,
         Elements elements,
         Types types) {
       this.componentName = componentName;

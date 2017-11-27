@@ -26,7 +26,6 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -78,7 +77,7 @@ abstract class BindingExpression {
     private final ComponentBindingExpressions componentBindingExpressions;
     private final ComponentRequirementFields componentRequirementFields;
     private final GeneratedComponentModel generatedComponentModel;
-    private final ImmutableMap<BindingKey, String> subcomponentNames;
+    private final SubcomponentNames subcomponentNames;
     private final BindingGraph graph;
     private final DaggerTypes types;
     private final Elements elements;
@@ -90,7 +89,7 @@ abstract class BindingExpression {
         ComponentBindingExpressions componentBindingExpressions,
         ComponentRequirementFields componentRequirementFields,
         GeneratedComponentModel generatedComponentModel,
-        ImmutableMap<BindingKey, String> subcomponentNames,
+        SubcomponentNames subcomponentNames,
         BindingGraph graph,
         DaggerTypes types,
         Elements elements,

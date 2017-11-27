@@ -214,6 +214,7 @@ java_library(
         "SimpleInvocationBindingExpression.java",
         "SimpleMethodBindingExpression.java",
         "SubcomponentBuilderBindingExpression.java",
+        "SubcomponentNames.java",
         "SubcomponentWriter.java",
         "UnwrappedMapKeyGenerator.java",
     ],

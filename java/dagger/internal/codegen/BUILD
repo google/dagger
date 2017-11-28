@@ -120,6 +120,7 @@ java_library(
         "InjectBindingRegistry.java",
         "Key.java",
         "KeyFactory.java",
+        "Keys.java",
         "MapKeys.java",
         "MapType.java",
         "MembersInjectionBinding.java",

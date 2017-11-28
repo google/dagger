@@ -30,7 +30,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
-import dagger.internal.codegen.Key.HasKey;
+import dagger.internal.codegen.Keys.HasKey;
 import java.util.Optional;
 
 /**

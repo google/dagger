@@ -23,7 +23,7 @@ import static dagger.internal.codegen.ErrorMessages.BINDS_OPTIONAL_OF_METHOD_HAS
 import static dagger.internal.codegen.ErrorMessages.BINDS_OPTIONAL_OF_METHOD_RETURNS_IMPLICITLY_PROVIDED_TYPE;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
-import static dagger.internal.codegen.Key.isValidImplicitProvisionKey;
+import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;

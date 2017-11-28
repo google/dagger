@@ -60,6 +60,8 @@ import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetad
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
 import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
+import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
+import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Scope.scopesOf;
@@ -877,7 +879,7 @@ final class BindingGraphValidator {
           requiresErrorMessageFormat = CANNOT_INJECT_WILDCARD_TYPE;
         } else {
           boolean requiresProvision = doesPathRequireProvisionOnly();
-          if (!key.isValidImplicitProvisionKey(types)) {
+          if (!isValidImplicitProvisionKey(key, types)) {
             requiresErrorMessageFormat =
                 requiresProvision ? REQUIRES_PROVIDER_FORMAT : REQUIRES_PROVIDER_OR_PRODUCER_FORMAT;
           } else {
@@ -890,7 +892,7 @@ final class BindingGraphValidator {
         StringBuilder errorMessage =
             new StringBuilder(
                 String.format(requiresErrorMessageFormat, formatCurrentDependencyRequestKey()));
-        if (key.isValidMembersInjectionKey()
+        if (isValidMembersInjectionKey(key)
             && injectBindingRegistry.getOrFindMembersInjectionBinding(key)
                 .map(binding -> !binding.injectionSites().isEmpty())
                 .orElse(false)) {

@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
+import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
+import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 
 import com.google.auto.common.MoreElements;
@@ -285,7 +287,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   @Override
   public Optional<ProvisionBinding> getOrFindProvisionBinding(Key key) {
     checkNotNull(key);
-    if (!key.isValidImplicitProvisionKey(types)) {
+    if (!isValidImplicitProvisionKey(key, types)) {
       return Optional.empty();
     }
     ProvisionBinding binding = provisionBindings.getBinding(key);
@@ -314,7 +316,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   public Optional<MembersInjectionBinding> getOrFindMembersInjectionBinding(Key key) {
     checkNotNull(key);
     // TODO(gak): is checking the kind enough?
-    checkArgument(key.isValidMembersInjectionKey());
+    checkArgument(isValidMembersInjectionKey(key));
     MembersInjectionBinding binding = membersInjectionBindings.getBinding(key);
     if (binding != null) {
       return Optional.of(binding);

@@ -20,7 +20,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -98,12 +97,6 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   @Override
   protected void decorateComponent() {
     component.addModifiers(PRIVATE, FINAL);
-    addSupertype(
-        component,
-        MoreTypes.asTypeElement(
-            graph.componentDescriptor().builderSpec().isPresent()
-                ? graph.componentDescriptor().builderSpec().get().componentType()
-                : resolvedSubcomponentFactoryMethod().getReturnType()));
   }
 
   @Override

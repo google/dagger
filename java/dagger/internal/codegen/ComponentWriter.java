@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -55,7 +54,6 @@ final class ComponentWriter extends AbstractComponentWriter {
   @Override
   protected void decorateComponent() {
     component.addModifiers(PUBLIC, FINAL);
-    addSupertype(component, graph.componentType());
   }
 
   private void addBuilderFactoryMethod() {

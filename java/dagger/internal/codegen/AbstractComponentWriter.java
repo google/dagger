@@ -33,6 +33,7 @@ import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
+import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -219,6 +220,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
   final TypeSpec.Builder write() {
     checkState(!done, "ComponentWriter has already been generated.");
     decorateComponent();
+    addSupertype(component, graph.componentType());
     if (hasBuilder(graph)) {
       addBuilder();
     }
@@ -243,6 +245,7 @@ abstract class AbstractComponentWriter implements GeneratedComponentModel {
     return component;
   }
 
+  // TODO(user): move this into GeneratedComponentModel
   /**
    * Adds Javadoc, modifiers, supertypes, and annotations to the component implementation class
    * declaration.

@@ -24,6 +24,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
@@ -527,8 +528,7 @@ final class FrameworkFieldInitializer {
   }
 
   private boolean useRawType() {
-    Optional<String> bindingPackage = resolvedBindings.binding().bindingPackage();
-    return bindingPackage.isPresent() && !bindingPackage.get().equals(componentName.packageName());
+    return !isTypeAccessibleFrom(resolvedBindings.key().type(), componentName.packageName());
   }
 
   /**

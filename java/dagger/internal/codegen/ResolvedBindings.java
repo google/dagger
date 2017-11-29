@@ -290,17 +290,6 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   }
 
   /**
-   * The name of the package in which these bindings must be managed, for
-   * example if a binding references non-public types.
-   *
-   * @throws IllegalStateException if there is more than one binding
-   */
-  Optional<String> bindingPackage() {
-    checkState(bindings().size() == 1);
-    return binding().bindingPackage();
-  }
-
-  /**
    * The framework class associated with these bindings.
    */
   Class<?> frameworkClass() {

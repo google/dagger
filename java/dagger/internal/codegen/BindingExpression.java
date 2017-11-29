@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
@@ -127,7 +128,8 @@ abstract class BindingExpression {
      */
     private FieldSpec generateFrameworkField(
         ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
-      boolean useRawType = useRawType(resolvedBindings);
+      boolean useRawType =
+          !isTypeAccessibleFrom(resolvedBindings.key().type(), componentName.packageName());
 
       FrameworkField contributionBindingField =
           FrameworkField.forResolvedBindings(resolvedBindings, frameworkClass);
@@ -143,12 +145,6 @@ abstract class BindingExpression {
       }
 
       return contributionField.build();
-    }
-
-    private boolean useRawType(ResolvedBindings resolvedBindings) {
-      Optional<String> bindingPackage = resolvedBindings.bindingPackage();
-      return bindingPackage.isPresent()
-          && !bindingPackage.get().equals(componentName.packageName());
     }
 
     private FrameworkFieldInitializer newFrameworkFieldInitializer(

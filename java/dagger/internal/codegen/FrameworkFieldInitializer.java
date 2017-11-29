@@ -36,7 +36,10 @@ import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
+import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
+import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
+import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
@@ -80,6 +83,7 @@ import javax.lang.model.type.TypeMirror;
  */
 final class FrameworkFieldInitializer {
   private final FieldSpec fieldSpec;
+  private final SubcomponentNames subcomponentNames;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ComponentRequirementFields componentRequirementFields;
@@ -89,51 +93,55 @@ final class FrameworkFieldInitializer {
   private final BindingGraph graph;
   private final boolean isProducerFromProvider;
   private final OptionalFactories optionalFactories;
-  private final ClassName componentName;
+  private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   FrameworkFieldInitializer(
       FieldSpec fieldSpec,
       ResolvedBindings resolvedBindings,
+      SubcomponentNames subcomponentNames,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementFields componentRequirementFields,
+      ReferenceReleasingManagerFields referenceReleasingManagerFields,
       CompilerOptions compilerOptions,
       BindingGraph graph,
-      OptionalFactories optionalFactories,
-      ClassName componentName) {
+      OptionalFactories optionalFactories) {
     this(
         fieldSpec,
         resolvedBindings,
+        subcomponentNames,
         generatedComponentModel,
         componentBindingExpressions,
         componentRequirementFields,
+        referenceReleasingManagerFields,
         compilerOptions,
         graph,
         false,
-        optionalFactories,
-        componentName);
+        optionalFactories);
   }
 
   private FrameworkFieldInitializer(
       FieldSpec fieldSpec,
       ResolvedBindings resolvedBindings,
+      SubcomponentNames subcomponentNames,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementFields componentRequirementFields,
+      ReferenceReleasingManagerFields referenceReleasingManagerFields,
       CompilerOptions compilerOptions,
       BindingGraph graph,
       boolean isProducerFromProvider,
-      OptionalFactories optionalFactories,
-      ClassName componentName) {
+      OptionalFactories optionalFactories) {
+    this.subcomponentNames = checkNotNull(subcomponentNames);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
+    this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.graph = checkNotNull(graph);
     this.optionalFactories = checkNotNull(optionalFactories);
-    this.componentName = checkNotNull(componentName);
     this.isProducerFromProvider = isProducerFromProvider;
     this.fieldSpec = checkNotNull(fieldSpec);
   }
@@ -188,7 +196,7 @@ final class FrameworkFieldInitializer {
           componentBindingExpressions
               .getDependencyExpression(
                   FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION),
-                  componentName)
+                  generatedComponentModel.name())
               .codeBlock());
     }
 
@@ -212,8 +220,7 @@ final class FrameworkFieldInitializer {
                 contributionBinding.bindingType().frameworkClass(),
                 getDependencyExpression(
                     getOnlyElement(contributionBinding.frameworkDependencies())));
-        return generatedComponentModel.decorateForScope(
-            delegatingCodeBlock, contributionBinding.scope());
+        return decorateForScope(delegatingCodeBlock, contributionBinding.scope());
       case SINGLETON_INSTANCE:
         checkState(contributionBinding.scope().isPresent());
         // fall through
@@ -246,7 +253,8 @@ final class FrameworkFieldInitializer {
             "$T.create($L)",
             INSTANCE_FACTORY,
             componentRequirementFields.getExpressionDuringInitialization(
-                ComponentRequirement.forDependency(binding.key().type()), componentName));
+                ComponentRequirement.forDependency(binding.key().type()),
+                generatedComponentModel.name()));
 
       case COMPONENT_PROVISION:
         {
@@ -293,12 +301,13 @@ final class FrameworkFieldInitializer {
               "new $L($L)",
               factoryName,
               componentRequirementFields.getExpressionDuringInitialization(
-                  ComponentRequirement.forDependency(dependencyType.asType()), componentName));
+                  ComponentRequirement.forDependency(dependencyType.asType()),
+                  generatedComponentModel.name()));
         }
 
       case SUBCOMPONENT_BUILDER:
         String subcomponentName =
-            generatedComponentModel.getSubcomponentName(
+            subcomponentNames.get(
                 graph
                     .componentDescriptor()
                     .subcomponentsByBuilderType()
@@ -322,7 +331,7 @@ final class FrameworkFieldInitializer {
             InstanceFactory.class,
             binding.nullableType().isPresent() ? "createNullable" : "create",
             componentRequirementFields.getExpressionDuringInitialization(
-                ComponentRequirement.forBinding(binding), componentName));
+                ComponentRequirement.forBinding(binding), generatedComponentModel.name()));
 
       case INJECTION:
       case PROVISION:
@@ -333,7 +342,7 @@ final class FrameworkFieldInitializer {
             arguments.add(
                 componentRequirementFields.getExpressionDuringInitialization(
                     ComponentRequirement.forModule(binding.contributingModule().get().asType()),
-                    componentName));
+                    generatedComponentModel.name()));
           }
           arguments.addAll(getBindingDependencyExpressions(binding));
 
@@ -351,7 +360,7 @@ final class FrameworkFieldInitializer {
             factoryCreate =
                 CodeBlock.of("($T) $L", binding.bindingType().frameworkClass(), factoryCreate);
           }
-          return generatedComponentModel.decorateForScope(factoryCreate, binding.scope());
+          return decorateForScope(factoryCreate, binding.scope());
         }
 
       case COMPONENT_PRODUCTION:
@@ -366,7 +375,7 @@ final class FrameworkFieldInitializer {
                   .initializer(
                       componentRequirementFields.getExpressionDuringInitialization(
                           ComponentRequirement.forDependency(dependencyType.asType()),
-                          componentName))
+                          generatedComponentModel.name()))
                   .build();
           return CodeBlock.of(
               "$L",
@@ -394,7 +403,7 @@ final class FrameworkFieldInitializer {
             arguments.add(
                 componentRequirementFields.getExpressionDuringInitialization(
                     ComponentRequirement.forModule(binding.contributingModule().get().asType()),
-                    componentName));
+                    generatedComponentModel.name()));
           }
           arguments.addAll(getBindingDependencyExpressions(binding));
 
@@ -421,6 +430,27 @@ final class FrameworkFieldInitializer {
 
       default:
         throw new AssertionError(binding);
+    }
+  }
+
+  /**
+   * Maybe wraps the given creation code block in single/double check or reference releasing
+   * providers.
+   */
+  private CodeBlock decorateForScope(CodeBlock factoryCreate, Optional<Scope> maybeScope) {
+    if (!maybeScope.isPresent()) {
+      return factoryCreate;
+    }
+    Scope scope = maybeScope.get();
+    if (referenceReleasingManagerFields.requiresReleasableReferences(scope)) {
+      return CodeBlock.of(
+          "$T.create($L, $L)",
+          REFERENCE_RELEASING_PROVIDER,
+          factoryCreate,
+          referenceReleasingManagerFields.getExpression(scope, generatedComponentModel.name()));
+    } else {
+      return CodeBlock.of(
+          "$T.provider($L)", scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK, factoryCreate);
     }
   }
 
@@ -512,7 +542,9 @@ final class FrameworkFieldInitializer {
               getDependencyExpression(frameworkDependency));
       codeBlocks.add(
           CodeBlock.of(
-              ".put($L, $L)", getMapKeyExpression(contributionBinding, componentName), value));
+              ".put($L, $L)",
+              getMapKeyExpression(contributionBinding, generatedComponentModel.name()),
+              value));
     }
     codeBlocks.add(CodeBlock.of(".build()"));
 
@@ -528,7 +560,9 @@ final class FrameworkFieldInitializer {
   }
 
   private boolean useRawType() {
-    return !isTypeAccessibleFrom(resolvedBindings.key().type(), componentName.packageName());
+
+    return !isTypeAccessibleFrom(
+        resolvedBindings.key().type(), generatedComponentModel.name().packageName());
   }
 
   /**
@@ -551,12 +585,12 @@ final class FrameworkFieldInitializer {
           MoreTypes.asDeclared(binding.key().type()).getTypeArguments().get(0);
       managerExpression =
           typedReleasableReferenceManagerDecoratorExpression(
-              generatedComponentModel.getReferenceReleasingProviderManagerExpression(scope),
+              referenceReleasingManagerFields.getExpression(scope, generatedComponentModel.name()),
               scope.releasableReferencesMetadata(metadataType).get());
     } else {
       // The key's type is ReleasableReferenceManager, so return the field as is.
       managerExpression =
-          generatedComponentModel.getReferenceReleasingProviderManagerExpression(scope);
+          referenceReleasingManagerFields.getExpression(scope, generatedComponentModel.name());
     }
 
     TypeName keyType = TypeName.get(binding.key().type());
@@ -589,7 +623,7 @@ final class FrameworkFieldInitializer {
     ImmutableList.Builder<CodeBlock> managerExpressions = ImmutableList.builder();
     for (Scope scope : graph.scopesRequiringReleasableReferenceManagers()) {
       CodeBlock releasableReferenceManagerExpression =
-          generatedComponentModel.getReferenceReleasingProviderManagerExpression(scope);
+          referenceReleasingManagerFields.getExpression(scope, generatedComponentModel.name());
 
       if (keyType.elementsAreTypeOf(ReleasableReferenceManager.class)) {
         managerExpressions.add(releasableReferenceManagerExpression);
@@ -672,7 +706,7 @@ final class FrameworkFieldInitializer {
   /** Returns a code block referencing the given dependency. */
   private CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
     return componentBindingExpressions
-        .getDependencyExpression(frameworkDependency, componentName)
+        .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
         .codeBlock();
   }
 
@@ -680,14 +714,15 @@ final class FrameworkFieldInitializer {
     return new FrameworkFieldInitializer(
         fieldSpec,
         resolvedBindings,
+        subcomponentNames,
         generatedComponentModel,
         componentBindingExpressions,
         componentRequirementFields,
+        referenceReleasingManagerFields,
         compilerOptions,
         graph,
         true,
-        optionalFactories,
-        componentName);
+        optionalFactories);
   }
 
   /** Initialization state for a factory field. */

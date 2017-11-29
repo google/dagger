@@ -49,7 +49,6 @@ import javax.lang.model.util.Elements;
  * <p>Dependents of this binding expression will just called the no-arg method.
  */
 final class PrivateMethodBindingExpression extends BindingExpression {
-  private final ClassName componentName;
   private final GeneratedComponentModel generatedComponentModel;
   private final BindingExpression delegate;
   private final Map<DependencyRequest.Kind, String> methodNames =
@@ -58,22 +57,23 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       new EnumMap<>(DependencyRequest.Kind.class);
   private final ContributionBinding binding;
   private final CompilerOptions compilerOptions;
+  private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final DaggerTypes types;
   private final Elements elements;
 
   PrivateMethodBindingExpression(
       ResolvedBindings resolvedBindings,
-      ClassName componentName,
       GeneratedComponentModel generatedComponentModel,
       BindingExpression delegate,
+      ReferenceReleasingManagerFields referenceReleasingManagerFields,
       CompilerOptions compilerOptions,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
-    this.componentName = componentName;
     this.generatedComponentModel = generatedComponentModel;
     this.delegate = delegate;
     binding = resolvedBindings.contributionBinding();
+    this.referenceReleasingManagerFields = referenceReleasingManagerFields;
     this.compilerOptions = compilerOptions;
     this.types = types;
     this.elements = elements;
@@ -114,10 +114,14 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     }
 
     CodeBlock invocation =
-        componentName.equals(requestingClass)
+        componentName().equals(requestingClass)
             ? CodeBlock.of("$N()", methodNames.get(requestKind))
-            : CodeBlock.of("$T.this.$N()", componentName, methodNames.get(requestKind));
+            : CodeBlock.of("$T.this.$N()", componentName(), methodNames.get(requestKind));
     return Expression.create(returnType(requestKind), invocation);
+  }
+
+  private ClassName componentName() {
+    return generatedComponentModel.name();
   }
 
   // TODO(user): Invert this method to return true if we are using the private method strategy.
@@ -147,7 +151,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     // TODO(user): Enable for releasable references
     return compilerOptions.experimentalAndroidMode()
         && binding.scope().isPresent()
-        && !generatedComponentModel.requiresReleasableReferences(binding.scope().get());
+        && !referenceReleasingManagerFields.requiresReleasableReferences(binding.scope().get());
   }
 
   /** Returns the first component method associated with this request kind, if one exists. */
@@ -207,7 +211,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         // dependency instead of delegating to the private method. To use the private method,
         // recursively call this.getDependencyExpression().
         CodeBlock asProvider =
-            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName).codeBlock();
+            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName()).codeBlock();
         return CodeBlock.of("return $L;", FrameworkType.PROVIDER.to(requestKind, asProvider));
       case INSTANCE:
         if (canInlineScope()) {
@@ -219,7 +223,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       case PRODUCER:
       case FUTURE:
         return CodeBlock.of(
-            "return $L;", delegate.getDependencyExpression(requestKind, componentName).codeBlock());
+            "return $L;",
+            delegate.getDependencyExpression(requestKind, componentName()).codeBlock());
       default:
         throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
     }
@@ -232,7 +237,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         .addStatement(
             "$N = $L",
             fieldName,
-            delegate.getDependencyExpression(requestKind, componentName).codeBlock())
+            delegate.getDependencyExpression(requestKind, componentName()).codeBlock())
         .endControlFlow()
         .addStatement("return ($T) $N", returnType(requestKind), fieldName)
         .build();
@@ -251,7 +256,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         .addStatement(
             "$L = $L",
             fieldName,
-            delegate.getDependencyExpression(requestKind, componentName).codeBlock())
+            delegate.getDependencyExpression(requestKind, componentName()).codeBlock())
         .endControlFlow()
         .addStatement("local = $L", fieldName)
         .endControlFlow()
@@ -284,7 +289,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
                 .returns(TypeName.get(accessibleType(binding.contributedType())))
                 .addStatement(
                     "return $L",
-                    getDependencyExpression(DependencyRequest.Kind.INSTANCE, componentName)
+                    getDependencyExpression(DependencyRequest.Kind.INSTANCE, componentName())
                         .codeBlock())
                 .build())
         .build();
@@ -312,9 +317,9 @@ final class PrivateMethodBindingExpression extends BindingExpression {
 
   /** Returns a {@link TypeName} for the binding that is accessible to the component. */
   private TypeMirror accessibleType(TypeMirror typeMirror) {
-    if (Accessibility.isTypeAccessibleFrom(typeMirror, componentName.packageName())) {
+    if (Accessibility.isTypeAccessibleFrom(typeMirror, componentName().packageName())) {
       return typeMirror;
-    } else if (Accessibility.isRawTypeAccessible(typeMirror, componentName.packageName())
+    } else if (Accessibility.isRawTypeAccessible(typeMirror, componentName().packageName())
         && typeMirror.getKind().equals(TypeKind.DECLARED)) {
       return types.getDeclaredType(MoreTypes.asTypeElement(typeMirror));
     } else {

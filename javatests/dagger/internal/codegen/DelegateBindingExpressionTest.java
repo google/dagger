@@ -190,10 +190,7 @@ public class DelegateBindingExpressionTest {
                     "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
+                    "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -204,6 +201,9 @@ public class DelegateBindingExpressionTest {
                     "  private Provider<ReusableScoped> reusableScopedProvider;")
                 .addLines(
                     "  private Provider<Object> reusableProvider;",
+                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                    "      new ReferenceReleasingProviderManager(",
+                    "          ReleasableScoped.CustomScope.class);",
                     "  private Provider<ReleasableScoped> releasableScopedProvider;",
                     "  private Provider<Object> releasableProvider;",
                     "  private Provider<Object> unscopedProvider;",
@@ -376,10 +376,7 @@ public class DelegateBindingExpressionTest {
                     "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
+                    "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -389,6 +386,9 @@ public class DelegateBindingExpressionTest {
                     "  private Provider<RegularScoped> regularScopedProvider;",
                     "  private Provider<ReusableScoped> reusableScopedProvider;")
                 .addLines(
+                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                    "      new ReferenceReleasingProviderManager(",
+                    "          ReleasableScoped.CustomScope.class);",
                     "  private Provider<ReleasableScoped> releasableScopedProvider;",
                     "  private Provider<Object> releasableProvider;",
                     "  private Provider<Object> unscopedProvider;",
@@ -554,10 +554,7 @@ public class DelegateBindingExpressionTest {
                     "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
+                    "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -567,6 +564,9 @@ public class DelegateBindingExpressionTest {
                     "  private Provider<RegularScoped> regularScopedProvider;",
                     "  private Provider<ReusableScoped> reusableScopedProvider;")
                 .addLines(
+                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                    "      new ReferenceReleasingProviderManager(",
+                    "          ReleasableScoped.CustomScope.class);",
                     "  private Provider<ReleasableScoped> releasableScopedProvider;",
                     "  private Provider<Object> unscopedProvider;",
                     "  private Provider<ReleasableReferenceManager>",
@@ -730,10 +730,7 @@ public class DelegateBindingExpressionTest {
                     "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);")
+                    "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -743,6 +740,9 @@ public class DelegateBindingExpressionTest {
                     "  private Provider<RegularScoped> regularScopedProvider;",
                     "  private Provider<ReusableScoped> reusableScopedProvider;")
                 .addLines(
+                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
+                    "      new ReferenceReleasingProviderManager(",
+                    "          ReleasableScoped.CustomScope.class);",
                     "  private Provider<ReleasableScoped> releasableScopedProvider;",
                     "  private Provider<ReleasableReferenceManager>",
                     "      forReleasableReferencesReleasableReferenceManagerProvider;",

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -31,29 +30,37 @@ import javax.lang.model.util.Elements;
  * Creates the implementation class for a component.
  */
 final class ComponentWriter extends AbstractComponentWriter {
-
-  ComponentWriter(
+  static TypeSpec.Builder write(
       DaggerTypes types,
       Elements elements,
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,
       BindingGraph graph) {
+    GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.forComponent(name);
+    return new ComponentWriter(
+            types, elements, keyFactory, compilerOptions, graph, generatedComponentModel)
+        .write();
+  }
+
+  private ComponentWriter(
+      DaggerTypes types,
+      Elements elements,
+      KeyFactory keyFactory,
+      CompilerOptions compilerOptions,
+      BindingGraph graph,
+      GeneratedComponentModel generatedComponentModel) {
     super(
         types,
         elements,
         compilerOptions,
-        name,
         graph,
+        generatedComponentModel,
         new SubcomponentNames(graph, keyFactory),
         new OptionalFactories(),
         new ComponentBindingExpressions(types),
-        new ComponentRequirementFields());
-  }
-
-  @Override
-  protected void decorateComponent() {
-    component.addModifiers(PUBLIC, FINAL);
+        new ComponentRequirementFields(),
+        new ReferenceReleasingManagerFields(graph, generatedComponentModel));
   }
 
   private void addBuilderFactoryMethod() {
@@ -69,12 +76,12 @@ final class ComponentWriter extends AbstractComponentWriter {
                     : builderName())
             .addStatement("return new $T()", builderName())
             .build();
-    component.addMethod(builderFactoryMethod);
+    generatedComponentModel.addMethod(builderFactoryMethod);
   }
 
   @Override
   protected void addBuilderClass(TypeSpec builder) {
-    component.addType(builder);
+    generatedComponentModel.addType(builder);
   }
 
   @Override
@@ -85,7 +92,7 @@ final class ComponentWriter extends AbstractComponentWriter {
           graph.componentDescriptor().builderSpec().isPresent()
               ? graph.componentDescriptor().builderSpec().get().buildMethod().getSimpleName()
               : "build";
-      component.addMethod(
+      generatedComponentModel.addMethod(
           methodBuilder("create")
               .returns(ClassName.get(graph.componentType()))
               .addModifiers(PUBLIC, STATIC)
@@ -99,10 +106,5 @@ final class ComponentWriter extends AbstractComponentWriter {
     return !Iterables.any(
         graph.componentRequirements(),
         dependency -> dependency.requiresAPassedInstance(elements, types));
-  }
-
-  @Override
-  public boolean requiresReleasableReferences(Scope scope) {
-    return graph.scopesRequiringReleasableReferenceManagers().contains(scope);
   }
 }

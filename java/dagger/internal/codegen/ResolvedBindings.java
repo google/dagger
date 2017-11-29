@@ -123,12 +123,13 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   }
 
   /**
-   * {@code true} if there are no {@link #bindings()}, {@link #multibindingDeclarations()}, or
-   * {@link #subcomponentDeclarations()}.
+   * {@code true} if there are no {@link #bindings()}, {@link #multibindingDeclarations()},
+   * {@link #optionalBindingDeclarations()}, or {@link #subcomponentDeclarations()}.
    */
   boolean isEmpty() {
     return bindings().isEmpty()
         && multibindingDeclarations().isEmpty()
+        && optionalBindingDeclarations().isEmpty()
         && subcomponentDeclarations().isEmpty();
   }
 

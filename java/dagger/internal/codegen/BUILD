@@ -21,9 +21,11 @@ load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
+KYTHE_SRCS = ["KytheBindingGraphFactory.java"]
+
 CODEGEN_SRCS = glob(
     ["*.java"],
-    exclude = EXPERIMENTAL_VISUALIZER_SRCS,
+    exclude = EXPERIMENTAL_VISUALIZER_SRCS + KYTHE_SRCS,
 )
 
 CODEGEN_PLUGINS = [
@@ -118,6 +120,7 @@ java_library(
         "InjectBindingRegistry.java",
         "Key.java",
         "KeyFactory.java",
+        "Keys.java",
         "MapKeys.java",
         "MapType.java",
         "MembersInjectionBinding.java",
@@ -201,6 +204,7 @@ java_library(
         "InjectionMethods.java",
         "MapBindingExpression.java",
         "MemberSelect.java",
+        "MembersInjectionMethods.java",
         "MembersInjectorGenerator.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
@@ -210,10 +214,12 @@ java_library(
         "ProducerFactoryGenerator.java",
         "ProductionExecutorModuleGenerator.java",
         "ProviderOrProducerBindingExpression.java",
+        "ReferenceReleasingManagerFields.java",
         "SetBindingExpression.java",
         "SimpleInvocationBindingExpression.java",
         "SimpleMethodBindingExpression.java",
         "SubcomponentBuilderBindingExpression.java",
+        "SubcomponentNames.java",
         "SubcomponentWriter.java",
         "UnwrappedMapKeyGenerator.java",
     ],
@@ -245,6 +251,20 @@ java_library(
         ":binding",
         ":writing",
         ":validation",
+    ],
+)
+
+java_library(
+    name = "kythe",
+    srcs = KYTHE_SRCS,
+    deps = [
+        ":base",
+        ":binding",
+        ":processor",
+        ":validation",
+        "//java/dagger:core",
+        "//java/dagger/producers",
+        "//third_party:auto_common",
     ],
 )
 

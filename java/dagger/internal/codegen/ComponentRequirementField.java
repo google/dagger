@@ -146,10 +146,9 @@ abstract class ComponentRequirementField {
 
     Factory(
         GeneratedComponentModel generatedComponentModel,
-        ClassName owningComponent,
         ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
-      this.owningComponent = checkNotNull(owningComponent);
+      this.owningComponent = checkNotNull(generatedComponentModel.name());
       this.builderFields = checkNotNull(builderFields);
     }
 

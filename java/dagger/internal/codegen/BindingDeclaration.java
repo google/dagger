@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.ENCLOSING_TYPE_ELEMENT;
 
-import dagger.internal.codegen.Key.HasKey;
+import dagger.internal.codegen.Keys.HasKey;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
@@ -26,7 +27,6 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -74,11 +74,12 @@ abstract class BindingExpression {
             EnumSet.of(SYNTHETIC_MULTIBOUND_SET, SYNTHETIC_MULTIBOUND_MAP, INJECTION, PROVISION));
 
     private final CompilerOptions compilerOptions;
-    private final ClassName componentName;
     private final ComponentBindingExpressions componentBindingExpressions;
     private final ComponentRequirementFields componentRequirementFields;
+    private final MembersInjectionMethods membersInjectionMethods;
+    private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
     private final GeneratedComponentModel generatedComponentModel;
-    private final ImmutableMap<BindingKey, String> subcomponentNames;
+    private final SubcomponentNames subcomponentNames;
     private final BindingGraph graph;
     private final DaggerTypes types;
     private final Elements elements;
@@ -86,19 +87,21 @@ abstract class BindingExpression {
 
     Factory(
         CompilerOptions compilerOptions,
-        ClassName componentName,
         ComponentBindingExpressions componentBindingExpressions,
         ComponentRequirementFields componentRequirementFields,
+        MembersInjectionMethods membersInjectionMethods,
+        ReferenceReleasingManagerFields referenceReleasingManagerFields,
         GeneratedComponentModel generatedComponentModel,
-        ImmutableMap<BindingKey, String> subcomponentNames,
+        SubcomponentNames subcomponentNames,
         BindingGraph graph,
         DaggerTypes types,
         Elements elements,
         OptionalFactories optionalFactories) {
       this.compilerOptions = checkNotNull(compilerOptions);
-      this.componentName = checkNotNull(componentName);
       this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
       this.componentRequirementFields = checkNotNull(componentRequirementFields);
+      this.membersInjectionMethods = checkNotNull(membersInjectionMethods);
+      this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
       this.generatedComponentModel = checkNotNull(generatedComponentModel);
       this.subcomponentNames = checkNotNull(subcomponentNames);
       this.graph = checkNotNull(graph);
@@ -112,7 +115,7 @@ abstract class BindingExpression {
       FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.empty());
       return create(
           resolvedBindings,
-          MemberSelect.localField(componentName, fieldSpec.name),
+          MemberSelect.localField(generatedComponentModel.name(), fieldSpec.name),
           Optional.of(newFrameworkFieldInitializer(fieldSpec, resolvedBindings)));
     }
 
@@ -128,7 +131,9 @@ abstract class BindingExpression {
      */
     private FieldSpec generateFrameworkField(
         ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
-      boolean useRawType = useRawType(resolvedBindings);
+      boolean useRawType =
+          !isTypeAccessibleFrom(
+              resolvedBindings.key().type(), generatedComponentModel.name().packageName());
 
       FrameworkField contributionBindingField =
           FrameworkField.forResolvedBindings(resolvedBindings, frameworkClass);
@@ -146,24 +151,19 @@ abstract class BindingExpression {
       return contributionField.build();
     }
 
-    private boolean useRawType(ResolvedBindings resolvedBindings) {
-      Optional<String> bindingPackage = resolvedBindings.bindingPackage();
-      return bindingPackage.isPresent()
-          && !bindingPackage.get().equals(componentName.packageName());
-    }
-
     private FrameworkFieldInitializer newFrameworkFieldInitializer(
         FieldSpec fieldSpec, ResolvedBindings resolvedBindings) {
       return new FrameworkFieldInitializer(
           fieldSpec,
           resolvedBindings,
+          subcomponentNames,
           generatedComponentModel,
           componentBindingExpressions,
           componentRequirementFields,
+          referenceReleasingManagerFields,
           compilerOptions,
           graph,
-          optionalFactories,
-          componentName);
+          optionalFactories);
     }
 
     private BindingExpression create(
@@ -189,9 +189,9 @@ abstract class BindingExpression {
       if (usePrivateMethod(resolvedBindings.contributionBinding())) {
         return new PrivateMethodBindingExpression(
             resolvedBindings,
-            componentName,
             generatedComponentModel,
             inlineBindingExpression,
+            referenceReleasingManagerFields,
             compilerOptions,
             types,
             elements);
@@ -206,7 +206,7 @@ abstract class BindingExpression {
       FieldSpec producerField =
           generateFrameworkField(resolvedBindings, Optional.of(TypeNames.PRODUCER));
       return providerBindingExpression.producerFromProvider(
-          MemberSelect.localField(componentName, producerField.name),
+          MemberSelect.localField(generatedComponentModel.name(), producerField.name),
           newFrameworkFieldInitializer(producerField, resolvedBindings).forProducerFromProvider());
     }
 
@@ -217,7 +217,7 @@ abstract class BindingExpression {
       switch (provisionBinding.bindingKind()) {
         case COMPONENT:
           return new ComponentInstanceBindingExpression(
-              bindingExpression, provisionBinding, componentName, types);
+              bindingExpression, provisionBinding, generatedComponentModel.name(), types);
 
         case COMPONENT_DEPENDENCY:
           return new BoundInstanceBindingExpression(
@@ -283,7 +283,7 @@ abstract class BindingExpression {
                 provisionBinding,
                 bindingExpression,
                 componentBindingExpressions,
-                generatedComponentModel,
+                membersInjectionMethods,
                 componentRequirementFields,
                 types,
                 elements);
@@ -306,7 +306,8 @@ abstract class BindingExpression {
       // TODO(user): Also inline releasable references in experimentalAndroidMode
       return !binding.scope().isPresent()
           || (compilerOptions.experimentalAndroidMode()
-              && !generatedComponentModel.requiresReleasableReferences(binding.scope().get()));
+              && !referenceReleasingManagerFields.requiresReleasableReferences(
+                  binding.scope().get()));
     }
   }
 }

@@ -26,7 +26,7 @@ import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionM
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.Key.indexByKey;
+import static dagger.internal.codegen.Keys.indexByKey;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.function.Predicate.isEqual;
@@ -50,7 +50,7 @@ import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ContributionBinding.Kind;
-import dagger.internal.codegen.Key.HasKey;
+import dagger.internal.codegen.Keys.HasKey;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;

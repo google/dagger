@@ -118,6 +118,11 @@ abstract class Scope {
     return scope(elements, Reusable.class);
   }
 
+  /** Returns {@code true} if this scope is the {@link Reusable @Reusable} scope. */
+  boolean isReusable() {
+    return getQualifiedName().contentEquals(Reusable.class.getName());
+  }
+
   /**
    * Returns {@code true} for scopes that are annotated with {@link CanReleaseReferences} or some
    * other annotation that is itself annotated with {@link CanReleaseReferences}.

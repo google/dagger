@@ -20,7 +20,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -69,18 +68,10 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   private static ClassName subcomponentName(AbstractComponentWriter parent, BindingGraph subgraph) {
-    return parent.name.nestedClass(
-        parent.subcomponentNames.get(subgraph.componentDescriptor()) + "Impl");
-  }
-
-  @Override
-  public CodeBlock getReferenceReleasingProviderManagerExpression(Scope scope) {
-    return parent.getReferenceReleasingProviderManagerExpression(scope);
-  }
-
-  @Override
-  public boolean requiresReleasableReferences(Scope scope) {
-    return parent.requiresReleasableReferences(scope);
+    return parent
+        .generatedComponentModel
+        .name()
+        .nestedClass(parent.subcomponentNames.get(subgraph.componentDescriptor()) + "Impl");
   }
 
   private ExecutableType resolvedSubcomponentFactoryMethod() {
@@ -96,19 +87,8 @@ final class SubcomponentWriter extends AbstractComponentWriter {
   }
 
   @Override
-  protected void decorateComponent() {
-    component.addModifiers(PRIVATE, FINAL);
-    addSupertype(
-        component,
-        MoreTypes.asTypeElement(
-            graph.componentDescriptor().builderSpec().isPresent()
-                ? graph.componentDescriptor().builderSpec().get().componentType()
-                : resolvedSubcomponentFactoryMethod().getReturnType()));
-  }
-
-  @Override
   protected void addBuilderClass(TypeSpec builder) {
-    parent.component.addType(builder);
+    parent.generatedComponentModel.addType(builder);
   }
 
   @Override
@@ -149,7 +129,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
             componentField(ClassName.get(moduleTypeElement), preferredModuleName)
                 .addModifiers(PRIVATE, FINAL)
                 .build();
-        component.addField(contributionField);
+        generatedComponentModel.addField(contributionField);
 
         constructor
             .addParameter(moduleType, contributionField.name)
@@ -158,7 +138,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
 
         componentRequirementFields.add(
             ComponentRequirementField.componentField(
-                componentRequirement, contributionField, name));
+                componentRequirement, contributionField, generatedComponentModel.name()));
         subcomponentConstructorParameters.add(
             CodeBlock.of("$L", moduleVariable.getSimpleName()));
       }
@@ -178,14 +158,16 @@ final class SubcomponentWriter extends AbstractComponentWriter {
           componentField(ClassName.get(moduleType), preferredModuleName)
               .addModifiers(PRIVATE, FINAL)
               .build();
-      component.addField(contributionField);
+      generatedComponentModel.addField(contributionField);
       constructor.addStatement("this.$N = new $T()", contributionField, ClassName.get(moduleType));
       componentRequirementFields.add(
           ComponentRequirementField.componentField(
-              componentRequirement, contributionField, name));
+              componentRequirement, contributionField, generatedComponentModel.name()));
     }
 
-    componentMethod.addStatement("return new $T($L)",
-        name, makeParametersCodeBlock(subcomponentConstructorParameters.build()));
+    componentMethod.addStatement(
+        "return new $T($L)",
+        generatedComponentModel.name(),
+        makeParametersCodeBlock(subcomponentConstructorParameters.build()));
   }
 }

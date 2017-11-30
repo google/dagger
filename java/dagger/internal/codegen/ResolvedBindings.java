@@ -30,7 +30,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
-import dagger.internal.codegen.Key.HasKey;
+import dagger.internal.codegen.Keys.HasKey;
 import java.util.Optional;
 
 /**
@@ -287,17 +287,6 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
   @Override
   public ContributionType contributionType() {
     return contributionBinding().contributionType();
-  }
-
-  /**
-   * The name of the package in which these bindings must be managed, for
-   * example if a binding references non-public types.
-   *
-   * @throws IllegalStateException if there is more than one binding
-   */
-  Optional<String> bindingPackage() {
-    checkState(bindings().size() == 1);
-    return binding().bindingPackage();
   }
 
   /**

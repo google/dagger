@@ -46,7 +46,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final CompilerOptions compilerOptions;
   private final ProvisionBinding provisionBinding;
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementFields componentRequirementFields;
   private final Elements elements;
 
@@ -55,7 +55,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ProvisionBinding provisionBinding,
       BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
-      GeneratedComponentModel generatedComponentModel,
+      MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementFields componentRequirementFields,
       DaggerTypes types,
       Elements elements) {
@@ -67,7 +67,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.compilerOptions = compilerOptions;
     this.provisionBinding = provisionBinding;
     this.componentBindingExpressions = componentBindingExpressions;
-    this.generatedComponentModel = generatedComponentModel;
+    this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementFields = componentRequirementFields;
     this.elements = elements;
   }
@@ -153,8 +153,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
     }
 
-    MethodSpec membersInjectionMethod =
-        generatedComponentModel.getMembersInjectionMethod(provisionBinding.key());
+    MethodSpec membersInjectionMethod = membersInjectionMethods.getOrCreate(provisionBinding.key());
     TypeMirror returnType =
         membersInjectionMethod.returnType.equals(TypeName.OBJECT)
             ? elements.getTypeElement(Object.class.getCanonicalName()).asType()

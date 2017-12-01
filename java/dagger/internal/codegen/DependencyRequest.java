@@ -484,14 +484,6 @@ abstract class DependencyRequest {
           .build();
     }
 
-    DependencyRequest forMembersInjectedType(DeclaredType type) {
-      return DependencyRequest.builder()
-          .kind(Kind.MEMBERS_INJECTOR)
-          .key(keyFactory.forMembersInjectedType(type))
-          .requestElement(type.asElement())
-          .build();
-    }
-
     DependencyRequest forProductionImplementationExecutor() {
       Key key = keyFactory.forProductionImplementationExecutor();
       return DependencyRequest.builder()

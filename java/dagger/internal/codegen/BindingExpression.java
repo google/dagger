@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.EnumSet;
 import java.util.Optional;
 import javax.lang.model.util.Elements;
@@ -58,8 +59,9 @@ abstract class BindingExpression {
       DependencyRequest.Kind requestKind, ClassName requestingClass);
 
   /** Returns an expression for the implementation of a component method with the given request. */
-  // TODO(dpb): Consider using ComponentMethodDescriptor instead of DependencyRequest?
-  CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getComponentMethodImplementation(
+      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
+    DependencyRequest request = componentMethod.dependencyRequest().get();
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
     // By default, just delegate to #getDependencyExpression().
     CodeBlock expression = getDependencyExpression(request.kind(), requestingClass).codeBlock();
@@ -174,10 +176,21 @@ abstract class BindingExpression {
           FrameworkInstanceBindingExpression.create(
               resolvedBindings, memberSelect, frameworkFieldInitializer, types, elements);
 
-      if (!resolvedBindings.bindingType().equals(BindingType.PROVISION)) {
-        return frameworkInstanceBindingExpression;
+      switch (resolvedBindings.bindingType()) {
+        case MEMBERS_INJECTION:
+          return new MembersInjectionBindingExpression(
+              frameworkInstanceBindingExpression,
+              generatedComponentModel,
+              membersInjectionMethods);
+        case PROVISION:
+          return provisionBindingExpression(frameworkInstanceBindingExpression);
+        default:
+          return frameworkInstanceBindingExpression;
       }
+    }
 
+    private BindingExpression provisionBindingExpression(
+        FrameworkInstanceBindingExpression frameworkInstanceBindingExpression) {
       BindingExpression bindingExpression =
           new ProviderOrProducerBindingExpression(
               frameworkInstanceBindingExpression,
@@ -186,6 +199,7 @@ abstract class BindingExpression {
       BindingExpression inlineBindingExpression =
           inlineProvisionBindingExpression(bindingExpression);
 
+      ResolvedBindings resolvedBindings = frameworkInstanceBindingExpression.resolvedBindings();
       if (usePrivateMethod(resolvedBindings.contributionBinding())) {
         return new PrivateMethodBindingExpression(
             resolvedBindings,

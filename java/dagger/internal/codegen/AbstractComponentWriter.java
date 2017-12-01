@@ -18,14 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +33,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -44,7 +41,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.util.Elements;
@@ -248,7 +244,6 @@ abstract class AbstractComponentWriter {
     for (ComponentMethodDescriptor componentMethod :
         graph.componentDescriptor().componentMethods()) {
       if (componentMethod.dependencyRequest().isPresent()) {
-        DependencyRequest interfaceRequest = componentMethod.dependencyRequest().get();
         ExecutableElement methodElement = componentMethod.methodElement();
         ExecutableType requestType =
             MoreTypes.asExecutable(types.asMemberOf(componentType, methodElement));
@@ -258,32 +253,9 @@ abstract class AbstractComponentWriter {
         if (interfaceMethodSignatures.add(signature)) {
           MethodSpec.Builder interfaceMethod =
               MethodSpec.overriding(methodElement, componentType, types);
-          List<? extends VariableElement> parameters = methodElement.getParameters();
-          if (interfaceRequest.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR)
-              && !parameters.isEmpty() /* i.e. it's not a request for a MembersInjector<T> */) {
-            ParameterSpec parameter = ParameterSpec.get(getOnlyElement(parameters));
-            MembersInjectionBinding binding =
-                graph
-                    .resolvedBindings()
-                    .get(interfaceRequest.bindingKey())
-                    .membersInjectionBinding()
-                    .get();
-            if (requestType.getReturnType().getKind().equals(VOID)) {
-              if (!binding.injectionSites().isEmpty()) {
-                interfaceMethod.addStatement(
-                    "$N($N)", membersInjectionMethods.getOrCreate(binding.key()), parameter);
-              }
-            } else if (binding.injectionSites().isEmpty()) {
-              interfaceMethod.addStatement("return $N", parameter);
-            } else {
-              interfaceMethod.addStatement(
-                  "return $N($N)", membersInjectionMethods.getOrCreate(binding.key()), parameter);
-            }
-          } else {
-            interfaceMethod.addCode(
-                bindingExpressions.getComponentMethodImplementation(
-                    interfaceRequest, generatedComponentModel.name()));
-          }
+          interfaceMethod.addCode(
+              bindingExpressions.getComponentMethodImplementation(
+                  componentMethod, generatedComponentModel.name()));
           interfaceMethods.add(interfaceMethod.build());
         }
       }

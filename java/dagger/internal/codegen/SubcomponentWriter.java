@@ -170,4 +170,9 @@ final class SubcomponentWriter extends AbstractComponentWriter {
         generatedComponentModel.name(),
         makeParametersCodeBlock(subcomponentConstructorParameters.build()));
   }
+
+  /** Creates a {@link FieldSpec.Builder} with a unique name based off of {@code name}. */
+  private final FieldSpec.Builder componentField(TypeName type, String name) {
+    return FieldSpec.builder(type, generatedComponentModel.getUniqueFieldName(name));
+  }
 }

@@ -33,7 +33,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.ArrayList;
@@ -50,7 +49,7 @@ abstract class AbstractComponentWriter {
   // TODO(dpb): Make all these fields private after refactoring is complete.
   protected final Elements elements;
   protected final DaggerTypes types;
-  protected final CompilerOptions compilerOptions;
+  private final CompilerOptions compilerOptions;
   protected final BindingGraph graph;
   protected final SubcomponentNames subcomponentNames;
   private final ComponentBindingExpressions bindingExpressions;
@@ -136,13 +135,6 @@ abstract class AbstractComponentWriter {
         parent.bindingExpressions.forChildComponent(),
         parent.componentRequirementFields.forChildComponent(),
         parent.referenceReleasingManagerFields);
-  }
-
-  /**
-   * Creates a {@link FieldSpec.Builder} with a unique name based off of {@code name}.
-   */
-  protected final FieldSpec.Builder componentField(TypeName type, String name) {
-    return FieldSpec.builder(type, generatedComponentModel.getUniqueFieldName(name));
   }
 
   /**

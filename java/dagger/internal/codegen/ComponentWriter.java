@@ -38,29 +38,52 @@ final class ComponentWriter extends AbstractComponentWriter {
       ClassName name,
       BindingGraph graph) {
     GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.forComponent(name);
+    SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
+    ComponentRequirementFields componentRequirementFields = new ComponentRequirementFields();
+    OptionalFactories optionalFactories = new OptionalFactories();
+    ComponentBindingExpressions bindingExpressions =
+        new ComponentBindingExpressions(
+            graph,
+            generatedComponentModel,
+            subcomponentNames,
+            componentRequirementFields,
+            optionalFactories,
+            types,
+            elements,
+            compilerOptions);
     return new ComponentWriter(
-            types, elements, keyFactory, compilerOptions, graph, generatedComponentModel)
+            types,
+            elements,
+            compilerOptions,
+            graph,
+            generatedComponentModel,
+            subcomponentNames,
+            bindingExpressions,
+            componentRequirementFields,
+            optionalFactories)
         .write();
   }
 
   private ComponentWriter(
       DaggerTypes types,
       Elements elements,
-      KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel) {
+      GeneratedComponentModel generatedComponentModel,
+      SubcomponentNames subcomponentNames,
+      ComponentBindingExpressions bindingExpressions,
+      ComponentRequirementFields componentRequirementFields,
+      OptionalFactories optionalFactories) {
     super(
         types,
         elements,
         compilerOptions,
         graph,
         generatedComponentModel,
-        new SubcomponentNames(graph, keyFactory),
-        new OptionalFactories(),
-        new ComponentBindingExpressions(types),
-        new ComponentRequirementFields(),
-        new ReferenceReleasingManagerFields(graph, generatedComponentModel));
+        subcomponentNames,
+        optionalFactories,
+        bindingExpressions,
+        componentRequirementFields);
   }
 
   private void addBuilderFactoryMethod() {

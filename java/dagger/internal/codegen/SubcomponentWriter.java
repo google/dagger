@@ -58,20 +58,29 @@ final class SubcomponentWriter extends AbstractComponentWriter {
    */
   private final Optional<ComponentMethodDescriptor> subcomponentFactoryMethod;
 
-  SubcomponentWriter(
-      AbstractComponentWriter parent,
-      Optional<ComponentMethodDescriptor> subcomponentFactoryMethod,
-      BindingGraph subgraph) {
-    super(parent, subcomponentName(parent, subgraph), subgraph);
+  SubcomponentWriter(AbstractComponentWriter parent, BindingGraph graph) {
+    super(
+        parent,
+        subcomponentModel(parent, graph),
+        graph,
+        parent.componentRequirementFields.forChildComponent());
     this.parent = parent;
-    this.subcomponentFactoryMethod = subcomponentFactoryMethod;
+    this.subcomponentFactoryMethod =
+        Optional.ofNullable(
+            parent
+                .graph
+                .componentDescriptor()
+                .subcomponentsByFactoryMethod()
+                .inverse()
+                .get(graph.componentDescriptor()));
   }
 
-  private static ClassName subcomponentName(AbstractComponentWriter parent, BindingGraph subgraph) {
-    return parent
-        .generatedComponentModel
-        .name()
-        .nestedClass(parent.subcomponentNames.get(subgraph.componentDescriptor()) + "Impl");
+  private static GeneratedComponentModel subcomponentModel(
+      AbstractComponentWriter parent, BindingGraph graph) {
+    ClassName parentName = parent.generatedComponentModel.name();
+    ClassName name =
+        parentName.nestedClass(parent.subcomponentNames.get(graph.componentDescriptor()) + "Impl");
+    return GeneratedComponentModel.forSubcomponent(name);
   }
 
   private ExecutableType resolvedSubcomponentFactoryMethod() {

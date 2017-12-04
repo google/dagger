@@ -37,7 +37,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
@@ -55,10 +54,8 @@ abstract class AbstractComponentWriter {
   private final ComponentBindingExpressions bindingExpressions;
   protected final ComponentRequirementFields componentRequirementFields;
   protected final GeneratedComponentModel generatedComponentModel;
-  private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final MembersInjectionMethods membersInjectionMethods;
   protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
-  private final BindingExpression.Factory bindingExpressionFactory;
   private final ComponentRequirementField.Factory componentRequirementFieldFactory;
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
   private final OptionalFactories optionalFactories;
@@ -80,8 +77,7 @@ abstract class AbstractComponentWriter {
       SubcomponentNames subcomponentNames,
       OptionalFactories optionalFactories,
       ComponentBindingExpressions bindingExpressions,
-      ComponentRequirementFields componentRequirementFields,
-      ReferenceReleasingManagerFields referenceReleasingManagerFields) {
+      ComponentRequirementFields componentRequirementFields) {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
@@ -100,41 +96,28 @@ abstract class AbstractComponentWriter {
       builderFields = ImmutableMap.of();
     }
     this.componentRequirementFields = componentRequirementFields;
-    this.referenceReleasingManagerFields = referenceReleasingManagerFields;
-    this.membersInjectionMethods =
-        new MembersInjectionMethods(
-            generatedComponentModel, bindingExpressions, graph, elements, types);
-    // TODO(user): move factories into ComponentBindingExpressions.
-    this.bindingExpressionFactory =
-        new BindingExpression.Factory(
-            compilerOptions,
-            bindingExpressions,
-            componentRequirementFields,
-            membersInjectionMethods,
-            referenceReleasingManagerFields,
-            generatedComponentModel,
-            subcomponentNames,
-            graph,
-            types,
-            elements,
-            optionalFactories);
+    // TODO(user): Remove membersInjectionMethods field once we have another way to order methods.
+    this.membersInjectionMethods = bindingExpressions.membersInjectionMethods();
     this.componentRequirementFieldFactory =
         new ComponentRequirementField.Factory(generatedComponentModel, builderFields);
   }
 
   protected AbstractComponentWriter(
-      AbstractComponentWriter parent, ClassName name, BindingGraph graph) {
+      AbstractComponentWriter parent,
+      GeneratedComponentModel generatedComponentModel,
+      BindingGraph graph,
+      ComponentRequirementFields componentRequirementFields) {
     this(
         parent.types,
         parent.elements,
         parent.compilerOptions,
         graph,
-        GeneratedComponentModel.forSubcomponent(name),
+        generatedComponentModel,
         parent.subcomponentNames,
         parent.optionalFactories,
-        parent.bindingExpressions.forChildComponent(),
-        parent.componentRequirementFields.forChildComponent(),
-        parent.referenceReleasingManagerFields);
+        parent.bindingExpressions.forChildComponent(
+            graph, generatedComponentModel, componentRequirementFields),
+        componentRequirementFields);
   }
 
   /**
@@ -154,7 +137,6 @@ abstract class AbstractComponentWriter {
         .forEach(method -> generatedComponentModel.claimMethodName(method.getSimpleName()));
 
     addFactoryMethods();
-    createBindingExpressions();
     createComponentRequirementFields();
     implementInterfaceMethods();
     addSubcomponents();
@@ -193,34 +175,8 @@ abstract class AbstractComponentWriter {
     return builder.name();
   }
 
-  /**
-   * Adds component factory methods.
-   */
+  /** Adds component factory methods. */
   protected abstract void addFactoryMethods();
-
-  private void createBindingExpressions() {
-    graph.resolvedBindings().values().forEach(this::createBindingExpression);
-  }
-
-  private void createBindingExpression(ResolvedBindings resolvedBindings) {
-    // If the binding can be satisfied with a static method call without dependencies or state,
-    // no field is necessary.
-    // TODO(ronshapiro): can these be merged into bindingExpressionFactory.forResolvedBindings()?
-    Optional<BindingExpression> staticBindingExpression =
-        bindingExpressionFactory.forStaticMethod(resolvedBindings);
-    if (staticBindingExpression.isPresent()) {
-      bindingExpressions.addBindingExpression(staticBindingExpression.get());
-      return;
-    }
-
-    // No field needed if there are no owned bindings.
-    if (resolvedBindings.ownedBindings().isEmpty()) {
-      return;
-    }
-
-    // TODO(gak): get rid of the field for unscoped delegated bindings
-    bindingExpressions.addBindingExpression(bindingExpressionFactory.forField(resolvedBindings));
-  }
 
   private void createComponentRequirementFields() {
     builderFields
@@ -256,14 +212,7 @@ abstract class AbstractComponentWriter {
 
   private void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      ComponentMethodDescriptor componentMethodDescriptor =
-          graph.componentDescriptor()
-              .subcomponentsByFactoryMethod()
-              .inverse()
-              .get(subgraph.componentDescriptor());
-      SubcomponentWriter subcomponent =
-          new SubcomponentWriter(this, Optional.ofNullable(componentMethodDescriptor), subgraph);
-      generatedComponentModel.addType(subcomponent.write().build());
+      generatedComponentModel.addType(new SubcomponentWriter(this, subgraph).write().build());
     }
   }
 

@@ -21,4 +21,5 @@ package dagger.android;
  * APIs to assist with using Dagger on Android devices. It includes common code to perform injection
  * as well as Android-specific extensions to {@link dagger.releasablereferences}.
  */
-import javax.annotation.CheckReturnValue;
+
+import com.google.errorprone.annotations.CheckReturnValue;

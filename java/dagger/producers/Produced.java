@@ -19,9 +19,9 @@ package dagger.producers;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.Beta;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 
 /**

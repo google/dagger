@@ -22,4 +22,5 @@ package dagger.android.support;
  * href="https://developer.android.com/topic/libraries/support-library">Android support
  * libraries</a>.
  */
-import javax.annotation.CheckReturnValue;
+
+import com.google.errorprone.annotations.CheckReturnValue;

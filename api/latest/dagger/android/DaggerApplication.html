@@ -329,7 +329,8 @@ implements <a href="../../dagger/android/HasActivityInjector.html" title="interf
 <ul class="blockList">
 <li class="blockList">
 <h4>applicationInjector</h4>
-<pre>protected abstract&nbsp;<a href="../../dagger/android/AndroidInjector.html" title="interface in dagger.android">AndroidInjector</a>&lt;? extends <a href="../../dagger/android/DaggerApplication.html" title="class in dagger.android">DaggerApplication</a>&gt;&nbsp;applicationInjector()</pre>
+<pre>@ForOverride
+protected abstract&nbsp;<a href="../../dagger/android/AndroidInjector.html" title="interface in dagger.android">AndroidInjector</a>&lt;? extends <a href="../../dagger/android/DaggerApplication.html" title="class in dagger.android">DaggerApplication</a>&gt;&nbsp;applicationInjector()</pre>
 <div class="block">Implementations should return an <a href="../../dagger/android/AndroidInjector.html" title="interface in dagger.android"><code>AndroidInjector</code></a> for the concrete <a href="../../dagger/android/DaggerApplication.html" title="class in dagger.android"><code>DaggerApplication</code></a>. Typically, that injector is a <a href="../../dagger/Component.html" title="annotation in dagger"><code>Component</code></a>.</div>
 </li>
 </ul>

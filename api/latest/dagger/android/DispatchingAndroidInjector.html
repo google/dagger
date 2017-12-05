@@ -213,7 +213,8 @@ implements <a href="../../dagger/android/AndroidInjector.html" title="interface 
 <ul class="blockList">
 <li class="blockList">
 <h4>maybeInject</h4>
-<pre>public&nbsp;boolean&nbsp;maybeInject(<a href="../../dagger/android/DispatchingAndroidInjector.html" title="type parameter in DispatchingAndroidInjector">T</a>&nbsp;instance)</pre>
+<pre>@CanIgnoreReturnValue
+public&nbsp;boolean&nbsp;maybeInject(<a href="../../dagger/android/DispatchingAndroidInjector.html" title="type parameter in DispatchingAndroidInjector">T</a>&nbsp;instance)</pre>
 <div class="block">Attempts to perform members-injection on <code>instance</code>, returning <code>true</code> if
  successful, <code>false</code> otherwise.</div>
 <dl>

@@ -20,6 +20,9 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.COMPONENT_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -97,7 +100,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
 
   @Override
   protected void addBuilderClass(TypeSpec builder) {
-    parent.generatedComponentModel.addType(builder);
+    parent.generatedComponentModel.addType(SUBCOMPONENT, builder);
   }
 
   @Override
@@ -115,7 +118,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
     ExecutableType resolvedMethod = resolvedSubcomponentFactoryMethod();
     componentMethod.returns(ClassName.get(resolvedMethod.getReturnType()));
     writeSubcomponentWithoutBuilder(componentMethod, resolvedMethod);
-    parent.interfaceMethods.add(componentMethod.build());
+    parent.generatedComponentModel.addMethod(COMPONENT_METHOD, componentMethod.build());
   }
 
   private void writeSubcomponentWithoutBuilder(
@@ -138,7 +141,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
             componentField(ClassName.get(moduleTypeElement), preferredModuleName)
                 .addModifiers(PRIVATE, FINAL)
                 .build();
-        generatedComponentModel.addField(contributionField);
+        generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, contributionField);
 
         constructor
             .addParameter(moduleType, contributionField.name)
@@ -167,7 +170,7 @@ final class SubcomponentWriter extends AbstractComponentWriter {
           componentField(ClassName.get(moduleType), preferredModuleName)
               .addModifiers(PRIVATE, FINAL)
               .build();
-      generatedComponentModel.addField(contributionField);
+      generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, contributionField);
       constructor.addStatement("this.$N = new $T()", contributionField, ClassName.get(moduleType));
       componentRequirementFields.add(
           ComponentRequirementField.componentField(

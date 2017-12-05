@@ -20,10 +20,10 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.MEMBERS_INJECTION_METHOD;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -64,16 +64,9 @@ final class MembersInjectionMethods {
   /**
    * Returns the members injection {@link MethodSpec} for the given {@link Key}, creating it if
    * necessary.
-   *
-   * <p>To get a list of all members injection {@link MethodSpec}s, call {@link #getAllMethods()}
    */
   MethodSpec getOrCreate(Key key) {
     return reentrantComputeIfAbsent(membersInjectionMethods, key, this::membersInjectionMethod);
-  }
-
-  /** Returns the list of all members injection {@link MethodSpec}s for this component. */
-  ImmutableList<MethodSpec> getAllMethods() {
-    return ImmutableList.copyOf(membersInjectionMethods.values());
   }
 
   private MethodSpec membersInjectionMethod(Key key) {
@@ -93,7 +86,7 @@ final class MembersInjectionMethods {
     // simple names Foo.Builder -> injectFooBuilder
     String methodName = generatedComponentModel.getUniqueMethodName("inject" + bindingTypeName);
     ParameterSpec parameter = ParameterSpec.builder(membersInjectedTypeName, "instance").build();
-    MethodSpec.Builder method =
+    MethodSpec.Builder methodBuilder =
         methodBuilder(methodName)
             .addModifiers(PRIVATE)
             .returns(membersInjectedTypeName)
@@ -101,10 +94,10 @@ final class MembersInjectionMethods {
     TypeElement canIgnoreReturnValue =
         elements.getTypeElement("com.google.errorprone.annotations.CanIgnoreReturnValue");
     if (canIgnoreReturnValue != null) {
-      method.addAnnotation(ClassName.get(canIgnoreReturnValue));
+      methodBuilder.addAnnotation(ClassName.get(canIgnoreReturnValue));
     }
     CodeBlock instance = CodeBlock.of("$N", parameter);
-    method.addCode(
+    methodBuilder.addCode(
         InjectionSiteMethod.invokeAll(
             injectionSites(binding),
             generatedComponentModel.name(),
@@ -115,9 +108,11 @@ final class MembersInjectionMethods {
                 bindingExpressions
                     .getDependencyArgumentExpression(request, generatedComponentModel.name())
                     .codeBlock()));
-    method.addStatement("return $L", instance);
+    methodBuilder.addStatement("return $L", instance);
 
-    return method.build();
+    MethodSpec method = methodBuilder.build();
+    generatedComponentModel.addMethod(MEMBERS_INJECTION_METHOD, method);
+    return method;
   }
 
   private static ImmutableSet<InjectionSite> injectionSites(Binding binding) {

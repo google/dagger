@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableMap;
@@ -104,7 +105,7 @@ abstract class ComponentRequirementField {
         FieldSpec componentField =
             FieldSpec.builder(TypeName.get(componentRequirement().type()), fieldName, PRIVATE)
                 .build();
-        generatedComponentModel.addField(componentField);
+        generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, componentField);
         generatedComponentModel.addInitialization(
             CodeBlock.of("this.$N = builder.$N;", componentField, builderField));
         field = MemberSelect.localField(owningComponent, fieldName);

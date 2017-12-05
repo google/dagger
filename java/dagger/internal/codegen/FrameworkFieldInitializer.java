@@ -29,6 +29,8 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.FRAMEWORK_FIELD;
+import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -167,7 +169,7 @@ final class FrameworkFieldInitializer {
           codeBuilder.add(initCode);
         }
         generatedComponentModel.addInitialization(codeBuilder.build());
-        generatedComponentModel.addField(fieldSpec);
+        generatedComponentModel.addField(FRAMEWORK_FIELD, fieldSpec);
 
         fieldInitializationState = InitializationState.INITIALIZED;
         break;
@@ -286,6 +288,7 @@ final class FrameworkFieldInitializer {
                 ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));
           }
           generatedComponentModel.addType(
+              COMPONENT_PROVISION_FACTORY,
               TypeSpec.classBuilder(factoryName)
                   .addSuperinterface(providerOf(bindingKeyTypeName))
                   .addModifiers(PRIVATE, STATIC)

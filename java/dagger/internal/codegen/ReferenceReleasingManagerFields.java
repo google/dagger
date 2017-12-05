@@ -20,6 +20,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.REFERENCE_RELEASING_MANAGER_FIELD;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
@@ -77,7 +78,7 @@ public class ReferenceReleasingManagerFields {
 
   private MemberSelect createReferenceReleasingManagerField(Scope scope) {
     FieldSpec field = referenceReleasingProxyManagerField(scope);
-    generatedComponentModel.addField(field);
+    generatedComponentModel.addField(REFERENCE_RELEASING_MANAGER_FIELD, field);
     return localField(generatedComponentModel.name(), field.name);
   }
 

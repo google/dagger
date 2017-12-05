@@ -23,6 +23,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRIVATE_METHOD;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -184,6 +186,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     // TODO(user): Consider when we can make this method static.
     // TODO(user): Fix the order that these generated methods are written to the component.
     generatedComponentModel.addMethod(
+        PRIVATE_METHOD,
         methodBuilder(name)
             .addModifiers(PRIVATE)
             .returns(TypeName.get(returnType(requestKind)))
@@ -271,6 +274,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     if (!fieldNames.containsKey(requestKind)) {
       String name = generatedComponentModel.getUniqueFieldName(BindingVariableNamer.name(binding));
       generatedComponentModel.addField(
+          PRIVATE_METHOD_SCOPED_FIELD,
           FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)
               .initializer("new $T()", MemoizedSentinel.class)
               .build());

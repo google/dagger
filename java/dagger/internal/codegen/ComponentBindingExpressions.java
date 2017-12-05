@@ -215,12 +215,6 @@ final class ComponentBindingExpressions {
     return bindingExpressionFactory.create(graph.resolvedBindings().get(bindingKey));
   }
 
-  // This is only made visibile to keep the correct order of methods in the generated component.
-  // TODO(user): remove this method after removing the dependency from AbstractComponentWriter.
-  MembersInjectionMethods membersInjectionMethods() {
-    return bindingExpressionFactory.membersInjectionMethods;
-  }
-
   /** Factory for building a {@link BindingExpression}. */
   private static final class BindingExpressionFactory {
     // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
@@ -335,12 +329,10 @@ final class ComponentBindingExpressions {
           FrameworkInstanceBindingExpression.create(
               resolvedBindings, memberSelect, frameworkFieldInitializer, types, elements);
 
-       switch (resolvedBindings.bindingType()) {
+      switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
           return new MembersInjectionBindingExpression(
-              frameworkInstanceBindingExpression,
-              generatedComponentModel,
-              membersInjectionMethods);
+              frameworkInstanceBindingExpression, generatedComponentModel, membersInjectionMethods);
         case PROVISION:
           return provisionBindingExpression(frameworkInstanceBindingExpression);
         default:

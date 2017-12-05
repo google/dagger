@@ -17,6 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.BUILDER_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_BUILDER;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -99,12 +101,12 @@ final class ComponentWriter extends AbstractComponentWriter {
                     : builderName())
             .addStatement("return new $T()", builderName())
             .build();
-    generatedComponentModel.addMethod(builderFactoryMethod);
+    generatedComponentModel.addMethod(BUILDER_METHOD, builderFactoryMethod);
   }
 
   @Override
   protected void addBuilderClass(TypeSpec builder) {
-    generatedComponentModel.addType(builder);
+    generatedComponentModel.addType(COMPONENT_BUILDER, builder);
   }
 
   @Override
@@ -116,6 +118,7 @@ final class ComponentWriter extends AbstractComponentWriter {
               ? graph.componentDescriptor().builderSpec().get().buildMethod().getSimpleName()
               : "build";
       generatedComponentModel.addMethod(
+          BUILDER_METHOD,
           methodBuilder("create")
               .returns(ClassName.get(graph.componentType()))
               .addModifiers(PUBLIC, STATIC)

@@ -81,8 +81,8 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   /**
    * The expression for the framework instance for this binding. If the instance comes from a
    * component field, it will be {@link GeneratedComponentModel#addInitialization(CodeBlock)
-   * initialized} and {@link GeneratedComponentModel#addField(FieldSpec) added} to the component the
-   * first time this method is invoked.
+   * initialized} and {@link GeneratedComponentModel#addField(GeneratedComponentModel.FieldSpecKind,
+   * FieldSpec) added} to the component the first time this method is invoked.
    */
   @Override
   Expression getDependencyExpression(

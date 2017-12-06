@@ -43,6 +43,7 @@ java_library(
     ],
     deps = [
         "//java/dagger:core",
+        "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:jsr305_annotations",
         "//third_party:jsr330_inject",

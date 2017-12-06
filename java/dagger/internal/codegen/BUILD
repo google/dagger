@@ -204,6 +204,7 @@ java_library(
         "InjectionMethods.java",
         "MapBindingExpression.java",
         "MemberSelect.java",
+        "MembersInjectionBindingExpression.java",
         "MembersInjectionMethods.java",
         "MembersInjectorGenerator.java",
         "MonitoringModuleGenerator.java",

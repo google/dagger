@@ -97,8 +97,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_errorprone_error_prone_annotations",
-    artifact = "com.google.errorprone:error_prone_annotations:2.0.12",
-    sha1 = "8530d22d4ae8419e799d5a5234e0d2c0dcf15d4b",
+    artifact = "com.google.errorprone:error_prone_annotations:2.1.3",
+    sha1 = "39b109f2cd352b2d71b52a3b5a1a9850e1dc304b",
 )
 
 maven_jar(

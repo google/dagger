@@ -80,17 +80,19 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  CodeBlock getComponentMethodImplementation(DependencyRequest request, ClassName requestingClass) {
+  CodeBlock getComponentMethodImplementation(
+      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
+    DependencyRequest request = componentMethod.dependencyRequest().get();
     checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
     if (!canInlineScope() && ignorePrivateMethodStrategy(request.kind())) {
-      return delegate.getComponentMethodImplementation(request, requestingClass);
+      return delegate.getComponentMethodImplementation(componentMethod, requestingClass);
     }
 
     return findComponentMethod(request.kind())
-            .map(method -> method.dependencyRequest().get().equals(request))
+            .map(method -> method.equals(componentMethod))
             .orElse(false)
         ? methodBody(request.kind())
-        : super.getComponentMethodImplementation(request, requestingClass);
+        : super.getComponentMethodImplementation(componentMethod, requestingClass);
   }
 
   @Override

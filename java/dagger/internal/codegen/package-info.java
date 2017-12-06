@@ -17,4 +17,4 @@
 @CheckReturnValue
 package dagger.internal.codegen;
 
-import javax.annotation.CheckReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;

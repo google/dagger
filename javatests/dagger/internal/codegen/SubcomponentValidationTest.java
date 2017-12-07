@@ -22,7 +22,6 @@ import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
@@ -400,7 +399,6 @@ public class SubcomponentValidationTest {
                 DEFAULT_MODE,
                 "import dagger.internal.DoubleCheck;")
             .addLines(
-                "import dagger.internal.Preconditions;",
                 "import javax.annotation.Generated;")
             .addLinesIn(
                 DEFAULT_MODE,
@@ -543,9 +541,8 @@ public class SubcomponentValidationTest {
                 "",
                 "    @Override",
                 "    public Object getObject() {",
-                "      return Preconditions.checkNotNull(",
-                "          childModule.provideObject(getA()),",
-                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "      return ChildModule_ProvideObjectFactory.proxyProvideObject(",
+                "          childModule, getA());",
                 "    }",
                 "",
                 "    @CanIgnoreReturnValue",

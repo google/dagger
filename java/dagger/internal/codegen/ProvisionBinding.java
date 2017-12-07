@@ -108,8 +108,13 @@ abstract class ProvisionBinding extends ContributionBinding {
 
   abstract Builder toBuilder();
 
+  private static final ImmutableSet<ContributionBinding.Kind> KINDS_TO_CHECK_FOR_NULL =
+      ImmutableSet.of(
+          ContributionBinding.Kind.PROVISION, ContributionBinding.Kind.COMPONENT_PROVISION);
+
   boolean shouldCheckForNull(CompilerOptions compilerOptions) {
-    return !contributedPrimitiveType().isPresent()
+    return KINDS_TO_CHECK_FOR_NULL.contains(bindingKind())
+        && !contributedPrimitiveType().isPresent()
         && !nullableType().isPresent()
         && compilerOptions.doCheckForNulls();
   }

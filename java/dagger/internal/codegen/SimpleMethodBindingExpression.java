@@ -20,8 +20,6 @@ import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.FactoryGenerator.checkNotNullProvidesMethod;
 import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
 
@@ -75,7 +73,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   @Override
   Expression getInstanceDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    return requiresInjectionMethod(provisionBinding, requestingClass.packageName())
+    return requiresInjectionMethod(provisionBinding, compilerOptions, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);
   }
@@ -98,8 +96,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         CodeBlock module =
             moduleReference(requestingClass)
                 .orElse(CodeBlock.of("$T", provisionBinding.bindingTypeElement().get()));
-        invocation = maybeCheckForNulls(
-            CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments));
+        invocation = CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments);
         break;
       default:
         throw new IllegalStateException();
@@ -120,25 +117,18 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
   private Expression invokeInjectionMethod(ClassName requestingClass) {
     return injectMembers(
-        maybeCheckForNulls(
-            ProvisionMethod.invoke(
-                provisionBinding,
-                request -> dependencyArgument(request, requestingClass),
-                requestingClass,
-                moduleReference(requestingClass))));
+        ProvisionMethod.invoke(
+            provisionBinding,
+            request -> dependencyArgument(request, requestingClass),
+            requestingClass,
+            moduleReference(requestingClass),
+            compilerOptions));
   }
 
   private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
     return componentBindingExpressions
         .getDependencyArgumentExpression(dependency, requestingClass)
         .codeBlock();
-  }
-
-  private CodeBlock maybeCheckForNulls(CodeBlock methodCall) {
-    return !provisionBinding.bindingKind().equals(INJECTION)
-            && provisionBinding.shouldCheckForNull(compilerOptions)
-        ? checkNotNullProvidesMethod(methodCall)
-        : methodCall;
   }
 
   private Expression injectMembers(CodeBlock instance) {

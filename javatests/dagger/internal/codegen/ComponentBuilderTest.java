@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -180,8 +179,7 @@ public class ComponentBuilderTest {
             "",
             "  @Override",
             "  public String string() {",
-            "    return Preconditions.checkNotNull(",
-            "        testModule.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+            "    return TestModule_StringFactory.proxyString(testModule);",
             "  }",
             "",
             "  private static final class Builder implements TestComponent.Builder {",
@@ -288,14 +286,12 @@ public class ComponentBuilderTest {
             "",
             "  @Override",
             "  public String string() {",
-            "    return Preconditions.checkNotNull(",
-            "        testModule1.string()," + NPE_FROM_PROVIDES_METHOD + ");",
+            "    return TestModule1_StringFactory.proxyString(testModule1);",
             "  }",
             "",
             "  @Override",
             "  public Integer integer() {",
-            "    return Preconditions.checkNotNull(",
-            "        testModule2.integer()," + NPE_FROM_PROVIDES_METHOD + ");",
+            "    return TestModule2_IntegerFactory.proxyInteger(testModule2);",
             "  }",
             "",
             "  private static final class Builder implements TestComponent.Builder {",

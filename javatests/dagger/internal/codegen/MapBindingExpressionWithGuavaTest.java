@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -423,9 +422,8 @@ public class MapBindingExpressionWithGuavaTest {
             "    public Map<String, Object> objectMap() {",
             "      return ImmutableMap.<String, Object>of(",
             "          \"parent key\",",
-            "          Preconditions.checkNotNull(",
-            "              DaggerParent.this.parentModule.parentKeyObject(),",
-            "              " + NPE_FROM_PROVIDES_METHOD + ");",
+            "          ParentModule_ParentKeyObjectFactory.proxyParentKeyObject(",
+            "              DaggerParent.this.parentModule));",
             "    }",
             "  }",
             "}");

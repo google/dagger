@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.collect.ImmutableList;
@@ -259,8 +258,8 @@ public class MapKeyProcessorTest {
                 "    return new Provider<Handler>() {",
                 "      @Override",
                 "      public Handler get() {",
-                "        return Preconditions.checkNotNull(",
-                "            mapModuleOne.provideAdminHandler()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "        return MapModuleOne_ProvideAdminHandlerFactory.proxyProvideAdminHandler(",
+                "            mapModuleOne);",
                 "      }",
                 "    };",
                 "  }",
@@ -269,8 +268,8 @@ public class MapKeyProcessorTest {
                 "    return new Provider<Handler>() {",
                 "      @Override",
                 "      public Handler get() {",
-                "        return Preconditions.checkNotNull(",
-                "            mapModuleTwo.provideLoginHandler()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "        return MapModuleTwo_ProvideLoginHandlerFactory.proxyProvideLoginHandler(",
+                "            mapModuleTwo);",
                 "      }",
                 "    };",
                 "  }",
@@ -527,8 +526,8 @@ public class MapKeyProcessorTest {
                 "    return new Provider<Handler>() {",
                 "      @Override",
                 "      public Handler get() {",
-                "        return Preconditions.checkNotNull(",
-                "            mapModuleOne.provideAdminHandler()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "        return MapModuleOne_ProvideAdminHandlerFactory.proxyProvideAdminHandler(",
+                "            mapModuleOne);",
                 "      }",
                 "    };",
                 "  }",
@@ -537,8 +536,8 @@ public class MapKeyProcessorTest {
                 "    return new Provider<Handler>() {",
                 "      @Override",
                 "      public Handler get() {",
-                "        return Preconditions.checkNotNull(",
-                "            mapModuleTwo.provideLoginHandler()," + NPE_FROM_PROVIDES_METHOD + ");",
+                "        return MapModuleTwo_ProvideLoginHandlerFactory.proxyProvideLoginHandler(",
+                "            mapModuleTwo);",
                 "      }",
                 "    };",
                 "  }",

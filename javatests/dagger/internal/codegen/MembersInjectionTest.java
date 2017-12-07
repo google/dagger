@@ -26,7 +26,6 @@ import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 import com.google.common.base.Joiner;
@@ -1464,9 +1463,7 @@ public class MembersInjectionTest {
                 "      synchronized (local) {",
                 "        if (local == listOfInaccessible) {",
                 "          listOfInaccessible =",
-                "              Preconditions.checkNotNull(",
-                "                  InaccessiblesModule_InaccessiblesFactory.proxyInaccessibles(),",
-                "                  " + NPE_FROM_PROVIDES_METHOD + ");",
+                "              InaccessiblesModule_InaccessiblesFactory.proxyInaccessibles();",
                 "        }",
                 "        local = listOfInaccessible;",
                 "      }",

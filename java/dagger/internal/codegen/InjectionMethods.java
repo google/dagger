@@ -27,6 +27,7 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toConcatenatedCodeBlock;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.FactoryGenerator.checkNotNullProvidesMethod;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
@@ -110,11 +111,11 @@ final class InjectionMethods {
     /**
      * Returns a method that invokes the binding's {@linkplain ProvisionBinding#bindingElement()
      * constructor} and injects the instance's members, if necessary. If {@link
-     * #shouldCreateInjectionMethod(ProvisionBinding) no method is necessary}, then {@link
-     * Optional#empty()} is returned.
+     * #shouldCreateInjectionMethod(ProvisionBinding, CompilerOptions)} no method is necessary},
+     * then {@link Optional#empty()} is returned.
      */
-    static Optional<MethodSpec> create(ProvisionBinding binding) {
-      if (!shouldCreateInjectionMethod(binding)) {
+    static Optional<MethodSpec> create(ProvisionBinding binding, CompilerOptions compilerOptions) {
+      if (!shouldCreateInjectionMethod(binding, compilerOptions)) {
         return Optional.empty();
       }
       ExecutableElement element = MoreElements.asExecutable(binding.bindingElement().get());
@@ -123,7 +124,11 @@ final class InjectionMethods {
           return Optional.of(constructorProxy(element));
         case METHOD:
           return Optional.of(
-              methodProxy(element, methodName(element), ReceiverAccessibility.IGNORE));
+              methodProxy(
+                  element,
+                  methodName(element),
+                  ReceiverAccessibility.IGNORE,
+                  CheckNotNullPolicy.get(binding, compilerOptions)));
         default:
           throw new AssertionError(element);
       }
@@ -137,14 +142,15 @@ final class InjectionMethods {
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
         ClassName requestingClass,
-        Optional<CodeBlock> moduleReference) {
+        Optional<CodeBlock> moduleReference,
+        CompilerOptions compilerOptions) {
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       moduleReference.ifPresent(arguments::add);
       arguments.addAll(
           injectionMethodArguments(
               binding.provisionDependencies(), dependencyUsage, requestingClass));
       return callInjectionMethod(
-          create(binding).get().name,
+          create(binding, compilerOptions).get().name,
           arguments.build(),
           generatedClassNameForBinding(binding),
           requestingClass);
@@ -171,19 +177,22 @@ final class InjectionMethods {
      * Returns {@code true} if injecting an instance of {@code binding} from {@code callingPackage}
      * requires the use of an injection method.
      */
-    static boolean requiresInjectionMethod(ProvisionBinding binding, String callingPackage) {
+    static boolean requiresInjectionMethod(
+        ProvisionBinding binding, CompilerOptions compilerOptions, String callingPackage) {
       ExecutableElement method = MoreElements.asExecutable(binding.bindingElement().get());
       return !binding.injectionSites().isEmpty()
+          || binding.shouldCheckForNull(compilerOptions)
           || !isElementAccessibleFrom(method, callingPackage)
           || method
-              .getParameters()
-              .stream()
-              .map(VariableElement::asType)
-              .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
+          .getParameters()
+          .stream()
+          .map(VariableElement::asType)
+          .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
     }
 
-    private static boolean shouldCreateInjectionMethod(ProvisionBinding binding) {
-      return requiresInjectionMethod(binding, "dagger.should.never.exist");
+    private static boolean shouldCreateInjectionMethod(
+        ProvisionBinding binding, CompilerOptions compilerOptions) {
+      return requiresInjectionMethod(binding, compilerOptions, "dagger.should.never.exist");
     }
 
     /**
@@ -235,7 +244,8 @@ final class InjectionMethods {
           return methodProxy(
               MoreElements.asExecutable(injectionSite.element()),
               methodName,
-              ReceiverAccessibility.CAST_IF_NOT_PUBLIC);
+              ReceiverAccessibility.CAST_IF_NOT_PUBLIC,
+              CheckNotNullPolicy.IGNORE);
         case FIELD:
           return fieldProxy(MoreElements.asVariable(injectionSite.element()), methodName);
         default:
@@ -428,8 +438,25 @@ final class InjectionMethods {
         : CodeBlock.of("(($T) $L)", instanceType, instance);
   }
 
+  private enum CheckNotNullPolicy {
+    IGNORE, CHECK_FOR_NULL;
+    CodeBlock checkForNull(CodeBlock maybeNull) {
+      if (this.equals(IGNORE)) {
+        return maybeNull;
+      }
+      return checkNotNullProvidesMethod(maybeNull);
+    }
+
+    static CheckNotNullPolicy get(ProvisionBinding binding, CompilerOptions compilerOptions) {
+      return binding.shouldCheckForNull(compilerOptions) ? CHECK_FOR_NULL : IGNORE;
+    }
+  }
+
   private static MethodSpec methodProxy(
-      ExecutableElement method, String methodName, ReceiverAccessibility receiverAccessibility) {
+      ExecutableElement method,
+      String methodName,
+      ReceiverAccessibility receiverAccessibility,
+      CheckNotNullPolicy checkNotNullPolicy) {
     TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
     MethodSpec.Builder methodBuilder = methodBuilder(methodName).addModifiers(PUBLIC, STATIC);
 
@@ -446,18 +473,20 @@ final class InjectionMethods {
           .ifPresent(nullableType -> CodeBlocks.addAnnotation(methodBuilder, nullableType));
       methodBuilder.addCode("return ");
     }
+    CodeBlock.Builder proxyInvocation = CodeBlock.builder();
     if (method.getModifiers().contains(STATIC)) {
-      methodBuilder.addCode("$T", rawTypeName(TypeName.get(enclosingType.asType())));
+      proxyInvocation.add("$T", rawTypeName(TypeName.get(enclosingType.asType())));
     } else {
       copyTypeParameters(enclosingType, methodBuilder);
       // "instance" is guaranteed b/c it was the first name into the UniqueNameSet
-      methodBuilder.addCode(
+      proxyInvocation.add(
           receiverAccessibility.potentiallyCast(CodeBlock.of("instance"), enclosingType.asType()));
     }
     copyTypeParameters(method, methodBuilder);
     copyThrows(method, methodBuilder);
 
-    methodBuilder.addCode(".$N($L);", method.getSimpleName(), arguments);
+    proxyInvocation.add(".$N($L)", method.getSimpleName(), arguments);
+    methodBuilder.addCode(checkNotNullPolicy.checkForNull(proxyInvocation.build())).addCode(";");
     return methodBuilder.build();
   }
 

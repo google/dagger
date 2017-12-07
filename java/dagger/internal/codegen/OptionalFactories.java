@@ -25,6 +25,9 @@ import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.ABSENT_OPTIONAL_FIELD;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.ABSENT_OPTIONAL_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.PRESENT_FACTORY;
 import static dagger.internal.codegen.TypeNames.PROVIDER;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
@@ -359,9 +362,10 @@ final class OptionalFactories {
    * #absentOptionalProvider(ContributionBinding)} and {@link
    * #presentOptionalFactory(ContributionBinding, CodeBlock)} to the top-level {@code component}.
    */
-  void addMembers(TypeSpec.Builder component) {
-    component.addTypes(presentFactoryClasses.values());
-    component.addMethods(absentOptionalProviderMethods.values());
-    component.addFields(absentOptionalProviderFields.values());
+  void addMembers(GeneratedComponentModel generatedComponentModel) {
+    generatedComponentModel.addTypes(PRESENT_FACTORY, presentFactoryClasses.values());
+    generatedComponentModel.addMethods(
+        ABSENT_OPTIONAL_METHOD, absentOptionalProviderMethods.values());
+    generatedComponentModel.addFields(ABSENT_OPTIONAL_FIELD, absentOptionalProviderFields.values());
   }
 }

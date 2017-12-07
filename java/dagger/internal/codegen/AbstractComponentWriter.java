@@ -21,7 +21,10 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
-import static dagger.internal.codegen.TypeSpecs.addSupertype;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.COMPONENT_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.CONSTRUCTOR;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.INITIALIZE_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
@@ -35,7 +38,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
@@ -54,8 +56,6 @@ abstract class AbstractComponentWriter {
   private final ComponentBindingExpressions bindingExpressions;
   protected final ComponentRequirementFields componentRequirementFields;
   protected final GeneratedComponentModel generatedComponentModel;
-  private final MembersInjectionMethods membersInjectionMethods;
-  protected final List<MethodSpec> interfaceMethods = new ArrayList<>();
   private final ComponentRequirementField.Factory componentRequirementFieldFactory;
   protected final MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
   private final OptionalFactories optionalFactories;
@@ -96,8 +96,6 @@ abstract class AbstractComponentWriter {
       builderFields = ImmutableMap.of();
     }
     this.componentRequirementFields = componentRequirementFields;
-    // TODO(user): Remove membersInjectionMethods field once we have another way to order methods.
-    this.membersInjectionMethods = bindingExpressions.membersInjectionMethods();
     this.componentRequirementFieldFactory =
         new ComponentRequirementField.Factory(generatedComponentModel, builderFields);
   }
@@ -127,7 +125,7 @@ abstract class AbstractComponentWriter {
    */
   final TypeSpec.Builder write() {
     checkState(!done, "ComponentWriter has already been generated.");
-    addSupertype(generatedComponentModel.component, graph.componentType());
+    generatedComponentModel.addSupertype(graph.componentType());
     if (hasBuilder(graph)) {
       addBuilder();
     }
@@ -138,17 +136,15 @@ abstract class AbstractComponentWriter {
 
     addFactoryMethods();
     createComponentRequirementFields();
-    implementInterfaceMethods();
+    addInterfaceMethods();
     addSubcomponents();
-    writeInitializeAndInterfaceMethods();
-    generatedComponentModel.addMethods(membersInjectionMethods.getAllMethods());
-    generatedComponentModel.addMethod(constructor.build());
+    addInitializeMethods();
+    generatedComponentModel.addMethod(CONSTRUCTOR, constructor.build());
     if (graph.componentDescriptor().kind().isTopLevel()) {
-      // TODO(user): pass in generatedComponentModel instead of the component.
-      optionalFactories.addMembers(generatedComponentModel.component);
+      optionalFactories.addMembers(generatedComponentModel);
     }
     done = true;
-    return generatedComponentModel.component;
+    return generatedComponentModel.generate();
   }
 
   private static boolean hasBuilder(BindingGraph graph) {
@@ -186,7 +182,7 @@ abstract class AbstractComponentWriter {
         .forEach(componentRequirementFields::add);
   }
 
-  private void implementInterfaceMethods() {
+  private void addInterfaceMethods() {
     Set<MethodSignature> interfaceMethodSignatures = Sets.newHashSet();
     DeclaredType componentType = MoreTypes.asDeclared(graph.componentType().asType());
     for (ComponentMethodDescriptor componentMethod :
@@ -204,7 +200,7 @@ abstract class AbstractComponentWriter {
           interfaceMethod.addCode(
               bindingExpressions.getComponentMethodImplementation(
                   componentMethod, generatedComponentModel.name()));
-          interfaceMethods.add(interfaceMethod.build());
+          generatedComponentModel.addMethod(COMPONENT_METHOD, interfaceMethod.build());
         }
       }
     }
@@ -212,13 +208,14 @@ abstract class AbstractComponentWriter {
 
   private void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      generatedComponentModel.addType(new SubcomponentWriter(this, subgraph).write().build());
+      generatedComponentModel.addType(
+          SUBCOMPONENT, new SubcomponentWriter(this, subgraph).write().build());
     }
   }
 
   private static final int INITIALIZATIONS_PER_INITIALIZE_METHOD = 100;
 
-  private void writeInitializeAndInterfaceMethods() {
+  private void addInitializeMethods() {
     List<List<CodeBlock>> partitions =
         Lists.partition(
             generatedComponentModel.getInitializations(), INITIALIZATIONS_PER_INITIALIZE_METHOD);
@@ -241,9 +238,7 @@ abstract class AbstractComponentWriter {
       } else {
         constructor.addStatement("$L()", methodName);
       }
-      generatedComponentModel.addMethod(initializeMethod.build());
+      generatedComponentModel.addMethod(INITIALIZE_METHOD, initializeMethod.build());
     }
-
-    generatedComponentModel.addMethods(interfaceMethods);
   }
 }

@@ -1113,6 +1113,8 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "",
+            // TODO(user): Reverse the order of subcomponent and builder so that subcomponent
+            // comes first.
             "  private final class F_SubBuilder implements C.Foo.Sub.Builder {",
             "    @Override",
             "    public C.Foo.Sub build() {",

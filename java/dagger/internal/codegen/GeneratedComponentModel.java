@@ -138,6 +138,7 @@ final class GeneratedComponentModel {
     TypeSpecs.addSupertype(component, supertype);
   }
 
+  // TODO(dpb): Consider taking FieldSpec, and returning identical FieldSpec with unique name?
   /** Adds the given field to the component. */
   void addField(FieldSpecKind fieldKind, FieldSpec fieldSpec) {
     fieldSpecsMap.put(fieldKind, fieldSpec);
@@ -148,6 +149,7 @@ final class GeneratedComponentModel {
     fieldSpecsMap.putAll(fieldKind, fieldSpecs);
   }
 
+  // TODO(dpb): Consider taking MethodSpec, and returning identical MethodSpec with unique name?
   /** Adds the given method to the component. */
   void addMethod(MethodSpecKind methodKind, MethodSpec methodSpec) {
     methodSpecsMap.put(methodKind, methodSpec);

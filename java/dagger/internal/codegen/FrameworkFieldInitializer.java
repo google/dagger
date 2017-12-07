@@ -25,6 +25,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
@@ -83,8 +84,8 @@ import javax.lang.model.type.TypeMirror;
  * An object that can initialize a framework-type component field for a binding. An instance should
  * be created for each field.
  */
+// TODO(dpb): Split this class up, at least by binding kind, but maybe also producerFromProvider?
 final class FrameworkFieldInitializer {
-  private final FieldSpec fieldSpec;
   private final SubcomponentNames subcomponentNames;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
@@ -96,35 +97,10 @@ final class FrameworkFieldInitializer {
   private final boolean isProducerFromProvider;
   private final OptionalFactories optionalFactories;
   private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
+  private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   FrameworkFieldInitializer(
-      FieldSpec fieldSpec,
-      ResolvedBindings resolvedBindings,
-      SubcomponentNames subcomponentNames,
-      GeneratedComponentModel generatedComponentModel,
-      ComponentBindingExpressions componentBindingExpressions,
-      ComponentRequirementFields componentRequirementFields,
-      ReferenceReleasingManagerFields referenceReleasingManagerFields,
-      CompilerOptions compilerOptions,
-      BindingGraph graph,
-      OptionalFactories optionalFactories) {
-    this(
-        fieldSpec,
-        resolvedBindings,
-        subcomponentNames,
-        generatedComponentModel,
-        componentBindingExpressions,
-        componentRequirementFields,
-        referenceReleasingManagerFields,
-        compilerOptions,
-        graph,
-        false,
-        optionalFactories);
-  }
-
-  private FrameworkFieldInitializer(
-      FieldSpec fieldSpec,
       ResolvedBindings resolvedBindings,
       SubcomponentNames subcomponentNames,
       GeneratedComponentModel generatedComponentModel,
@@ -145,17 +121,25 @@ final class FrameworkFieldInitializer {
     this.graph = checkNotNull(graph);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.isProducerFromProvider = isProducerFromProvider;
-    this.fieldSpec = checkNotNull(fieldSpec);
   }
 
-  /** Adds the field and its initialization code to the component. */
-  void initializeField() {
+  /**
+   * Returns the {@link MemberSelect} for the framework field, and adds the field and its
+   * initialization code to the component if it's needed and not already added.
+   */
+  MemberSelect getOrCreateMemberSelect() {
+    initializeField();
+    return MemberSelect.localField(generatedComponentModel.name(), checkNotNull(fieldSpec).name);
+  }
+
+  private void initializeField() {
     switch (fieldInitializationState) {
       case UNINITIALIZED:
         // Change our state in case we are recursively invoked via initializeBindingExpression
         fieldInitializationState = InitializationState.INITIALIZING;
         CodeBlock.Builder codeBuilder = CodeBlock.builder();
-        CodeBlock initCode = CodeBlock.of("this.$N = $L;", fieldSpec, getFieldInitialization());
+        CodeBlock fieldInitialization = getFieldInitialization();
+        CodeBlock initCode = CodeBlock.of("this.$N = $L;", getOrCreateField(), fieldInitialization);
 
         if (fieldInitializationState == InitializationState.DELEGATED) {
           // If we were recursively invoked, set the delegate factory as part of our initialization
@@ -169,7 +153,6 @@ final class FrameworkFieldInitializer {
           codeBuilder.add(initCode);
         }
         generatedComponentModel.addInitialization(codeBuilder.build());
-        generatedComponentModel.addField(FRAMEWORK_FIELD, fieldSpec);
 
         fieldInitializationState = InitializationState.INITIALIZED;
         break;
@@ -177,7 +160,7 @@ final class FrameworkFieldInitializer {
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
         generatedComponentModel.addInitialization(
-            CodeBlock.of("this.$N = new $T<>();", fieldSpec, DelegateFactory.class));
+            CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), DelegateFactory.class));
         fieldInitializationState = InitializationState.DELEGATED;
         break;
 
@@ -188,6 +171,36 @@ final class FrameworkFieldInitializer {
       default:
         throw new AssertionError("Unhandled initialization state: " + fieldInitializationState);
     }
+  }
+
+  /**
+   * Adds a field representing the resolved bindings, optionally forcing it to use a particular
+   * binding type (instead of the type the resolved bindings would typically use).
+   */
+  private FieldSpec getOrCreateField() {
+    if (fieldSpec != null) {
+      return fieldSpec;
+    }
+    boolean useRawType =
+        !isTypeAccessibleFrom(
+            resolvedBindings.key().type(), generatedComponentModel.name().packageName());
+
+    Optional<ClassName> alternativeFrameworkClass =
+        isProducerFromProvider ? Optional.of(TypeNames.PRODUCER) : Optional.empty();
+    FrameworkField contributionBindingField =
+        FrameworkField.forResolvedBindings(resolvedBindings, alternativeFrameworkClass);
+    FieldSpec.Builder contributionField =
+        FieldSpec.builder(
+            useRawType ? contributionBindingField.type().rawType : contributionBindingField.type(),
+            generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
+    contributionField.addModifiers(PRIVATE);
+    if (useRawType) {
+      contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
+    }
+    fieldSpec = contributionField.build();
+    generatedComponentModel.addField(FRAMEWORK_FIELD, fieldSpec);
+
+    return fieldSpec;
   }
 
   /** Returns the expression to use to initialize the field. */
@@ -711,21 +724,6 @@ final class FrameworkFieldInitializer {
     return componentBindingExpressions
         .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
         .codeBlock();
-  }
-
-  FrameworkFieldInitializer forProducerFromProvider() {
-    return new FrameworkFieldInitializer(
-        fieldSpec,
-        resolvedBindings,
-        subcomponentNames,
-        generatedComponentModel,
-        componentBindingExpressions,
-        componentRequirementFields,
-        referenceReleasingManagerFields,
-        compilerOptions,
-        graph,
-        true,
-        optionalFactories);
   }
 
   /** Initialization state for a factory field. */

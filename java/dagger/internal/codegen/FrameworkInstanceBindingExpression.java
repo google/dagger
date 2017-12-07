@@ -16,9 +16,11 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
+import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -29,53 +31,67 @@ import javax.lang.model.util.Elements;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
-  private final MemberSelect memberSelect;
+  private final Supplier<MemberSelect> frameworkFieldSupplier;
   private final FrameworkType frameworkType;
-  private final Optional<FrameworkFieldInitializer> fieldInitializer;
   private final DaggerTypes types;
   private final Elements elements;
 
   /** Returns a binding expression for a binding. */
   static FrameworkInstanceBindingExpression create(
       ResolvedBindings resolvedBindings,
-      MemberSelect memberSelect,
-      Optional<FrameworkFieldInitializer> frameworkFieldInitializer,
+      BindingGraph graph,
+      SubcomponentNames subcomponentNames,
+      GeneratedComponentModel generatedComponentModel,
+      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequirementFields componentRequirementFields,
+      ReferenceReleasingManagerFields referenceReleasingManagerFields,
+      boolean isProducerFromProvider,
+      OptionalFactories optionalFactories,
+      CompilerOptions compilerOptions,
       DaggerTypes types,
       Elements elements) {
+    FrameworkType frameworkType = resolvedBindings.bindingType().frameworkType();
+    checkArgument(!isProducerFromProvider || frameworkType.equals(FrameworkType.PROVIDER));
+
+    Optional<MemberSelect> staticMemberSelect = staticMemberSelect(resolvedBindings);
+    Supplier<MemberSelect> frameworkFieldSupplier;
+    if (!isProducerFromProvider && staticMemberSelect.isPresent()) {
+      frameworkFieldSupplier = staticMemberSelect::get;
+    } else {
+      FrameworkFieldInitializer fieldInitializer =
+          new FrameworkFieldInitializer(
+              resolvedBindings,
+              subcomponentNames,
+              generatedComponentModel,
+              componentBindingExpressions,
+              componentRequirementFields,
+              referenceReleasingManagerFields,
+              compilerOptions,
+              graph,
+              isProducerFromProvider,
+              optionalFactories);
+      frameworkFieldSupplier = fieldInitializer::getOrCreateMemberSelect;
+    }
+
     return new FrameworkInstanceBindingExpression(
         resolvedBindings,
-        memberSelect,
-        resolvedBindings.bindingType().frameworkType(),
-        frameworkFieldInitializer,
+        isProducerFromProvider ? FrameworkType.PRODUCER : frameworkType,
+        frameworkFieldSupplier,
         types,
         elements);
   }
 
   private FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
-      MemberSelect memberSelect,
       FrameworkType frameworkType,
-      Optional<FrameworkFieldInitializer> fieldInitializer,
+      Supplier<MemberSelect> frameworkFieldSupplier,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
-    this.memberSelect = memberSelect;
     this.frameworkType = frameworkType;
-    this.fieldInitializer = fieldInitializer;
+    this.frameworkFieldSupplier = frameworkFieldSupplier;
     this.types = types;
     this.elements = elements;
-  }
-
-  FrameworkInstanceBindingExpression producerFromProvider(
-      MemberSelect memberSelect, FrameworkFieldInitializer producerFieldInitializer) {
-    checkState(frameworkType.equals(FrameworkType.PROVIDER));
-    return new FrameworkInstanceBindingExpression(
-        resolvedBindings(),
-        memberSelect,
-        FrameworkType.PRODUCER,
-        Optional.of(producerFieldInitializer),
-        types,
-        elements);
   }
 
   /**
@@ -87,10 +103,11 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    fieldInitializer.ifPresent(FrameworkFieldInitializer::initializeField);
+    MemberSelect memberSelect = frameworkFieldSupplier.get();
+
     TypeMirror expressionType =
         isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
-                || isInlinedFactoryCreation()
+                || isInlinedFactoryCreation(memberSelect)
             ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
             : rawFrameworkType();
 
@@ -124,7 +141,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    * will still be able to determine the type that is returned from the {@code Foo_Factory.create()}
    * method.
    */
-  private boolean isInlinedFactoryCreation() {
+  private static boolean isInlinedFactoryCreation(MemberSelect memberSelect) {
     return memberSelect.staticMember();
   }
 

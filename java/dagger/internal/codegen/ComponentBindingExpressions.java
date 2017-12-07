@@ -19,18 +19,14 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
-import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
-import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -260,74 +256,28 @@ final class ComponentBindingExpressions {
               generatedComponentModel, componentBindingExpressions, graph, elements, types);
     }
 
-    /** Creates a binding expression */
-    BindingExpression create(ResolvedBindings resolvedBindings) {
-      return forStaticMethod(resolvedBindings).orElseGet(() -> forField(resolvedBindings));
-    }
-
-    /** Creates a binding expression for a field. */
-    private BindingExpression forField(ResolvedBindings resolvedBindings) {
-      FieldSpec fieldSpec = generateFrameworkField(resolvedBindings, Optional.empty());
-      return internalCreate(
+    private FrameworkInstanceBindingExpression newFrameworkInstanceBindingExpression(
+        boolean isProducerFromProvider, ResolvedBindings resolvedBindings) {
+      return FrameworkInstanceBindingExpression.create(
           resolvedBindings,
-          MemberSelect.localField(generatedComponentModel.name(), fieldSpec.name),
-          Optional.of(newFrameworkFieldInitializer(fieldSpec, resolvedBindings)));
-    }
-
-    /** Creates a binding expression for a static method call. */
-    private Optional<BindingExpression> forStaticMethod(ResolvedBindings resolvedBindings) {
-      return staticMemberSelect(resolvedBindings)
-          .map(memberSelect -> internalCreate(resolvedBindings, memberSelect, Optional.empty()));
-    }
-
-    /**
-     * Adds a field representing the resolved bindings, optionally forcing it to use a particular
-     * binding type (instead of the type the resolved bindings would typically use).
-     */
-    private FieldSpec generateFrameworkField(
-        ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
-      boolean useRawType =
-          !isTypeAccessibleFrom(
-              resolvedBindings.key().type(), generatedComponentModel.name().packageName());
-
-      FrameworkField contributionBindingField =
-          FrameworkField.forResolvedBindings(resolvedBindings, frameworkClass);
-      FieldSpec.Builder contributionField =
-          FieldSpec.builder(
-              useRawType
-                  ? contributionBindingField.type().rawType
-                  : contributionBindingField.type(),
-              generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
-      contributionField.addModifiers(PRIVATE);
-      if (useRawType) {
-        contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
-      }
-
-      return contributionField.build();
-    }
-
-    private FrameworkFieldInitializer newFrameworkFieldInitializer(
-        FieldSpec fieldSpec, ResolvedBindings resolvedBindings) {
-      return new FrameworkFieldInitializer(
-          fieldSpec,
-          resolvedBindings,
+          graph,
           subcomponentNames,
           generatedComponentModel,
           componentBindingExpressions,
           componentRequirementFields,
           referenceReleasingManagerFields,
+          isProducerFromProvider,
+          optionalFactories,
           compilerOptions,
-          graph,
-          optionalFactories);
+          types,
+          elements);
     }
 
-    private BindingExpression internalCreate(
-        ResolvedBindings resolvedBindings,
-        MemberSelect memberSelect,
-        Optional<FrameworkFieldInitializer> frameworkFieldInitializer) {
+    /** Creates a binding expression */
+    BindingExpression create(ResolvedBindings resolvedBindings) {
       FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
-          FrameworkInstanceBindingExpression.create(
-              resolvedBindings, memberSelect, frameworkFieldInitializer, types, elements);
+          newFrameworkInstanceBindingExpression(
+              false /* isProducerFromProvider */, resolvedBindings);
 
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
@@ -341,16 +291,22 @@ final class ComponentBindingExpressions {
     }
 
     private BindingExpression provisionBindingExpression(
-        FrameworkInstanceBindingExpression frameworkInstanceBindingExpression) {
+        FrameworkInstanceBindingExpression providerBindingExpression) {
+      // TODO(user): this can be removed once we pass DependencyRequest.Kind to the factory.
+      // With DependencyRequest.Kind, we can know if it's a ProducerFromProvider or not, so we won't
+      // have to pass in both types of binding expressions.
+      ResolvedBindings resolvedBindings = providerBindingExpression.resolvedBindings();
+      FrameworkInstanceBindingExpression producerBindingExpression =
+          newFrameworkInstanceBindingExpression(
+              true /* isProducerFromProvider */, resolvedBindings);
       BindingExpression bindingExpression =
           new ProviderOrProducerBindingExpression(
-              frameworkInstanceBindingExpression,
-              producerFromProviderBindingExpression(frameworkInstanceBindingExpression));
+              providerBindingExpression,
+              producerBindingExpression);
 
       BindingExpression inlineBindingExpression =
           inlineProvisionBindingExpression(bindingExpression);
 
-      ResolvedBindings resolvedBindings = frameworkInstanceBindingExpression.resolvedBindings();
       if (usePrivateMethod(resolvedBindings.contributionBinding())) {
         return new PrivateMethodBindingExpression(
             resolvedBindings,
@@ -363,16 +319,6 @@ final class ComponentBindingExpressions {
       }
 
       return inlineBindingExpression;
-    }
-
-    private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
-        FrameworkInstanceBindingExpression providerBindingExpression) {
-      ResolvedBindings resolvedBindings = providerBindingExpression.resolvedBindings();
-      FieldSpec producerField =
-          generateFrameworkField(resolvedBindings, Optional.of(TypeNames.PRODUCER));
-      return providerBindingExpression.producerFromProvider(
-          MemberSelect.localField(generatedComponentModel.name(), producerField.name),
-          newFrameworkFieldInitializer(producerField, resolvedBindings).forProducerFromProvider());
     }
 
     private BindingExpression inlineProvisionBindingExpression(

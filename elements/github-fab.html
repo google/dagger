@@ -1,15 +1,12 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import"
-    href="../bower_components/core-tooltip/core-tooltip.html">
-<link rel="import"
-    href="../bower_components/core-icon-button/core-icon-button.html">
-<link rel="import"
-    href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 
 <polymer-element name="github-fab">
   <template>
     <style shim-shadowdom>
-      core-tooltip.fancy::shadow .core-tooltip {
+      paper-tooltip.fancy::shadow .paper-tooltip {
         opacity: 0;
         -webkit-transition: all 300ms cubic-bezier(0,1.92,.99,1.07);
         transition: all 300ms cubic-bezier(0,1.92,.99,1.07);
@@ -17,17 +14,17 @@
         transform: translate3d(0, -10px, 0);
       }
 
-      core-tooltip.fancy:hover::shadow .core-tooltip,
-      core-tooltip.fancy:focus::shadow .core-tooltip {
+      paper-tooltip.fancy:hover::shadow .paper-tooltip,
+      paper-tooltip.fancy:focus::shadow .paper-tooltip {
         opacity: 1;
         -webkit-transform: translate3d(0, 0, 0);
         transform: translate3d(0, 0, 0);
       }
     </style>
 
-    <core-tooltip id="fork-button" label="Fork me on github" class="fancy" position="left">
+    <paper-tooltip id="fork-button" label="Fork me on github" class="fancy" position="left">
       <paper-fab src="GitHub-Mark-Light-32px.png" on-click="{{gogogo}}"></paper-fab>
-    </core-tooltip>
+    </paper-tooltip>
   </template>
   <script>
     Polymer({

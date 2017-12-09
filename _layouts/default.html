@@ -5,7 +5,7 @@
       <title>Dagger &#x2021; A fast dependency injector for Android and Java.</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta name="description" content="A fast dependency injector for Android and Java." />
-      {% assign polymer_root = site.url | append: '/bower_components' %}
+      {% assign polymer_root = site.baseurl | append: '/bower_components' %}
       <link href="{{polymer_root}}/normalize.css/normalize.css" rel="stylesheet"/>
 
       <link rel="import" href="{{polymer_root}}/paper-item/paper-item.html">
@@ -22,42 +22,42 @@
       <link rel="import" href="{{polymer_root}}/app-layout/app-toolbar/app-toolbar.html">
       <link rel="import" href="{{polymer_root}}/app-layout/app-scroll-effects/effects/material.html">
 
-      <link href="{{ site.url }}/static/syntax.css" rel="stylesheet"/>
-      <link href="{{ site.url }}/static/main.css" rel="stylesheet" shim-shadowdom/>
+      <link href="{{ site.baseurl }}/static/syntax.css" rel="stylesheet"/>
+      <link href="{{ site.baseurl }}/static/main.css" rel="stylesheet" shim-shadowdom/>
       {% include analytics.html %}
   </head>
   <body>
     <app-drawer-layout>
       <app-drawer slot="drawer" persistent opened>
         <nav navigation>
-          <a href="{{ site.url }}/">
+          <a href="{{ site.baseurl }}/">
             <paper-item>Home<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/users-guide.html">
+          <a href="{{ site.baseurl }}/users-guide.html">
             <paper-item>User's Guide<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/dagger-1-migration.html">
+          <a href="{{ site.baseurl }}/dagger-1-migration.html">
             <paper-item>Migrating from Dagger 1<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/android.html">
+          <a href="{{ site.baseurl }}/android.html">
             <paper-item>Android<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/multibindings.html">
+          <a href="{{ site.baseurl }}/multibindings.html">
             <paper-item>Multibinding Sets and Maps<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/subcomponents.html">
+          <a href="{{ site.baseurl }}/subcomponents.html">
             <paper-item>Subcomponents<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/producers.html">
+          <a href="{{ site.baseurl }}/producers.html">
             <paper-item>Producers<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/testing.html">
+          <a href="{{ site.baseurl }}/testing.html">
             <paper-item>Testing<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/resources.html">
+          <a href="{{ site.baseurl }}/resources.html">
             <paper-item>Resources<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/faq.html">
+          <a href="{{ site.baseurl }}/faq.html">
             <paper-item>FAQ<paper-ripple></paper-ripple></paper-item>
           </a>
           <h4>Project Pages</h4>
@@ -68,24 +68,24 @@
               <paper-ripple></paper-ripple>
             </paper-icon-item>
           </a>
-          <a href="{{ site.url }}/api/2.13/" target="_blank">
+          <a href="{{ site.baseurl }}/api/2.13/" target="_blank">
             <paper-icon-item>
               <iron-icon icon="open-in-browser" slot="item-icon"></iron-icon>
               Javadoc @ 2.13
               <paper-ripple></paper-ripple>
             </paper-icon-item>
           </a>
-          <a href="{{ site.url }}/api/latest/" target="_blank">
+          <a href="{{ site.baseurl }}/api/latest/" target="_blank">
             <paper-icon-item>
               <iron-icon icon="open-in-browser" slot="item-icon"></iron-icon>
               Javadoc @ HEAD
               <paper-ripple></paper-ripple>
             </paper-icon-item>
           </a>
-          <a href="{{ site.url }}/releases-and-versioning.html">
+          <a href="{{ site.baseurl }}/releases-and-versioning.html">
             <paper-item>Releases &amp; Versioning<paper-ripple></paper-ripple></paper-item>
           </a>
-          <a href="{{ site.url }}/release.html">
+          <a href="{{ site.baseurl }}/release.html">
             <paper-item>Release Steps<paper-ripple></paper-ripple></paper-item>
           </a>
           <h4>Resources</h4>

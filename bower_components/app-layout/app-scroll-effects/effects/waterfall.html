@@ -1,0 +1,26 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../app-scroll-effects-behavior.html">
+
+<script>
+  /**
+   * Toggles the shadow property in app-header when content is scrolled to create a sense of depth
+   * between the element and the content underneath.
+   */
+  Polymer.AppLayout.registerEffect('waterfall', {
+    /**
+     *  @this Polymer.AppLayout.ElementWithBackground
+     */
+    run: function run() {
+      this.shadow = this.isOnScreen() && this.isContentBelow();
+    }
+  });
+</script>

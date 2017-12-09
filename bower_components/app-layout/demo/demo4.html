@@ -1,0 +1,192 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>demo4</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <!-- Promise polyfill needed for 1.0-hybrid mode since neither iron-request 2.x nor
+    webcomponentsjs 0.x include the Promise polyfill. -->
+  <script src="../../es6-promise/dist/es6-promise.auto.min.js"></script>
+
+  <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../iron-list/iron-list.html">
+  <link rel="import" href="../../iron-ajax/iron-ajax.html">
+  <link rel="import" href="../app-scroll-effects/app-scroll-effects.html">
+  <link rel="import" href="../app-header/app-header.html">
+  <link rel="import" href="../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../app-drawer-layout/app-drawer-layout.html">
+  <link rel="import" href="../app-drawer/app-drawer.html">
+  <link rel="import" href="../app-header-layout/app-header-layout.html">
+  <link rel="import" href="../demo/sample-content.html">
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      background-color: #eee;
+    }
+
+  </style>
+
+</head>
+<body unresolved>
+
+  <dom-module id="x-demo">
+    <template>
+      <style>
+
+        app-header {
+          background-color: #0b8043;
+          color: white;
+
+          --app-header-background-front-layer: {
+            background-color: #4285f4;
+          };
+        }
+
+        app-header paper-icon-button {
+          --paper-icon-button-ink-color: white;
+        }
+
+        iron-list {
+          background-color: var(--paper-grey-200, #eee);
+          padding-bottom: 16px;
+          @apply --layout-flex;
+        }
+
+        .item {
+          @apply --layout-horizontal;
+
+          margin: 16px 16px 0 16px;
+          padding: 20px;
+
+          border-radius: 8px;
+          background-color: white;
+          border: 1px solid #ddd;
+        }
+
+        .avatar {
+          height: 40px;
+          width: 40px;
+          border-radius: 20px;
+          box-sizing: border-box;
+          background-color: #DDD;
+        }
+
+        .pad {
+          padding: 0 16px;
+          @apply --layout-flex;
+          @apply --layout-vertical;
+        }
+
+        .primary {
+          font-size: 16px;
+          font-weight: bold;
+        }
+
+        .secondary {
+          font-size: 14px;
+        }
+
+        .dim {
+          color: gray;
+        }
+
+        .mainHeader [main-title] {
+          font-weight: 400;
+          margin: 0 0 0 50px;
+        }
+
+        .mainHeader [condensed-title] {
+          font-weight: 400;
+          margin-left: 30px;
+        }
+
+        .mainHeader [condensed-title] i {
+          font-style: normal;
+          font-weight: 100;
+        }
+
+        app-toolbar.tall {
+          height: 148px;
+        }
+
+        app-drawer-layout:not([narrow]) [drawer-toggle] {
+          display: none;
+        }
+
+      </style>
+
+      <app-drawer-layout>
+        <app-drawer swipe-open slot="drawer">
+          <app-toolbar class="navToolbar">App name</app-toolbar>
+        </app-drawer>
+        <app-header-layout>
+          <app-header class="mainHeader" condenses fixed effects="resize-title blend-background waterfall" slot="header">
+            <app-toolbar>
+              <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+              <h4 condensed-title>Contacts <i>&mdash; Summary</i></h4>
+              <paper-icon-button icon="search"></paper-icon-button>
+              <paper-icon-button icon="more-vert"></paper-icon-button>
+            </app-toolbar>
+            <app-toolbar class="tall">
+              <h1 main-title>Contacts</h1>
+            </app-toolbar>
+          </app-header>
+          <iron-list items="[[data]]" as="item" scroll-target="document">
+            <template>
+              <div>
+                <div class="item" tabindex$="[[tabIndex]]">
+                  <img class="avatar" src="[[item.image]]">
+                  <div class="pad">
+                    <div class="primary">[[item.name]]</div>
+                    <div class="secondary">[[item.shortText]]</div>
+                    <div class="secondary dim">[[item.longText]]</div>
+                  </div>
+                  <iron-icon icon$="[[iconForItem(item)]]"></iron-icon>
+                </div>
+              </div>
+            </template>
+          </iron-list>
+
+          <iron-ajax url="contacts.json" last-response="{{data}}" auto></iron-ajax>
+
+        </app-header-layout>
+      </app-drawer-layout>
+
+    </template>
+
+    <script>
+    HTMLImports.whenReady(function() {
+      Polymer({
+        is: 'x-demo',
+
+        iconForItem: function(item) {
+          return item ? (item.integer < 50 ? 'star-border' : 'star') : '';
+        }
+      });
+    });
+    </script>
+  </dom-module>
+
+  <x-demo></x-demo>
+
+</body>
+</html>

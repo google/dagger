@@ -1,0 +1,269 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>Flickr grid layout</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <!-- Promise polyfill needed for 1.0-hybrid mode since neither iron-request 2.x nor
+    webcomponentsjs 0.x include the Promise polyfill. -->
+  <script src="../../../es6-promise/dist/es6-promise.auto.min.js"></script>
+
+  <link rel="import" href="../../../polymer/polymer.html">
+  <link rel="import" href="../../../iron-scroll-threshold/iron-scroll-threshold.html">
+  <link rel="import" href="../../../iron-ajax/iron-ajax.html">
+  <link rel="import" href="../../../paper-styles/shadow.html">
+  <link rel="import" href="../../../paper-spinner/paper-spinner.html">
+
+  <link rel="import" href="../../app-header-layout/app-header-layout.html">
+  <link rel="import" href="../../app-scroll-effects/effects/waterfall.html">
+  <link rel="import" href="../../app-header/app-header.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../app-grid-style.html">
+
+  <style>
+
+    body {
+      font-family: 'Roboto', 'Noto', sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <dom-module id="x-grid">
+    <template>
+      <style include="app-grid-style">
+
+        :host {
+          display: block;
+          --app-grid-columns: 4;
+          --app-grid-gutter: 5px;
+          --app-grid-item-height: 250px;
+          --app-grid-expandible-item-columns: 4;
+        }
+
+        app-header {
+          background-color: rgba(255, 255, 255, 0.8);
+          color: black;
+          -webkit-backdrop-filter: saturate(180%) blur(20px);
+          backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        ul {
+          padding: 0;
+          list-style: none;
+        }
+
+        [main-title] {
+          font-weight: bold;
+        }
+
+        .centered-container {
+          margin-top: 40px;
+          max-width: 1000px;
+          margin: 40px auto;
+        }
+
+        .loadingIndicator {
+          font-size: 16px;
+          text-align: center;
+          height: 60px;
+        }
+
+        .loadingIndicator paper-spinner {
+          margin-right: 20px;
+          vertical-align: middle;
+        }
+
+        .item {
+          background-color: white;
+          background-size: cover;
+          background-position: center center;
+        }
+
+        .item:nth-child(5n + 1) {
+          @apply --app-grid-expandible-item;
+          height: 400px;
+        }
+
+        @media(max-width: 799px) {
+
+          :host {
+            --app-grid-columns: 2;
+            --app-grid-gutter: 5px;
+            --app-grid-item-height: 200px;
+          }
+
+          .centered-container {
+            margin: 10px 5px;
+          }
+
+          .item:nth-child(5n + 1) {
+            height: 250px;
+          }
+
+          [spacer] {
+            margin-left: 0;
+          }
+
+        }
+
+      </style>
+
+      <app-header-layout>
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <div spacer main-title>Flickr grid layout</div>
+          </app-toolbar>
+        </app-header>
+        <div class="centered-container">
+          <ul class="app-grid">
+            <template is="dom-repeat" items="[[photos]]" as="photo">
+              <li class="item" style$="[[_getItemStyle(photo)]]"></li>
+            </template>
+          </ul>
+        </div>
+      </app-header-layout>
+
+      <div class="loadingIndicator" hidden$="[[!loadingPhotos]]">
+        <paper-spinner active$="[[loadingPhotos]]"></paper-spinner> Fetching photos
+      </div>
+
+      <iron-ajax id="ajax" loading="{{loadingPhotos}}" handle-as="text" on-response="_didReceiveResponse"></iron-ajax>
+
+      <!-- this element loads more photos when the user scrolls down and reached the lower threshold -->
+      <iron-scroll-threshold id="scrollTheshold"
+        lower-threshold="500"
+        on-lower-threshold="_loadMorePhotos"
+        scroll-target="document">
+      </iron-scroll-threshold>
+
+    </template>
+
+    <script>
+
+      HTMLImports.whenReady(function() {
+
+        Polymer({
+          is: 'x-grid',
+
+          properties: {
+
+            apiKey: {
+              type: String,
+              value: 'c304f1096a06486d3c1e7ab271bf7f3f'
+            },
+
+            photos: {
+              type: Array,
+              value: function() {
+                return [];
+              }
+            },
+
+            perPage: {
+              type: Number,
+              value: 36
+            },
+
+            page: {
+              type: Number,
+              value: 0
+            },
+
+            userId: {
+              type: String,
+              value: '142203852@N04'
+            },
+
+            totalPages: {
+              type: Number,
+              value: 1
+            },
+
+            loadingPhotos: Boolean
+          },
+
+          attached: function() {
+            this._updateGridStyles = this._updateGridStyles || function() {
+              this.updateStyles();
+            }.bind(this);
+            window.addEventListener('resize', this._updateGridStyles);
+          },
+
+          detached: function() {
+            window.removeEventListener('resize', this._updateGridStyles);
+          },
+
+          _getAPIEndpoint: function(apiKey, userId, page) {
+            return 'https://api.flickr.com/services/rest/?method=flickr.photos.search' +
+                '&api_key=' + apiKey +
+                '&safe_search=1&sort=interestingness-desc'+
+                '&user_id=' + userId +
+                '&page=' + page +
+                '&format=json' +
+                '&per_page=' + this.perPage;
+          },
+
+          _didReceiveResponse: function(e) {
+            var payload = JSON.parse(e.detail.response.match('jsonFlickrApi\\((.*)\\)')[1]);
+
+            if (!payload || !payload.photos || !payload.photos.photo) {
+              return;
+            }
+
+            this.totalPages = payload.photos.pages;
+
+            payload.photos.photo.forEach(function(photo) {
+              this.push('photos', photo);
+            }, this);
+
+            this.$.scrollTheshold.clearTriggers();
+          },
+
+          _loadMorePhotos: function() {
+            if (this.loadingPhotos) {
+              return;
+            }
+            if (this.page < this.totalPages) {
+              this.page++;
+              this.$.ajax.url = this._getAPIEndpoint(this.apiKey, this.userId, this.page);
+              this.$.ajax.generateRequest();
+            } else {
+              this.$.scrollTheshold.clearTriggers();
+            }
+          },
+
+          _getItemStyle: function(photo) {
+            return 'background-image: url(//farm' + photo.farm +
+                '.staticflickr.com/' + photo.server + '/' + photo.id + '_' + photo.secret + '_b.jpg);';
+          }
+
+        });
+
+      });
+
+    </script>
+  </dom-module>
+
+  <x-grid></x-grid>
+
+</body>
+</html>

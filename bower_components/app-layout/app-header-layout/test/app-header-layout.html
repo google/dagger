@@ -1,0 +1,159 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for app-header-layout</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../app-header/app-header.html">
+  <link rel="import" href="../app-header-layout.html">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    app-header {
+      background: green;
+    }
+
+    .content {
+      width: 1px;
+      height: 3000px;
+      background-color: red;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="trivialHeader">
+    <template>
+      <app-header-layout>
+        <app-header slot="header" condenses>
+          <app-toolbar></app-toolbar>
+          <app-toolbar>
+            <div main-title spacer>Title</div>
+          </app-toolbar>
+        </app-header>
+        <div class="content"></div>
+      </app-header-layout>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="trivialFixedHeader">
+    <template>
+      <app-header-layout has-scrolling-region>
+        <div class="content"></div>
+      </app-header-layout>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    suite('basic features', function() {
+      var headerLayout, header, toolbar;
+
+      setup(function() {
+        headerLayout = fixture('trivialHeader');
+        header = headerLayout.querySelector('app-header');
+        toolbar = headerLayout.querySelector('app-toolbar');
+      });
+
+      test('default values', function() {
+        assert.isFalse(headerLayout.hasScrollingRegion);
+        assert.equal(header.scrollTarget, document.documentElement);
+      });
+
+      test('scrolling region', function(done) {
+        headerLayout.hasScrollingRegion = true;
+
+        flush(function() {
+          assert.isTrue(header.scrollTarget !== document.documentElement, 'scroller should not point to the document element');
+          done();
+        });
+      });
+
+      test('header box size', function(done) {
+        headerLayout.hasScrollingRegion = false;
+        Polymer.dom.flush();
+
+        flush(function() {
+          requestAnimationFrame(function() {
+            assert.equal(headerLayout.offsetWidth, header.offsetWidth,
+                'should have the same width of app-header-layout');
+
+            headerLayout.style.width = '200px';
+            headerLayout.resetLayout();
+
+            flush(function() {
+              requestAnimationFrame(function() {
+                assert.equal(headerLayout.offsetWidth, header.offsetWidth,
+                  'should have the same width of app-header-layout even after setting a width');
+                done();
+              });
+            });
+          });
+        });
+      });
+
+      test('fullbleed', function() {
+        headerLayout.setAttribute('fullbleed', '');
+        Polymer.dom.flush();
+        assert.deepEqual(headerLayout.getBoundingClientRect(),
+            headerLayout.offsetParent.getBoundingClientRect());
+      });
+
+      test('initial static position header and content', function(done) {
+        assert.isTrue(headerLayout.$.wrapper.classList.contains('initializing'));
+        flush(function() {
+          assert.isFalse(headerLayout.$.wrapper.classList.contains('initializing'));
+          done();
+        });
+      });
+    });
+
+    suite('Scrolling region and fixed header', function() {
+      var headerLayout;
+
+      setup(function() {
+        headerLayout = fixture('trivialFixedHeader');
+      });
+
+      test('Issue #406', function(done) {
+        Polymer.dom.flush();
+        assert.isTrue(headerLayout.isAttached, 'app-header-layout is attached');
+        var header = document.createElement('app-header');
+        Polymer.dom(header).innerHTML = '<app-toolbar></app-toolbar>';
+        header.setAttribute('slot', 'header');
+        header.fixed = true;
+        Polymer.dom(headerLayout).appendChild(header);
+        Polymer.dom.flush();
+        header.fire('app-reset-layout');
+        flush(function() {
+          assert.equal(headerLayout.$.contentContainer.style.marginTop,
+              header.offsetHeight + 'px');
+          done();
+        });
+      });
+    });
+
+  </script>
+
+</body>
+</html>

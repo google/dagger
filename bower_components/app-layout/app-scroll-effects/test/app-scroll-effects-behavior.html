@@ -1,0 +1,217 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for app-scroll-effects-behavior</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="x-container.html">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 1000vh;
+    }
+
+    x-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="testHeader">
+    <template>
+      <x-container></x-container>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    function scrollTestHelper(scroller, tests) {
+
+      function scrollEventHandler() {
+        var nextTest = tests.shift();
+        if (nextTest) {
+          nextTest.callback();
+          if (tests.length > 0) triggerScrollEvent();
+        }
+      }
+
+      function triggerScrollEvent() {
+        var scrollTop = scroller === document.documentElement ? window.pageYOffset : scroller.scrollTop;
+        if (tests[0].y === scrollTop) {
+          // Scrolling to the same position won't trigger a scroll event,
+          // so just call the scroll event handler.
+          scrollEventHandler();
+        } else {
+          if (scroller === document.documentElement) window.scrollTo(0, tests[0].y);
+          else scroller.scrollTop = tests[0].y;
+        }
+      }
+
+      if (tests.length > 0) {
+        var scrollTarget = scroller === document.documentElement ? window : scroller;
+        scrollTarget.addEventListener('scroll', scrollEventHandler);
+        triggerScrollEvent();
+      }
+    }
+
+    suite('basic features', function() {
+      var container, testEffect;
+
+      suiteSetup(function() {
+        testEffect = {
+          setUp: sinon.spy(),
+          tearDown: sinon.spy(),
+          run: sinon.spy()
+        };
+        Polymer.AppLayout.registerEffect('test-effect', testEffect);
+      });
+
+      setup(function() {
+        container = fixture('testHeader');
+        testEffect.setUp.reset();
+        testEffect.tearDown.reset();
+        testEffect.run.reset();
+      });
+
+      test('simple effect', function(done) {
+        container.effects = 'test-effect';
+
+        flush(function() {
+          scrollTestHelper(container.scrollTarget, [
+            {
+              y: 0,
+              callback: function() {
+                assert.isTrue(testEffect.setUp.called);
+                assert.deepEqual(testEffect.run.lastCall.args, [0, 0]);
+              }
+            }, {
+              y: container.offsetHeight * 0.5,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [0.5, container.offsetHeight * 0.5]);
+              }
+            }, {
+              y: container.offsetHeight,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [1, container.offsetHeight]);
+              }
+            }, {
+              y: container.offsetHeight * 2,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [2, container.offsetHeight * 2]);
+              }
+            }, {
+              y: container.offsetHeight * 3,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [3, container.offsetHeight * 3]);
+                container.effects = '';
+                assert.isTrue(testEffect.tearDown.called);
+                done();
+              }
+            }
+          ]);
+        });
+      });
+
+      test('effect with config', function(done) {
+        var testEffectConfig = {
+          startsAt: 0.5,
+          endsAt: 1
+        };
+
+        container.effects = 'test-effect';
+        container.effectsConfig = {
+          'test-effect': testEffectConfig
+        };
+
+        flush(function() {
+          scrollTestHelper(container.scrollTarget, [
+            {
+              y: 0,
+              callback: function() {
+                assert.isTrue(testEffect.setUp.called);
+                assert.deepEqual(testEffect.setUp.lastCall.args, [testEffectConfig]);
+                assert.deepEqual(testEffect.run.lastCall.args, [0, 0]);
+              }
+            }, {
+              y: container.offsetHeight * 0.25,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [0, container.offsetHeight*0.25]);
+              }
+            }, {
+              y: container.offsetHeight * 0.5,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [0, container.offsetHeight*0.5]);
+              }
+            }, {
+              y: container.offsetHeight * 0.75,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [0.5, container.offsetHeight * 0.75]);
+              }
+            }, {
+              y: container.offsetHeight,
+              callback: function() {
+                assert.deepEqual(testEffect.run.lastCall.args, [1, container.offsetHeight]);
+                container.effects = '';
+                assert.isTrue(testEffect.tearDown.called);
+                done();
+              }
+            }
+          ]);
+        });
+      });
+
+      test('threshold and threshold-triggered', function(done) {
+        flush(function() {
+          assert.isUndefined(container.thresholdTriggered);
+          assert.equal(container.threshold, 0);
+          container.threshold = 100;
+
+          scrollTestHelper(container.scrollTarget, [
+            {
+              y: 0,
+              callback: function() {
+                assert.isFalse(container.thresholdTriggered);
+              }
+            }, {
+              y: 100,
+              callback: function() {
+                assert.isTrue(container.thresholdTriggered);
+              }
+            }, {
+              y: 50,
+              callback: function() {
+                assert.isFalse(container.thresholdTriggered);
+                done();
+              }
+            }
+          ]);
+        });
+      });
+    });
+
+  </script>
+
+</body>
+</html>

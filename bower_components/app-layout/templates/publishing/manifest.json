@@ -1,0 +1,21 @@
+{
+  "name": "Zuperkülblog",
+  "short_name": "Zuperkülblog",
+  "icons": [{
+      "src": "//app-layout-assets.appspot.com/assets/zuperkulblog/launcher-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }, {
+      "src": "//app-layout-assets.appspot.com/assets/zuperkulblog/launcher-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },{
+      "src": "//app-layout-assets.appspot.com/assets/zuperkulblog/launcher-icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    }],
+  "start_url": "index.html",
+  "background_color": "#fafafa",
+  "display": "standalone",
+  "theme_color": "#fafafa"
+}

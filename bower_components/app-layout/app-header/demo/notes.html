@@ -1,0 +1,175 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>Notes Demo</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../iron-icon/iron-icon.html">
+  <link rel="import" href="../../../iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../../paper-fab/paper-fab.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../app-scroll-effects/app-scroll-effects.html">
+  <link rel="import" href="../app-header.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        background-color: #eee;
+      }
+
+      .bg-header {
+        position: fixed;
+        top: 0px;
+        left: 0;
+        width: 100%;
+        height: 264px;
+        background-color: #e91e63;
+        color: #fff;
+      }
+
+      app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #e91e63;
+        color: #fff;
+        --app-header-shadow: {
+          transition: none;
+        };
+      }
+
+      paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      paper-fab {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        --paper-fab-background: #FFEB3B;
+        --paper-fab-keyboard-focus-background: #EFDB2B;
+        color: #666;
+      }
+
+      [main-title] {
+        margin-left: 30px;
+        font-weight: 300;
+      }
+
+      .content {
+        @apply --layout-horizontal;
+        @apply --layout-wrap;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 190px 4px 4px;
+        box-sizing: border-box;
+      }
+
+      .card {
+        width: calc(50% - 8px);
+        height: 200px;
+        margin: 4px;
+        background-color: #90A4AE;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14);
+      }
+
+      .cyan {
+        background-color: #00BCD4;
+      }
+
+      .teal {
+        background-color: #009688;
+      }
+
+      .purple {
+        background-color: #9c27b0;
+      }
+
+      .blue {
+        background-color: #4285f4;
+      }
+
+      .orange {
+        background-color: #FF5722;
+      }
+
+    </style>
+  </custom-style>
+</head>
+<body unresolved>
+
+  <div class="bg-header"></div>
+
+  <div class="content">
+    <div class="card"></div>
+    <div class="card orange"></div>
+    <div class="card purple"></div>
+    <div class="card cyan"></div>
+    <div class="card orange"></div>
+    <div class="card"></div>
+    <div class="card teal"></div>
+    <div class="card blue"></div>
+    <div class="card cyan"></div>
+    <div class="card purple"></div>
+  </div>
+
+  <paper-fab icon="add"></paper-fab>
+
+  <app-header fixed>
+    <app-toolbar>
+      <paper-icon-button icon="menu"></paper-icon-button>
+      <div main-title>Notes</div>
+      <paper-icon-button icon="search"></paper-icon-button>
+    </app-toolbar>
+  </app-header>
+
+  <script>
+
+    addEventListener('WebComponentsReady', function() {
+
+      var appHeader = document.querySelector('app-header');
+      var bgHeader = document.querySelector('.bg-header');
+      var appHeaderHeight = appHeader.offsetHeight;
+      var bgHeaderHeight = bgHeader.offsetHeight;
+
+      var transformBgHeader = function() {
+        var y = window.scrollY;
+        if (y <= bgHeaderHeight) {
+          y = 1.5 * y;
+        }
+        var s = bgHeader.style;
+        s.transform = s.webkitTransform = 'translate3d(0,' + -y + 'px,0)';
+        appHeader.shadow = y > bgHeaderHeight - appHeaderHeight;
+      }
+
+      transformBgHeader();
+
+      addEventListener('scroll', transformBgHeader);
+
+    });
+
+  </script>
+
+</body>
+</html>

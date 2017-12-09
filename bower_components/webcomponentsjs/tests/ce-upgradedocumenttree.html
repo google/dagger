@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <script>
+      WCT = {
+        waitFor: function(cb) {
+          cb();
+        }
+      }
+    </script>
+    <script src="../webcomponents-loader.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="imports/element-import-a.html">
+  </head>
+  <body>
+    <x-test></x-test>
+
+    <script>
+      var created = 0;
+      function register() {
+        class XTest extends HTMLElement {
+          connectedCallback() {
+            created++;
+          }
+        }
+        window.customElements.define('x-test', XTest);
+      }
+
+      test('upgraded document tree', function(done) {
+        if (CustomElements.useNative || !window.HTMLImports) {
+          return done();
+        } else {
+          window.addEventListener('WebComponentsReady', function() {
+            CustomElements.ready = false;
+            register();
+            assert.equal(created, 0, 'no elements created when ready explicitly set to false');
+            CustomElements.upgradeDocumentTree(document);
+            assert.equal(created, 3, 'elements in document tree upgraded via CustomElements.upgradeDocumentTree');
+            done();
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,157 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for app-grid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="../app-grid-style.html">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+ <dom-module id="x-grid">
+    <template>
+      <style include="app-grid-style">
+
+        :host {
+          display: block;
+          --app-grid-columns: 4;
+          --app-grid-gutter: 16px;
+          --app-grid-expandible-item-columns: 2;
+          --app-grid-item-height: 100px;
+          width: 480px;
+          background-color: red;
+
+        }
+
+        ul {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .item {
+          list-style: none;
+          background-color: green;
+        }
+
+        .item:nth-child(2),
+        .item:nth-child(5),
+        .item:nth-child(8),
+        .item:nth-child(11) {
+            @apply --app-grid-expandible-item;
+        }
+
+      </style>
+
+      <ul class="app-grid">
+        <template items="[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]" is="dom-repeat">
+          <li class="item">[[item]]</li>
+        </template>
+      </ul>
+
+    </template>
+
+    <script>
+
+      HTMLImports.whenReady(function() {
+
+        Polymer({
+          is: 'x-grid'
+        });
+
+      });
+
+    </script>
+  </dom-module>
+
+
+  <test-fixture id="trivialGrid">
+    <template>
+      <x-grid></x-grid>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    function valueAsInt(obj) {
+      var rtn = {top: 0, right: 0, bottom: 0, left: 0, width: 0};
+      for (var k in obj) {
+        if (rtn.hasOwnProperty(k)) {
+          rtn[k] = Math.round(obj[k]);
+        }
+      }
+      return rtn;
+    }
+
+    suite('basic features', function() {
+      var grid;
+
+      setup(function() {
+        grid = fixture('trivialGrid');
+      });
+
+      test('bounding rectangle for each item', function(done) {
+
+        flush(function() {
+
+          var i, k, currentRect;
+          var gridItems = Polymer.dom(grid.root).querySelectorAll('li');
+          var expectedBoundingRect = [
+            {top: 16, right: 116, bottom: 116, left: 16, width: 100},
+            {top: 16, right: 348, bottom: 116, left: 132, width: 216},
+            {top: 16, right: 464, bottom: 116, left: 364, width: 100},
+            {top: 132, right: 116, bottom: 232, left: 16, width: 100},
+            {top: 132, right: 348, bottom: 232, left: 132, width: 216},
+            {top: 132, right: 464, bottom: 232, left: 364, width: 100},
+            {top: 248, right: 116, bottom: 348, left: 16, width: 100},
+            {top: 248, right: 348, bottom: 348, left: 132, width: 216},
+            {top: 248, right: 464, bottom: 348, left: 364, width: 100},
+            {top: 364, right: 116, bottom: 464, left: 16, width: 100},
+            {top: 364, right: 348, bottom: 464, left: 132, width: 216},
+            {top: 364, right: 464, bottom: 464, left: 364, width: 100}
+          ];
+
+          for (i = 0; i < gridItems.length; i++) {
+            currentRect = valueAsInt(gridItems[i].getBoundingClientRect());
+
+            for (k in expectedBoundingRect[i]) {
+              if (expectedBoundingRect[i].hasOwnProperty(k)) {
+                assert.approximately(expectedBoundingRect[i][k],
+                    currentRect[k], 4, ' ItemRect[' + i + '].' + k);
+              }
+            }
+          }
+
+          done();
+
+        });
+
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>app-drawer demo</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../font-roboto/roboto.html">
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../../paper-item/paper-icon-item.html">
+  <link rel="import" href="../../demo/sample-content.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../app-drawer.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        background-color: #eee;
+      }
+
+      app-toolbar {
+        background-color: #4285f4;
+        color: #fff;
+      }
+
+      app-drawer {
+        --app-drawer-content-container: {
+          background-color: #B0BEC5;
+        }
+      }
+
+      .drawer-contents {
+        height: 100%;
+        overflow-y: auto;
+      }
+
+    </style>
+  </custom-style>
+
+</head>
+<body>
+
+  <app-toolbar>
+    <div main-title></div>
+    <paper-icon-button icon="menu" onclick="drawer.toggle()"></paper-icon-button>
+  </app-toolbar>
+
+  <sample-content size="100"></sample-content>
+
+  <app-drawer id="drawer" align="right" swipe-open>
+    <div class="drawer-contents">
+      <paper-icon-item>
+        <iron-icon icon="inbox" item-icon slot="item-icon"></iron-icon>
+        <span>inbox</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="favorite" item-icon slot="item-icon"></iron-icon>
+        <span>favorite</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="polymer" item-icon slot="item-icon"></iron-icon>
+        <span>polymer</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="question-answer" item-icon slot="item-icon"></iron-icon>
+        <span>question-answer</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="send" item-icon slot="item-icon"></iron-icon>
+        <span>send</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="archive" item-icon slot="item-icon"></iron-icon>
+        <span>archive</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="backup" item-icon slot="item-icon"></iron-icon>
+        <span>backup</span>
+      </paper-icon-item>
+      <paper-icon-item>
+        <iron-icon icon="dashboard" item-icon slot="item-icon"></iron-icon>
+        <span>dashboard</span>
+      </paper-icon-item>
+    </div>
+  </app-drawer>
+
+</body>
+</html>

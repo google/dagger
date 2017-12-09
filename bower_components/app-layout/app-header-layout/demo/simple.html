@@ -1,0 +1,88 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>app-header-layout demo</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../font-roboto/roboto.html">
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../app-scroll-effects/effects/waterfall.html">
+  <link rel="import" href="../../app-header/app-header.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../demo/sample-content.html">
+  <link rel="import" href="../app-header-layout.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        background-color: #eee;
+      }
+
+      app-header {
+        background-color: #4285f4;
+        color: #fff;
+      }
+
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+    </style>
+  </custom-style>
+</head>
+<body>
+
+  <dom-module id="simple-layout">
+    <template>
+      <style>
+        app-header {
+          background-color: #4285f4;
+          color: #fff;
+        }
+      </style>
+      <app-header-layout fullbleed>
+        <app-header slot="header" effects="waterfall" condenses reveals>
+          <app-toolbar>
+            <paper-icon-button icon="menu"></paper-icon-button>
+            <div main-title></div>
+            <paper-icon-button icon="search"></paper-icon-button>
+          </app-toolbar>
+          <app-toolbar></app-toolbar>
+          <app-toolbar>
+            <div spacer main-title>My Drive</div>
+          </app-toolbar>
+        </app-header>
+        <sample-content size="100"></sample-content>
+      </app-header-layout>
+    </template>
+    <script>
+      document.addEventListener('WebComponentsReady', function() {
+        Polymer({
+          is: 'simple-layout'
+        });
+      });
+    </script>
+  </dom-module>
+
+  <simple-Layout></simple-Layout>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>Material design grid layout using app-grid</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+
+  <link rel="import" href="../../../polymer/polymer.html">
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../paper-styles/shadow.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+
+  <link rel="import" href="../../app-header-layout/app-header-layout.html">
+  <link rel="import" href="../../app-scroll-effects/effects/waterfall.html">
+  <link rel="import" href="../../app-header/app-header.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../app-grid-style.html">
+
+  <style>
+
+    body {
+      font-family: 'Roboto', 'Noto', sans-serif;
+      background-color: #ddd;
+      margin: 0;
+    }
+
+  </style>
+
+</head>
+<body>
+  <dom-module id="x-grid">
+    <template>
+      <style include="app-grid-style">
+
+        :host {
+          display: block;
+          --app-grid-columns: 4;
+          --app-grid-gutter: 10px;
+          --app-grid-expandible-item-columns: 4;
+          --paper-icon-button-ink-color: white;
+        }
+
+        app-header {
+          background-color: #0b8043;
+          color: white;
+        }
+
+        ul {
+          padding: 0;
+          list-style: none;
+        }
+
+        .centered-container {
+          margin-top: 40px;
+          max-width: 1000px;
+          margin: 40px auto;
+        }
+
+        .item {
+          height: 250px;
+          position: relative;
+          background-color: white;
+          background-size: cover;
+          background-position: center center;
+        }
+
+        .item:nth-child(5n + 1) {
+          height: 30vmax;
+          @apply --app-grid-expandible-item;
+        }
+
+        .item-title {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: rgba(0, 0, 0, 0.2);
+          color: white;
+          font-weight: 400;
+          padding: 16px;
+        }
+
+        @media(max-width: 799px) {
+
+          .centered-container {
+            margin: 10px 5px;
+          }
+
+          :host {
+            --app-grid-columns: 2;
+            --app-grid-gutter: 5px;
+            --app-grid-item-height: 200px;
+          }
+
+        }
+
+      </style>
+
+      <app-header-layout>
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <div spacer main-title>Material responsive grid</div>
+          </app-toolbar>
+        </app-header>
+        <div class="centered-container">
+          <ul class="app-grid">
+            <template is="dom-repeat" items="[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]">
+              <li class="item" style$="background-image: url(//lorempixel.com/800/800/nature/?i=[[item]]);">
+                <div class="item-title">Nature [[item]]</div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </app-header-layout>
+
+    </template>
+
+    <script>
+
+      HTMLImports.whenReady(function() {
+
+        Polymer({
+          is: 'x-grid',
+
+          attached: function() {
+            this._updateGridStyles = this._updateGridStyles || function() {
+              this.updateStyles();
+            }.bind(this);
+            window.addEventListener('resize', this._updateGridStyles);
+          },
+
+          detached: function() {
+            window.removeEventListener('resize', this._updateGridStyles);
+          }
+        });
+
+      });
+
+    </script>
+  </dom-module>
+
+  <x-grid></x-grid>
+
+</body>
+</html>

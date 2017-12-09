@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for the resize-title effect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="../app-scroll-effects.html">
+  <link rel="import" href="x-container.html">
+  <link rel="import" href="utils.html">
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 1000vh;
+    }
+
+    x-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="testHeader">
+    <template>
+      <x-container effects="resize-title"></x-container>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    suite('basic features', function() {
+      var container;
+
+      setup(function() {
+        container = fixture('testHeader');
+      });
+
+      test('effect outputs', function(done) {
+        flush(function() {
+          container._updateScrollState(0);
+
+          assert.isTrue(sameCSS(container.$.mainTitle,
+              'will-change: opacity; transform: translate(0px, 0px) scale3d(1, 1, 1); opacity: 1;'),
+              'main-title when progress = 0');
+
+          assert.isTrue(sameCSS(container.$.condensedTitle,
+            'will-change: opacity; transform: translateZ(0px); opacity: 0;'),
+            'condensed-title when progress = 0');
+
+          container._updateScrollState(container.offsetHeight * 0.5);
+
+          assert.isTrue(sameCSS(container.$.mainTitle,
+              'will-change: opacity; transform: translate(50px, 50px) scale3d(1.5, 1.5, 1); opacity: 1;'),
+              'main-title when progress = 0.5');
+
+          assert.isTrue(sameCSS(container.$.condensedTitle,
+            'will-change: opacity; transform: translateZ(0px); opacity: 0;'),
+            'condensed-title when progress = 0.5');
+
+          container._updateScrollState(container.offsetHeight);
+
+          assert.isTrue(sameCSS(container.$.mainTitle,
+            'will-change: opacity; transform: translate(100px, 100px) scale3d(2, 2, 1); opacity: 0;'),
+            'main-title when progress = 1');
+
+          assert.isTrue(sameCSS(container.$.condensedTitle,
+            'will-change: opacity; transform: translateZ(0px); opacity: 1;'),
+            'condensed-title when progress = 1');
+
+          done();
+        });
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

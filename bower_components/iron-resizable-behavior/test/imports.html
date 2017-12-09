@@ -1,0 +1,44 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<html>
+
+<head>
+
+  <title>iron-resizable-behavior tests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="x-resizable.html">
+  <link rel="import" href="x-resizer-parent.html">
+
+</head>
+
+<body>
+  <x-resizer-parent>
+    <x-resizable></x-resizable>
+  </x-resizer-parent>
+
+  <script>
+    suite('imports order', function() {
+      test('resizable children and parent updated', function() {
+        var parent = document.querySelector('x-resizer-parent');
+        var child = parent.firstElementChild;
+        assert.deepEqual(parent._interestedResizables, [child], 'resizable children ok');
+        assert.equal(child._parentResizable, parent, 'resizable parent ok');
+      });
+    });
+  </script>
+</body>
+
+</html>

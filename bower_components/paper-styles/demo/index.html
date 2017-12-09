@@ -1,0 +1,232 @@
+<!doctype html>
+
+<!--
+  @license
+  Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+  This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+  The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+  The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+  Code distributed by Google as part of the polymer project is also
+  subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<html>
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <title>paper-styles demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../color.html">
+    <link rel="import" href="../shadow.html">
+    <link rel="import" href="../typography.html">
+    <link rel="import" href="../default-theme.html">
+    <link rel="import" href="../element-styles/paper-item-styles.html">
+    <link rel="import" href="../element-styles/paper-material-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  </head>
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+      .redlines {
+        background: linear-gradient(0deg, transparent, transparent 3.5px, rgba(255,0,0,0.2) 3.5px, rgba(255,0,0,0.2) 4px);
+        background-size: 100% 4px;
+      }
+    </style>
+  </custom-style>
+
+  <body unresolved>
+    <div class="vertical-section-container centered">
+      <h4>typography.html</h4>
+      <demo-snippet>
+        <template>
+          <div class="redlines">
+            <div class="paper-font-display4">Display 4</div>
+            <div class="paper-font-display3">Display 3</div>
+            <div class="paper-font-display2">Display 2</div>
+            <div class="paper-font-display1">Display 1</div>
+            <div class="paper-font-headline">Headline</div>
+            <div class="paper-font-title">Title</div>
+            <div class="paper-font-subhead">Subhead</div>
+            <div class="paper-font-body2">Body 2</div>
+            <div class="paper-font-body1">Body 1</div>
+            <div class="paper-font-caption">Caption</div>
+            <div class="paper-font-menu">Menu</div>
+            <div class="paper-font-button">Button</div>
+          </div>
+
+          <p class="redlines paper-font-body1">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
+            tincidunt dui sit amet mi auctor, ac gravida magna aliquam. Fusce quis
+            purus elementum, tempus nisi vel, volutpat nulla. Vestibulum mollis
+            dictum tellus, vulputate porttitor arcu. Curabitur imperdiet risus id
+            egestas accumsan. Donec lectus felis, dignissim id iaculis sit amet,
+            faucibus in leo.
+          </p>
+
+          <p class="redlines paper-font-body2">
+            Mauris id urna ac ante ultrices commodo a imperdiet elit. Vivamus
+            interdum neque magna, eget dapibus est auctor et. Donec accumsan
+            libero nec augue scelerisque, ac egestas ante tincidunt. Proin
+            sollicitudin, mi eget sagittis mollis, arcu orci scelerisque turpis, a
+            sollicitudin tellus quam non sapien.
+          </p>
+
+          <custom-style>
+            <style is="custom-style">
+              .paper-font-display4 { @apply --paper-font-display4; }
+              .paper-font-display3 { @apply --paper-font-display3; }
+              .paper-font-display2 { @apply --paper-font-display2; }
+              .paper-font-display1 { @apply --paper-font-display1; }
+              .paper-font-headline { @apply --paper-font-headline; }
+              .paper-font-title { @apply --paper-font-title; }
+              .paper-font-subhead {  @apply --paper-font-subhead; }
+              .paper-font-body2 { @apply --paper-font-body2; }
+              .paper-font-body1 { @apply --paper-font-body1; }
+              .paper-font-caption { @apply --paper-font-caption; }
+              .paper-font-menu { @apply --paper-font-menu; }
+              .paper-font-button { @apply --paper-font-button; }
+            </style>
+          </custom-style>
+        </template>
+      </demo-snippet>
+
+      <h4>shadow.html</h4>
+      <demo-snippet>
+        <template>
+          <div class="shadow shadow-2dp">2dp</div>
+          <div class="shadow shadow-3dp">3dp</div>
+          <div class="shadow shadow-4dp">4dp</div>
+          <div class="shadow shadow-6dp">6dp</div>
+          <div class="shadow shadow-8dp">8dp</div>
+          <div class="shadow shadow-12dp">12dp</div>
+          <div class="shadow shadow-16dp">16dp</div>
+
+          <custom-style>
+            <style is="custom-style">
+              .shadow-2dp { @apply --shadow-elevation-2dp; }
+              .shadow-3dp { @apply --shadow-elevation-3dp; }
+              .shadow-4dp { @apply --shadow-elevation-4dp; }
+              .shadow-6dp { @apply --shadow-elevation-6dp; }
+              .shadow-8dp { @apply --shadow-elevation-8dp; }
+              .shadow-12dp { @apply --shadow-elevation-12dp; }
+              .shadow-16dp { @apply --shadow-elevation-16dp; }
+              .shadow {
+                display: inline-block;
+                padding: 8px;
+                margin: 16px;
+                height: 50px;
+                width: 50px;
+              }
+            </style>
+          </custom-style>
+        </template>
+      </demo-snippet>
+
+      <h4>default-theme.html</h4>
+      <demo-snippet>
+        <template>
+          <div>
+            <div class="toolbar">Title</div>
+            <div class="item">
+              <div class="fab">+</div>
+              <div class="primary">Primary text</div>
+              <div class="secondary">Secondary text</div>
+            </div>
+            <div class="disabled-item">Disabled</div>
+          </div>
+
+          <custom-style>
+            <style is="custom-style">
+              .toolbar {
+                height: 144px;
+                padding: 16px;
+                background: var(--default-primary-color);
+                color: var(--text-primary-color);
+                @apply --paper-font-display1;
+              }
+
+              .item, .disabled-item {
+                position: relative;
+                padding: 8px;
+                border: 1px solid;
+                border-color: var(--divider-color);
+                border-top: 0;
+              }
+
+              .item .primary {
+                color: var(--primary-text-color);
+                @apply --paper-font-body2;
+              }
+
+              .item .secondary {
+                color: var(--secondary-text-color);
+                @apply --paper-font-body1;
+              }
+
+              .disabled-item {
+                color: var(--disabled-text-color);
+                @apply --paper-font-body2;
+              }
+
+              .fab {
+                position: absolute;
+                box-sizing: border-box;
+                padding: 8px;
+                width: 56px;
+                height: 56px;
+                right: 16px;
+                top: -28px;
+                border-radius: 50%;
+                text-align: center;
+
+                background: var(--accent-color);
+                color: var(--text-primary-color);
+                @apply --paper-font-display1;
+              }
+            </style>
+          </custom-style>
+        </template>
+      </demo-snippet>
+
+      <h4>Element shared styles: paper-material</h4>
+      <demo-snippet>
+        <template>
+          <custom-style>
+            <style is="custom-style" include="paper-material-styles">
+              .paper-material {
+                padding: 16px;
+                margin: 0 16px;
+                display: inline-block;
+              }
+            </style>
+          </custom-style>
+
+          <div class="paper-material" elevation="1">1</div>
+          <div class="paper-material" elevation="2">2</div>
+          <div class="paper-material" elevation="3">3</div>
+          <div class="paper-material" elevation="4">4</div>
+          <div class="paper-material" elevation="5">5</div>
+        </template>
+      </demo-snippet>
+
+      <h4>Element shared styles: paper-item</h4>
+      <demo-snippet>
+        <template>
+          <custom-style>
+            <style is="custom-style" include="paper-item-styles"></style>
+          </custom-style>
+
+          <button class="paper-item" role="option">Inbox</button>
+          <button class="paper-item" role="option">Starred</button>
+          <button class="paper-item" role="option">Sent mail</button>
+        </template>
+      </demo-snippet>
+
+    </div>
+  </body>
+</html>

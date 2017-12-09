@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "gulp": "^3.8.8",
-    "web-component-tester": "^0.6.0"
-  }
-}

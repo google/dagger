@@ -1,9 +1,0 @@
-{
-  "name": "paper-icon-button",
-  "private": true,
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0",
-    "core-selector": "Polymer/core-selector#^0.4.0",
-    "paper-button": "Polymer/paper-button#^0.4.0"
-  }
-}

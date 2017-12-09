@@ -1,9 +1,0 @@
-{
-  "name": "paper-item",
-  "private": true,
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0",
-    "core-icon": "Polymer/core-icon#^0.4.0",
-    "paper-ripple": "Polymer/paper-ripple#^0.4.0"
-  }
-}

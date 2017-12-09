@@ -3,22 +3,7 @@
 *~
 \#*\#
 
-eclipsebin
-
-bin
-gen
-build
-out
-lib
-
-target
-pom.xml.*
-release.properties
-
 *.iml
-classes
-
-obj
 
 Gemfile
 Gemfile.lock

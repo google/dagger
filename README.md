@@ -187,7 +187,7 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 
 ## License
 
-    Copyright 2012 The Dagger Authors
+    Copyright 2017 The Dagger Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

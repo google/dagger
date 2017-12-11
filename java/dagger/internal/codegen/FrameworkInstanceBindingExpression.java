@@ -31,6 +31,7 @@ import javax.lang.model.util.Elements;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
+  private final ComponentBindingExpressions componentBindingExpressions;
   private final Supplier<MemberSelect> frameworkFieldSupplier;
   private final FrameworkType frameworkType;
   private final DaggerTypes types;
@@ -75,6 +76,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
 
     return new FrameworkInstanceBindingExpression(
         resolvedBindings,
+        componentBindingExpressions,
         isProducerFromProvider ? FrameworkType.PRODUCER : frameworkType,
         frameworkFieldSupplier,
         types,
@@ -83,11 +85,13 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
 
   private FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
+      ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
       Supplier<MemberSelect> frameworkFieldSupplier,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
+    this.componentBindingExpressions = componentBindingExpressions;
     this.frameworkType = frameworkType;
     this.frameworkFieldSupplier = frameworkFieldSupplier;
     this.types = types;
@@ -103,18 +107,39 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    MemberSelect memberSelect = frameworkFieldSupplier.get();
+    if (requestKind.equals(frameworkRequestKind())) {
+      MemberSelect memberSelect = frameworkFieldSupplier.get();
+      TypeMirror expressionType =
+          isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
+                  || isInlinedFactoryCreation(memberSelect)
+              ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
+              : rawFrameworkType();
+      return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
+    }
 
-    TypeMirror expressionType =
-        isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
-                || isInlinedFactoryCreation(memberSelect)
-            ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
-            : rawFrameworkType();
-
+    // The following expressions form a composite with the expression for the framework type.
+    // For example, the expression for a DependencyRequest.Kind.LAZY is a composite of the
+    // expression for a DependencyRequest.Kind.PROVIDER (the framework type):
+    //    lazyExpression = DoubleCheck.lazy(providerExpression);
     return frameworkType.to(
         requestKind,
-        Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass)),
+        componentBindingExpressions.getDependencyExpression(
+            resolvedBindings().bindingKey(), frameworkRequestKind(), requestingClass),
         types);
+  }
+
+  /** Returns the request kind that matches the framework type. */
+  private DependencyRequest.Kind frameworkRequestKind() {
+    switch (frameworkType) {
+      case PROVIDER:
+        return DependencyRequest.Kind.PROVIDER;
+      case PRODUCER:
+        return DependencyRequest.Kind.PRODUCER;
+      case MEMBERS_INJECTOR:
+        return DependencyRequest.Kind.MEMBERS_INJECTOR;
+      default:
+        throw new AssertionError();
+    }
   }
 
   /**

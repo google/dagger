@@ -46,6 +46,8 @@ final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final DaggerTypes types;
   private final BindingExpressionFactory bindingExpressionFactory;
+  // TODO(user): Switch to Table<BindingKey, DependencyRequest.Kind, BindingExpression>, and give
+  // each BindingKey, DependencyRequest.Kind pair its own instance of BindingExpression.
   private final Map<BindingKey, BindingExpression> bindingExpressionsMap = new HashMap<>();
 
   ComponentBindingExpressions(
@@ -311,6 +313,7 @@ final class ComponentBindingExpressions {
         return new PrivateMethodBindingExpression(
             resolvedBindings,
             generatedComponentModel,
+            componentBindingExpressions,
             inlineBindingExpression,
             referenceReleasingManagerFields,
             compilerOptions,

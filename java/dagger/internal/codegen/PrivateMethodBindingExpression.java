@@ -52,6 +52,7 @@ import javax.lang.model.util.Elements;
  */
 final class PrivateMethodBindingExpression extends BindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingExpression delegate;
   private final Map<DependencyRequest.Kind, String> methodNames =
       new EnumMap<>(DependencyRequest.Kind.class);
@@ -66,6 +67,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   PrivateMethodBindingExpression(
       ResolvedBindings resolvedBindings,
       GeneratedComponentModel generatedComponentModel,
+      ComponentBindingExpressions componentBindingExpressions,
       BindingExpression delegate,
       ReferenceReleasingManagerFields referenceReleasingManagerFields,
       CompilerOptions compilerOptions,
@@ -73,6 +75,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       Elements elements) {
     super(resolvedBindings);
     this.generatedComponentModel = generatedComponentModel;
+    this.componentBindingExpressions = componentBindingExpressions;
     this.delegate = delegate;
     binding = resolvedBindings.contributionBinding();
     this.referenceReleasingManagerFields = referenceReleasingManagerFields;
@@ -138,6 +141,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       case LAZY:
       case PROVIDER_OF_LAZY:
         return !compilerOptions.experimentalAndroidMode()
+            || (binding.scope().isPresent() && !canInlineScope())
             || binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE);
       default:
         return !compilerOptions.experimentalAndroidMode();
@@ -209,15 +213,6 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       case PROVIDER:
         // TODO(user): Cache provider field instead of recreating each time.
         return CodeBlock.of("return $L;", providerTypeSpec());
-      case LAZY:
-      case PROVIDER_OF_LAZY:
-        // TODO(user): Refactor the delegate BindingExpression to handle these cases?
-        // Don't use delegate.getDependencyExpression() because that will inline the provider
-        // dependency instead of delegating to the private method. To use the private method,
-        // recursively call this.getDependencyExpression().
-        CodeBlock asProvider =
-            getDependencyExpression(DependencyRequest.Kind.PROVIDER, componentName()).codeBlock();
-        return CodeBlock.of("return $L;", FrameworkType.PROVIDER.to(requestKind, asProvider));
       case INSTANCE:
         if (canInlineScope()) {
           Scope scope = resolvedBindings().scope().get();
@@ -225,13 +220,10 @@ final class PrivateMethodBindingExpression extends BindingExpression {
               ? singleCheck(requestKind) : doubleCheck(requestKind);
         }
         // fall through
-      case PRODUCER:
-      case FUTURE:
+      default:
         return CodeBlock.of(
             "return $L;",
             delegate.getDependencyExpression(requestKind, componentName()).codeBlock());
-      default:
-        throw new AssertionError("Unhandled DependencyRequest: " + requestKind);
     }
   }
 
@@ -295,7 +287,11 @@ final class PrivateMethodBindingExpression extends BindingExpression {
                 .returns(TypeName.get(accessibleType(binding.contributedType())))
                 .addStatement(
                     "return $L",
-                    getDependencyExpression(DependencyRequest.Kind.INSTANCE, componentName())
+                    componentBindingExpressions
+                        .getDependencyExpression(
+                            resolvedBindings().bindingKey(),
+                            DependencyRequest.Kind.INSTANCE,
+                            componentName())
                         .codeBlock())
                 .build())
         .build();

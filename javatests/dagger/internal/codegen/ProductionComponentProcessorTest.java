@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
@@ -267,12 +266,9 @@ public class ProductionComponentProcessorTest {
                 "      synchronized (local) {",
                 "        if (local == productionImplementationExecutor) {",
                 "          productionImplementationExecutor =",
-                "              Preconditions.checkNotNull(",
-                "                  TestClass_SimpleComponent_ProductionExecutorModule.executor(",
-                "                      Preconditions.checkNotNull(",
-                "                          bModule.executor(),",
-                "                          " + NPE_FROM_PROVIDES_METHOD + ")),",
-                "                  " + NPE_FROM_PROVIDES_METHOD + ");",
+                "              TestClass_SimpleComponent_ProductionExecutorModule_ExecutorFactory",
+                "                  .proxyExecutor(",
+                "                      TestClass_BModule_ExecutorFactory.proxyExecutor(bModule));",
                 "        }",
                 "        local = productionImplementationExecutor;",
                 "      }",
@@ -295,11 +291,10 @@ public class ProductionComponentProcessorTest {
                 "      synchronized (local) {",
                 "        if (local == productionComponentMonitor) {",
                 "          productionComponentMonitor =",
-                "              Preconditions.checkNotNull(",
-                "                  TestClass_SimpleComponent_MonitoringModule.monitor(",
+                "              TestClass_SimpleComponent_MonitoringModule_MonitorFactory",
+                "                  .proxyMonitor(",
                 "                      simpleComponentProvider,",
-                "                      SetFactory.<ProductionComponentMonitor.Factory>empty()),",
-                "                  " + NPE_FROM_PROVIDES_METHOD + ");",
+                "                      SetFactory.<ProductionComponentMonitor.Factory>empty());",
                 "        }",
                 "        local = productionComponentMonitor;",
                 "      }",
@@ -318,8 +313,7 @@ public class ProductionComponentProcessorTest {
                 "  }",
                 "",
                 "  private TestClass.B getB() {",
-                "    return Preconditions.checkNotNull(",
-                "        bModule.b(new TestClass.C()), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    return TestClass_BModule_BFactory.proxyB(bModule, new TestClass.C());",
                 "  }",
                 "",
                 "  private Provider<TestClass.B> getBProvider() {",

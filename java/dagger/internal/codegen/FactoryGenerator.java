@@ -118,7 +118,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     factoryBuilder.addMethod(getMethod(binding));
     addCreateMethod(binding, factoryBuilder);
 
-    ProvisionMethod.create(binding).ifPresent(factoryBuilder::addMethod);
+    ProvisionMethod.create(binding, compilerOptions).ifPresent(factoryBuilder::addMethod);
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
     mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
 

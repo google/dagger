@@ -20,7 +20,6 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.NPE_FROM_COMPONENT_METHOD;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -489,14 +488,13 @@ public class ComponentRequirementFieldTest {
                 "  }",
                 "",
                 "  private Set<Object> getSetOfObject() {",
-                "    return ImmutableSet.<Object>of(Preconditions.checkNotNull(",
-                "        ParentModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + "));",
+                "    return ImmutableSet.<Object>of(",
+                "        ParentModule_ContributionFactory.proxyContribution());",
                 "  }",
                 "",
                 "  private Object getObject() {",
-                "    return Preconditions.checkNotNull(",
-                "        parentModule.reliesOnMultibinding(getSetOfObject()),",
-                "        " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    return ParentModule_ReliesOnMultibindingFactory.proxyReliesOnMultibinding(",
+                "        parentModule, getSetOfObject());",
                 "  }",
                 "",
                 "  @SuppressWarnings(\"unchecked\")",
@@ -542,17 +540,13 @@ public class ComponentRequirementFieldTest {
                 "",
                 "    private Set<Object> getSetOfObject() {",
                 "      return ImmutableSet.<Object>of(",
-                "          Preconditions.checkNotNull(",
-                "              ParentModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + "),",
-                "          Preconditions.checkNotNull(",
-                "              ChildModule.contribution(), " + NPE_FROM_PROVIDES_METHOD + "));",
+                "          ParentModule_ContributionFactory.proxyContribution(),",
+                "          ChildModule_ContributionFactory.proxyContribution());",
                 "    }",
                 "",
                 "    private Object getObject() {",
-                "      return Preconditions.checkNotNull(",
-                "          DaggerTestComponent.this.parentModule.reliesOnMultibinding(",
-                "              getSetOfObject()),",
-                "          " + NPE_FROM_PROVIDES_METHOD + ");",
+                "      return ParentModule_ReliesOnMultibindingFactory.proxyReliesOnMultibinding(",
+                "          DaggerTestComponent.this.parentModule, getSetOfObject());",
                 "    }",
                 "",
                 "    @Override",

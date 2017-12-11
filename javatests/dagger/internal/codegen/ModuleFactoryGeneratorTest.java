@@ -273,7 +273,7 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static String proxyProvideString(TestModule instance) {",
-            "    return instance.provideString();",
+            "    return Preconditions.checkNotNull(instance.provideString(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSource()).that(moduleFile)
@@ -474,7 +474,8 @@ public class ModuleFactoryGeneratorTest {
             "",
             "  public static List<Object> proxyProvideObjects(",
             "      TestModule instance, Object a, Object b, MembersInjector<X> x) {",
-            "    return instance.provideObjects(a, b, x);",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideObjects(a, b, x), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSources()).that(
@@ -525,7 +526,7 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static String proxyProvideString(TestModule instance) {",
-            "    return instance.provideString();",
+            "    return Preconditions.checkNotNull(instance.provideString(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSource()).that(moduleFile)
@@ -580,7 +581,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static List<List<?>> proxyProvideWildcardList(TestModule instance) {",
-            "    return instance.provideWildcardList();",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideWildcardList(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSource()).that(moduleFile)
@@ -631,7 +633,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static Set<String> proxyProvideStrings(TestModule instance) {",
-            "    return instance.provideStrings();",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideStrings(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSource()).that(moduleFile)
@@ -928,7 +931,7 @@ public class ModuleFactoryGeneratorTest {
             "  public static <A extends CharSequence, B, C extends Number & Comparable<C>> List<B>",
             "      proxyProvideListB(",
             "          ParentModule<A, B, C> instance, B b) {",
-            "    return instance.provideListB(b);",
+            "    return Preconditions.checkNotNull(instance.provideListB(b), " + NPE_LITERAL + ");",
             "  }",
             "}");
     JavaFileObject bElementFactory =
@@ -967,7 +970,8 @@ public class ModuleFactoryGeneratorTest {
             "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
             "      B proxyProvideBElement(",
             "          ParentModule<A, B, C> instance, B b) {",
-            "        return instance.provideBElement(b);",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideBElement(b), " + NPE_LITERAL + ");",
             "  }",
             "}");
     JavaFileObject bEntryFactory =
@@ -1006,7 +1010,8 @@ public class ModuleFactoryGeneratorTest {
             "  public static <A extends CharSequence, B, C extends Number & Comparable<C>>",
             "      B proxyProvideBEntry(",
             "          ParentModule<A, B, C> instance, B b) {",
-            "        return instance.provideBEntry(b);",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideBEntry(b), " + NPE_LITERAL + ");",
             "  }",
             "}");
     JavaFileObject numberFactory =
@@ -1037,7 +1042,7 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static Number proxyProvideNumber(ChildNumberModule instance) {",
-            "    return instance.provideNumber();",
+            "    return Preconditions.checkNotNull(instance.provideNumber(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     JavaFileObject integerFactory =
@@ -1068,7 +1073,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static Integer proxyProvideInteger(ChildIntegerModule instance) {",
-            "    return instance.provideInteger();",
+            "    return Preconditions.checkNotNull(",
+            "        instance.provideInteger(), " + NPE_LITERAL + ");",
             "  }",
             "}");
     assertAbout(javaSources())
@@ -1138,7 +1144,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static Map<String, Number> proxyProvideMapStringNumber() {",
-            "    return ParameterizedModule.provideMapStringNumber();",
+            "    return Preconditions.checkNotNull(ParameterizedModule.provideMapStringNumber(),",
+            "        " + NPE_LITERAL + ");",
             "  }",
             "}");
 
@@ -1168,7 +1175,8 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static Object proxyProvideNonGenericType() {",
-            "    return ParameterizedModule.provideNonGenericType();",
+            "    return Preconditions.checkNotNull(ParameterizedModule.provideNonGenericType(),",
+            "        " + NPE_LITERAL + ");",
             "  }",
             "}");
 
@@ -1204,7 +1212,9 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "",
             "  public static String proxyProvideNonGenericTypeWithDeps(Object o) {",
-            "    return ParameterizedModule.provideNonGenericTypeWithDeps(o);",
+            "    return Preconditions.checkNotNull(",
+            "        ParameterizedModule.provideNonGenericTypeWithDeps(o),",
+            "        " + NPE_LITERAL + ");",
             "  }",
             "}");
 

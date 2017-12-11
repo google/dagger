@@ -28,9 +28,9 @@ TMPDIR=$7/combined
 
 mkdir -p $TMPDIR
 for dep in $DEPS; do
-  unzip -B $dep -d $TMPDIR
+  unzip -qq -B $dep -d $TMPDIR
 done
-pushd $TMPDIR
+pushd $TMPDIR &>/dev/null
 
 # Concatenate similar files in META-INF/services
 for file in META-INF/services/*; do
@@ -48,9 +48,9 @@ if [[ -n "$duplicate_files" ]]; then
   echo "Error: duplicate files in merged jar: $duplicate_files"
   exit 1
 fi
-$JAR_BINARY cvf combined.jar *
+$JAR_BINARY cf combined.jar *
 
-popd
+popd &>/dev/null
 
 $JAVA_BINARY -jar $JARJAR process $RULES_FILE $TMPDIR/combined.jar $OUT
 rm -rf $TMPDIR

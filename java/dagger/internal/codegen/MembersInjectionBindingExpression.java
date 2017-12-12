@@ -28,20 +28,20 @@ import java.util.List;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 
-/** A binding expression that can wrap another */
+/** A binding expression for members injection bindings. */
 final class MembersInjectionBindingExpression extends BindingExpression {
-  private final FrameworkInstanceBindingExpression membersInjectorField;
+  private final FrameworkInstanceBindingExpression membersInjectorExpression;
   private final GeneratedComponentModel generatedComponentModel;
   private final MembersInjectionBinding binding;
   private final MembersInjectionMethods membersInjectionMethods;
 
   MembersInjectionBindingExpression(
-      FrameworkInstanceBindingExpression membersInjectorField,
+      FrameworkInstanceBindingExpression membersInjectorExpression,
       GeneratedComponentModel generatedComponentModel,
       MembersInjectionMethods membersInjectionMethods) {
-    super(membersInjectorField.resolvedBindings());
+    super(membersInjectorExpression.resolvedBindings());
     checkArgument(resolvedBindings().bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
-    this.membersInjectorField = membersInjectorField;
+    this.membersInjectorExpression = membersInjectorExpression;
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings().membersInjectionBinding().get();
     this.membersInjectionMethods = membersInjectionMethods;
@@ -51,7 +51,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     checkArgument(requestKind.equals(DependencyRequest.Kind.MEMBERS_INJECTOR));
-    return membersInjectorField.getDependencyExpression(requestKind, requestingClass);
+    return membersInjectorExpression.getDependencyExpression(requestKind, requestingClass);
   }
 
   @Override
@@ -64,8 +64,8 @@ final class MembersInjectionBindingExpression extends BindingExpression {
     ExecutableElement methodElement = componentMethod.methodElement();
     List<? extends VariableElement> parameters = methodElement.getParameters();
     if (parameters.isEmpty() /* i.e. it's a request for a MembersInjector<T> */) {
-      return membersInjectorField
-          .getComponentMethodImplementation(componentMethod, generatedComponentModel.name());
+      return membersInjectorExpression.getComponentMethodImplementation(
+          componentMethod, generatedComponentModel.name());
     }
 
     ParameterSpec parameter = ParameterSpec.get(getOnlyElement(parameters));

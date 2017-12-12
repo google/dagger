@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
@@ -23,6 +24,7 @@ import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
+import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -258,53 +260,89 @@ final class ComponentBindingExpressions {
               generatedComponentModel, componentBindingExpressions, graph, elements, types);
     }
 
-    private FrameworkInstanceBindingExpression newFrameworkInstanceBindingExpression(
-        boolean isProducerFromProvider, ResolvedBindings resolvedBindings) {
-      return FrameworkInstanceBindingExpression.create(
-          resolvedBindings,
-          graph,
-          subcomponentNames,
+    /** Creates a binding expression. */
+    BindingExpression create(ResolvedBindings resolvedBindings) {
+      switch (resolvedBindings.bindingType()) {
+        case MEMBERS_INJECTION:
+          return membersInjectionBindingExpression(resolvedBindings);
+
+        case PROVISION:
+          return provisionBindingExpression(resolvedBindings);
+
+        case PRODUCTION:
+          return frameworkInstanceBindingExpression(resolvedBindings);
+
+        default:
+          throw new AssertionError(resolvedBindings);
+      }
+    }
+
+    /** Returns a binding expression for a members injection binding. */
+    private MembersInjectionBindingExpression membersInjectionBindingExpression(
+        ResolvedBindings resolvedBindings) {
+      return new MembersInjectionBindingExpression(
+          frameworkInstanceBindingExpression(resolvedBindings),
           generatedComponentModel,
+          membersInjectionMethods);
+    }
+
+    /**
+     * Returns a binding expression that uses a {@link javax.inject.Provider} for provision
+     * bindings, a {@link dagger.producers.Producer} for production bindings, or a {@link
+     * dagger.MembersInjector} for members injection bindings.
+     */
+    private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
+        ResolvedBindings resolvedBindings) {
+      Optional<MemberSelect> staticMethod = staticMemberSelect(resolvedBindings);
+      return new FrameworkInstanceBindingExpression(
+          resolvedBindings,
           componentBindingExpressions,
-          componentRequirementFields,
-          referenceReleasingManagerFields,
-          isProducerFromProvider,
-          optionalFactories,
-          compilerOptions,
+          resolvedBindings.bindingType().frameworkType(),
+          staticMethod.isPresent()
+              ? staticMethod::get
+              : frameworkFieldInitializer(resolvedBindings),
           types,
           elements);
     }
 
-    /** Creates a binding expression */
-    BindingExpression create(ResolvedBindings resolvedBindings) {
-      FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
-          newFrameworkInstanceBindingExpression(
-              false /* isProducerFromProvider */, resolvedBindings);
-
+    /**
+     * Returns an initializer for a {@link javax.inject.Provider} field for provision bindings, a
+     * {@link dagger.producers.Producer} field for production bindings, or a {@link
+     * dagger.MembersInjector} field for members injection bindings.
+     */
+    private FrameworkFieldInitializer frameworkFieldInitializer(ResolvedBindings resolvedBindings) {
       switch (resolvedBindings.bindingType()) {
-        case MEMBERS_INJECTION:
-          return new MembersInjectionBindingExpression(
-              frameworkInstanceBindingExpression, generatedComponentModel, membersInjectionMethods);
+        case PRODUCTION:
         case PROVISION:
-          return provisionBindingExpression(frameworkInstanceBindingExpression);
+          return new ProviderOrProducerFieldInitializer(
+              resolvedBindings,
+              subcomponentNames,
+              generatedComponentModel,
+              componentBindingExpressions,
+              componentRequirementFields,
+              referenceReleasingManagerFields,
+              compilerOptions,
+              graph,
+              optionalFactories);
+
+        case MEMBERS_INJECTION:
+          return new MembersInjectorFieldInitializer(
+              resolvedBindings, generatedComponentModel, componentBindingExpressions);
+
         default:
-          return frameworkInstanceBindingExpression;
+          throw new AssertionError(resolvedBindings);
       }
     }
 
-    private BindingExpression provisionBindingExpression(
-        FrameworkInstanceBindingExpression providerBindingExpression) {
+    /** Returns a binding expression for a provision binding. */
+    private BindingExpression provisionBindingExpression(ResolvedBindings resolvedBindings) {
       // TODO(user): this can be removed once we pass DependencyRequest.Kind to the factory.
       // With DependencyRequest.Kind, we can know if it's a ProducerFromProvider or not, so we won't
       // have to pass in both types of binding expressions.
-      ResolvedBindings resolvedBindings = providerBindingExpression.resolvedBindings();
-      FrameworkInstanceBindingExpression producerBindingExpression =
-          newFrameworkInstanceBindingExpression(
-              true /* isProducerFromProvider */, resolvedBindings);
       BindingExpression bindingExpression =
           new ProviderOrProducerBindingExpression(
-              providerBindingExpression,
-              producerBindingExpression);
+              frameworkInstanceBindingExpression(resolvedBindings),
+              producerFromProviderInstanceBindingExpression(resolvedBindings));
 
       BindingExpression inlineBindingExpression =
           inlineProvisionBindingExpression(bindingExpression);
@@ -322,6 +360,23 @@ final class ComponentBindingExpressions {
       }
 
       return inlineBindingExpression;
+    }
+
+    /**
+     * Returns a binding expression that uses a {@link dagger.producers.Producer} field for a
+     * provision binding.
+     */
+    private FrameworkInstanceBindingExpression producerFromProviderInstanceBindingExpression(
+        ResolvedBindings resolvedBindings) {
+      checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
+      return new FrameworkInstanceBindingExpression(
+          resolvedBindings,
+          componentBindingExpressions,
+          FrameworkType.PRODUCER,
+          new ProducerFromProviderFieldInitializer(
+              resolvedBindings, generatedComponentModel, componentBindingExpressions),
+          types,
+          elements);
     }
 
     private BindingExpression inlineProvisionBindingExpression(

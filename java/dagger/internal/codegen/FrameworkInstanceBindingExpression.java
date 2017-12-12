@@ -16,15 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
-import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import java.util.Optional;
+import dagger.internal.codegen.MemberSelect.MemberSelectSupplier;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -32,62 +29,16 @@ import javax.lang.model.util.Elements;
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final Supplier<MemberSelect> frameworkFieldSupplier;
+  private final MemberSelectSupplier frameworkFieldSupplier;
   private final FrameworkType frameworkType;
   private final DaggerTypes types;
   private final Elements elements;
 
-  /** Returns a binding expression for a binding. */
-  static FrameworkInstanceBindingExpression create(
-      ResolvedBindings resolvedBindings,
-      BindingGraph graph,
-      SubcomponentNames subcomponentNames,
-      GeneratedComponentModel generatedComponentModel,
-      ComponentBindingExpressions componentBindingExpressions,
-      ComponentRequirementFields componentRequirementFields,
-      ReferenceReleasingManagerFields referenceReleasingManagerFields,
-      boolean isProducerFromProvider,
-      OptionalFactories optionalFactories,
-      CompilerOptions compilerOptions,
-      DaggerTypes types,
-      Elements elements) {
-    FrameworkType frameworkType = resolvedBindings.bindingType().frameworkType();
-    checkArgument(!isProducerFromProvider || frameworkType.equals(FrameworkType.PROVIDER));
-
-    Optional<MemberSelect> staticMemberSelect = staticMemberSelect(resolvedBindings);
-    Supplier<MemberSelect> frameworkFieldSupplier;
-    if (!isProducerFromProvider && staticMemberSelect.isPresent()) {
-      frameworkFieldSupplier = staticMemberSelect::get;
-    } else {
-      FrameworkFieldInitializer fieldInitializer =
-          new FrameworkFieldInitializer(
-              resolvedBindings,
-              subcomponentNames,
-              generatedComponentModel,
-              componentBindingExpressions,
-              componentRequirementFields,
-              referenceReleasingManagerFields,
-              compilerOptions,
-              graph,
-              isProducerFromProvider,
-              optionalFactories);
-      frameworkFieldSupplier = fieldInitializer::getOrCreateMemberSelect;
-    }
-
-    return new FrameworkInstanceBindingExpression(
-        resolvedBindings,
-        componentBindingExpressions,
-        isProducerFromProvider ? FrameworkType.PRODUCER : frameworkType,
-        frameworkFieldSupplier,
-        types,
-        elements);
-  }
-
-  private FrameworkInstanceBindingExpression(
+  FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
       ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
-      Supplier<MemberSelect> frameworkFieldSupplier,
+      MemberSelectSupplier frameworkFieldSupplier,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings);
@@ -108,7 +59,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   Expression getDependencyExpression(
       DependencyRequest.Kind requestKind, ClassName requestingClass) {
     if (requestKind.equals(frameworkRequestKind())) {
-      MemberSelect memberSelect = frameworkFieldSupplier.get();
+      MemberSelect memberSelect = frameworkFieldSupplier.memberSelect();
       TypeMirror expressionType =
           isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
                   || isInlinedFactoryCreation(memberSelect)

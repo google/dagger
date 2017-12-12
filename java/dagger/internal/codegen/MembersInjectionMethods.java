@@ -32,6 +32,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.Key;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.lang.model.element.Name;

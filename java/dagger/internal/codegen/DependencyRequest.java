@@ -43,6 +43,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Provides;
+import dagger.model.Key;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.List;

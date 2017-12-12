@@ -61,6 +61,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.InstanceFactory;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
+import dagger.model.Key;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.ForReleasableReferences;

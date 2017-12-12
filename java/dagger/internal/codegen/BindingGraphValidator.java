@@ -96,6 +96,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.model.Key;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;

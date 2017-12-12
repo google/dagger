@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
+import dagger.model.Key;
 import dagger.producers.Producer;
 import java.util.Optional;
 import java.util.stream.Stream;

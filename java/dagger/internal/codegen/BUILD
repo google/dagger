@@ -50,6 +50,7 @@ CODEGEN_SHARED_DEPS = [
     "//third_party:jsr330_inject",
     "//java/dagger:core",
     "//java/dagger/producers",
+    "//java/dagger/model",
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
@@ -62,6 +63,7 @@ java_library(
     srcs = [
         "Accessibility.java",
         "AnnotationSpecs.java",
+        "BindingKey.java",
         "CodeBlocks.java",
         "CompilerOptions.java",
         "ContributionType.java",
@@ -71,13 +73,18 @@ java_library(
         "Expression.java",
         "FeatureStatus.java",
         "ForwardingNetwork.java",
+        "FrameworkTypes.java",
         "InjectionAnnotations.java",
+        "Keys.java",
         "MapKeyAccessibility.java",
+        "MapType.java",
         "MethodSignature.java",
         "MoreAnnotationMirrors.java",
         "MoreAnnotationValues.java",
         "MultibindingAnnotations.java",
+        "OptionalType.java",
         "Optionals.java",
+        "SetType.java",
         "SimpleAnnotationMirror.java",
         "SimpleTypeAnnotationValue.java",
         "SourceFileGenerationException.java",  # Used in :writing and :processor
@@ -102,8 +109,7 @@ java_library(
         "Binding.java",
         "BindingDeclaration.java",
         "BindingGraph.java",
-        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to it's own spi target
-        "BindingKey.java",
+        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to it's own model target
         "BindingNetwork.java",
         "BindingType.java",
         "BindingTypeMapper.java",
@@ -121,23 +127,17 @@ java_library(
         "FrameworkDependency.java",
         "FrameworkField.java",  # Used by SourceFiles
         "FrameworkType.java",
-        "FrameworkTypes.java",
         "InjectBindingRegistry.java",
-        "Key.java",
         "KeyFactory.java",
-        "Keys.java",
         "MapKeys.java",
-        "MapType.java",
         "MembersInjectionBinding.java",
         "ModuleDescriptor.java",
         "MultibindingDeclaration.java",
         "OptionalBindingDeclaration.java",
-        "OptionalType.java",
         "ProductionBinding.java",
         "ProvisionBinding.java",
         "ResolvedBindings.java",
         "Scope.java",
-        "SetType.java",
         "SourceFiles.java",  # Consider splitting this up?
         "SubcomponentDeclaration.java",
     ],
@@ -272,6 +272,7 @@ java_library(
         ":processor",
         ":validation",
         "//java/dagger:core",
+        "//java/dagger/model",
         "//java/dagger/producers",
         "//third_party:auto_common",
         "//third_party:auto_service",

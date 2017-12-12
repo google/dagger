@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Provides;
+import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
 import java.util.Optional;
@@ -171,7 +172,7 @@ abstract class ComponentRequirement {
   static ComponentRequirement forBinding(Key key, boolean nullable, String variableName) {
     return new AutoValue_ComponentRequirement(
         Kind.BINDING,
-        key.wrappedType(),
+        MoreTypes.equivalence().wrap(key.type()),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
         variableName);

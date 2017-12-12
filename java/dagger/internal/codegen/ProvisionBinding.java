@@ -39,6 +39,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;

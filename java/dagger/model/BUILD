@@ -13,36 +13,38 @@
 # limitations under the License.
 
 # Description:
-#   Tests for the Dagger compiler/codegen
+#   Dagger's core APIs exposed for plugins
 
 package(default_visibility = ["//:src"])
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load(
+    "//:build_defs.bzl",
+    "DOCLINT_HTML_AND_SYNTAX",
+    "DOCLINT_REFERENCES",
+)
 
-GenJavaTests(
-    name = "compiler_tests",
+filegroup(
+    name = "model-srcs",
     srcs = glob(["*.java"]),
-    functional = False,
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
+)
+
+java_library(
+    name = "model",
+    srcs = [":model-srcs"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen:base",
-        "//java/dagger/internal/codegen:binding",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen:validation",
-        "//java/dagger/internal/codegen:writing",
-        "//java/dagger/model",
-        "//java/dagger/producers",
         "//third_party:auto_common",
         "//third_party:auto_value",
-        "//third_party:compile_testing",
         "//third_party:guava",
-        "//third_party:javapoet",
-        "//third_party:jsr250_annotations",
         "//third_party:jsr330_inject",
-        "//third_party:junit",
-        "//third_party:mockito",
-        "//third_party:truth",
     ],
+)
+
+load("//tools:javadoc.bzl", "javadoc_library")
+
+javadoc_library(
+    name = "model-javadoc",
+    srcs = [":model-srcs"],
+    root_packages = ["dagger.model"],
+    deps = [":model"],
 )

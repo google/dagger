@@ -27,6 +27,7 @@ import com.google.devtools.kythe.analyzers.base.NodeKind;
 import com.google.devtools.kythe.analyzers.java.Plugin.KytheGraph;
 import com.google.devtools.kythe.proto.Storage.VName;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import dagger.model.Key;
 import java.util.EnumMap;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;

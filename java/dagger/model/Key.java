@@ -14,33 +14,44 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
-import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
+import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
 import java.util.Optional;
-import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Represents a unique combination of {@linkplain TypeMirror type} and
- * {@linkplain Qualifier qualifier} to which binding can occur.
- *
- * @author Gregory Kick
+ * A {@linkplain TypeMirror type} and an optional {@linkplain javax.inject.Qualifier qualifier} that
+ * is the lookup key for a binding.
  */
 @AutoValue
-abstract class Key {
+public abstract class Key {
+  /**
+   * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
+   * for the type of this key.
+   */
+  public final Optional<AnnotationMirror> qualifier() {
+    return wrappedQualifier().map(Wrapper::get);
+  }
+
+  /**
+   * The type represented by this key.
+   */
+  public final TypeMirror type() {
+    return wrappedType().get();
+  }
+
   /**
    * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
    * for the type of this key.
@@ -63,30 +74,38 @@ abstract class Key {
    * Distinguishes keys for multibinding contributions that share a {@link #type()} and {@link
    * #qualifier()}.
    *
-   * <p>Each multibound map and set has a {@linkplain
-   * ProvisionBinding.Factory#syntheticMultibinding(Key, Iterable) synthetic multibinding} that
-   * depends on the specific contributions to that map or set using keys that identify those
-   * multibinding contributions.
+   * <p>Each multibound map and set has a synthetic multibinding that depends on the specific
+   * contributions to that map or set using keys that identify those multibinding contributions.
    *
    * <p>Absent except for multibinding contributions.
    */
-  abstract Optional<MultibindingContributionIdentifier> multibindingContributionIdentifier();
-  
-  abstract Builder toBuilder();
+  public abstract Optional<MultibindingContributionIdentifier> multibindingContributionIdentifier();
+
+  /** Returns a {@link Builder} that inherits the properties of this key. */
+  public abstract Builder toBuilder();
 
   @Memoized
   @Override
   public abstract int hashCode();
 
-  static Builder builder(TypeMirror type) {
+  @Override
+  public final String toString() {
+    return Joiner.on(' ')
+        .skipNulls()
+        .join(qualifier().orElse(null), type(), multibindingContributionIdentifier().orElse(null));
+  }
+
+  /** Returns a builder for {@link Key}s. */
+  public static Builder builder(TypeMirror type) {
     return new AutoValue_Key.Builder().type(type);
   }
 
+  /** A builder for {@link Key}s. */
   @AutoValue.Builder
-  abstract static class Builder {
+  public abstract static class Builder {
     abstract Builder wrappedType(Equivalence.Wrapper<TypeMirror> wrappedType);
 
-    Builder type(TypeMirror type) {
+    public final Builder type(TypeMirror type) {
       return wrappedType(MoreTypes.equivalence().wrap(checkNotNull(type)));
     }
 
@@ -95,37 +114,38 @@ abstract class Key {
 
     abstract Builder wrappedQualifier(Equivalence.Wrapper<AnnotationMirror> wrappedQualifier);
 
-    Builder qualifier(AnnotationMirror qualifier) {
+    public final Builder qualifier(AnnotationMirror qualifier) {
       return wrappedQualifier(AnnotationMirrors.equivalence().wrap(checkNotNull(qualifier)));
     }
 
-    Builder qualifier(Optional<AnnotationMirror> qualifier) {
-      return wrappedQualifier(wrapOptionalInEquivalence(checkNotNull(qualifier)));
+    public final Builder qualifier(Optional<AnnotationMirror> qualifier) {
+      return wrappedQualifier(checkNotNull(qualifier).map(AnnotationMirrors.equivalence()::wrap));
     }
 
-    Builder qualifier(TypeElement annotationType) {
-      return qualifier(SimpleAnnotationMirror.of(annotationType));
-    }
-
-    abstract Builder multibindingContributionIdentifier(
+    public abstract Builder multibindingContributionIdentifier(
         Optional<MultibindingContributionIdentifier> identifier);
 
-    abstract Builder multibindingContributionIdentifier(
+    public abstract Builder multibindingContributionIdentifier(
         MultibindingContributionIdentifier identifier);
 
-    abstract Key build();
+    public abstract Key build();
   }
   
   /**
    * An object that identifies a multibinding contribution method and the module class that
    * contributes it to the graph.
    *
-   * @see Key#multibindingContributionIdentifier()
+   * @see #multibindingContributionIdentifier()
    */
-  static final class MultibindingContributionIdentifier {
+  public static final class MultibindingContributionIdentifier {
     private final String identifierString;
 
-    MultibindingContributionIdentifier(
+    /**
+     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
+     * It is not part of a specified API and may change at any point.
+     */
+    @Deprecated
+    public MultibindingContributionIdentifier(
         ExecutableElement bindingMethod, TypeElement contributingModule) {
       this.identifierString =
           String.format(
@@ -154,41 +174,5 @@ abstract class Key {
     public int hashCode() {
       return identifierString.hashCode();
     }
-  }
-
-  /**
-   * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
-   * for the type of this key.
-   */
-  Optional<AnnotationMirror> qualifier() {
-    return unwrapOptionalEquivalence(wrappedQualifier());
-  }
-
-  /**
-   * The type represented by this key.
-   */
-  TypeMirror type() {
-    return wrappedType().get();
-  }
-
-  /**
-   * A key whose {@link #qualifier()} and {@link #type()} are equivalent to this one's, but without
-   * a {@link #multibindingContributionIdentifier()}.
-   */
-  Key withoutMultibindingContributionIdentifier() {
-    return toBuilder().multibindingContributionIdentifier(Optional.empty()).build();
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The returned string is equal to another key's if and only if this key is {@link
-   * #equals(Object)} to it.
-   */
-  @Override
-  public String toString() {
-    return Joiner.on(' ')
-        .skipNulls()
-        .join(qualifier().orElse(null), type(), multibindingContributionIdentifier().orElse(null));
   }
 }

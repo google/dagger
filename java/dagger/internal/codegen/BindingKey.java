@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
+import dagger.model.Key;
 
 /**
  * A value object that pairs a {@link Key} with the style of its binding (i.e., whether it's a

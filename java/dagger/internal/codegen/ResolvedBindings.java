@@ -31,6 +31,7 @@ import com.google.common.collect.Multimap;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.Keys.HasKey;
+import dagger.model.Key;
 import java.util.Optional;
 
 /**

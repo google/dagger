@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.BindingType.HasBindingType;
+import dagger.model.Key;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;

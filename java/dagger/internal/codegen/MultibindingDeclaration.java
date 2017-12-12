@@ -24,6 +24,7 @@ import com.google.auto.value.AutoValue;
 import dagger.Module;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;

@@ -29,6 +29,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Lazy;
 import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
+import dagger.model.Key;
 import dagger.producers.Produces;
 import java.util.List;
 import java.util.Optional;

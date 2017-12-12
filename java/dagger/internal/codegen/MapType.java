@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
+import dagger.model.Key;
 import java.util.Map;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;

@@ -24,7 +24,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.testing.compile.CompilationRule;
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.Key.MultibindingContributionIdentifier;
+import dagger.model.Key;
+import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
@@ -50,7 +51,7 @@ import org.junit.runners.JUnit4;
  * Tests {@link Key}.
  */
 @RunWith(JUnit4.class)
-public class KeyTest {
+public class KeyFactoryTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
   private Elements elements;
@@ -71,7 +72,7 @@ public class KeyTest {
     Key key =
         keyFactory.forInjectConstructorWithResolvedType(constructor.getEnclosingElement().asType());
     assertThat(key).isEqualTo(Key.builder(typeElement.asType()).build());
-    assertThat(key.toString()).isEqualTo("dagger.internal.codegen.KeyTest.InjectedClass");
+    assertThat(key.toString()).isEqualTo("dagger.internal.codegen.KeyFactoryTest.InjectedClass");
   }
 
   static final class InjectedClass {
@@ -108,11 +109,12 @@ public class KeyTest {
     Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
     assertThat(MoreTypes.equivalence().wrap(key.qualifier().get().getAnnotationType()))
         .isEqualTo(MoreTypes.equivalence().wrap(qualifierElement.asType()));
-    assertThat(key.wrappedType()).isEqualTo(MoreTypes.equivalence().wrap(stringType));
+    assertThat(MoreTypes.equivalence().wrap(key.type()))
+        .isEqualTo(MoreTypes.equivalence().wrap(stringType));
     assertThat(key.toString())
         .isEqualTo(
-            "@dagger.internal.codegen.KeyTest.TestQualifier("
-                + "{@dagger.internal.codegen.KeyTest.InnerAnnotation}) java.lang.String");
+            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier("
+                + "{@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation}) java.lang.String");
   }
 
   @Test public void qualifiedKeyEquivalents() {
@@ -133,8 +135,8 @@ public class KeyTest {
     assertThat(provisionKey).isEqualTo(injectionKey);
     assertThat(injectionKey.toString())
         .isEqualTo(
-            "@dagger.internal.codegen.KeyTest.TestQualifier("
-                + "{@dagger.internal.codegen.KeyTest.InnerAnnotation}) java.lang.String");
+            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier("
+                + "{@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation}) java.lang.String");
   }
 
   @Module
@@ -176,7 +178,7 @@ public class KeyTest {
           .isEqualTo(
               String.format(
                   "java.util.Set<java.lang.String> "
-                      + "dagger.internal.codegen.KeyTest.SetProvidesMethodsModule#%s",
+                      + "dagger.internal.codegen.KeyFactoryTest.SetProvidesMethodsModule#%s",
                   providesMethod.getSimpleName()));
     }
   }
@@ -270,7 +272,7 @@ public class KeyTest {
           .isEqualTo(
               String.format(
                   "java.util.Set<java.lang.String> "
-                      + "dagger.internal.codegen.KeyTest.SetProducesMethodsModule#%s",
+                      + "dagger.internal.codegen.KeyFactoryTest.SetProducesMethodsModule#%s",
                   producesMethod.getSimpleName()));
     }
   }

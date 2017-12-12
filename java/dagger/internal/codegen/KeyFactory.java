@@ -36,7 +36,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
-import dagger.internal.codegen.Key.MultibindingContributionIdentifier;
+import dagger.model.Key;
+import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -266,13 +267,13 @@ final class KeyFactory {
 
   Key forProductionExecutor() {
     return Key.builder(getClassElement(Executor.class).asType())
-        .qualifier(getClassElement(Production.class))
+        .qualifier(SimpleAnnotationMirror.of(getClassElement(Production.class)))
         .build();
   }
 
   Key forProductionImplementationExecutor() {
     return Key.builder(getClassElement(Executor.class).asType())
-        .qualifier(getClassElement(ProductionImplementation.class))
+        .qualifier(SimpleAnnotationMirror.of(getClassElement(ProductionImplementation.class)))
         .build();
   }
 

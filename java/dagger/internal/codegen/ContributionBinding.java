@@ -38,6 +38,7 @@ import dagger.Component;
 import dagger.MapKey;
 import dagger.Provides;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.model.Key;
 import dagger.producers.Produces;
 import java.util.Optional;
 import java.util.Set;

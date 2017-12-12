@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Component;
 import dagger.Provides;
+import dagger.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;

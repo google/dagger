@@ -109,6 +109,7 @@ javadoc_library(
         "//java/dagger/android/support:support-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
         "//java/dagger/grpc/server/processor:javadoc-srcs",
+        "//java/dagger/model:model-srcs",
         "//java/dagger/producers:producers-srcs",
     ],
     android_api_level = 26,
@@ -126,6 +127,7 @@ javadoc_library(
         "//java/dagger/android/support",
         "//java/dagger/grpc/server",
         "//java/dagger/grpc/server/processor",
+        "//java/dagger/model",
         "//java/dagger/producers",
     ],
 )

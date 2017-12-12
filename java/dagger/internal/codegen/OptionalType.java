@@ -26,6 +26,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Name;
 import javax.lang.model.type.DeclaredType;

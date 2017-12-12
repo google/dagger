@@ -34,6 +34,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.Provides;
+import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;

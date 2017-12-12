@@ -12,6 +12,7 @@ python $(dirname $0)/maven/generate_poms.py $VERSION_NAME \
   //gwt:gwt \
   //java/dagger/internal/codegen:processor \
   //java/dagger/producers:producers \
+  //java/dagger/model:model \
   //java/dagger/android:android \
   //java/dagger/android:libandroid.jar \
   //java/dagger/android/support:libsupport.jar \
@@ -72,6 +73,12 @@ deploy_library \
   java/dagger/producers/libproducers-src.jar \
   java/dagger/producers/producers-javadoc.jar \
   dagger-producers.pom.xml
+
+deploy_library \
+  java/dagger/model/libmodel.jar \
+  java/dagger/model/libmodel-src.jar \
+  java/dagger/model/model-javadoc.jar \
+  dagger-spi.pom.xml
 
 deploy_library \
   java/dagger/android/android.aar \

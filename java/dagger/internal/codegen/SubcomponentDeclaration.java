@@ -24,6 +24,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBu
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;

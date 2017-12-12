@@ -20,6 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDe
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.Key;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;

@@ -73,6 +73,10 @@ METADATA = {
         'name': 'Dagger Producers',
         'artifact': 'dagger-producers',
     },
+    '//java/dagger/model:model': {
+        'name': 'Dagger SPI',
+        'artifact': 'dagger-spi',
+    },
     '//java/dagger/android:android': {
         'name': 'Dagger Android',
         'artifact': 'dagger-android',

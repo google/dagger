@@ -51,6 +51,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Keys.HasKey;
+import dagger.model.Key;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -1149,7 +1150,13 @@ abstract class BindingGraph {
       ImmutableSetMultimap.Builder<Key, T> builder = ImmutableSetMultimap.builder();
       for (T declaration : declarations) {
         if (declaration.key().multibindingContributionIdentifier().isPresent()) {
-          builder.put(declaration.key().withoutMultibindingContributionIdentifier(), declaration);
+          builder.put(
+              declaration
+                  .key()
+                  .toBuilder()
+                  .multibindingContributionIdentifier(Optional.empty())
+                  .build(),
+              declaration);
         }
       }
       return builder.build();

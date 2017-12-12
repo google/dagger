@@ -25,7 +25,6 @@ import com.google.common.graph.Graph;
 import com.google.common.graph.Network;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /** A {@link Network} that delegates all methods to another instance. */
 // TODO(dpb): Move to com.google.common.graph.
@@ -148,7 +147,7 @@ public class ForwardingNetwork<N, E> extends ForwardingObject implements Network
   }
 
   @SuppressWarnings("MissingOverride") // Until Guava 23.0
-  @Nullable
+  // @Nullable // TODO(ronshapiro): replace with the checker framework?
   public E edgeConnectingOrNull(N nodeU, N nodeV) {
     return delegate().edgeConnectingOrNull(nodeU, nodeV);
   }

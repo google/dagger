@@ -37,7 +37,6 @@ java_library(
         "//third_party:grpc_netty",
         "//third_party:grpc_protobuf",
         "//third_party:guava",
-        "//third_party:jsr305_annotations",
         "//third_party:jsr330_inject",
         "//third_party:protobuf",
     ],

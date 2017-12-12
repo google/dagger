@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
@@ -234,7 +235,7 @@ public class ProductionComponentProcessorTest {
                 "import dagger.producers.internal.Producers;",
                 "import dagger.producers.monitoring.ProductionComponentMonitor;",
                 "import java.util.concurrent.Executor;",
-                "import javax.annotation.Generated;",
+                IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
                 GENERATED_ANNOTATION,
@@ -401,7 +402,7 @@ public class ProductionComponentProcessorTest {
                 "import dagger.producers.internal.Producers;",
                 "import dagger.producers.monitoring.ProductionComponentMonitor;",
                 "import java.util.concurrent.Executor;",
-                "import javax.annotation.Generated;",
+                IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
                 GENERATED_ANNOTATION,

@@ -36,6 +36,7 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -362,7 +363,7 @@ public class ProducerModuleFactoryGeneratorTest {
             "import dagger.producers.monitoring.ProducerToken;",
             "import dagger.producers.monitoring.ProductionComponentMonitor;",
             "import java.util.concurrent.Executor;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
@@ -444,7 +445,7 @@ public class ProducerModuleFactoryGeneratorTest {
             "import dagger.producers.monitoring.ProducerToken;",
             "import dagger.producers.monitoring.ProductionComponentMonitor;",
             "import java.util.concurrent.Executor;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,

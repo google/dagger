@@ -22,6 +22,7 @@ import static dagger.internal.codegen.CodeBlocks.stringLiteral;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
@@ -284,7 +285,7 @@ public class ComponentProcessorTest {
                 "",
                 "import dagger.Lazy;",
                 "import dagger.internal.DoubleCheck;",
-                "import javax.annotation.Generated;",
+                IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
                 GENERATED_ANNOTATION,
@@ -548,7 +549,7 @@ public class ComponentProcessorTest {
                 "package test;",
                 "",
                 "import dagger.internal.Preconditions;",
-                "import javax.annotation.Generated;",
+                IMPORT_GENERATED_ANNOTATION,
                 "",
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
@@ -751,7 +752,7 @@ public class ComponentProcessorTest {
         "package test;",
         "",
         "import dagger.internal.Preconditions;",
-        "import javax.annotation.Generated;",
+        IMPORT_GENERATED_ANNOTATION,
         "",
         GENERATED_ANNOTATION,
         "public final class DaggerTestComponent implements TestComponent {",
@@ -935,7 +936,7 @@ public class ComponentProcessorTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
@@ -1466,7 +1467,7 @@ public class ComponentProcessorTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerBComponent implements BComponent {",
@@ -1554,7 +1555,7 @@ public class ComponentProcessorTest {
             .addLines(
                 "package test;",
                 "",
-                "import javax.annotation.Generated;",
+                IMPORT_GENERATED_ANNOTATION,
                 "",
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
@@ -1635,7 +1636,7 @@ public class ComponentProcessorTest {
             "test.DaggerSimpleComponent",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerSimpleComponent implements SimpleComponent {",
@@ -2103,7 +2104,7 @@ public class ComponentProcessorTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",

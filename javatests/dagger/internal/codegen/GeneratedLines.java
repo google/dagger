@@ -25,9 +25,23 @@ import com.squareup.javapoet.CodeBlock;
  */
 public final class GeneratedLines {
   public static final String GENERATED_ANNOTATION =
-      "@Generated("
-          + "value = \"dagger.internal.codegen.ComponentProcessor\", "
-          + "comments = \"https://google.github.io/dagger\")";
+     "@Generated("
+        + "value = \"dagger.internal.codegen.ComponentProcessor\", "
+        + "comments = \"https://google.github.io/dagger\")";
+
+  public static final String IMPORT_GENERATED_ANNOTATION =
+      isBeforeJava9()
+          ? "import javax.annotation.Generated;"
+          : "import javax.annotation.processing.Generated;";
+
+  private static boolean isBeforeJava9() {
+    try {
+      Class.forName("java.lang.Module");
+      return false;
+    } catch (ClassNotFoundException e) {
+      return true;
+    }
+  }
 
   public static final CodeBlock NPE_FROM_PROVIDES_METHOD =
       stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);

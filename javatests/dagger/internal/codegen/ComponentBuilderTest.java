@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -217,7 +218,7 @@ public class ComponentBuilderTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
@@ -406,7 +407,7 @@ public class ComponentBuilderTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerSimpleComponent implements SimpleComponent {",

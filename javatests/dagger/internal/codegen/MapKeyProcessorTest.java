@@ -24,6 +24,7 @@ import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.collect.ImmutableList;
@@ -76,7 +77,7 @@ public class MapKeyProcessorTest {
             "package test;",
             "",
             "import com.google.auto.value.AutoAnnotation;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class PathKeyCreator {",
@@ -125,7 +126,7 @@ public class MapKeyProcessorTest {
             "package test;",
             "",
             "import com.google.auto.value.AutoAnnotation;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class Container_PathKeyCreator {",

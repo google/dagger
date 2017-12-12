@@ -20,6 +20,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.CLASS_PATH_WITHOUT_GUAVA_OPTION;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
@@ -267,7 +268,7 @@ public class SetBindingRequestFulfillmentTest {
             "import dagger.internal.Preconditions;",
             "import java.util.Collections;",
             "import java.util.Set;",
-            "import javax.annotation.Generated;",
+            IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",

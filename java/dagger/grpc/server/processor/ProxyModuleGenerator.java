@@ -57,12 +57,14 @@ final class ProxyModuleGenerator extends SourceGenerator {
 
   @Override
   protected TypeSpec createType() {
-    return classBuilder(grpcServiceModel.proxyModuleName)
-        .addModifiers(PUBLIC, FINAL)
-        .addJavadoc(
-            "Install this module in the {@link $T @Singleton} server component.\n",
-            JavaxInject.singleton().type)
-        .addAnnotation(grpcServiceModel.generatedAnnotation())
+    TypeSpec.Builder proxyModule =
+        classBuilder(grpcServiceModel.proxyModuleName)
+            .addModifiers(PUBLIC, FINAL)
+            .addJavadoc(
+                "Install this module in the {@link $T @Singleton} server component.\n",
+                JavaxInject.singleton().type);
+    grpcServiceModel.generatedAnnotation().ifPresent(proxyModule::addAnnotation);
+    return proxyModule
         .addAnnotation(Dagger.module())
         .addMethod(provideServiceDefinitionContribution())
         .addMethod(provideServiceDefinitionFactory())

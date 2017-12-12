@@ -20,14 +20,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import dagger.producers.Produces;
 import java.util.Objects;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /** A token that represents an individual {@linkplain Produces producer method}. */
 public final class ProducerToken {
-  @Nullable private final Class<?> classToken;
-  @Nullable private final String methodName;
+  @NullableDecl private final Class<?> classToken;
+  @NullableDecl private final String methodName;
 
-  private ProducerToken(@Nullable Class<?> classToken, @Nullable String methodName) {
+  private ProducerToken(@NullableDecl Class<?> classToken, @NullableDecl String methodName) {
     this.classToken = classToken;
     this.methodName = methodName;
   }

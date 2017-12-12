@@ -49,12 +49,15 @@ final class UnscopedGrpcServiceModuleGenerator extends SourceGenerator {
     ClassName unscopedComponentFactory =
         grpcServiceModel.unscopedServiceModuleName.nestedClass(
             grpcServiceModel.serviceImplementationClassName.simpleName() + "ComponentFactory");
-    return classBuilder(grpcServiceModel.unscopedServiceModuleName)
-        .addJavadoc(
-            "Install this module in the {@link $T @Singleton} server component\n",
-            JavaxInject.singleton().type)
-        .addJavadoc("if it implements {@link $T}.\n", grpcServiceModel.serviceDefinitionTypeName)
-        .addAnnotation(grpcServiceModel.generatedAnnotation())
+    TypeSpec.Builder unscopedServiceModule =
+        classBuilder(grpcServiceModel.unscopedServiceModuleName)
+            .addJavadoc(
+                "Install this module in the {@link $T @Singleton} server component\n",
+                JavaxInject.singleton().type)
+            .addJavadoc(
+                "if it implements {@link $T}.\n", grpcServiceModel.serviceDefinitionTypeName);
+    grpcServiceModel.generatedAnnotation().ifPresent(unscopedServiceModule::addAnnotation);
+    return unscopedServiceModule
         .addAnnotation(
             Dagger.module(grpcServiceModel.proxyModuleName, grpcServiceModel.serviceModuleName))
         .addModifiers(PUBLIC, ABSTRACT)

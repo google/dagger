@@ -22,7 +22,7 @@ import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.Beta;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * An interface that represents the result of a {@linkplain Producer production} of type {@code T},
@@ -66,7 +66,7 @@ public abstract class Produced<T> {
   public abstract int hashCode();
 
   /** Returns a successful {@code Produced}, whose {@link #get} will return the given value. */
-  public static <T> Produced<T> successful(@Nullable T value) {
+  public static <T> Produced<T> successful(@NullableDecl T value) {
     return new Successful<T>(value);
   }
 
@@ -79,13 +79,15 @@ public abstract class Produced<T> {
   }
 
   private static final class Successful<T> extends Produced<T> {
-    @Nullable private final T value;
+    @NullableDecl private final T value;
 
-    private Successful(@Nullable T value) {
+    private Successful(@NullableDecl T value) {
       this.value = value;
     }
 
-    @Override public T get() {
+    @Override
+    @NullableDecl
+    public T get() {
       return value;
     }
 

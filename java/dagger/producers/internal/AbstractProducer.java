@@ -24,8 +24,8 @@ import dagger.producers.monitoring.ProducerMonitor;
 import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import dagger.producers.monitoring.internal.Monitors;
-import javax.annotation.Nullable;
 import javax.inject.Provider;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * An abstract {@link Producer} implementation that memoizes the result of its compute method.
@@ -35,7 +35,7 @@ import javax.inject.Provider;
  */
 public abstract class AbstractProducer<T> implements Producer<T> {
   private final Provider<ProductionComponentMonitor> monitorProvider;
-  @Nullable private final ProducerToken token;
+  @NullableDecl private final ProducerToken token;
   private volatile ListenableFuture<T> instance = null;
   protected volatile ProducerMonitor monitor = null;
 
@@ -44,7 +44,7 @@ public abstract class AbstractProducer<T> implements Producer<T> {
   }
 
   protected AbstractProducer(
-      Provider<ProductionComponentMonitor> monitorProvider, @Nullable ProducerToken token) {
+      Provider<ProductionComponentMonitor> monitorProvider, @NullableDecl ProducerToken token) {
     this.monitorProvider = checkNotNull(monitorProvider);
     this.token = token;
   }

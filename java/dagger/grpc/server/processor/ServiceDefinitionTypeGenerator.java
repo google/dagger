@@ -43,8 +43,8 @@ final class ServiceDefinitionTypeGenerator extends SourceGenerator {
     TypeSpec.Builder type =
         interfaceBuilder(grpcServiceModel.serviceDefinitionTypeName.simpleName())
             .addJavadoc("A component must implement this interface.\n")
-            .addAnnotation(grpcServiceModel.generatedAnnotation())
             .addModifiers(PUBLIC);
+    grpcServiceModel.generatedAnnotation().ifPresent(type::addAnnotation);
     type.addType(
         interfaceBuilder(grpcServiceModel.serviceDefinitionTypeFactoryName.simpleName())
             .addModifiers(PUBLIC, STATIC)

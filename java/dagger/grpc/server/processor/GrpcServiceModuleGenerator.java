@@ -50,14 +50,16 @@ final class GrpcServiceModuleGenerator extends SourceGenerator {
 
   @Override
   protected TypeSpec createType() {
-    return classBuilder(grpcServiceModel.serviceModuleName)
-        .addJavadoc(
-            "Install this module in the {@link $T @Singleton} server component\n",
-            JavaxInject.singleton().type)
-        .addJavadoc(
-            "or in the subcomponent that implements {@link $T}.\n",
-            grpcServiceModel.serviceDefinitionTypeName)
-        .addAnnotation(grpcServiceModel.generatedAnnotation())
+    TypeSpec.Builder serviceModule =
+        classBuilder(grpcServiceModel.serviceModuleName)
+            .addJavadoc(
+                "Install this module in the {@link $T @Singleton} server component\n",
+                JavaxInject.singleton().type)
+            .addJavadoc(
+                "or in the subcomponent that implements {@link $T}.\n",
+                grpcServiceModel.serviceDefinitionTypeName);
+    grpcServiceModel.generatedAnnotation().ifPresent(serviceModule::addAnnotation);
+    return serviceModule
         .addAnnotation(Dagger.module())
         .addModifiers(PUBLIC, FINAL)
         .addMethod(provideServiceDefinition())

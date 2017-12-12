@@ -208,3 +208,9 @@ http_archive(
 load("//tools:jarjar.bzl", "jarjar_deps")
 
 jarjar_deps()
+
+maven_jar(
+    name = "org_checkerframework_checker_compat_qual",
+    artifact = "org.checkerframework:checker-compat-qual:2.3.0",
+    sha1 = "69cb4fea55a9d89b8827d107f17c985cc1a76052",
+)

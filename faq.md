@@ -43,7 +43,7 @@ correctness because the annotation determines the constraints.
 ### Why can't `@Binds` and instance `@Provides` methods go in the same module?
 
 Because `@Binds` methods are _just_ a method _declaration_, they are expressed
-as `abstract` methods — no implementation is ever created and nothing is never
+as `abstract` methods — no implementation is ever created and nothing is ever
 invoked. On the other hand, a `@Provides` method _does_ have an implementation
 and _will_ be invoked.
 

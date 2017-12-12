@@ -21,7 +21,12 @@ load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
-KYTHE_SRCS = ["KytheBindingGraphFactory.java"]
+KYTHE_SRCS = [
+    "KytheBindingGraphFactory.java",
+    "DaggerKythePlugin.java",
+    "KytheFormatting.java",
+    "KeyVNameFactory.java",
+]
 
 CODEGEN_SRCS = glob(
     ["*.java"],
@@ -266,6 +271,11 @@ java_library(
         "//java/dagger:core",
         "//java/dagger/producers",
         "//third_party:auto_common",
+        "//third_party:auto_service",
+        "//third_party:guava",
+        "//third_party:javapoet",
+        "//third_party:kythe_plugin",
+        "@bazel_tools//third_party/java/jdk/langtools:javac",
     ],
 )
 

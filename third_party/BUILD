@@ -233,3 +233,13 @@ java_library(
         "@local_jdk//:lib/tools.jar",
     ],
 )
+
+# A _deploy.jar consisting of the java_librarys in https://github.com/google/kythe needed to build a
+# Kythe plugin
+# TODO(ronshapiro): replace this with a http_archive of the next release in
+# https://github.com/google/kythe/releases
+java_import(
+    name = "kythe_plugin",
+    jars = ["kythe_plugin_deploy.jar"],
+    neverlink = 1,
+)

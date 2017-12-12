@@ -24,14 +24,18 @@ load(
     "SOURCE_7_TARGET_7",
 )
 
+# Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
+# contains.
+SRCS = glob(["**/*.java"])
+
 filegroup(
     name = "producers-srcs",
-    srcs = glob(["**/*.java"]),
+    srcs = SRCS,
 )
 
 java_library(
     name = "producers",
-    srcs = [":producers-srcs"],
+    srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = [
         # TODO(cgruber): Enable Beta checker.
@@ -54,7 +58,7 @@ load("//tools:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "producers-javadoc",
-    srcs = [":producers-srcs"],
+    srcs = SRCS,
     exclude_packages = [
         "dagger.producers.internal",
         "dagger.producers.monitoring.internal",

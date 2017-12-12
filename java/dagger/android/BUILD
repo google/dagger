@@ -24,14 +24,18 @@ load(
     "SOURCE_7_TARGET_7",
 )
 
+# Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
+# contains.
+SRCS = glob(["*.java"])
+
 filegroup(
     name = "android-srcs",
-    srcs = glob(["*.java"]),
+    srcs = SRCS,
 )
 
 android_library(
     name = "android",
-    srcs = [":android-srcs"],
+    srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     deps = [

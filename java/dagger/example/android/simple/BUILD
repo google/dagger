@@ -35,7 +35,6 @@ android_library(
 android_binary(
     name = "simple",
     manifest = "AndroidManifest.xml",
-    manifest_merger = "legacy",
     deps = [
         ":simple_lib",
     ],

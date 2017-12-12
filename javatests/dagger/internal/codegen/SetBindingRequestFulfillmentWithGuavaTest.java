@@ -101,22 +101,9 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "package test;",
             "",
             "import com.google.common.collect.ImmutableSet;",
-            "import dagger.internal.Preconditions;",
-            "import java.util.Set;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Set<String> strings() {",
             "    return ImmutableSet.<String>builder()",
@@ -136,21 +123,6 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "        EmptySetModule_OnlyContributionIsElementsIntoSetFactory",
             "            .proxyOnlyContributionIsElementsIntoSet());",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder setModule(SetModule setModule) {",
-            "      Preconditions.checkNotNull(setModule);",
-            "      return this;",
-            "    }",
-            "  }",
             "}");
     Compilation compilation =
         daggerCompiler()
@@ -159,7 +131,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -230,24 +202,12 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "package test;",
             "",
             "import com.google.common.collect.ImmutableSet;",
-            "import java.util.Set;",
-            "import javax.annotation.Generated;",
             "import other.TestModule_EmptySetFactory;",
             "import other.UsesInaccessible;",
             "import other.UsesInaccessible_Factory;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  private Set getSetOfInaccessible2() {",
             "    return ImmutableSet.copyOf(TestModule_EmptySetFactory.proxyEmptySet());",
             "  }",
@@ -258,14 +218,6 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "        (Set) ImmutableSet.of(),",
             "        (Set) getSetOfInaccessible2());",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
     Compilation compilation =
         daggerCompiler()
@@ -274,7 +226,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -324,44 +276,10 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "package test;",
             "",
             "import com.google.common.collect.ImmutableSet;",
-            "import dagger.internal.Preconditions;",
-            "import java.util.Set;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
-            "  private DaggerParent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static Parent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Child child() {",
-            "    return new ChildImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public Parent build() {",
-            "      return new DaggerParent(this);",
-            "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder parentModule(ParentModule parentModule) {",
-            "      Preconditions.checkNotNull(parentModule);",
-            "      return this;",
-            "    }",
-            "  }",
-            "",
             "  private final class ChildImpl implements Child {",
-            "    private ChildImpl() {}",
-            "",
             "    @Override",
             "    public Set<Object> objectSet() {",
             "      return ImmutableSet.<Object>of(",
@@ -374,7 +292,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test

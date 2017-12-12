@@ -16,11 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.FluentIterable;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -97,20 +98,9 @@ public class InaccessibleTypeTest {
             "import foreign.NonPublicClass2_Factory;",
             "import foreign.PublicClass;",
             "import foreign.PublicClass_Factory;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  private Object getNonPublicClass1() {",
             "    return NonPublicClass1_Factory.newNonPublicClass1(",
             "        NoDepClass_Factory.newNoDepClass());",
@@ -128,35 +118,26 @@ public class InaccessibleTypeTest {
             "        getNonPublicClass2(), ",
             "        NoDepClass_Factory.newNoDepClass());",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(
+                FluentIterable.from(compilerMode.javacopts())
+                    .append(
+                        "-Xlint:-processing",
+                        "-Xlint:rawtypes",
+                        "-Xlint:unchecked",
+                        "-Xlint:-classfile"))
+            .compile(
                 noDepClassFile,
                 publicClassFile,
                 nonPublicClass1File,
                 nonPublicClass2File,
-                componentFile))
-        .withCompilerOptions(
-            compilerMode
-                .javacopts()
-                .append(
-                    "-Xlint:-processing",
-                    "-Xlint:rawtypes",
-                    "-Xlint:unchecked",
-                    "-Xlint:-classfile"))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutWarnings()
-        .and()
-        .generatesSources(generatedComponent);
+                componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(generatedComponent);
   }
 
   @Test public void memberInjectedType() {
@@ -220,23 +201,11 @@ public class InaccessibleTypeTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
             "import foreign.B_MembersInjector;",
             "import foreign.C_MembersInjector;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public void injectA(A a) {",
             "    injectA2(a);",
@@ -250,31 +219,22 @@ public class InaccessibleTypeTest {
             "    A_MembersInjector.injectDep(instance, new NoDepClass());",
             "    return instance;",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
-                noDepClassFile, aClassFile, bClassFile, cClassFile, dClassFile, componentFile))
-        .withCompilerOptions(
-            compilerMode
-                .javacopts()
-                .append(
-                    "-Xlint:-processing",
-                    "-Xlint:rawtypes",
-                    "-Xlint:unchecked",
-                    "-Xlint:-classfile"))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutWarnings()
-        .and()
-        .generatesSources(generatedComponent);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(
+                FluentIterable.from(compilerMode.javacopts())
+                    .append(
+                        "-Xlint:-processing",
+                        "-Xlint:rawtypes",
+                        "-Xlint:unchecked",
+                        "-Xlint:-classfile"))
+            .compile(
+                noDepClassFile,
+                aClassFile, bClassFile, cClassFile, dClassFile, componentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(generatedComponent);
   }
 }

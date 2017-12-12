@@ -168,60 +168,14 @@ public class DelegateBindingExpressionTest {
 
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             compilerMode
                 .javaFileBuilder("test.DaggerTestComponent")
                 .addLines(
                     "package test;",
                     "",
-                    "import dagger.internal.DoubleCheck;")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
-                    "",
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<Object> reusableProvider;",
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> releasableProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private RegularScoped getRegularScoped() {",
@@ -284,45 +238,6 @@ public class DelegateBindingExpressionTest {
                     "          }",
                     "        };",
                     "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {",
-                    "    return reusableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
                     "}")
                 .build());
   }
@@ -355,58 +270,14 @@ public class DelegateBindingExpressionTest {
 
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             compilerMode
                 .javaFileBuilder("test.DaggerTestComponent")
                 .addLines(
                     "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;",
-                    "import dagger.internal.SingleCheck;",
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> releasableProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private RegularScoped getRegularScoped() {",
@@ -454,51 +325,6 @@ public class DelegateBindingExpressionTest {
                     "          }",
                     "        };",
                     "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
                     "}")
                 .build());
   }
@@ -530,60 +356,14 @@ public class DelegateBindingExpressionTest {
 
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             compilerMode
                 .javaFileBuilder("test.DaggerTestComponent")
                 .addLines(
                     "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<Object> unscopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private RegularScoped getRegularScoped() {",
@@ -630,51 +410,6 @@ public class DelegateBindingExpressionTest {
                     "          }",
                     "        };",
                     "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableScopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return unscopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
-                    "  }",
                     "}")
                 .build());
   }
@@ -706,59 +441,14 @@ public class DelegateBindingExpressionTest {
 
     assertThatCompilationWithModule(module)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             compilerMode
                 .javaFileBuilder("test.DaggerTestComponent")
                 .addLines(
                     "package test;",
-                    "")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "import dagger.internal.MemoizedSentinel;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.DoubleCheck;")
-                .addLines(
-                    "import dagger.internal.ReferenceReleasingProvider;",
-                    "import dagger.internal.ReferenceReleasingProviderManager;")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "import dagger.internal.SingleCheck;")
-                .addLines(
-                    "import dagger.releasablereferences.ReleasableReferenceManager;",
-                    "import javax.annotation.Generated;",
-                    "import javax.inject.Provider;",
                     "",
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile Object reusableScoped = new MemoizedSentinel();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "  private Provider<RegularScoped> regularScopedProvider;",
-                    "  private Provider<ReusableScoped> reusableScopedProvider;")
-                .addLines(
-                    "  private Provider<ReleasableScoped> releasableScopedProvider;",
-                    "  private Provider<ReleasableReferenceManager>",
-                    "      forReleasableReferencesReleasableReferenceManagerProvider;",
-                    "  private final ReferenceReleasingProviderManager customScopeReferences =",
-                    "      new ReferenceReleasingProviderManager(",
-                    "          ReleasableScoped.CustomScope.class);",
-                    "",
-                    "  private DaggerTestComponent(Builder builder) {",
-                    "    initialize(builder);",
-                    "  }",
-                    "",
-                    "  public static Builder builder() {",
-                    "    return new Builder();",
-                    "  }",
-                    "",
-                    "  public static TestComponent create() {",
-                    "    return new Builder().build();",
-                    "  }",
-                    "")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
                     "  private RegularScoped getRegularScoped() {",
@@ -801,51 +491,6 @@ public class DelegateBindingExpressionTest {
                     "            return customScopeReferences;",
                     "          }",
                     "        };",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object regular() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getRegularScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return regularScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object reusable() {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    return getReusableScoped();")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    return reusableScopedProvider.get();")
-                .addLines(
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object releasable() {",
-                    "    return releasableScopedProvider.get();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public Object unscoped() {",
-                    "    return new Unscoped();",
-                    "  }",
-                    "",
-                    "  @Override",
-                    "  public ReleasableReferenceManager releasableReferenceManager() {",
-                    "    return forReleasableReferencesReleasableReferenceManagerProvider.get();",
-                    "  }",
-                    "",
-                    "  public static final class Builder {",
-                    "    private Builder() {}",
-                    "",
-                    "    public TestComponent build() {",
-                    "      return new DaggerTestComponent(this);",
-                    "    }",
                     "  }",
                     "}")
                 .build());
@@ -902,7 +547,7 @@ public class DelegateBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
@@ -918,18 +563,6 @@ public class DelegateBindingExpressionTest {
                 "  @SuppressWarnings(\"rawtypes\")",
                 "  private Provider subtypeProvider;",
                 "",
-                "  private DaggerTestComponent(Builder builder) {",
-                "    initialize(builder);",
-                "  }",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static TestComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize(final Builder builder) {",
                 "    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());",
@@ -938,14 +571,6 @@ public class DelegateBindingExpressionTest {
                 "  @Override",
                 "  public Supertype supertype() {",
                 "    return (Supertype) subtypeProvider.get();",
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public TestComponent build() {",
-                "      return new DaggerTestComponent(this);",
-                "    }",
                 "  }",
                 "}"));
   }
@@ -1010,14 +635,11 @@ public class DelegateBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                "import dagger.internal.DoubleCheck;",
-                "import javax.annotation.Generated;",
-                "import javax.inject.Provider;",
                 "import other.Subtype_Factory;",
                 "import other.UsesSupertype;",
                 "import other.UsesSupertype_Factory;",
@@ -1027,35 +649,10 @@ public class DelegateBindingExpressionTest {
                 "  @SuppressWarnings(\"rawtypes\")",
                 "  private Provider subtypeProvider;",
                 "",
-                "  private DaggerTestComponent(Builder builder) {",
-                "    initialize(builder);",
-                "  }",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static TestComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "",
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());",
-                "  }",
-                "",
                 "  @Override",
                 "  public UsesSupertype usesSupertype() {",
                 //   can't cast the provider.get() to a type that's not accessible
                 "    return UsesSupertype_Factory.newUsesSupertype(subtypeProvider.get());",
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public TestComponent build() {",
-                "      return new DaggerTestComponent(this);",
-                "    }",
                 "  }",
                 "}"));
   }
@@ -1109,26 +706,14 @@ public class DelegateBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestComponent",
                 "",
                 "package test;",
                 "",
-                "import javax.annotation.Generated;",
-                "import javax.inject.Provider;",
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
-                "  private DaggerTestComponent(Builder builder) {}",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static TestComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "",
                 "  @Override",
                 "  public Provider<CharSequence> charSequence() {",
                 "    return (Provider) TestModule_ProvideStringFactory.create();",
@@ -1143,14 +728,6 @@ public class DelegateBindingExpressionTest {
                 "  @Override",
                 "  public Provider<String> namedString() {",
                 "    return TestModule_ProvideStringFactory.create();",
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public TestComponent build() {",
-                "      return new DaggerTestComponent(this);",
-                "    }",
                 "  }",
                 "}"));
   }
@@ -1202,40 +779,20 @@ public class DelegateBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerRequestsSubtypeAsProvider")
-        .hasSourceEquivalentTo(
+        .containsElementsIn(
             JavaFileObjects.forSourceLines(
                 "test.DaggerRequestsSubtypeAsProvider",
                 "package test;",
                 "",
-                "import javax.annotation.Generated;",
-                "import javax.inject.Provider;",
                 "import other.Subtype_Factory;",
                 "import other.Supertype;",
                 "",
                 GENERATED_ANNOTATION,
                 "public final class DaggerRequestsSubtypeAsProvider ",
                 "    implements RequestsSubtypeAsProvider {",
-                "  private DaggerRequestsSubtypeAsProvider(Builder builder) {}",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static RequestsSubtypeAsProvider create() {",
-                "    return new Builder().build();",
-                "  }",
-                "",
                 "  @Override",
                 "  public Provider<Supertype> supertypeProvider() {",
                 "    return (Provider) Subtype_Factory.create();",
-                "  }",
-                "",
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public RequestsSubtypeAsProvider build() {",
-                "      return new DaggerRequestsSubtypeAsProvider(this);",
-                "    }",
                 "  }",
                 "}"));
   }

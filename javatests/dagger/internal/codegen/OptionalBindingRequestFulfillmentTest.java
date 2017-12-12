@@ -109,26 +109,9 @@ public class OptionalBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import com.google.common.base.Optional;",
-            "import dagger.Lazy;",
-            "import dagger.internal.ProviderOfLazy;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
-            "import other.DefinitelyNot;",
-            "import other.Maybe;",
-            "import other.Maybe_MaybeModule_ProvideMaybeFactory;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Optional<Maybe> maybe() {",
             "    return Optional.of(Maybe_MaybeModule_ProvideMaybeFactory.proxyProvideMaybe());",
@@ -150,14 +133,6 @@ public class OptionalBindingRequestFulfillmentTest {
             "      providerOfLazyOfDefinitelyNot() {",
             "    return Optional.absent();",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
     Compilation compilation =
         daggerCompiler()
@@ -166,7 +141,7 @@ public class OptionalBindingRequestFulfillmentTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -230,26 +205,9 @@ public class OptionalBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import com.google.common.base.Optional;",
-            "import com.google.common.util.concurrent.Futures;",
-            "import com.google.common.util.concurrent.ListenableFuture;",
-            "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
-            "import other.DefinitelyNot;",
-            "import other.Maybe;",
-            "import other.Maybe_MaybeModule_ProvideMaybeFactory;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public ListenableFuture<Optional<Maybe>> maybe() {",
             "    return Futures.immediateFuture(",
@@ -261,22 +219,6 @@ public class OptionalBindingRequestFulfillmentTest {
             "    return Futures.immediateFuture(Optional.<DefinitelyNot>absent());",
 
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder testComponent_ProductionExecutorModule(",
-            "        TestComponent_ProductionExecutorModule",
-            "            testComponent_ProductionExecutorModule) {",
-            "      Preconditions.checkNotNull(testComponent_ProductionExecutorModule);",
-            "      return this;",
-            "    }",
-            "  }",
             "}");
 
     Compilation compilation =
@@ -286,6 +228,6 @@ public class OptionalBindingRequestFulfillmentTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 }

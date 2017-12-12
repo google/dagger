@@ -97,24 +97,10 @@ public class SetBindingRequestFulfillmentTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import dagger.internal.Preconditions;",
             "import dagger.internal.SetBuilder;",
-            "import java.util.Collections;",
-            "import java.util.Set;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Set<String> strings() {",
             "    return SetBuilder.<String>newSetBuilder(2)",
@@ -127,28 +113,13 @@ public class SetBindingRequestFulfillmentTest {
             "  public Set<Object> objects() {",
             "    return Collections.<Object>emptySet();",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {",
-            "    }",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder setModule(SetModule setModule) {",
-            "      Preconditions.checkNotNull(setModule);",
-            "      return this;",
-            "    }",
-            "  }",
             "}");
     Compilation compilation =
         daggerCompilerWithoutGuava().compile(emptySetModuleFile, setModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -219,25 +190,12 @@ public class SetBindingRequestFulfillmentTest {
             "package test;",
             "",
             "import dagger.internal.SetBuilder;",
-            "import java.util.Collections;",
-            "import java.util.Set;",
-            "import javax.annotation.Generated;",
             "import other.TestModule_EmptySetFactory;",
             "import other.UsesInaccessible;",
             "import other.UsesInaccessible_Factory;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  private Set getSetOfInaccessible2() {",
             "    return SetBuilder.newSetBuilder(1)",
             "        .addAll(TestModule_EmptySetFactory.proxyEmptySet())",
@@ -250,14 +208,6 @@ public class SetBindingRequestFulfillmentTest {
             "        (Set) Collections.emptySet(),",
             "        (Set) getSetOfInaccessible2());",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
     Compilation compilation =
         daggerCompilerWithoutGuava()
@@ -265,7 +215,7 @@ public class SetBindingRequestFulfillmentTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test

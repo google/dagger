@@ -80,25 +80,8 @@ public class ComponentBuilderTest {
             "test.DaggerSimpleComponent",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private DaggerSimpleComponent(Builder builder) {}",
-            "",
-            "  public static SimpleComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static SimpleComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public SomeInjectableType someInjectableType() {",
-            "    return new SomeInjectableType();",
-            "  }",
-            "",
             "  private static final class Builder implements SimpleComponent.Builder {",
             "    @Override",
             "    public SimpleComponent build() {",
@@ -113,7 +96,7 @@ public class ComponentBuilderTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -154,34 +137,9 @@ public class ComponentBuilderTest {
             "package test;",
             "",
             "import dagger.internal.Preconditions;",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private TestModule testModule;",
-            "",
-            "  private DaggerTestComponent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static TestComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().create();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.testModule = builder.testModule;",
-            "  }",
-            "",
-            "  @Override",
-            "  public String string() {",
-            "    return TestModule_StringFactory.proxyString(testModule);",
-            "  }",
-            "",
             "  private static final class Builder implements TestComponent.Builder {",
             "    private TestModule testModule;",
             "",
@@ -205,7 +163,7 @@ public class ComponentBuilderTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test

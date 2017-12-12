@@ -124,23 +124,8 @@ public class MapBindingExpressionWithGuavaTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                "import com.google.common.collect.ImmutableMap;",
-                "import java.util.Map;",
-                "import javax.annotation.Generated;",
-                "import javax.inject.Provider;",
-                "",
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
-                "  private DaggerTestComponent(Builder builder) {}",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static TestComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "",
                 "  @Override",
                 "  public Map<String, String> strings() {",
                 "    return ImmutableMap.<String, String>of();",
@@ -183,14 +168,6 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return new SubImpl();",
                 "  }",
                 "",
-                "  public static final class Builder {",
-                "    private Builder() {",
-                "    }",
-                "",
-                "    public TestComponent build() {",
-                "      return new DaggerTestComponent(this);",
-                "    }",
-                "  }",
                 "  private final class SubImpl implements Sub {",
                 "    private SubImpl() {}",
                 "",
@@ -226,7 +203,7 @@ public class MapBindingExpressionWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -279,35 +256,11 @@ public class MapBindingExpressionWithGuavaTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import com.google.common.collect.ImmutableMap;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "import other.UsesInaccessible;",
-            "import other.UsesInaccessible_Factory;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newUsesInaccessible((Map) ImmutableMap.of());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
             "  }",
             "}");
     Compilation compilation =
@@ -317,7 +270,7 @@ public class MapBindingExpressionWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -366,58 +319,11 @@ public class MapBindingExpressionWithGuavaTest {
             "test.DaggerParent",
             "package test;",
             "",
-            "import com.google.common.collect.ImmutableMap;",
-            "import dagger.internal.Preconditions;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
             "  private ParentModule parentModule;",
             "",
-            "  private DaggerParent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static Parent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.parentModule = builder.parentModule;",
-            "  }",
-            "",
-            "  @Override",
-            "  public Child child() {",
-            "    return new ChildImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private ParentModule parentModule;",
-            "",
-            "    private Builder() {}",
-            "",
-            "    public Parent build() {",
-            "      if (parentModule == null) {",
-            "        this.parentModule = new ParentModule();",
-            "      }",
-            "      return new DaggerParent(this);",
-            "    }",
-            "",
-            "    public Builder parentModule(ParentModule parentModule) {",
-            "      this.parentModule = Preconditions.checkNotNull(parentModule);",
-            "      return this;",
-            "    }",
-            "  }",
-            "",
             "  private final class ChildImpl implements Child {",
-            "    private ChildImpl() {}",
-            "",
             "    @Override",
             "    public Map<String, Object> objectMap() {",
             "      return ImmutableMap.<String, Object>of(",
@@ -433,7 +339,7 @@ public class MapBindingExpressionWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -467,45 +373,12 @@ public class MapBindingExpressionWithGuavaTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import com.google.common.collect.ImmutableMap;",
-            "import com.google.common.util.concurrent.Futures;",
-            "import com.google.common.util.concurrent.ListenableFuture;",
-            "import dagger.internal.Preconditions;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public ListenableFuture<Map<String, String>> stringMap() {",
             "    return Futures.<Map<String, String>>immediateFuture(",
             "        ImmutableMap.<String, String>of());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "",
-            "    @Deprecated",
-            "    public Builder testComponent_ProductionExecutorModule(",
-            "        TestComponent_ProductionExecutorModule",
-            "            testComponent_ProductionExecutorModule) {",
-            "      Preconditions.checkNotNull(testComponent_ProductionExecutorModule);",
-            "      return this;",
-            "    }",
             "  }",
             "}");
     Compilation compilation =
@@ -515,6 +388,6 @@ public class MapBindingExpressionWithGuavaTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 }

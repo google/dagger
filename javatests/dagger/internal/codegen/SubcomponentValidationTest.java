@@ -17,13 +17,16 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -391,46 +394,8 @@ public class SubcomponentValidationTest {
             .addLines(
                 "package test;",
                 "",
-                "import com.google.errorprone.annotations.CanIgnoreReturnValue;")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "import dagger.internal.MemoizedSentinel;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "import dagger.internal.DoubleCheck;")
-            .addLines(
-                "import javax.annotation.Generated;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "import javax.inject.Provider;")
-            .addLines(
-                "",
                 GENERATED_ANNOTATION,
                 "public final class DaggerParentComponent implements ParentComponent {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "  private volatile Object dep1 = new MemoizedSentinel();",
-                "  private volatile Object dep2 = new MemoizedSentinel();",
-                "",
-                "  private DaggerParentComponent(Builder builder) {}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  private Provider<Dep1> dep1Provider;",
-                "  private Provider<Dep2> dep2Provider;",
-                "",
-                "  private DaggerParentComponent(Builder builder) {",
-                "    initialize(builder);",
-                "  }")
-            .addLines(
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static ParentComponent create() {",
-                "    return new Builder().build();",
-                "  }",
-                "")
             .addLinesIn(
                 DEFAULT_MODE,
                 "  @SuppressWarnings(\"unchecked\")",
@@ -499,13 +464,6 @@ public class SubcomponentValidationTest {
                 "    return instance;",
                 "  }")
             .addLines(
-                "  public static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public ParentComponent build() {",
-                "      return new DaggerParentComponent(this);",
-                "    }",
-                "  }",
                 "",
                 "  private final class ChildComponentImpl implements ChildComponent {",
                 "    private final ChildModule childModule;",
@@ -553,21 +511,22 @@ public class SubcomponentValidationTest {
                 "  }",
                 "}")
             .build();
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(
                 parentComponentFile,
                 childComponentFile,
                 childModuleFile,
                 aFile,
                 needsDep1File,
                 dep1File,
-                dep2File))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(generatedComponent);
+                dep2File);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParentComponent")
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -630,22 +589,10 @@ public class SubcomponentValidationTest {
             "test.DaggerParentComponent",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
             "import test.subpackage.Sub;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParentComponent implements ParentComponent {",
-            "  private DaggerParentComponent(Builder builder) {",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Foo.Sub newFooSubcomponent() {",
             "    return new F_SubImpl();",
@@ -657,48 +604,37 @@ public class SubcomponentValidationTest {
             "  }",
             "",
             "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
             "    public ParentComponent build() {",
             "      return new DaggerParentComponent(this);",
             "    }",
             "  }",
             "",
             "  private final class F_SubImpl implements Foo.Sub {",
-            "",
-            "    private F_SubImpl() {}",
-            "",
             "    @Override",
             "    public Bar.Sub newBarSubcomponent() {",
             "      return new B_SubImpl();",
             "    }",
             "",
             "    private final class B_SubImpl implements Bar.Sub {",
-            "",
-            "      private B_SubImpl() {}",
-            "",
             "      @Override",
             "      public Sub newSubcomponentInSubpackage() {",
             "        return new ts_SubImpl();",
             "      }",
             "",
-            "      private final class ts_SubImpl implements Sub {",
-            "        private ts_SubImpl() {}",
-            "      }",
+            "      private final class ts_SubImpl implements Sub {}",
             "    }",
             "  }",
-            "  private final class NoConflictImpl implements NoConflict {",
-            "    private NoConflictImpl() {}",
-            "  }",
+            "",
+            "  private final class NoConflictImpl implements NoConflict {}",
             "}");
-
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, foo, bar, baz, noConflict))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(parent, foo, bar, baz, noConflict);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParentComponent")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test
@@ -738,37 +674,20 @@ public class SubcomponentValidationTest {
             "test.DaggerParentComponent",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerParentComponent implements ParentComponent {",
-            "  private DaggerParentComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Sub newSubcomponent() {",
             "    return new t_SubImpl();",
             "  }",
             "",
             "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
             "    public ParentComponent build() {",
             "      return new DaggerParentComponent(this);",
             "    }",
             "  }",
             "",
             "  private final class t_SubImpl implements Sub {",
-            "",
-            "    private t_SubImpl() {}",
-            "",
             "    @Override",
             "    public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {",
             "      return new tdmltmt_SubImpl();",
@@ -780,14 +699,12 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "}");
-
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, sub, deepSub))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParentComponent")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test
@@ -821,31 +738,12 @@ public class SubcomponentValidationTest {
     JavaFileObject componentGeneratedFile =
         JavaFileObjects.forSourceLines(
             "DaggerParentComponent",
-            "import javax.annotation.Generated;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParentComponent implements ParentComponent {",
-            "  private DaggerParentComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Sub newSubcomponent() {",
             "    return new $_SubImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public ParentComponent build() {",
-            "      return new DaggerParentComponent(this);",
-            "    }",
             "  }",
             "",
             "  private final class $_SubImpl implements Sub {",
@@ -864,13 +762,12 @@ public class SubcomponentValidationTest {
             "}",
             "");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, sub, deepSub))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("DaggerParentComponent")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test
@@ -917,21 +814,10 @@ public class SubcomponentValidationTest {
             "test.DaggerParentComponent",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
             "import top1.a.b.c.d.E;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParentComponent implements ParentComponent {",
-            "  private DaggerParentComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static ParentComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public E.F.Sub top1() {",
             "    return new F_SubImpl();",
@@ -942,14 +828,6 @@ public class SubcomponentValidationTest {
             "    return new F2_SubImpl();",
             "  }",
             "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public ParentComponent build() {",
-            "      return new DaggerParentComponent(this);",
-            "    }",
-            "  }",
-            "",
             "  private final class F_SubImpl implements E.F.Sub {",
             "    private F_SubImpl() {}",
             "  }",
@@ -958,13 +836,12 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, top1, top2))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent, top1, top2);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParentComponent")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test
@@ -996,45 +873,24 @@ public class SubcomponentValidationTest {
             "test.DaggerC",
             "package test;",
             "",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerC implements C {",
-            "  private DaggerC(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static C create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Foo.C newFooC() {",
             "    return new F_CImpl();",
             "  }",
             "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public C build() {",
-            "      return new DaggerC(this);",
-            "    }",
-            "  }",
-            "",
-            "  private final class F_CImpl implements Foo.C {",
-            "    private F_CImpl() {}",
-            "  }",
+            "  private final class F_CImpl implements Foo.C {}",
             "}");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent, subcomponentWithSameSimpleNameAsParent))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(parent, subcomponentWithSameSimpleNameAsParent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerC")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test
@@ -1081,17 +937,6 @@ public class SubcomponentValidationTest {
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerC implements C {",
-            "",
-            "  private DaggerC(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static C create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public C.Foo.Sub.Builder fooBuilder() {",
             "    return new F_SubBuilder();",
@@ -1100,14 +945,6 @@ public class SubcomponentValidationTest {
             "  @Override",
             "  public C.Bar.Sub.Builder barBuilder() {",
             "    return new B_SubBuilder();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public C build() {",
-            "      return new DaggerC(this);",
-            "    }",
             "  }",
             "",
             // TODO(user): Reverse the order of subcomponent and builder so that subcomponent
@@ -1134,14 +971,12 @@ public class SubcomponentValidationTest {
             "    private B_SubImpl(B_SubBuilder builder) {}",
             "  }",
             "}");
-
-    assertAbout(javaSources())
-        .that(ImmutableList.of(parent))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesSources(componentGeneratedFile);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerC")
+        .containsElementsIn(componentGeneratedFile);
   }
 
   @Test

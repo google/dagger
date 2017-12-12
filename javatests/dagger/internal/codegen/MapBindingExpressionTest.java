@@ -92,23 +92,9 @@ public class MapBindingExpressionTest {
             "package test;",
             "",
             "import dagger.internal.MapBuilder;",
-            "import java.util.Collections;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Map<String, String> strings() {",
             "    return Collections.<String, String>emptyMap();",
@@ -147,20 +133,12 @@ public class MapBindingExpressionTest {
             "        .put(2L, MapModule_ProvideLong2Factory.create())",
             "        .build();",
             "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
-            "  }",
             "}");
     Compilation compilation = daggerCompilerWithoutGuava().compile(mapModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -216,36 +194,12 @@ public class MapBindingExpressionTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
-            "import java.util.Collections;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "import other.UsesInaccessible;",
-            "import other.UsesInaccessible_Factory;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent {",
-            "  private DaggerTestComponent(Builder builder) {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newUsesInaccessible(",
             "        (Map) Collections.emptyMap());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
-            "    }",
             "  }",
             "}");
     Compilation compilation =
@@ -253,7 +207,7 @@ public class MapBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -303,58 +257,11 @@ public class MapBindingExpressionTest {
             "test.DaggerParent",
             "package test;",
             "",
-            "import dagger.internal.Preconditions;",
-            "import java.util.Collections;",
-            "import java.util.Map;",
-            "import javax.annotation.Generated;",
-            "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
             "  private ParentModule parentModule;",
             "",
-            "  private DaggerParent(Builder builder) {",
-            "    initialize(builder);",
-            "  }",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static Parent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.parentModule = builder.parentModule;",
-            "  }",
-            "",
-            "  @Override",
-            "  public Child child() {",
-            "    return new ChildImpl();",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private ParentModule parentModule;",
-            "",
-            "    private Builder() {}",
-            "",
-            "    public Parent build() {",
-            "      if (parentModule == null) {",
-            "        this.parentModule = new ParentModule();",
-            "      }",
-            "      return new DaggerParent(this);",
-            "    }",
-            "",
-            "    public Builder parentModule(ParentModule parentModule) {",
-            "      this.parentModule = Preconditions.checkNotNull(parentModule);",
-            "      return this;",
-            "    }",
-            "  }",
-            "",
             "  private final class ChildImpl implements Child {",
-            "    private ChildImpl() {}",
-            "",
             "    @Override",
             "    public Map<String, Object> objectMap() {",
             "      return Collections.<String, Object>singletonMap(",
@@ -369,7 +276,7 @@ public class MapBindingExpressionTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   private Compiler daggerCompilerWithoutGuava() {

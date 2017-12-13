@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <title>iron-icon demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../iron-icon.html">
+  <link rel="import" href="../../iron-iconset/iron-iconset.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+</head>
+<body unresolved>
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles"></style>
+  </custom-style>
+
+  <div class="vertical-section-container centered">
+    <h3>
+      This demo is for a single &lt;iron-icon&gt;. If you're looking for the
+      whole set of available icons, check out the
+      <a href="https://www.webcomponents.org/element/PolymerElements/iron-icons/demo/demo/index.html" target="_top">&lt;iron-icons&gt;
+      demo.</a>
+    </h3>
+
+    <h3><code>iron-icon</code> using a iron-iconset as its icon source.</h3>
+    <demo-snippet>
+      <template>
+        <iron-iconset name="example" icons="location" src="location.png" size="24" width="24"></iron-iconset>
+
+        <iron-icon icon="example:location"></iron-icon>
+      </template>
+    </demo-snippet>
+
+    <h3><code>iron-icon</code> using an image url as its icon source.</h3>
+    <demo-snippet>
+      <template>
+        <iron-icon src="location.png"></iron-icon>
+      </template>
+    </demo-snippet>
+  </div>
+</body>
+</html>

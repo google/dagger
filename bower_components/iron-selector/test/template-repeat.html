@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<html>
+<head>
+
+  <title>iron-selector-template-repeat</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+
+  <link rel="import" href="../iron-selector.html">
+
+  <style>
+    .iron-selected {
+      background: #ccc;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="scope-polymer2">
+    <template>
+      <div>
+        <dom-bind>
+          <template>
+            <iron-selector selected="1">
+              <dom-repeat>
+                <template>
+                  <div id$="[[item.name]]">{{item.name}}</div>
+                </template>
+              </dom-repeat>
+            </iron-selector>
+          </template>
+        </dom-bind>
+      </div>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="scope-polymer1">
+    <template>
+      <div>
+        <template is="dom-bind">
+          <iron-selector selected="1">
+            <template is="dom-repeat">
+              <div id$="[[item.name]]">{{item.name}}</div>
+            </template>
+          </iron-selector>
+        </template>
+      </div>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    suite('dom-repeat', function() {
+
+      var scope;
+      var selector;
+      var domRepeat;
+
+      setup(function() {
+        if (Polymer.Element) {
+          scope = fixture('scope-polymer2');
+          selector = scope.querySelector('iron-selector');
+          domRepeat = scope.querySelector('dom-repeat');
+        } else {
+          scope = fixture('scope-polymer1');
+          selector = scope.querySelector('iron-selector');
+          domRepeat = scope.querySelector('template[is=dom-repeat]');
+        }
+        domRepeat.items = [{name:'item0'}, {name: 'item1'}, {name: 'item2'}, {name: 'item3'}];
+        domRepeat.render();
+        // See the note in `forceSynchronousItemUpdate`.
+        selector.forceSynchronousItemUpdate();
+      });
+
+      test('supports repeated items', function() {
+        // check items
+        assert.equal(selector.items.length, 4);
+        // check selected
+        assert.equal(selector.selected, 1);
+        // check selected item
+        var item = selector.selectedItem;
+        assert.equal(selector.items[1], item);
+        // check selected class
+        assert.isTrue(item.classList.contains('iron-selected'));
+      });
+
+      test('update items', function() {
+        // check items
+        assert.equal(selector.items.length, 4);
+        // check selected
+        assert.equal(selector.selected, 1);
+        // update items
+        domRepeat.items = [{name:'foo'}, {name: 'bar'}];
+        domRepeat.render();
+        // See the note in `forceSynchronousItemUpdate`.
+        selector.forceSynchronousItemUpdate();
+        // check items
+        assert.equal(selector.items.length, 2);
+        // check selected (should still honor the selected)
+        assert.equal(selector.selected, 1);
+        // check selected class
+        assert.isTrue(selector.querySelector('#bar').classList.contains('iron-selected'));
+      });
+
+      test('set selected to something else', function() {
+        // set selected to something else
+        selector.selected = 3;
+        // check selected item
+        var item = selector.selectedItem;
+        assert.equal(selector.items[3], item);
+        // check selected class
+        assert.isTrue(item.classList.contains('iron-selected'));
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

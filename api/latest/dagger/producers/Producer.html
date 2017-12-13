@@ -188,7 +188,7 @@ public interface <span class="typeNameLabel">Producer&lt;T&gt;</span></pre>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code><a href="https://google.github.io/guava/releases/21.0/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent">ListenableFuture</a>&lt;<a href="../../dagger/producers/Producer.html" title="type parameter in Producer">T</a>&gt;</code></td>
+<td class="colFirst"><code><a href="https://google.github.io/guava/releases/23.3-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent">ListenableFuture</a>&lt;<a href="../../dagger/producers/Producer.html" title="type parameter in Producer">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../dagger/producers/Producer.html#get--">get</a></span>()</code>
 <div class="block">Returns a future representing a running task that produces a value.</div>
 </td>
@@ -214,8 +214,8 @@ public interface <span class="typeNameLabel">Producer&lt;T&gt;</span></pre>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>get</h4>
-<pre><a href="https://docs.oracle.com/javase/8/docs/api/javax/annotation/CheckReturnValue.html?is-external=true" title="class or interface in javax.annotation">@CheckReturnValue</a>
-<a href="https://google.github.io/guava/releases/21.0/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent">ListenableFuture</a>&lt;<a href="../../dagger/producers/Producer.html" title="type parameter in Producer">T</a>&gt;&nbsp;get()</pre>
+<pre>@CheckReturnValue
+<a href="https://google.github.io/guava/releases/23.3-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent">ListenableFuture</a>&lt;<a href="../../dagger/producers/Producer.html" title="type parameter in Producer">T</a>&gt;&nbsp;get()</pre>
 <div class="block">Returns a future representing a running task that produces a value. Calling this method will
  trigger the submission of this task to the executor, if it has not already been triggered. In
  order to trigger this task's submission, the transitive dependencies required to produce the

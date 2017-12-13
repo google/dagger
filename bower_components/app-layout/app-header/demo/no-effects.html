@@ -1,0 +1,66 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>app-header demo that doesn't use any effects</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../demo/sample-content.html">
+  <link rel="import" href="../app-header.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: arial;
+        background-color: #eee;
+      }
+
+      app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 200px;
+        color: #fff;
+        background-color: #4285f4;
+      }
+
+      sample-content {
+        padding-top: 200px;
+      }
+
+    </style>
+  </custom-style>
+
+</head>
+<body unresolved>
+
+  <app-header condenses reveals>
+    <app-toolbar>
+      <paper-icon-button icon="menu"></paper-icon-button>
+    </app-toolbar>
+  </app-header>
+
+  <sample-content size="100"></sample-content>
+
+</body>
+</html>

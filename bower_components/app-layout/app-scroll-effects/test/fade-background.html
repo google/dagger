@@ -1,0 +1,99 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for the fade-background effect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="../app-scroll-effects.html">
+  <link rel="import" href="x-container.html">
+  <link rel="import" href="utils.html">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 1000vh;
+    }
+
+    x-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="testHeader">
+    <template>
+      <x-container effects="fade-background"></x-container>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    suite('basic features', function() {
+      var container;
+
+      setup(function() {
+        container = fixture('testHeader');
+      });
+
+      test('effect outputs', function(done) {
+        flush(function() {
+          container._updateScrollState(0);
+
+          assert.isTrue(sameCSS(container.$.backgroundFrontLayer,
+              'will-change: opacity; transition-property: opacity; ' +
+              'transition-duration: 0.5s;'),
+              'backgroundFrontLayer when progress = 0');
+
+          assert.isTrue(sameCSS(container.$.backgroundRearLayer,
+              'will-change: opacity; transition-property: opacity;' +
+              'transition-duration: 0.5s;'),
+              'backgroundRearLayer when progress = 0');
+
+          container.$.backgroundFrontLayer.style.transition = 'none';
+          container.$.backgroundRearLayer.style.transition = 'none';
+
+          assert.isTrue(sameCSS(container.$.backgroundFrontLayer, 'opacity: 1'),
+              'backgroundFrontLayer when progress = 0');
+
+          assert.isTrue(sameCSS(container.$.backgroundRearLayer, 'opacity: 0'),
+              'backgroundRearLayer when progress = 0');
+
+          container._updateScrollState(container.offsetHeight);
+
+          assert.isTrue(sameCSS(container.$.backgroundFrontLayer, 'opacity: 0'),
+              'backgroundFrontLayer when progress = 1');
+
+          assert.isTrue(sameCSS(container.$.backgroundRearLayer, 'opacity: 1'),
+              'backgroundRearLayer when progress = 1');
+
+          done();
+        });
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

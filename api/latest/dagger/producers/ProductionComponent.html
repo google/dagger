@@ -111,7 +111,7 @@ public @interface <span class="memberNameLabel">ProductionComponent</span></pre>
  <p>Every type annotated with <code>@ProductionComponent</code> must contain at least one abstract
  component method. Component methods must represent <a href="../../dagger/producers/Producer.html" title="interface in dagger.producers">production</a>.
 
- Production methods have no arguments and return either a <a href="https://google.github.io/guava/releases/21.0/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent"><code>ListenableFuture</code></a> or
+ Production methods have no arguments and return either a <a href="https://google.github.io/guava/releases/23.3-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html?is-external=true" title="class or interface in com.google.common.util.concurrent"><code>ListenableFuture</code></a> or
  <a href="../../dagger/producers/Producer.html" title="interface in dagger.producers"><code>Producer</code></a> of a type that is <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Inject.html?is-external=true" title="class or interface in javax.inject"><code>injected</code></a>, <a href="../../dagger/Provides.html" title="annotation in dagger"><code>provided</code></a>, or
  <a href="../../dagger/producers/Produces.html" title="annotation in dagger.producers"><code>produced</code></a>. Each may have a <a href="https://docs.oracle.com/javaee/7/api/javax/inject/Qualifier.html?is-external=true" title="class or interface in javax.inject"><code>Qualifier</code></a> annotation as well. The following
  are all valid production method declarations: <pre><code>
@@ -130,7 +130,7 @@ public @interface <span class="memberNameLabel">ProductionComponent</span></pre>
 
  <p>If a non-execution exception is thrown (e.g., an <code>InterruptedException</code> or
  <code>CancellationException</code>), then exception is handled as in
- <a href="https://google.github.io/guava/releases/21.0/api/docs/com/google/common/util/concurrent/Futures.html?is-external=true#transform-com.google.common.util.concurrent.ListenableFuture-com.google.common.base.Function-" title="class or interface in com.google.common.util.concurrent"><code>Futures.transform(com.google.common.util.concurrent.ListenableFuture&lt;I&gt;, com.google.common.base.Function&lt;? super I, ? extends O&gt;)</code></a>.
+ <a href="https://google.github.io/guava/releases/23.3-jre/api/docs/com/google/common/util/concurrent/Futures.html?is-external=true#transform-com.google.common.util.concurrent.ListenableFuture-com.google.common.base.Function-" title="class or interface in com.google.common.util.concurrent"><code>Futures.transform(com.google.common.util.concurrent.ListenableFuture&lt;I&gt;, com.google.common.base.Function&lt;? super I, ? extends O&gt;)</code></a>.
  <!-- TODO(beder): Explain this more thoroughly, and update the javadocs of those utilities. -->
 
  <h2>Executor</h2>

@@ -1,0 +1,7 @@
+dagger
+dagger.android
+dagger.android.support
+dagger.multibindings
+dagger.producers
+dagger.producers.monitoring
+dagger.releasablereferences

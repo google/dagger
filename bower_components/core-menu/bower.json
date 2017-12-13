@@ -1,9 +1,0 @@
-{
-  "name": "core-menu",
-  "private": true,
-  "dependencies": {
-    "core-selector": "Polymer/core-selector#^0.4.0",
-    "core-collapse": "Polymer/core-collapse#^0.4.0",
-    "core-item": "Polymer/core-item#^0.4.0"
-  }
-}

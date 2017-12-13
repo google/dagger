@@ -1,8 +1,0 @@
-{
-  "name": "marked-element",
-  "private": true,
-  "dependencies": {
-    "marked": "*",
-    "polymer": "Polymer/polymer#^0.4.0"
-  }
-}

@@ -1,0 +1,113 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>Preserving aspect ratio using app-grid-style</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../polymer/polymer.html">
+  <link rel="import" href="../app-grid-style.html">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <dom-module id="x-app">
+    <template>
+      <style include="app-grid-style">
+
+        :host {
+          display: block;
+          --app-grid-columns: 3;
+          --app-grid-gutter: 10px;
+          /* Height is 100% the width of the item. This is equivalent to 1:1 aspect ratio */
+          --app-grid-item-height: 100%;
+        }
+
+        h1 {
+          font-family: 'Roboto', 'Noto', sans-serif;
+          text-align: center;
+          font-size: 18px;
+          line-height: 30px;
+          font-weight: 400;
+          margin: 10px 20px;
+        }
+
+        ul {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .item {
+          background-color: white;
+        }
+
+        @media(max-width: 799px) {
+          :host {
+            /* Height is 50% the width of the item. This is equivalent to 2:1 aspect ratio */
+            --app-grid-item-height: 50%;
+          }
+        }
+
+      </style>
+
+      <h1>Aspect ratio: items have an aspect ratio of 1:1 on large screens and 2:1 on small ones.</h1>
+
+      <ul class="app-grid" has-aspect-ratio>
+        <template is="dom-repeat" items="[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]">
+          <li>
+            <div class="item"></div>
+          </li>
+        </template>
+      </ul>
+
+    </template>
+
+    <script>
+
+      HTMLImports.whenReady(function() {
+
+        Polymer({
+
+          is: 'x-app',
+
+          attached: function() {
+            this._updateGridStyles = this._updateGridStyles || function() {
+              this.updateStyles();
+            }.bind(this);
+            window.addEventListener('resize', this._updateGridStyles);
+          },
+
+          detached: function() {
+            window.removeEventListener('resize', this._updateGridStyles);
+          }
+
+        });
+
+      });
+
+    </script>
+  </dom-module>
+
+  <x-app></x-app>
+
+</body>
+</html>

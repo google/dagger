@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<html>
+  <head>
+
+    <title>iron-selector</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../iron-selector.html">
+    <link rel="import" href="../../paper-styles/color.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+
+  </head>
+  <body unresolved>
+    <custom-style>
+      <style is="custom-style" include="demo-pages-shared-styles">
+        iron-selector > * {
+          padding: 8px;
+        }
+
+        .iron-selected {
+          background-color: var(--google-blue-500);
+          color: white;
+        }
+      </style>
+    </custom-style>
+
+    <div class="vertical-section-container centered">
+      <h3>Basic</h3>
+      <demo-snippet>
+        <template>
+          <iron-selector selected="3">
+            <div>Item 0</div>
+            <div>Item 1</div>
+            <div>Item 2</div>
+            <div>Item 3</div>
+            <div>Item 4</div>
+          </iron-selector>
+        </template>
+      </demo-snippet>
+
+      <h3>Use <code>multi</code> to enable multiple selection.</h3>
+      <demo-snippet>
+        <template>
+          <iron-selector multi selected-values='[0,2]'>
+            <div>Item 0</div>
+            <div>Item 1</div>
+            <div>Item 2</div>
+            <div>Item 3</div>
+            <div>Item 4</div>
+          </iron-selector>
+        </template>
+      </demo-snippet>
+
+      <h3>
+        Use <code>attr-for-selected</code> to specify the attribute of the
+        selectable elements containing the selection key.
+      </h3>
+      <demo-snippet>
+        <template>
+          <iron-selector selected="bar" attr-for-selected="name">
+            <div name="foo">Foo</div>
+            <div name="bar">Bar</div>
+            <div name="baz">Baz</div>
+            <div name="qux">Qux</div>
+            <div name="quux">Quux</div>
+          </iron-selector>
+        </template>
+      </demo-snippet>
+
+      <h3>
+        Use <code>fallback-selection</code> to provide an option to be selected
+        when all options are deselected or all selected options are invalid.
+      </h3>
+      <demo-snippet>
+        <template>
+          <iron-selector multi selected="an-unknown-key" attr-for-selected="name" fallback-selection="default">
+            <div name="foo">Foo</div>
+            <div name="bar">Bar</div>
+            <div name="baz">Baz</div>
+            <div name="qux">Qux</div>
+            <div name="quux">Quux</div>
+            <div name="default">Default</div>
+          </iron-selector>
+        </template>
+      </demo-snippet>
+    </div>
+
+  </body>
+</html>

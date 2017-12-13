@@ -1,0 +1,139 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>demo5</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../font-roboto/roboto.html">
+  <link rel="import" href="../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../paper-item/paper-icon-item.html">
+  <link rel="import" href="../app-drawer-layout/app-drawer-layout.html">
+  <link rel="import" href="../app-drawer/app-drawer.html">
+  <link rel="import" href="../app-scroll-effects/app-scroll-effects.html">
+  <link rel="import" href="../app-header/app-header.html">
+  <link rel="import" href="../app-header-layout/app-header-layout.html">
+  <link rel="import" href="../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../demo/sample-content.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      background-color: #eee;
+    }
+
+    .blueHeader {
+      background-color: #4285f4;
+      color: #fff;
+    }
+
+    .blueHeader paper-icon-button {
+      --paper-icon-button-ink-color: white;
+    }
+
+    .whiteHeader {
+      font-weight: bold;
+      background-color: white;
+    }
+
+    .iconItem {
+      color: #666;
+    }
+
+    app-drawer-layout:not([narrow]) [drawer-toggle] {
+      display: none;
+    }
+
+    </style>
+  </custom-style>
+
+</head>
+<body unresolved>
+
+  <app-drawer-layout>
+
+    <app-drawer swipe-open slot="drawer">
+      <app-header-layout has-scrolling-region>
+
+        <app-header class="whiteHeader" waterfall fixed slot="header">
+          <app-toolbar>
+            <div main-title>Inbox</div>
+          </app-toolbar>
+        </app-header>
+
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="inbox" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="favorite" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="polymer" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="question-answer" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="send" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="archive" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="backup" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+        <paper-icon-item class="iconItem">
+          <iron-icon class="grayIcon" icon="dashboard" slot="item-icon"></iron-icon>
+          <span>Option Name</span>
+        </paper-icon-item>
+
+      </app-header-layout>
+    </app-drawer>
+
+    <app-header-layout>
+
+      <app-header class="blueHeader" condenses reveals effects="waterfall" slot="header">
+        <app-toolbar>
+          <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+          <div main-title></div>
+          <paper-icon-button icon="search"></paper-icon-button>
+          <paper-icon-button icon="more-vert"></paper-icon-button>
+        </app-toolbar>
+        <app-toolbar></app-toolbar>
+        <app-toolbar>
+          <div spacer main-title>My Drive</div>
+        </app-toolbar>
+      </app-header>
+
+      <sample-content size="100"></sample-content>
+
+    </app-header-layout>
+
+  </app-drawer-layout>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>demo6</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../font-roboto/roboto.html">
+  <link rel="import" href="../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../paper-item/paper-icon-item.html">
+  <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../app-drawer-layout/app-drawer-layout.html">
+  <link rel="import" href="../app-drawer/app-drawer.html">
+  <link rel="import" href="../app-scroll-effects/app-scroll-effects.html">
+  <link rel="import" href="../app-header/app-header.html">
+  <link rel="import" href="../app-header-layout/app-header-layout.html">
+  <link rel="import" href="../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../demo/sample-content.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      background-color: #eee;
+    }
+
+    app-header {
+      background-color: #4285f4;
+      color: #fff;
+    }
+
+    app-header paper-icon-button {
+      --paper-icon-button-ink-color: #fff;
+    }
+
+    app-drawer-layout {
+      --app-drawer-layout-content-transition: margin 0.2s;
+    }
+
+    app-drawer {
+      --app-drawer-content-container: {
+        background-color: #eee;
+      }
+    }
+
+    .drawer-content {
+      margin-top: 80px;
+      height: calc(100% - 80px);
+      overflow: auto;
+    }
+
+    </style>
+  </custom-style>
+
+</head>
+<body unresolved>
+
+  <app-header-layout>
+
+    <app-header fixed effects="waterfall" slot="header">
+      <app-toolbar>
+        <paper-icon-button id="toggle" icon="menu"></paper-icon-button>
+        <div main-title>Inbox</div>
+      </app-toolbar>
+    </app-header>
+
+    <app-drawer-layout id="drawerLayout">
+
+      <app-drawer slot="drawer">
+        <div class="drawer-content">
+          <paper-icon-item>
+            <iron-icon icon="inbox" slot="item-icon"></iron-icon> <span>Inbox</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="query-builder" slot="item-icon"></iron-icon> <span>Snoozed</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="done" slot="item-icon"></iron-icon> <span>Done</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="drafts" slot="item-icon"></iron-icon> <span>Drafts</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="send" slot="item-icon"></iron-icon> <span>Sent</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="delete" slot="item-icon"></iron-icon> <span>Trash</span>
+          </paper-icon-item>
+          <paper-icon-item>
+            <iron-icon icon="report" slot="item-icon"></iron-icon> <span>Spam</span>
+          </paper-icon-item>
+        </div>
+      </app-drawer>
+      
+      <sample-content size="100"></sample-content>
+
+    </app-drawer-layout>
+
+  </app-header-layout>
+
+  <script>
+    var drawerLayout = document.getElementById('drawerLayout');
+    toggle.addEventListener('click', function() {
+      if (drawerLayout.forceNarrow || !drawerLayout.narrow) {
+        drawerLayout.forceNarrow = !drawerLayout.forceNarrow;
+      } else {
+        drawerLayout.drawer.toggle();
+      }
+    });
+  </script>
+
+</body>
+</html>

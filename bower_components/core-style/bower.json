@@ -1,7 +1,0 @@
-{
-  "name": "core-style",
-  "private": true,
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0"
-  }
-}

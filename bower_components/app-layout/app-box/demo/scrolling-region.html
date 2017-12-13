@@ -1,0 +1,232 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>app-box using a custom scrolling region</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../demo/sample-content.html">
+  <link rel="import" href="../../app-scroll-effects/effects/parallax-background.html">
+  <link rel="import" href="../app-box.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        background-color: #eee;
+      }
+
+      header {
+        background-color: white;
+        height: 128px;
+      }
+
+      #scrollingRegion {
+        position: fixed;
+        left: 100px;
+        right: 100px;
+        top: 50px;
+        bottom: 50px;
+        overflow-y: auto;
+        background-color: #fff;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        scroll-behavior: smooth;
+      }
+
+      app-toolbar {
+        font-size: 18px;
+        font-weight: 400;
+        letter-spacing: 5px;
+        text-align: center;
+        color: #1a237e;
+      }
+
+      .nav {
+        height: 64px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+
+      .nav li {
+        display: inline-block;
+        list-style: none;
+      }
+
+      .nav a {
+        display: inline-block;
+        font-weight: 12px;
+        line-height: 64px;
+        text-decoration: none;
+        color: black;
+        font-weight: 300;
+        margin: 0 10px;
+      }
+
+      .nav a:hover {
+        color: #444;
+        border-bottom: 1px solid #999;
+      }
+
+      [threshold-triggered] {
+        position: fixed;
+        top: 50px;
+        left: 100px;
+        right: 100px;
+        z-index: 1;
+      }
+
+      .first, .second, .third, .fourth {
+        height: 640px;
+      }
+
+      .second {
+        --app-box-background-front-layer: {
+          background-image: url(https://app-layout-assets.appspot.com/assets/bg2.jpg);
+          background-position: bottom;
+          padding-bottom: 120px;
+          margin-top: -20px;
+          height: 100%;
+        };
+      }
+
+      .third {
+        --app-box-background-front-layer: {
+          background-image: url(https://app-layout-assets.appspot.com/assets/bg3.jpg);
+          background-position: bottom;
+          padding-bottom: 120px;
+          margin-top: -20px;
+          height: 100%;
+        };
+      }
+
+      .fourth {
+        --app-box-background-front-layer: {
+          background-image: url(https://app-layout-assets.appspot.com/assets/bg4.jpg);
+          background-position: bottom;
+          padding-bottom: 120px;
+          margin-top: -20px;
+          height: 100%;
+        };
+      }
+
+      section {
+        padding-top: 100px;
+      }
+
+      article {
+        font-weight: 100;
+        max-width: 500px;
+        text-align: center;
+        margin: 0 auto 100px auto;
+      }
+
+      article h2 {
+        font-weight: 100;
+        font-size: 50px;
+        margin: 5px;
+      }
+
+      article p {
+        font-size: 18px;
+        line-height: 30px;
+      }
+
+      article hr {
+        width: 100px;
+        height: 1px;
+        border: none;
+        margin: 20px auto;
+        background-color: black;
+      }
+
+    </style>
+  </custom-style>
+</head>
+<body class="fullbleed" unresolved>
+
+
+    <div class="overlay" id="scrollingRegion">
+      <header>
+        <app-toolbar>
+          <div main-title>POLYMER</div>
+        </app-toolbar>
+        <app-box scroll-target="scrollingRegion" threshold="64">
+          <ul role="navigation" class="nav">
+            <li><a href="#speed">Speed</a></li>
+            <li><a href="#modern">Modern</a></li>
+            <li><a href="#standard">Standard</a></li>
+            <li><a href="#create">Create</a></li>
+          </ul>
+        </app-box>
+      </header>
+
+      <section id="speed">
+        <article>
+          <hr />
+          <h2>Built for Speed</h2>
+          <p>Polymer 1.0 replaces the shadow DOM polyfill with a lightweight shim, uses a new, faster data-binding system, and significantly reduces code size.</p>
+        </article>
+        <!-- This app-box uses `#scrollingRegion` as the scroller element -->
+        <app-box class="first" scroll-target="scrollingRegion" effects="parallax-background">
+          <!--
+            app-box allows to style the mixin `--app-box-background-front-layer` or create a custom background in the light DOM.
+            In this case, we create a custom background by adding the attribute `background` to the `img` in
+            the light DOM.
+          -->
+          <img slot="background" src="//app-layout-assets.appspot.com/assets/bg1.jpg" style="width:100%; height: 900px" />
+        </app-box>
+      </section>
+
+      <section id="modern">
+        <article>
+          <hr />
+          <h2>For Modern Browsers</h2>
+          <p>Polymer is built from the ground up for modern browsers, using the latest web platform APIs. Polyfills provide support on evergreen browsers for APIs that aren't universal yet.</p>
+        </article>
+          <!--
+            This app-box uses the class `.second` and the mixin `--app-box-background-front-layer` to assign the background image.
+          -->
+        <app-box class="second" scroll-target="scrollingRegion" effects="parallax-background"></app-box>
+      </section>
+
+      <section id="standard">
+        <article>
+          <hr />
+          <h2>Using Web Components</h2>
+          <p>Polymer leverages web components, a new set of standards designed to provide reusable components for the web.</p>
+        </article>
+        <app-box class="third" scroll-target="scrollingRegion" effects="parallax-background"></app-box>
+      </section>
+
+      <section id="create">
+        <article>
+          <hr />
+          <h2>Create your own elements</h2>
+          <p>The Polymer library makes it easy to create your own powerful elements. Give your element some markup and properties, and then use it on a site. Polymer provides useful features like templating and data binding to reduce the amount of boilerplate you need to write.</p>
+        </article>
+        <app-box class="fourth" scroll-target="scrollingRegion" effects="parallax-background"></app-box>
+      </section>
+    </div>
+
+
+</body>
+</html>

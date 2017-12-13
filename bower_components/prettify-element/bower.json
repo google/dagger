@@ -1,8 +1,0 @@
-{
-  "name": "prettify-element",
-  "private": true,
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0",
-    "google-code-prettify": "*"
-  }
-}

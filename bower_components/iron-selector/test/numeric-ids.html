@@ -1,0 +1,111 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<html>
+<head>
+
+  <title>iron-selector-numeric-ids</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+
+  <link rel="import" href="../iron-selector.html">
+
+  <style>
+    .iron-selected {
+      background: #ccc;
+    }
+  </style>
+
+</head>
+<body>
+
+  <test-fixture id="scope-polymer2">
+    <template>
+      <div>
+        <dom-bind>
+          <template>
+            <iron-selector attr-for-selected="name">
+              <dom-repeat>
+                <template>
+                  <div name="[[item.id]]">{{item.name}}</div>
+                </template>
+              </dom-repeat>
+            </iron-selector>
+          </template>
+        </dom-bind>
+      </div>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="scope-polymer1">
+    <template>
+      <div>
+        <template is="dom-bind">
+          <iron-selector attr-for-selected="name">
+            <template is="dom-repeat">
+              <div name="[[item.id]]">{{item.name}}</div>
+            </template>
+          </iron-selector>
+        </template>
+      </div>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    suite('select by a numeric property', function() {
+
+      var scope;
+      var selector;
+      var domRepeat;
+
+      setup(function(done) {
+        if (Polymer.Element) {
+          scope = fixture('scope-polymer2');
+          selector = scope.querySelector('iron-selector');
+          domRepeat = scope.querySelector('dom-repeat');
+        } else {
+          scope = fixture('scope-polymer1');
+          selector = scope.querySelector('iron-selector');
+          domRepeat = scope.querySelector('template[is=dom-repeat]');
+        }
+
+        // Wait for the initial iron-items-changed.
+        selector.addEventListener('iron-items-changed', function onIronItemsChanged() {
+          selector.removeEventListener('iron-items-changed', onIronItemsChanged);
+
+          domRepeat.items = [{ id: 0, name:'item0'}, {id: 1, name: 'item1'}, {id: 2, name: 'item2'}];
+          domRepeat.render();
+          selector.forceSynchronousItemUpdate();
+
+          done();
+        });
+      });
+
+      test('select a value of zero', function() {
+        selector.selected = 1;
+        assert.equal(selector.selected, '1');
+
+        // select item with a name value of 0
+        MockInteractions.tap(selector.items[0]);
+        assert.equal(selector.selected, 0);
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

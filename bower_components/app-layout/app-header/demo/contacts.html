@@ -1,0 +1,125 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+  <title>Contacts Demo</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../../paper-fab/paper-fab.html">
+  <link rel="import" href="../../app-toolbar/app-toolbar.html">
+  <link rel="import" href="../../app-scroll-effects/app-scroll-effects.html">
+  <link rel="import" href="../../demo/sample-content.html">
+  <link rel="import" href="../app-header.html">
+
+  <custom-style>
+    <style is="custom-style">
+
+      body {
+        margin: 0;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        background-color: #eee;
+      }
+
+      app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        color: #fff;
+        background-color: #3f51b5;
+        --app-header-background-front-layer: {
+          background-image: url(https://app-layout-assets.appspot.com/assets/PharrellWilliams.jpg);
+        };
+      }
+
+      paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      paper-fab {
+        position: absolute;
+        right: 16px;
+        top: 248px;
+        will-change: transform;
+        transition: 0.1s -webkit-transform;
+        transition: 0.1s transform;
+      }
+
+      paper-fab.shrink-to-hidden {
+        -webkit-transform: scale3d(0, 0, 0);
+        transform: scale3d(0, 0, 0);
+      }
+
+      app-toolbar.middle {
+        height: 120px;
+      }
+
+      app-toolbar.bottom {
+        height: 92px;
+      }
+
+      sample-content {
+        padding-top: 276px;
+      }
+
+      [main-title] {
+        margin-left: 64px;
+        font-size: 32px;
+        font-weight: 300;
+      }
+
+      [condensed-title] {
+        margin-left: 20px;
+        font-weight: 300;
+      }
+
+    </style>
+  </custom-style>
+</head>
+<body unresolved>
+
+  <app-header effects="waterfall resize-title blend-background parallax-background" condenses reveals>
+    <app-toolbar>
+      <paper-icon-button icon="arrow-back"></paper-icon-button>
+      <div condensed-title>Pharrell Williams</div>
+      <paper-icon-button icon="create"></paper-icon-button>
+      <paper-icon-button icon="more-vert"></paper-icon-button>
+    </app-toolbar>
+    <app-toolbar class="middle"></app-toolbar>
+    <app-toolbar class="bottom">
+      <div main-title>Pharrell Williams</div>
+    </app-toolbar>
+  </app-header>
+
+  <paper-fab icon="star"></paper-fab>
+
+  <sample-content size="100"></sample-content>
+
+  <script>
+
+    var fab = document.querySelector('paper-fab');
+    var header = document.querySelector('app-header');
+
+    window.addEventListener('scroll', function() {
+      var progress = header.getScrollState().progress;
+      fab.toggleClass('shrink-to-hidden', progress > 0.5);
+    });
+
+  </script>
+
+</body>
+</html>

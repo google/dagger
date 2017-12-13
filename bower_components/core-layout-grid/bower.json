@@ -1,7 +1,0 @@
-{
-  "name": "core-layout-grid",
-  "private": true,
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0"
-  }
-}

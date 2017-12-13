@@ -1,0 +1,239 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>test for app-drawer-layout</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+  <link rel="import" href="../../../iron-resizable-behavior/iron-resizable-behavior.html">
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <link rel="import" href="../../app-drawer/app-drawer.html">
+  <link rel="import" href="../app-drawer-layout.html">
+
+
+  <custom-style>
+    <style is="custom-style">
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      app-drawer-layout {
+        width: 1000px;
+        --app-drawer-content-container: {
+          background-color: cyan;
+        };
+      }
+    </style>
+  </custom-style>
+
+</head>
+<body>
+
+  <test-fixture id="testDrawerLayout">
+    <template>
+      <app-drawer-layout>
+        <app-drawer slot="drawer">Drawer</app-drawer>
+        <div drawer-toggle>Toggle</div>
+        <p>Content</p>
+        <x-resizeable></x-resizeable>
+      </app-drawer-layout>
+    </template>
+  </test-fixture>
+
+  <script>
+    HTMLImports.whenReady(function() {
+      Polymer({
+        is: 'x-resizeable',
+        behaviors: [
+          Polymer.IronResizableBehavior
+        ]
+      });
+    });
+
+    suite('basic features', function() {
+      var drawerLayout, drawer;
+
+      setup(function() {
+        drawerLayout = fixture('testDrawerLayout');
+        drawer = drawerLayout.querySelector('app-drawer');
+        Polymer.dom.flush();
+      });
+
+      test('default values', function() {
+        assert.isFalse(drawerLayout.forceNarrow);
+        assert.equal(drawerLayout.responsiveWidth, '640px');
+        assert.isFalse(drawerLayout.openedWhenNarrow);
+      });
+
+      test('get drawer', function() {
+        assert.equal(drawerLayout.drawer, drawer);
+      });
+
+      test('forceNarrow', function() {
+        drawerLayout.responsiveWidth = '0px';
+        drawerLayout.forceNarrow = true;
+
+        assert.isTrue(drawerLayout.narrow);
+      });
+
+      test('responsiveWidth', function(done) {
+        var xResizeable = drawerLayout.querySelector('x-resizeable');
+        var notifyResizeSpy = sinon.spy(xResizeable, 'notifyResize');
+        drawerLayout.responsiveWidth = '0px';
+
+        window.setTimeout(function() {
+          assert.isFalse(drawerLayout.narrow);
+          assert.isTrue(drawer.opened);
+          assert.isTrue(notifyResizeSpy.called);
+
+          notifyResizeSpy.reset();
+          drawerLayout.responsiveWidth = '10000px';
+
+          window.setTimeout(function() {
+            assert.isTrue(drawerLayout.narrow);
+            assert.isFalse(drawer.opened);
+            assert.isTrue(notifyResizeSpy.called);
+
+            done();
+          }, 150);
+        }, 150);
+      });
+
+      test('drawer-toggle', function(done) {
+        drawerLayout.responsiveWidth = '10000px';
+       
+        assert.isFalse(drawer.opened);
+
+        Polymer.Base.fire('click', null /* detail */, { node: drawerLayout.querySelector('p') });
+
+        assert.isFalse(drawer.opened);
+
+        Polymer.Base.fire('click', null /* detail */, { node: drawerLayout.querySelector('[drawer-toggle]') });
+
+        assert.isTrue(drawer.opened);
+
+        drawerLayout.responsiveWidth = '0px';
+
+        window.setTimeout(function() {
+          Polymer.Base.fire('click', null /* detail */, { node: drawerLayout.querySelector('[drawer-toggle]') });
+          assert.isTrue(drawer.opened);
+          done();
+        }, 150);
+      });
+
+      test('disable initial drawer transition', function(done) {
+        assert.isTrue(drawer.hasAttribute('no-transition'));
+        Polymer.dom.flush();
+
+        window.setTimeout(function() {
+          assert.isFalse(drawer.hasAttribute('no-transition'));
+          done();
+        }, 150);
+      });
+
+      test('content layout', function(done) {
+        drawerLayout.responsiveWidth = '10000px';
+
+        window.setTimeout(function() {
+          var contentContainer = drawerLayout.$.contentContainer;
+          var computedStyle = window.getComputedStyle(contentContainer);
+          assert.equal(computedStyle.marginLeft, '0px');
+          assert.equal(computedStyle.marginRight, '0px');
+
+          drawerLayout.responsiveWidth = '0px';
+
+          window.setTimeout(function() {
+            computedStyle = window.getComputedStyle(contentContainer);
+            assert.equal(computedStyle.marginLeft, '256px');
+            assert.equal(computedStyle.marginRight, '0px');
+
+            drawer.align = 'right';
+
+            window.setTimeout(function() {
+              computedStyle = window.getComputedStyle(contentContainer);
+              assert.equal(computedStyle.marginLeft, '0px');
+              assert.equal(computedStyle.marginRight, '256px');
+
+              done();
+            }, 100);
+          }, 100);
+        }, 100);
+      });
+
+      test('iron-resize triggers content layout', function() {
+        var resetLayoutSpy = sinon.spy(drawerLayout, 'resetLayout');
+
+        assert.isFalse(resetLayoutSpy.called);
+
+        drawerLayout.notifyResize();
+
+        assert.isTrue(resetLayoutSpy.called);
+
+        resetLayoutSpy.restore();
+      });
+
+      test('openedWhenNarrow', function(done) {
+        drawerLayout.openedWhenNarrow = true;
+        drawerLayout.responsiveWidth = '0px';
+
+        window.setTimeout(function() {
+          assert.isFalse(drawerLayout.narrow);
+          assert.isTrue(drawer.opened);
+
+          drawerLayout.responsiveWidth = '10000px';
+
+          window.setTimeout(function() {
+            assert.isTrue(drawerLayout.narrow);
+            assert.isTrue(drawer.opened);
+
+            done();
+          }, 100);
+        }, 100);
+      });
+
+      test('app-drawer appended later', function(done) {
+        assert.doesNotThrow(function() {
+          drawerLayout = document.body.appendChild(document.createElement('app-drawer-layout'));
+        });
+        Polymer.dom.flush();
+
+        var contentContainer = drawerLayout.$.contentContainer;
+        var computedStyle = window.getComputedStyle(contentContainer);
+        assert.isUndefined(drawerLayout.drawer);
+        assert.equal(computedStyle.marginLeft, '0px');
+        assert.equal(computedStyle.marginRight, '0px');
+
+        drawerLayout.responsiveWidth = '0px';
+        drawer = document.createElement('app-drawer');
+        drawer.setAttribute('slot', 'drawer');
+        Polymer.dom(drawerLayout).appendChild(drawer);
+        Polymer.dom.flush();
+
+        window.setTimeout(function() {
+          computedStyle = window.getComputedStyle(contentContainer);
+          assert.isTrue(drawerLayout.drawer.opened);
+          assert.equal(computedStyle.marginLeft, '256px');
+          assert.equal(computedStyle.marginRight, '0px');
+
+          done();
+        }, 100);
+      });
+    });
+
+  </script>
+
+</body>
+</html>

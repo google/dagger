@@ -1,0 +1,76 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="bower_components/app-layout/demo/sample-content.html">
+
+<dom-module id="x-app">
+
+  <template>
+
+    <style>
+
+      app-header {
+        background-color: #00897B;
+        color: #fff;
+      }
+
+      paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      app-drawer-layout:not([narrow]) [drawer-toggle] {
+        display: none;
+      }
+
+    </style>
+
+    <app-drawer-layout>
+
+      <app-drawer slot="drawer">
+        <app-toolbar>Getting Started</app-toolbar>
+      </app-drawer>
+
+      <app-header-layout>
+
+        <app-header slot="header" reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+            <div main-title>Title</div>
+          </app-toolbar>
+        </app-header>
+
+        <sample-content size="100"></sample-content>
+
+      </app-header-layout>
+
+    </app-drawer-layout>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'x-app'
+
+    });
+
+  </script>
+
+</dom-module>

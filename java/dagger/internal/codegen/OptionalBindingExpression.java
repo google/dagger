@@ -42,14 +42,13 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
       // When compiling with -source 7, javac's type inference isn't strong enough to detect
       // Futures.immediateFuture(Optional.absent()) for keys that aren't Object
-      if (requestKind.equals(DependencyRequest.Kind.FUTURE)
+      if (requestKind().equals(DependencyRequest.Kind.FUTURE)
           && isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
         return Expression.create(
             binding.key().type(),

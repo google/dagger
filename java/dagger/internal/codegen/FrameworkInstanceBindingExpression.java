@@ -37,12 +37,13 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
 
   FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
+      DependencyRequest.Kind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
       MemberSelectSupplier frameworkFieldSupplier,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings);
+    super(resolvedBindings, requestKind);
     this.componentBindingExpressions = componentBindingExpressions;
     this.frameworkType = frameworkType;
     this.frameworkFieldSupplier = frameworkFieldSupplier;
@@ -57,9 +58,8 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    * FieldSpec) added} to the component the first time this method is invoked.
    */
   @Override
-  Expression getDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    if (requestKind.equals(frameworkRequestKind())) {
+  Expression getDependencyExpression(ClassName requestingClass) {
+    if (requestKind().equals(frameworkRequestKind())) {
       MemberSelect memberSelect = frameworkFieldSupplier.memberSelect();
       TypeMirror expressionType =
           isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
@@ -74,9 +74,9 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     // expression for a DependencyRequest.Kind.PROVIDER (the framework type):
     //    lazyExpression = DoubleCheck.lazy(providerExpression);
     return frameworkType.to(
-        requestKind,
+        requestKind(),
         componentBindingExpressions.getDependencyExpression(
-            resolvedBindings().bindingKey(), frameworkRequestKind(), requestingClass),
+            bindingKey(), frameworkRequestKind(), requestingClass),
         types);
   }
 
@@ -111,12 +111,11 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    * the initialization {@code this.fooProvider = Foo_Factory.create(Bar_Factory.create());}, {@code
    * Bar_Factory} is considered to be inline.
    *
-   * <p>This is used in {@link #getDependencyExpression(DependencyRequest.Kind, ClassName)} when
-   * determining the type of a factory. Normally if the {@link #instanceType()} is not accessible
-   * from the component, the type of the expression will be a raw {@link javax.inject.Provider}.
-   * However, if the factory is created inline, even if contributed type is not accessible, javac
-   * will still be able to determine the type that is returned from the {@code Foo_Factory.create()}
-   * method.
+   * <p>This is used in {@link #getDependencyExpression(ClassName)} when determining the type of a
+   * factory. Normally if the {@link #instanceType()} is not accessible from the component, the type
+   * of the expression will be a raw {@link javax.inject.Provider}. However, if the factory is
+   * created inline, even if contributed type is not accessible, javac will still be able to
+   * determine the type that is returned from the {@code Foo_Factory.create()} method.
    */
   private static boolean isInlinedFactoryCreation(MemberSelect memberSelect) {
     return memberSelect.staticMember();

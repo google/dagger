@@ -26,13 +26,13 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -48,9 +48,8 @@ final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final DaggerTypes types;
   private final BindingExpressionFactory bindingExpressionFactory;
-  // TODO(user): Switch to Table<BindingKey, DependencyRequest.Kind, BindingExpression>, and give
-  // each BindingKey, DependencyRequest.Kind pair its own instance of BindingExpression.
-  private final Map<BindingKey, BindingExpression> bindingExpressionsMap = new HashMap<>();
+  private final Table<BindingKey, DependencyRequest.Kind, BindingExpression> expressions =
+      HashBasedTable.create();
 
   ComponentBindingExpressions(
       BindingGraph graph,
@@ -132,7 +131,7 @@ final class ComponentBindingExpressions {
    */
   Expression getDependencyExpression(
       BindingKey bindingKey, DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    return getBindingExpression(bindingKey).getDependencyExpression(requestKind, requestingClass);
+    return getBindingExpression(bindingKey, requestKind).getDependencyExpression(requestingClass);
   }
 
   /**
@@ -196,23 +195,28 @@ final class ComponentBindingExpressions {
    */
   CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
-    return getBindingExpression(componentMethod.dependencyRequest().get().bindingKey())
+    return getBindingExpression(
+            componentMethod.dependencyRequest().get().bindingKey(),
+            componentMethod.dependencyRequest().get().kind())
         .getComponentMethodImplementation(componentMethod, requestingClass);
   }
 
-  private BindingExpression getBindingExpression(BindingKey bindingKey) {
+  private BindingExpression getBindingExpression(
+      BindingKey bindingKey, DependencyRequest.Kind requestKind) {
     if (graph.resolvedBindings().containsKey(bindingKey)
         && !graph.resolvedBindings().get(bindingKey).ownedBindings().isEmpty()) {
-      return bindingExpressionsMap.computeIfAbsent(bindingKey, this::createBindingExpression);
+      if (!expressions.contains(bindingKey, requestKind)) {
+        expressions.put(
+            bindingKey, requestKind, bindingExpressionFactory.create(bindingKey, requestKind));
+      }
+      return expressions.get(bindingKey, requestKind);
     }
     return parent
-        .map(p -> p.getBindingExpression(bindingKey))
+        .map(p -> p.getBindingExpression(bindingKey, requestKind))
         .orElseThrow(
-            () -> new IllegalStateException("no binding expression found for " + bindingKey));
-  }
-
-  private BindingExpression createBindingExpression(BindingKey bindingKey) {
-    return bindingExpressionFactory.create(graph.resolvedBindings().get(bindingKey));
+            () ->
+                new IllegalStateException(
+                    String.format("no expression found for %s-%s", bindingKey, requestKind)));
   }
 
   /** Factory for building a {@link BindingExpression}. */
@@ -261,16 +265,17 @@ final class ComponentBindingExpressions {
     }
 
     /** Creates a binding expression. */
-    BindingExpression create(ResolvedBindings resolvedBindings) {
+    BindingExpression create(BindingKey bindingKey, DependencyRequest.Kind requestKind) {
+      ResolvedBindings resolvedBindings = graph.resolvedBindings().get(bindingKey);
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
-          return membersInjectionBindingExpression(resolvedBindings);
+          return membersInjectionBindingExpression(resolvedBindings, requestKind);
 
         case PROVISION:
-          return provisionBindingExpression(resolvedBindings);
+          return provisionBindingExpression(resolvedBindings, requestKind);
 
         case PRODUCTION:
-          return frameworkInstanceBindingExpression(resolvedBindings);
+          return frameworkInstanceBindingExpression(resolvedBindings, requestKind);
 
         default:
           throw new AssertionError(resolvedBindings);
@@ -279,9 +284,9 @@ final class ComponentBindingExpressions {
 
     /** Returns a binding expression for a members injection binding. */
     private MembersInjectionBindingExpression membersInjectionBindingExpression(
-        ResolvedBindings resolvedBindings) {
+        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
       return new MembersInjectionBindingExpression(
-          frameworkInstanceBindingExpression(resolvedBindings),
+          frameworkInstanceBindingExpression(resolvedBindings, requestKind),
           generatedComponentModel,
           membersInjectionMethods);
     }
@@ -292,10 +297,11 @@ final class ComponentBindingExpressions {
      * dagger.MembersInjector} for members injection bindings.
      */
     private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
-        ResolvedBindings resolvedBindings) {
+        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
       Optional<MemberSelect> staticMethod = staticMemberSelect(resolvedBindings);
       return new FrameworkInstanceBindingExpression(
           resolvedBindings,
+          requestKind,
           componentBindingExpressions,
           resolvedBindings.bindingType().frameworkType(),
           staticMethod.isPresent()
@@ -335,21 +341,18 @@ final class ComponentBindingExpressions {
     }
 
     /** Returns a binding expression for a provision binding. */
-    private BindingExpression provisionBindingExpression(ResolvedBindings resolvedBindings) {
-      // TODO(user): this can be removed once we pass DependencyRequest.Kind to the factory.
-      // With DependencyRequest.Kind, we can know if it's a ProducerFromProvider or not, so we won't
-      // have to pass in both types of binding expressions.
-      BindingExpression bindingExpression =
-          new ProviderOrProducerBindingExpression(
-              frameworkInstanceBindingExpression(resolvedBindings),
-              producerFromProviderInstanceBindingExpression(resolvedBindings));
+    private BindingExpression provisionBindingExpression(
+        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+      FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
+          requestKind.equals(DependencyRequest.Kind.PRODUCER)
+              ? producerFromProviderInstanceBindingExpression(resolvedBindings, requestKind)
+              : frameworkInstanceBindingExpression(resolvedBindings, requestKind);
 
       BindingExpression inlineBindingExpression =
-          inlineProvisionBindingExpression(bindingExpression);
+          inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
 
       if (usePrivateMethod(resolvedBindings.contributionBinding())) {
         return new PrivateMethodBindingExpression(
-            resolvedBindings,
             generatedComponentModel,
             componentBindingExpressions,
             inlineBindingExpression,
@@ -367,10 +370,11 @@ final class ComponentBindingExpressions {
      * provision binding.
      */
     private FrameworkInstanceBindingExpression producerFromProviderInstanceBindingExpression(
-        ResolvedBindings resolvedBindings) {
+        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
       checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
       return new FrameworkInstanceBindingExpression(
           resolvedBindings,
+          requestKind,
           componentBindingExpressions,
           FrameworkType.PRODUCER,
           new ProducerFromProviderFieldInitializer(
@@ -408,7 +412,7 @@ final class ComponentBindingExpressions {
           return new SubcomponentBuilderBindingExpression(
               bindingExpression,
               provisionBinding,
-              subcomponentNames.get(bindingExpression.resolvedBindings().bindingKey()),
+              subcomponentNames.get(bindingExpression.bindingKey()),
               types);
 
         case SYNTHETIC_MULTIBOUND_SET:

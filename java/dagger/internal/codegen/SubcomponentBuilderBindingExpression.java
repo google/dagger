@@ -35,8 +35,7 @@ final class SubcomponentBuilderBindingExpression extends SimpleInvocationBinding
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         binding.key().type(), CodeBlock.of("new $LBuilder()", subcomponentBuilderName));
   }

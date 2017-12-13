@@ -30,19 +30,18 @@ final class DelegateBindingExpression extends BindingExpression {
   private final ContributionBinding binding;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
-  private final Elements elements;
   private final BindsTypeChecker bindsTypeChecker;
 
   private DelegateBindingExpression(
       ResolvedBindings resolvedBindings,
+      DependencyRequest.Kind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings);
+    super(resolvedBindings, requestKind);
     this.binding = checkNotNull(resolvedBindings.contributionBinding());
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
-    this.elements = checkNotNull(elements);
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
   }
 
@@ -62,28 +61,28 @@ final class DelegateBindingExpression extends BindingExpression {
     ScopeKind bindsScope = ScopeKind.get(binding, graph, elements);
     ScopeKind delegateScope = ScopeKind.get(delegateBinding, graph, elements);
     if (bindsScope.isSimilarOrWeakerScopeThan(delegateScope)) {
+      DependencyRequest.Kind requestKind = bindingExpression.requestKind();
       return new DelegateBindingExpression(
-          resolvedBindings, componentBindingExpressions, types, elements);
+          resolvedBindings, requestKind, componentBindingExpressions, types, elements);
     }
     return bindingExpression;
   }
 
   @Override
-  Expression getDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     Expression delegateExpression =
         componentBindingExpressions.getDependencyExpression(
-            getOnlyElement(binding.dependencies()).bindingKey(), requestKind, requestingClass);
+            getOnlyElement(binding.dependencies()).bindingKey(), requestKind(), requestingClass);
 
     TypeMirror contributedType = binding.contributedType();
-    switch (requestKind) {
+    switch (requestKind()) {
       case INSTANCE:
         return instanceRequiresCast(delegateExpression, requestingClass)
             ? delegateExpression.castTo(contributedType)
             : delegateExpression;
       default:
         return castToRawTypeIfNecessary(
-            delegateExpression, requestKind.type(contributedType, types));
+            delegateExpression, requestKind().type(contributedType, types));
     }
   }
 

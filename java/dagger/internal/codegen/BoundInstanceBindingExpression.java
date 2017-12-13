@@ -38,8 +38,7 @@ final class BoundInstanceBindingExpression extends SimpleInvocationBindingExpres
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         componentRequirement.type(),
         componentRequirementFields.getExpression(componentRequirement, requestingClass));

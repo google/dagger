@@ -39,8 +39,9 @@ final class MembersInjectionBindingExpression extends BindingExpression {
       FrameworkInstanceBindingExpression membersInjectorExpression,
       GeneratedComponentModel generatedComponentModel,
       MembersInjectionMethods membersInjectionMethods) {
-    super(membersInjectorExpression.resolvedBindings());
-    checkArgument(resolvedBindings().bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
+    super(membersInjectorExpression.resolvedBindings(), membersInjectorExpression.requestKind());
+    checkArgument(bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
+    checkArgument(requestKind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR));
     this.membersInjectorExpression = membersInjectorExpression;
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings().membersInjectionBinding().get();
@@ -48,19 +49,13 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   }
 
   @Override
-  Expression getDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    checkArgument(requestKind.equals(DependencyRequest.Kind.MEMBERS_INJECTOR));
-    return membersInjectorExpression.getDependencyExpression(requestKind, requestingClass);
+  Expression getDependencyExpression(ClassName requestingClass) {
+    return membersInjectorExpression.getDependencyExpression(requestingClass);
   }
 
   @Override
-  CodeBlock getComponentMethodImplementation(
+  protected CodeBlock doGetComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
-    DependencyRequest request = componentMethod.dependencyRequest().get();
-    checkArgument(request.bindingKey().equals(resolvedBindings().bindingKey()));
-    checkArgument(request.kind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR));
-
     ExecutableElement methodElement = componentMethod.methodElement();
     List<? extends VariableElement> parameters = methodElement.getParameters();
     if (parameters.isEmpty() /* i.e. it's a request for a MembersInjector<T> */) {

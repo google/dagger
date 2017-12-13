@@ -30,7 +30,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final DaggerTypes types;
 
   SimpleInvocationBindingExpression(BindingExpression delegate, DaggerTypes types) {
-    super(delegate.resolvedBindings());
+    super(delegate.resolvedBindings(), delegate.requestKind());
     this.delegate = delegate;
     this.types = types;
   }
@@ -40,8 +40,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
    *
    * @param requestingClass the class that will contain the expression
    */
-  abstract Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass);
+  abstract Expression getInstanceDependencyExpression(ClassName requestingClass);
 
   /**
    * Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
@@ -55,13 +54,12 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
   }
 
   @Override
-  final Expression getDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
-    switch (requestKind) {
+  final Expression getDependencyExpression(ClassName requestingClass) {
+    switch (requestKind()) {
       case INSTANCE:
-        return getInstanceDependencyExpression(requestKind, requestingClass);
+        return getInstanceDependencyExpression(requestingClass);
       case FUTURE:
-        Expression expression = getInstanceDependencyExpression(requestKind, requestingClass);
+        Expression expression = getInstanceDependencyExpression(requestingClass);
         return Expression.create(
             types.wrapType(expression.type(), ListenableFuture.class),
             CodeBlock.builder()
@@ -70,7 +68,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
                 .add("immediateFuture($L)", expression.codeBlock())
                 .build());
       default:
-        return delegate.getDependencyExpression(requestKind, requestingClass);
+        return delegate.getDependencyExpression(requestingClass);
     }
   }
 }

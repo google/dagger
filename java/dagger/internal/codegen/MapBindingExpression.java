@@ -63,8 +63,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     return Expression.create(binding.key().type(), mapExpression(requestingClass));
   }
 

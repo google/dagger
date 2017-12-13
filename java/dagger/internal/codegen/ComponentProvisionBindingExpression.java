@@ -47,8 +47,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     CodeBlock invocation =
         CodeBlock.of(
             "$L.$L()",

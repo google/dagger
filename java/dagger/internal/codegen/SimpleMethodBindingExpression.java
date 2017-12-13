@@ -71,8 +71,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   @Override
-  Expression getInstanceDependencyExpression(
-      DependencyRequest.Kind requestKind, ClassName requestingClass) {
+  Expression getInstanceDependencyExpression(ClassName requestingClass) {
     return requiresInjectionMethod(provisionBinding, compilerOptions, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);

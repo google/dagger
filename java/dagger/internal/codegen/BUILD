@@ -220,7 +220,6 @@ java_library(
         "ProducerFactoryGenerator.java",
         "ProducerFromProviderFieldInitializer.java",
         "ProductionExecutorModuleGenerator.java",
-        "ProviderOrProducerBindingExpression.java",
         "ProviderOrProducerFieldInitializer.java",
         "ReferenceReleasingManagerFields.java",
         "SetBindingExpression.java",

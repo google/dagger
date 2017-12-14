@@ -25,6 +25,7 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
+import com.google.errorprone.annotations.DoNotMock;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -36,6 +37,7 @@ import javax.lang.model.type.TypeMirror;
  * is the lookup key for a binding.
  */
 @AutoValue
+@DoNotMock("Use Key.builder() to create an instance.")
 public abstract class Key {
   /**
    * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix

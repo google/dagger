@@ -33,8 +33,10 @@ java_library(
     srcs = [":model-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
+        "//java/dagger:core",
         "//third_party:auto_common",
         "//third_party:auto_value",
+        "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:jsr330_inject",
     ],

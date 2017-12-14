@@ -2351,6 +2351,66 @@ public class ComponentProcessorTest {
   }
 
   @Test
+  public void bindsToDuplicateBinding_bindsKeyIsNotDuplicated() {
+    JavaFileObject firstModule =
+        JavaFileObjects.forSourceLines(
+            "test.FirstModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class FirstModule {",
+            "  @Provides static String first() { return \"first\"; }",
+            "}");
+    JavaFileObject secondModule =
+        JavaFileObjects.forSourceLines(
+            "test.SecondModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class SecondModule {",
+            "  @Provides static String second() { return \"second\"; }",
+            "}");
+    JavaFileObject bindsModule =
+        JavaFileObjects.forSourceLines(
+            "test.BindsModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "abstract class BindsModule {",
+            "  @Binds abstract Object bindToDuplicateBinding(String duplicate);",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = {FirstModule.class, SecondModule.class, BindsModule.class})",
+            "interface TestComponent {",
+            "  Object notDuplicated();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(firstModule, secondModule, bindsModule, component);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining("java.lang.String is bound multiple times")
+        .inFile(component)
+        .onLineContaining("Object notDuplicated();");
+  }
+
+  @Test
   public void nullIncorrectlyReturnedFromNonNullableInlinedProvider() {
     Compilation compilation =
         daggerCompiler()

@@ -729,8 +729,6 @@ abstract class BindingGraph {
         }
         // It doesn't matter which of these is selected, since they will later on produce a
         // duplicate binding error.
-        // TODO(ronshapiro): Once compile-testing has a CompilationResult, add a test which asserts
-        // that a duplicate binding for the RHS does not result in a duplicate binding for the LHS.
         ContributionBinding explicitDelegate =
             resolvedDelegate.contributionBindings().iterator().next();
         switch (explicitDelegate.bindingType()) {

@@ -65,7 +65,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   }
 
   /** Returns a {@link Provider} that caches the value from the given delegate provider. */
-  public static <T> Provider<T> provider(Provider<T> delegate) {
+  public static <P extends Provider<T>, T> Provider<T> provider(P delegate) {
     checkNotNull(delegate);
     if (delegate instanceof DoubleCheck) {
       /* This should be a rare case, but if we have a scoped @Binds that delegates to a scoped
@@ -76,7 +76,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   }
 
   /** Returns a {@link Lazy} that caches the value from the given provider. */
-  public static <T> Lazy<T> lazy(Provider<T> provider) {
+  public static <P extends Provider<T>, T> Lazy<T> lazy(P provider) {
     if (provider instanceof Lazy) {
       @SuppressWarnings("unchecked")
       final Lazy<T> lazy = (Lazy<T>) provider;

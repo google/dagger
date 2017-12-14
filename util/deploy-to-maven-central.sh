@@ -44,7 +44,7 @@ bazel build //:user-docs.jar
 git clone --quiet --branch gh-pages \
     https://github.com/google/dagger gh-pages > /dev/null
 cd gh-pages
-unzip ../bazel-genfiles/user-docs.jar -d api/$version_name
+unzip ../bazel-bin/user-docs.jar -d api/$version_name
 rm -rf api/$version_name/META-INF/
 git add api/$version_name
 sed -i -r \

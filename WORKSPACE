@@ -187,22 +187,22 @@ maven_jar(
 
 maven_jar(
     name = "com_google_protobuf_protobuf_java",
-    artifact = "com.google.protobuf:protobuf-java:3.2.0",
-    sha1 = "62ccf171a106ff6791507f2d5364c275f9a3131d",
+    artifact = "com.google.protobuf:protobuf-java:3.5.0",
+    sha1 = "200fb936907fbab5e521d148026f6033d4aa539e",
 )
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "ff771a662fb6bd4d3cc209bcccedef3e93980a49f71df1e987f6afa3bcdcba3a",
-    strip_prefix = "protobuf-b4b0e304be5a68de3d0ee1af9b286f958750f5e4",
-    urls = ["https://github.com/google/protobuf/archive/b4b0e304be5a68de3d0ee1af9b286f958750f5e4.zip"],
+    sha256 = "cef7f1b5a7c5fba672bec2a319246e8feba471f04dcebfe362d55930ee7c1c30",
+    strip_prefix = "protobuf-3.5.0",
+    urls = ["https://github.com/google/protobuf/archive/v3.5.0.zip"],
 )
 
 http_archive(
     name = "com_google_protobuf_java",
-    sha256 = "ff771a662fb6bd4d3cc209bcccedef3e93980a49f71df1e987f6afa3bcdcba3a",
-    strip_prefix = "protobuf-b4b0e304be5a68de3d0ee1af9b286f958750f5e4",
-    urls = ["https://github.com/google/protobuf/archive/b4b0e304be5a68de3d0ee1af9b286f958750f5e4.zip"],
+    sha256 = "cef7f1b5a7c5fba672bec2a319246e8feba471f04dcebfe362d55930ee7c1c30",
+    strip_prefix = "protobuf-3.5.0",
+    urls = ["https://github.com/google/protobuf/archive/v3.5.0.zip"],
 )
 
 load("//tools:jarjar.bzl", "jarjar_deps")

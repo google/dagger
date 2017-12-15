@@ -24,7 +24,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.MembersInjector;
-import dagger.internal.DelegateFactory;
 import dagger.internal.DoubleCheck;
 import dagger.internal.Factory;
 import dagger.internal.InstanceFactory;
@@ -48,8 +47,6 @@ import dagger.producers.internal.SetOfProducedProducer;
 import dagger.producers.internal.SetProducer;
 import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
-import dagger.releasablereferences.ReleasableReferenceManager;
-import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -63,12 +60,10 @@ final class TypeNames {
 
   static final ClassName ABSTRACT_PRODUCER = ClassName.get(AbstractProducer.class);
   static final ClassName ASYNC_FUNCTION = ClassName.get(AsyncFunction.class);
-  static final ClassName DELEGATE_FACTORY = ClassName.get(DelegateFactory.class);
   static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
   static final ClassName EXECUTOR = ClassName.get(Executor.class);
   static final ClassName FACTORY = ClassName.get(Factory.class);
   static final ClassName FUTURES = ClassName.get(Futures.class);
-  static final ClassName ILLEGAL_STATE_EXCEPTION = ClassName.get(IllegalStateException.class);
   static final ClassName INSTANCE_FACTORY = ClassName.get(InstanceFactory.class);
   static final ClassName LAZY = ClassName.get(Lazy.class);
   static final ClassName LIST = ClassName.get(List.class);
@@ -94,21 +89,13 @@ final class TypeNames {
       ClassName.get(ReferenceReleasingProvider.class);
   static final ClassName REFERENCE_RELEASING_PROVIDER_MANAGER =
       ClassName.get(ReferenceReleasingProviderManager.class);
-  static final ClassName RELEASABLE_REFERENCE_MANAGER =
-      ClassName.get(ReleasableReferenceManager.class);
   static final ClassName SET = ClassName.get(Set.class);
   static final ClassName SET_FACTORY = ClassName.get(SetFactory.class);
   static final ClassName SET_OF_PRODUCED_PRODUCER = ClassName.get(SetOfProducedProducer.class);
   static final ClassName SET_PRODUCER = ClassName.get(SetProducer.class);
   static final ClassName SINGLE_CHECK = ClassName.get(SingleCheck.class);
-  static final ClassName STRING = ClassName.get(String.class);
-  static final ClassName TYPED_RELEASABLE_REFERENCE_MANAGER =
-      ClassName.get(TypedReleasableReferenceManager.class);
   static final ClassName TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR =
       ClassName.get(TypedReleasableReferenceManagerDecorator.class);
-
-  static final ClassName UNSUPPORTED_OPERATION_EXCEPTION =
-      ClassName.get(UnsupportedOperationException.class);
 
   /**
    * {@link TypeName#VOID} is lowercase-v {@code void} whereas this represents the class, {@link

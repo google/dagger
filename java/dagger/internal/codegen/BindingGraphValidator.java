@@ -97,6 +97,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
@@ -1127,7 +1128,7 @@ final class BindingGraphValidator {
         return providers.build();
       }
 
-      private boolean breaksCycle(TypeMirror requestedType, DependencyRequest.Kind requestKind) {
+      private boolean breaksCycle(TypeMirror requestedType, RequestKind requestKind) {
         switch (requestKind) {
           case PROVIDER:
           case LAZY:

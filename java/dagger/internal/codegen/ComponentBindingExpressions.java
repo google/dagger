@@ -32,6 +32,7 @@ import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.RequestKind;
 import java.util.EnumSet;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
@@ -48,7 +49,7 @@ final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final DaggerTypes types;
   private final BindingExpressionFactory bindingExpressionFactory;
-  private final Table<BindingKey, DependencyRequest.Kind, BindingExpression> expressions =
+  private final Table<BindingKey, RequestKind, BindingExpression> expressions =
       HashBasedTable.create();
 
   ComponentBindingExpressions(
@@ -130,7 +131,7 @@ final class ComponentBindingExpressions {
    *     request
    */
   Expression getDependencyExpression(
-      BindingKey bindingKey, DependencyRequest.Kind requestKind, ClassName requestingClass) {
+      BindingKey bindingKey, RequestKind requestKind, ClassName requestingClass) {
     return getBindingExpression(bindingKey, requestKind).getDependencyExpression(requestingClass);
   }
 
@@ -202,7 +203,7 @@ final class ComponentBindingExpressions {
   }
 
   private BindingExpression getBindingExpression(
-      BindingKey bindingKey, DependencyRequest.Kind requestKind) {
+      BindingKey bindingKey, RequestKind requestKind) {
     if (graph.resolvedBindings().containsKey(bindingKey)
         && !graph.resolvedBindings().get(bindingKey).ownedBindings().isEmpty()) {
       if (!expressions.contains(bindingKey, requestKind)) {
@@ -265,7 +266,7 @@ final class ComponentBindingExpressions {
     }
 
     /** Creates a binding expression. */
-    BindingExpression create(BindingKey bindingKey, DependencyRequest.Kind requestKind) {
+    BindingExpression create(BindingKey bindingKey, RequestKind requestKind) {
       ResolvedBindings resolvedBindings = graph.resolvedBindings().get(bindingKey);
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
@@ -284,7 +285,7 @@ final class ComponentBindingExpressions {
 
     /** Returns a binding expression for a members injection binding. */
     private MembersInjectionBindingExpression membersInjectionBindingExpression(
-        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+        ResolvedBindings resolvedBindings, RequestKind requestKind) {
       return new MembersInjectionBindingExpression(
           frameworkInstanceBindingExpression(resolvedBindings, requestKind),
           generatedComponentModel,
@@ -297,7 +298,7 @@ final class ComponentBindingExpressions {
      * dagger.MembersInjector} for members injection bindings.
      */
     private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
-        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+        ResolvedBindings resolvedBindings, RequestKind requestKind) {
       Optional<MemberSelect> staticMethod = staticMemberSelect(resolvedBindings);
       return new FrameworkInstanceBindingExpression(
           resolvedBindings,
@@ -342,9 +343,9 @@ final class ComponentBindingExpressions {
 
     /** Returns a binding expression for a provision binding. */
     private BindingExpression provisionBindingExpression(
-        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+        ResolvedBindings resolvedBindings, RequestKind requestKind) {
       FrameworkInstanceBindingExpression frameworkInstanceBindingExpression =
-          requestKind.equals(DependencyRequest.Kind.PRODUCER)
+          requestKind.equals(RequestKind.PRODUCER)
               ? producerFromProviderInstanceBindingExpression(resolvedBindings, requestKind)
               : frameworkInstanceBindingExpression(resolvedBindings, requestKind);
 
@@ -370,7 +371,7 @@ final class ComponentBindingExpressions {
      * provision binding.
      */
     private FrameworkInstanceBindingExpression producerFromProviderInstanceBindingExpression(
-        ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+        ResolvedBindings resolvedBindings, RequestKind requestKind) {
       checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
       return new FrameworkInstanceBindingExpression(
           resolvedBindings,

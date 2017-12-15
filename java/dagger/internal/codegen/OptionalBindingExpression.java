@@ -22,6 +22,7 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
+import dagger.model.RequestKind;
 import javax.lang.model.util.Types;
 
 /** A binding expression for optional bindings. */
@@ -48,7 +49,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
     if (binding.dependencies().isEmpty()) {
       // When compiling with -source 7, javac's type inference isn't strong enough to detect
       // Futures.immediateFuture(Optional.absent()) for keys that aren't Object
-      if (requestKind().equals(DependencyRequest.Kind.FUTURE)
+      if (requestKind().equals(RequestKind.FUTURE)
           && isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
         return Expression.create(
             binding.key().type(),

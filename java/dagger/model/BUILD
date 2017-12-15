@@ -34,6 +34,7 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",
+        "//java/dagger/producers",
         "//third_party:auto_common",
         "//third_party:auto_value",
         "//third_party:error_prone_annotations",

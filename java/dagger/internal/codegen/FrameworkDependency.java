@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
+import dagger.model.RequestKind;
 import javax.inject.Provider;
 
 /**
@@ -52,16 +53,16 @@ abstract class FrameworkDependency {
   abstract BindingType bindingType();
 
   /** The dependency request kind that is equivalent to requesting the framework dependency. */
-  DependencyRequest.Kind dependencyRequestKind() {
+  RequestKind dependencyRequestKind() {
     switch (bindingType()) {
       case PROVISION:
-        return DependencyRequest.Kind.PROVIDER;
+        return RequestKind.PROVIDER;
 
       case PRODUCTION:
-        return DependencyRequest.Kind.PRODUCER;
+        return RequestKind.PRODUCER;
 
       case MEMBERS_INJECTION:
-        return DependencyRequest.Kind.MEMBERS_INJECTOR;
+        return RequestKind.MEMBERS_INJECTOR;
 
       default:
         throw new AssertionError(bindingType());

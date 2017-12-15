@@ -25,12 +25,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.Optionals.firstPresent;
-import static dagger.internal.codegen.TypeNames.lazyOf;
-import static dagger.internal.codegen.TypeNames.listenableFutureOf;
-import static dagger.internal.codegen.TypeNames.membersInjectorOf;
-import static dagger.internal.codegen.TypeNames.producedOf;
-import static dagger.internal.codegen.TypeNames.producerOf;
-import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.internal.codegen.RequestKinds.frameworkClass;
+import static dagger.model.RequestKind.FUTURE;
+import static dagger.model.RequestKind.INSTANCE;
+import static dagger.model.RequestKind.LAZY;
+import static dagger.model.RequestKind.MEMBERS_INJECTOR;
+import static dagger.model.RequestKind.PRODUCER;
+import static dagger.model.RequestKind.PROVIDER;
+import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -39,13 +41,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Provides;
 import dagger.model.Key;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
+import dagger.model.RequestKind;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -71,117 +71,7 @@ import javax.lang.model.util.SimpleTypeVisitor7;
 // TODO(gak): Set bindings and the permutations thereof need to be addressed
 @AutoValue
 abstract class DependencyRequest {
-
-  enum Kind {
-    /** A default request for an instance.  E.g.: {@code Blah} */
-    INSTANCE,
-
-    /** A request for a {@link Provider}.  E.g.: {@code Provider<Blah>} */
-    PROVIDER(Provider.class),
-
-    /** A request for a {@link Lazy}.  E.g.: {@code Lazy<Blah>} */
-    LAZY(Lazy.class),
-
-    /** A request for a {@link Provider} of a {@link Lazy}. E.g.: {@code Provider<Lazy<Blah>>} */
-    PROVIDER_OF_LAZY,
-
-    /** A request for a {@link MembersInjector}.  E.g.: {@code MembersInjector<Blah>} */
-    MEMBERS_INJECTOR(MembersInjector.class),
-
-    /** A request for a {@link Producer}.  E.g.: {@code Producer<Blah>} */
-    PRODUCER(Producer.class),
-
-    /** A request for a {@link Produced}.  E.g.: {@code Produced<Blah>} */
-    PRODUCED(Produced.class),
-
-    /**
-     * A request for a {@link ListenableFuture}.  E.g.: {@code ListenableFuture<Blah>}.
-     * These can only be requested by component interfaces.
-     */
-    FUTURE,
-    ;
-
-    final Optional<Class<?>> frameworkClass;
-
-    Kind(Class<?> frameworkClass) {
-      this.frameworkClass = Optional.<Class<?>>of(frameworkClass);
-    }
-
-    Kind() {
-      this.frameworkClass = Optional.empty();
-    }
-
-    /**
-     * If {@code type}'s raw type is {@link #frameworkClass}, returns a {@link KindAndType} with
-     * this kind that represents the dependency request.
-     */
-    Optional<KindAndType> from(TypeMirror type) {
-      if (frameworkClass.isPresent() && isType(type) && isTypeOf(frameworkClass.get(), type)) {
-        List<? extends TypeMirror> typeArguments = asDeclared(type).getTypeArguments();
-        if (typeArguments.isEmpty()) {
-          return Optional.empty();
-        }
-        return Optional.of(this.ofType(getOnlyElement(typeArguments)));
-      }
-      return Optional.empty();
-    }
-
-    /** Returns a {@link KindAndType} with this kind and {@code type} type. */
-    KindAndType ofType(TypeMirror type) {
-      return new AutoValue_DependencyRequest_KindAndType(this, type);
-    }
-
-    /** Returns the type of a request of this kind for a key with a given type. */
-    TypeName typeName(TypeName keyType) {
-      switch (this) {
-        case INSTANCE:
-          return keyType;
-
-        case PROVIDER:
-          return providerOf(keyType);
-
-        case LAZY:
-          return lazyOf(keyType);
-
-        case PROVIDER_OF_LAZY:
-          return providerOf(lazyOf(keyType));
-
-        case PRODUCER:
-          return producerOf(keyType);
-
-        case PRODUCED:
-          return producedOf(keyType);
-
-        case FUTURE:
-          return listenableFutureOf(keyType);
-
-        case MEMBERS_INJECTOR:
-          return membersInjectorOf(keyType);
-
-        default:
-          throw new AssertionError(this);
-      }
-    }
-
-    /** Returns the type of a request of this kind for the given {@code type}. */
-    TypeMirror type(TypeMirror type, DaggerTypes types) {
-      switch (this) {
-        case INSTANCE:
-          return type;
-
-        case PROVIDER_OF_LAZY:
-          return types.wrapType(LAZY.type(type, types), Provider.class);
-
-        case FUTURE:
-          return types.wrapType(type, ListenableFuture.class);
-
-        default:
-          return types.wrapType(type, frameworkClass.get());
-      }
-    }
-  }
-
-  abstract Kind kind();
+  abstract RequestKind kind();
   abstract Key key();
 
   BindingKey bindingKey() {
@@ -230,8 +120,8 @@ abstract class DependencyRequest {
 
   /**
    * Extracts the dependency request type and kind from the type of a dependency request element.
-   * For example, if a user requests {@code Provider<Foo>}, this will return ({@link Kind#PROVIDER},
-   * {@code Foo}).
+   * For example, if a user requests {@code Provider<Foo>}, this will return ({@link
+   * RequestKind#PROVIDER}, {@code Foo}).
    *
    * @throws TypeNotPresentException if {@code type}'s kind is {@link TypeKind#ERROR}, which may
    *     mean that the type will be generated in a later round of processing
@@ -256,21 +146,32 @@ abstract class DependencyRequest {
 
           @Override
           protected KindAndType defaultAction(TypeMirror otherType, Void p) {
-            return Kind.INSTANCE.ofType(otherType);
+            return new KindAndType(INSTANCE, otherType);
           }
         },
         null);
   }
 
-  @AutoValue
-  abstract static class KindAndType {
-    abstract Kind kind();
+  static final class KindAndType {
+    private final RequestKind kind;
+    private final TypeMirror type;
 
-    abstract TypeMirror type();
+    KindAndType(RequestKind kind, TypeMirror type) {
+      this.kind = checkNotNull(kind);
+      this.type = checkNotNull(type);
+    }
+
+    RequestKind kind() {
+      return kind;
+    }
+
+    TypeMirror type() {
+      return type;
+    }
 
     static Optional<KindAndType> from(TypeMirror type) {
-      for (Kind kind : Kind.values()) {
-        Optional<KindAndType> kindAndType = kind.from(type);
+      for (RequestKind kind : RequestKind.values()) {
+        Optional<KindAndType> kindAndType = from(kind, type);
         if (kindAndType.isPresent()) {
           return firstPresent(kindAndType.get().maybeProviderOfLazy(), kindAndType);
         }
@@ -279,14 +180,32 @@ abstract class DependencyRequest {
     }
 
     /**
-     * If {@code kindAndType} represents a {@link Kind#PROVIDER} of a {@code Lazy<T>} for some type
-     * {@code T}, then this method returns ({@link Kind#PROVIDER_OF_LAZY}, {@code T}).
+     * If {@code type}'s raw type is {@link RequestKinds#frameworkClass framework class}, returns a
+     * {@link KindAndType} with this kind that represents the dependency request.
+     */
+    private static Optional<KindAndType> from(RequestKind kind, TypeMirror type) {
+      Optional<Class<?>> frameworkClass = frameworkClass(kind);
+      if (frameworkClass.isPresent() && isType(type) && isTypeOf(frameworkClass.get(), type)) {
+        List<? extends TypeMirror> typeArguments = asDeclared(type).getTypeArguments();
+        if (typeArguments.isEmpty()) {
+          return Optional.empty();
+        }
+        return Optional.of(new KindAndType(kind, getOnlyElement(typeArguments)));
+      }
+      return Optional.empty();
+    }
+
+    /**
+     * If {@code kindAndType} represents a {@link RequestKind#PROVIDER} of a {@code Lazy<T>} for
+     * some type {@code T}, then this method returns ({@link RequestKind#PROVIDER_OF_LAZY}, {@code
+     * T}).
      */
     private Optional<KindAndType> maybeProviderOfLazy() {
-      if (kind().equals(Kind.PROVIDER)) {
+      if (kind().equals(PROVIDER)) {
         Optional<KindAndType> providedKindAndType = from(type());
-        if (providedKindAndType.isPresent() && providedKindAndType.get().kind().equals(Kind.LAZY)) {
-          return Optional.of(Kind.PROVIDER_OF_LAZY.ofType(providedKindAndType.get().type()));
+        if (providedKindAndType.isPresent()
+            && providedKindAndType.get().kind().equals(LAZY)) {
+          return Optional.of(new KindAndType(PROVIDER_OF_LAZY, providedKindAndType.get().type()));
         }
       }
       return Optional.empty();
@@ -296,7 +215,7 @@ abstract class DependencyRequest {
   @CanIgnoreReturnValue
   @AutoValue.Builder
   abstract static class Builder {
-    abstract Builder kind(Kind kind);
+    abstract Builder kind(RequestKind kind);
 
     abstract Builder key(Key key);
 
@@ -342,20 +261,9 @@ abstract class DependencyRequest {
      */
     DependencyRequest providerForImplicitMapBinding(Key mapOfFactoryKey) {
       return DependencyRequest.builder()
-          .kind(Kind.PROVIDER)
+          .kind(PROVIDER)
           .key(mapOfFactoryKey)
           .build();
-    }
-
-    /**
-     * Creates a implicit {@link DependencyRequest} for a {@link Producer} of {@code
-     * mapOfFactoryKey}.
-     *
-     * @param mapOfFactoryKey a key equivalent to {@code mapOfValueRequest}'s key, whose type is
-     *     {@code Map<K, Provider<V>>} or {@code Map<K, Producer<V>>}
-     */
-    DependencyRequest producerForImplicitMapBinding(Key mapOfFactoryKey) {
-      return DependencyRequest.builder().kind(Kind.PRODUCER).key(mapOfFactoryKey).build();
     }
 
     /**
@@ -387,23 +295,23 @@ abstract class DependencyRequest {
     }
 
     // TODO(b/28555349): support PROVIDER_OF_LAZY here too
-    private static final ImmutableSet<Kind> WRAPPING_MAP_VALUE_FRAMEWORK_TYPES =
-        ImmutableSet.of(Kind.PROVIDER, Kind.PRODUCER);
+    private static final ImmutableSet<RequestKind> WRAPPING_MAP_VALUE_FRAMEWORK_TYPES =
+        ImmutableSet.of(PROVIDER, PRODUCER);
 
-    private Kind multibindingContributionRequestKind(
+    private RequestKind multibindingContributionRequestKind(
         Key multibindingKey, ContributionBinding multibindingContribution) {
       switch (multibindingContribution.contributionType()) {
         case MAP:
           MapType mapType = MapType.from(multibindingKey);
-          for (Kind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
-            if (mapType.valuesAreTypeOf(kind.frameworkClass.get())) {
+          for (RequestKind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
+            if (mapType.valuesAreTypeOf(frameworkClass(kind).get())) {
               return kind;
             }
           }
           // fall through
         case SET:
         case SET_VALUES:
-          return Kind.INSTANCE;
+          return INSTANCE;
         case UNIQUE:
           throw new IllegalArgumentException(
               "multibindingContribution must be a multibinding: " + multibindingContribution);
@@ -456,7 +364,7 @@ abstract class DependencyRequest {
       // special-case it here.
       if (isTypeOf(ListenableFuture.class, type)) {
         return DependencyRequest.builder()
-            .kind(Kind.FUTURE)
+            .kind(FUTURE)
             .key(keyFactory.forQualifiedType(
                 qualifier, Iterables.getOnlyElement(((DeclaredType) type).getTypeArguments())))
             .requestElement(productionMethod)
@@ -479,7 +387,7 @@ abstract class DependencyRequest {
               ? getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments())
               : getOnlyElement(membersInjectionMethodType.getParameterTypes());
       return DependencyRequest.builder()
-          .kind(Kind.MEMBERS_INJECTOR)
+          .kind(MEMBERS_INJECTOR)
           .key(keyFactory.forMembersInjectedType(membersInjectedType))
           .requestElement(membersInjectionMethod)
           .build();
@@ -488,7 +396,7 @@ abstract class DependencyRequest {
     DependencyRequest forProductionImplementationExecutor() {
       Key key = keyFactory.forProductionImplementationExecutor();
       return DependencyRequest.builder()
-          .kind(Kind.PROVIDER)
+          .kind(PROVIDER)
           .key(key)
           .requestElement(MoreTypes.asElement(key.type()))
           .build();
@@ -497,7 +405,7 @@ abstract class DependencyRequest {
     DependencyRequest forProductionComponentMonitor() {
       Key key = keyFactory.forProductionComponentMonitor();
       return DependencyRequest.builder()
-          .kind(Kind.PROVIDER)
+          .kind(PROVIDER)
           .key(key)
           .requestElement(MoreTypes.asElement(key.type()))
           .overriddenVariableName(Optional.of("monitor"))
@@ -508,7 +416,7 @@ abstract class DependencyRequest {
      * Returns a synthetic request for the present value of an optional binding generated from a
      * {@link dagger.BindsOptionalOf} declaration.
      */
-    DependencyRequest forSyntheticPresentOptionalBinding(Key requestKey, Kind kind) {
+    DependencyRequest forSyntheticPresentOptionalBinding(Key requestKey, RequestKind kind) {
       Optional<Key> key = keyFactory.unwrapOptional(requestKey);
       checkArgument(key.isPresent(), "not a request for optional: %s", requestKey);
       return builder()
@@ -527,7 +435,7 @@ abstract class DependencyRequest {
         Optional<AnnotationMirror> qualifier,
         Optional<String> name) {
       KindAndType kindAndType = extractKindAndType(type);
-      if (kindAndType.kind().equals(Kind.MEMBERS_INJECTOR)) {
+      if (kindAndType.kind().equals(MEMBERS_INJECTOR)) {
         checkArgument(!qualifier.isPresent());
       }
       return DependencyRequest.builder()
@@ -540,14 +448,14 @@ abstract class DependencyRequest {
     }
 
     /**
-     * Returns {@code true} if a given request element allows null values. {@link Kind#INSTANCE}
-     * requests must be annotated with {@code @Nullable} in order to allow null values. All other
-     * request kinds implicitly allow null values because they are are wrapped inside {@link
-     * Provider}, {@link Lazy}, etc.
+     * Returns {@code true} if a given request element allows null values. {@link
+     * RequestKind#INSTANCE} requests must be annotated with {@code @Nullable} in order to allow
+     * null values. All other request kinds implicitly allow null values because they are are
+     * wrapped inside {@link Provider}, {@link Lazy}, etc.
      */
     // TODO(sameb): should Produced/Producer always require non-nullable?
-    private boolean allowsNull(Kind kind, Optional<DeclaredType> nullableType) {
-      return kind.equals(Kind.INSTANCE) ? nullableType.isPresent() : true;
+    private boolean allowsNull(RequestKind kind, Optional<DeclaredType> nullableType) {
+      return kind.equals(INSTANCE) ? nullableType.isPresent() : true;
     }
   }
 }

@@ -19,9 +19,11 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.RequestKinds.requestType;
 import static dagger.internal.codegen.Scope.reusableScope;
 
 import com.squareup.javapoet.ClassName;
+import dagger.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -34,7 +36,7 @@ final class DelegateBindingExpression extends BindingExpression {
 
   private DelegateBindingExpression(
       ResolvedBindings resolvedBindings,
-      DependencyRequest.Kind requestKind,
+      RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       Elements elements) {
@@ -61,7 +63,7 @@ final class DelegateBindingExpression extends BindingExpression {
     ScopeKind bindsScope = ScopeKind.get(binding, graph, elements);
     ScopeKind delegateScope = ScopeKind.get(delegateBinding, graph, elements);
     if (bindsScope.isSimilarOrWeakerScopeThan(delegateScope)) {
-      DependencyRequest.Kind requestKind = bindingExpression.requestKind();
+      RequestKind requestKind = bindingExpression.requestKind();
       return new DelegateBindingExpression(
           resolvedBindings, requestKind, componentBindingExpressions, types, elements);
     }
@@ -82,7 +84,7 @@ final class DelegateBindingExpression extends BindingExpression {
             : delegateExpression;
       default:
         return castToRawTypeIfNecessary(
-            delegateExpression, requestKind().type(contributedType, types));
+            delegateExpression, requestType(requestKind(), contributedType, types));
     }
   }
 

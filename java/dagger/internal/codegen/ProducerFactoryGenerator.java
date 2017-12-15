@@ -57,6 +57,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Map;
 import java.util.Optional;
@@ -161,7 +162,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
           "$T $L = $L",
           futureType,
           dependencyFutureName(dependency),
-          dependency.kind().equals(DependencyRequest.Kind.PRODUCED)
+          dependency.kind().equals(RequestKind.PRODUCED)
               ? CodeBlock.of("$T.createFutureProduced($L)", PRODUCERS, futureAccess)
               : futureAccess);
     }

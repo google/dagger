@@ -20,12 +20,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
-import static dagger.internal.codegen.DependencyRequest.Kind.INSTANCE;
-import static dagger.internal.codegen.DependencyRequest.Kind.LAZY;
-import static dagger.internal.codegen.DependencyRequest.Kind.MEMBERS_INJECTOR;
-import static dagger.internal.codegen.DependencyRequest.Kind.PRODUCED;
-import static dagger.internal.codegen.DependencyRequest.Kind.PRODUCER;
-import static dagger.internal.codegen.DependencyRequest.Kind.PROVIDER;
+import static dagger.model.RequestKind.INSTANCE;
+import static dagger.model.RequestKind.LAZY;
+import static dagger.model.RequestKind.MEMBERS_INJECTOR;
+import static dagger.model.RequestKind.PRODUCED;
+import static dagger.model.RequestKind.PRODUCER;
+import static dagger.model.RequestKind.PROVIDER;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

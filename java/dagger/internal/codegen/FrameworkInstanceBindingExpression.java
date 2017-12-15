@@ -23,6 +23,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import dagger.internal.codegen.MemberSelect.MemberSelectSupplier;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -37,7 +38,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
 
   FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
-      DependencyRequest.Kind requestKind,
+      RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
       MemberSelectSupplier frameworkFieldSupplier,
@@ -69,9 +70,9 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
     }
 
-    // The following expressions form a composite with the expression for the framework type.
-    // For example, the expression for a DependencyRequest.Kind.LAZY is a composite of the
-    // expression for a DependencyRequest.Kind.PROVIDER (the framework type):
+    // The following expressions form a composite with the expression for the framework type. For
+    // example, the expression for RequestKind.LAZY is a composite of the expression for a
+    // RequestKind.PROVIDER (the framework type):
     //    lazyExpression = DoubleCheck.lazy(providerExpression);
     return frameworkType.to(
         requestKind(),
@@ -81,14 +82,14 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   }
 
   /** Returns the request kind that matches the framework type. */
-  private DependencyRequest.Kind frameworkRequestKind() {
+  private RequestKind frameworkRequestKind() {
     switch (frameworkType) {
       case PROVIDER:
-        return DependencyRequest.Kind.PROVIDER;
+        return RequestKind.PROVIDER;
       case PRODUCER:
-        return DependencyRequest.Kind.PRODUCER;
+        return RequestKind.PRODUCER;
       case MEMBERS_INJECTOR:
-        return DependencyRequest.Kind.MEMBERS_INJECTOR;
+        return RequestKind.MEMBERS_INJECTOR;
       default:
         throw new AssertionError();
     }

@@ -83,6 +83,7 @@ java_library(
         "MultibindingAnnotations.java",
         "OptionalType.java",
         "Optionals.java",
+        "RequestKinds.java",
         "SetType.java",
         "SimpleAnnotationMirror.java",
         "SimpleTypeAnnotationValue.java",

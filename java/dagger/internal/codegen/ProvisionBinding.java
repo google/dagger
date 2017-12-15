@@ -40,6 +40,7 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -410,7 +411,7 @@ abstract class ProvisionBinding extends ContributionBinding {
      * Returns a synthetic binding for an {@linkplain dagger.BindsOptionalOf optional binding} in a
      * component with a binding for the underlying key.
      */
-    ProvisionBinding syntheticPresentBinding(Key key, DependencyRequest.Kind kind) {
+    ProvisionBinding syntheticPresentBinding(Key key, RequestKind kind) {
       return syntheticAbsentBinding(key)
           .toBuilder()
           .provisionDependencies(

@@ -54,6 +54,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.SetFactory;
+import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.SetOfProducedProducer;
@@ -147,7 +148,7 @@ class SourceFiles {
   }
 
   static CodeBlock frameworkTypeUsageStatement(
-      CodeBlock frameworkTypeMemberSelect, DependencyRequest.Kind dependencyKind) {
+      CodeBlock frameworkTypeMemberSelect, RequestKind dependencyKind) {
     switch (dependencyKind) {
       case LAZY:
         return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
@@ -167,7 +168,7 @@ class SourceFiles {
 
   /**
    * Returns a mapping of {@link DependencyRequest}s to {@link CodeBlock}s that {@linkplain
-   * #frameworkTypeUsageStatement(CodeBlock, DependencyRequest.Kind) use them}.
+   * #frameworkTypeUsageStatement(CodeBlock, RequestKind) use them}.
    */
   static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
       ImmutableSet<DependencyRequest> dependencies, ImmutableMap<BindingKey, FieldSpec> fields) {

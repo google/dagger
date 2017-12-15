@@ -52,6 +52,7 @@ import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Keys.HasKey;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -670,7 +671,7 @@ abstract class BindingGraph {
         if (optionalBindingDeclarations.isEmpty()) {
           return Optional.empty();
         }
-        DependencyRequest.Kind kind =
+        RequestKind requestKind =
             DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).kind();
         ResolvedBindings underlyingKeyBindings =
             lookUpBindings(BindingKey.contribution(keyFactory.unwrapOptional(key).get()));
@@ -678,11 +679,11 @@ abstract class BindingGraph {
           return Optional.of(provisionBindingFactory.syntheticAbsentBinding(key));
         } else if (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)
             // handles producerFromProvider cases
-            || kind.equals(DependencyRequest.Kind.PRODUCER)
-            || kind.equals(DependencyRequest.Kind.PRODUCED)) {
-          return Optional.of(productionBindingFactory.syntheticPresentBinding(key, kind));
+            || requestKind.equals(RequestKind.PRODUCER)
+            || requestKind.equals(RequestKind.PRODUCED)) {
+          return Optional.of(productionBindingFactory.syntheticPresentBinding(key, requestKind));
         } else {
-          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key, kind));
+          return Optional.of(provisionBindingFactory.syntheticPresentBinding(key, requestKind));
         }
       }
 

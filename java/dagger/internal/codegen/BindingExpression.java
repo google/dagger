@@ -22,14 +22,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.RequestKind;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
 // TODO(user): Rename this to RequestExpression?
 abstract class BindingExpression {
   private final ResolvedBindings resolvedBindings;
-  private final DependencyRequest.Kind requestKind;
+  private final RequestKind requestKind;
 
-  BindingExpression(ResolvedBindings resolvedBindings, DependencyRequest.Kind requestKind) {
+  BindingExpression(ResolvedBindings resolvedBindings, RequestKind requestKind) {
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.requestKind = checkNotNull(requestKind);
   }
@@ -39,8 +40,8 @@ abstract class BindingExpression {
     return resolvedBindings.bindingKey();
   }
 
-  /** Returns the {#linkplain DependencyRequest.Kind request kind} handled by this expression. */
-  final DependencyRequest.Kind requestKind() {
+  /** Returns the {@linkplain RequestKind} handled by this expression. */
+  final RequestKind requestKind() {
     return requestKind;
   }
 

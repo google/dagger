@@ -18,7 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.DependencyRequest.Kind.INSTANCE;
+import static dagger.internal.codegen.RequestKinds.frameworkClass;
+import static dagger.model.RequestKind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -27,6 +28,7 @@ import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
+import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
@@ -38,7 +40,7 @@ enum FrameworkType {
   /** A {@link Provider}. */
   PROVIDER {
     @Override
-    CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from) {
+    CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case INSTANCE:
           return CodeBlock.of("$L.get()", from);
@@ -68,7 +70,7 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+    Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
       CodeBlock codeBlock = to(requestKind, from.codeBlock());
       switch (requestKind) {
         case INSTANCE:
@@ -87,7 +89,7 @@ enum FrameworkType {
 
         default:
           return Expression.create(
-              types.rewrapType(from.type(), requestKind.frameworkClass.get()), codeBlock);
+              types.rewrapType(from.type(), frameworkClass(requestKind).get()), codeBlock);
       }
     }
   },
@@ -95,7 +97,7 @@ enum FrameworkType {
   /** A {@link Producer}. */
   PRODUCER {
     @Override
-    CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from) {
+    CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case FUTURE:
           return CodeBlock.of("$L.get()", from);
@@ -110,7 +112,7 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+    Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
       switch (requestKind) {
         case FUTURE:
           return Expression.create(
@@ -130,7 +132,7 @@ enum FrameworkType {
   /** A {@link MembersInjector}. */
   MEMBERS_INJECTOR {
     @Override
-    CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from) {
+    CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case MEMBERS_INJECTOR:
           return from;
@@ -142,7 +144,7 @@ enum FrameworkType {
     }
 
     @Override
-    Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types) {
+    Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
       switch (requestKind) {
         case MEMBERS_INJECTOR:
           return from;
@@ -165,7 +167,7 @@ enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  abstract CodeBlock to(DependencyRequest.Kind requestKind, CodeBlock from);
+  abstract CodeBlock to(RequestKind requestKind, CodeBlock from);
 
   /**
    * Returns an {@link Expression} that evaluates to a requested object given an expression that
@@ -177,7 +179,7 @@ enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  abstract Expression to(DependencyRequest.Kind requestKind, Expression from, DaggerTypes types);
+  abstract Expression to(RequestKind requestKind, Expression from, DaggerTypes types);
 
   @Override
   public String toString() {

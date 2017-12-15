@@ -24,6 +24,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.RequestKind;
 import java.util.List;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
@@ -41,7 +42,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
       MembersInjectionMethods membersInjectionMethods) {
     super(membersInjectorExpression.resolvedBindings(), membersInjectorExpression.requestKind());
     checkArgument(bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
-    checkArgument(requestKind().equals(DependencyRequest.Kind.MEMBERS_INJECTOR));
+    checkArgument(requestKind().equals(RequestKind.MEMBERS_INJECTOR));
     this.membersInjectorExpression = membersInjectorExpression;
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings().membersInjectionBinding().get();

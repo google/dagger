@@ -20,13 +20,12 @@ import static com.google.auto.common.MoreElements.asExecutable;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.ErrorMessages.DOUBLE_INDENT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
+import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import dagger.Lazy;
 import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
 import dagger.model.Key;
@@ -35,17 +34,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor7;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Formats a {@link DependencyRequest} into a {@link String} suitable for an error message listing
@@ -71,12 +66,10 @@ import javax.lang.model.util.Types;
  */
 final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
 
-  private final Types types;
-  private final Elements elements;
+  private final DaggerTypes types;
 
-  DependencyRequestFormatter(Types types, Elements elements) {
+  DependencyRequestFormatter(DaggerTypes types) {
     this.types = types;
-    this.elements = elements;
   }
 
   /** Returns a representation of the dependency trace, with the entry point at the bottom. */
@@ -184,34 +177,12 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
   @CanIgnoreReturnValue
   private StringBuilder appendRequestedTypeIsInjectedAt(
       StringBuilder builder, DependencyRequest request) {
+    TypeMirror requestedType = requestType(request.kind(), request.key().type(), types);
     return builder
         .append(INDENT)
-        .append(formatKey(request.key().qualifier(), requestedType(request)))
+        .append(formatKey(request.key().qualifier(), requestedType))
         .append(" is injected at\n")
         .append(DOUBLE_INDENT);
-  }
-
-  private TypeMirror requestedType(DependencyRequest request) {
-    TypeMirror keyType = request.key().type();
-    switch (request.kind()) {
-      case FUTURE:
-        return wrapType(ListenableFuture.class, keyType);
-
-      case PROVIDER_OF_LAZY:
-        return wrapType(Provider.class, wrapType(Lazy.class, keyType));
-
-      default:
-        if (request.kind().frameworkClass.isPresent()) {
-          return wrapType(request.kind().frameworkClass.get(), keyType);
-        } else {
-          return keyType;
-        }
-    }
-  }
-
-  private DeclaredType wrapType(Class<?> wrapperType, TypeMirror wrappedType) {
-    return types.getDeclaredType(
-        elements.getTypeElement(wrapperType.getCanonicalName()), wrappedType);
   }
 
   private String formatKey(Key key) {

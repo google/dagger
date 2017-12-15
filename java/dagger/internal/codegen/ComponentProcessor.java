@@ -92,8 +92,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     MethodSignatureFormatter methodSignatureFormatter = new MethodSignatureFormatter(types);
     BindingDeclarationFormatter bindingDeclarationFormatter =
         new BindingDeclarationFormatter(methodSignatureFormatter);
-    DependencyRequestFormatter dependencyRequestFormatter =
-        new DependencyRequestFormatter(types, elements);
+    DependencyRequestFormatter dependencyRequestFormatter = new DependencyRequestFormatter(types);
 
     KeyFactory keyFactory = new KeyFactory(types, elements);
 

@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -228,7 +229,7 @@ abstract class ProductionBinding extends ContributionBinding {
      * Returns a synthetic binding for an {@linkplain dagger.BindsOptionalOf optional binding} in a
      * component with a binding for the underlying key.
      */
-    ProductionBinding syntheticPresentBinding(Key key, DependencyRequest.Kind kind) {
+    ProductionBinding syntheticPresentBinding(Key key, RequestKind kind) {
       return ProductionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(key)

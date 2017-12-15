@@ -21,6 +21,7 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializ
   @Override
   protected CodeBlock getFieldInitialization() {
     return FrameworkType.PROVIDER.to(
-        DependencyRequest.Kind.PRODUCER,
+        RequestKind.PRODUCER,
         componentBindingExpressions
             .getDependencyExpression(
                 FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION),

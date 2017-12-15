@@ -28,6 +28,7 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.ABSENT_OPTIONAL_FIELD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.ABSENT_OPTIONAL_METHOD;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.PRESENT_FACTORY;
+import static dagger.internal.codegen.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.TypeNames.PROVIDER;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
@@ -53,6 +54,7 @@ import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.InstanceFactory;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.OptionalType.OptionalKind;
+import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
 import java.util.Comparator;
@@ -157,7 +159,7 @@ final class OptionalFactories {
     abstract OptionalKind optionalKind();
 
     /** The kind of request satisfied by the value of the {@code Optional}. */
-    abstract DependencyRequest.Kind valueKind();
+    abstract RequestKind valueKind();
 
     /** The type variable for the factory class. */
     TypeVariableName typeVariable() {
@@ -166,7 +168,7 @@ final class OptionalFactories {
 
     /** The type contained by the {@code Optional}. */
     TypeName valueType() {
-      return valueKind().typeName(typeVariable());
+      return requestTypeName(valueKind(), typeVariable());
     }
 
     /** The type provided or produced by the factory. */
@@ -200,25 +202,25 @@ final class OptionalFactories {
           getOnlyElement(binding.dependencies()).kind());
     }
   }
-  
+
   /**
    * Returns an expression for an instance of a nested class that implements {@code
    * Provider<Optional<T>>} or {@code Producer<Optional<T>>} for a present optional binding, where
    * {@code T} represents dependency requests of that kind.
    *
    * <ul>
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#INSTANCE}, the class
-   *     implements {@code ProviderOrProducer<Optional<T>>}.
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#PROVIDER}, the class
-   *     implements {@code Provider<Optional<Provider<T>>>}.
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#LAZY}, the class implements
-   *     {@code Provider<Optional<Lazy<T>>>}.
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#PROVIDER_OF_LAZY}, the
-   *     class implements {@code Provider<Optional<Provider<Lazy<T>>>>}.
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#PRODUCER}, the class
-   *     implements {@code Producer<Optional<Producer<T>>>}.
-   * <li>If {@code optionalRequestKind} is {@link DependencyRequest.Kind#PRODUCED}, the class
-   *     implements {@code Producer<Optional<Produced<T>>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#INSTANCE}, the class implements
+   *       {@code ProviderOrProducer<Optional<T>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#PROVIDER}, the class implements
+   *       {@code Provider<Optional<Provider<T>>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#LAZY}, the class implements {@code
+   *       Provider<Optional<Lazy<T>>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#PROVIDER_OF_LAZY}, the class
+   *       implements {@code Provider<Optional<Provider<Lazy<T>>>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#PRODUCER}, the class implements
+   *       {@code Producer<Optional<Producer<T>>>}.
+   *   <li>If {@code optionalRequestKind} is {@link RequestKind#PRODUCED}, the class implements
+   *       {@code Producer<Optional<Produced<T>>>}.
    * </ul>
    *
    * @param delegateFactory an expression for a {@link Provider} or {@link Producer} of the

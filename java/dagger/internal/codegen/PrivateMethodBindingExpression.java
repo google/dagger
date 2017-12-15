@@ -24,6 +24,7 @@ import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRIVATE_METHOD;
+import static dagger.internal.codegen.RequestKinds.requestType;
 import static dagger.internal.codegen.Scope.reusableScope;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -37,6 +38,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.MemoizedSentinel;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.RequestKind;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,10 +56,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingExpression delegate;
   // TODO(user): No need for a map. Each PMBE instance only handles 1 request kind now.
-  private final Map<DependencyRequest.Kind, String> methodNames =
-      new EnumMap<>(DependencyRequest.Kind.class);
-  private final Map<DependencyRequest.Kind, String> fieldNames =
-      new EnumMap<>(DependencyRequest.Kind.class);
+  private final Map<RequestKind, String> methodNames = new EnumMap<>(RequestKind.class);
+  private final Map<RequestKind, String> fieldNames = new EnumMap<>(RequestKind.class);
   private final ContributionBinding binding;
   private final CompilerOptions compilerOptions;
   private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
@@ -143,8 +143,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   private boolean isNullaryProvisionMethod() {
-    return (requestKind().equals(DependencyRequest.Kind.INSTANCE)
-            || requestKind().equals(DependencyRequest.Kind.FUTURE))
+    return (requestKind().equals(RequestKind.INSTANCE) || requestKind().equals(RequestKind.FUTURE))
         && binding.dependencies().isEmpty()
         && !findComponentMethod().isPresent();
   }
@@ -193,11 +192,11 @@ final class PrivateMethodBindingExpression extends BindingExpression {
 
   /** Returns the return type for the dependency request. */
   private TypeMirror returnType() {
-    if (requestKind().equals(DependencyRequest.Kind.INSTANCE)
+    if (requestKind().equals(RequestKind.INSTANCE)
         && binding.contributedPrimitiveType().isPresent()) {
       return binding.contributedPrimitiveType().get();
     }
-    return accessibleType(requestKind().type(binding.contributedType(), types));
+    return accessibleType(requestType(requestKind(), binding.contributedType(), types));
   }
 
   /** Returns the method body for the dependency request. */
@@ -276,7 +275,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
                     "return $L",
                     componentBindingExpressions
                         .getDependencyExpression(
-                            bindingKey(), DependencyRequest.Kind.INSTANCE, componentName())
+                            bindingKey(), RequestKind.INSTANCE, componentName())
                         .codeBlock())
                 .build())
         .build();
@@ -286,7 +285,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private String methodName() {
     // TODO(user): Use a better name for @MapKey binding instances.
     // TODO(user): Include the binding method as part of the method name.
-    if (requestKind().equals(DependencyRequest.Kind.INSTANCE)) {
+    if (requestKind().equals(RequestKind.INSTANCE)) {
       return "get" + bindingName();
     }
     return "get" + bindingName() + dependencyKindName(requestKind());
@@ -297,8 +296,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     return LOWER_CAMEL.to(UPPER_CAMEL, BindingVariableNamer.name(binding));
   }
 
-  /** Returns a canonical name for the {@link DependencyRequest.Kind}. */
-  private static String dependencyKindName(DependencyRequest.Kind kind) {
+  /** Returns a canonical name for the {@link RequestKind}. */
+  private static String dependencyKindName(RequestKind kind) {
     return UPPER_UNDERSCORE.to(UPPER_CAMEL, kind.name());
   }
 

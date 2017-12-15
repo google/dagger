@@ -28,6 +28,7 @@ import static dagger.internal.codegen.CodeBlocks.toConcatenatedCodeBlock;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.FactoryGenerator.checkNotNullProvidesMethod;
+import static dagger.internal.codegen.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
@@ -45,8 +46,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.internal.codegen.DependencyRequest.Kind;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -364,7 +365,7 @@ final class InjectionMethods {
     CodeBlock.Builder codeBlock = CodeBlock.builder();
     if (!isRawTypeAccessible(keyType, generatedTypeName.packageName())
         && isTypeAccessibleFrom(keyType, generatedTypeName.packageName())) {
-      if (!dependency.kind().equals(Kind.INSTANCE)) {
+      if (!dependency.kind().equals(RequestKind.INSTANCE)) {
         TypeName usageTypeName = accessibleType(dependency);
         codeBlock.add("($T) ($T)", usageTypeName, rawTypeName(usageTypeName));
       } else if (dependency.requestElement().get().asType().getKind().equals(TypeKind.TYPEVAR)) {
@@ -379,7 +380,7 @@ final class InjectionMethods {
    * {@link Object}.
    */
   private static TypeName accessibleType(DependencyRequest dependency) {
-    TypeName typeName = dependency.kind().typeName(accessibleType(dependency.key().type()));
+    TypeName typeName = requestTypeName(dependency.kind(), accessibleType(dependency.key().type()));
     return dependency.requestsPrimitiveType() ? typeName.unbox() : typeName;
   }
 

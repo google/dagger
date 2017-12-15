@@ -24,16 +24,17 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import javax.inject.Provider;
 
 /**
- * A mapper for associating a {@link DependencyRequest.Kind} to a {@link BindingType}, dependent on
- * the type of code to be generated (e.g., for {@link Provider} or {@link Producer}).
+ * A mapper for associating a {@link RequestKind} to a {@link BindingType}, dependent on the type of
+ * code to be generated (e.g., for {@link Provider} or {@link Producer}).
  */
 enum BindingTypeMapper {
   FOR_PROVIDER() {
-    @Override public BindingType getBindingType(DependencyRequest.Kind requestKind) {
+    @Override public BindingType getBindingType(RequestKind requestKind) {
       switch (requestKind) {
         case INSTANCE:
         case PROVIDER:
@@ -51,7 +52,7 @@ enum BindingTypeMapper {
     }
   },
   FOR_PRODUCER() {
-    @Override public BindingType getBindingType(DependencyRequest.Kind requestKind) {
+    @Override public BindingType getBindingType(RequestKind requestKind) {
       switch (requestKind) {
         case INSTANCE:
         case PRODUCED:
@@ -73,7 +74,7 @@ enum BindingTypeMapper {
     return bindingType.equals(PRODUCTION) ? FOR_PRODUCER : FOR_PROVIDER;
   }
 
-  abstract BindingType getBindingType(DependencyRequest.Kind requestKind);
+  abstract BindingType getBindingType(RequestKind requestKind);
 
   /**
    * Returns the {@link BindingType} to use for a collection of requests of the same

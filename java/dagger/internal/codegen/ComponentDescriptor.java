@@ -79,8 +79,6 @@ import javax.lang.model.util.Types;
  */
 @AutoValue
 abstract class ComponentDescriptor {
-  ComponentDescriptor() {}
-
   enum Kind {
     COMPONENT(Component.class, Component.Builder.class, true),
     SUBCOMPONENT(Subcomponent.class, Subcomponent.Builder.class, false),

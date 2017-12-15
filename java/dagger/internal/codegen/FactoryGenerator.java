@@ -180,7 +180,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     MethodSpec.Builder createMethodBuilder =
         methodBuilder("create")
             .addModifiers(PUBLIC, STATIC)
-            .returns(factoryTypeName(binding))
+            .returns(parameterizedGeneratedTypeNameForBinding(binding))
             .addTypeVariables(typeParameters(binding));
 
     switch (binding.factoryCreationStrategy()) {
@@ -193,14 +193,9 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
           // If the factory has type parameters, ignore them in the field declaration & initializer
           instanceFieldBuilder.addAnnotation(suppressWarnings(RAWTYPES));
 
-          // We use an unsafe cast here because the types are different.
-          // It's safe because the type is never referenced anywhere.
-          createMethodBuilder
-              .addStatement("return ($T) INSTANCE", TypeNames.FACTORY)
-              .addAnnotation(suppressWarnings(RAWTYPES, UNCHECKED));
-        } else {
-          createMethodBuilder.addStatement("return INSTANCE");
+          createMethodBuilder.addAnnotation(suppressWarnings(UNCHECKED));
         }
+        createMethodBuilder.addStatement("return INSTANCE");
         factoryBuilder.addField(instanceFieldBuilder.build());
         break;
       case CLASS_CONSTRUCTOR:

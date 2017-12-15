@@ -1244,7 +1244,7 @@ public class ComponentProcessorTest {
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerBComponent implements BComponent {",
-            "  private Provider<A> aProvider;",
+            "  private test_AComponent_a aProvider;",
             "",
             "  @SuppressWarnings(\"unchecked\")",
             "  private void initialize(final Builder builder) {",

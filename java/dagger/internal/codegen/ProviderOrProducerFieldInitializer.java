@@ -192,6 +192,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
                           .build())
                   .addMethod(getMethod.build())
                   .build());
+          setFieldTypeReplacement(generatedComponentModel.name().nestedClass(factoryName));
           return CodeBlock.of(
               "new $L($L)",
               factoryName,
@@ -254,6 +255,8 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
               && binding.scope().isPresent()) {
             factoryCreate =
                 CodeBlock.of("($T) $L", binding.bindingType().frameworkClass(), factoryCreate);
+          } else if (!binding.scope().isPresent()) {
+            setFieldTypeReplacement(generatedClassNameForBinding(binding));
           }
           return decorateForScope(factoryCreate, binding.scope());
         }
@@ -272,6 +275,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
                           ComponentRequirement.forDependency(dependencyType.asType()),
                           generatedComponentModel.name()))
                   .build();
+          // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
           return CodeBlock.of(
               "$L",
               anonymousClassBuilder("")
@@ -302,6 +306,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
           }
           arguments.addAll(getBindingDependencyExpressions(binding));
 
+          setFieldTypeReplacement(generatedClassNameForBinding(binding));
           return CodeBlock.of(
               "new $T($L)",
               generatedClassNameForBinding(binding),

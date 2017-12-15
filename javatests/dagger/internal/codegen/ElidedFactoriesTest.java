@@ -251,7 +251,7 @@ public class ElidedFactoriesTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private Provider<ScopedType> scopedTypeProvider;",
-                "  private Provider<DependsOnScoped> dependsOnScopedProvider;",
+                "  private DependsOnScoped_Factory dependsOnScopedProvider;",
                 "  private DaggerSimpleComponent(Builder builder) {",
                 "    initialize(builder);",
                 "  }",

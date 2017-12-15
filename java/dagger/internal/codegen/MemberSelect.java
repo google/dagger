@@ -50,12 +50,6 @@ import javax.lang.model.type.TypeMirror;
  */
 abstract class MemberSelect {
 
-  /** An object that supplies a {@link MemberSelect}. */
-  interface MemberSelectSupplier {
-    /** Returns a {@link MemberSelect}, with possible side effects on the first call. */
-    MemberSelect memberSelect();
-  }
-
   /**
    * Returns a {@link MemberSelect} that accesses the field given by {@code fieldName} owned by
    * {@code owningClass}.  In this context "local" refers to the fact that the field is owned by the

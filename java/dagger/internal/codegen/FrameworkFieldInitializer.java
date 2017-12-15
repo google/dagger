@@ -27,20 +27,28 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.TypeName;
 import dagger.internal.DelegateFactory;
-import dagger.internal.codegen.MemberSelect.MemberSelectSupplier;
 import java.util.Optional;
 
 /**
  * An object that can initialize a framework-type component field for a binding. An instance should
  * be created for each field.
  */
-abstract class FrameworkFieldInitializer implements MemberSelectSupplier {
+abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
+
   protected final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ResolvedBindings resolvedBindings;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
+
+  /**
+   * Indicates the type of the initializer when has been replaced with a more-specific factory type.
+   * This is used by {@code FrameworkInstanceBindingExpression} to create fields with the
+   * most-specific type available.  This allows javac to complete much faster for large components.
+   */
+  private Optional<TypeName> fieldTypeReplacement = Optional.empty();
 
   protected FrameworkFieldInitializer(
       GeneratedComponentModel generatedComponentModel,
@@ -61,6 +69,7 @@ abstract class FrameworkFieldInitializer implements MemberSelectSupplier {
     return MemberSelect.localField(generatedComponentModel.name(), checkNotNull(fieldSpec).name);
   }
 
+  /** Adds the field and its initialization code to the component. */
   private void initializeField() {
     switch (fieldInitializationState) {
       case UNINITIALIZED:
@@ -115,18 +124,35 @@ abstract class FrameworkFieldInitializer implements MemberSelectSupplier {
             resolvedBindings.key().type(), generatedComponentModel.name().packageName());
     FrameworkField contributionBindingField =
         FrameworkField.forResolvedBindings(resolvedBindings, alternativeFrameworkClass());
+
+    TypeName fieldType;
+    if (fieldTypeReplacement.isPresent()) {
+      // For some larger components, this causes javac to compile much faster by getting the
+      // field type to exactly match the type of the expression being assigned to it.
+      fieldType = fieldTypeReplacement.get();
+    } else if (useRawType) {
+      fieldType = contributionBindingField.type().rawType;
+    } else {
+      fieldType = contributionBindingField.type();
+    }
+
     FieldSpec.Builder contributionField =
         FieldSpec.builder(
-            useRawType ? contributionBindingField.type().rawType : contributionBindingField.type(),
+            fieldType,
             generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
-    if (useRawType) {
+    if (useRawType && !fieldTypeReplacement.isPresent()) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
     fieldSpec = contributionField.build();
     generatedComponentModel.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
+  }
+
+  @Override
+  public boolean fieldTypeReplaced() {
+    return fieldTypeReplacement.isPresent();
   }
 
   /**
@@ -151,6 +177,10 @@ abstract class FrameworkFieldInitializer implements MemberSelectSupplier {
     return componentBindingExpressions
         .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
         .codeBlock();
+  }
+
+  protected final void setFieldTypeReplacement(TypeName typeName) {
+    this.fieldTypeReplacement = Optional.of(typeName);
   }
 
   /** Initialization state for a factory field. */

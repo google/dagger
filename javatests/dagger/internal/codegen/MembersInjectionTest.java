@@ -1140,7 +1140,7 @@ public class MembersInjectionTest {
             "    return instance;",
             "  }",
             "",
-            "  public static Factory<InjectedType> create(",
+            "  public static InjectedType_Factory create(",
             "      Provider<Integer> boxedIntAndPrimitiveIntProvider) {",
             "    return new InjectedType_Factory(boxedIntAndPrimitiveIntProvider);",
             "  }",

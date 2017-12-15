@@ -203,6 +203,7 @@ java_library(
         "DelegateBindingExpression.java",
         "FactoryGenerator.java",
         "FrameworkFieldInitializer.java",
+        "FrameworkFieldSupplier.java",
         "FrameworkInstanceBindingExpression.java",
         "GeneratedComponentModel.java",
         "GwtCompatibility.java",

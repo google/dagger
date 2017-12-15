@@ -21,7 +21,6 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import dagger.internal.codegen.MemberSelect.MemberSelectSupplier;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import javax.lang.model.type.DeclaredType;
@@ -31,7 +30,7 @@ import javax.lang.model.util.Elements;
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final MemberSelectSupplier frameworkFieldSupplier;
+  private final FrameworkFieldSupplier frameworkFieldSupplier;
   private final FrameworkType frameworkType;
   private final DaggerTypes types;
   private final Elements elements;
@@ -41,7 +40,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
-      MemberSelectSupplier frameworkFieldSupplier,
+      FrameworkFieldSupplier frameworkFieldSupplier,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings, requestKind);
@@ -65,6 +64,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       TypeMirror expressionType =
           isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
                   || isInlinedFactoryCreation(memberSelect)
+                  || frameworkFieldSupplier.fieldTypeReplaced()
               ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
               : rawFrameworkType();
       return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));

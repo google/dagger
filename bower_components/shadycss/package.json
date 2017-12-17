@@ -1,0 +1,58 @@
+{
+  "name": "@webcomponents/shadycss",
+  "version": "1.1.0",
+  "description": "Styling helpers for ShadyDOM",
+  "main": "shadycss.min.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webcomponents/shadycss.git"
+  },
+  "author": "The Polymer Project Authors (https://polymer.github.io/AUTHORS.txt)",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "shady-css",
+    "shadycss",
+    "shadow-css",
+    "shadowcss",
+    "web-components",
+    "webcomponents",
+    "polyfill",
+    "shim"
+  ],
+  "bugs": {
+    "url": "https://github.com/webcomponents/shadycss/issues"
+  },
+  "scripts": {
+    "build": "gulp",
+    "lint": "eslint src test entrypoints",
+    "test": "npm run lint && gulp test-modules && wct"
+  },
+  "homepage": "https://webcomponents.org/polyfills",
+  "devDependencies": {
+    "@webcomponents/custom-elements": "^1.0.4",
+    "@webcomponents/html-imports": "^1.0.0",
+    "@webcomponents/shadydom": "^1.0.4",
+    "@webcomponents/template": "^1.0.0",
+    "@webcomponents/webcomponents-platform": "^1.0.0",
+    "del": "^3.0.0",
+    "es6-promise": "^4.1.0",
+    "eslint": "^4.7.1",
+    "eslint-plugin-html": "^3.2.2",
+    "google-closure-compiler": "^20170910.0.0",
+    "gulp": "^3.8.8",
+    "gulp-rename": "^1.2.2",
+    "gulp-size": "^2.1.0",
+    "gulp-sourcemaps": "^2.6.1",
+    "rollup-stream": "=1.23.1",
+    "run-sequence": "^2.2.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "web-component-tester": "^6.1.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

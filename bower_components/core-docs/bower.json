@@ -1,7 +1,0 @@
-{
-  "name": "core-docs",
-  "private": true,
-  "dependencies": {
-    "core-doc-viewer": "Polymer/core-doc-viewer#^0.4.0"
-  }
-}

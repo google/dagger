@@ -1,9 +1,0 @@
-{
-  "name": "paper-radio-group",
-  "private": true,
-  "dependencies": {
-    "core-selector": "Polymer/core-selector#^0.4.0",
-    "font-roboto": "Polymer/font-roboto#^0.4.0",
-    "paper-radio-button": "Polymer/paper-radio-button#^0.4.0"
-  }
-}

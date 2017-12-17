@@ -1,0 +1,25 @@
+{
+  "name": "test-drive",
+  "authors": [
+    "The Polymer Authors"
+  ],
+  "private": true,
+  "dependencies": {
+    "app-layout": "polymerelements/app-layout#1 - 2",
+    "iron-iconset-svg": "polymerelements/iron-iconset-svg#1 - 2",
+    "paper-checkbox": "PolymerElements/paper-checkbox#1 - 2",
+    "paper-icon-button": "PolymerElements/paper-icon-button#1 - 2",
+    "polymer": "Polymer/polymer#1.9 - 2"
+  },
+  "variants": {
+    "1.x": {
+      "dependencies": {
+        "polymer": "polymer/polymer#^1.9"
+      },
+      "resolutions": {
+        "webcomponentsjs": "^0.7",
+        "polymer": "^1.9"
+      }
+    }
+  }
+}

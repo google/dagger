@@ -1,8 +1,0 @@
-{
-  "name": "core-drawer-panel",
-  "private": true,
-  "dependencies": {
-    "core-selector": "Polymer/core-selector#^0.4.0",
-    "core-media-query": "Polymer/core-media-query#^0.4.0"
-  }
-}

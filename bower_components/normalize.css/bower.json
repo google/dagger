@@ -1,13 +1,13 @@
 {
   "name": "normalize-css",
-  "version": "3.0.2",
+  "description": "A modern alternative to CSS resets",
   "main": "normalize.css",
-  "author": "Nicolas Gallagher",
+  "license": "MIT",
   "ignore": [
     "CHANGELOG.md",
     "CONTRIBUTING.md",
-    "component.json",
     "package.json",
+    "README.md",
     "test.html"
   ]
 }

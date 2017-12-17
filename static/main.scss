@@ -59,7 +59,8 @@ pre {
 
 nav {
   padding: 0 16px;
-  overflow-y: scroll;
+  height: 100%;
+  overflow-y: auto;
 }
 
 #fork-button {
@@ -69,6 +70,19 @@ nav {
   z-index: 1;
 }
 
-core-scaffold /deep/ core-toolbar {
+app-toolbar {
   background-color: $googblue500;
+}
+app-toolbar.main-toolbar {
+  height: 192px;
+  z-index: 0;
+}
+app-toolbar.condensed-toolbar {
+  height: 64px;
+  z-index: 1;
+}
+
+paper-item, paper-icon-item {
+  @include type-subhead1(dark);
+  white-space: nowrap;
 }

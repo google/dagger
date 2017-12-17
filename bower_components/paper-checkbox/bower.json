@@ -1,8 +1,0 @@
-{
-  "name": "paper-checkbox",
-  "private": true,
-  "dependencies": {
-    "font-roboto": "Polymer/font-roboto#^0.4.0",
-    "paper-radio-button": "Polymer/paper-radio-button#^0.4.0"
-  }
-}

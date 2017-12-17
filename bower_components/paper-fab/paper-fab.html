@@ -1,5 +1,6 @@
 <!--
-Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
 The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
@@ -7,160 +8,200 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<!--
-@group Paper Elements
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-behaviors/paper-button-behavior.html">
+<link rel="import" href="../paper-styles/element-styles/paper-material-styles.html">
+<link rel="import" href="../paper-styles/color.html">
+<link rel="import" href="../paper-styles/default-theme.html">
 
-Material Design: <a href="https://spec.googleplex.com/quantum/components/buttons.html">Button</a>
+<!--
+Material design: [Floating Action Button](https://www.google.com/design/spec/components/buttons-floating-action-button.html)
 
 `paper-fab` is a floating action button. It contains an image placed in the center and
-comes in two sizes: regular size and a smaller size by applying the class `mini`. When
+comes in two sizes: regular size and a smaller size by applying the attribute `mini`. When
 the user touches the button, a ripple effect emanates from the center of the button.
 
-You may import `core-icons` to use with this element, or provide an URL to a custom icon.
-See `core-iconset` for more information about how to use a custom icon set.
+You may import `iron-icons` to use with this element, or provide a URL to a custom icon.
+See `iron-iconset` for more information about how to use a custom icon set.
 
 Example:
 
-    <link href="path/to/core-icons/core-icons.html" rel="import">
+    <link href="path/to/iron-icons/iron-icons.html" rel="import">
 
     <paper-fab icon="add"></paper-fab>
     <paper-fab mini icon="favorite"></paper-fab>
     <paper-fab src="star.png"></paper-fab>
 
-Styling
--------
 
-Style the button with CSS as you would a normal DOM element. If you are using the icons
-provided by `core-icons`, the icon will inherit the foreground color of the button.
+### Styling
 
-    /* make a blue "cloud" button */
-    <paper-fab icon="cloud" style="color: blue;"></paper-fab>
+The following custom properties and mixins are available for styling:
 
-By default, the ripple is the same color as the foreground at 25% opacity. You may
-customize the color using this selector:
+Custom property | Description | Default
+----------------|-------------|----------
+`--paper-fab-background` | The background color of the button | `--accent-color`
+`--paper-fab-keyboard-focus-background` | The background color of the button when focused | `--paper-pink-900`
+`--paper-fab-disabled-background` | The background color of the button when it's disabled | `--paper-grey-300`
+`--paper-fab-disabled-text` | The text color of the button when it's disabled | `--paper-grey-500`
+`--paper-fab` | Mixin applied to the button | `{}`
+`--paper-fab-mini` | Mixin applied to a mini button | `{}`
+`--paper-fab-disabled` | Mixin applied to a disabled button | `{}`
+`--paper-fab-iron-icon` | Mixin applied to the iron-icon within the button | `{}`
+`--paper-fab-label` | Mixin applied to the label within the button | `{}`
 
-    /* make #my-button use a blue ripple instead of foreground color */
-    #my-button::shadow #ripple {
-      color: blue;
-    }
-
-The opacity of the ripple is not customizable via CSS.
-
-Accessibility
--------------
-
-The button is accessible by default if you use the `icon` property. By default, the
-`aria-label` attribute will be set to the `icon` property. If you use a custom icon,
-you should ensure that the `aria-label` attribute is set.
-
-    <paper-fab src="star.png" aria-label="star"></paper-fab>
-
-@element paper-fab
-@extends paper-button-base
-@status unstable
+@group Paper Elements
+@demo demo/index.html
 -->
 
-<link href="../polymer/polymer.html" rel="import">
-<link href="../paper-button/paper-button-base.html" rel="import">
-<link href="../paper-ripple/paper-ripple.html" rel="import">
-<link href="../paper-shadow/paper-shadow.html" rel="import">
-
-<polymer-element name="paper-fab" extends="paper-button-base" attributes="src icon mini" role="button">
-
-  <template>
-
-    <style>
+<dom-module id="paper-fab">
+  <template strip-whitespace>
+    <style include="paper-material-styles">
       :host {
-        display: inline-block;
-        position: relative;
+        @apply --layout-vertical;
+        @apply --layout-center-center;
+
+        background: var(--paper-fab-background, var(--accent-color));
+        border-radius: 50%;
+        box-sizing: border-box;
+        color: var(--text-primary-color);
+        cursor: pointer;
+        height: 56px;
+        min-width: 0;
         outline: none;
+        padding: 16px;
+        position: relative;
+        -moz-user-select: none;
+        -ms-user-select: none;
         -webkit-user-select: none;
         user-select: none;
-        cursor: pointer;
+        width: 56px;
         z-index: 0;
 
-        box-sizing: border-box;
-        width: 56px;
-        height: 56px;
-        background: #d23f31;
-        color: #fff;
-        border-radius: 50%;
-        padding: 16px;
+        /* NOTE: Both values are needed, since some phones require the value `transparent`. */
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-tap-highlight-color: transparent;
+
+        @apply --paper-fab;
+      }
+
+      [hidden] {
+        display: none !important;
       }
 
       :host([mini]) {
         width: 40px;
         height: 40px;
         padding: 8px;
+
+        @apply --paper-fab-mini;
       }
 
       :host([disabled]) {
-        color: #c9c9c9;
-        pointer-events: none;
-        cursor: auto;
+        color: var(--paper-fab-disabled-text, var(--paper-grey-500));
+        background: var(--paper-fab-disabled-background, var(--paper-grey-300));
+
+        @apply --paper-fab-disabled;
       }
 
-      #ripple {
-        pointer-events: none;
-        z-index: -1;
+      iron-icon {
+        @apply --paper-fab-iron-icon;
+      }
+
+      span {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+
+        @apply --paper-fab-label;
+      }
+
+      :host(.keyboard-focus) {
+        background: var(--paper-fab-keyboard-focus-background, var(--paper-pink-900));
+      }
+
+      :host([elevation="1"]) {
+        @apply --paper-material-elevation-1;
+      }
+
+      :host([elevation="2"]) {
+        @apply --paper-material-elevation-2;
+      }
+
+      :host([elevation="3"]) {
+        @apply --paper-material-elevation-3;
+      }
+
+      :host([elevation="4"]) {
+        @apply --paper-material-elevation-4;
+      }
+
+      :host([elevation="5"]) {
+        @apply --paper-material-elevation-5;
       }
     </style>
 
-    <template if="{{raised}}">
-      <paper-shadow id="shadow" z="{{z}}" animated></paper-shadow>
-    </template>
-
-    <!-- to position to ripple behind the icon -->
-    <core-icon relative id="icon" src="{{src}}" icon="{{icon}}"></core-icon>
-
+    <iron-icon id="icon" hidden$="{{!_computeIsIconFab(icon, src)}}" src="[[src]]" icon="[[icon]]"></iron-icon>
+    <span hidden$="{{_computeIsIconFab(icon, src)}}">{{label}}</span>
   </template>
 
   <script>
     Polymer({
+      is: 'paper-fab',
 
-      publish: {
+      behaviors: [
+        Polymer.PaperButtonBehavior
+      ],
 
+      properties: {
         /**
          * The URL of an image for the icon. If the src property is specified,
          * the icon property should not be.
-         *
-         * @attribute src
-         * @type string
-         * @default ''
          */
-        src: '',
+        src: {
+          type: String,
+          value: ''
+        },
 
         /**
          * Specifies the icon name or index in the set of icons available in
          * the icon's icon set. If the icon property is specified,
          * the src property should not be.
-         *
-         * @attribute icon
-         * @type string
-         * @default ''
          */
-        icon: '',
+        icon: {
+          type: String,
+          value: ''
+        },
 
         /**
          * Set this to true to style this is a "mini" FAB.
-         *
-         * @attribute mini
-         * @type boolean
-         * @default false
          */
-        mini: false,
+        mini: {
+          type: Boolean,
+          value: false,
+          reflectToAttribute: true
+        },
 
-        raised: true,
-        recenteringTouch: false,
-        fill: true
-
+        /**
+         * The label displayed in the badge. The label is centered, and ideally
+         * should have very few characters.
+         */
+        label: {
+          type: String,
+          observer: '_labelChanged'
+        }
       },
 
-      iconChanged: function(oldIcon) {
-        this.setAttribute('aria-label', this.icon);
+      _labelChanged: function() {
+        this.setAttribute('aria-label', this.label);
+      },
+
+      _computeIsIconFab: function(icon, src) {
+        return (icon.length > 0) || (src.length > 0);
       }
-
     });
-
   </script>
-</polymer-element>
+</dom-module>

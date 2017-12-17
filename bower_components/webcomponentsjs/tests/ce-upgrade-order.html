@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom Element Upgrade Order</title>
+  <script src="../webcomponents-loader.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="imports/import-upgrade-order.html">
+</head>
+<body>
+  <x-foo id="main"></x-foo>
+  <script>
+    suite('Custom Element upgrade', function() {
+      test('upgrade order', function() {
+        var order = [];
+        class XFoo extends HTMLElement {
+          connectedCallback() {
+            order.push(this.id);
+          }
+        }
+        window.customElements.define('x-foo', XFoo);
+        assert.deepEqual(order, ['import', 'main'], 'elements are upgraded in imports before main document');
+      });
+    });
+  </script>
+</body>
+</html>

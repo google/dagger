@@ -1,6 +1,0 @@
-{
-  "name": "core-input",
-  "dependencies": {
-    "polymer": "Polymer/polymer#^0.4.0"
-  }
-}

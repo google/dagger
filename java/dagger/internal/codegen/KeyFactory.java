@@ -38,6 +38,7 @@ import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
 import dagger.model.Key.MultibindingContributionIdentifier;
+import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;

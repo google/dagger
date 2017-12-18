@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
-import javax.inject.Scope;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -55,10 +54,6 @@ final class InjectionAnnotations {
 
   static ImmutableSet<? extends AnnotationMirror> getQualifiers(Element element) {
     return AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
-  }
-
-  static ImmutableSet<? extends AnnotationMirror> getScopes(Element element) {
-    return AnnotationMirrors.getAnnotatedAnnotations(element, Scope.class);
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */

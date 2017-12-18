@@ -18,20 +18,20 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
+import static dagger.internal.codegen.Scopes.getReadableSource;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
+import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -379,12 +379,12 @@ final class ErrorMessages {
             + "annotated with %s. The available reference-releasing scopes are %s.",
         formattedKey,
         topLevelGraph.componentType().getQualifiedName(),
-        scope.getReadableSource(),
+        getReadableSource(scope),
         topLevelGraph
             .componentDescriptor()
             .releasableReferencesScopes()
             .stream()
-            .map(Scope::getReadableSource)
+            .map(Scopes::getReadableSource)
             .collect(toList()));
   }
 
@@ -399,7 +399,7 @@ final class ErrorMessages {
       String formattedKey, Scope scope, TypeMirror metadataType) {
     return String.format(
         "There is no binding for %s because %s is not annotated with @%s.",
-        formattedKey, scope.getQualifiedName(), metadataType);
+        formattedKey, scope.scopeAnnotationElement().getQualifiedName(), metadataType);
   }
 
   /**
@@ -637,52 +637,9 @@ final class ErrorMessages {
     }
   }
 
-  /**
-   * A regular expression to match a small list of specific packages deemed to
-   * be unhelpful to display in fully qualified types in error messages.
-   *
-   * Note: This should never be applied to messages themselves.
-   */
-  private static final Pattern COMMON_PACKAGE_PATTERN = Pattern.compile(
-      "(?:^|[^.a-z_])"     // What we want to match on but not capture.
-      + "((?:"             // Start a group with a non-capturing or part
-      + "java[.]lang"
-      + "|java[.]util"
-      + "|javax[.]inject"
-      + "|dagger"
-      + "|com[.]google[.]common[.]base"
-      + "|com[.]google[.]common[.]collect"
-      + ")[.])"            // Always end with a literal .
-      + "[A-Z]");           // What we want to match on but not capture.
-
-  /**
-   * A method to strip out common packages and a few rare type prefixes
-   * from types' string representation before being used in error messages.
-   *
-   * This type assumes a String value that is a valid fully qualified
-   * (and possibly parameterized) type, and should NOT be used with
-   * arbitrary text, especially prose error messages.
-   *
-   * TODO(cgruber): Tighten these to take type representations (mirrors
-   *     and elements) to avoid accidental mis-use by running errors
-   *     through this method.
-   */
-  static String stripCommonTypePrefixes(String type) {
-    // Do regex magic to remove common packages we care to shorten.
-    Matcher matcher = COMMON_PACKAGE_PATTERN.matcher(type);
-    StringBuilder result = new StringBuilder();
-    int index = 0;
-    while (matcher.find()) {
-      result.append(type.subSequence(index, matcher.start(1)));
-      index = matcher.end(1); // Skip the matched pattern content.
-    }
-    result.append(type.subSequence(index, type.length()));
-    return result.toString();
-  }
-
   //TODO(cgruber): Extract Formatter and do something less stringy.
   static String format(AnnotationMirror annotation) {
-    return stripCommonTypePrefixes(annotation.toString());
+    return DiagnosticFormatting.stripCommonTypePrefixes(annotation.toString());
   }
 
   private ErrorMessages() {}

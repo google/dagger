@@ -22,8 +22,8 @@ import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueCannotReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueNotAScope;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
-import static dagger.internal.codegen.Scope.isScope;
-import static dagger.internal.codegen.Scope.scope;
+import static dagger.internal.codegen.Scopes.scope;
+import static dagger.model.Scope.isScope;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreTypes;

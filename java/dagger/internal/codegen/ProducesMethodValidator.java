@@ -25,6 +25,7 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.Scopes.scopesOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -75,7 +76,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
 
   /** Adds an error if a {@link Produces @Produces} method has a scope annotation. */
   private void checkScope(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!Scope.scopesOf(builder.getSubject()).isEmpty()) {
+    if (!scopesOf(builder.getSubject()).isEmpty()) {
       builder.addError(PRODUCES_METHOD_SCOPE);
     }
   }

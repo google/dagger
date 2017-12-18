@@ -32,6 +32,7 @@ import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.Keys.HasKey;
 import dagger.model.Key;
+import dagger.model.Scope;
 import java.util.Optional;
 
 /**

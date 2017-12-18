@@ -30,6 +30,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import dagger.model.Scope;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -37,6 +37,7 @@ import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapK
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_INJECT_WILDCARD_TYPE;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
@@ -59,12 +60,12 @@ import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
-import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
-import static dagger.internal.codegen.Scope.reusableScope;
-import static dagger.internal.codegen.Scope.scopesOf;
+import static dagger.internal.codegen.Scopes.getReadableSource;
+import static dagger.internal.codegen.Scopes.scopesOf;
+import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.stream.Collectors.groupingBy;
@@ -98,6 +99,7 @@ import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
@@ -292,7 +294,7 @@ final class BindingGraphValidator {
       ImmutableSet<Scope> scopes = descriptor.scopes();
       ImmutableSet<TypeElement> scopedDependencies = scopedTypesIn(descriptor.dependencies());
       if (!scopes.isEmpty()) {
-        Scope singletonScope = Scope.singletonScope(elements);
+        Scope singletonScope = singletonScope(elements);
         // Dagger 1.x scope compatibility requires this be suppress-able.
         if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()
             && scopes.contains(singletonScope)) {
@@ -313,7 +315,7 @@ final class BindingGraphValidator {
           // Scoped components may depend on at most one scoped component.
           StringBuilder message = new StringBuilder();
           for (Scope scope : scopes) {
-            message.append(scope.getReadableSource()).append(' ');
+            message.append(getReadableSource(scope)).append(' ');
           }
           message
               .append(descriptor.componentDefinitionType().getQualifiedName())
@@ -457,7 +459,7 @@ final class BindingGraphValidator {
         TypeElement dependency,
         Deque<ImmutableSet<Scope>> scopeStack,
         Deque<TypeElement> scopedDependencyStack) {
-      ImmutableSet<Scope> scopes = Scope.scopesOf(dependency);
+      ImmutableSet<Scope> scopes = scopesOf(dependency);
       if (stackOverlaps(scopeStack, scopes)) {
         scopedDependencyStack.push(dependency);
         // Current scope has already appeared in the component chain.
@@ -514,7 +516,7 @@ final class BindingGraphValidator {
     private void checkBindingScope(
         ContributionBinding binding, ComponentDescriptor owningComponent) {
       if (binding.scope().isPresent()
-          && !binding.scope().get().equals(reusableScope(elements))
+          && !binding.scope().get().isReusable()
           && !owningComponent.scopes().contains(binding.scope().get())) {
         incompatiblyScopedBindings.put(owningComponent, binding);
       }
@@ -534,7 +536,7 @@ final class BindingGraphValidator {
       if (!graph.componentDescriptor().scopes().isEmpty()) {
         message.append(" scoped with ");
         for (Scope scope : graph.componentDescriptor().scopes()) {
-          message.append(scope.getReadableSource()).append(' ');
+          message.append(getReadableSource(scope)).append(' ');
         }
         message.append("may not reference bindings with different scopes:\n");
       } else {
@@ -554,7 +556,7 @@ final class BindingGraphValidator {
 
           case INJECTION:
             message
-                .append(binding.scope().get().getReadableSource())
+                .append(getReadableSource(binding.scope().get()))
                 .append(" class ")
                 .append(binding.bindingTypeElement().get().getQualifiedName());
             break;
@@ -954,7 +956,7 @@ final class BindingGraphValidator {
         }
 
         Scope scope =
-            Scope.scope(MoreTypes.asTypeElement(getTypeValue(key.qualifier().get(), "value")));
+            Scopes.scope(MoreTypes.asTypeElement(getTypeValue(key.qualifier().get(), "value")));
         String missingRequestKey = formatCurrentDependencyRequestKey();
         if (!rootGraph.componentDescriptor().releasableReferencesScopes().contains(scope)) {
           reportErrorAtEntryPoint(
@@ -1200,8 +1202,8 @@ final class BindingGraphValidator {
   private void appendIndentedComponentsList(StringBuilder message, Iterable<TypeElement> types) {
     for (TypeElement scopedComponent : types) {
       message.append(INDENT);
-      for (Scope scope : Scope.scopesOf(scopedComponent)) {
-        message.append(scope.getReadableSource()).append(' ');
+      for (Scope scope : scopesOf(scopedComponent)) {
+        message.append(getReadableSource(scope)).append(' ');
       }
       message.append(stripCommonTypePrefixes(scopedComponent.getQualifiedName().toString()))
           .append('\n');

@@ -18,9 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Functions.constant;
 import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
+import static dagger.internal.codegen.Scopes.getReadableSource;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Predicate;
@@ -31,19 +31,17 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.Scope;
 import java.util.Map;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.Elements;
 
 /** Validates the relationships between parent components and subcomponents. */
 final class ComponentHierarchyValidator {
   private final CompilerOptions compilerOptions;
-  private final Elements elements;
 
-  ComponentHierarchyValidator(CompilerOptions compilerOptions, Elements elements) {
+  ComponentHierarchyValidator(CompilerOptions compilerOptions) {
     this.compilerOptions = compilerOptions;
-    this.elements = elements;
   }
 
   ValidationReport<TypeElement> validate(ComponentDescriptor componentDescriptor) {
@@ -120,7 +118,7 @@ final class ComponentHierarchyValidator {
     Predicate<Scope> subjectScopes =
         subject.kind().isProducer()
             // TODO(beder): validate that @ProductionScope is only applied on production components
-            ? and(in(subject.scopes()), not(equalTo(Scope.productionScope(elements))))
+            ? and(in(subject.scopes()), not(Scope::isProductionScope))
             : in(subject.scopes());
     SetMultimap<ComponentDescriptor, Scope> overlappingScopes =
         Multimaps.filterValues(scopesByComponent, subjectScopes);
@@ -134,7 +132,7 @@ final class ComponentHierarchyValidator {
         error.append("\n  ")
             .append(entry.getKey().componentDefinitionType().getQualifiedName())
             .append(" also has ")
-            .append(scope.getReadableSource());
+            .append(getReadableSource(scope));
       }
       report.addItem(
           error.toString(),

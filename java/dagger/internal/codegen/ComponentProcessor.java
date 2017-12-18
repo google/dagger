@@ -196,7 +196,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     CanReleaseReferencesValidator canReleaseReferencesValidator =
         new CanReleaseReferencesValidator();
     ComponentHierarchyValidator componentHierarchyValidator =
-        new ComponentHierarchyValidator(compilerOptions, elements);
+        new ComponentHierarchyValidator(compilerOptions);
     BindingGraphValidator bindingGraphValidator =
         new BindingGraphValidator(
             elements,

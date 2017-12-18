@@ -27,7 +27,6 @@ import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBO
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Keys.indexByKey;
-import static dagger.internal.codegen.Scope.reusableScope;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -53,6 +52,7 @@ import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.internal.codegen.Keys.HasKey;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -794,7 +794,7 @@ abstract class BindingGraph {
       }
 
       private Optional<Resolver> getOwningResolver(ContributionBinding binding) {
-        if (binding.scope().isPresent() && binding.scope().get().equals(reusableScope(elements))) {
+        if (binding.scope().isPresent() && binding.scope().get().isReusable()) {
           for (Resolver requestResolver : getResolverLineage().reverse()) {
             // If a @Reusable binding was resolved in an ancestor, use that component.
             if (requestResolver.resolvedBindings.containsKey(
@@ -1095,8 +1095,7 @@ abstract class BindingGraph {
         }
 
         private boolean dependsOnLocalBindingsUncached(Binding binding) {
-          if ((!binding.scope().isPresent()
-                  || binding.scope().get().equals(reusableScope(elements)))
+          if ((!binding.scope().isPresent() || binding.scope().get().isReusable())
               // TODO(beder): Figure out what happens with production subcomponents.
               && !binding.bindingType().equals(BindingType.PRODUCTION)) {
             for (DependencyRequest dependency : binding.dependencies()) {

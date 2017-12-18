@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
+import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 
 import com.google.auto.common.MoreElements;

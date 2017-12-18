@@ -28,6 +28,8 @@ import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBui
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
+import static dagger.internal.codegen.Scopes.productionScope;
+import static dagger.internal.codegen.Scopes.scopesOf;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -50,6 +52,7 @@ import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.model.Scope;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -564,9 +567,9 @@ abstract class ComponentDescriptor {
           Optional.ofNullable(getOnlyElement(enclosedBuilders, null));
       Optional<BuilderSpec> builderSpec = createBuilderSpec(builderType);
 
-      ImmutableSet<Scope> scopes = Scope.scopesOf(componentDefinitionType);
+      ImmutableSet<Scope> scopes = scopesOf(componentDefinitionType);
       if (kind.isProducer()) {
-        scopes = FluentIterable.from(scopes).append(Scope.productionScope(elements)).toSet();
+        scopes = FluentIterable.from(scopes).append(productionScope(elements)).toSet();
       }
 
       return new AutoValue_ComponentDescriptor(

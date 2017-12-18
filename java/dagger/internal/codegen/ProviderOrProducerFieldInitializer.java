@@ -62,6 +62,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.InstanceFactory;
 import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.model.Key;
+import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -576,7 +577,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
   private Scope forReleasableReferencesAnnotationValue(AnnotationMirror annotation) {
     checkArgument(
         MoreTypes.isTypeOf(ForReleasableReferences.class, annotation.getAnnotationType()));
-    return Scope.scope(
+    return Scopes.scope(
         MoreElements.asType(MoreTypes.asDeclared(getTypeValue(annotation, "value")).asElement()));
   }
 

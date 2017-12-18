@@ -69,6 +69,7 @@ java_library(
         "DaggerElements.java",
         "DaggerStreams.java",
         "DaggerTypes.java",
+        "DiagnosticFormatting.java",
         "Expression.java",
         "FeatureStatus.java",
         "ForwardingNetwork.java",
@@ -84,6 +85,7 @@ java_library(
         "OptionalType.java",
         "Optionals.java",
         "RequestKinds.java",
+        "Scopes.java",
         "SetType.java",
         "SimpleAnnotationMirror.java",
         "SimpleTypeAnnotationValue.java",
@@ -137,7 +139,6 @@ java_library(
         "ProductionBinding.java",
         "ProvisionBinding.java",
         "ResolvedBindings.java",
-        "Scope.java",
         "SourceFiles.java",  # Consider splitting this up?
         "SubcomponentDeclaration.java",
     ],

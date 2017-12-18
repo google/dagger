@@ -26,6 +26,6 @@ import org.junit.runners.JUnit4;
 public class ErrorMessagesTest {
   @Test public void stripCommonTypePrefixes() {
     String typeName = "com.google.common.collect.ImmutableList<java.lang.Boolean>";
-    assertThat(ErrorMessages.stripCommonTypePrefixes(typeName)).isEqualTo("ImmutableList<Boolean>");
+    assertThat(DiagnosticFormatting.stripCommonTypePrefixes(typeName)).isEqualTo("ImmutableList<Boolean>");
   }
 }

@@ -31,6 +31,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.model.Key;
+import dagger.model.Scope;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;

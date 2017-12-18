@@ -25,6 +25,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.internal.codegen.Scopes.uniqueScopeOf;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -41,6 +42,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -200,7 +202,7 @@ abstract class ProvisionBinding extends ContributionBinding {
               .provisionDependencies(provisionDependencies)
               .injectionSites(injectionSites)
               .bindingKind(Kind.INJECTION)
-              .scope(Scope.uniqueScopeOf(constructorElement.getEnclosingElement()));
+              .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
       TypeElement bindingTypeElement =
           MoreElements.asType(constructorElement.getEnclosingElement());
@@ -230,7 +232,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .nullableType(ConfigurationAnnotations.getNullableType(providesMethod))
           .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(providesMethod)))
           .bindingKind(Kind.PROVISION)
-          .scope(Scope.uniqueScopeOf(providesMethod))
+          .scope(uniqueScopeOf(providesMethod))
           .build();
     }
 
@@ -281,7 +283,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .key(keyFactory.forComponentMethod(componentMethod))
           .nullableType(ConfigurationAnnotations.getNullableType(componentMethod))
           .bindingKind(Kind.COMPONENT_PROVISION)
-          .scope(Scope.uniqueScopeOf(componentMethod))
+          .scope(uniqueScopeOf(componentMethod))
           .build();
     }
 
@@ -348,7 +350,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .provisionDependencies(delegateDeclaration.delegateRequest())
           .wrappedMapKey(delegateDeclaration.wrappedMapKey())
           .bindingKind(Kind.SYNTHETIC_DELEGATE_BINDING)
-          .scope(Scope.uniqueScopeOf(delegateDeclaration.bindingElement().get()));
+          .scope(uniqueScopeOf(delegateDeclaration.bindingElement().get()));
     }
 
     /**

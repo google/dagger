@@ -25,7 +25,6 @@ import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrateg
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRIVATE_METHOD;
 import static dagger.internal.codegen.RequestKinds.requestType;
-import static dagger.internal.codegen.Scope.reusableScope;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -39,6 +38,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.MemoizedSentinel;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -208,7 +208,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       case INSTANCE:
         if (canInlineScope()) {
           Scope scope = resolvedBindings().scope().get();
-          return scope.equals(reusableScope(elements)) ? singleCheck() : doubleCheck();
+          return scope.isReusable() ? singleCheck() : doubleCheck();
         }
         // fall through
       default:

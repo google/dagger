@@ -20,10 +20,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.RequestKinds.requestType;
-import static dagger.internal.codegen.Scope.reusableScope;
 
 import com.squareup.javapoet.ClassName;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -128,7 +128,7 @@ final class DelegateBindingExpression extends BindingExpression {
       if (graph.scopesRequiringReleasableReferenceManagers().contains(scope)) {
         return RELEASABLE;
       }
-      return scope.equals(reusableScope(elements)) ? SINGLE_CHECK : DOUBLE_CHECK;
+      return scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK;
     }
 
     boolean isSimilarOrWeakerScopeThan(ScopeKind other) {

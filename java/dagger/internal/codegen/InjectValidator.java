@@ -37,8 +37,8 @@ import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_FIELD;
 import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_METHOD;
 import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
-import static dagger.internal.codegen.InjectionAnnotations.getScopes;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
+import static dagger.internal.codegen.Scopes.scopesOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -48,6 +48,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import dagger.model.Scope;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -112,8 +113,8 @@ final class InjectValidator {
       builder.addError(QUALIFIER_ON_INJECT_CONSTRUCTOR, constructorElement, qualifier);
     }
 
-    for (AnnotationMirror scope : getScopes(constructorElement)) {
-      builder.addError(SCOPE_ON_INJECT_CONSTRUCTOR, constructorElement, scope);
+    for (Scope scope : scopesOf(constructorElement)) {
+      builder.addError(SCOPE_ON_INJECT_CONSTRUCTOR, constructorElement, scope.scopeAnnotation());
     }
 
     for (VariableElement parameter : constructorElement.getParameters()) {
@@ -164,10 +165,10 @@ final class InjectValidator {
       builder.addError(MULTIPLE_INJECT_CONSTRUCTORS, constructorElement);
     }
 
-    ImmutableSet<? extends AnnotationMirror> scopes = getScopes(enclosingElement);
+    ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
     if (scopes.size() > 1) {
-      for (AnnotationMirror scope : scopes) {
-        builder.addError(MULTIPLE_SCOPES, enclosingElement, scope);
+      for (Scope scope : scopes) {
+        builder.addError(MULTIPLE_SCOPES, enclosingElement, scope.scopeAnnotation());
       }
     }
 

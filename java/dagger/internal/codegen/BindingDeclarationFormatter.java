@@ -21,7 +21,7 @@ import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGER;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS;
-import static dagger.internal.codegen.ErrorMessages.stripCommonTypePrefixes;
+import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;

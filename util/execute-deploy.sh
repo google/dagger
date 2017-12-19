@@ -75,7 +75,7 @@ deploy_library \
   dagger-producers.pom.xml
 
 deploy_library \
-  java/dagger/model/libmodel.jar \
+  shaded_spi.jar \
   java/dagger/model/libmodel-src.jar \
   java/dagger/model/model-javadoc.jar \
   dagger-spi.pom.xml

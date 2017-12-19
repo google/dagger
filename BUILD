@@ -69,6 +69,15 @@ jarjar_library(
 )
 
 jarjar_library(
+    name = "shaded_spi",
+    rules_file = "shade_rules.txt",
+    deps = [
+        "//java/dagger/model",
+        "@com_google_auto_auto_common//jar",
+    ],
+)
+
+jarjar_library(
     name = "shaded_compiler_src",
     rules_file = "merge_all_rules.txt",
     deps = [

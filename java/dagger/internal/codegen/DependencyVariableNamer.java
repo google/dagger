@@ -16,8 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
 import dagger.Lazy;
@@ -39,10 +40,10 @@ final class DependencyVariableNamer {
   private static final Pattern LAZY_PROVIDER_PATTERN = Pattern.compile("lazy(\\w+)Provider");
 
   static String name(DependencyRequest dependency) {
-    if (dependency.overriddenVariableName().isPresent()) {
-      return dependency.overriddenVariableName().get();
+    if (!dependency.requestElement().isPresent()) {
+      return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type()));
     }
-    checkArgument(dependency.requestElement().isPresent());
+
     String variableName = dependency.requestElement().get().getSimpleName().toString();
     if (Ascii.isUpperCase(variableName.charAt(0))) {
       variableName = toLowerCamel(variableName);

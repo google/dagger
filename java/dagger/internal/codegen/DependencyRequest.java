@@ -108,12 +108,6 @@ abstract class DependencyRequest {
   /** Returns true if this request allows null objects. */
   abstract boolean isNullable();
 
-  /**
-   * An optional name for this request when it's referred to in generated code. If empty, it will
-   * use a name derived from {@link #requestElement}.
-   */
-  abstract Optional<String> overriddenVariableName();
-
   private static DependencyRequest.Builder builder() {
     return new AutoValue_DependencyRequest.Builder().isNullable(false);
   }
@@ -223,8 +217,6 @@ abstract class DependencyRequest {
 
     abstract Builder isNullable(boolean isNullable);
 
-    abstract Builder overriddenVariableName(Optional<String> overriddenVariableName);
-
     @CheckReturnValue
     abstract DependencyRequest build();
   }
@@ -250,20 +242,6 @@ abstract class DependencyRequest {
         builder.add(forRequiredResolvedVariable(variables.get(i), resolvedTypes.get(i)));
       }
       return builder.build();
-    }
-
-    /**
-     * Creates a implicit {@link DependencyRequest} for a {@link Provider} of {@code
-     * mapOfFactoryKey}.
-     *
-     * @param mapOfFactoryKey a key equivalent to {@code mapOfValueRequest}'s key, whose type is
-     *     {@code Map<K, Provider<V>>} or {@code Map<K, Producer<V>>}
-     */
-    DependencyRequest providerForImplicitMapBinding(Key mapOfFactoryKey) {
-      return DependencyRequest.builder()
-          .kind(PROVIDER)
-          .key(mapOfFactoryKey)
-          .build();
     }
 
     /**
@@ -320,23 +298,12 @@ abstract class DependencyRequest {
       }
     }
 
-    DependencyRequest forRequiredVariable(VariableElement variableElement) {
-      return forRequiredVariable(variableElement, Optional.empty());
-    }
-
-    DependencyRequest forRequiredVariable(VariableElement variableElement, Optional<String> name) {
-      checkNotNull(variableElement);
-      TypeMirror type = variableElement.asType();
-      Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(variableElement);
-      return newDependencyRequest(variableElement, type, qualifier, name);
-    }
-
     DependencyRequest forRequiredResolvedVariable(
         VariableElement variableElement, TypeMirror resolvedType) {
       checkNotNull(variableElement);
       checkNotNull(resolvedType);
       Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(variableElement);
-      return newDependencyRequest(variableElement, resolvedType, qualifier, Optional.empty());
+      return newDependencyRequest(variableElement, resolvedType, qualifier);
     }
 
     DependencyRequest forComponentProvisionMethod(ExecutableElement provisionMethod,
@@ -348,8 +315,7 @@ abstract class DependencyRequest {
           "Component provision methods must be empty: %s",
           provisionMethod);
       Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(provisionMethod);
-      return newDependencyRequest(
-          provisionMethod, provisionMethodType.getReturnType(), qualifier, Optional.empty());
+      return newDependencyRequest(provisionMethod, provisionMethodType.getReturnType(), qualifier);
     }
 
     DependencyRequest forComponentProductionMethod(ExecutableElement productionMethod,
@@ -370,7 +336,7 @@ abstract class DependencyRequest {
             .requestElement(productionMethod)
             .build();
       } else {
-        return newDependencyRequest(productionMethod, type, qualifier, Optional.empty());
+        return newDependencyRequest(productionMethod, type, qualifier);
       }
     }
 
@@ -403,12 +369,9 @@ abstract class DependencyRequest {
     }
 
     DependencyRequest forProductionComponentMonitor() {
-      Key key = keyFactory.forProductionComponentMonitor();
       return DependencyRequest.builder()
           .kind(PROVIDER)
-          .key(key)
-          .requestElement(MoreTypes.asElement(key.type()))
-          .overriddenVariableName(Optional.of("monitor"))
+          .key(keyFactory.forProductionComponentMonitor())
           .build();
     }
 
@@ -432,8 +395,7 @@ abstract class DependencyRequest {
     private DependencyRequest newDependencyRequest(
         Element requestElement,
         TypeMirror type,
-        Optional<AnnotationMirror> qualifier,
-        Optional<String> name) {
+        Optional<AnnotationMirror> qualifier) {
       KindAndType kindAndType = extractKindAndType(type);
       if (kindAndType.kind().equals(MEMBERS_INJECTOR)) {
         checkArgument(!qualifier.isPresent());
@@ -443,7 +405,6 @@ abstract class DependencyRequest {
           .key(keyFactory.forQualifiedType(qualifier, kindAndType.type()))
           .requestElement(requestElement)
           .isNullable(allowsNull(kindAndType.kind(), getNullableType(requestElement)))
-          .overriddenVariableName(name)
           .build();
     }
 

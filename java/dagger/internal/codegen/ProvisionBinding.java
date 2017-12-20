@@ -140,13 +140,13 @@ abstract class ProvisionBinding extends ContributionBinding {
   }
 
   static final class Factory {
-    private final Types types;
+    private final DaggerTypes types;
     private final KeyFactory keyFactory;
     private final DependencyRequest.Factory dependencyRequestFactory;
     private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
 
     Factory(
-        Types types,
+        DaggerTypes types,
         KeyFactory keyFactory,
         DependencyRequest.Factory dependencyRequestFactory,
         MembersInjectionBinding.Factory membersInjectionBindingFactory) {
@@ -418,6 +418,18 @@ abstract class ProvisionBinding extends ContributionBinding {
           .toBuilder()
           .provisionDependencies(
               dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, kind))
+          .build();
+    }
+
+    /** Returns a binding for a {@link dagger.MembersInjector} wrapper type. */
+    ProvisionBinding forMembersInjector(Key key, MembersInjectionBinding membersInjectionBinding) {
+      return ProvisionBinding.builder()
+          .key(key)
+          .contributionType(ContributionType.UNIQUE)
+          .bindingKind(Kind.MEMBERS_INJECTOR)
+          .bindingElement(MoreTypes.asTypeElement(membersInjectionBinding.key().type()))
+          .provisionDependencies(membersInjectionBinding.dependencies())
+          .injectionSites(membersInjectionBinding.injectionSites())
           .build();
     }
   }

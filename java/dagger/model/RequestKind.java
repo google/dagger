@@ -17,7 +17,6 @@
 package dagger.model;
 
 import dagger.Lazy;
-import dagger.MembersInjector;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import javax.inject.Provider;
@@ -42,8 +41,11 @@ public enum RequestKind {
   /** A request for a {@link Provider} of a {@link Lazy}. E.g.: {@code Provider<Lazy<FooType>>} */
   PROVIDER_OF_LAZY,
 
-  /** A request for a {@link MembersInjector}. E.g.: {@code MembersInjector<FooType>} */
-  MEMBERS_INJECTOR,
+  /**
+   * A request for a members injection. E.g. {@code void inject(FooType);}. Can only be requested by
+   * component interfaces.
+   */
+  MEMBERS_INJECTION,
 
   /** A request for a {@link Producer}. E.g.: {@code Producer<FooType>} */
   PRODUCER,

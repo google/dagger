@@ -61,9 +61,6 @@ abstract class FrameworkDependency {
       case PRODUCTION:
         return RequestKind.PRODUCER;
 
-      case MEMBERS_INJECTION:
-        return RequestKind.MEMBERS_INJECTOR;
-
       default:
         throw new AssertionError(bindingType());
     }

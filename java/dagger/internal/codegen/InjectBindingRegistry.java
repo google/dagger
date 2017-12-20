@@ -44,6 +44,12 @@ interface InjectBindingRegistry {
    */
   Optional<MembersInjectionBinding> getOrFindMembersInjectionBinding(Key key);
 
+  /**
+   * Returns a {@link ProvisionBinding} for a {@link dagger.MembersInjector} of {@code key}. If none
+   * has been registered yet, registers one.
+   */
+  Optional<ProvisionBinding> getOrFindMembersInjectorProvisionBinding(Key key);
+
   @CanIgnoreReturnValue
   Optional<ProvisionBinding> tryRegisterConstructor(ExecutableElement constructorElement);
 

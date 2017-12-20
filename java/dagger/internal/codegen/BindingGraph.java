@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreTypes.isType;
+import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
@@ -45,6 +47,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
+import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
@@ -520,8 +523,8 @@ abstract class BindingGraph {
             ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
                 optionalBindingDeclarationsBuilder.build();
 
-            ImmutableSet.Builder<Optional<ContributionBinding>> maybeContributionBindings =
-                ImmutableSet.builder();
+            ImmutableSet.Builder<Optional<? extends ContributionBinding>>
+                maybeContributionBindings = ImmutableSet.builder();
             maybeContributionBindings.add(
                 syntheticMultibinding(
                     requestKey, multibindingContributions, multibindingDeclarations));
@@ -538,9 +541,12 @@ abstract class BindingGraph {
              * one. */
             if (contributionBindings.isEmpty()) {
               maybeContributionBindings.add(
-                  injectBindingRegistry
-                      .getOrFindProvisionBinding(requestKey)
-                      .map((ContributionBinding b) -> b));
+                  injectBindingRegistry.getOrFindProvisionBinding(requestKey));
+            }
+
+            if (isType(requestKey.type()) && isTypeOf(MembersInjector.class, requestKey.type())) {
+              maybeContributionBindings.add(
+                  injectBindingRegistry.getOrFindMembersInjectorProvisionBinding(requestKey));
             }
 
             maybeContributionBindings

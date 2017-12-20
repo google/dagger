@@ -25,46 +25,38 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.RequestKind;
-import java.util.List;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 
-/** A binding expression for members injection bindings. */
+/**
+ * A binding expression for members injection component methods. See {@link
+ * MembersInjectionMethods}.
+ */
 final class MembersInjectionBindingExpression extends BindingExpression {
-  private final FrameworkInstanceBindingExpression membersInjectorExpression;
-  private final GeneratedComponentModel generatedComponentModel;
   private final MembersInjectionBinding binding;
   private final MembersInjectionMethods membersInjectionMethods;
 
   MembersInjectionBindingExpression(
-      FrameworkInstanceBindingExpression membersInjectorExpression,
-      GeneratedComponentModel generatedComponentModel,
-      MembersInjectionMethods membersInjectionMethods) {
-    super(membersInjectorExpression.resolvedBindings(), membersInjectorExpression.requestKind());
+      ResolvedBindings resolvedBindings, MembersInjectionMethods membersInjectionMethods) {
+    super(resolvedBindings, RequestKind.MEMBERS_INJECTION);
     checkArgument(bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
-    checkArgument(requestKind().equals(RequestKind.MEMBERS_INJECTOR));
-    this.membersInjectorExpression = membersInjectorExpression;
-    this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings().membersInjectionBinding().get();
     this.membersInjectionMethods = membersInjectionMethods;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    return membersInjectorExpression.getDependencyExpression(requestingClass);
+    throw new UnsupportedOperationException(binding.toString());
   }
 
+  // TODO(ronshapiro): This class doesn't need to be a BindingExpression, as
+  // getDependencyExpression() should never be called for members injection methods. It's probably
+  // better suited as a method on MembersInjectionMethods
   @Override
   protected CodeBlock doGetComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
     ExecutableElement methodElement = componentMethod.methodElement();
-    List<? extends VariableElement> parameters = methodElement.getParameters();
-    if (parameters.isEmpty() /* i.e. it's a request for a MembersInjector<T> */) {
-      return membersInjectorExpression.getComponentMethodImplementation(
-          componentMethod, generatedComponentModel.name());
-    }
+    ParameterSpec parameter = ParameterSpec.get(getOnlyElement(methodElement.getParameters()));
 
-    ParameterSpec parameter = ParameterSpec.get(getOnlyElement(parameters));
     if (binding.injectionSites().isEmpty()) {
       return methodElement.getReturnType().getKind().equals(VOID)
           ? CodeBlock.of("")

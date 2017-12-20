@@ -65,10 +65,6 @@ final class DependencyVariableNamer {
         return variableName.endsWith("Provider") && !variableName.equals("Provider")
             ? variableName.substring(0, variableName.length() - 8)
             : variableName;
-      case MEMBERS_INJECTOR:
-        return variableName.endsWith("MembersInjector") && !variableName.equals("MembersInjector")
-            ? variableName.substring(0, variableName.length() - 15)
-            : variableName;
       case PRODUCED:
         return variableName.startsWith("produced") && !variableName.equals("produced")
             ? toLowerCamel(variableName.substring(8))

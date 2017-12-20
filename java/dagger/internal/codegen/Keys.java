@@ -48,7 +48,9 @@ final class Keys {
   }
 
   static boolean isValidMembersInjectionKey(Key key) {
-    return !key.qualifier().isPresent() && key.type().getKind().equals(TypeKind.DECLARED);
+    return !key.qualifier().isPresent()
+        && !key.multibindingContributionIdentifier().isPresent()
+        && key.type().getKind().equals(TypeKind.DECLARED);
   }
 
   /**

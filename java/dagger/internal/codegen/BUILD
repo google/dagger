@@ -213,7 +213,6 @@ java_library(
         "MemberSelect.java",
         "MembersInjectionBindingExpression.java",
         "MembersInjectionMethods.java",
-        "MembersInjectorFieldInitializer.java",
         "MembersInjectorGenerator.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",

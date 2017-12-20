@@ -128,6 +128,9 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     /** An instance of a {@linkplain Component#dependencies() dependency}. */
     COMPONENT_DEPENDENCY,
 
+    /** A binding for a {@link dagger.MembersInjector} of a type. */
+    MEMBERS_INJECTOR,
+
     /**
      * A subcomponent builder method on a component or subcomponent.
      */

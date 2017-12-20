@@ -30,6 +30,7 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.ContributionBinding.Kind.MEMBERS_INJECTOR;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
@@ -129,13 +130,12 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor8;
-import javax.lang.model.util.Types;
 
 /** Reports errors in the shape of the binding graph. */
 final class BindingGraphValidator {
 
   private final Elements elements;
-  private final Types types;
+  private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final InjectValidator injectValidator;
   private final InjectBindingRegistry injectBindingRegistry;
@@ -146,7 +146,7 @@ final class BindingGraphValidator {
 
   BindingGraphValidator(
       Elements elements,
-      Types types,
+      DaggerTypes types,
       CompilerOptions compilerOptions,
       InjectValidator injectValidator,
       InjectBindingRegistry injectBindingRegistry,
@@ -654,6 +654,8 @@ final class BindingGraphValidator {
         }
         if (binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP)) {
           validateMapKeys(binding, owningComponent);
+        } else if (binding.bindingKind().equals(MEMBERS_INJECTOR)) {
+          validateMembersInjectionType(binding);
         }
         super.visitContributionBinding(binding, owningComponent);
       }
@@ -661,7 +663,7 @@ final class BindingGraphValidator {
       @Override
       protected void visitMembersInjectionBinding(
           MembersInjectionBinding binding, ComponentDescriptor owningComponent) {
-        validateMembersInjectionBinding(binding);
+        validateMembersInjectionType(binding);
         super.visitMembersInjectionBinding(binding, owningComponent);
       }
 
@@ -779,21 +781,26 @@ final class BindingGraphValidator {
 
       /** Reports errors if a members injection binding is invalid. */
       // TODO(dpb): Can this be done while validating @Inject?
-      private void validateMembersInjectionBinding(MembersInjectionBinding binding) {
-        binding.key().type().accept(membersInjectionBindingValidator, binding);
+      private void validateMembersInjectionType(Binding binding) {
+        TypeMirror type =
+            binding.bindingType().equals(BindingType.MEMBERS_INJECTION)
+                ? binding.key().type()
+                : types.unwrapType(binding.key().type());
+        type.accept(membersInjectionBindingValidator, binding);
       }
 
-      private final TypeVisitor<Void, MembersInjectionBinding> membersInjectionBindingValidator =
-          new SimpleTypeVisitor8<Void, MembersInjectionBinding>() {
+      private final TypeVisitor<Void, Binding> membersInjectionBindingValidator =
+          new SimpleTypeVisitor8<Void, Binding>() {
             @Override
-            protected Void defaultAction(TypeMirror e, MembersInjectionBinding p) {
+            protected Void defaultAction(TypeMirror e, Binding binding) {
               report(currentGraph())
-                  .addError("Invalid members injection request.", p.membersInjectedType());
+                  .addError(
+                      "Invalid members injection request.", binding.bindingTypeElement().get());
               return null;
             }
 
             @Override
-            public Void visitDeclared(DeclaredType type, MembersInjectionBinding binding) {
+            public Void visitDeclared(DeclaredType type, Binding binding) {
               // If the key has type arguments, validate that each type argument is declared.
               // Otherwise the type argument may be a wildcard (or other type), and we can't
               // resolve that to actual types.  If the arg was an array, validate the type
@@ -1168,7 +1175,7 @@ final class BindingGraphValidator {
           case INSTANCE:
           case PROVIDER:
           case LAZY:
-          case MEMBERS_INJECTOR:
+          case MEMBERS_INJECTION:
             return true;
           case PRODUCER:
           case PRODUCED:

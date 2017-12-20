@@ -50,7 +50,6 @@ import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Lazy;
-import dagger.MembersInjector;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.model.Scope;
@@ -604,11 +603,6 @@ abstract class ComponentDescriptor {
           return ComponentMethodDescriptor.forProvision(
               componentMethod,
               dependencyRequestFactory.forComponentProvisionMethod(
-                  componentMethod, resolvedComponentMethod));
-        } else if (MoreTypes.isTypeOf(MembersInjector.class, returnType)) {
-          return ComponentMethodDescriptor.forMembersInjection(
-              componentMethod,
-              dependencyRequestFactory.forComponentMembersInjectionMethod(
                   componentMethod, resolvedComponentMethod));
         } else if (!getQualifier(componentMethod).isPresent()) {
           Element returnTypeElement = MoreTypes.asElement(returnType);

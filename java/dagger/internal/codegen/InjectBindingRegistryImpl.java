@@ -47,7 +47,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
 /**
@@ -60,7 +59,7 @@ import javax.tools.Diagnostic.Kind;
  */
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final Elements elements;
-  private final Types types;
+  private final DaggerTypes types;
   private final Messager messager;
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
@@ -155,7 +154,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   InjectBindingRegistryImpl(
       Elements elements,
-      Types types,
+      DaggerTypes types,
       Messager messager,
       InjectValidator injectValidator,
       KeyFactory keyFactory,
@@ -326,5 +325,15 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         tryRegisterMembersInjectedType(
             MoreTypes.asTypeElement(key.type()), Optional.of(key.type()), true);
     return newBinding;
+  }
+
+  @Override
+  public Optional<ProvisionBinding> getOrFindMembersInjectorProvisionBinding(Key key) {
+    if (!isValidMembersInjectionKey(key)) {
+      return Optional.empty();
+    }
+    Key membersInjectionKey = keyFactory.forMembersInjectedType(types.unwrapType(key.type()));
+    return getOrFindMembersInjectionBinding(membersInjectionKey)
+        .map(binding -> provisionBindingFactory.forMembersInjector(key, binding));
   }
 }

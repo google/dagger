@@ -29,7 +29,7 @@ import static dagger.internal.codegen.RequestKinds.frameworkClass;
 import static dagger.model.RequestKind.FUTURE;
 import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.LAZY;
-import static dagger.model.RequestKind.MEMBERS_INJECTOR;
+import static dagger.model.RequestKind.MEMBERS_INJECTION;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
 import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
@@ -84,7 +84,7 @@ abstract class DependencyRequest {
       case PRODUCED:
       case FUTURE:
         return BindingKey.contribution(key());
-      case MEMBERS_INJECTOR:
+      case MEMBERS_INJECTION:
         return BindingKey.membersInjection(key());
       default:
         throw new AssertionError(this);
@@ -353,7 +353,7 @@ abstract class DependencyRequest {
               ? getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments())
               : getOnlyElement(membersInjectionMethodType.getParameterTypes());
       return DependencyRequest.builder()
-          .kind(MEMBERS_INJECTOR)
+          .kind(MEMBERS_INJECTION)
           .key(keyFactory.forMembersInjectedType(membersInjectedType))
           .requestElement(membersInjectionMethod)
           .build();
@@ -397,9 +397,6 @@ abstract class DependencyRequest {
         TypeMirror type,
         Optional<AnnotationMirror> qualifier) {
       KindAndType kindAndType = extractKindAndType(type);
-      if (kindAndType.kind().equals(MEMBERS_INJECTOR)) {
-        checkArgument(!qualifier.isPresent());
-      }
       return DependencyRequest.builder()
           .kind(kindAndType.kind())
           .key(keyFactory.forQualifiedType(qualifier, kindAndType.type()))

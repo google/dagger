@@ -17,12 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.LAZY;
-import static dagger.model.RequestKind.MEMBERS_INJECTOR;
 import static dagger.model.RequestKind.PRODUCED;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
@@ -44,8 +42,6 @@ public class BindingTypeMapperTest {
         .isEqualTo(PROVISION);
     assertThat(mapper.getBindingType(PROVIDER))
         .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(MEMBERS_INJECTOR))
-        .isEqualTo(MEMBERS_INJECTION);
   }
 
   @Test public void forProducer() {
@@ -56,8 +52,6 @@ public class BindingTypeMapperTest {
         .isEqualTo(PROVISION);
     assertThat(mapper.getBindingType(PROVIDER))
         .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(MEMBERS_INJECTOR))
-        .isEqualTo(MEMBERS_INJECTION);
     assertThat(mapper.getBindingType(PRODUCER))
         .isEqualTo(PRODUCTION);
     assertThat(mapper.getBindingType(PRODUCED))

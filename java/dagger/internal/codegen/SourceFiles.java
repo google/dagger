@@ -157,7 +157,6 @@ class SourceFiles {
         return CodeBlock.of("$L.get()", frameworkTypeMemberSelect);
       case PROVIDER:
       case PRODUCER:
-      case MEMBERS_INJECTOR:
         return frameworkTypeMemberSelect;
       case PROVIDER_OF_LAZY:
         return CodeBlock.of("$T.create($L)", PROVIDER_OF_LAZY, frameworkTypeMemberSelect);

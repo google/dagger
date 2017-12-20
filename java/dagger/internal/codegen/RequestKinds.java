@@ -18,12 +18,10 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
-import static dagger.internal.codegen.TypeNames.membersInjectorOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.model.RequestKind.LAZY;
-import static dagger.model.RequestKind.MEMBERS_INJECTOR;
 import static dagger.model.RequestKind.PRODUCED;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
@@ -32,7 +30,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
-import dagger.MembersInjector;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -83,9 +80,6 @@ final class RequestKinds {
       case FUTURE:
         return listenableFutureOf(keyType);
 
-      case MEMBERS_INJECTOR:
-        return membersInjectorOf(keyType);
-
       default:
         throw new AssertionError(requestKind);
     }
@@ -95,7 +89,6 @@ final class RequestKinds {
       ImmutableMap.of(
           PROVIDER, Provider.class,
           LAZY, Lazy.class,
-          MEMBERS_INJECTOR, MembersInjector.class,
           PRODUCER, Producer.class,
           PRODUCED, Produced.class);
 

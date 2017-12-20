@@ -63,6 +63,20 @@ final class DaggerTypes implements Types {
   }
 
   /**
+   * Returns {@code type}'s single type argument.
+   *
+   * <p>For example, if {@code type} is {@code List<Number>} this will return {@code Number}.
+   *
+   * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
+   *     than one type arguments.
+   */
+  TypeMirror unwrapType(TypeMirror type) {
+    TypeMirror unwrapped = unwrapTypeOrDefault(type, null);
+    checkArgument(unwrapped != null, "%s is a raw type", type);
+    return unwrapped;
+  }
+
+  /**
    * Returns {@code type}'s single type argument, if one exists, or {@link Object} if not.
    *
    * <p>For example, if {@code type} is {@code List<Number>} this will return {@code Number}.
@@ -71,15 +85,18 @@ final class DaggerTypes implements Types {
    *     type argument.
    */
   TypeMirror unwrapTypeOrObject(TypeMirror type) {
+    return unwrapTypeOrDefault(
+        type, elements.getTypeElement(Object.class.getCanonicalName()).asType());
+  }
+
+  private TypeMirror unwrapTypeOrDefault(TypeMirror type, TypeMirror defaultType) {
     DeclaredType declaredType = MoreTypes.asDeclared(type);
     TypeElement typeElement = MoreElements.asType(declaredType.asElement());
     checkArgument(
         !typeElement.getTypeParameters().isEmpty(),
         "%s does not have a type parameter",
         typeElement.getQualifiedName());
-    return getOnlyElement(
-        declaredType.getTypeArguments(),
-        elements.getTypeElement(Object.class.getCanonicalName()).asType());
+    return getOnlyElement(declaredType.getTypeArguments(), defaultType);
   }
 
   /**

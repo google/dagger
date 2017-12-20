@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.ContributionBinding.Kind.MEMBERS_INJECTOR;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
 import com.squareup.javapoet.ClassName;
@@ -94,7 +96,10 @@ abstract class FrameworkField {
     if (resolvedBindings.bindingKey().kind().equals(BindingKey.Kind.CONTRIBUTION)) {
       ContributionBinding binding = resolvedBindings.contributionBinding();
       if (binding.bindingElement().isPresent()) {
-        return BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
+        String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
+        return binding.bindingKind().equals(MEMBERS_INJECTOR)
+            ? name + "MembersInjector"
+            : name;
       }
     }
     return BindingVariableNamer.name(resolvedBindings.binding());

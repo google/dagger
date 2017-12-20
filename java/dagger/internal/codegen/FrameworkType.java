@@ -129,30 +129,17 @@ enum FrameworkType {
     }
   },
 
+  // TODO(ronshapiro): Remove this once MembersInjectionBinding no longer extends Binding
   /** A {@link MembersInjector}. */
   MEMBERS_INJECTOR {
     @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
-      switch (requestKind) {
-        case MEMBERS_INJECTOR:
-          return from;
-
-        default:
-          throw new IllegalArgumentException(
-              String.format("Cannot request a %s from a %s", requestKind, this));
-      }
+      throw new UnsupportedOperationException(requestKind.toString());
     }
 
     @Override
     Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
-      switch (requestKind) {
-        case MEMBERS_INJECTOR:
-          return from;
-
-        default:
-          throw new IllegalArgumentException(
-              String.format("Cannot request a %s from a %s", requestKind, this));
-      }
+      throw new UnsupportedOperationException(requestKind.toString());
     }
   },
   ;

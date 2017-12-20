@@ -88,10 +88,8 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
         return RequestKind.PROVIDER;
       case PRODUCER:
         return RequestKind.PRODUCER;
-      case MEMBERS_INJECTOR:
-        return RequestKind.MEMBERS_INJECTOR;
       default:
-        throw new AssertionError();
+        throw new AssertionError(frameworkType);
     }
   }
 

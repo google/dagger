@@ -33,9 +33,11 @@ import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
+import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
+import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
@@ -324,6 +326,9 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
       case SYNTHETIC_OPTIONAL_BINDING:
         return factoryForSyntheticOptionalBindingInitialization(binding);
 
+      case MEMBERS_INJECTOR:
+        return factoryForSyntheticMembersInjectorBinding(binding);
+
       default:
         throw new AssertionError(binding);
     }
@@ -594,5 +599,26 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
       return optionalFactories.presentOptionalFactory(
           binding, getDependencyExpression(getOnlyElement(binding.frameworkDependencies())));
     }
+  }
+
+  /**
+   * Returns an expression that initializes a {@code Provider<MembersInjector<T>>} for a {@link
+   * ContributionBinding.Kind#MEMBERS_INJECTOR} binding.
+   */
+  private CodeBlock factoryForSyntheticMembersInjectorBinding(ContributionBinding binding) {
+    TypeMirror membersInjectedType =
+        getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
+
+    CodeBlock membersInjector =
+        ((ProvisionBinding) binding).injectionSites().isEmpty()
+            ? CodeBlock.of("$T.<$T>noOp()", MEMBERS_INJECTORS, membersInjectedType)
+            : CodeBlock.of(
+                "$T.create($L)",
+                membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
+                makeParametersCodeBlock(getBindingDependencyExpressions(binding)));
+
+    // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
+    // (as it's rarely requested as a Provider).
+    return CodeBlock.of("$T.create($L)", INSTANCE_FACTORY, membersInjector);
   }
 }

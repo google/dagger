@@ -270,7 +270,7 @@ final class ComponentBindingExpressions {
       ResolvedBindings resolvedBindings = graph.resolvedBindings().get(bindingKey);
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
-          return membersInjectionBindingExpression(resolvedBindings, requestKind);
+          return membersInjectionBindingExpression(resolvedBindings);
 
         case PROVISION:
           return provisionBindingExpression(resolvedBindings, requestKind);
@@ -285,11 +285,8 @@ final class ComponentBindingExpressions {
 
     /** Returns a binding expression for a members injection binding. */
     private MembersInjectionBindingExpression membersInjectionBindingExpression(
-        ResolvedBindings resolvedBindings, RequestKind requestKind) {
-      return new MembersInjectionBindingExpression(
-          frameworkInstanceBindingExpression(resolvedBindings, requestKind),
-          generatedComponentModel,
-          membersInjectionMethods);
+        ResolvedBindings resolvedBindings) {
+      return new MembersInjectionBindingExpression(resolvedBindings, membersInjectionMethods);
     }
 
     /**
@@ -331,11 +328,6 @@ final class ComponentBindingExpressions {
               compilerOptions,
               graph,
               optionalFactories);
-
-        case MEMBERS_INJECTION:
-          return new MembersInjectorFieldInitializer(
-              resolvedBindings, generatedComponentModel, componentBindingExpressions);
-
         default:
           throw new AssertionError(resolvedBindings);
       }

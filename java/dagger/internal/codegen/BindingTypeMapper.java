@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.CONTRIBUTION_TYPES;
-import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
 
@@ -41,8 +40,6 @@ enum BindingTypeMapper {
         case PROVIDER_OF_LAZY:
         case LAZY:
           return PROVISION;
-        case MEMBERS_INJECTOR:
-          return MEMBERS_INJECTION;
         case PRODUCED:
         case PRODUCER:
           throw new IllegalArgumentException(requestKind.toString());
@@ -62,8 +59,6 @@ enum BindingTypeMapper {
         case PROVIDER_OF_LAZY:
         case LAZY:
           return PROVISION;
-        case MEMBERS_INJECTOR:
-          return MEMBERS_INJECTION;
         default:
           throw new AssertionError(requestKind);
       }

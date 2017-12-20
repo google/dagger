@@ -292,7 +292,13 @@ final class BindingGraphValidator {
     private void validateDependencyScopes(BindingGraph graph) {
       ComponentDescriptor descriptor = graph.componentDescriptor();
       ImmutableSet<Scope> scopes = descriptor.scopes();
-      ImmutableSet<TypeElement> scopedDependencies = scopedTypesIn(descriptor.dependencies());
+      ImmutableSet<TypeElement> scopedDependencies =
+          scopedTypesIn(
+              descriptor
+                  .dependencies()
+                  .stream()
+                  .map(ComponentRequirement::typeElement)
+                  .collect(toImmutableSet()));
       if (!scopes.isEmpty()) {
         Scope singletonScope = singletonScope(elements);
         // Dagger 1.x scope compatibility requires this be suppress-able.

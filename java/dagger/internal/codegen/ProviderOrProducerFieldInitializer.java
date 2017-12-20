@@ -34,7 +34,6 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
-import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
@@ -74,7 +73,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -153,8 +151,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
 
       case COMPONENT_PROVISION:
         {
-          TypeElement dependencyType = dependencyTypeForBinding(binding);
-          String dependencyVariable = simpleVariableName(dependencyType);
+          ComponentRequirement dependency = dependencyForBinding(binding);
           String componentMethod = binding.bindingElement().get().getSimpleName().toString();
           // TODO(sameb): The Provider.get() throws a very vague NPE.  The stack trace doesn't
           // help to figure out what the method or return type is.  If we include a string
@@ -166,8 +163,8 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
               ComponentProvisionBindingExpression.maybeCheckForNull(
                   (ProvisionBinding) binding,
                   compilerOptions,
-                  CodeBlock.of("$L.$L()", dependencyVariable, componentMethod));
-          ClassName dependencyClassName = ClassName.get(dependencyType);
+                  CodeBlock.of("$L.$L()", dependency.variableName(), componentMethod));
+          ClassName dependencyClassName = ClassName.get(dependency.typeElement());
           String factoryName =
               dependencyClassName.toString().replace('.', '_') + "_" + componentMethod;
           MethodSpec.Builder getMethod =
@@ -185,11 +182,11 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
               TypeSpec.classBuilder(factoryName)
                   .addSuperinterface(providerOf(bindingKeyTypeName))
                   .addModifiers(PRIVATE, STATIC)
-                  .addField(dependencyClassName, dependencyVariable, PRIVATE, FINAL)
+                  .addField(dependencyClassName, dependency.variableName(), PRIVATE, FINAL)
                   .addMethod(
                       constructorBuilder()
-                          .addParameter(dependencyClassName, dependencyVariable)
-                          .addStatement("this.$1L = $1L", dependencyVariable)
+                          .addParameter(dependencyClassName, dependency.variableName())
+                          .addStatement("this.$1L = $1L", dependency.variableName())
                           .build())
                   .addMethod(getMethod.build())
                   .build());
@@ -198,8 +195,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
               "new $L($L)",
               factoryName,
               componentRequirementFields.getExpressionDuringInitialization(
-                  ComponentRequirement.forDependency(dependencyType.asType()),
-                  generatedComponentModel.name()));
+                  dependency, generatedComponentModel.name()));
         }
 
       case SUBCOMPONENT_BUILDER:
@@ -264,17 +260,16 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
 
       case COMPONENT_PRODUCTION:
         {
-          TypeElement dependencyType = dependencyTypeForBinding(binding);
+          ComponentRequirement dependency = dependencyForBinding(binding);
           FieldSpec dependencyField =
               FieldSpec.builder(
-                      ClassName.get(dependencyType),
-                      simpleVariableName(dependencyType),
+                      ClassName.get(dependency.typeElement()),
+                      dependency.variableName(),
                       PRIVATE,
                       FINAL)
                   .initializer(
                       componentRequirementFields.getExpressionDuringInitialization(
-                          ComponentRequirement.forDependency(dependencyType.asType()),
-                          generatedComponentModel.name()))
+                          dependency, generatedComponentModel.name()))
                   .build();
           // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
           return CodeBlock.of(
@@ -355,8 +350,11 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
     }
   }
 
-  private TypeElement dependencyTypeForBinding(ContributionBinding binding) {
-    return graph.componentDescriptor().dependencyMethodIndex().get(binding.bindingElement().get());
+  private ComponentRequirement dependencyForBinding(ContributionBinding binding) {
+    return graph
+        .componentDescriptor()
+        .dependenciesByDependencyMethod()
+        .get(binding.bindingElement().get());
   }
 
   private CodeBlock factoryForSetMultibindingInitialization(ContributionBinding binding) {

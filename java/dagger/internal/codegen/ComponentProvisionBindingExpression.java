@@ -19,11 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 
-import com.google.auto.common.MoreElements;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
-import javax.lang.model.element.TypeElement;
 
 /** A binding expression for component provision methods. */
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {
@@ -58,12 +56,10 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   }
 
   private ComponentRequirement componentRequirement() {
-    TypeElement componentDependency =
-        bindingGraph
-            .componentDescriptor()
-            .dependencyMethodIndex()
-            .get(MoreElements.asExecutable(binding.bindingElement().get()));
-    return ComponentRequirement.forDependency(componentDependency.asType());
+    return bindingGraph
+        .componentDescriptor()
+        .dependenciesByDependencyMethod()
+        .get(binding.bindingElement().get());
   }
 
   static CodeBlock maybeCheckForNull(

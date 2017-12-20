@@ -263,12 +263,12 @@ abstract class ProvisionBinding extends ContributionBinding {
           .build();
     }
 
-    ProvisionBinding forComponentDependency(TypeElement dependencyType) {
-      checkNotNull(dependencyType);
+    ProvisionBinding forComponentDependency(ComponentRequirement dependency) {
+      checkNotNull(dependency);
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
-          .bindingElement(dependencyType)
-          .key(keyFactory.forType(dependencyType.asType()))
+          .bindingElement(dependency.typeElement())
+          .key(keyFactory.forType(dependency.type()))
           .bindingKind(Kind.COMPONENT_DEPENDENCY)
           .build();
     }

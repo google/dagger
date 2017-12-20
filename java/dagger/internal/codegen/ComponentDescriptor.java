@@ -32,6 +32,7 @@ import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -70,7 +71,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -204,9 +204,10 @@ abstract class ComponentDescriptor {
   abstract TypeElement componentDefinitionType();
 
   /**
-   * The set of component dependencies listed in {@link Component#dependencies}.
+   * The set of component dependencies listed in {@link Component#dependencies} or {@link
+   * ProductionComponent#dependencies()}.
    */
-  abstract ImmutableSet<TypeElement> dependencies();
+  abstract ImmutableSet<ComponentRequirement> dependencies();
 
   /**
    * The set of {@link ModuleDescriptor modules} declared directly in {@link Component#modules}.
@@ -249,11 +250,12 @@ abstract class ComponentDescriptor {
   }
 
   /**
-   * An index of the type to which this component holds a reference (the type listed in
-   * {@link Component#dependencies} or {@link ProductionComponent#dependencies} as opposed to the
-   * enclosing type) for each method from a component dependency that can be used for binding.
+   * This component's {@linkplain #dependencies() dependencies} keyed by each provision or
+   * production method implemented by that dependency. Note that the dependencies' types are not
+   * simply the enclosing type of the method; a method may be declared by a supertype of the actual
+   * dependency.
    */
-  abstract ImmutableMap<ExecutableElement, TypeElement> dependencyMethodIndex();
+  abstract ImmutableMap<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod();
 
   /**
    * The scopes of the component.
@@ -292,7 +294,7 @@ abstract class ComponentDescriptor {
    * builder method.
    */
   abstract ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor>
-    subcomponentsByBuilderMethod();
+      subcomponentsByBuilderMethod();
 
   /**
    * All {@linkplain Subcomponent direct child} components that are declared by an entry point
@@ -478,20 +480,22 @@ abstract class ComponentDescriptor {
       DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
       AnnotationMirror componentMirror =
           getAnnotationMirror(componentDefinitionType, kind.annotationType()).get();
-      ImmutableSet<TypeElement> componentDependencyTypes =
+      ImmutableSet<ComponentRequirement> componentDependencies =
           kind.isTopLevel()
-              ? MoreTypes.asTypeElements(getComponentDependencies(componentMirror))
-              : ImmutableSet.<TypeElement>of();
+              ? getComponentDependencies(componentMirror)
+                  .stream()
+                  .map(ComponentRequirement::forDependency)
+                  .collect(toImmutableSet())
+              : ImmutableSet.of();
 
-      ImmutableMap.Builder<ExecutableElement, TypeElement> dependencyMethodIndex =
+      ImmutableMap.Builder<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod =
           ImmutableMap.builder();
 
-      for (TypeElement componentDependency : componentDependencyTypes) {
-        List<ExecutableElement> dependencyMethods =
-            ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
-        for (ExecutableElement dependencyMethod : dependencyMethods) {
+      for (ComponentRequirement componentDependency : componentDependencies) {
+        for (ExecutableElement dependencyMethod :
+            methodsIn(elements.getAllMembers(componentDependency.typeElement()))) {
           if (isComponentContributionMethod(elements, dependencyMethod)) {
-            dependencyMethodIndex.put(dependencyMethod, componentDependency);
+            dependenciesByDependencyMethod.put(dependencyMethod, componentDependency);
           }
         }
       }
@@ -576,10 +580,10 @@ abstract class ComponentDescriptor {
           kind,
           componentMirror,
           componentDefinitionType,
-          componentDependencyTypes,
+          componentDependencies,
           modules,
           transitiveModules,
-          dependencyMethodIndex.build(),
+          dependenciesByDependencyMethod.build(),
           scopes,
           subcomponentsFromModules.build(),
           subcomponentsByFactoryMethod.build(),
@@ -749,7 +753,8 @@ abstract class ComponentDescriptor {
   static boolean isComponentContributionMethod(Elements elements, ExecutableElement method) {
     return method.getParameters().isEmpty()
         && !method.getReturnType().getKind().equals(VOID)
-        && !elements.getTypeElement(Object.class.getCanonicalName())
+        && !elements
+            .getTypeElement(Object.class.getCanonicalName())
             .equals(method.getEnclosingElement())
         && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
   }

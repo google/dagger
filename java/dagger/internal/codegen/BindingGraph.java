@@ -30,6 +30,7 @@ import static dagger.internal.codegen.Keys.indexByKey;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -75,7 +76,6 @@ import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
 /**
@@ -177,7 +177,6 @@ abstract class BindingGraph {
     componentDescriptor()
         .dependencies()
         .stream()
-        .map(dep -> ComponentRequirement.forDependency(dep.asType()))
         .forEach(requirements::add);
     if (componentDescriptor().builderSpec().isPresent()) {
       componentDescriptor()
@@ -206,10 +205,7 @@ abstract class BindingGraph {
                 .stream()
                 .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
                 .map(module -> ComponentRequirement.forModule(module.asType())),
-            componentDescriptor()
-                .dependencies()
-                .stream()
-                .map(dep -> ComponentRequirement.forDependency(dep.asType())))
+            componentDescriptor().dependencies().stream())
         .collect(toImmutableSet());
   }
 
@@ -255,11 +251,10 @@ abstract class BindingGraph {
           provisionBindingFactory.forComponent(componentDescriptor.componentDefinitionType()));
 
       // Collect Component dependencies.
-      for (TypeElement componentDependency : componentDescriptor.dependencies()) {
-        explicitBindingsBuilder.add(
-            provisionBindingFactory.forComponentDependency(componentDependency));
+      for (ComponentRequirement dependency : componentDescriptor.dependencies()) {
+        explicitBindingsBuilder.add(provisionBindingFactory.forComponentDependency(dependency));
         List<ExecutableElement> dependencyMethods =
-            ElementFilter.methodsIn(elements.getAllMembers(componentDependency));
+            methodsIn(elements.getAllMembers(dependency.typeElement()));
         for (ExecutableElement method : dependencyMethods) {
           // MembersInjection methods aren't "provided" explicitly, so ignore them.
           if (isComponentContributionMethod(elements, method)) {

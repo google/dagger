@@ -227,10 +227,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   private Stream<ComponentRequirement> componentRequirements(ComponentDescriptor component) {
     checkArgument(component.kind().isTopLevel());
     return Stream.concat(
-        component
-            .dependencies()
-            .stream()
-            .map(typeElement -> ComponentRequirement.forDependency(typeElement.asType())),
+        component.dependencies().stream(),
         component
             .transitiveModules()
             .stream()

@@ -125,13 +125,13 @@ public class OptionalBindingRequestFulfillmentTest {
             "",
             "  @Override",
             "  public Optional<DefinitelyNot> definitelyNot() {",
-            "    return Optional.absent();",
+            "    return Optional.<DefinitelyNot>absent();",
             "  }",
             "",
             "  @Override",
             "  public Optional<Provider<Lazy<DefinitelyNot>>>",
             "      providerOfLazyOfDefinitelyNot() {",
-            "    return Optional.absent();",
+            "    return Optional.<Provider<Lazy<DefinitelyNot>>>absent();",
             "  }",
             "}");
     Compilation compilation =

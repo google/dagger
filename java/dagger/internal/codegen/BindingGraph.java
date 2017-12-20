@@ -25,6 +25,7 @@ import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
+import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -188,7 +189,7 @@ abstract class BindingGraph {
           .requirementMethods()
           .stream()
           .map(BuilderRequirementMethod::requirement)
-          .filter(req -> req.kind().equals(ComponentRequirement.Kind.BINDING))
+          .filter(req -> req.kind().equals(BOUND_INSTANCE))
           .forEach(requirements::add);
     }
     return requirements.build();
@@ -274,7 +275,7 @@ abstract class BindingGraph {
       if (componentDescriptor.builderSpec().isPresent()) {
         for (BuilderRequirementMethod method :
             componentDescriptor.builderSpec().get().requirementMethods()) {
-          if (method.requirement().kind().equals(ComponentRequirement.Kind.BINDING)) {
+          if (method.requirement().kind().equals(BOUND_INSTANCE)) {
             explicitBindingsBuilder.add(provisionBindingFactory.forBuilderBinding(method));
           }
         }

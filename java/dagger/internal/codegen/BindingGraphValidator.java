@@ -27,6 +27,7 @@ import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.BindingType.PROVISION;
+import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
@@ -387,8 +388,7 @@ final class BindingGraphValidator {
       ImmutableSet<BuilderRequirementMethod> declaredSetters =
           spec.requirementMethods()
               .stream()
-              .filter(
-                  method -> !method.requirement().kind().equals(ComponentRequirement.Kind.BINDING))
+              .filter(method -> !method.requirement().kind().equals(BOUND_INSTANCE))
               .collect(toImmutableSet());
       ImmutableSet<ComponentRequirement> declaredRequirements =
           declaredSetters
@@ -433,8 +433,7 @@ final class BindingGraphValidator {
       Map<Equivalence.Wrapper<TypeMirror>, List<ExecutableElement>> declaredRequirementsByType =
           spec.requirementMethods()
               .stream()
-              .filter(
-                  method -> !method.requirement().kind().equals(ComponentRequirement.Kind.BINDING))
+              .filter(method -> !method.requirement().kind().equals(BOUND_INSTANCE))
               .collect(
                   groupingBy(
                       method -> method.requirement().wrappedType(),

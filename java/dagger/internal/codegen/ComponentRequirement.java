@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ContributionBinding.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
@@ -49,10 +48,14 @@ abstract class ComponentRequirement {
   enum Kind {
     /** A type listed in the component's {@code dependencies} attribute. */
     DEPENDENCY,
+
     /** A type listed in the component or subcomponent's {@code modules} attribute. */
     MODULE,
-    /** An object key that can be bound to an instance provided to the builder. */
-    BINDING,
+
+    /**
+     * An object that is passed to a builder's {@link dagger.BindsInstance @BindsInstance} method.
+     */
+    BOUND_INSTANCE,
   }
 
   /** The kind of requirement. */
@@ -105,7 +108,7 @@ abstract class ComponentRequirement {
             ? NullPolicy.NEW
             : requiresAPassedInstance(elements, types) ? NullPolicy.THROW : NullPolicy.ALLOW;
       case DEPENDENCY:
-      case BINDING:
+      case BOUND_INSTANCE:
         return NullPolicy.THROW;
     }
     throw new AssertionError();
@@ -116,7 +119,7 @@ abstract class ComponentRequirement {
    * to be used within a component.
    */
   boolean requiresAPassedInstance(Elements elements, Types types) {
-    if (kind().equals(ComponentRequirement.Kind.BINDING)) {
+    if (kind().equals(Kind.BOUND_INSTANCE)) {
       // A user has explicitly defined in their component builder they will provide an instance.
       return true;
     }
@@ -170,18 +173,18 @@ abstract class ComponentRequirement {
         simpleVariableName(MoreTypes.asTypeElement(type)));
   }
 
-  static ComponentRequirement forBinding(Key key, boolean nullable, String variableName) {
+  static ComponentRequirement forBoundInstance(Key key, boolean nullable, String variableName) {
     return new AutoValue_ComponentRequirement(
-        Kind.BINDING,
+        Kind.BOUND_INSTANCE,
         MoreTypes.equivalence().wrap(key.type()),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
         variableName);
   }
 
-  static ComponentRequirement forBinding(ContributionBinding binding) {
-    checkArgument(binding.bindingKind().equals(BOUND_INSTANCE));
-    return forBinding(
+  static ComponentRequirement forBoundInstance(ContributionBinding binding) {
+    checkArgument(binding.bindingKind().equals(ContributionBinding.Kind.BOUND_INSTANCE));
+    return forBoundInstance(
         binding.key(),
         binding.nullableType().isPresent(),
         binding.bindingElement().get().getSimpleName().toString());

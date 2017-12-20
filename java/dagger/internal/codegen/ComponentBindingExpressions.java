@@ -386,7 +386,7 @@ final class ComponentBindingExpressions {
               bindingExpression, provisionBinding, generatedComponentModel.name(), types);
 
         case COMPONENT_DEPENDENCY:
-          return new BoundInstanceBindingExpression(
+          return new ComponentRequirementBindingExpression(
               bindingExpression,
               ComponentRequirement.forDependency(provisionBinding.key().type()),
               componentRequirementFields,
@@ -435,9 +435,9 @@ final class ComponentBindingExpressions {
               graph, bindingExpression, componentBindingExpressions, types, elements);
 
         case BOUND_INSTANCE:
-          return new BoundInstanceBindingExpression(
+          return new ComponentRequirementBindingExpression(
               bindingExpression,
-              ComponentRequirement.forBinding(provisionBinding),
+              ComponentRequirement.forBoundInstance(provisionBinding),
               componentRequirementFields,
               types);
 

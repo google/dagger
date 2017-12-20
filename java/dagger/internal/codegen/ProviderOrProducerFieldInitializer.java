@@ -226,7 +226,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
             InstanceFactory.class,
             binding.nullableType().isPresent() ? "createNullable" : "create",
             componentRequirementFields.getExpressionDuringInitialization(
-                ComponentRequirement.forBinding(binding), generatedComponentModel.name()));
+                ComponentRequirement.forBoundInstance(binding), generatedComponentModel.name()));
 
       case INJECTION:
       case PROVISION:

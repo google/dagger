@@ -17,17 +17,17 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
-import dagger.Component;
 
 /**
  * A binding expression for instances bound with {@link dagger.BindsInstance} and instances of
- * {@link Component#dependencies() component dependencies}.
+ * {@linkplain dagger.Component#dependencies() component} and {@linkplain
+ * dagger.producers.ProductionComponent#dependencies() production component dependencies}.
  */
-final class BoundInstanceBindingExpression extends SimpleInvocationBindingExpression {
+final class ComponentRequirementBindingExpression extends SimpleInvocationBindingExpression {
   private final ComponentRequirement componentRequirement;
   private final ComponentRequirementFields componentRequirementFields;
 
-  BoundInstanceBindingExpression(
+  ComponentRequirementBindingExpression(
       BindingExpression delegate,
       ComponentRequirement componentRequirement,
       ComponentRequirementFields componentRequirementFields,

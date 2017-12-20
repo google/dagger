@@ -696,7 +696,7 @@ abstract class ComponentDescriptor {
             dependencyRequestFactory.forRequiredResolvedVariable(
                 getOnlyElement(method.getParameters()),
                 getOnlyElement(resolvedType.getParameterTypes()));
-        return ComponentRequirement.forBinding(
+        return ComponentRequirement.forBoundInstance(
             request.key(), request.isNullable(), method.getSimpleName().toString());
       }
 

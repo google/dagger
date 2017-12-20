@@ -299,7 +299,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(builderMethod)
           .key(method.requirement().key().get())
           .nullableType(ConfigurationAnnotations.getNullableType(parameterElement))
-          .bindingKind(Kind.BUILDER_BINDING)
+          .bindingKind(Kind.BOUND_INSTANCE)
           .build();
     }
 

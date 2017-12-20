@@ -442,7 +442,7 @@ final class ComponentBindingExpressions {
           return DelegateBindingExpression.create(
               graph, bindingExpression, componentBindingExpressions, types, elements);
 
-        case BUILDER_BINDING:
+        case BOUND_INSTANCE:
           return new BoundInstanceBindingExpression(
               bindingExpression,
               ComponentRequirement.forBinding(provisionBinding),

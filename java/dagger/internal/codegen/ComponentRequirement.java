@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.ContributionBinding.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
@@ -179,7 +180,7 @@ abstract class ComponentRequirement {
   }
 
   static ComponentRequirement forBinding(ContributionBinding binding) {
-    checkArgument(binding.bindingKind().equals(ContributionBinding.Kind.BUILDER_BINDING));
+    checkArgument(binding.bindingKind().equals(BOUND_INSTANCE));
     return forBinding(
         binding.key(),
         binding.nullableType().isPresent(),

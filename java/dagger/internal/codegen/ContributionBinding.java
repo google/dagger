@@ -133,8 +133,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
      */
     SUBCOMPONENT_BUILDER,
 
-    /** A builder binding method. */
-    BUILDER_BINDING,
+    /** A {@link dagger.BindsInstance @BindsInstance} builder method. */
+    BOUND_INSTANCE,
 
     // Production kinds
 

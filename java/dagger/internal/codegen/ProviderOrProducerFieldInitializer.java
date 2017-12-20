@@ -218,7 +218,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
                         .build())
                 .build());
 
-      case BUILDER_BINDING:
+      case BOUND_INSTANCE:
         return CodeBlock.of(
             "$T.$L($L)",
             InstanceFactory.class,

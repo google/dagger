@@ -1193,7 +1193,7 @@ final class BindingGraphValidator {
       private FluentIterable<ContributionBinding> provisionsDependingOnLatestRequest() {
         return FluentIterable.from(dependentBindings())
             .filter(ContributionBinding.class)
-            .filter(PROVISION::isOfType);
+            .filter(binding -> binding.bindingType().equals(BindingType.PROVISION));
       }
 
       private String formatCurrentDependencyRequestKey() {

@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.model.Key;
 import dagger.model.Scope;
 import java.util.Collection;
@@ -54,11 +53,14 @@ import javax.lang.model.util.Types;
  * @author Gregory Kick
  * @since 2.0
  */
-abstract class Binding extends BindingDeclaration implements HasBindingType {
+abstract class Binding extends BindingDeclaration {
 
   /** The {@link Key} that is provided by this binding. */
   @Override
   public abstract Key key();
+
+  /** The {@link BindingType} of this binding. */
+  abstract BindingType bindingType();
 
   /**
    * The explicit set of {@link DependencyRequest dependencies} required to satisfy this binding as

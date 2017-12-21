@@ -70,7 +70,7 @@ final class KytheBindingGraphFactory {
     ProductionBinding.Factory productionBindingFactory =
         new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
     MultibindingDeclaration.Factory multibindingDeclarationFactory =
-        new MultibindingDeclaration.Factory(elements, types, keyFactory);
+        new MultibindingDeclaration.Factory(types, keyFactory);
     DelegateDeclaration.Factory bindingDelegateDeclarationFactory =
         new DelegateDeclaration.Factory(types, keyFactory, dependencyRequestFactory);
     SubcomponentDeclaration.Factory subcomponentDeclarationFactory =

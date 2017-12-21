@@ -28,9 +28,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
-import dagger.internal.codegen.Keys.HasKey;
 import dagger.model.Key;
 import dagger.model.Scope;
 import java.util.Optional;
@@ -42,7 +40,7 @@ import java.util.Optional;
  * @author Gregory Kick
  */
 @AutoValue
-abstract class ResolvedBindings implements HasBindingType, HasContributionType, HasKey {
+abstract class ResolvedBindings implements HasContributionType {
   /**
    * The binding key for which the {@link #bindings()} have been resolved.
    */
@@ -67,8 +65,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    */
   abstract ImmutableMap<ComponentDescriptor, MembersInjectionBinding> allMembersInjectionBindings();
 
-  @Override
-  public Key key() {
+  final Key key() {
     return bindingKey().key();
   }
   
@@ -262,8 +259,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
    *
    * @throws IllegalStateException if {@link #isEmpty()} or the binding types conflict
    */
-  @Override
-  public BindingType bindingType() {
+  final BindingType bindingType() {
     checkState(!isEmpty(), "empty bindings for %s", bindingKey());
     if (bindings().isEmpty()
         && (!multibindingDeclarations().isEmpty() || !subcomponentDeclarations().isEmpty())) {
@@ -277,7 +273,7 @@ abstract class ResolvedBindings implements HasBindingType, HasContributionType, 
 
   /** The binding types for {@link #bindings()}. */
   ImmutableSet<BindingType> bindingTypes() {
-    return bindings().stream().map(HasBindingType::bindingType).collect(toImmutableSet());
+    return bindings().stream().map(Binding::bindingType).collect(toImmutableSet());
   }
 
   /**

@@ -18,8 +18,6 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimaps;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
@@ -34,19 +32,6 @@ import javax.lang.model.util.Types;
 
 /** Utility methods related to {@link Key}s. */
 final class Keys {
-  /** An object that is associated with a {@link Key}. */
-  interface HasKey {
-    /** The key associated with this object. */
-    Key key();
-  }
-
-  /**
-   * Indexes {@code haveKeys} by {@link HasKey#key()}.
-   */
-  static <T extends HasKey> ImmutableSetMultimap<Key, T> indexByKey(Iterable<T> haveKeys) {
-    return ImmutableSetMultimap.copyOf(Multimaps.index(haveKeys, HasKey::key));
-  }
-
   static boolean isValidMembersInjectionKey(Key key) {
     return !key.qualifier().isPresent()
         && !key.multibindingContributionIdentifier().isPresent()

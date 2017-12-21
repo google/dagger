@@ -18,13 +18,16 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.ENCLOSING_TYPE_ELEMENT;
 
-import dagger.internal.codegen.Keys.HasKey;
+import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** An object that declares or specifies a binding. */
-abstract class BindingDeclaration implements HasKey {
+abstract class BindingDeclaration {
+
+  /** The {@link Key} of this declaration. */
+  abstract Key key();
 
   /**
    * The {@link Element} that declares the binding. Absent for bindings without identifying

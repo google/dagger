@@ -29,7 +29,6 @@ import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.Keys.indexByKey;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -46,6 +45,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
 import dagger.MembersInjector;
@@ -54,7 +54,6 @@ import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ContributionBinding.Kind;
-import dagger.internal.codegen.Keys.HasKey;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
@@ -647,7 +646,7 @@ abstract class BindingGraph {
           return true;
         }
         return Iterables.any(multibindingContributions,
-            hasBindingType -> hasBindingType.bindingType().equals(BindingType.PRODUCTION));
+            binding -> binding.bindingType().equals(BindingType.PRODUCTION));
       }
 
       private Optional<ProvisionBinding> syntheticSubcomponentBuilderBinding(
@@ -1144,7 +1143,7 @@ abstract class BindingGraph {
      * A multimap of those {@code declarations} that are multibinding contribution declarations,
      * indexed by the key of the set or map to which they contribute.
      */
-    static <T extends HasKey>
+    static <T extends BindingDeclaration>
         ImmutableSetMultimap<Key, T> multibindingContributionsByMultibindingKey(
             Iterable<T> declarations) {
       ImmutableSetMultimap.Builder<Key, T> builder = ImmutableSetMultimap.builder();
@@ -1161,5 +1160,11 @@ abstract class BindingGraph {
       }
       return builder.build();
     }
+  }
+
+  /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */
+  private static <T extends BindingDeclaration> ImmutableSetMultimap<Key, T> indexByKey(
+      Iterable<T> declarations) {
+    return ImmutableSetMultimap.copyOf(Multimaps.index(declarations, BindingDeclaration::key));
   }
 }

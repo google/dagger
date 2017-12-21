@@ -137,7 +137,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ProductionBinding.Factory productionBindingFactory =
         new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
     MultibindingDeclaration.Factory multibindingDeclarationFactory =
-        new MultibindingDeclaration.Factory(elements, types, keyFactory);
+        new MultibindingDeclaration.Factory(types, keyFactory);
     SubcomponentDeclaration.Factory subcomponentDeclarationFactory =
         new SubcomponentDeclaration.Factory(keyFactory);
 

@@ -38,19 +38,9 @@ enum BindingType {
   PRODUCTION(Producer.class, FrameworkType.PRODUCER),
   ;
 
-  boolean isOfType(HasBindingType hasBindingType) {
-    return this.equals(hasBindingType.bindingType());
-  }
-
   static final ImmutableSet<BindingType> CONTRIBUTION_TYPES =
       Sets.immutableEnumSet(PROVISION, PRODUCTION);
 
-  /** An object that is associated with a {@link BindingType}. */
-  interface HasBindingType {
-
-    /** The binding type of this object. */
-    BindingType bindingType();
-  }
   private final Class<?> frameworkClass;
   private final FrameworkType frameworkType;
 

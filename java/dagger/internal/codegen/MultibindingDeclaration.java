@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import dagger.Module;
-import dagger.internal.codegen.BindingType.HasBindingType;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
@@ -37,7 +36,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -46,8 +44,7 @@ import javax.lang.model.util.Types;
  * method annotated with {@link Multibinds @Multibinds}.
  */
 @AutoValue
-abstract class MultibindingDeclaration extends BindingDeclaration
-    implements HasBindingType, HasContributionType {
+abstract class MultibindingDeclaration extends BindingDeclaration implements HasContributionType {
 
   /**
    * The map or set key whose availability is declared. For maps, this will be {@code Map<K, F<V>>},
@@ -69,19 +66,16 @@ abstract class MultibindingDeclaration extends BindingDeclaration
    * is enclosed in a {@link Module @Module}, or {@link BindingType#PROVISION} if it is nested in a
    * {@link ProducerModule @ProducerModule}.
    */
-  @Override
-  public abstract BindingType bindingType();
+  abstract BindingType bindingType();
 
   /**
    * A factory for {@link MultibindingDeclaration}s.
    */
   static final class Factory {
-    private final Elements elements;
     private final Types types;
     private final KeyFactory keyFactory;
 
-    Factory(Elements elements, Types types, KeyFactory keyFactory) {
-      this.elements = elements;
+    Factory(Types types, KeyFactory keyFactory) {
       this.types = types;
       this.keyFactory = keyFactory;
     }

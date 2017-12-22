@@ -124,6 +124,7 @@ java_library(
         "ContributionBinding.java",
         "DelegateDeclaration.java",
         "DependencyRequest.java",
+        "DependencyRequestFactory.java",
         "DependencyVariableNamer.java",  # Used by SourceFiles
         "ErrorMessages.java",  # Consider splitting this up as it pulls in too much
         "FrameworkDependency.java",

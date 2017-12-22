@@ -64,6 +64,8 @@ import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotIn
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
+import static dagger.internal.codegen.RequestKinds.extractKeyType;
+import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Scopes.getReadableSource;
 import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
@@ -1130,10 +1132,10 @@ final class BindingGraphValidator {
                     /* Request resolved to a @BindsOptionalOf binding, so test the type inside the
                      * Optional. Optional<Provider or Lazy or Provider of Lazy or Map of Provider>
                      * breaks the cycle. */
-                    DependencyRequest.KindAndType kindAndType =
-                        DependencyRequest.extractKindAndType(
-                            OptionalType.from(dependencyRequest.key()).valueType());
-                    if (breaksCycle(kindAndType.type(), kindAndType.kind())) {
+                    TypeMirror optionalValueType =
+                        OptionalType.from(dependencyRequest.key()).valueType();
+                    RequestKind requestKind = getRequestKind(optionalValueType);
+                    if (breaksCycle(extractKeyType(requestKind, optionalValueType), requestKind)) {
                       providers.add(dependencyRequest);
                     }
                   }

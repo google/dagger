@@ -447,13 +447,13 @@ abstract class ComponentDescriptor {
   static final class Factory {
     private final DaggerElements elements;
     private final Types types;
-    private final DependencyRequest.Factory dependencyRequestFactory;
+    private final DependencyRequestFactory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
     Factory(
         DaggerElements elements,
         Types types,
-        DependencyRequest.Factory dependencyRequestFactory,
+        DependencyRequestFactory dependencyRequestFactory,
         ModuleDescriptor.Factory moduleDescriptorFactory) {
       this.elements = elements;
       this.types = types;

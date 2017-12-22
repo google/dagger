@@ -130,10 +130,9 @@ abstract class ProductionBinding extends ContributionBinding {
   static final class Factory {
     private final Types types;
     private final KeyFactory keyFactory;
-    private final DependencyRequest.Factory dependencyRequestFactory;
+    private final DependencyRequestFactory dependencyRequestFactory;
 
-    Factory(
-        Types types, KeyFactory keyFactory, DependencyRequest.Factory dependencyRequestFactory) {
+    Factory(Types types, KeyFactory keyFactory, DependencyRequestFactory dependencyRequestFactory) {
       this.types = types;
       this.keyFactory = keyFactory;
       this.dependencyRequestFactory = dependencyRequestFactory;

@@ -28,6 +28,8 @@ import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.mapKeyType;
 import static dagger.internal.codegen.Optionals.firstPresent;
+import static dagger.internal.codegen.RequestKinds.extractKeyType;
+import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;
@@ -38,6 +40,7 @@ import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
 import dagger.model.Key.MultibindingContributionIdentifier;
+import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
@@ -428,16 +431,19 @@ final class KeyFactory {
 
   /**
    * If {@code key}'s type is {@code Optional<T>} for some {@code T}, returns a key with the same
-   * qualifier whose type is {@linkplain DependencyRequest#extractKindAndType(TypeMirror)
+   * qualifier whose type is {@linkplain RequestKinds#extractKeyType(RequestKind, TypeMirror)}
    * extracted} from {@code T}.
    */
   Optional<Key> unwrapOptional(Key key) {
     if (!OptionalType.isOptional(key)) {
       return Optional.empty();
     }
-    TypeMirror underlyingType =
-        DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).type();
-    return Optional.of(key.toBuilder().type(underlyingType).build());
+
+    TypeMirror optionalValueType = OptionalType.from(key).valueType();
+    return Optional.of(
+        key.toBuilder()
+            .type(extractKeyType(getRequestKind(optionalValueType), optionalValueType))
+            .build());
   }
 
   /** Returns a key for a {@code @ForReleasableReferences(scope) ReleasableReferenceManager}. */

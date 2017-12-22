@@ -142,13 +142,13 @@ abstract class ProvisionBinding extends ContributionBinding {
   static final class Factory {
     private final DaggerTypes types;
     private final KeyFactory keyFactory;
-    private final DependencyRequest.Factory dependencyRequestFactory;
+    private final DependencyRequestFactory dependencyRequestFactory;
     private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
 
     Factory(
         DaggerTypes types,
         KeyFactory keyFactory,
-        DependencyRequest.Factory dependencyRequestFactory,
+        DependencyRequestFactory dependencyRequestFactory,
         MembersInjectionBinding.Factory membersInjectionBindingFactory) {
       this.types = types;
       this.keyFactory = keyFactory;

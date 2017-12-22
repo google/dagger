@@ -29,6 +29,7 @@ import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -699,8 +700,7 @@ abstract class BindingGraph {
         if (optionalBindingDeclarations.isEmpty()) {
           return Optional.empty();
         }
-        RequestKind requestKind =
-            DependencyRequest.extractKindAndType(OptionalType.from(key).valueType()).kind();
+        RequestKind requestKind = getRequestKind(OptionalType.from(key).valueType());
         ResolvedBindings underlyingKeyBindings =
             lookUpBindings(keyFactory.unwrapOptional(key).get());
         if (underlyingKeyBindings.isEmpty()) {

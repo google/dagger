@@ -143,13 +143,13 @@ abstract class MembersInjectionBinding extends Binding {
     private final Elements elements;
     private final DaggerTypes types;
     private final KeyFactory keyFactory;
-    private final DependencyRequest.Factory dependencyRequestFactory;
+    private final DependencyRequestFactory dependencyRequestFactory;
 
     Factory(
         Elements elements,
         DaggerTypes types,
         KeyFactory keyFactory,
-        DependencyRequest.Factory dependencyRequestFactory) {
+        DependencyRequestFactory dependencyRequestFactory) {
       this.elements = checkNotNull(elements);
       this.types = checkNotNull(types);
       this.keyFactory = checkNotNull(keyFactory);

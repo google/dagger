@@ -127,8 +127,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             elements, types, moduleValidator, subcomponentValidator, builderValidator);
     MapKeyValidator mapKeyValidator = new MapKeyValidator(elements);
 
-    DependencyRequest.Factory dependencyRequestFactory =
-        new DependencyRequest.Factory(keyFactory);
+    DependencyRequestFactory dependencyRequestFactory =
+        new DependencyRequestFactory(keyFactory, types);
     MembersInjectionBinding.Factory membersInjectionBindingFactory =
         new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
     ProvisionBinding.Factory provisionBindingFactory =

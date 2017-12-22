@@ -61,7 +61,8 @@ final class KytheBindingGraphFactory {
   private static ComponentDescriptor.Factory createComponentDescriptorFactory(
       DaggerElements elements, DaggerTypes types) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
-    DependencyRequest.Factory dependencyRequestFactory = new DependencyRequest.Factory(keyFactory);
+    DependencyRequestFactory dependencyRequestFactory =
+        new DependencyRequestFactory(keyFactory, types);
     MembersInjectionBinding.Factory membersInjectionBindingFactory =
         new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
     ProvisionBinding.Factory provisionBindingFactory =
@@ -94,7 +95,8 @@ final class KytheBindingGraphFactory {
   private static BindingGraph.Factory createBindingGraphFactory(
       DaggerTypes types, DaggerElements elements) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
-    DependencyRequest.Factory dependencyRequestFactory = new DependencyRequest.Factory(keyFactory);
+    DependencyRequestFactory dependencyRequestFactory =
+        new DependencyRequestFactory(keyFactory, types);
     Messager messager = new NullMessager();
     CompilerOptions compilerOptions =
         CompilerOptions.builder()

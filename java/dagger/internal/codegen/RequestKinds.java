@@ -16,16 +16,25 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.isType;
+import static com.google.auto.common.MoreTypes.isTypeOf;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.DaggerTypes.checkTypePresent;
 import static dagger.internal.codegen.TypeNames.lazyOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
 import static dagger.internal.codegen.TypeNames.producerOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.LAZY;
 import static dagger.model.RequestKind.PRODUCED;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
+import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.TypeName;
@@ -46,7 +55,7 @@ final class RequestKinds {
         return type;
 
       case PROVIDER_OF_LAZY:
-        return types.wrapType(requestType(RequestKind.LAZY, type, types), Provider.class);
+        return types.wrapType(requestType(LAZY, type, types), Provider.class);
 
       case FUTURE:
         return types.wrapType(type, ListenableFuture.class);
@@ -82,6 +91,54 @@ final class RequestKinds {
 
       default:
         throw new AssertionError(requestKind);
+    }
+  }
+
+  /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
+  static RequestKind getRequestKind(TypeMirror type) {
+    checkTypePresent(type);
+    for (RequestKind kind : RequestKind.values()) {
+      if (matchesKind(kind, type)) {
+        if (kind.equals(PROVIDER) && matchesKind(LAZY, extractKeyType(kind, type))) {
+          return PROVIDER_OF_LAZY;
+        }
+        return kind;
+      }
+    }
+    return INSTANCE;
+  }
+
+  /**
+   * Returns {@code true} if {@code type} is a parameterized type of {@code kind}'s {@link
+   * #frameworkClass(RequestKind) framework class}.
+   */
+  private static boolean matchesKind(RequestKind kind, TypeMirror type) {
+    Optional<Class<?>> frameworkClass = frameworkClass(kind);
+    return frameworkClass.isPresent()
+        && isType(type)
+        && isTypeOf(frameworkClass.get(), type)
+        && !asDeclared(type).getTypeArguments().isEmpty();
+  }
+
+  /**
+   * Unwraps the framework class(es) of {@code requestKind} from {@code type}. If {@code
+   * requestKind} is {@link RequestKind#INSTANCE}, this acts as an identity function.
+   *
+   * @throws TypeNotPresentException if {@code type} is an {@link javax.lang.model.type.ErrorType},
+   *     which may mean that the type will be generated in a later round of processing
+   * @throws IllegalArgumentException if {@code type} is not wrapped with {@code requestKind}'s
+   *     framework class(es).
+   */
+  static TypeMirror extractKeyType(RequestKind requestKind, TypeMirror type) {
+    checkTypePresent(type);
+    switch (requestKind) {
+      case INSTANCE:
+        return type;
+      case PROVIDER_OF_LAZY:
+        return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
+      default:
+        checkArgument(isType(type) && isTypeOf(frameworkClass(requestKind).get(), type));
+        return getOnlyElement(MoreTypes.asDeclared(type).getTypeArguments());
     }
   }
 

@@ -133,6 +133,16 @@ final class DaggerTypes implements Types {
     }
   }
 
+  /**
+   * Throws {@link TypeNotPresentException} if {@code type} is an {@link
+   * javax.lang.model.type.ErrorType}.
+   */
+  static void checkTypePresent(TypeMirror type) {
+    if (type.getKind().equals(TypeKind.ERROR)) {
+      throw new TypeNotPresentException(type.toString(), null);
+    }
+  }
+
   // Implementation of Types methods, delegating to types.
 
   @Override

@@ -57,6 +57,7 @@ import dagger.internal.Factory;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
+import dagger.model.Key;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -156,19 +157,19 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     return Optional.empty();
   }
 
-  private ImmutableMap<BindingKey, FieldSpec> frameworkFields(ProvisionBinding binding) {
+  private ImmutableMap<Key, FieldSpec> frameworkFields(ProvisionBinding binding) {
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     // TODO(user, dpb): Add a test for the case when a Factory parameter is named "module".
     if (binding.requiresModuleInstance()) {
       uniqueFieldNames.claim("module");
     }
-    ImmutableMap.Builder<BindingKey, FieldSpec> fields = ImmutableMap.builder();
+    ImmutableMap.Builder<Key, FieldSpec> fields = ImmutableMap.builder();
     generateBindingFieldsForDependencies(binding)
         .forEach(
-            (bindingKey, frameworkField) -> {
+            (key, frameworkField) -> {
               TypeName type = frameworkField.type();
               String name = uniqueFieldNames.getUniqueName(frameworkField.name());
-              fields.put(bindingKey, FieldSpec.builder(type, name, PRIVATE, FINAL).build());
+              fields.put(key, FieldSpec.builder(type, name, PRIVATE, FINAL).build());
             });
     return fields.build();
   }
@@ -220,7 +221,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC);
 
-    ImmutableMap<BindingKey, FieldSpec> frameworkFields = frameworkFields(binding);
+    ImmutableMap<Key, FieldSpec> frameworkFields = frameworkFields(binding);
     CodeBlock parametersCodeBlock =
         makeParametersCodeBlock(
             frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());

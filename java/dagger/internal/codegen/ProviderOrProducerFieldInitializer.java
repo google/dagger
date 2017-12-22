@@ -25,7 +25,6 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.BindingKey.Kind.CONTRIBUTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
@@ -103,7 +102,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
       BindingGraph graph,
       OptionalFactories optionalFactories) {
     super(generatedComponentModel, componentBindingExpressions, resolvedBindings);
-    checkArgument(resolvedBindings.bindingKey().kind().equals(CONTRIBUTION));
+    checkArgument(resolvedBindings.contributionBindings().size() == 1);
     this.subcomponentNames = checkNotNull(subcomponentNames);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
@@ -378,7 +377,7 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
     CodeBlock.Builder builderMethodCalls = CodeBlock.builder();
     for (FrameworkDependency frameworkDependency : binding.frameworkDependencies()) {
       ContributionType contributionType =
-          graph.resolvedBindings().get(frameworkDependency.bindingKey()).contributionType();
+          graph.contributionBindings().get(frameworkDependency.key()).contributionType();
       String methodName;
       String methodNameSuffix = frameworkDependency.frameworkClass().getSimpleName();
       switch (contributionType) {
@@ -436,9 +435,8 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
     codeBlocks.add(builderCall.build());
 
     for (FrameworkDependency frameworkDependency : frameworkDependencies) {
-      BindingKey bindingKey = frameworkDependency.bindingKey();
       ContributionBinding contributionBinding =
-          graph.resolvedBindings().get(bindingKey).contributionBinding();
+          graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
       CodeBlock value =
           potentiallyCast(
               useRawTypes,

@@ -54,6 +54,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.SetFactory;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -107,18 +108,18 @@ class SourceFiles {
    *
    * @param binding must be an unresolved binding (type parameters must match its type element's)
    */
-  static ImmutableMap<BindingKey, FrameworkField> generateBindingFieldsForDependencies(
+  static ImmutableMap<Key, FrameworkField> generateBindingFieldsForDependencies(
       Binding binding) {
     checkArgument(!binding.unresolved().isPresent(), "binding must be unresolved: %s", binding);
 
-    ImmutableMap.Builder<BindingKey, FrameworkField> bindingFields = ImmutableMap.builder();
+    ImmutableMap.Builder<Key, FrameworkField> bindingFields = ImmutableMap.builder();
     for (Binding.DependencyAssociation dependencyAssociation : binding.dependencyAssociations()) {
       FrameworkDependency frameworkDependency = dependencyAssociation.frameworkDependency();
       bindingFields.put(
-          frameworkDependency.bindingKey(),
+          frameworkDependency.key(),
           FrameworkField.create(
               ClassName.get(frameworkDependency.frameworkClass()),
-              TypeName.get(frameworkDependency.bindingKey().key().type()),
+              TypeName.get(frameworkDependency.key().type()),
               fieldNameForDependency(dependencyAssociation.dependencyRequests())));
     }
     return bindingFields.build();
@@ -170,12 +171,11 @@ class SourceFiles {
    * #frameworkTypeUsageStatement(CodeBlock, RequestKind) use them}.
    */
   static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
-      ImmutableSet<DependencyRequest> dependencies, ImmutableMap<BindingKey, FieldSpec> fields) {
+      ImmutableSet<DependencyRequest> dependencies, ImmutableMap<Key, FieldSpec> fields) {
     return Maps.toMap(
         dependencies,
         dep ->
-            frameworkTypeUsageStatement(
-                CodeBlock.of("$N", fields.get(dep.bindingKey())), dep.kind()));
+            frameworkTypeUsageStatement(CodeBlock.of("$N", fields.get(dep.key())), dep.kind()));
   }
 
   /**

@@ -77,7 +77,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     return frameworkType.to(
         requestKind(),
         componentBindingExpressions.getDependencyExpression(
-            bindingKey(), frameworkRequestKind(), requestingClass),
+            key(), frameworkRequestKind(), requestingClass),
         types);
   }
 

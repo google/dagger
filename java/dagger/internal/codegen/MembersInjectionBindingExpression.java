@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -38,7 +37,6 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   MembersInjectionBindingExpression(
       ResolvedBindings resolvedBindings, MembersInjectionMethods membersInjectionMethods) {
     super(resolvedBindings, RequestKind.MEMBERS_INJECTION);
-    checkArgument(bindingKey().kind().equals(BindingKey.Kind.MEMBERS_INJECTION));
     this.binding = resolvedBindings().membersInjectionBinding().get();
     this.membersInjectionMethods = membersInjectionMethods;
   }

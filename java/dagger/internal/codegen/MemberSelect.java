@@ -25,8 +25,6 @@ import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import static dagger.internal.codegen.TypeNames.FACTORY;
 import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
-import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
-import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
 import static dagger.internal.codegen.TypeNames.PRODUCER;
 import static dagger.internal.codegen.TypeNames.PRODUCERS;
 import static dagger.internal.codegen.TypeNames.PROVIDER;
@@ -38,9 +36,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.MembersInjector;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -84,66 +80,52 @@ abstract class MemberSelect {
    * injector.
    */
   static Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
-    BindingKey bindingKey = resolvedBindings.bindingKey();
-    switch (bindingKey.kind()) {
-      case CONTRIBUTION:
-        ContributionBinding contributionBinding;
-        try {
-          contributionBinding = resolvedBindings.contributionBinding();
-        } catch (NoSuchElementException e) {
-          throw new AssertionError(
-              "Expected a contribution binding, but none found. *THIS IS A DAGGER BUG* - please "
-                  + "report it on Github with as much context as you can provide. Thanks!"
-                  + "\n\nBinding Key: " + resolvedBindings.bindingKey()
-                  + "\nMultibinding declarations: " + resolvedBindings.multibindingDeclarations()
-                  + "\nSubcomponent declarations: " + resolvedBindings.subcomponentDeclarations()
-                  + "\nOptional binding declarations: "
-                  + resolvedBindings.optionalBindingDeclarations());
-        }
-        if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
-            && !contributionBinding.scope().isPresent()) {
-          switch (contributionBinding.bindingKind()) {
-            case SYNTHETIC_MULTIBOUND_MAP:
-              return Optional.of(emptyMapFactory(contributionBinding));
-
-            case SYNTHETIC_MULTIBOUND_SET:
-              return Optional.of(emptySetFactory(contributionBinding));
-
-            case INJECTION:
-            case PROVISION:
-              if (bindingKey.key().type().getKind().equals(DECLARED)) {
-                ImmutableList<TypeVariableName> typeVariables =
-                    bindingTypeElementTypeVariableNames(contributionBinding);
-                if (!typeVariables.isEmpty()) {
-                  List<? extends TypeMirror> typeArguments =
-                      ((DeclaredType) bindingKey.key().type()).getTypeArguments();
-                  return Optional.of(
-                      MemberSelect.parameterizedFactoryCreateMethod(
-                          generatedClassNameForBinding(contributionBinding), typeArguments));
-                }
-              }
-              // fall through
-
-            default:
-              return Optional.of(
-                  new StaticMethod(
-                      generatedClassNameForBinding(contributionBinding), CodeBlock.of("create()")));
-          }
-        }
-        break;
-
-      case MEMBERS_INJECTION:
-        Optional<MembersInjectionBinding> membersInjectionBinding =
-            resolvedBindings.membersInjectionBinding();
-        if (membersInjectionBinding.isPresent()
-            && membersInjectionBinding.get().injectionSites().isEmpty()) {
-          return Optional.of(noOpMembersInjector(membersInjectionBinding.get().key().type()));
-        }
-        break;
-
-      default:
-        throw new AssertionError();
+    if (resolvedBindings.contributionBindings().isEmpty()) {
+      throw new AssertionError(
+          "Expected a contribution binding, but none found. *THIS IS A DAGGER BUG* - please "
+              + "report it on Github with as much context as you can provide. Thanks!"
+              + "\n\nKey: "
+              + resolvedBindings.key()
+              + "\nMultibinding declarations: "
+              + resolvedBindings.multibindingDeclarations()
+              + "\nSubcomponent declarations: "
+              + resolvedBindings.subcomponentDeclarations()
+              + "\nOptional binding declarations: "
+              + resolvedBindings.optionalBindingDeclarations());
     }
+    ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
+    if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
+        && !contributionBinding.scope().isPresent()) {
+      switch (contributionBinding.bindingKind()) {
+        case SYNTHETIC_MULTIBOUND_MAP:
+          return Optional.of(emptyMapFactory(contributionBinding));
+
+        case SYNTHETIC_MULTIBOUND_SET:
+          return Optional.of(emptySetFactory(contributionBinding));
+
+        case INJECTION:
+        case PROVISION:
+          TypeMirror keyType = resolvedBindings.key().type();
+          if (keyType.getKind().equals(DECLARED)) {
+            ImmutableList<TypeVariableName> typeVariables =
+                bindingTypeElementTypeVariableNames(contributionBinding);
+            if (!typeVariables.isEmpty()) {
+              List<? extends TypeMirror> typeArguments =
+                  ((DeclaredType) keyType).getTypeArguments();
+              return Optional.of(
+                  MemberSelect.parameterizedFactoryCreateMethod(
+                      generatedClassNameForBinding(contributionBinding), typeArguments));
+            }
+          }
+          // fall through
+
+        default:
+          return Optional.of(
+              new StaticMethod(
+                  generatedClassNameForBinding(contributionBinding), CodeBlock.of("create()")));
+      }
+    }
+
     return Optional.empty();
   }
 
@@ -171,15 +153,6 @@ abstract class MemberSelect {
           ? methodCodeBlock
           : CodeBlock.of("$T.$L", owningClass(), methodCodeBlock);
     }
-  }
-
-  /** Returns the {@link MemberSelect} for a no-op {@link MembersInjector} for the given type. */
-  private static MemberSelect noOpMembersInjector(TypeMirror type) {
-    return new ParameterizedStaticMethod(
-        MEMBERS_INJECTORS,
-        ImmutableList.of(type),
-        CodeBlock.of("noOp()"),
-        MEMBERS_INJECTOR);
   }
 
   /** A {@link MemberSelect} for a factory of an empty map. */

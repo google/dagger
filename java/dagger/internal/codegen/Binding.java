@@ -19,10 +19,10 @@ package dagger.internal.codegen;
 import static com.google.common.base.Suppliers.memoize;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -169,9 +169,7 @@ abstract class Binding extends BindingDeclaration {
                   DependencyAssociation.create(
                       FrameworkDependency.create(
                           getOnlyElement(
-                              FluentIterable.from(requests)
-                                  .transform(DependencyRequest::bindingKey)
-                                  .toSet()),
+                              requests.stream().map(DependencyRequest::key).collect(toSet())),
                           bindingTypeMapper.getBindingType(requests)),
                       requests));
             }
@@ -220,13 +218,13 @@ abstract class Binding extends BindingDeclaration {
    * from the {@link Binding#unresolved()} binding if it exists.
    */
   private ImmutableList<Collection<DependencyRequest>> groupByUnresolvedKey() {
-    ImmutableSetMultimap.Builder<BindingKey, DependencyRequest> dependenciesByKeyBuilder =
+    ImmutableSetMultimap.Builder<Key, DependencyRequest> dependenciesByKeyBuilder =
         ImmutableSetMultimap.builder();
     Iterator<DependencyRequest> dependencies = dependencies().iterator();
     Binding unresolved = unresolved().isPresent() ? unresolved().get() : this;
     Iterator<DependencyRequest> unresolvedDependencies = unresolved.dependencies().iterator();
     while (dependencies.hasNext()) {
-      dependenciesByKeyBuilder.put(unresolvedDependencies.next().bindingKey(), dependencies.next());
+      dependenciesByKeyBuilder.put(unresolvedDependencies.next().key(), dependencies.next());
     }
     return ImmutableList.copyOf(
         dependenciesByKeyBuilder

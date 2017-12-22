@@ -59,7 +59,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
     this.dependencies =
         Maps.toMap(
             binding.dependencies(),
-            dep -> graph.resolvedBindings().get(dep.bindingKey()).contributionBinding());
+            dep -> graph.contributionBindings().get(dep.key()).contributionBinding());
   }
 
   @Override

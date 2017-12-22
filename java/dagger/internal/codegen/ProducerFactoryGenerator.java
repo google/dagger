@@ -57,6 +57,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Map;
@@ -107,7 +108,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .superclass(abstractProducerOf(providedTypeName));
 
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
-    ImmutableMap.Builder<BindingKey, FieldSpec> fieldsBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<Key, FieldSpec> fieldsBuilder = ImmutableMap.builder();
 
     MethodSpec.Builder constructorBuilder = constructorBuilder().addModifiers(PUBLIC);
 
@@ -121,9 +122,9 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                     TypeName.get(binding.bindingTypeElement().get().asType())))
             : Optional.empty();
 
-    for (Map.Entry<BindingKey, FrameworkField> entry :
+    for (Map.Entry<Key, FrameworkField> entry :
         generateBindingFieldsForDependencies(binding).entrySet()) {
-      BindingKey bindingKey = entry.getKey();
+      Key key = entry.getKey();
       FrameworkField bindingField = entry.getValue();
       FieldSpec field =
           addFieldAndConstructorParameter(
@@ -131,13 +132,13 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
               constructorBuilder,
               uniqueFieldNames.getUniqueName(bindingField.name()),
               bindingField.type());
-      fieldsBuilder.put(bindingKey, field);
+      fieldsBuilder.put(key, field);
     }
-    ImmutableMap<BindingKey, FieldSpec> fields = fieldsBuilder.build();
+    ImmutableMap<Key, FieldSpec> fields = fieldsBuilder.build();
 
     constructorBuilder.addStatement(
         "super($N, $L)",
-        fields.get(binding.monitorRequest().get().bindingKey()),
+        fields.get(binding.monitorRequest().get().key()),
         producerTokenConstruction(generatedTypeName, binding));
 
     if (binding.requiresModuleInstance()) {
@@ -157,7 +158,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     ImmutableList<DependencyRequest> asyncDependencies = asyncDependencies(binding);
     for (DependencyRequest dependency : asyncDependencies) {
       TypeName futureType = listenableFutureOf(asyncDependencyType(dependency));
-      CodeBlock futureAccess = CodeBlock.of("$N.get()", fields.get(dependency.bindingKey()));
+      CodeBlock futureAccess = CodeBlock.of("$N.get()", fields.get(dependency.key()));
       computeMethodBuilder.addStatement(
           "$T $L = $L",
           futureType,
@@ -272,10 +273,10 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
   /** Represents the transformation of an input future by a producer method. */
   abstract static class FutureTransform {
-    protected final ImmutableMap<BindingKey, FieldSpec> fields;
+    protected final ImmutableMap<Key, FieldSpec> fields;
     protected final ProductionBinding binding;
 
-    FutureTransform(ImmutableMap<BindingKey, FieldSpec> fields, ProductionBinding binding) {
+    FutureTransform(ImmutableMap<Key, FieldSpec> fields, ProductionBinding binding) {
       this.fields = fields;
       this.binding = binding;
     }
@@ -298,7 +299,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     }
 
     static FutureTransform create(
-        ImmutableMap<BindingKey, FieldSpec> fields,
+        ImmutableMap<Key, FieldSpec> fields,
         ProductionBinding binding,
         ImmutableList<DependencyRequest> asyncDependencies) {
       if (asyncDependencies.isEmpty()) {
@@ -313,7 +314,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   }
 
   static final class NoArgFutureTransform extends FutureTransform {
-    NoArgFutureTransform(ImmutableMap<BindingKey, FieldSpec> fields, ProductionBinding binding) {
+    NoArgFutureTransform(ImmutableMap<Key, FieldSpec> fields, ProductionBinding binding) {
       super(fields, binding);
     }
 
@@ -338,7 +339,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       for (DependencyRequest dependency : binding.explicitDependencies()) {
         parameterCodeBlocks.add(
             frameworkTypeUsageStatement(
-                CodeBlock.of("$N", fields.get(dependency.bindingKey())), dependency.kind()));
+                CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
       }
       return parameterCodeBlocks.build();
     }
@@ -348,7 +349,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     private final DependencyRequest asyncDependency;
 
     SingleArgFutureTransform(
-        ImmutableMap<BindingKey, FieldSpec> fields,
+        ImmutableMap<Key, FieldSpec> fields,
         ProductionBinding binding,
         DependencyRequest asyncDependency) {
       super(fields, binding);
@@ -382,7 +383,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
           parameterCodeBlocks.add(
               // TODO(ronshapiro) extract this into a method shared by FutureTransform subclasses
               frameworkTypeUsageStatement(
-                  CodeBlock.of("$N", fields.get(dependency.bindingKey())), dependency.kind()));
+                  CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
         }
       }
       return parameterCodeBlocks.build();
@@ -393,7 +394,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     private final ImmutableList<DependencyRequest> asyncDependencies;
 
     MultiArgFutureTransform(
-        ImmutableMap<BindingKey, FieldSpec> fields,
+        ImmutableMap<Key, FieldSpec> fields,
         ProductionBinding binding,
         ImmutableList<DependencyRequest> asyncDependencies) {
       super(fields, binding);
@@ -456,7 +457,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   }
 
   private static ImmutableList<CodeBlock> getParameterCodeBlocks(
-      ProductionBinding binding, ImmutableMap<BindingKey, FieldSpec> fields, String listArgName) {
+      ProductionBinding binding, ImmutableMap<Key, FieldSpec> fields, String listArgName) {
     int argIndex = 0;
     ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
     for (DependencyRequest dependency : binding.explicitDependencies()) {
@@ -468,7 +469,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       } else {
         codeBlocks.add(
             frameworkTypeUsageStatement(
-                CodeBlock.of("$N", fields.get(dependency.bindingKey())), dependency.kind()));
+                CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
       }
     }
     return codeBlocks.build();

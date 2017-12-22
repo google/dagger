@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import javax.inject.Provider;
 
@@ -27,13 +28,13 @@ import javax.inject.Provider;
  * <p>In the following example, the binding {@code provideFoo()} has two dependency requests:
  *
  * <ol>
- * <li>{@code Bar bar}
- * <li>{@code Provider<Bar> barProvider}
+ *   <li>{@code Bar bar}
+ *   <li>{@code Provider<Bar> barProvider}
  * </ol>
  *
  * But they both can be satisfied with the same instance of {@code Provider<Bar>}. So one instance
- * of {@code FrameworkDependency} will be used for both. Its {@link #bindingKey()} will be for
- * {@code Bar}, and its {@link #frameworkClass()} will be {@link Provider}.
+ * of {@code FrameworkDependency} will be used for both. Its {@link #key()} will be for {@code Bar},
+ * and its {@link #frameworkClass()} will be {@link Provider}.
  *
  * <pre><code>
  *   {@literal @Provides} static Foo provideFoo(Bar bar, {@literal Provider<Bar>} barProvider) {
@@ -44,10 +45,8 @@ import javax.inject.Provider;
 @AutoValue
 abstract class FrameworkDependency {
 
-  /**
-   * The fully-resolved binding key shared by all the dependency requests.
-   */
-  abstract BindingKey bindingKey();
+  /** The fully-resolved key shared by all the dependency requests. */
+  abstract Key key();
 
   /** The binding type of the framework dependency. */
   abstract BindingType bindingType();
@@ -72,7 +71,7 @@ abstract class FrameworkDependency {
   }
 
   /** Returns a new instance with the given key and type. */
-  static FrameworkDependency create(BindingKey bindingKey, BindingType bindingType) {
-    return new AutoValue_FrameworkDependency(bindingKey, bindingType);
+  static FrameworkDependency create(Key key, BindingType bindingType) {
+    return new AutoValue_FrameworkDependency(key, bindingType);
   }
 }

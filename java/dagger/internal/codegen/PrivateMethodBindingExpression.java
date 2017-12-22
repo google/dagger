@@ -172,7 +172,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       ComponentMethodDescriptor componentMethod) {
     return componentMethod
         .dependencyRequest()
-        .filter(request -> request.bindingKey().equals(bindingKey()))
+        .filter(request -> request.key().equals(key()))
         .filter(request -> request.kind().equals(requestKind()))
         .isPresent();
   }
@@ -274,8 +274,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
                 .addStatement(
                     "return $L",
                     componentBindingExpressions
-                        .getDependencyExpression(
-                            bindingKey(), RequestKind.INSTANCE, componentName())
+                        .getDependencyExpression(key(), RequestKind.INSTANCE, componentName())
                         .codeBlock())
                 .build())
         .build();

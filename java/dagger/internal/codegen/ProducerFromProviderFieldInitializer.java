@@ -47,7 +47,7 @@ final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializ
         RequestKind.PRODUCER,
         componentBindingExpressions
             .getDependencyExpression(
-                FrameworkDependency.create(resolvedBindings.bindingKey(), PROVISION),
+                FrameworkDependency.create(resolvedBindings.key(), PROVISION),
                 generatedComponentModel.name())
             .codeBlock());
   }

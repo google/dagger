@@ -93,7 +93,7 @@ abstract class FrameworkField {
   }
 
   private static String frameworkFieldName(ResolvedBindings resolvedBindings) {
-    if (resolvedBindings.bindingKey().kind().equals(BindingKey.Kind.CONTRIBUTION)) {
+    if (!resolvedBindings.contributionBindings().isEmpty()) {
       ContributionBinding binding = resolvedBindings.contributionBinding();
       if (binding.bindingElement().isPresent()) {
         String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);

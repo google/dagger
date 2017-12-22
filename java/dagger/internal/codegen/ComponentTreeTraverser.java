@@ -25,7 +25,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Multimaps.asMap;
-import static dagger.internal.codegen.BindingKey.contribution;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
@@ -262,14 +261,12 @@ public class ComponentTreeTraverser {
      * @param resolvedBindings the object returned by {@link #resolvedBindings()}
      */
     protected void visitResolvedBindings(ResolvedBindings resolvedBindings) {
-      switch (resolvedBindings.bindingKey().kind()) {
-        case MEMBERS_INJECTION:
-          visitMembersInjectionBindings(resolvedBindings);
-          break;
+      if (resolvedBindings.membersInjectionBinding().isPresent()) {
+        visitMembersInjectionBindings(resolvedBindings);
+      }
 
-        case CONTRIBUTION:
-          visitContributionBindings(resolvedBindings);
-          break;
+      if (!resolvedBindings.contributionBindings().isEmpty()) {
+        visitContributionBindings(resolvedBindings);
       }
     }
 
@@ -390,7 +387,7 @@ public class ComponentTreeTraverser {
       }
 
       ResolvedBindings resolvedBindings =
-          bindingGraph.resolvedBindings().get(dependencyRequest.bindingKey());
+          bindingGraph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key());
       dependencyRequestPath.addLast(dependencyRequest);
       resolvedBindingsPath.addLast(resolvedBindings);
       bindingKeysInPath.add(dependencyRequest.bindingKey());
@@ -422,7 +419,7 @@ public class ComponentTreeTraverser {
       ImmutableSet.Builder<ComponentDescriptor> owningComponents = ImmutableSet.builder();
       for (ContributionBinding binding : bindings) {
         ResolvedBindings resolvedBindings =
-            currentGraph().resolvedBindings().get(contribution(binding.key()));
+            currentGraph().contributionBindings().get(binding.key());
         owningComponents.add(resolvedBindings.owningComponent(binding));
       }
       return componentTreePath.rootmostGraph(owningComponents.build());

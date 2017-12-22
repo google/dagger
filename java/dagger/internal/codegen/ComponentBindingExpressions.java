@@ -32,6 +32,7 @@ import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.EnumSet;
 import java.util.Optional;
@@ -49,8 +50,7 @@ final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final DaggerTypes types;
   private final BindingExpressionFactory bindingExpressionFactory;
-  private final Table<BindingKey, RequestKind, BindingExpression> expressions =
-      HashBasedTable.create();
+  private final Table<Key, RequestKind, BindingExpression> expressions = HashBasedTable.create();
 
   ComponentBindingExpressions(
       BindingGraph graph,
@@ -130,9 +130,8 @@ final class ComponentBindingExpressions {
    * @throws IllegalStateException if there is no binding expression that satisfies the dependency
    *     request
    */
-  Expression getDependencyExpression(
-      BindingKey bindingKey, RequestKind requestKind, ClassName requestingClass) {
-    return getBindingExpression(bindingKey, requestKind).getDependencyExpression(requestingClass);
+  Expression getDependencyExpression(Key key, RequestKind requestKind, ClassName requestingClass) {
+    return getBindingExpression(key, requestKind).getDependencyExpression(requestingClass);
   }
 
   /**
@@ -144,7 +143,7 @@ final class ComponentBindingExpressions {
    *     request
    */
   Expression getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    return getDependencyExpression(request.bindingKey(), request.kind(), requestingClass);
+    return getDependencyExpression(request.key(), request.kind(), requestingClass);
   }
 
   /**
@@ -158,9 +157,7 @@ final class ComponentBindingExpressions {
   Expression getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     return getDependencyExpression(
-        frameworkDependency.bindingKey(),
-        frameworkDependency.dependencyRequestKind(),
-        requestingClass);
+        frameworkDependency.key(), frameworkDependency.dependencyRequestKind(), requestingClass);
   }
 
   /**
@@ -197,27 +194,26 @@ final class ComponentBindingExpressions {
   CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
     return getBindingExpression(
-            componentMethod.dependencyRequest().get().bindingKey(),
+            componentMethod.dependencyRequest().get().key(),
             componentMethod.dependencyRequest().get().kind())
         .getComponentMethodImplementation(componentMethod, requestingClass);
   }
 
-  private BindingExpression getBindingExpression(
-      BindingKey bindingKey, RequestKind requestKind) {
-    if (graph.resolvedBindings().containsKey(bindingKey)
-        && !graph.resolvedBindings().get(bindingKey).ownedBindings().isEmpty()) {
-      if (!expressions.contains(bindingKey, requestKind)) {
+  private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+    if (resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty()) {
+      if (!expressions.contains(key, requestKind)) {
         expressions.put(
-            bindingKey, requestKind, bindingExpressionFactory.create(bindingKey, requestKind));
+            key, requestKind, bindingExpressionFactory.create(resolvedBindings, requestKind));
       }
-      return expressions.get(bindingKey, requestKind);
+      return expressions.get(key, requestKind);
     }
     return parent
-        .map(p -> p.getBindingExpression(bindingKey, requestKind))
+        .map(p -> p.getBindingExpression(key, requestKind))
         .orElseThrow(
             () ->
                 new IllegalStateException(
-                    String.format("no expression found for %s-%s", bindingKey, requestKind)));
+                    String.format("no expression found for %s-%s", key, requestKind)));
   }
 
   /** Factory for building a {@link BindingExpression}. */
@@ -266,8 +262,7 @@ final class ComponentBindingExpressions {
     }
 
     /** Creates a binding expression. */
-    BindingExpression create(BindingKey bindingKey, RequestKind requestKind) {
-      ResolvedBindings resolvedBindings = graph.resolvedBindings().get(bindingKey);
+    BindingExpression create(ResolvedBindings resolvedBindings, RequestKind requestKind) {
       switch (resolvedBindings.bindingType()) {
         case MEMBERS_INJECTION:
           return membersInjectionBindingExpression(resolvedBindings);
@@ -405,7 +400,7 @@ final class ComponentBindingExpressions {
           return new SubcomponentBuilderBindingExpression(
               bindingExpression,
               provisionBinding,
-              subcomponentNames.get(bindingExpression.bindingKey()),
+              subcomponentNames.get(bindingExpression.key()),
               types);
 
         case SYNTHETIC_MULTIBOUND_SET:

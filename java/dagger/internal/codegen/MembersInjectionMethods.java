@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
@@ -71,11 +70,9 @@ final class MembersInjectionMethods {
   }
 
   private MethodSpec membersInjectionMethod(Key key) {
-    Binding binding =
-        firstNonNull(
-                graph.resolvedBindings().get(BindingKey.membersInjection(key)),
-                graph.resolvedBindings().get(BindingKey.contribution(key)))
-            .binding();
+    ResolvedBindings resolvedBindings =
+        graph.membersInjectionBindings().getOrDefault(key, graph.contributionBindings().get(key));
+    Binding binding = resolvedBindings.binding();
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, generatedComponentModel.name().packageName())

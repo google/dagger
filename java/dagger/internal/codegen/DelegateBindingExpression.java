@@ -56,10 +56,7 @@ final class DelegateBindingExpression extends BindingExpression {
     ResolvedBindings resolvedBindings = bindingExpression.resolvedBindings();
     ContributionBinding binding = resolvedBindings.contributionBinding();
     Binding delegateBinding =
-        graph
-            .resolvedBindings()
-            .get(getOnlyElement(binding.dependencies()).bindingKey())
-            .binding();
+        graph.contributionBindings().get(getOnlyElement(binding.dependencies()).key()).binding();
     ScopeKind bindsScope = ScopeKind.get(binding, graph, elements);
     ScopeKind delegateScope = ScopeKind.get(delegateBinding, graph, elements);
     if (bindsScope.isSimilarOrWeakerScopeThan(delegateScope)) {
@@ -74,7 +71,7 @@ final class DelegateBindingExpression extends BindingExpression {
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression delegateExpression =
         componentBindingExpressions.getDependencyExpression(
-            getOnlyElement(binding.dependencies()).bindingKey(), requestKind(), requestingClass);
+            getOnlyElement(binding.dependencies()).key(), requestKind(), requestingClass);
 
     TypeMirror contributedType = binding.contributedType();
     switch (requestKind()) {

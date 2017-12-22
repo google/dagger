@@ -70,7 +70,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   private void addNodesForGraph(BindingGraph graph) {
-    for (ResolvedBindings resolvedBindings : graph.resolvedBindings().values()) {
+    for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
       for (Binding binding : resolvedBindings.bindings()) {
         addBindingDeclarationNode(binding);
 
@@ -81,9 +81,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
       resolvedBindings.subcomponentDeclarations().forEach(this::addBindingDeclarationNode);
       resolvedBindings
           .optionalBindingDeclarations()
-          .forEach(
-              declaration ->
-                  addBindingDeclarationNode(declaration, resolvedBindings.bindingKey().key()));
+          .forEach(declaration -> addBindingDeclarationNode(declaration, resolvedBindings.key()));
     }
 
     for (ComponentDescriptor.ComponentMethodDescriptor componentMethod :

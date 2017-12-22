@@ -26,7 +26,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
-import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
@@ -923,7 +922,7 @@ final class BindingGraphValidator {
         }
         StringBuilder errorMessage = requiresErrorMessageBase().append(formatDependencyTrace());
         for (String suggestion :
-            MissingBindingSuggestions.forKey(rootGraph, dependencyRequest().bindingKey())) {
+            MissingBindingSuggestions.forKey(rootGraph, dependencyRequest().key())) {
           errorMessage.append('\n').append(suggestion);
         }
         reportErrorAtEntryPoint(rootGraph, errorMessage.toString());
@@ -1041,7 +1040,7 @@ final class BindingGraphValidator {
         verify(
             duplicateDeclarationsByType.keySet().size() > 1,
             "expected multiple contribution types for %s: %s",
-            dependencyRequest().bindingKey(),
+            dependencyRequest().key(),
             duplicateDeclarationsByType);
         ImmutableSortedMap.copyOf(Multimaps.asMap(duplicateDeclarationsByType))
             .forEach(

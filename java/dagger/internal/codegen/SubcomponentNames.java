@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimaps;
+import dagger.model.Key;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -40,11 +41,11 @@ import javax.lang.model.type.TypeMirror;
 final class SubcomponentNames {
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
   private final ImmutableMap<ComponentDescriptor, String> namesByDescriptor;
-  private final ImmutableMap<BindingKey, String> namesByBindingKey;
+  private final ImmutableMap<Key, String> namesByKey;
 
   SubcomponentNames(BindingGraph graph, KeyFactory keyFactory) {
     this.namesByDescriptor = namesByDescriptor(graph);
-    this.namesByBindingKey = namesByBindingKey(keyFactory, namesByDescriptor);
+    this.namesByKey = namesByKey(keyFactory, namesByDescriptor);
   }
 
   /** Returns the simple component name for the given {@link ComponentDescriptor}. */
@@ -52,9 +53,9 @@ final class SubcomponentNames {
     return namesByDescriptor.get(componentDescriptor);
   }
 
-  /** Returns the simple component name for the given subcomponent builder {@link BindingKey}. */
-  String get(BindingKey bindingKey) {
-    return namesByBindingKey.get(bindingKey);
+  /** Returns the simple component name for the given subcomponent builder {@link Key}. */
+  String get(Key key) {
+    return namesByKey.get(key);
   }
 
   private static ImmutableMap<ComponentDescriptor, String> namesByDescriptor(BindingGraph graph) {
@@ -77,15 +78,14 @@ final class SubcomponentNames {
     return ImmutableMap.copyOf(subcomponentImplSimpleNames);
   }
 
-  private static ImmutableMap<BindingKey, String> namesByBindingKey(
+  private static ImmutableMap<Key, String> namesByKey(
       KeyFactory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
-    ImmutableMap.Builder<BindingKey, String> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<Key, String> builder = ImmutableMap.builder();
     subcomponentNames.forEach(
         (component, name) -> {
           if (component.builderSpec().isPresent()) {
             TypeMirror builderType = component.builderSpec().get().builderDefinitionType().asType();
-            builder.put(
-                BindingKey.contribution(keyFactory.forSubcomponentBuilder(builderType)), name);
+            builder.put(keyFactory.forSubcomponentBuilder(builderType), name);
           }
         });
     return builder.build();

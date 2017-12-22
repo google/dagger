@@ -135,8 +135,8 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private boolean isSingleValue(DependencyRequest dependency) {
     return graph
-        .resolvedBindings()
-        .get(dependency.bindingKey())
+        .contributionBindings()
+        .get(dependency.key())
         .contributionBinding()
         .contributionType()
         .equals(ContributionType.SET);

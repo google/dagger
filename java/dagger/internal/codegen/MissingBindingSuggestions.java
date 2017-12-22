@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.google.common.collect.ImmutableList;
+import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -31,14 +32,14 @@ class MissingBindingSuggestions {
    * Searches the entire binding graph from the top-level graph for a binding matching
    * {@code key}.
    */
-  static ImmutableList<String> forKey(BindingGraph topLevelGraph, BindingKey key) {
+  static ImmutableList<String> forKey(BindingGraph topLevelGraph, Key key) {
     ImmutableList.Builder<String> resolutions = new ImmutableList.Builder<>();
     Deque<BindingGraph> graphsToTry = new ArrayDeque<>();
 
     graphsToTry.add(topLevelGraph);
     do {
       BindingGraph graph = graphsToTry.removeLast();
-      ResolvedBindings bindings = graph.resolvedBindings().get(key);
+      ResolvedBindings bindings = graph.contributionBindings().get(key);
       if ((bindings == null) || bindings.bindings().isEmpty()) {
         graphsToTry.addAll(graph.subgraphs());
       } else {

@@ -30,8 +30,6 @@
 
   <modules>
     <module>simple</module>
-    <module>android-simple</module>
-    <module>android-activity-graphs</module>
   </modules>
 
   <!-- Example-only dependencies. -->
@@ -74,12 +72,6 @@
           <groupId>com.simpligility.maven.plugins</groupId>
           <artifactId>android-maven-plugin</artifactId>
           <version>4.3.0</version>
-          <configuration>
-            <sdk>
-              <platform>${android.latest.version}</platform>
-              <path>${env.ANDROID_HOME}</path>
-            </sdk>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

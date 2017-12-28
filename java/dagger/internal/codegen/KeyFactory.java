@@ -19,11 +19,11 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
-import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MapKeys.mapKeyType;
@@ -35,7 +35,6 @@ import static javax.lang.model.element.ElementKind.METHOD;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
@@ -65,14 +64,13 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** A factory for {@link Key}s. */
 final class KeyFactory {
-  private final Types types;
+  private final DaggerTypes types;
   private final Elements elements;
 
-  KeyFactory(Types types, Elements elements) {
+  KeyFactory(DaggerTypes types, Elements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
   }
@@ -114,7 +112,7 @@ final class KeyFactory {
     checkArgument(componentMethod.getKind().equals(METHOD));
     TypeMirror returnType = componentMethod.getReturnType();
     TypeMirror keyType =
-        isTypeOf(ListenableFuture.class, returnType)
+        isFutureType(returnType)
             ? getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments())
             : returnType;
     return forMethod(componentMethod, keyType);
@@ -167,15 +165,15 @@ final class KeyFactory {
     if (frameworkType.isPresent()
         && frameworkType.get().equals(getClassElement(Producer.class))
         && isType(returnType)) {
-      if (isTypeOf(ListenableFuture.class, returnType)) {
+      if (isFutureType(methodType.getReturnType())) {
         returnType = getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       } else if (contributionType.equals(ContributionType.SET_VALUES)
           && SetType.isSet(returnType)) {
         SetType setType = SetType.from(returnType);
-        if (setType.elementsAreTypeOf(ListenableFuture.class)) {
+        if (isFutureType(setType.elementType())) {
           returnType =
               types.getDeclaredType(
-                  getClassElement(Set.class), setType.unwrappedElementType(ListenableFuture.class));
+                  getClassElement(Set.class), types.unwrapType(setType.elementType()));
         }
       }
     }

@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -27,7 +28,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.model.Key;
@@ -154,11 +154,10 @@ abstract class ProductionBinding extends ContributionBinding {
           dependencyRequestFactory.forProductionImplementationExecutor();
       DependencyRequest monitorRequest = dependencyRequestFactory.forProductionComponentMonitor();
       final ProductionKind productionKind;
-      if (MoreTypes.isTypeOf(ListenableFuture.class, producesMethod.getReturnType())) {
+      if (isFutureType(producesMethod.getReturnType())) {
         productionKind = ProductionKind.FUTURE;
       } else if (contributionType.equals(ContributionType.SET_VALUES)
-          && SetType.from(producesMethod.getReturnType())
-              .elementsAreTypeOf(ListenableFuture.class)) {
+          && isFutureType(SetType.from(producesMethod.getReturnType()).elementType())) {
         productionKind = ProductionKind.SET_OF_FUTURE;
       } else {
         productionKind = ProductionKind.IMMEDIATE;
@@ -200,7 +199,7 @@ abstract class ProductionBinding extends ContributionBinding {
       checkNotNull(componentMethod);
       checkArgument(componentMethod.getKind().equals(METHOD));
       checkArgument(componentMethod.getParameters().isEmpty());
-      checkArgument(MoreTypes.isTypeOf(ListenableFuture.class, componentMethod.getReturnType()));
+      checkArgument(isFutureType(componentMethod.getReturnType()));
       return ProductionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .bindingElement(componentMethod)

@@ -22,6 +22,9 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -141,6 +144,13 @@ final class DaggerTypes implements Types {
     if (type.getKind().equals(TypeKind.ERROR)) {
       throw new TypeNotPresentException(type.toString(), null);
     }
+  }
+
+  private static final ImmutableSet<Class<?>> FUTURE_TYPES =
+      ImmutableSet.of(ListenableFuture.class, FluentFuture.class);
+
+  static boolean isFutureType(TypeMirror type) {
+    return FUTURE_TYPES.stream().anyMatch(t -> MoreTypes.isTypeOf(t, type));
   }
 
   // Implementation of Types methods, delegating to types.

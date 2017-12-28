@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
@@ -45,7 +46,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeTraverser;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -752,7 +752,6 @@ abstract class ComponentDescriptor {
   }
 
   static boolean isComponentProductionMethod(Elements elements, ExecutableElement method) {
-    return isComponentContributionMethod(elements, method)
-        && MoreTypes.isTypeOf(ListenableFuture.class, method.getReturnType());
+    return isComponentContributionMethod(elements, method) && isFutureType(method.getReturnType());
   }
 }

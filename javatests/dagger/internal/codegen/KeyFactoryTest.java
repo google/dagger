@@ -40,7 +40,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,12 +54,12 @@ public class KeyFactoryTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
   private Elements elements;
-  private Types types;
+  private DaggerTypes types;
   private KeyFactory keyFactory;
 
   @Before public void setUp() {
-    this.types = compilationRule.getTypes();
     this.elements = compilationRule.getElements();
+    this.types = new DaggerTypes(compilationRule.getTypes(), compilationRule.getElements());
     this.keyFactory = new KeyFactory(types, elements);
   }
 

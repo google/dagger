@@ -84,7 +84,6 @@ import javax.lang.model.type.TypeMirror;
 final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer {
   private final SubcomponentNames subcomponentNames;
   private final ComponentRequirementFields componentRequirementFields;
-  // TODO(ronshapiro): add Binding.bindingKey() and use that instead of taking a ResolvedBindings
   private final ResolvedBindings resolvedBindings;
   private final CompilerOptions compilerOptions;
   private final BindingGraph graph;

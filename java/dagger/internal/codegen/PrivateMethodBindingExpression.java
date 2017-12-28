@@ -163,12 +163,12 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         .owningComponent()
         .componentMethods()
         .stream()
-        .filter(method -> componentMethodMatchesRequestBindingKeyAndKind(method))
+        .filter(this::componentMethodMatchesRequestKeyAndKind)
         .findFirst();
   }
 
-  /** Returns true if the component method matches the dependency request binding key and kind. */
-  private boolean componentMethodMatchesRequestBindingKeyAndKind(
+  /** Returns true if the component method matches the dependency request key and kind. */
+  private boolean componentMethodMatchesRequestKeyAndKind(
       ComponentMethodDescriptor componentMethod) {
     return componentMethod
         .dependencyRequest()

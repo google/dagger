@@ -21,6 +21,7 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;
@@ -29,8 +30,7 @@ import java.util.Optional;
 final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializer {
 
   private final ComponentBindingExpressions componentBindingExpressions;
-  // TODO(ronshapiro): add Binding.bindingKey() and use that instead of taking a ResolvedBindings
-  private final ResolvedBindings resolvedBindings;
+  private final Key key;
 
   ProducerFromProviderFieldInitializer(
       ResolvedBindings resolvedBindings,
@@ -38,7 +38,7 @@ final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializ
       ComponentBindingExpressions componentBindingExpressions) {
     super(generatedComponentModel, componentBindingExpressions, resolvedBindings);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.key = resolvedBindings.key();
   }
 
   @Override
@@ -47,8 +47,7 @@ final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializ
         RequestKind.PRODUCER,
         componentBindingExpressions
             .getDependencyExpression(
-                FrameworkDependency.create(resolvedBindings.key(), PROVISION),
-                generatedComponentModel.name())
+                FrameworkDependency.create(key, PROVISION), generatedComponentModel.name())
             .codeBlock());
   }
 

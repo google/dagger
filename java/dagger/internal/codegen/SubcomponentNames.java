@@ -36,7 +36,7 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * Holds the unique simple names for all subcomponents, keyed by their {@link ComponentDescriptor}
- * and {@link BindingKey} of the subcomponent builder.
+ * and {@link Key} of the subcomponent builder.
  */
 final class SubcomponentNames {
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');

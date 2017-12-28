@@ -25,8 +25,6 @@ import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
 import static com.google.common.graph.Graphs.transpose;
-import static dagger.internal.codegen.BindingKey.contribution;
-import static dagger.internal.codegen.BindingKey.membersInjection;
 import static dagger.internal.codegen.ContributionBinding.Kind.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
@@ -41,7 +39,9 @@ import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
 import dagger.BindsOptionalOf;
 import dagger.Module;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
+import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -96,10 +96,10 @@ public final class BindingNetwork
     return bindingNodesStream().collect(toImmutableSet());
   }
 
-  /** Returns the binding nodes for a binding. */
-  public ImmutableSet<BindingNode> bindingNodes(BindingKey bindingKey) {
+  /** Returns the binding nodes for a key. */
+  public ImmutableSet<BindingNode> bindingNodes(Key key) {
     return bindingNodesStream()
-        .filter(node -> node.bindingKey().equals(bindingKey))
+        .filter(node -> node.binding().key().equals(key))
         .collect(toImmutableSet());
   }
 
@@ -332,22 +332,6 @@ public final class BindingNetwork
       return binding;
     }
 
-    /** The binding key for this binding. */
-    // TODO(dpb): Put this on Binding.
-    public BindingKey bindingKey() {
-      switch (binding.bindingType()) {
-        case MEMBERS_INJECTION:
-          return membersInjection(binding.key());
-
-        case PRODUCTION:
-        case PROVISION:
-          return contribution(binding.key());
-
-        default:
-          throw new AssertionError(binding);
-      }
-    }
-
     /**
      * The declarations (other than the binding's {@link Binding#bindingElement()}) that are
      * associated with the binding.
@@ -422,8 +406,8 @@ public final class BindingNetwork
 
     @Override
     protected BindingGraphTraverser bindingGraphTraverser(
-        ComponentTreePath componentPath, DependencyRequest entryPoint) {
-      return new BindingGraphVisitor(componentPath, entryPoint);
+        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
+      return new BindingGraphVisitor(componentPath, entryPointMethod);
     }
 
     BindingNetwork bindingNetwork() {
@@ -434,8 +418,9 @@ public final class BindingNetwork
 
       private Node current;
 
-      BindingGraphVisitor(ComponentTreePath componentPath, DependencyRequest entryPoint) {
-        super(componentPath, entryPoint);
+      BindingGraphVisitor(
+          ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
+        super(componentPath, entryPointMethod);
         current = currentComponent;
         network.addNode(current);
       }

@@ -731,6 +731,93 @@ public class GraphValidationTest {
         .onLine(7);
   }
 
+  @Test
+  public void cycleFromMembersInjectionMethod_WithSameKeyAsMembersInjectionMethod() {
+    JavaFileObject a =
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class A {",
+            "  @Inject A() {}",
+            "  @Inject B b;",
+            "}");
+    JavaFileObject b =
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class B {",
+            "  @Inject B() {}",
+            "  @Inject A a;",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.CycleComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface CycleComponent {",
+            "  void inject(A a);",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(a, b, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(Joiner.on('\n')
+            .join(
+                "Found a dependency cycle:",
+                "      test.B is injected at",
+                "          test.A.b",
+                "      test.A is injected at",
+                "          test.B.a",
+                "      test.B is injected at",
+                "          test.A.b",
+                "      test.A is injected at",
+                "          test.CycleComponent.inject(a)"))
+        .inFile(component)
+        .onLineContaining("void inject(A a);");
+  }
+
+  @Test
+  public void missingBindingWithSameKeyAsMembersInjectionMethod() {
+    JavaFileObject self =
+        JavaFileObjects.forSourceLines(
+            "test.Self",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
+            "class Self {",
+            "  @Inject Provider<Self> selfProvider;",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.SelfComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface SelfComponent {",
+            "  void inject(Self target);",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(self, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("test.Self cannot be provided without an @Inject constructor")
+        .inFile(component)
+        .onLineContaining("void inject(Self target);");
+  }
+
   @Test public void duplicateExplicitBindings_ProvidesAndComponentProvision() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",

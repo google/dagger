@@ -72,8 +72,8 @@ enum BindingTypeMapper {
   abstract BindingType getBindingType(RequestKind requestKind);
 
   /**
-   * Returns the {@link BindingType} to use for a collection of requests of the same
-   * {@link BindingKey}. This allows factories to only take a single argument for multiple requests
+   * Returns the {@link BindingType} to use for a collection of requests of the same {@link
+   * dagger.model.Key}. This allows factories to only take a single argument for multiple requests
    * of the same key.
    */
   BindingType getBindingType(Iterable<DependencyRequest> requests) {

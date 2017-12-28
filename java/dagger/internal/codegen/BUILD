@@ -62,7 +62,6 @@ java_library(
     srcs = [
         "Accessibility.java",
         "AnnotationSpecs.java",
-        "BindingKey.java",
         "CodeBlocks.java",
         "CompilerOptions.java",
         "ContributionType.java",

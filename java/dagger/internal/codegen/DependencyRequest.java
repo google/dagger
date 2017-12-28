@@ -40,23 +40,6 @@ abstract class DependencyRequest {
   abstract RequestKind kind();
   abstract Key key();
 
-  BindingKey bindingKey() {
-    switch (kind()) {
-      case INSTANCE:
-      case LAZY:
-      case PROVIDER:
-      case PROVIDER_OF_LAZY:
-      case PRODUCER:
-      case PRODUCED:
-      case FUTURE:
-        return BindingKey.contribution(key());
-      case MEMBERS_INJECTION:
-        return BindingKey.membersInjection(key());
-      default:
-        throw new AssertionError(this);
-    }
-  }
-
   /** The element that declares this dependency request. Absent for synthetic requests. */
   abstract Optional<Element> requestElement();
 

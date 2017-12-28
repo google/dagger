@@ -98,6 +98,7 @@ import dagger.Lazy;
 import dagger.MapKey;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
@@ -183,8 +184,8 @@ final class BindingGraphValidator {
 
     @Override
     protected BindingGraphTraverser bindingGraphTraverser(
-        ComponentTreePath componentPath, DependencyRequest entryPoint) {
-      return new BindingGraphValidation(componentPath, entryPoint);
+        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
+      return new BindingGraphValidation(componentPath, entryPointMethod);
     }
 
     /** Returns a report that contains all validation messages found during traversal. */
@@ -582,8 +583,9 @@ final class BindingGraphValidator {
 
     final class BindingGraphValidation extends BindingGraphTraverser {
 
-      BindingGraphValidation(ComponentTreePath componentPath, DependencyRequest entryPoint) {
-        super(componentPath, entryPoint);
+      BindingGraphValidation(
+          ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
+        super(componentPath, entryPointMethod);
       }
 
       /** Reports an error for the current component at the entry point. */

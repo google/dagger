@@ -322,13 +322,11 @@ abstract class ComponentDescriptor {
 
   abstract ImmutableSet<ComponentMethodDescriptor> componentMethods();
 
-  /** The dependency requests defined by methods on the component type. */
-  ImmutableSet<DependencyRequest> entryPoints() {
+  /** The entry point methods on the component type. */
+  ImmutableSet<ComponentMethodDescriptor> entryPointMethods() {
     return componentMethods()
         .stream()
-        .map(ComponentMethodDescriptor::dependencyRequest)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .filter(method -> method.dependencyRequest().isPresent())
         .collect(toImmutableSet());
   }
 

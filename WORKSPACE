@@ -85,8 +85,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_auto_service_auto_service",
-    artifact = "com.google.auto.service:auto-service:1.0-rc2",
-    sha1 = "51033a5b8fcf7039159e35b6878f106ccd5fb35f",
+    artifact = "com.google.auto.service:auto-service:1.0-rc4",
+    sha1 = "44954d465f3b9065388bbd2fc08a3eb8fd07917c",
 )
 
 maven_jar(

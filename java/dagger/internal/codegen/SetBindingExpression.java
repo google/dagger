@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
+import dagger.model.DependencyRequest;
 import java.util.Collections;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;

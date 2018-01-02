@@ -22,6 +22,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
 import dagger.Lazy;
+import dagger.model.DependencyRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Provider;

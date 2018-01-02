@@ -27,6 +27,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.model.DependencyRequest;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;

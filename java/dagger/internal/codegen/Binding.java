@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.Scope;
 import java.util.Collection;

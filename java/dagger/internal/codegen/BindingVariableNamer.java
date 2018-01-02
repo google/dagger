@@ -20,6 +20,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
 
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Iterator;
 import javax.lang.model.element.Element;

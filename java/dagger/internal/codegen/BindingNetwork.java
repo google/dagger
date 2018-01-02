@@ -41,6 +41,7 @@ import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import java.util.Optional;

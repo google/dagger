@@ -39,6 +39,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.LinkedHashMultiset;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;

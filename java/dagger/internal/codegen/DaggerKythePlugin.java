@@ -41,6 +41,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;

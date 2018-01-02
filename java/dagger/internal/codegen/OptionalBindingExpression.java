@@ -22,6 +22,7 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
+import dagger.model.DependencyRequest;
 import javax.lang.model.util.Types;
 
 /** A binding expression for optional bindings. */

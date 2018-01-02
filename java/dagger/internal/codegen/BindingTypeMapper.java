@@ -23,6 +23,7 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import javax.inject.Provider;

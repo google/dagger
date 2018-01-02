@@ -52,6 +52,7 @@ import dagger.Component;
 import dagger.Lazy;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;

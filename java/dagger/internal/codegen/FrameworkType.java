@@ -28,6 +28,7 @@ import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
+import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;

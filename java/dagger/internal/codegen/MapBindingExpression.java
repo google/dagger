@@ -28,6 +28,7 @@ import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.MapBuilder;
+import dagger.model.DependencyRequest;
 import java.util.Collections;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;

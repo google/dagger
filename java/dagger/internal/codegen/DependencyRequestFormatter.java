@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.producers.Produces;
 import java.util.List;

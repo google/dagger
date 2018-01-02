@@ -47,6 +47,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.List;
@@ -381,7 +382,12 @@ final class InjectionMethods {
    */
   private static TypeName accessibleType(DependencyRequest dependency) {
     TypeName typeName = requestTypeName(dependency.kind(), accessibleType(dependency.key().type()));
-    return dependency.requestsPrimitiveType() ? typeName.unbox() : typeName;
+    return dependency
+            .requestElement()
+            .map(element -> element.asType().getKind().isPrimitive())
+            .orElse(false)
+        ? typeName.unbox()
+        : typeName;
   }
 
   /**

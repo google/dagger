@@ -16,8 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
+import static dagger.internal.codegen.TypeNames.providerOf;
 import static dagger.internal.codegen.TypeNames.rawTypeName;
 import static java.util.stream.StreamSupport.stream;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -82,6 +86,24 @@ final class CodeBlocks {
   /** Adds an annotation to a method. */
   static void addAnnotation(MethodSpec.Builder method, DeclaredType nullableType) {
     method.addAnnotation(ClassName.get(MoreTypes.asTypeElement(nullableType)));
+  }
+
+  /**
+   * Returns an anonymous {@link javax.inject.Provider} class with the single {@link
+   * javax.inject.Provider#get()} method implemented by {@code body}.
+   */
+  static CodeBlock anonymousProvider(TypeName providedType, CodeBlock body) {
+    return CodeBlock.of("$L",
+        anonymousClassBuilder("")
+            .superclass(providerOf(providedType))
+            .addMethod(
+                methodBuilder("get")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .returns(providedType)
+                    .addCode(body)
+                    .build())
+            .build());
   }
 
   private static final class CodeBlockJoiner {

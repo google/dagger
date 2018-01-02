@@ -20,13 +20,12 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
+import static dagger.internal.codegen.CodeBlocks.anonymousProvider;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRIVATE_METHOD;
 import static dagger.internal.codegen.RequestKinds.requestType;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
 import com.google.auto.common.MoreTypes;
@@ -262,22 +261,15 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   /** Returns a {@link TypeSpec} for an anonymous provider class. */
-  private TypeSpec providerTypeSpec() {
+  private CodeBlock providerTypeSpec() {
     // TODO(user): For scoped bindings that have already been created, use InstanceFactory?
-    return anonymousClassBuilder("")
-        .addSuperinterface(TypeName.get(returnType()))
-        .addMethod(
-            methodBuilder("get")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(TypeName.get(accessibleType(binding.contributedType())))
-                .addStatement(
-                    "return $L",
-                    componentBindingExpressions
-                        .getDependencyExpression(key(), RequestKind.INSTANCE, componentName())
-                        .codeBlock())
-                .build())
-        .build();
+    return anonymousProvider(
+        TypeName.get(accessibleType(binding.contributedType())),
+        CodeBlock.of(
+            "return $L;",
+            componentBindingExpressions
+                .getDependencyExpression(key(), RequestKind.INSTANCE, componentName())
+                .codeBlock()));
   }
 
   /** Returns the canonical name for a no-arg dependency expression method. */

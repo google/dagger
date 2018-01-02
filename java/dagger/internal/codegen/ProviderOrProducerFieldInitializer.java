@@ -25,6 +25,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.CodeBlocks.anonymousProvider;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
@@ -205,18 +206,8 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
                     .componentDescriptor()
                     .subcomponentsByBuilderType()
                     .get(MoreTypes.asTypeElement(binding.key().type())));
-        return CodeBlock.of(
-            "$L",
-            anonymousClassBuilder("")
-                .superclass(providerOf(bindingKeyTypeName))
-                .addMethod(
-                    methodBuilder("get")
-                        .addAnnotation(Override.class)
-                        .addModifiers(PUBLIC)
-                        .returns(bindingKeyTypeName)
-                        .addStatement("return new $LBuilder()", subcomponentName)
-                        .build())
-                .build());
+        return anonymousProvider(
+            bindingKeyTypeName, CodeBlock.of("return new $NBuilder();", subcomponentName));
 
       case BOUND_INSTANCE:
         return CodeBlock.of(
@@ -494,19 +485,8 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
           referenceReleasingManagerFields.getExpression(scope, generatedComponentModel.name());
     }
 
-    TypeName keyType = TypeName.get(binding.key().type());
-    return CodeBlock.of(
-        "$L",
-        anonymousClassBuilder("")
-            .addSuperinterface(providerOf(keyType))
-            .addMethod(
-                methodBuilder("get")
-                    .addAnnotation(Override.class)
-                    .addModifiers(PUBLIC)
-                    .returns(keyType)
-                    .addCode("return $L;", managerExpression)
-                    .build())
-            .build());
+    return anonymousProvider(
+        TypeName.get(binding.key().type()), CodeBlock.of("return $L;", managerExpression));
   }
 
   /**
@@ -542,22 +522,13 @@ final class ProviderOrProducerFieldInitializer extends FrameworkFieldInitializer
       }
     }
     TypeName keyTypeName = TypeName.get(key.type());
-    return CodeBlock.of(
-        "$L",
-        anonymousClassBuilder("")
-            .addSuperinterface(providerOf(keyTypeName))
-            .addMethod(
-                methodBuilder("get")
-                    .addAnnotation(Override.class)
-                    .addModifiers(PUBLIC)
-                    .returns(keyTypeName)
-                    .addCode(
-                        "return new $T($T.asList($L));",
-                        HashSet.class,
-                        Arrays.class,
-                        makeParametersCodeBlock(managerExpressions.build()))
-                    .build())
-            .build());
+    CodeBlock body =
+        CodeBlock.of(
+            "return new $T($T.asList($L));",
+            HashSet.class,
+            Arrays.class,
+            makeParametersCodeBlock(managerExpressions.build()));
+    return anonymousProvider(keyTypeName, body);
   }
 
   /**

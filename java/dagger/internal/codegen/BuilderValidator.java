@@ -28,7 +28,6 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
-import dagger.internal.codegen.ValidationReport.Builder;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
@@ -217,20 +216,6 @@ class BuilderValidator {
       builder.addError(String.format(enclosedError, extraArgs), method);
     } else {
       builder.addError(String.format(inheritedError, append(extraArgs, method)));
-    }
-  }
-
-  /** @see #error(Builder, ExecutableElement, String, String, Object...) */
-  private static void warning(
-      ValidationReport.Builder<TypeElement> builder,
-      ExecutableElement method,
-      String enclosedWarning,
-      String inheritedWarning,
-      Object... extraArgs) {
-    if (method.getEnclosingElement().equals(builder.getSubject())) {
-      builder.addWarning(String.format(enclosedWarning, extraArgs), method);
-    } else {
-      builder.addWarning(String.format(inheritedWarning, append(extraArgs, method)), method);
     }
   }
 

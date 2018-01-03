@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
@@ -528,70 +529,45 @@ abstract class BindingGraph {
        * </ul>
        */
       ResolvedBindings lookUpBindings(Key requestKey) {
-        Set<ContributionBinding> contributionBindings = new LinkedHashSet<>();
-        ImmutableSet.Builder<ContributionBinding> multibindingContributionsBuilder =
-            ImmutableSet.builder();
-        ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarationsBuilder =
-            ImmutableSet.builder();
-        ImmutableSet.Builder<SubcomponentDeclaration> subcomponentDeclarationsBuilder =
-            ImmutableSet.builder();
-        ImmutableSet.Builder<OptionalBindingDeclaration> optionalBindingDeclarationsBuilder =
-            ImmutableSet.builder();
-
-        for (Key key : keysMatchingRequest(requestKey)) {
-          contributionBindings.addAll(getExplicitBindings(key));
-          multibindingContributionsBuilder.addAll(getExplicitMultibindings(key));
-          multibindingDeclarationsBuilder.addAll(getMultibindingDeclarations(key));
-          subcomponentDeclarationsBuilder.addAll(getSubcomponentDeclarations(key));
-          optionalBindingDeclarationsBuilder.addAll(getOptionalBindingDeclarations(key));
-        }
+        Set<ContributionBinding> bindings = new LinkedHashSet<>();
+        bindings.addAll(getExplicitBindings(requestKey));
 
         ImmutableSet<ContributionBinding> multibindingContributions =
-            multibindingContributionsBuilder.build();
+            getAllMatchingBindingDeclarations(requestKey, this::getExplicitMultibindings);
         ImmutableSet<MultibindingDeclaration> multibindingDeclarations =
-            multibindingDeclarationsBuilder.build();
-        ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations =
-            subcomponentDeclarationsBuilder.build();
-        ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
-            optionalBindingDeclarationsBuilder.build();
+            getAllMatchingBindingDeclarations(requestKey, this::getMultibindingDeclarations);
 
-        ImmutableSet.Builder<Optional<? extends ContributionBinding>> maybeContributionBindings =
-            ImmutableSet.builder();
-        maybeContributionBindings.add(
-            syntheticMultibinding(
-                requestKey, multibindingContributions, multibindingDeclarations));
+        syntheticMultibinding(requestKey, multibindingContributions, multibindingDeclarations)
+            .ifPresent(bindings::add);
+
+        ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
+            getAllMatchingBindingDeclarations(requestKey, this::getOptionalBindingDeclarations);
+        syntheticOptionalBinding(requestKey, optionalBindingDeclarations).ifPresent(bindings::add);
+
+        ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations =
+            getSubcomponentDeclarations(requestKey);
         syntheticSubcomponentBuilderBinding(subcomponentDeclarations)
             .ifPresent(
                 binding -> {
-                  contributionBindings.add(binding);
+                  bindings.add(binding);
                   addSubcomponentToOwningResolver(binding);
                 });
-        maybeContributionBindings.add(
-            syntheticOptionalBinding(requestKey, optionalBindingDeclarations));
-
-        /* If there are no bindings, add the implicit @Inject-constructed binding if there is
-         * one. */
-        if (contributionBindings.isEmpty()) {
-          maybeContributionBindings.add(
-              injectBindingRegistry.getOrFindProvisionBinding(requestKey));
-        }
 
         if (isType(requestKey.type()) && isTypeOf(MembersInjector.class, requestKey.type())) {
-          maybeContributionBindings.add(
-              injectBindingRegistry.getOrFindMembersInjectorProvisionBinding(requestKey));
+          injectBindingRegistry
+              .getOrFindMembersInjectorProvisionBinding(requestKey)
+              .ifPresent(bindings::add);
         }
 
-        maybeContributionBindings
-            .build()
-            .stream()
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .forEach(contributionBindings::add);
+        // If there are no bindings, add the implicit @Inject-constructed binding if there is one.
+        if (bindings.isEmpty()) {
+          injectBindingRegistry.getOrFindProvisionBinding(requestKey).ifPresent(bindings::add);
+        }
 
         return ResolvedBindings.forContributionBindings(
             requestKey,
             componentDescriptor,
-            indexBindingsByOwningComponent(requestKey, ImmutableSet.copyOf(contributionBindings)),
+            indexBindingsByOwningComponent(requestKey, ImmutableSet.copyOf(bindings)),
             multibindingDeclarations,
             subcomponentDeclarations,
             optionalBindingDeclarations);
@@ -864,6 +840,18 @@ abstract class BindingGraph {
           resolverList.add(currentResolver.get());
         }
         return ImmutableList.copyOf(Lists.reverse(resolverList));
+      }
+
+      /**
+       * For all {@linkplain #keysMatchingRequest(Key) keys matching {@code requestKey}}, applies
+       * {@code getDeclarationsPerKey} and collects the values into an {@link ImmutableSet}.
+       */
+      private <T extends BindingDeclaration> ImmutableSet<T> getAllMatchingBindingDeclarations(
+          Key requestKey, Function<Key, Collection<T>> getDeclarationsPerKey) {
+        return keysMatchingRequest(requestKey)
+            .stream()
+            .flatMap(key -> getDeclarationsPerKey.apply(key).stream())
+            .collect(toImmutableSet());
       }
 
       /**

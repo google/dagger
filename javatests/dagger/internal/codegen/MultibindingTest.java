@@ -18,7 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -93,5 +95,100 @@ public class MultibindingTest {
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
         .in(component)
         .onLine(13);
+  }
+
+  @Test
+  public void concreteBindingForMultibindingAlias() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Collections;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "class TestModule {",
+            "  @Provides",
+            "  Map<String, Provider<String>> mapOfStringToProviderOfString() {",
+            "    return Collections.emptyMap();",
+            "  }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Map<String, String> mapOfStringToString();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,java.lang.String> "
+                + "cannot be provided without an @Provides-annotated method")
+        .inFile(component)
+        .onLineContaining("mapOfStringToString()");
+  }
+
+  @Test
+  public void produceConcreteSet_andRequestSetOfProduced() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import java.util.Collections;",
+            "import java.util.Set;",
+            "",
+            "@ProducerModule",
+            "class TestModule {",
+            "  @Produces",
+            "  Set<String> setOfString() {",
+            "    return Collections.emptySet();",
+            "  }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.BindsInstance;",
+            "import dagger.producers.Produced;",
+            "import dagger.producers.Production;",
+            "import dagger.producers.ProductionComponent;",
+            "import java.util.concurrent.Executor;",
+            "import java.util.Set;",
+            "",
+            "@ProductionComponent(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  ListenableFuture<Set<Produced<String>>> setOfProduced();",
+            "",
+            "  @ProductionComponent.Builder",
+            "  interface Builder {",
+            "    @BindsInstance Builder executor(@Production Executor executor);",
+            "    TestComponent build();",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Set<dagger.producers.Produced<java.lang.String>> "
+                + "cannot be provided without an @Provides- or @Produces-annotated method")
+        .inFile(component)
+        .onLineContaining("setOfProduced()");
+
   }
 }

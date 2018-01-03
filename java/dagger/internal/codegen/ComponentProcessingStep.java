@@ -47,7 +47,6 @@ import javax.lang.model.element.TypeElement;
 final class ComponentProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ComponentValidator componentValidator;
-  private final ComponentValidator subcomponentValidator;
   private final BuilderValidator builderValidator;
   private final ComponentHierarchyValidator componentHierarchyValidator;
   private final BindingGraphValidator bindingGraphValidator;
@@ -59,7 +58,6 @@ final class ComponentProcessingStep implements ProcessingStep {
   ComponentProcessingStep(
       Messager messager,
       ComponentValidator componentValidator,
-      ComponentValidator subcomponentValidator,
       BuilderValidator builderValidator,
       ComponentHierarchyValidator componentHierarchyValidator,
       BindingGraphValidator bindingGraphValidator,
@@ -69,7 +67,6 @@ final class ComponentProcessingStep implements ProcessingStep {
       Iterable<BindingGraphPlugin> bindingGraphPlugins) {
     this.messager = messager;
     this.componentValidator = componentValidator;
-    this.subcomponentValidator = subcomponentValidator;
     this.builderValidator = builderValidator;
     this.componentHierarchyValidator = componentHierarchyValidator;
     this.bindingGraphValidator = bindingGraphValidator;
@@ -184,8 +181,9 @@ final class ComponentProcessingStep implements ProcessingStep {
       Set<? extends Element> subcomponentBuilderElements) {
     Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent = Maps.newHashMap();
     for (Element element : subcomponentElements) {
-      ComponentValidationReport report = subcomponentValidator.validate(
-          MoreElements.asType(element), subcomponentElements, subcomponentBuilderElements);
+      ComponentValidationReport report =
+          componentValidator.validate(
+              MoreElements.asType(element), subcomponentElements, subcomponentBuilderElements);
       report.report().printMessagesTo(messager);
       reportsBySubcomponent.put(element, report.report());
     }

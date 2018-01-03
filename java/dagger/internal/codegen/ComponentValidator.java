@@ -72,50 +72,17 @@ final class ComponentValidator {
   private final Elements elements;
   private final Types types;
   private final ModuleValidator moduleValidator;
-  private final ComponentValidator subcomponentValidator;
-  private final BuilderValidator subcomponentBuilderValidator;
+  private final BuilderValidator builderValidator;
 
-  private ComponentValidator(
+  ComponentValidator(
       Elements elements,
       Types types,
       ModuleValidator moduleValidator,
-      BuilderValidator subcomponentBuilderValidator) {
+      BuilderValidator builderValidator) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
-    this.subcomponentValidator = this;
-    this.subcomponentBuilderValidator = subcomponentBuilderValidator;
-  }
-
-  private ComponentValidator(
-      Elements elements,
-      Types types,
-      ModuleValidator moduleValidator,
-      ComponentValidator subcomponentValidator,
-      BuilderValidator subcomponentBuilderValidator) {
-    this.elements = elements;
-    this.types = types;
-    this.moduleValidator = moduleValidator;
-    this.subcomponentValidator = subcomponentValidator;
-    this.subcomponentBuilderValidator = subcomponentBuilderValidator;
-  }
-
-  static ComponentValidator createForComponent(
-      Elements elements,
-      Types types,
-      ModuleValidator moduleValidator,
-      ComponentValidator subcomponentValidator,
-      BuilderValidator subcomponentBuilderValidator) {
-    return new ComponentValidator(
-        elements, types, moduleValidator, subcomponentValidator, subcomponentBuilderValidator);
-  }
-
-  static ComponentValidator createForSubcomponent(
-      Elements elements,
-      Types types,
-      ModuleValidator moduleValidator,
-      BuilderValidator subcomponentBuilderValidator) {
-    return new ComponentValidator(elements, types, moduleValidator, subcomponentBuilderValidator);
+    this.builderValidator = builderValidator;
   }
 
   @AutoValue
@@ -266,7 +233,7 @@ final class ComponentValidator {
     for (Element subcomponent :
         Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
       ComponentValidationReport subreport =
-          subcomponentValidator.validate(
+          validate(
               MoreElements.asType(subcomponent),
               validatedSubcomponents,
               validatedSubcomponentBuilders);
@@ -368,7 +335,7 @@ final class ComponentValidator {
       // TODO(sameb): The builder validator right now assumes the element is being compiled
       // in this pass, which isn't true here.  We should change error messages to spit out
       // this method as the subject and add the original subject to the message output.
-      builder.addItems(subcomponentBuilderValidator.validate(builderElement).items());
+      builder.addItems(builderValidator.validate(builderElement).items());
     }
   }
 

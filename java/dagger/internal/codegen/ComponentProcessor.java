@@ -116,12 +116,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             anyBindingMethodValidator,
             methodSignatureFormatter);
     BuilderValidator builderValidator = new BuilderValidator(elements, types);
-    ComponentValidator subcomponentValidator =
-        ComponentValidator.createForSubcomponent(
-            elements, types, moduleValidator, builderValidator);
     ComponentValidator componentValidator =
-        ComponentValidator.createForComponent(
-            elements, types, moduleValidator, subcomponentValidator, builderValidator);
+        new ComponentValidator(elements, types, moduleValidator, builderValidator);
     MapKeyValidator mapKeyValidator = new MapKeyValidator(elements);
 
     DependencyRequestFactory dependencyRequestFactory =
@@ -213,7 +209,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             : new ComponentProcessingStep(
                 messager,
                 componentValidator,
-                subcomponentValidator,
                 builderValidator,
                 componentHierarchyValidator,
                 bindingGraphValidator,

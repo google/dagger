@@ -16,9 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ModuleProcessingStep.moduleProcessingStep;
-import static dagger.internal.codegen.ModuleProcessingStep.producerModuleProcessingStep;
-
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
@@ -235,8 +232,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new ProductionExecutorModuleProcessingStep(messager, productionExecutorModuleGenerator),
         new MultibindingAnnotationsProcessingStep(messager),
         new BindsInstanceProcessingStep(messager),
-        moduleProcessingStep(messager, moduleValidator, provisionBindingFactory, factoryGenerator),
-        producerModuleProcessingStep(
+        new ModuleProcessingStep(
             messager,
             moduleValidator,
             provisionBindingFactory,

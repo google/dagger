@@ -17,13 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -35,28 +32,46 @@ import java.util.Optional;
  * An object that can initialize a framework-type component field for a binding. An instance should
  * be created for each field.
  */
-abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
+class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
-  protected final GeneratedComponentModel generatedComponentModel;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  /**
+   * An object that can determine the expression to use to assign to the component field for a
+   * binding.
+   */
+  interface FrameworkInstanceCreationExpression {
+    /** Returns the expression to use to assign to the component field for the binding. */
+    CodeBlock creationExpression();
+
+    /**
+     * Returns the type of the creation expression when it is a specific factory type. This
+     * implementation returns {@link Optional#empty()}.
+     */
+    default Optional<TypeName> specificType() {
+      return Optional.empty();
+    }
+
+    /**
+     * Returns the framework class to use for the field, if different from the one implied by the
+     * binding. This implementation returns {@link Optional#empty()}.
+     */
+    default Optional<ClassName> alternativeFrameworkClass() {
+      return Optional.empty();
+    }
+  }
+
+  private final GeneratedComponentModel generatedComponentModel;
   private final ResolvedBindings resolvedBindings;
+  private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
-  /**
-   * Indicates the type of the initializer when has been replaced with a more-specific factory type.
-   * This is used by {@code FrameworkInstanceBindingExpression} to create fields with the
-   * most-specific type available.  This allows javac to complete much faster for large components.
-   */
-  private Optional<TypeName> fieldTypeReplacement = Optional.empty();
-
-  protected FrameworkFieldInitializer(
+  FrameworkFieldInitializer(
       GeneratedComponentModel generatedComponentModel,
-      ComponentBindingExpressions componentBindingExpressions,
-      ResolvedBindings resolvedBindings) {
+      ResolvedBindings resolvedBindings,
+      FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
   /**
@@ -76,7 +91,7 @@ abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
         // Change our state in case we are recursively invoked via initializeBindingExpression
         fieldInitializationState = InitializationState.INITIALIZING;
         CodeBlock.Builder codeBuilder = CodeBlock.builder();
-        CodeBlock fieldInitialization = getFieldInitialization();
+        CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();
         CodeBlock initCode = CodeBlock.of("this.$N = $L;", getOrCreateField(), fieldInitialization);
 
         if (fieldInitializationState == InitializationState.DELEGATED) {
@@ -97,9 +112,9 @@ abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
 
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
+        fieldInitializationState = InitializationState.DELEGATED;
         generatedComponentModel.addInitialization(
             CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), DelegateFactory.class));
-        fieldInitializationState = InitializationState.DELEGATED;
         break;
 
       case DELEGATED:
@@ -119,17 +134,17 @@ abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType =
-        !isTypeAccessibleFrom(
-            resolvedBindings.key().type(), generatedComponentModel.name().packageName());
+    boolean useRawType = !generatedComponentModel.isTypeAccessible(resolvedBindings.key().type());
     FrameworkField contributionBindingField =
-        FrameworkField.forResolvedBindings(resolvedBindings, alternativeFrameworkClass());
+        FrameworkField.forResolvedBindings(
+            resolvedBindings, frameworkInstanceCreationExpression.alternativeFrameworkClass());
 
     TypeName fieldType;
-    if (fieldTypeReplacement.isPresent()) {
+    if (!fieldInitializationState.equals(InitializationState.DELEGATED)
+        && specificType().isPresent()) {
       // For some larger components, this causes javac to compile much faster by getting the
       // field type to exactly match the type of the expression being assigned to it.
-      fieldType = fieldTypeReplacement.get();
+      fieldType = specificType().get();
     } else if (useRawType) {
       fieldType = contributionBindingField.type().rawType;
     } else {
@@ -141,7 +156,7 @@ abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
             fieldType,
             generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
-    if (useRawType && !fieldTypeReplacement.isPresent()) {
+    if (useRawType && !specificType().isPresent()) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
     fieldSpec = contributionField.build();
@@ -150,37 +165,10 @@ abstract class FrameworkFieldInitializer implements FrameworkFieldSupplier {
     return fieldSpec;
   }
 
+  /** Returns the type of the instance when it is a specific factory type. */
   @Override
-  public boolean fieldTypeReplaced() {
-    return fieldTypeReplacement.isPresent();
-  }
-
-  /**
-   * Returns the framework class to use for the field, if different from the one implied by the
-   * binding. This implementation returns {@link Optional#empty()}.
-   */
-  protected Optional<ClassName> alternativeFrameworkClass() {
-    return Optional.empty();
-  }
-
-  /** Returns the expression to use to initialize the field. */
-  protected abstract CodeBlock getFieldInitialization();
-
-  /** Returns a list of code blocks for referencing all of the given binding's dependencies. */
-  protected final ImmutableList<CodeBlock> getBindingDependencyExpressions(Binding binding) {
-    ImmutableList<FrameworkDependency> dependencies = binding.frameworkDependencies();
-    return dependencies.stream().map(this::getDependencyExpression).collect(toImmutableList());
-  }
-
-  /** Returns a code block referencing the given dependency. */
-  protected final CodeBlock getDependencyExpression(FrameworkDependency frameworkDependency) {
-    return componentBindingExpressions
-        .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
-        .codeBlock();
-  }
-
-  protected final void setFieldTypeReplacement(TypeName typeName) {
-    this.fieldTypeReplacement = Optional.of(typeName);
+  public Optional<TypeName> specificType() {
+    return frameworkInstanceCreationExpression.specificType();
   }
 
   /** Initialization state for a factory field. */

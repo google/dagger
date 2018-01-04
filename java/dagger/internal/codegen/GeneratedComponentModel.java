@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -35,6 +36,7 @@ import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 /** The model of the component being generated. */
 final class GeneratedComponentModel {
@@ -131,6 +133,11 @@ final class GeneratedComponentModel {
   /** Returns the name of the component. */
   ClassName name() {
     return name;
+  }
+
+  /** Returns {@code true} if {@code type} is accessible from the generated component. */
+  boolean isTypeAccessible(TypeMirror type) {
+    return isTypeAccessibleFrom(type, name.packageName());
   }
 
   /** Adds the given super type to the component. */

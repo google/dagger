@@ -18,23 +18,37 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
+import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
+import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
+import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.InstanceFactory;
+import dagger.internal.MembersInjectors;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import dagger.model.Scope;
 import java.util.EnumSet;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
@@ -162,6 +176,18 @@ final class ComponentBindingExpressions {
   }
 
   /**
+   * Returns the expressions for each of the given {@linkplain FrameworkDependency framework
+   * dependencies}.
+   */
+  ImmutableList<CodeBlock> getDependencyExpressions(
+      ImmutableList<FrameworkDependency> frameworkDependencies, ClassName requestingClass) {
+    return frameworkDependencies
+        .stream()
+        .map(dependency -> getDependencyExpression(dependency, requestingClass).codeBlock())
+        .collect(toImmutableList());
+  }
+
+  /**
    * Returns an expression that evaluates to the value of a dependency request, for passing to a
    * binding method, an {@code @Inject}-annotated constructor or member, or a proxy for one.
    *
@@ -286,13 +312,18 @@ final class ComponentBindingExpressions {
     }
 
     /**
-     * Returns a binding expression that uses a {@link javax.inject.Provider} for provision
-     * bindings, a {@link dagger.producers.Producer} for production bindings, or a {@link
-     * dagger.MembersInjector} for members injection bindings.
+     * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings
+     * or a {@link dagger.producers.Producer} for production bindings.
      */
     private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
         ResolvedBindings resolvedBindings, RequestKind requestKind) {
       Optional<MemberSelect> staticMethod = staticMemberSelect(resolvedBindings);
+      FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
+          resolvedBindings.scope().isPresent()
+              ? scope(
+                  resolvedBindings.scope().get(),
+                  frameworkInstanceCreationExpression(resolvedBindings))
+              : frameworkInstanceCreationExpression(resolvedBindings);
       return new FrameworkInstanceBindingExpression(
           resolvedBindings,
           requestKind,
@@ -300,32 +331,136 @@ final class ComponentBindingExpressions {
           resolvedBindings.bindingType().frameworkType(),
           staticMethod.isPresent()
               ? staticMethod::get
-              : frameworkFieldInitializer(resolvedBindings),
+              : new FrameworkFieldInitializer(
+                  generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression),
           types,
           elements);
     }
 
+    private FrameworkInstanceCreationExpression scope(
+        Scope scope, FrameworkInstanceCreationExpression unscoped) {
+      if (referenceReleasingManagerFields.requiresReleasableReferences(scope)) {
+        return () ->
+            CodeBlock.of(
+                "$T.create($L, $L)",
+                REFERENCE_RELEASING_PROVIDER,
+                unscoped.creationExpression(),
+                referenceReleasingManagerFields.getExpression(
+                    scope, generatedComponentModel.name()));
+      } else {
+        return () ->
+            CodeBlock.of(
+                "$T.provider($L)",
+                scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
+                unscoped.creationExpression());
+      }
+    }
+
     /**
-     * Returns an initializer for a {@link javax.inject.Provider} field for provision bindings, a
-     * {@link dagger.producers.Producer} field for production bindings, or a {@link
-     * dagger.MembersInjector} field for members injection bindings.
+     * Returns a creation expression for a {@link javax.inject.Provider} for provision bindings or a
+     * {@link dagger.producers.Producer} for production bindings.
      */
-    private FrameworkFieldInitializer frameworkFieldInitializer(ResolvedBindings resolvedBindings) {
-      switch (resolvedBindings.bindingType()) {
-        case PRODUCTION:
+    private FrameworkInstanceCreationExpression frameworkInstanceCreationExpression(
+        ResolvedBindings resolvedBindings) {
+      checkArgument(!resolvedBindings.bindingType().equals(MEMBERS_INJECTION));
+      ContributionBinding binding = resolvedBindings.contributionBinding();
+      switch (binding.bindingKind()) {
+        case COMPONENT:
+          // The type parameter can be removed when we drop java 7 source support
+          return () ->
+              CodeBlock.of("$T.<$T>create(this)", InstanceFactory.class, binding.key().type());
+
+        case BOUND_INSTANCE:
+        case COMPONENT_DEPENDENCY:
+          return new ComponentRequirementProviderCreationExpression(
+              binding, generatedComponentModel, componentRequirementFields);
+
+        case COMPONENT_PROVISION:
+          return new DependencyMethodProviderCreationExpression(
+              binding, generatedComponentModel, componentRequirementFields, compilerOptions, graph);
+
+        case SUBCOMPONENT_BUILDER:
+          return new SubcomponentBuilderProviderCreationExpression(
+              binding.key().type(), subcomponentNames.get(binding.key()));
+
+        case INJECTION:
         case PROVISION:
-          return new ProviderOrProducerFieldInitializer(
-              resolvedBindings,
-              subcomponentNames,
+          return new InjectionOrProvisionProviderCreationExpression(
+              binding,
               generatedComponentModel,
               componentBindingExpressions,
-              componentRequirementFields,
-              referenceReleasingManagerFields,
-              compilerOptions,
-              graph,
-              optionalFactories);
+              componentRequirementFields);
+
+        case COMPONENT_PRODUCTION:
+          return new DependencyMethodProducerCreationExpression(
+              binding, generatedComponentModel, componentRequirementFields, graph);
+
+        case PRODUCTION:
+          return new ProducerCreationExpression(
+              binding,
+              generatedComponentModel,
+              componentBindingExpressions,
+              componentRequirementFields);
+
+        case SYNTHETIC_MULTIBOUND_SET:
+          return new SetFactoryCreationExpression(
+              binding, generatedComponentModel, componentBindingExpressions, graph);
+
+        case SYNTHETIC_MULTIBOUND_MAP:
+          return new MapFactoryCreationExpression(
+              binding, generatedComponentModel, componentBindingExpressions, graph);
+
+        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGER:
+          return new ReleasableReferenceManagerProviderCreationExpression(
+              binding, generatedComponentModel, referenceReleasingManagerFields);
+
+        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS:
+          return new ReleasableReferenceManagerSetProviderCreationExpression(
+              binding, generatedComponentModel, referenceReleasingManagerFields, graph);
+
+        case SYNTHETIC_DELEGATE_BINDING:
+          return new DelegatingFrameworkInstanceCreationExpression(
+              binding, generatedComponentModel, componentBindingExpressions);
+
+        case SYNTHETIC_OPTIONAL_BINDING:
+          if (binding.explicitDependencies().isEmpty()) {
+            return () -> optionalFactories.absentOptionalProvider(binding);
+          } else {
+            return () ->
+                optionalFactories.presentOptionalFactory(
+                    binding,
+                    componentBindingExpressions
+                        .getDependencyExpression(
+                            getOnlyElement(binding.frameworkDependencies()),
+                            generatedComponentModel.name())
+                        .codeBlock());
+          }
+
+        case MEMBERS_INJECTOR:
+          TypeMirror membersInjectedType =
+              getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
+
+          if (((ProvisionBinding) binding).injectionSites().isEmpty()) {
+            return () ->
+                // The type parameter can be removed when we drop Java 7 source support.
+                CodeBlock.of(
+                    "$T.create($T.<$T>noOp())",
+                    InstanceFactory.class,
+                    MembersInjectors.class,
+                    membersInjectedType);
+          } else {
+            return () ->
+                CodeBlock.of(
+                    "$T.create($T.create($L))",
+                    InstanceFactory.class,
+                    membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
+                    makeParametersCodeBlock(
+                        componentBindingExpressions.getDependencyExpressions(
+                            binding.frameworkDependencies(), generatedComponentModel.name())));
+          }
+
         default:
-          throw new AssertionError(resolvedBindings);
+          throw new AssertionError(binding);
       }
     }
 
@@ -366,8 +501,13 @@ final class ComponentBindingExpressions {
           requestKind,
           componentBindingExpressions,
           FrameworkType.PRODUCER,
-          new ProducerFromProviderFieldInitializer(
-              resolvedBindings, generatedComponentModel, componentBindingExpressions),
+          new FrameworkFieldInitializer(
+              generatedComponentModel,
+              resolvedBindings,
+              new ProducerFromProviderCreationExpression(
+                  resolvedBindings.contributionBinding(),
+                  generatedComponentModel,
+                  componentBindingExpressions)),
           types,
           elements);
     }

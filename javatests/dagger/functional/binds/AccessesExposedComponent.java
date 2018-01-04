@@ -41,4 +41,11 @@ interface AccessesExposedComponent {
   Provider<List<? extends Exposed>> providerOfListOfExposed();
 
   UsesExposedInjectsMembers usesExposedInjectsMembers();
+
+  /**
+   * This provider needs a {@code Provider<ExposedInjectsMembers>}, which is bound to a {@code
+   * Provider<NotExposedInjectsMembers>}. This method is here to make sure that the cast happens
+   * appropriately.
+   */
+  Provider<UsesExposedInjectsMembers> usesExposedInjectsMembersProvider();
 }

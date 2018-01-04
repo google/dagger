@@ -16,16 +16,16 @@
 
 package dagger.internal.codegen;
 
-/** An object that supplies a {@link MemberSelect} for a framework field. */
-interface FrameworkFieldSupplier {
+import com.squareup.javapoet.TypeName;
+import java.util.Optional;
+
+/** An object that supplies a {@link MemberSelect} for a framework instance. */
+interface FrameworkInstanceSupplier {
   /** Returns a {@link MemberSelect}, with possible side effects on the first call. */
   MemberSelect memberSelect();
 
-  /**
-   * If true, signals that a publicly-visible concrete type was used to replace the original type
-   * of the field being initialized.
-   */
-  default boolean fieldTypeReplaced() {
-    return false;
+  /** The framework instance is of this specific subtype. */
+  default Optional<TypeName> specificType() {
+    return Optional.empty();
   }
 }

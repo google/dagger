@@ -106,6 +106,11 @@ final class CodeBlocks {
             .build());
   }
 
+  /** Returns {@code expression} cast to a type. */
+  static CodeBlock cast(CodeBlock expression, Class<?> castTo) {
+    return CodeBlock.of("($T) $L", castTo, expression);
+  }
+
   private static final class CodeBlockJoiner {
     private final String delimiter;
     private final CodeBlock.Builder builder;

@@ -30,7 +30,7 @@ import javax.lang.model.util.Elements;
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final FrameworkFieldSupplier frameworkFieldSupplier;
+  private final FrameworkInstanceSupplier frameworkInstanceSupplier;
   private final FrameworkType frameworkType;
   private final DaggerTypes types;
   private final Elements elements;
@@ -40,13 +40,13 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       FrameworkType frameworkType,
-      FrameworkFieldSupplier frameworkFieldSupplier,
+      FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       Elements elements) {
     super(resolvedBindings, requestKind);
     this.componentBindingExpressions = componentBindingExpressions;
     this.frameworkType = frameworkType;
-    this.frameworkFieldSupplier = frameworkFieldSupplier;
+    this.frameworkInstanceSupplier = frameworkInstanceSupplier;
     this.types = types;
     this.elements = elements;
   }
@@ -60,11 +60,11 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     if (requestKind().equals(frameworkRequestKind())) {
-      MemberSelect memberSelect = frameworkFieldSupplier.memberSelect();
+      MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
       TypeMirror expressionType =
-          isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
+          frameworkInstanceSupplier.specificType().isPresent()
+                  || isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
                   || isInlinedFactoryCreation(memberSelect)
-                  || frameworkFieldSupplier.fieldTypeReplaced()
               ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
               : rawFrameworkType();
       return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));

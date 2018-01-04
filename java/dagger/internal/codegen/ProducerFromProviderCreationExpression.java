@@ -21,38 +21,39 @@ import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.model.Key;
+import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;
 
-/** An initializer for {@link Producer} fields that are adaptations of provision bindings. */
-final class ProducerFromProviderFieldInitializer extends FrameworkFieldInitializer {
-
+/** An {@link Producer} creation expression for provision bindings. */
+final class ProducerFromProviderCreationExpression implements FrameworkInstanceCreationExpression {
+  private final ContributionBinding binding;
+  private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final Key key;
 
-  ProducerFromProviderFieldInitializer(
-      ResolvedBindings resolvedBindings,
+  ProducerFromProviderCreationExpression(
+      ContributionBinding binding,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions) {
-    super(generatedComponentModel, componentBindingExpressions, resolvedBindings);
+    this.binding = checkNotNull(binding);
+    this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.key = resolvedBindings.key();
   }
 
   @Override
-  protected CodeBlock getFieldInitialization() {
+  public CodeBlock creationExpression() {
     return FrameworkType.PROVIDER.to(
         RequestKind.PRODUCER,
         componentBindingExpressions
             .getDependencyExpression(
-                FrameworkDependency.create(key, PROVISION), generatedComponentModel.name())
+                FrameworkDependency.create(binding.key(), PROVISION),
+                generatedComponentModel.name())
             .codeBlock());
   }
 
   @Override
-  protected Optional<ClassName> alternativeFrameworkClass() {
+  public Optional<ClassName> alternativeFrameworkClass() {
     return Optional.of(ClassName.get(Producer.class));
   }
 }

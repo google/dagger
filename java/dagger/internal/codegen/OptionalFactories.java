@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -96,6 +97,10 @@ final class OptionalFactories {
    * for absent optional bindings.
    */
   CodeBlock absentOptionalProvider(ContributionBinding binding) {
+    verify(
+        binding.bindingType().equals(BindingType.PROVISION),
+        "Absent optional bindings should be provisions: %s",
+        binding);
     OptionalKind optionalKind = OptionalType.from(binding.key()).kind();
     return CodeBlock.of(
         "$N()",

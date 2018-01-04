@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.REFERENCE_RELEASING_MANAGER_FIELD;
 import static dagger.internal.codegen.MemberSelect.localField;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER_MANAGER;
+import static dagger.internal.codegen.TypeNames.TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -30,9 +31,11 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.model.Scope;
 import java.util.HashMap;
 import java.util.Map;
+import javax.lang.model.element.AnnotationMirror;
 
 /**
  * Manages the {@link dagger.internal.ReferenceReleasingProviderManager} fields and the logic for
@@ -57,6 +60,20 @@ public class ReferenceReleasingManagerFields {
     this.graph = checkNotNull(graph);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     checkArgument(graph.componentDescriptor().kind().isTopLevel());
+  }
+
+  /**
+   * Returns an expression that evaluates to a {@link TypedReleasableReferenceManagerDecorator} that
+   * decorates the {@code managerExpression} to supply {@code metadata}.
+   */
+  static CodeBlock typedReleasableReferenceManagerDecoratorExpression(
+      CodeBlock managerExpression, AnnotationMirror metadata) {
+    return CodeBlock.of(
+        "new $T<$T>($L, $L)",
+        TYPED_RELEASABLE_REFERENCE_MANAGER_DECORATOR,
+        metadata.getAnnotationType(),
+        managerExpression,
+        new AnnotationExpression(metadata).getAnnotationInstanceExpression());
   }
 
   /**

@@ -45,7 +45,7 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
   public abstract Key key();
 
   @Override
-  abstract Optional<? extends ExecutableElement> bindingElement();
+  abstract Optional<ExecutableElement > bindingElement();
 
   /**
    * The type element that defines the {@link dagger.Subcomponent} or {@link

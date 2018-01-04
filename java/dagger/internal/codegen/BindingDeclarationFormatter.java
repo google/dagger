@@ -19,10 +19,10 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGER;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
+import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGER;
+import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGERS;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
@@ -31,6 +31,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import dagger.model.BindingKind;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeKind;
@@ -43,10 +44,10 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
   private static final ImmutableSet<TypeKind> FORMATTABLE_ELEMENT_TYPE_KINDS =
       immutableEnumSet(EXECUTABLE, DECLARED);
 
-  private static final ImmutableSet<ContributionBinding.Kind>
+  private static final ImmutableSet<BindingKind>
       FORMATTABLE_ELEMENTLESS_BINDING_KINDS =
           immutableEnumSet(
-              SYNTHETIC_RELEASABLE_REFERENCE_MANAGER, SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS);
+              RELEASABLE_REFERENCE_MANAGER, RELEASABLE_REFERENCE_MANAGERS);
 
   private final MethodSignatureFormatter methodSignatureFormatter;
 
@@ -61,8 +62,8 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
    * <ul>
    * <li>Those with {@linkplain BindingDeclaration#bindingElement() binding elements} that are
    *     methods, constructors, or types.
-   * <li>{@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGER} bindings.
-   * <li>{@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS} bindings.
+   * <li>{@link BindingKind#RELEASABLE_REFERENCE_MANAGER} bindings.
+   * <li>{@link BindingKind#RELEASABLE_REFERENCE_MANAGERS} bindings.
    * </ul>
    */
   boolean canFormat(BindingDeclaration bindingDeclaration) {
@@ -75,7 +76,7 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
     }
     if (bindingDeclaration instanceof ContributionBinding) {
       ContributionBinding contributionBinding = (ContributionBinding) bindingDeclaration;
-      return FORMATTABLE_ELEMENTLESS_BINDING_KINDS.contains(contributionBinding.bindingKind());
+      return FORMATTABLE_ELEMENTLESS_BINDING_KINDS.contains(contributionBinding.kind());
     }
     return false;
   }
@@ -88,12 +89,12 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
 
     if (bindingDeclaration instanceof ContributionBinding) {
       ContributionBinding binding = (ContributionBinding) bindingDeclaration;
-      switch (binding.bindingKind()) {
-        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGER:
+      switch (binding.kind()) {
+        case RELEASABLE_REFERENCE_MANAGER:
           return String.format(
               "binding for %s from the scope declaration",
               stripCommonTypePrefixes(binding.key().toString()));
-        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS:
+        case RELEASABLE_REFERENCE_MANAGERS:
           return String.format(
               "Dagger-generated binding for %s",
               stripCommonTypePrefixes(binding.key().toString()));

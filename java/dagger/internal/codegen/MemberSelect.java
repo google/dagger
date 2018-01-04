@@ -96,11 +96,11 @@ abstract class MemberSelect {
     ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
     if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
         && !contributionBinding.scope().isPresent()) {
-      switch (contributionBinding.bindingKind()) {
-        case SYNTHETIC_MULTIBOUND_MAP:
+      switch (contributionBinding.kind()) {
+        case MULTIBOUND_MAP:
           return Optional.of(emptyMapFactory(contributionBinding));
 
-        case SYNTHETIC_MULTIBOUND_SET:
+        case MULTIBOUND_SET:
           return Optional.of(emptySetFactory(contributionBinding));
 
         case INJECTION:

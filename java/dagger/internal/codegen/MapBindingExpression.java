@@ -20,14 +20,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
+import static dagger.model.BindingKind.MULTIBOUND_MAP;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.MapBuilder;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import java.util.Collections;
 import java.util.Map;
@@ -52,8 +53,8 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
       DaggerTypes types,
       Elements elements) {
     super(delegate, types);
-    ContributionBinding.Kind bindingKind = binding.bindingKind();
-    checkArgument(bindingKind.equals(SYNTHETIC_MULTIBOUND_MAP), bindingKind);
+    BindingKind bindingKind = binding.kind();
+    checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
     this.binding = binding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.elements = elements;

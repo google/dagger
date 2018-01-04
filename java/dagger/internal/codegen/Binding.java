@@ -54,11 +54,7 @@ import javax.lang.model.util.Types;
  * @author Gregory Kick
  * @since 2.0
  */
-abstract class Binding extends BindingDeclaration {
-
-  /** The {@link Key} that is provided by this binding. */
-  @Override
-  public abstract Key key();
+abstract class Binding extends BindingDeclaration implements dagger.model.Binding {
 
   /** The {@link BindingType} of this binding. */
   abstract BindingType bindingType();
@@ -93,7 +89,8 @@ abstract class Binding extends BindingDeclaration {
    * union of {@link #explicitDependencies()} and {@link #implicitDependencies()}. This returns an
    * unmodifiable set.
    */
-  final ImmutableSet<DependencyRequest> dependencies() {
+  @Override
+  public ImmutableSet<DependencyRequest> dependencies() {
     return dependencies.get();
   }
 
@@ -242,10 +239,8 @@ abstract class Binding extends BindingDeclaration {
    */
   abstract Optional<? extends Binding> unresolved();
 
-  /**
-   * The scope of this binding.
-   */
-  Optional<Scope> scope() {
+  @Override
+  public Optional<Scope> scope() {
     return Optional.empty();
   }
 

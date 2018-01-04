@@ -29,10 +29,6 @@ import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.MEMBERS_INJECTOR;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
@@ -71,6 +67,9 @@ import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.model.BindingKind.INJECTION;
+import static dagger.model.BindingKind.MEMBERS_INJECTOR;
+import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
@@ -101,6 +100,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -556,8 +556,8 @@ final class BindingGraphValidator {
           incompatiblyScopedBindings.get(graph.componentDescriptor())) {
         message.append(ErrorMessages.INDENT);
 
-        switch (binding.bindingKind()) {
-          case SYNTHETIC_DELEGATE_BINDING:
+        switch (binding.kind()) {
+          case DELEGATE:
           case PROVISION:
             message.append(
                 methodSignatureFormatter.format(
@@ -631,7 +631,7 @@ final class BindingGraphValidator {
         if (!dependencyRequest().isNullable() && binding.nullableType().isPresent()) {
           reportNullableBindingForNonNullableRequest(binding);
         }
-        if (binding.bindingKind().equals(INJECTION)) {
+        if (binding.kind().equals(INJECTION)) {
           TypeMirror type = binding.key().type();
           ValidationReport<TypeElement> report =
               injectValidator.validateType(MoreTypes.asTypeElement(type));
@@ -657,9 +657,9 @@ final class BindingGraphValidator {
             }
           }
         }
-        if (binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP)) {
+        if (binding.kind().equals(MULTIBOUND_MAP)) {
           validateMapKeys(binding, owningComponent);
-        } else if (binding.bindingKind().equals(MEMBERS_INJECTOR)) {
+        } else if (binding.kind().equals(MEMBERS_INJECTOR)) {
           validateMembersInjectionType(binding);
         }
         super.visitContributionBinding(binding, owningComponent);
@@ -681,14 +681,14 @@ final class BindingGraphValidator {
        * ContributionBinding}s with present {@linkplain BindingDeclaration#bindingElement() binding
        * elements}.
        *
-       * <p>Includes {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGER} or
-       * {@link ContributionBinding.Kind#SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS} bindings, even
+       * <p>Includes {@link BindingKind#RELEASABLE_REFERENCE_MANAGER} or
+       * {@link BindingKind#RELEASABLE_REFERENCE_MANAGERS} bindings, even
        * though they have no binding elements, because they will be reported via the declared
        * scopes.
        *
        * <p>For other bindings without binding elements, such as the {@link
-       * ContributionBinding.Kind#SYNTHETIC_MULTIBOUND_KINDS}, includes the conflicting declarations
-       * in their resolved dependencies.
+       * ContributionBinding#isSyntheticMultibinding()}, includes the conflicting declarations in
+       * their resolved dependencies.
        */
       private ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration>
           reportableDeclarations() {
@@ -746,7 +746,7 @@ final class BindingGraphValidator {
       private void validateMapKeys(
           ContributionBinding binding, ComponentDescriptor owningComponent) {
         checkArgument(
-            binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP),
+            binding.kind().equals(MULTIBOUND_MAP),
             "binding must be a synthetic multibound map: %s",
             binding);
         ImmutableSet<ContributionBinding> multibindingContributions =
@@ -1012,9 +1012,8 @@ final class BindingGraphValidator {
         if (resolvedBindings()
             .contributionBindings()
             .stream()
-            .map(ContributionBinding::bindingKind)
             // TODO(dpb): Kill with fire.
-            .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)) {
+            .anyMatch(ContributionBinding::isSyntheticMultibinding)) {
           reportMultipleContributionTypes();
           return;
         }

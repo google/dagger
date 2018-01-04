@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Provides;
+import dagger.model.BindingKind;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
@@ -183,7 +184,7 @@ abstract class ComponentRequirement {
   }
 
   static ComponentRequirement forBoundInstance(ContributionBinding binding) {
-    checkArgument(binding.bindingKind().equals(ContributionBinding.Kind.BOUND_INSTANCE));
+    checkArgument(binding.kind().equals(BindingKind.BOUND_INSTANCE));
     return forBoundInstance(
         binding.key(),
         binding.nullableType().isPresent(),

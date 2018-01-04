@@ -21,16 +21,17 @@ import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_KINDS;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_OPTIONAL_BINDING;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.model.BindingKind.OPTIONAL;
+import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -55,7 +56,6 @@ import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
-import dagger.internal.codegen.ContributionBinding.Kind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -591,7 +591,7 @@ abstract class BindingGraph {
        * The queue will be used to detect which subcomponents need to be resolved.
        */
       private void addSubcomponentToOwningResolver(ProvisionBinding subcomponentBuilderBinding) {
-        checkArgument(subcomponentBuilderBinding.bindingKind().equals(Kind.SUBCOMPONENT_BUILDER));
+        checkArgument(subcomponentBuilderBinding.kind().equals(SUBCOMPONENT_BUILDER));
         Resolver owningResolver = getOwningResolver(subcomponentBuilderBinding).get();
 
         TypeElement builderType = MoreTypes.asTypeElement(subcomponentBuilderBinding.key().type());
@@ -1160,11 +1160,9 @@ abstract class BindingGraph {
          * at least one contribution declared within this component's modules.
          */
         private boolean hasLocalMultibindingContributions(ResolvedBindings resolvedBindings) {
-          return resolvedBindings
-                  .contributionBindings()
-                  .stream()
-                  .map(ContributionBinding::bindingKind)
-                  .anyMatch(SYNTHETIC_MULTIBOUND_KINDS::contains)
+          return any(
+                  resolvedBindings.contributionBindings(),
+                  ContributionBinding::isSyntheticMultibinding)
               && keysMatchingRequest(resolvedBindings.key())
                   .stream()
                   .anyMatch(key -> !getLocalExplicitMultibindings(key).isEmpty());
@@ -1178,8 +1176,8 @@ abstract class BindingGraph {
           return resolvedBindings
                   .contributionBindings()
                   .stream()
-                  .map(ContributionBinding::bindingKind)
-                  .anyMatch(isEqual(SYNTHETIC_OPTIONAL_BINDING))
+                  .map(ContributionBinding::kind)
+                  .anyMatch(isEqual(OPTIONAL))
               && !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
                   .isEmpty();
         }

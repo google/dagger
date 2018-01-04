@@ -18,8 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.model.BindingKind.INJECTION;
 
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.CodeBlock;
@@ -75,7 +75,7 @@ final class InjectionOrProvisionProviderCreationExpression
 
     // When scoping a parameterized factory for an @Inject class, Java 7 cannot always infer the
     // type properly, so cast to a raw framework type before scoping.
-    if (binding.bindingKind().equals(INJECTION)
+    if (binding.kind().equals(INJECTION)
         && binding.unresolved().isPresent()
         && binding.scope().isPresent()) {
       return CodeBlocks.cast(createFactory, binding.bindingType().frameworkClass());

@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ContributionBinding.Kind.MEMBERS_INJECTOR;
+import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
@@ -97,7 +97,7 @@ abstract class FrameworkField {
       ContributionBinding binding = resolvedBindings.contributionBinding();
       if (binding.bindingElement().isPresent()) {
         String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
-        return binding.bindingKind().equals(MEMBERS_INJECTOR)
+        return binding.kind().equals(MEMBERS_INJECTOR)
             ? name + "MembersInjector"
             : name;
       }

@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ import javax.lang.model.util.Types;
 @AutoValue
 abstract class MembersInjectionBinding extends Binding {
   @Override
-  Optional<? extends Element> bindingElement() {
+  public Optional<TypeElement> bindingElement() {
     return Optional.of(membersInjectedType());
   }
 
@@ -75,7 +76,7 @@ abstract class MembersInjectionBinding extends Binding {
   abstract Optional<MembersInjectionBinding> unresolved();
 
   @Override
-  Optional<TypeElement> contributingModule() {
+  public Optional<TypeElement> contributingModule() {
     return Optional.empty();
   }
 
@@ -89,8 +90,18 @@ abstract class MembersInjectionBinding extends Binding {
   abstract Optional<Key> parentKey();
 
   @Override
-  public BindingType bindingType() {
+  BindingType bindingType() {
     return BindingType.MEMBERS_INJECTION;
+  }
+
+  @Override
+  public BindingKind kind() {
+    return BindingKind.MEMBERS_INJECTION;
+  }
+
+  @Override
+  public boolean isNullable() {
+    return false;
   }
 
   /**
@@ -102,6 +113,11 @@ abstract class MembersInjectionBinding extends Binding {
         .anyMatch(
             injectionSite ->
                 injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
+  }
+
+  @Override
+  public final boolean isProduction() {
+    return false;
   }
 
   @AutoValue

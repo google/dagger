@@ -25,10 +25,10 @@ import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
 import static com.google.common.graph.Graphs.transpose;
-import static dagger.internal.codegen.ContributionBinding.Kind.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
@@ -435,7 +435,7 @@ public final class BindingNetwork
         network.addNode(current);
         if (binding instanceof ContributionBinding) {
           ContributionBinding contributionBinding = (ContributionBinding) binding;
-          if (contributionBinding.bindingKind().equals(SUBCOMPONENT_BUILDER)) {
+          if (contributionBinding.kind().equals(SUBCOMPONENT_BUILDER)) {
             network.addEdge(
                 current,
                 subcomponentNode(contributionBinding, owningComponent),
@@ -456,7 +456,7 @@ public final class BindingNetwork
 
       private ComponentNode subcomponentNode(
           ContributionBinding binding, ComponentDescriptor subcomponentParent) {
-        checkArgument(binding.bindingKind().equals(SUBCOMPONENT_BUILDER));
+        checkArgument(binding.kind().equals(SUBCOMPONENT_BUILDER));
         TypeElement builderType = asTypeElement(binding.key().type());
         TypeElement subcomponentType = asType(builderType.getEnclosingElement());
         ComponentTreePath childPath =

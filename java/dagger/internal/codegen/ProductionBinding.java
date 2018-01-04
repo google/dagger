@@ -22,6 +22,10 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.model.BindingKind.COMPONENT_PRODUCTION;
+import static dagger.model.BindingKind.DELEGATE;
+import static dagger.model.BindingKind.OPTIONAL;
+import static dagger.model.BindingKind.PRODUCTION;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;
@@ -110,6 +114,11 @@ abstract class ProductionBinding extends ContributionBinding {
         .thrownTypes(ImmutableList.<TypeMirror>of());
   }
 
+  @Override
+  public final boolean isProduction() {
+    return true;
+  }
+
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<Builder> {
@@ -173,7 +182,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .key(key)
           .explicitDependencies(dependencies)
           .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(producesMethod)))
-          .bindingKind(Kind.PRODUCTION)
+          .kind(PRODUCTION)
           .productionKind(productionKind)
           .thrownTypes(producesMethod.getThrownTypes())
           .executorRequest(executorRequest)
@@ -194,7 +203,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .key(key)
           .explicitDependencies(
               dependencyRequestFactory.forMultibindingContributions(key, multibindingContributions))
-          .bindingKind(Kind.forMultibindingKey(key))
+          .kind(bindingKindForMultibindingKey(key))
           .build();
     }
 
@@ -207,7 +216,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .bindingElement(componentMethod)
           .key(keyFactory.forProductionComponentMethod(componentMethod))
-          .bindingKind(Kind.COMPONENT_PRODUCTION)
+          .kind(COMPONENT_PRODUCTION)
           .thrownTypes(componentMethod.getThrownTypes())
           .build();
     }
@@ -222,7 +231,7 @@ abstract class ProductionBinding extends ContributionBinding {
           .explicitDependencies(delegateDeclaration.delegateRequest())
           .nullableType(delegateBinding.nullableType())
           .wrappedMapKey(delegateDeclaration.wrappedMapKey())
-          .bindingKind(Kind.SYNTHETIC_DELEGATE_BINDING)
+          .kind(DELEGATE)
           .build();
     }
 
@@ -234,7 +243,7 @@ abstract class ProductionBinding extends ContributionBinding {
       return ProductionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(key)
-          .bindingKind(Kind.SYNTHETIC_OPTIONAL_BINDING)
+          .kind(OPTIONAL)
           .explicitDependencies(
               dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, kind))
           .build();

@@ -26,6 +26,18 @@ import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Scopes.uniqueScopeOf;
+import static dagger.model.BindingKind.BOUND_INSTANCE;
+import static dagger.model.BindingKind.COMPONENT;
+import static dagger.model.BindingKind.COMPONENT_DEPENDENCY;
+import static dagger.model.BindingKind.COMPONENT_PROVISION;
+import static dagger.model.BindingKind.DELEGATE;
+import static dagger.model.BindingKind.INJECTION;
+import static dagger.model.BindingKind.MEMBERS_INJECTOR;
+import static dagger.model.BindingKind.OPTIONAL;
+import static dagger.model.BindingKind.PROVISION;
+import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGER;
+import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGERS;
+import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -40,6 +52,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -89,8 +102,8 @@ abstract class ProvisionBinding extends ContributionBinding {
   }
 
   /**
-   * {@link InjectionSite}s for all {@code @Inject} members if {@link #bindingKind()} is {@link
-   * ContributionBinding.Kind#INJECTION}, otherwise empty.
+   * {@link InjectionSite}s for all {@code @Inject} members if {@link #kind()} is {@link
+   * BindingKind#INJECTION}, otherwise empty.
    */
   abstract ImmutableSortedSet<InjectionSite> injectionSites();
 
@@ -102,8 +115,10 @@ abstract class ProvisionBinding extends ContributionBinding {
   @Override
   abstract Optional<ProvisionBinding> unresolved();
 
+  // TODO(ronshapiro): we should be able to remove this, but AutoValue barks on the Builder's scope
+  // method, saying that the method doesn't correspond to a property of ProvisionBinding
   @Override
-  abstract Optional<Scope> scope();
+  public abstract Optional<Scope> scope();
 
   private static Builder builder() {
     return new AutoValue_ProvisionBinding.Builder()
@@ -113,15 +128,19 @@ abstract class ProvisionBinding extends ContributionBinding {
 
   abstract Builder toBuilder();
 
-  private static final ImmutableSet<ContributionBinding.Kind> KINDS_TO_CHECK_FOR_NULL =
-      ImmutableSet.of(
-          ContributionBinding.Kind.PROVISION, ContributionBinding.Kind.COMPONENT_PROVISION);
+  private static final ImmutableSet<BindingKind> KINDS_TO_CHECK_FOR_NULL =
+      ImmutableSet.of(PROVISION, COMPONENT_PROVISION);
 
   boolean shouldCheckForNull(CompilerOptions compilerOptions) {
-    return KINDS_TO_CHECK_FOR_NULL.contains(bindingKind())
+    return KINDS_TO_CHECK_FOR_NULL.contains(kind())
         && !contributedPrimitiveType().isPresent()
         && !nullableType().isPresent()
         && compilerOptions.doCheckForNulls();
+  }
+
+  @Override
+  public final boolean isProduction() {
+    return false;
   }
 
   @AutoValue.Builder
@@ -203,7 +222,7 @@ abstract class ProvisionBinding extends ContributionBinding {
               .key(key)
               .provisionDependencies(provisionDependencies)
               .injectionSites(injectionSites)
-              .bindingKind(Kind.INJECTION)
+              .kind(INJECTION)
               .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
       TypeElement bindingTypeElement =
@@ -233,7 +252,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .provisionDependencies(dependencies)
           .nullableType(ConfigurationAnnotations.getNullableType(providesMethod))
           .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(providesMethod)))
-          .bindingKind(Kind.PROVISION)
+          .kind(PROVISION)
           .scope(uniqueScopeOf(providesMethod))
           .build();
     }
@@ -251,7 +270,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .key(key)
           .provisionDependencies(
               dependencyRequestFactory.forMultibindingContributions(key, multibindingContributions))
-          .bindingKind(Kind.forMultibindingKey(key))
+          .kind(bindingKindForMultibindingKey(key))
           .build();
     }
 
@@ -261,7 +280,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .bindingElement(componentDefinitionType)
           .key(keyFactory.forType(componentDefinitionType.asType()))
-          .bindingKind(Kind.COMPONENT)
+          .kind(COMPONENT)
           .build();
     }
 
@@ -271,7 +290,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .contributionType(ContributionType.UNIQUE)
           .bindingElement(dependency.typeElement())
           .key(keyFactory.forType(dependency.type()))
-          .bindingKind(Kind.COMPONENT_DEPENDENCY)
+          .kind(COMPONENT_DEPENDENCY)
           .build();
     }
 
@@ -284,7 +303,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(componentMethod)
           .key(keyFactory.forComponentMethod(componentMethod))
           .nullableType(ConfigurationAnnotations.getNullableType(componentMethod))
-          .bindingKind(Kind.COMPONENT_PROVISION)
+          .kind(COMPONENT_PROVISION)
           .scope(uniqueScopeOf(componentMethod))
           .build();
     }
@@ -301,7 +320,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(builderMethod)
           .key(method.requirement().key().get())
           .nullableType(ConfigurationAnnotations.getNullableType(parameterElement))
-          .bindingKind(Kind.BOUND_INSTANCE)
+          .kind(BOUND_INSTANCE)
           .build();
     }
 
@@ -316,7 +335,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .bindingElement(subcomponentBuilderMethod)
           .key(
               keyFactory.forSubcomponentBuilderMethod(subcomponentBuilderMethod, declaredContainer))
-          .bindingKind(Kind.SUBCOMPONENT_BUILDER)
+          .kind(SUBCOMPONENT_BUILDER)
           .build();
     }
 
@@ -326,7 +345,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(subcomponentDeclaration.key())
-          .bindingKind(Kind.SUBCOMPONENT_BUILDER)
+          .kind(SUBCOMPONENT_BUILDER)
           .build();
     }
 
@@ -351,7 +370,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           .key(keyFactory.forDelegateBinding(delegateDeclaration, Provider.class))
           .provisionDependencies(delegateDeclaration.delegateRequest())
           .wrappedMapKey(delegateDeclaration.wrappedMapKey())
-          .bindingKind(Kind.SYNTHETIC_DELEGATE_BINDING)
+          .kind(DELEGATE)
           .scope(uniqueScopeOf(delegateDeclaration.bindingElement().get()));
     }
 
@@ -363,7 +382,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(keyFactory.forReleasableReferenceManager(scope))
-          .bindingKind(Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGER)
+          .kind(RELEASABLE_REFERENCE_MANAGER)
           .build();
     }
 
@@ -385,7 +404,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(keyFactory.forSetOfReleasableReferenceManagers())
-          .bindingKind(Kind.SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS)
+          .kind(RELEASABLE_REFERENCE_MANAGERS)
           .build();
     }
 
@@ -407,7 +426,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .contributionType(ContributionType.UNIQUE)
           .key(key)
-          .bindingKind(Kind.SYNTHETIC_OPTIONAL_BINDING)
+          .kind(OPTIONAL)
           .build();
     }
 
@@ -428,7 +447,7 @@ abstract class ProvisionBinding extends ContributionBinding {
       return ProvisionBinding.builder()
           .key(key)
           .contributionType(ContributionType.UNIQUE)
-          .bindingKind(Kind.MEMBERS_INJECTOR)
+          .kind(MEMBERS_INJECTOR)
           .bindingElement(MoreTypes.asTypeElement(membersInjectionBinding.key().type()))
           .provisionDependencies(membersInjectionBinding.dependencies())
           .injectionSites(membersInjectionBinding.injectionSites())

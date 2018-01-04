@@ -54,7 +54,7 @@ final class ComponentRequirementProviderCreationExpression
   }
 
   private ComponentRequirement componentRequirement() {
-    switch (binding.bindingKind()) {
+    switch (binding.kind()) {
       case COMPONENT_DEPENDENCY:
         return ComponentRequirement.forDependency(binding.key().type());
 

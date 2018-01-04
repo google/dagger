@@ -21,9 +21,6 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Optionals.optionalComparator;
@@ -37,6 +34,9 @@ import static dagger.internal.codegen.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.internal.codegen.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.TypeNames.SET_PRODUCER;
+import static dagger.model.BindingKind.INJECTION;
+import static dagger.model.BindingKind.MULTIBOUND_MAP;
+import static dagger.model.BindingKind.MULTIBOUND_SET;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
@@ -189,7 +189,7 @@ class SourceFiles {
         ContributionBinding contribution = (ContributionBinding) binding;
         checkArgument(contribution.bindingTypeElement().isPresent());
         ClassName enclosingClassName = ClassName.get(contribution.bindingTypeElement().get());
-        switch (contribution.bindingKind()) {
+        switch (contribution.kind()) {
           case INJECTION:
           case PROVISION:
           case PRODUCTION:
@@ -256,7 +256,7 @@ class SourceFiles {
    * </ul>
    */
   static ClassName setFactoryClassName(ContributionBinding binding) {
-    checkArgument(binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_SET));
+    checkArgument(binding.kind().equals(MULTIBOUND_SET));
     if (binding.bindingType().equals(BindingType.PROVISION)) {
       return SET_FACTORY;
     } else {
@@ -267,7 +267,7 @@ class SourceFiles {
 
   /** The {@link java.util.Map} factory class name appropriate for map bindings. */
   static ClassName mapFactoryClassName(ContributionBinding binding) {
-    checkState(binding.bindingKind().equals(SYNTHETIC_MULTIBOUND_MAP), binding.bindingKind());
+    checkState(binding.kind().equals(MULTIBOUND_MAP), binding.kind());
     MapType mapType = MapType.from(binding.key());
     switch (binding.bindingType()) {
       case PROVISION:
@@ -284,7 +284,7 @@ class SourceFiles {
   }
 
   private static String factoryPrefix(ContributionBinding binding) {
-    switch (binding.bindingKind()) {
+    switch (binding.kind()) {
       case INJECTION:
         return "";
 
@@ -301,7 +301,7 @@ class SourceFiles {
   static ImmutableList<TypeVariableName> bindingTypeElementTypeVariableNames(Binding binding) {
     if (binding instanceof ContributionBinding) {
       ContributionBinding contributionBinding = (ContributionBinding) binding;
-      if (!contributionBinding.bindingKind().equals(INJECTION)
+      if (!contributionBinding.kind().equals(INJECTION)
           && !contributionBinding.requiresModuleInstance()) {
         return ImmutableList.of();
       }

@@ -26,8 +26,6 @@ import static dagger.internal.codegen.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.DELEGATE;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.MapKeys.mapKeyFactoryMethod;
@@ -37,6 +35,8 @@ import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDepend
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
 import static dagger.internal.codegen.TypeNames.factoryOf;
+import static dagger.model.BindingKind.INJECTION;
+import static dagger.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -227,7 +227,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         makeParametersCodeBlock(
             frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());
 
-    if (binding.bindingKind().equals(PROVISION)) {
+    if (binding.kind().equals(PROVISION)) {
       // TODO(dpb): take advantage of the code in InjectionMethods so this doesn't have to be
       // duplicated
       binding
@@ -279,7 +279,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
 
   private static ImmutableList<TypeVariableName> typeParameters(ProvisionBinding binding) {
     // Use type parameters from the injected type or the module instance *only* if we require it.
-    if (binding.bindingKind().equals(INJECTION) || binding.requiresModuleInstance()) {
+    if (binding.kind().equals(INJECTION) || binding.requiresModuleInstance()) {
       return bindingTypeElementTypeVariableNames(binding);
     }
     return ImmutableList.of();

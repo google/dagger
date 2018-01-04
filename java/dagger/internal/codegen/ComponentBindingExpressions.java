@@ -23,16 +23,18 @@ import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.ContributionBinding.Kind.INJECTION;
-import static dagger.internal.codegen.ContributionBinding.Kind.PROVISION;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_MAP;
-import static dagger.internal.codegen.ContributionBinding.Kind.SYNTHETIC_MULTIBOUND_SET;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
+import static dagger.model.BindingKind.COMPONENT;
+import static dagger.model.BindingKind.COMPONENT_DEPENDENCY;
+import static dagger.model.BindingKind.INJECTION;
+import static dagger.model.BindingKind.MULTIBOUND_MAP;
+import static dagger.model.BindingKind.MULTIBOUND_SET;
+import static dagger.model.BindingKind.PROVISION;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashBasedTable;
@@ -45,6 +47,7 @@ import dagger.internal.InstanceFactory;
 import dagger.internal.MembersInjectors;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -246,9 +249,9 @@ final class ComponentBindingExpressions {
   /** Factory for building a {@link BindingExpression}. */
   private static final class BindingExpressionFactory {
     // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
-    private static final ImmutableSet<ContributionBinding.Kind> PRIVATE_METHOD_KINDS =
+    private static final ImmutableSet<BindingKind> PRIVATE_METHOD_KINDS =
         ImmutableSet.copyOf(
-            EnumSet.of(SYNTHETIC_MULTIBOUND_SET, SYNTHETIC_MULTIBOUND_MAP, INJECTION, PROVISION));
+            EnumSet.of(MULTIBOUND_SET, MULTIBOUND_MAP, INJECTION, PROVISION));
 
     private final BindingGraph graph;
     private final GeneratedComponentModel generatedComponentModel;
@@ -364,7 +367,7 @@ final class ComponentBindingExpressions {
         ResolvedBindings resolvedBindings) {
       checkArgument(!resolvedBindings.bindingType().equals(MEMBERS_INJECTION));
       ContributionBinding binding = resolvedBindings.contributionBinding();
-      switch (binding.bindingKind()) {
+      switch (binding.kind()) {
         case COMPONENT:
           // The type parameter can be removed when we drop java 7 source support
           return () ->
@@ -402,27 +405,27 @@ final class ComponentBindingExpressions {
               componentBindingExpressions,
               componentRequirementFields);
 
-        case SYNTHETIC_MULTIBOUND_SET:
+        case MULTIBOUND_SET:
           return new SetFactoryCreationExpression(
               binding, generatedComponentModel, componentBindingExpressions, graph);
 
-        case SYNTHETIC_MULTIBOUND_MAP:
+        case MULTIBOUND_MAP:
           return new MapFactoryCreationExpression(
               binding, generatedComponentModel, componentBindingExpressions, graph);
 
-        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGER:
+        case RELEASABLE_REFERENCE_MANAGER:
           return new ReleasableReferenceManagerProviderCreationExpression(
               binding, generatedComponentModel, referenceReleasingManagerFields);
 
-        case SYNTHETIC_RELEASABLE_REFERENCE_MANAGERS:
+        case RELEASABLE_REFERENCE_MANAGERS:
           return new ReleasableReferenceManagerSetProviderCreationExpression(
               binding, generatedComponentModel, referenceReleasingManagerFields, graph);
 
-        case SYNTHETIC_DELEGATE_BINDING:
+        case DELEGATE:
           return new DelegatingFrameworkInstanceCreationExpression(
               binding, generatedComponentModel, componentBindingExpressions);
 
-        case SYNTHETIC_OPTIONAL_BINDING:
+        case OPTIONAL:
           if (binding.explicitDependencies().isEmpty()) {
             return () -> optionalFactories.absentOptionalProvider(binding);
           } else {
@@ -516,7 +519,7 @@ final class ComponentBindingExpressions {
         BindingExpression bindingExpression) {
       ProvisionBinding provisionBinding =
           (ProvisionBinding) bindingExpression.resolvedBindings().contributionBinding();
-      switch (provisionBinding.bindingKind()) {
+      switch (provisionBinding.kind()) {
         case COMPONENT:
           return new ComponentInstanceBindingExpression(
               bindingExpression, provisionBinding, generatedComponentModel.name(), types);
@@ -544,7 +547,7 @@ final class ComponentBindingExpressions {
               subcomponentNames.get(bindingExpression.key()),
               types);
 
-        case SYNTHETIC_MULTIBOUND_SET:
+        case MULTIBOUND_SET:
           return new SetBindingExpression(
               provisionBinding,
               graph,
@@ -553,7 +556,7 @@ final class ComponentBindingExpressions {
               types,
               elements);
 
-        case SYNTHETIC_MULTIBOUND_MAP:
+        case MULTIBOUND_MAP:
           return new MapBindingExpression(
               provisionBinding,
               graph,
@@ -562,11 +565,11 @@ final class ComponentBindingExpressions {
               types,
               elements);
 
-        case SYNTHETIC_OPTIONAL_BINDING:
+        case OPTIONAL:
           return new OptionalBindingExpression(
               provisionBinding, bindingExpression, componentBindingExpressions, types);
 
-        case SYNTHETIC_DELEGATE_BINDING:
+        case DELEGATE:
           return DelegateBindingExpression.create(
               graph, bindingExpression, componentBindingExpressions, types, elements);
 
@@ -599,7 +602,7 @@ final class ComponentBindingExpressions {
 
     private boolean usePrivateMethod(ContributionBinding binding) {
       return (!binding.scope().isPresent() || compilerOptions.experimentalAndroidMode())
-          && PRIVATE_METHOD_KINDS.contains(binding.bindingKind());
+          && PRIVATE_METHOD_KINDS.contains(binding.kind());
     }
 
     private boolean canUseSimpleMethod(ContributionBinding binding) {

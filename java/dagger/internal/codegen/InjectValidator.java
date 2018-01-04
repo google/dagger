@@ -77,6 +77,7 @@ final class InjectValidator {
   private final CompilerOptions compilerOptions;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
 
+  @Inject
   InjectValidator(Types types, Elements elements, CompilerOptions compilerOptions) {
     this(types, elements, compilerOptions, Optional.empty());
   }

@@ -18,18 +18,17 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static com.google.common.collect.Maps.uniqueIndex;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ErrorMessages.tooManyBindingMethodAnnotations;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static java.util.Arrays.asList;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 
 /** Validates any binding method. */
@@ -39,8 +38,10 @@ final class AnyBindingMethodValidator {
   private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
       new HashMap<>();
 
-  AnyBindingMethodValidator(BindingMethodValidator... validators) {
-    this.validators = uniqueIndex(asList(validators), BindingMethodValidator::methodAnnotation);
+  @Inject
+  AnyBindingMethodValidator(
+      ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators) {
+    this.validators = validators;
   }
 
   /** Returns the binding method annotations considered by this validator. */

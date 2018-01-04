@@ -34,6 +34,7 @@ import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -48,6 +49,7 @@ import javax.lang.model.util.Types;
  */
 final class ProducesMethodValidator extends BindingMethodValidator {
 
+  @Inject
   ProducesMethodValidator(Elements elements, Types types) {
     super(
         elements,

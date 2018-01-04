@@ -29,6 +29,7 @@ import dagger.Binds;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.DependencyRequest;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -52,6 +53,7 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
     private final KeyFactory keyFactory;
     private final DependencyRequestFactory dependencyRequestFactory;
 
+    @Inject
     Factory(Types types, KeyFactory keyFactory, DependencyRequestFactory dependencyRequestFactory) {
       this.types = types;
       this.keyFactory = keyFactory;

@@ -33,6 +33,7 @@ import dagger.releasablereferences.ForReleasableReferences;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -42,6 +43,7 @@ final class ForReleasableReferencesValidator implements ProcessingStep {
 
   private final Messager messager;
 
+  @Inject
   ForReleasableReferencesValidator(Messager messager) {
     this.messager = messager;
   }

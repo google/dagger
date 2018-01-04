@@ -36,6 +36,7 @@ import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
@@ -133,6 +134,7 @@ abstract class ProductionBinding extends ContributionBinding {
     private final KeyFactory keyFactory;
     private final DependencyRequestFactory dependencyRequestFactory;
 
+    @Inject
     Factory(Types types, KeyFactory keyFactory, DependencyRequestFactory dependencyRequestFactory) {
       this.types = types;
       this.keyFactory = keyFactory;

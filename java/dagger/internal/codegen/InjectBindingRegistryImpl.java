@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -57,6 +58,7 @@ import javax.tools.Diagnostic.Kind;
  *
  * @author Gregory Kick
  */
+@Singleton
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final Elements elements;
   private final DaggerTypes types;
@@ -152,6 +154,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final BindingsCollection<MembersInjectionBinding> membersInjectionBindings =
       new BindingsCollection<>(BindingType.MEMBERS_INJECTION);
 
+  @Inject
   InjectBindingRegistryImpl(
       Elements elements,
       DaggerTypes types,

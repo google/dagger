@@ -33,6 +33,7 @@ import java.lang.annotation.Annotation;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
@@ -48,6 +49,7 @@ final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
 
   private final Messager messager;
 
+  @Inject
   MultibindingAnnotationsProcessingStep(Messager messager) {
     this.messager = messager;
   }

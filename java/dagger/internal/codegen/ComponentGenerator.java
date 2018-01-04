@@ -23,6 +23,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -39,6 +40,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
 
+  @Inject
   ComponentGenerator(
       Filer filer,
       Elements elements,

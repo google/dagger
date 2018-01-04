@@ -33,6 +33,7 @@ import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.Scope;
 import java.util.Map;
+import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
@@ -40,6 +41,7 @@ import javax.lang.model.element.VariableElement;
 final class ComponentHierarchyValidator {
   private final CompilerOptions compilerOptions;
 
+  @Inject
   ComponentHierarchyValidator(CompilerOptions compilerOptions) {
     this.compilerOptions = compilerOptions;
   }

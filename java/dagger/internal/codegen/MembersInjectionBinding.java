@@ -146,6 +146,7 @@ abstract class MembersInjectionBinding extends Binding {
     private final KeyFactory keyFactory;
     private final DependencyRequestFactory dependencyRequestFactory;
 
+    @Inject
     Factory(
         Elements elements,
         DaggerTypes types,

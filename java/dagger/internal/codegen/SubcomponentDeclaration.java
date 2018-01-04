@@ -26,6 +26,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import dagger.model.Key;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -57,7 +58,8 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
   static class Factory {
     private final KeyFactory keyFactory;
 
-    public Factory(KeyFactory keyFactory) {
+    @Inject
+    Factory(KeyFactory keyFactory) {
       this.keyFactory = keyFactory;
     }
 

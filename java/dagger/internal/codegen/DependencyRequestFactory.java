@@ -40,6 +40,7 @@ import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -59,6 +60,7 @@ final class DependencyRequestFactory {
   private final KeyFactory keyFactory;
   private final DaggerTypes types;
 
+  @Inject
   DependencyRequestFactory(KeyFactory keyFactory, DaggerTypes types) {
     this.keyFactory = keyFactory;
     this.types = types;

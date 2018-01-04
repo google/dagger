@@ -29,6 +29,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.producers.ProducerModule;
 import java.util.List;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -42,6 +43,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
   private final Types types;
   private final BindsTypeChecker bindsTypeChecker;
 
+  @Inject
   BindsMethodValidator(Elements elements, Types types) {
     super(
         elements,

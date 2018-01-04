@@ -63,6 +63,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -449,6 +450,7 @@ abstract class ComponentDescriptor {
     private final DependencyRequestFactory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
+    @Inject
     Factory(
         DaggerElements elements,
         Types types,

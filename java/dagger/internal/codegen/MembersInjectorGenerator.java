@@ -54,6 +54,7 @@ import dagger.model.Key;
 import java.util.Map.Entry;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -67,6 +68,7 @@ import javax.lang.model.util.Types;
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final Types types;
 
+  @Inject
   MembersInjectorGenerator(Filer filer, Elements elements, Types types) {
     super(filer, elements);
     this.types = types;

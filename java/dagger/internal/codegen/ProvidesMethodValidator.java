@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
 import dagger.producers.ProducerModule;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
@@ -38,6 +39,7 @@ import javax.lang.model.util.Types;
  */
 final class ProvidesMethodValidator extends BindingMethodValidator {
 
+  @Inject
   ProvidesMethodValidator(Elements elements, Types types) {
     super(
         elements,

@@ -36,6 +36,7 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -59,6 +60,7 @@ final class BindsInstanceProcessingStep implements ProcessingStep {
 
   private final Messager messager;
 
+  @Inject
   BindsInstanceProcessingStep(Messager messager) {
     this.messager = messager;
   }

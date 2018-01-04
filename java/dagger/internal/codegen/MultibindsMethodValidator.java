@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
-import java.lang.annotation.Annotation;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -38,20 +38,13 @@ import javax.lang.model.util.Types;
 class MultibindsMethodValidator extends BindingMethodValidator {
 
   /** Creates a validator for {@link Multibinds @Multibinds} methods. */
+  @Inject
   MultibindsMethodValidator(Elements elements, Types types) {
-    this(elements, types, Multibinds.class, ImmutableSet.of(Module.class, ProducerModule.class));
-  }
-
-  protected MultibindsMethodValidator(
-      Elements elements,
-      Types types,
-      Class<? extends Annotation> methodAnnotation,
-      Iterable<? extends Class<? extends Annotation>> enclosingElementAnnotations) {
     super(
         elements,
         types,
-        methodAnnotation,
-        enclosingElementAnnotations,
+        Multibinds.class,
+        ImmutableSet.of(Module.class, ProducerModule.class),
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         NO_MULTIBINDINGS);

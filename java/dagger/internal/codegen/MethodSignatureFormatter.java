@@ -25,6 +25,7 @@ import com.google.auto.common.MoreTypes;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -43,6 +44,7 @@ import javax.lang.model.util.Types;
 final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
   private final Types types;
 
+  @Inject
   MethodSignatureFormatter(Types types) {
     this.types = types;
   }

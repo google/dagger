@@ -120,6 +120,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -148,6 +149,7 @@ final class BindingGraphValidator {
   private final DependencyRequestFormatter dependencyRequestFormatter;
   private final KeyFactory keyFactory;
 
+  @Inject
   BindingGraphValidator(
       Elements elements,
       DaggerTypes types,
@@ -161,7 +163,7 @@ final class BindingGraphValidator {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
-    this.injectValidator = injectValidator;
+    this.injectValidator = injectValidator.whenGeneratingCode();
     this.injectBindingRegistry = injectBindingRegistry;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;

@@ -31,6 +31,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -49,6 +50,7 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
 
   private final MethodSignatureFormatter methodSignatureFormatter;
 
+  @Inject
   BindingDeclarationFormatter(MethodSignatureFormatter methodSignatureFormatter) {
     this.methodSignatureFormatter = methodSignatureFormatter;
   }

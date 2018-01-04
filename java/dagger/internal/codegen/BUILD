@@ -34,6 +34,7 @@ CODEGEN_SRCS = glob(
 )
 
 CODEGEN_PLUGINS = [
+    ":bootstrap_compiler_plugin",
     # TODO(cgruber): Enable Beta checker.
 ]
 
@@ -254,6 +255,8 @@ java_library(
 java_library(
     name = "processor",
     srcs = [
+        "BindingGraphPluginsModule.java",
+        "BindingMethodValidatorsModule.java",
         "CanReleaseReferencesProcessingStep.java",
         "ComponentHjarProcessingStep.java",
         "ComponentProcessingStep.java",
@@ -262,6 +265,7 @@ java_library(
         "InjectProcessingStep.java",
         "MapKeyProcessingStep.java",
         "ModuleProcessingStep.java",
+        "ProcessingOptions.java",
         "ProductionExecutorModuleProcessingStep.java",
     ],
     plugins = CODEGEN_PLUGINS,
@@ -293,6 +297,20 @@ java_library(
     ],
 )
 
+java_import(
+    name = "bootstrap_compiler",
+    jars = ["bootstrap_compiler_deploy.jar"],
+    visibility = ["//visibility:private"],
+)
+
+java_plugin(
+    name = "bootstrap_compiler_plugin",
+    generates_api = 1,
+    processor_class = "dagger.internal.codegen.ComponentProcessor",
+    visibility = ["//visibility:private"],
+    deps = [":bootstrap_compiler"],
+)
+
 load("//tools:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
@@ -307,6 +325,7 @@ java_library(
     testonly = 1,
     srcs = CODEGEN_SRCS,
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS,
 )
 

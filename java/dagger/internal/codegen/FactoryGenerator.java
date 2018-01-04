@@ -77,6 +77,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final Types types;
   private final CompilerOptions compilerOptions;
 
+  @Inject
   FactoryGenerator(
       Filer filer,
       Elements elements,

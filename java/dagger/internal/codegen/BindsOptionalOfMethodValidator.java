@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.producers.ProducerModule;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -41,6 +42,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
 
   private final Types types;
 
+  @Inject
   BindsOptionalOfMethodValidator(Elements elements, Types types) {
     super(
         elements,

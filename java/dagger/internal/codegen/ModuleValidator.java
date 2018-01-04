@@ -70,6 +70,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -90,6 +92,7 @@ import javax.lang.model.util.Types;
  * @author Gregory Kick
  * @since 2.0
  */
+@Singleton
 final class ModuleValidator {
   private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_TYPES =
       ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
@@ -117,6 +120,7 @@ final class ModuleValidator {
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
 
+  @Inject
   ModuleValidator(
       Types types,
       Elements elements,

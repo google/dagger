@@ -35,6 +35,7 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -55,6 +56,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentGenerator componentGenerator;
   private final ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
 
+  @Inject
   ComponentProcessingStep(
       Messager messager,
       ComponentValidator componentValidator,
@@ -64,7 +66,7 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraph.Factory bindingGraphFactory,
       ComponentGenerator componentGenerator,
-      Iterable<BindingGraphPlugin> bindingGraphPlugins) {
+      ImmutableList<BindingGraphPlugin> bindingGraphPlugins) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
@@ -73,7 +75,7 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
-    this.bindingGraphPlugins = ImmutableList.copyOf(bindingGraphPlugins);
+    this.bindingGraphPlugins = bindingGraphPlugins;
   }
 
   @Override

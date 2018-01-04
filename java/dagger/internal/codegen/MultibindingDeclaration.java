@@ -30,6 +30,7 @@ import dagger.producers.ProducerModule;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -75,6 +76,7 @@ abstract class MultibindingDeclaration extends BindingDeclaration implements Has
     private final Types types;
     private final KeyFactory keyFactory;
 
+    @Inject
     Factory(Types types, KeyFactory keyFactory) {
       this.types = types;
       this.keyFactory = keyFactory;

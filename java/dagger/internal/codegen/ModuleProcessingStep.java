@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -49,6 +50,7 @@ final class ModuleProcessingStep implements ProcessingStep {
   private final ProducerFactoryGenerator producerFactoryGenerator;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
 
+  @Inject
   ModuleProcessingStep(
       Messager messager,
       ModuleValidator moduleValidator,

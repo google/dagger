@@ -25,6 +25,7 @@ import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 
 /**
@@ -35,6 +36,7 @@ final class MonitoringModuleProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final MonitoringModuleGenerator monitoringModuleGenerator;
 
+  @Inject
   MonitoringModuleProcessingStep(
       Messager messager, MonitoringModuleGenerator monitoringModuleGenerator) {
     this.messager = messager;

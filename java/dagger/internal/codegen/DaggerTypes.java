@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
@@ -48,6 +49,7 @@ final class DaggerTypes implements Types {
   private final Types types;
   private final Elements elements;
 
+  @Inject
   DaggerTypes(Types types, Elements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);

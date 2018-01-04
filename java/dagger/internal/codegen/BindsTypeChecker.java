@@ -24,6 +24,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -41,6 +42,7 @@ final class BindsTypeChecker {
   private final Types types;
   private final Elements elements;
 
+  @Inject
   BindsTypeChecker(Types types, Elements elements) {
     this.types = types;
     this.elements = elements;

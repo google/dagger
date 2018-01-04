@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -56,6 +57,7 @@ final class DaggerElements implements Elements {
   private final Elements elements;
   private final Types types;
 
+  @Inject
   DaggerElements(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
     this.types = checkNotNull(types);

@@ -25,6 +25,7 @@ import com.google.common.collect.SetMultimap;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 
@@ -34,6 +35,7 @@ final class BindingMethodProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
 
+  @Inject
   BindingMethodProcessingStep(
       Messager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
     this.messager = messager;

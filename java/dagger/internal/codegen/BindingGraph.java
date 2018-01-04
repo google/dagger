@@ -262,6 +262,7 @@ abstract class BindingGraph {
     private final ProvisionBinding.Factory provisionBindingFactory;
     private final ProductionBinding.Factory productionBindingFactory;
 
+    @Inject
     Factory(
         Elements elements,
         InjectBindingRegistry injectBindingRegistry,

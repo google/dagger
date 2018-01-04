@@ -38,6 +38,7 @@ import javax.lang.model.util.ElementKindVisitor6;
 final class InjectProcessingStep implements BasicAnnotationProcessor.ProcessingStep {
   private final InjectBindingRegistry injectBindingRegistry;
 
+  @Inject
   InjectProcessingStep(InjectBindingRegistry injectBindingRegistry) {
     this.injectBindingRegistry = injectBindingRegistry;
   }

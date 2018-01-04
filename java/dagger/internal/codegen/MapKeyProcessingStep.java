@@ -28,6 +28,7 @@ import dagger.MapKey;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -48,6 +49,7 @@ public class MapKeyProcessingStep implements BasicAnnotationProcessor.Processing
   private final AnnotationCreatorGenerator annotationCreatorGenerator;
   private final UnwrappedMapKeyGenerator unwrappedMapKeyGenerator;
 
+  @Inject
   MapKeyProcessingStep(
       Messager messager,
       Types types,

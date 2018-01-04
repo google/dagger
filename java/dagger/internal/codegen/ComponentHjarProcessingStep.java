@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -83,6 +84,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   private final ComponentValidator componentValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
 
+  @Inject
   ComponentHjarProcessingStep(
       Elements elements,
       Types types,

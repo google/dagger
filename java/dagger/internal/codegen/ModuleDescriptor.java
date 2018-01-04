@@ -50,6 +50,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -144,6 +145,7 @@ abstract class ModuleDescriptor {
     private final SubcomponentDeclaration.Factory subcomponentDeclarationFactory;
     private final OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory;
 
+    @Inject
     Factory(
         DaggerElements elements,
         ProvisionBinding.Factory provisionBindingFactory,

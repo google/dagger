@@ -23,6 +23,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import dagger.MapKey;
 import java.util.List;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -39,6 +40,7 @@ import javax.lang.model.util.Elements;
 final class MapKeyValidator {
   private final Elements elements;
 
+  @Inject
   MapKeyValidator(Elements elements) {
     this.elements = elements;
   }

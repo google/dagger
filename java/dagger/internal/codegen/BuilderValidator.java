@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -52,6 +53,7 @@ class BuilderValidator {
   private final DaggerElements elements;
   private final Types types;
 
+  @Inject
   BuilderValidator(DaggerElements elements, Types types) {
     this.elements = elements;
     this.types = types;

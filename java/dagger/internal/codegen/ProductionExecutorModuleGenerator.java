@@ -32,6 +32,7 @@ import dagger.producers.internal.ProductionImplementation;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import javax.annotation.processing.Filer;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -40,6 +41,7 @@ import javax.lang.model.util.Elements;
 // TODO(beder): Replace this with a single class when the producers client library exists.
 final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeElement> {
 
+  @Inject
   ProductionExecutorModuleGenerator(Filer filer, Elements elements) {
     super(filer, elements);
   }

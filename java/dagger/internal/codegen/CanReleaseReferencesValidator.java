@@ -24,6 +24,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 import dagger.releasablereferences.CanReleaseReferences;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -35,6 +36,8 @@ import javax.lang.model.util.SimpleAnnotationValueVisitor7;
  * <p>They must not annotate annotations that have {@link RetentionPolicy#SOURCE}-level retention.
  */
 final class CanReleaseReferencesValidator {
+
+  @Inject CanReleaseReferencesValidator() {}
 
   ValidationReport<TypeElement> validate(TypeElement annotatedElement) {
     ValidationReport.Builder<TypeElement> report = ValidationReport.about(annotatedElement);

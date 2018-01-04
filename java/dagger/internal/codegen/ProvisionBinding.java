@@ -146,6 +146,7 @@ abstract class ProvisionBinding extends ContributionBinding {
     private final DependencyRequestFactory dependencyRequestFactory;
     private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
 
+    @Inject
     Factory(
         DaggerTypes types,
         KeyFactory keyFactory,

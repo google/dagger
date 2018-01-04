@@ -64,6 +64,7 @@ import dagger.producers.Producer;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
+import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -79,6 +80,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   private final Types types;
   private final CompilerOptions compilerOptions;
 
+  @Inject
   ProducerFactoryGenerator(
       Filer filer, Elements elements, Types types, CompilerOptions compilerOptions) {
     super(filer, elements);

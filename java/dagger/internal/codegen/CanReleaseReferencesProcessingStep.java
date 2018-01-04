@@ -26,6 +26,7 @@ import dagger.releasablereferences.CanReleaseReferences;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.inject.Scope;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -40,6 +41,7 @@ final class CanReleaseReferencesProcessingStep implements ProcessingStep {
   private final CanReleaseReferencesValidator canReleaseReferencesValidator;
   private final AnnotationCreatorGenerator annotationCreatorGenerator;
 
+  @Inject
   CanReleaseReferencesProcessingStep(
       Messager messager,
       CanReleaseReferencesValidator canReleaseReferencesValidator,

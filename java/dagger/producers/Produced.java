@@ -91,7 +91,8 @@ public abstract class Produced<T> {
       return value;
     }
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (o instanceof Successful) {
@@ -102,8 +103,14 @@ public abstract class Produced<T> {
       }
     }
 
-    @Override public int hashCode() {
+    @Override
+    public int hashCode() {
       return value == null ? 0 : value.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Produced[" + value + "]";
     }
   }
 
@@ -114,11 +121,13 @@ public abstract class Produced<T> {
       this.throwable = checkNotNull(throwable);
     }
 
-    @Override public T get() throws ExecutionException {
+    @Override
+    public T get() throws ExecutionException {
       throw new ExecutionException(throwable);
     }
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (o instanceof Failed) {
@@ -129,8 +138,14 @@ public abstract class Produced<T> {
       }
     }
 
-    @Override public int hashCode() {
+    @Override
+    public int hashCode() {
       return throwable.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Produced[failed with " + throwable.getClass().getCanonicalName() + "]";
     }
   }
 

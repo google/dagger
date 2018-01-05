@@ -156,6 +156,8 @@ abstract class MembersInjectionBinding extends Binding {
     }
   }
 
+  /* TODO(dpb): Combine ProvisionBinding.Factory, ProductionBinding.Factory, and
+   * MembersInjectionBinding.Factory into one BindingFactory class.*/
   static final class Factory {
     private final Elements elements;
     private final DaggerTypes types;

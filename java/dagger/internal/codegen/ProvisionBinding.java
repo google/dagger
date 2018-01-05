@@ -159,6 +159,8 @@ abstract class ProvisionBinding extends ContributionBinding {
     abstract ProvisionBinding build();
   }
 
+  /* TODO(dpb): Combine ProvisionBinding.Factory, ProductionBinding.Factory, and
+   * MembersInjectionBinding.Factory into one BindingFactory class.*/
   static final class Factory {
     private final DaggerTypes types;
     private final KeyFactory keyFactory;
@@ -236,25 +238,30 @@ abstract class ProvisionBinding extends ContributionBinding {
     ProvisionBinding forProvidesMethod(
         ExecutableElement providesMethod, TypeElement contributedBy) {
       checkArgument(providesMethod.getKind().equals(METHOD));
-      ExecutableType resolvedMethod =
+      ExecutableType methodType =
           MoreTypes.asExecutable(
               types.asMemberOf(MoreTypes.asDeclared(contributedBy.asType()), providesMethod));
       Key key = keyFactory.forProvidesMethod(providesMethod, contributedBy);
       ImmutableSet<DependencyRequest> dependencies =
           dependencyRequestFactory.forRequiredResolvedVariables(
-              providesMethod.getParameters(),
-              resolvedMethod.getParameterTypes());
-      return ProvisionBinding.builder()
-          .contributionType(ContributionType.fromBindingMethod(providesMethod))
-          .bindingElement(providesMethod)
-          .contributingModule(contributedBy)
-          .key(key)
-          .provisionDependencies(dependencies)
-          .nullableType(ConfigurationAnnotations.getNullableType(providesMethod))
-          .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(providesMethod)))
-          .kind(PROVISION)
-          .scope(uniqueScopeOf(providesMethod))
-          .build();
+              providesMethod.getParameters(), methodType.getParameterTypes());
+      ProvisionBinding.Builder builder =
+          ProvisionBinding.builder()
+              .contributionType(ContributionType.fromBindingMethod(providesMethod))
+              .bindingElement(providesMethod)
+              .contributingModule(contributedBy)
+              .key(key)
+              .provisionDependencies(dependencies)
+              .nullableType(ConfigurationAnnotations.getNullableType(providesMethod))
+              .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(providesMethod)))
+              .kind(PROVISION)
+              .scope(uniqueScopeOf(providesMethod));
+      if (!types.isSameType(methodType, providesMethod.asType())) {
+        builder.unresolved(
+            forProvidesMethod(
+                providesMethod, MoreElements.asType(providesMethod.getEnclosingElement())));
+      }
+      return builder.build();
     }
 
     /**

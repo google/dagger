@@ -35,7 +35,6 @@ import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDepend
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
 import static dagger.internal.codegen.TypeNames.factoryOf;
-import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -52,7 +51,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.Factory;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
@@ -114,7 +112,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         classBuilder(nameGeneratedType(binding))
             .addModifiers(PUBLIC, FINAL)
             .addSuperinterface(factoryTypeName(binding))
-            .addTypeVariables(typeParameters(binding));
+            .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
     addConstructorAndFields(binding, factoryBuilder);
     factoryBuilder.addMethod(getMethod(binding));
@@ -183,7 +181,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         methodBuilder("create")
             .addModifiers(PUBLIC, STATIC)
             .returns(parameterizedGeneratedTypeNameForBinding(binding))
-            .addTypeVariables(typeParameters(binding));
+            .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
     switch (binding.factoryCreationStrategy()) {
       case SINGLETON_INSTANCE:
@@ -191,7 +189,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             FieldSpec.builder(nameGeneratedType(binding), "INSTANCE", PRIVATE, STATIC, FINAL)
                 .initializer("new $T()", nameGeneratedType(binding));
 
-        if (!typeParameters(binding).isEmpty()) {
+        if (!bindingTypeElementTypeVariableNames(binding).isEmpty()) {
           // If the factory has type parameters, ignore them in the field declaration & initializer
           instanceFieldBuilder.addAnnotation(suppressWarnings(RAWTYPES));
 
@@ -275,14 +273,6 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
 
   private static ParameterSpec toParameter(FieldSpec field) {
     return ParameterSpec.builder(field.type, field.name).build();
-  }
-
-  private static ImmutableList<TypeVariableName> typeParameters(ProvisionBinding binding) {
-    // Use type parameters from the injected type or the module instance *only* if we require it.
-    if (binding.kind().equals(INJECTION) || binding.requiresModuleInstance()) {
-      return bindingTypeElementTypeVariableNames(binding);
-    }
-    return ImmutableList.of();
   }
 
   /**

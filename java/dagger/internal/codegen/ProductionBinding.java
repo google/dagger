@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -63,9 +64,7 @@ abstract class ProductionBinding extends ContributionBinding {
   }
 
   @Override
-  Optional<ProductionBinding> unresolved() {
-    return Optional.empty();
-  }
+  abstract Optional<ProductionBinding> unresolved();
 
   @Override
   ImmutableSet<DependencyRequest> implicitDependencies() {
@@ -128,6 +127,8 @@ abstract class ProductionBinding extends ContributionBinding {
 
     abstract Builder productionKind(ProductionKind productionKind);
 
+    abstract Builder unresolved(ProductionBinding unresolved);
+
     abstract Builder thrownTypes(Iterable<? extends TypeMirror> thrownTypes);
 
     abstract Builder executorRequest(DependencyRequest executorRequest);
@@ -138,6 +139,8 @@ abstract class ProductionBinding extends ContributionBinding {
     abstract ProductionBinding build();
   }
 
+  /* TODO(dpb): Combine ProvisionBinding.Factory, ProductionBinding.Factory, and
+   * MembersInjectionBinding.Factory into one BindingFactory class.*/
   static final class Factory {
     private final Types types;
     private final KeyFactory keyFactory;
@@ -155,13 +158,12 @@ abstract class ProductionBinding extends ContributionBinding {
       checkArgument(producesMethod.getKind().equals(METHOD));
       ContributionType contributionType = ContributionType.fromBindingMethod(producesMethod);
       Key key = keyFactory.forProducesMethod(producesMethod, contributedBy);
-      ExecutableType resolvedMethod =
+      ExecutableType methodType =
           MoreTypes.asExecutable(
               types.asMemberOf(MoreTypes.asDeclared(contributedBy.asType()), producesMethod));
       ImmutableSet<DependencyRequest> dependencies =
           dependencyRequestFactory.forRequiredResolvedVariables(
-              producesMethod.getParameters(),
-              resolvedMethod.getParameterTypes());
+              producesMethod.getParameters(), methodType.getParameterTypes());
       DependencyRequest executorRequest =
           dependencyRequestFactory.forProductionImplementationExecutor();
       DependencyRequest monitorRequest = dependencyRequestFactory.forProductionComponentMonitor();
@@ -175,19 +177,24 @@ abstract class ProductionBinding extends ContributionBinding {
         productionKind = ProductionKind.IMMEDIATE;
       }
       // TODO(beder): Add nullability checking with Java 8.
-      return ProductionBinding.builder()
-          .contributionType(contributionType)
-          .bindingElement(producesMethod)
-          .contributingModule(contributedBy)
-          .key(key)
-          .explicitDependencies(dependencies)
-          .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(producesMethod)))
-          .kind(PRODUCTION)
-          .productionKind(productionKind)
-          .thrownTypes(producesMethod.getThrownTypes())
-          .executorRequest(executorRequest)
-          .monitorRequest(monitorRequest)
-          .build();
+      ProductionBinding.Builder builder =
+          ProductionBinding.builder()
+              .contributionType(contributionType)
+              .bindingElement(producesMethod)
+              .contributingModule(contributedBy)
+              .key(key)
+              .explicitDependencies(dependencies)
+              .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(producesMethod)))
+              .kind(PRODUCTION)
+              .productionKind(productionKind)
+              .thrownTypes(producesMethod.getThrownTypes())
+              .executorRequest(executorRequest)
+              .monitorRequest(monitorRequest);
+      if (!types.isSameType(methodType, producesMethod.asType())) {
+        builder.unresolved(
+            forProducesMethod(producesMethod, asType(producesMethod.getEnclosingElement())));
+      }
+      return builder.build();
     }
 
     /**

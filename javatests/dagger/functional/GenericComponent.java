@@ -17,10 +17,16 @@
 package dagger.functional;
 
 import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import dagger.functional.GenericComponent.NongenericModule;
 import dagger.functional.sub.Exposed;
 import dagger.functional.sub.PublicSubclass;
+import java.util.Arrays;
+import java.util.List;
+import javax.inject.Provider;
 
-@Component(modules = {ChildDoubleModule.class, ChildIntegerModule.class})
+@Component(modules = {ChildDoubleModule.class, ChildIntegerModule.class, NongenericModule.class})
 interface GenericComponent {
   ReferencesGeneric referencesGeneric();
   GenericDoubleReferences<A> doubleGenericA();
@@ -37,4 +43,26 @@ interface GenericComponent {
   
   Iterable<Integer> iterableInt();
   Iterable<Double> iterableDouble();
+
+  Provider<List<String>> stringsProvider(); // b/71595104
+
+  // b/71595104
+  @Module
+  abstract class GenericModule<T> {
+    // Note that for subclasses that use String for T, this factory will still need two
+    // Provider<String> framework dependencies.
+    @Provides
+    List<T> list(T t, String string) {
+      return Arrays.asList(t);
+    }
+  }
+
+  // b/71595104
+  @Module
+  class NongenericModule extends GenericModule<String> {
+    @Provides
+    static String string() {
+      return "string";
+    }
+  }
 }

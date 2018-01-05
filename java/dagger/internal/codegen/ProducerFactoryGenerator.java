@@ -25,6 +25,7 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.MapKeys.mapKeyFactoryMethod;
+import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -100,6 +101,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
+    // We don't want to write out resolved bindings -- we want to write out the generic version.
+    checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
 
     TypeName providedTypeName = TypeName.get(binding.contributedType());
@@ -108,7 +111,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     TypeSpec.Builder factoryBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
-            .superclass(abstractProducerOf(providedTypeName));
+            .superclass(abstractProducerOf(providedTypeName))
+            .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     ImmutableMap.Builder<Key, FieldSpec> fieldsBuilder = ImmutableMap.builder();

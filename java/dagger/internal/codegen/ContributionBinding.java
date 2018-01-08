@@ -40,6 +40,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -78,6 +79,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
   Optional<TypeMirror> contributedPrimitiveType() {
     return bindingElement()
+        .filter(bindingElement -> bindingElement instanceof ExecutableElement)
         .map(bindingElement -> MoreElements.asExecutable(bindingElement).getReturnType())
         .filter(type -> type.getKind().isPrimitive());
   }

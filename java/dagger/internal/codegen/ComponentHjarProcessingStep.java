@@ -43,7 +43,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
 import dagger.Component;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import dagger.producers.ProductionComponent;
@@ -58,7 +57,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -157,7 +155,8 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
           TypeSpec.classBuilder(generatedTypeName)
               .addModifiers(PUBLIC, FINAL)
               .addMethod(privateConstructor());
-      addSupertype(generatedComponent, componentDescriptor.componentDefinitionType());
+      TypeElement componentElement = componentDescriptor.componentDefinitionType();
+      addSupertype(generatedComponent, componentElement);
 
       TypeName builderMethodReturnType;
       if (componentDescriptor.builderSpec().isPresent()) {
@@ -185,32 +184,25 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
         generatedComponent.addMethod(createMethod(componentDescriptor));
       }
 
+      DeclaredType componentType = MoreTypes.asDeclared(componentElement.asType());
       // TODO(ronshapiro): unify with AbstractComponentWriter
       Set<MethodSignature> methodSignatures =
           Sets.newHashSetWithExpectedSize(componentDescriptor.componentMethods().size());
       componentDescriptor
           .componentMethods()
           .stream()
-          .filter(method -> methodSignatures.add(methodSignature(componentDescriptor, method)))
+          .filter(
+              method -> {
+                return methodSignatures.add(
+                    MethodSignature.forComponentMethod(method, componentType, types));
+              })
           .forEach(
               method ->
                   generatedComponent.addMethod(
-                      emptyComponentMethod(
-                          componentDescriptor.componentDefinitionType(), method.methodElement())));
+                      emptyComponentMethod(componentElement, method.methodElement())));
 
       return Optional.of(generatedComponent);
     }
-  }
-
-  // TODO(ronshapiro): unify with AbstractComponentWriter
-  private MethodSignature methodSignature(
-      ComponentDescriptor component, ComponentMethodDescriptor method) {
-    DeclaredType componentType = MoreTypes.asDeclared(component.componentDefinitionType().asType());
-    ExecutableType requestType =
-        MoreTypes.asExecutable(types.asMemberOf(componentType, method.methodElement()));
-    return
-        MethodSignature.fromExecutableType(
-            method.methodElement().getSimpleName().toString(), requestType);
   }
 
   private MethodSpec emptyComponentMethod(TypeElement typeElement, ExecutableElement baseMethod) {

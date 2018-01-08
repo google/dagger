@@ -108,7 +108,8 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "",
             "  @Override",
             "  public UsesSubcomponent usesSubcomponent() {",
-            "    return new UsesSubcomponent(new SubBuilder());",
+            // TODO(ronshapiro): Should component methods not be used when deps == 0?
+            "    return new UsesSubcomponent(sBuilder());",
             "  }",
             "",
             "  public static final class Builder {",

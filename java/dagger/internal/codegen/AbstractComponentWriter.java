@@ -29,9 +29,10 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Multimaps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -39,10 +40,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import java.util.List;
-import java.util.Set;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
 import javax.lang.model.util.Elements;
 
 /** Creates the implementation class for a component or subcomponent. */
@@ -183,27 +180,21 @@ abstract class AbstractComponentWriter {
   }
 
   private void addInterfaceMethods() {
-    Set<MethodSignature> interfaceMethodSignatures = Sets.newHashSet();
-    DeclaredType componentType = MoreTypes.asDeclared(graph.componentType().asType());
-    for (ComponentMethodDescriptor componentMethod :
-        graph.componentDescriptor().componentMethods()) {
-      if (componentMethod.dependencyRequest().isPresent()) {
-        ExecutableElement methodElement = componentMethod.methodElement();
-        ExecutableType requestType =
-            MoreTypes.asExecutable(types.asMemberOf(componentType, methodElement));
-        MethodSignature signature =
-            MethodSignature.fromExecutableType(
-                methodElement.getSimpleName().toString(), requestType);
-        if (interfaceMethodSignatures.add(signature)) {
-          MethodSpec.Builder interfaceMethod =
-              MethodSpec.overriding(methodElement, componentType, types);
-          interfaceMethod.addCode(
-              bindingExpressions.getComponentMethodImplementation(
-                  componentMethod, generatedComponentModel.name()));
-          generatedComponentModel.addMethod(COMPONENT_METHOD, interfaceMethod.build());
-        }
-      }
+    /* Each component method may have been declared by several supertypes. We want to implement only
+     * one method for each distinct signature.*/
+    ImmutableListMultimap<MethodSignature, ComponentMethodDescriptor> componentMethodsBySignature =
+        Multimaps.index(graph.componentDescriptor().entryPointMethods(), this::getMethodSignature);
+    for (List<ComponentMethodDescriptor> methodsWithSameSignature :
+        Multimaps.asMap(componentMethodsBySignature).values()) {
+      ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
+      generatedComponentModel.addMethod(
+          COMPONENT_METHOD, bindingExpressions.getComponentMethod(anyOneMethod));
     }
+  }
+
+  private MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
+    return MethodSignature.forComponentMethod(
+        method, MoreTypes.asDeclared(graph.componentType().asType()), types);
   }
 
   private void addSubcomponents() {

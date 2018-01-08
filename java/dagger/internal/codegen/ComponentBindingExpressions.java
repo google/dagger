@@ -23,6 +23,7 @@ import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MemberSelect.staticMemberSelect;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
@@ -43,6 +44,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
 import dagger.internal.InstanceFactory;
 import dagger.internal.MembersInjectors;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -66,6 +68,7 @@ final class ComponentBindingExpressions {
 
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
+  private final GeneratedComponentModel generatedComponentModel;
   private final DaggerTypes types;
   private final BindingExpressionFactory bindingExpressionFactory;
   private final Table<Key, RequestKind, BindingExpression> expressions = HashBasedTable.create();
@@ -105,6 +108,7 @@ final class ComponentBindingExpressions {
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
+    this.generatedComponentModel = generatedComponentModel;
     this.types = types;
     this.bindingExpressionFactory =
         new BindingExpressionFactory(
@@ -215,18 +219,18 @@ final class ComponentBindingExpressions {
     return dependencyExpression;
   }
 
-  /**
-   * Returns an expression for the implementation of a component method with the given request.
-   *
-   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
-   *     request
-   */
-  CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
-    return getBindingExpression(
-            componentMethod.dependencyRequest().get().key(),
-            componentMethod.dependencyRequest().get().kind())
-        .getComponentMethodImplementation(componentMethod, requestingClass);
+  /** Returns the implementation of a component method. */
+  MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
+    checkArgument(componentMethod.dependencyRequest().isPresent());
+    DependencyRequest dependencyRequest = componentMethod.dependencyRequest().get();
+    return MethodSpec.overriding(
+            componentMethod.methodElement(),
+            MoreTypes.asDeclared(graph.componentType().asType()),
+            types)
+        .addCode(
+            getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
+                .getComponentMethodImplementation(componentMethod, generatedComponentModel.name()))
+        .build();
   }
 
   private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
@@ -478,18 +482,107 @@ final class ComponentBindingExpressions {
       BindingExpression inlineBindingExpression =
           inlineProvisionBindingExpression(frameworkInstanceBindingExpression);
 
-      if (usePrivateMethod(resolvedBindings.contributionBinding())) {
+      Optional<ComponentMethodDescriptor> componentMethod =
+          findMatchingComponentMethod(resolvedBindings.key(), requestKind);
+      BindingKind bindingKind = resolvedBindings.contributionBinding().kind();
+      if (componentMethod.isPresent()
+          // Requests for a component or a component field should access the component or field
+          // directly, even if a component method exists.
+          && !bindingKind.equals(COMPONENT)
+          && !bindingKind.equals(COMPONENT_DEPENDENCY)) {
+        return new ComponentMethodBindingExpression(
+            resolvedBindings,
+            requestKind,
+            methodImplementation(inlineBindingExpression),
+            generatedComponentModel.name(),
+            componentMethod.get(),
+            componentBindingExpressions);
+      } else if (shouldUsePrivateMethod(resolvedBindings.contributionBinding(), requestKind)) {
         return new PrivateMethodBindingExpression(
-            generatedComponentModel,
-            componentBindingExpressions,
-            inlineBindingExpression,
-            referenceReleasingManagerFields,
-            compilerOptions,
-            types,
-            elements);
+            resolvedBindings,
+            requestKind,
+            methodImplementation(inlineBindingExpression),
+            generatedComponentModel);
       }
 
       return inlineBindingExpression;
+    }
+
+    private BindingMethodImplementation methodImplementation(BindingExpression bindingExpression) {
+      return compilerOptions.experimentalAndroidMode()
+          ? new AndroidModeBindingMethodImplementation(
+              bindingExpression,
+              types,
+              elements,
+              generatedComponentModel,
+              componentBindingExpressions,
+              referenceReleasingManagerFields)
+          : new BindingMethodImplementation(
+              bindingExpression, generatedComponentModel.name(), types, elements);
+    }
+
+    /**
+     * Returns true if requesters should call a no-arg, private method.
+     *
+     * <p>In default mode, private methods are used for unscoped {@code INSTANCE} and {@code FUTURE}
+     * requests that require at least one dependency. (Those with no dependencies can simply use
+     * their factory class's single instance.)
+     *
+     * <p>In Android mode, private methods are used for all provision bindings unless the request:
+     *
+     * <ul>
+     *   <li>has releasable reference scope; TODO(user): enable for releasable reference scope
+     *   <li>is for an unscoped framework type (Provider, Lazy, ProviderOfLazy) that can use the
+     *       singleton instance of the factory class.
+     *   <li>is for an unscoped non-framework type that has no dependencies, which means users can
+     *       call a nullary method anyway.
+     * </ul>
+     */
+    private boolean shouldUsePrivateMethod(ContributionBinding binding, RequestKind requestKind) {
+      // TODO(user): enable for releasable references.
+      Optional<Scope> releasableReferenceScope =
+          binding.scope().filter(referenceReleasingManagerFields::requiresReleasableReferences);
+      if (!PRIVATE_METHOD_KINDS.contains(binding.kind()) || releasableReferenceScope.isPresent()) {
+        return false;
+      }
+      if (compilerOptions.experimentalAndroidMode()) {
+        switch (requestKind) {
+          case PROVIDER:
+          case LAZY:
+          case PROVIDER_OF_LAZY:
+            return binding.scope().isPresent()
+                || !binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE);
+          default:
+            return binding.scope().isPresent() || !binding.dependencies().isEmpty();
+        }
+      } else {
+        return (requestKind.equals(RequestKind.INSTANCE) || requestKind.equals(RequestKind.FUTURE))
+            && !binding.scope().isPresent()
+            && !binding.dependencies().isEmpty();
+      }
+    }
+
+    /** Returns the first component method associated with this request kind, if one exists. */
+    private Optional<ComponentMethodDescriptor> findMatchingComponentMethod(
+        Key key, RequestKind requestKind) {
+      Optional<ComponentMethodDescriptor> componentMethod =
+          graph
+              .componentDescriptor()
+              .componentMethods()
+              .stream()
+              .filter(method -> doesComponentMethodMatch(method, key, requestKind))
+              .findFirst();
+      return componentMethod;
+    }
+
+    /** Returns true if the component method matches the dependency request binding key and kind. */
+    private boolean doesComponentMethodMatch(
+        ComponentMethodDescriptor componentMethod, Key key, RequestKind requestKind) {
+      return componentMethod
+          .dependencyRequest()
+          .filter(request -> request.key().equals(key))
+          .filter(request -> request.kind().equals(requestKind))
+          .isPresent();
     }
 
     /**
@@ -598,11 +691,6 @@ final class ComponentBindingExpressions {
         default:
           return bindingExpression;
       }
-    }
-
-    private boolean usePrivateMethod(ContributionBinding binding) {
-      return (!binding.scope().isPresent() || compilerOptions.experimentalAndroidMode())
-          && PRIVATE_METHOD_KINDS.contains(binding.kind());
     }
 
     private boolean canUseSimpleMethod(ContributionBinding binding) {

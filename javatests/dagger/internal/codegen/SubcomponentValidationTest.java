@@ -406,7 +406,7 @@ public class SubcomponentValidationTest {
                 "  }",
                 "")
             .addLines(
-                "  @Override",
+                "  @Override", //
                 "  public Dep1 getDep1() {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
@@ -421,10 +421,10 @@ public class SubcomponentValidationTest {
                 "    }",
                 "    return (Dep1) local;")
             .addLinesIn(
-                DEFAULT_MODE,
+                DEFAULT_MODE, //
                 "    return dep1Provider.get();")
             .addLines(
-                "  }",
+                "  }", //
                 "",
                 "  @Override",
                 "  public Dep2 getDep2() {")
@@ -441,7 +441,7 @@ public class SubcomponentValidationTest {
                 "    }",
                 "    return (Dep2) local;")
             .addLinesIn(
-                DEFAULT_MODE,
+                DEFAULT_MODE, //
                 "    return dep2Provider.get();")
             .addLines(
                 "  }",
@@ -473,29 +473,16 @@ public class SubcomponentValidationTest {
                 "      this.childModule = new ChildModule();",
                 "    }",
                 "",
-                "    private NeedsDep1 getNeedsDep1() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "      return new NeedsDep1(DaggerParentComponent.this.getDep1());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());")
-            .addLines(
+                "    private NeedsDep1 getNeedsDep1() {",
+                "      return new NeedsDep1(DaggerParentComponent.this.getDep1());",
                 "    }",
                 "",
                 "    private A getA() {",
                 "      return injectA(",
                 "          A_Factory.newA(",
-                "              getNeedsDep1(),")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "              getNeedsDep1(),",
                 "              DaggerParentComponent.this.getDep1(),",
-                "              DaggerParentComponent.this.getDep2()));")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "              DaggerParentComponent.this.dep1Provider.get(),",
-                "              DaggerParentComponent.this.dep2Provider.get()));")
-            .addLines(
+                "              DaggerParentComponent.this.getDep2()));",
                 "    }",
                 "",
                 "    @Override",

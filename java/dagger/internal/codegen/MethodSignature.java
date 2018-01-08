@@ -16,34 +16,40 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import java.util.List;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 @AutoValue
 abstract class MethodSignature {
-  abstract String name();
-  abstract ImmutableList<Equivalence.Wrapper<TypeMirror>> parameterTypes();
-  abstract ImmutableList<Equivalence.Wrapper<TypeMirror>> thrownTypes();
 
-  static MethodSignature fromExecutableType(String methodName, ExecutableType methodType) {
-    checkNotNull(methodType);
-    ImmutableList.Builder<Equivalence.Wrapper<TypeMirror>> parameters = ImmutableList.builder();
-    ImmutableList.Builder<Equivalence.Wrapper<TypeMirror>> thrownTypes = ImmutableList.builder();
-    for (TypeMirror parameter : methodType.getParameterTypes()) {
-      parameters.add(MoreTypes.equivalence().wrap(parameter));
-    }
-    for (TypeMirror thrownType : methodType.getThrownTypes()) {
-      thrownTypes.add(MoreTypes.equivalence().wrap(thrownType));
-    }
+  abstract String name();
+
+  abstract ImmutableList<? extends Equivalence.Wrapper<? extends TypeMirror>> parameterTypes();
+
+  abstract ImmutableList<? extends Equivalence.Wrapper<? extends TypeMirror>> thrownTypes();
+
+  static MethodSignature forComponentMethod(
+      ComponentMethodDescriptor componentMethod, DeclaredType componentType, Types types) {
+    ExecutableType methodType =
+        MoreTypes.asExecutable(types.asMemberOf(componentType, componentMethod.methodElement()));
     return new AutoValue_MethodSignature(
-        methodName,
-        parameters.build(),
-        thrownTypes.build());
+        componentMethod.methodElement().getSimpleName().toString(),
+        wrapInEquivalence(methodType.getParameterTypes()),
+        wrapInEquivalence(methodType.getThrownTypes()));
+  }
+
+  private static ImmutableList<? extends Equivalence.Wrapper<? extends TypeMirror>>
+      wrapInEquivalence(List<? extends TypeMirror> types) {
+    return types.stream().map(MoreTypes.equivalence()::wrap).collect(toImmutableList());
   }
 }

@@ -307,7 +307,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
                 "  }",
                 "",
                 "  @Override",
@@ -383,7 +383,7 @@ public class ComponentProcessorTest {
                 "  }",
                 "")
             .addLines(
-                "  @Override",
+                "  @Override", //
                 "  public SomeInjectableType someInjectableType() {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
@@ -399,19 +399,17 @@ public class ComponentProcessorTest {
                 "    return (SomeInjectableType) local;")
             .addLinesIn(
                 DEFAULT_MODE,
-                "    return someInjectableTypeProvider.get();")
+                // TODO(ronshapiro): It's a little weird that the component method is used instead
+                // of the instance. This only really happens because the same key is scoped and
+                // exposed as a component method for both an instance and a Provider, so probably
+                // not so common. Are there any other cases where this might come up?
+                "    return someInjectableTypeProvider().get();")
             .addLines(
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider);")
-            .addLines(
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
                 "  }",
                 "",
                 "  @Override",
@@ -425,10 +423,10 @@ public class ComponentProcessorTest {
                 "      }",
                 "    };")
             .addLinesIn(
-                DEFAULT_MODE,
+                DEFAULT_MODE, //
                 "    return someInjectableTypeProvider;")
             .addLines(
-                "  }",
+                "  }", //
                 "}")
             .build();
     Compilation compilation =

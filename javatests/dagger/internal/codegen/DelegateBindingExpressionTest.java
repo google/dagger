@@ -669,7 +669,6 @@ public class DelegateBindingExpressionTest {
             "import dagger.Module;",
             "import dagger.Provides;",
             "import javax.inject.Named;",
-            "import javax.inject.Singleton;",
             "",
             "@Module",
             "interface TestModule {",
@@ -678,9 +677,6 @@ public class DelegateBindingExpressionTest {
             "",
             "  @Binds",
             "  CharSequence charSequence(String string);",
-            "",
-            "  @Binds",
-            "  Object object(CharSequence charSequence);",
             "",
             "  @Binds",
             "  @Named(\"named\")",
@@ -698,7 +694,6 @@ public class DelegateBindingExpressionTest {
             "@Component(modules = TestModule.class)",
             "interface TestComponent {",
             "  Provider<CharSequence> charSequence();",
-            "  Provider<Object> object();",
             "",
             "  @Named(\"named\") Provider<String> namedString();",
             "}");
@@ -721,14 +716,68 @@ public class DelegateBindingExpressionTest {
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<Object> object() {",
-                //   @Binds used twice, but no need to cast (Provider) (Provider)
-                "    return (Provider) TestModule_ProvideStringFactory.create();",
-                "  }",
-                "",
-                "  @Override",
                 "  public Provider<String> namedString() {",
                 "    return TestModule_ProvideStringFactory.create();",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void doubleBinds() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String provideString() { return new String(); }",
+            "",
+            "  @Binds",
+            "  CharSequence charSequence(String string);",
+            "",
+            "  @Binds",
+            "  Object object(CharSequence charSequence);",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Named;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<CharSequence> charSequence();",
+            "  Provider<Object> object();",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @Override",
+                "  public Provider<CharSequence> charSequence() {",
+                "    return (Provider) TestModule_ProvideStringFactory.create();",
+                "  }",
+                "  @Override",
+                "  public Provider<Object> object() {",
+                "    return (Provider) charSequence();",
                 "  }",
                 "}"));
   }

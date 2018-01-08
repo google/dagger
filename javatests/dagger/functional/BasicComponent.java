@@ -23,7 +23,12 @@ import dagger.functional.NullableModule.Nullable;
 import javax.inject.Provider;
 
 @Component(modules = {PrimitivesModule.class, NullableModule.class})
-interface BasicComponent extends Injector<Thing> {
+interface BasicComponent
+    extends Injector<Thing>,
+        // Implements two types that define the same method, not overridden here, to test that the
+        // method is implemented only once.
+        ComponentSupertypeOne,
+        ComponentSupertypeTwo {
   byte getByte();
   char getChar();
   short getShort();

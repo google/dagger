@@ -45,7 +45,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.collect.TreeTraverser;
+import com.google.common.graph.Traverser;
 import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -342,22 +342,16 @@ abstract class ComponentDescriptor {
    */
   ImmutableSet<Scope> releasableReferencesScopes() {
     return kind().equals(Kind.COMPONENT)
-        ? SUBCOMPONENT_TRAVERSER
-            .breadthFirstTraversal(this)
+        ? FluentIterable.from(SUBCOMPONENT_TRAVERSER.breadthFirst(this))
             .transformAndConcat(ComponentDescriptor::scopes)
             .filter(Scope::canReleaseReferences)
             .toSet()
         : ImmutableSet.<Scope>of();
   }
 
-  /** {@link TreeTraverser} for the subcomponent tree. */
-  private static final TreeTraverser<ComponentDescriptor> SUBCOMPONENT_TRAVERSER =
-      new TreeTraverser<ComponentDescriptor>() {
-        @Override
-        public Iterable<ComponentDescriptor> children(ComponentDescriptor node) {
-          return node.subcomponents();
-        }
-      };
+  /** {@link Traverser} for the subcomponent tree. */
+  private static final Traverser<ComponentDescriptor> SUBCOMPONENT_TRAVERSER =
+      Traverser.forTree(ComponentDescriptor::subcomponents);
 
   /** A function that returns all {@link #scopes()} of its input. */
   @AutoValue

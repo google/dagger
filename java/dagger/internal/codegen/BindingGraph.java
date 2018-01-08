@@ -49,7 +49,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-import com.google.common.collect.TreeTraverser;
+import com.google.common.graph.Traverser;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.Subcomponent;
@@ -182,13 +182,8 @@ abstract class BindingGraph {
     return FluentIterable.from(ownedModules()).transform(ModuleDescriptor::moduleElement).toSet();
   }
 
-  private static final TreeTraverser<BindingGraph> SUBGRAPH_TRAVERSER =
-      new TreeTraverser<BindingGraph>() {
-        @Override
-        public Iterable<BindingGraph> children(BindingGraph node) {
-          return node.subgraphs();
-        }
-      };
+  private static final Traverser<BindingGraph> SUBGRAPH_TRAVERSER =
+      Traverser.forTree(BindingGraph::subgraphs);
 
   /**
    * The types for which the component needs instances.
@@ -203,7 +198,7 @@ abstract class BindingGraph {
   @Memoized
   ImmutableSet<ComponentRequirement> componentRequirements() {
     ImmutableSet.Builder<ComponentRequirement> requirements = ImmutableSet.builder();
-    StreamSupport.stream(SUBGRAPH_TRAVERSER.preOrderTraversal(this).spliterator(), false)
+    StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
         .flatMap(graph -> graph.contributionBindings().values().stream())
         .flatMap(bindings -> bindings.contributionBindings().stream())
         .filter(ContributionBinding::requiresModuleInstance)
@@ -229,10 +224,10 @@ abstract class BindingGraph {
     }
     return requirements.build();
   }
+
   /** Returns the {@link ComponentDescriptor}s for this component and its subcomponents. */
   ImmutableSet<ComponentDescriptor> componentDescriptors() {
-    return SUBGRAPH_TRAVERSER
-        .preOrderTraversal(this)
+    return FluentIterable.from(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this))
         .transform(BindingGraph::componentDescriptor)
         .toSet();
   }

@@ -44,9 +44,8 @@ import javax.lang.model.element.TypeElement;
 final class ModuleProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ModuleValidator moduleValidator;
-  private final ProvisionBinding.Factory provisionBindingFactory;
+  private final BindingFactory bindingFactory;
   private final FactoryGenerator factoryGenerator;
-  private final ProductionBinding.Factory productionBindingFactory;
   private final ProducerFactoryGenerator producerFactoryGenerator;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
 
@@ -54,15 +53,13 @@ final class ModuleProcessingStep implements ProcessingStep {
   ModuleProcessingStep(
       Messager messager,
       ModuleValidator moduleValidator,
-      ProvisionBinding.Factory provisionBindingFactory,
+      BindingFactory bindingFactory,
       FactoryGenerator factoryGenerator,
-      ProductionBinding.Factory productionBindingFactory,
       ProducerFactoryGenerator producerFactoryGenerator) {
     this.messager = messager;
     this.moduleValidator = moduleValidator;
-    this.provisionBindingFactory = provisionBindingFactory;
+    this.bindingFactory = bindingFactory;
     this.factoryGenerator = factoryGenerator;
-    this.productionBindingFactory = productionBindingFactory;
     this.producerFactoryGenerator = producerFactoryGenerator;
   }
 
@@ -90,11 +87,10 @@ final class ModuleProcessingStep implements ProcessingStep {
     if (report.isClean()) {
       for (ExecutableElement method : methodsIn(module.getEnclosedElements())) {
         if (isAnnotationPresent(method, Provides.class)) {
-          factoryGenerator.generate(
-              provisionBindingFactory.forProvidesMethod(method, module), messager);
+          factoryGenerator.generate(bindingFactory.providesMethodBinding(method, module), messager);
         } else if (isAnnotationPresent(method, Produces.class)) {
           producerFactoryGenerator.generate(
-              productionBindingFactory.forProducesMethod(method, module), messager);
+              bindingFactory.producesMethodBinding(method, module), messager);
         }
       }
     }

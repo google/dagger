@@ -63,13 +63,8 @@ final class KytheBindingGraphFactory {
     KeyFactory keyFactory = new KeyFactory(types, elements);
     DependencyRequestFactory dependencyRequestFactory =
         new DependencyRequestFactory(keyFactory, types);
-    MembersInjectionBinding.Factory membersInjectionBindingFactory =
-        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
-    ProvisionBinding.Factory provisionBindingFactory =
-        new ProvisionBinding.Factory(
-            types, keyFactory, dependencyRequestFactory, membersInjectionBindingFactory);
-    ProductionBinding.Factory productionBindingFactory =
-        new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
+    BindingFactory provisionBindingFactory =
+        new BindingFactory(types, elements, keyFactory, dependencyRequestFactory);
     MultibindingDeclaration.Factory multibindingDeclarationFactory =
         new MultibindingDeclaration.Factory(types, keyFactory);
     DelegateDeclaration.Factory bindingDelegateDeclarationFactory =
@@ -83,7 +78,6 @@ final class KytheBindingGraphFactory {
         new ModuleDescriptor.Factory(
             elements,
             provisionBindingFactory,
-            productionBindingFactory,
             multibindingDeclarationFactory,
             bindingDelegateDeclarationFactory,
             subcomponentDeclarationFactory,
@@ -111,13 +105,8 @@ final class KytheBindingGraphFactory {
             .experimentalAndroidMode(false)
             .build();
 
-    MembersInjectionBinding.Factory membersInjectionBindingFactory =
-        new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
-    ProvisionBinding.Factory provisionBindingFactory =
-        new ProvisionBinding.Factory(
-            types, keyFactory, dependencyRequestFactory, membersInjectionBindingFactory);
-    ProductionBinding.Factory productionBindingFactory =
-        new ProductionBinding.Factory(types, keyFactory, dependencyRequestFactory);
+    BindingFactory bindingFactory =
+        new BindingFactory(types, elements, keyFactory, dependencyRequestFactory);
 
     InjectValidator injectMethodValidator = new InjectValidator(types, elements, compilerOptions);
 
@@ -128,16 +117,10 @@ final class KytheBindingGraphFactory {
             messager,
             injectMethodValidator,
             keyFactory,
-            provisionBindingFactory,
-            membersInjectionBindingFactory,
+            bindingFactory,
             compilerOptions);
 
-    return new BindingGraph.Factory(
-        elements,
-        injectBindingRegistry,
-        keyFactory,
-        provisionBindingFactory,
-        productionBindingFactory);
+    return new BindingGraph.Factory(elements, injectBindingRegistry, keyFactory, bindingFactory);
   }
 
   private static class NullMessager implements Messager {

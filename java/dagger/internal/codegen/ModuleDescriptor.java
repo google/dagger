@@ -138,8 +138,7 @@ abstract class ModuleDescriptor {
 
   static final class Factory {
     private final DaggerElements elements;
-    private final ProvisionBinding.Factory provisionBindingFactory;
-    private final ProductionBinding.Factory productionBindingFactory;
+    private final BindingFactory bindingFactory;
     private final MultibindingDeclaration.Factory multibindingDeclarationFactory;
     private final DelegateDeclaration.Factory bindingDelegateDeclarationFactory;
     private final SubcomponentDeclaration.Factory subcomponentDeclarationFactory;
@@ -148,15 +147,13 @@ abstract class ModuleDescriptor {
     @Inject
     Factory(
         DaggerElements elements,
-        ProvisionBinding.Factory provisionBindingFactory,
-        ProductionBinding.Factory productionBindingFactory,
+        BindingFactory bindingFactory,
         MultibindingDeclaration.Factory multibindingDeclarationFactory,
         DelegateDeclaration.Factory bindingDelegateDeclarationFactory,
         SubcomponentDeclaration.Factory subcomponentDeclarationFactory,
         OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory) {
       this.elements = elements;
-      this.provisionBindingFactory = provisionBindingFactory;
-      this.productionBindingFactory = productionBindingFactory;
+      this.bindingFactory = bindingFactory;
       this.multibindingDeclarationFactory = multibindingDeclarationFactory;
       this.bindingDelegateDeclarationFactory = bindingDelegateDeclarationFactory;
       this.subcomponentDeclarationFactory = subcomponentDeclarationFactory;
@@ -173,10 +170,10 @@ abstract class ModuleDescriptor {
 
       for (ExecutableElement moduleMethod : methodsIn(elements.getAllMembers(moduleElement))) {
         if (isAnnotationPresent(moduleMethod, Provides.class)) {
-          bindings.add(provisionBindingFactory.forProvidesMethod(moduleMethod, moduleElement));
+          bindings.add(bindingFactory.providesMethodBinding(moduleMethod, moduleElement));
         }
         if (isAnnotationPresent(moduleMethod, Produces.class)) {
-          bindings.add(productionBindingFactory.forProducesMethod(moduleMethod, moduleElement));
+          bindings.add(bindingFactory.producesMethodBinding(moduleMethod, moduleElement));
         }
         if (isAnnotationPresent(moduleMethod, Binds.class)) {
           delegates.add(bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));

@@ -21,6 +21,7 @@ import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrateg
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.MapKeys.unwrapValue;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
+import static java.util.Arrays.asList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -31,9 +32,11 @@ import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.MapKey;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.BindingKind;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;
 import java.util.Set;
@@ -202,11 +205,19 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   }
 
   /**
-   * Base builder for {@link com.google.auto.value.AutoValue @AutoValue} subclasses of
-   * {@link ContributionBinding}.
+   * Base builder for {@link com.google.auto.value.AutoValue @AutoValue} subclasses of {@link
+   * ContributionBinding}.
    */
   @CanIgnoreReturnValue
-  abstract static class Builder<B extends Builder<B>> {
+  abstract static class Builder<C extends ContributionBinding, B extends Builder<C, B>> {
+    abstract B dependencies(Iterable<DependencyRequest> dependencies);
+
+    B dependencies(DependencyRequest... dependencies) {
+      return dependencies(asList(dependencies));
+    }
+
+    abstract B unresolved(C unresolved);
+
     abstract B contributionType(ContributionType contributionType);
 
     abstract B bindingElement(Element bindingElement);
@@ -220,5 +231,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     abstract B wrappedMapKey(Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey);
 
     abstract B kind(BindingKind kind);
+
+    @CheckReturnValue
+    abstract C build();
   }
 }

@@ -109,8 +109,9 @@ java_library(
         "AnnotationExpression.java",
         "Binding.java",
         "BindingDeclaration.java",
+        "BindingFactory.java",
         "BindingGraph.java",
-        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to it's own model target
+        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to its own model target
         "BindingNetwork.java",
         "BindingType.java",
         "BindingTypeMapper.java",

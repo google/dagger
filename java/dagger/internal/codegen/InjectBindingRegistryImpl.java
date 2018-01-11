@@ -66,8 +66,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
   private final KeyFactory keyFactory;
-  private final ProvisionBinding.Factory provisionBindingFactory;
-  private final MembersInjectionBinding.Factory membersInjectionBindingFactory;
+  private final BindingFactory bindingFactory;
   private final CompilerOptions compilerOptions;
 
   final class BindingsCollection<B extends Binding> {
@@ -161,8 +160,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       Messager messager,
       InjectValidator injectValidator,
       KeyFactory keyFactory,
-      ProvisionBinding.Factory provisionBindingFactory,
-      MembersInjectionBinding.Factory membersInjectionBindingFactory,
+      BindingFactory bindingFactory,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.types = types;
@@ -170,8 +168,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     this.injectValidator = injectValidator;
     this.injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();
     this.keyFactory = keyFactory;
-    this.provisionBindingFactory = provisionBindingFactory;
-    this.membersInjectionBindingFactory = membersInjectionBindingFactory;
+    this.bindingFactory = bindingFactory;
     this.compilerOptions = compilerOptions;
   }
 
@@ -243,10 +240,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     ValidationReport<TypeElement> report = injectValidator.validateConstructor(constructorElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
-      ProvisionBinding binding =
-          provisionBindingFactory.forInjectConstructor(constructorElement, resolvedType);
+      ProvisionBinding binding = bindingFactory.injectionBinding(constructorElement, resolvedType);
       registerBinding(binding, warnIfNotAlreadyGenerated);
-      if (membersInjectionBindingFactory.hasInjectedMembersIn(type)) {
+      if (!binding.injectionSites().isEmpty()) {
         tryRegisterMembersInjectedType(typeElement, resolvedType, warnIfNotAlreadyGenerated);
       }
       return Optional.of(binding);
@@ -275,8 +271,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         injectValidator.validateMembersInjectionType(typeElement);
     report.printMessagesTo(messager);
     if (report.isClean()) {
-      MembersInjectionBinding binding =
-          membersInjectionBindingFactory.forInjectedType(type, resolvedType);
+      MembersInjectionBinding binding = bindingFactory.membersInjectionBinding(type, resolvedType);
       registerBinding(binding, warnIfNotAlreadyGenerated);
       if (binding.parentKey().isPresent() && !binding.injectionSites().isEmpty()) {
         getOrFindMembersInjectionBinding(binding.parentKey().get());
@@ -337,6 +332,6 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
     Key membersInjectionKey = keyFactory.forMembersInjectedType(types.unwrapType(key.type()));
     return getOrFindMembersInjectionBinding(membersInjectionKey)
-        .map(binding -> provisionBindingFactory.forMembersInjector(key, binding));
+        .map(binding -> bindingFactory.membersInjectorBinding(key, binding));
   }
 }

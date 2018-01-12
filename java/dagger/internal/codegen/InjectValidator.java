@@ -278,8 +278,7 @@ final class InjectValidator {
         }
       }
     }
-    // We can't use MembersInjectionBinding.Factory#hasInjectedMembersIn because that assumes this
-    // binding already validates, so we just check it again here.
+
     if (hasInjectedMembers && !isElementAccessibleFromOwnPackage(typeElement)) {
       builder.addItem(
           INJECT_INTO_PRIVATE_CLASS,

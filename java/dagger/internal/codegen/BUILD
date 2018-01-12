@@ -284,6 +284,7 @@ java_library(
 java_library(
     name = "kythe",
     srcs = KYTHE_SRCS,
+    plugins = [":component-codegen"],
     deps = [
         ":base",
         ":binding",

@@ -39,8 +39,10 @@ import javax.lang.model.type.NullType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Types} that adds Dagger-specific methods. */
@@ -153,6 +155,32 @@ final class DaggerTypes implements Types {
 
   static boolean isFutureType(TypeMirror type) {
     return FUTURE_TYPES.stream().anyMatch(t -> MoreTypes.isTypeOf(t, type));
+  }
+
+  static boolean hasTypeVariable(TypeMirror type) {
+    return type.accept(
+        new SimpleTypeVisitor8<Boolean, Void>() {
+          @Override
+          public Boolean visitArray(ArrayType arrayType, Void p) {
+            return arrayType.getComponentType().accept(this, p);
+          }
+
+          @Override
+          public Boolean visitDeclared(DeclaredType declaredType, Void p) {
+            return declaredType.getTypeArguments().stream().anyMatch(type -> type.accept(this, p));
+          }
+
+          @Override
+          public Boolean visitTypeVariable(TypeVariable t, Void aVoid) {
+            return true;
+          }
+
+          @Override
+          protected Boolean defaultAction(TypeMirror e, Void aVoid) {
+            return false;
+          }
+        },
+        null);
   }
 
   // Implementation of Types methods, delegating to types.

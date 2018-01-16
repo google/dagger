@@ -38,11 +38,11 @@ mailing list.
 
 ### Bazel
 
-If you build with `bazel`, follow the [`bazel` documenation for referencing
+If you build with `bazel`, follow the [`bazel` documentation for referencing
 external projects][bazel-external-deps] to include Dagger in your build.
 
 Given the following `WORKSPACE` definition, you can reference dagger via
-`@com_google_dagger//:dagger-with-compiler` in your deps.
+`@com_google_dagger//:dagger_with_compiler` in your deps.
 
 ```python
 http_archive(

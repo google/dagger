@@ -36,12 +36,29 @@ mailing list.
 
 ## Installation
 
+### Bazel
+
+If you build with `bazel`, follow the [`bazel` documenation for referencing
+external projects][bazel-external-deps] to include Dagger in your build.
+
+Given the following `WORKSPACE` definition, you can reference dagger via
+`@com_google_dagger//:dagger-with-compiler` in your deps.
+
+```python
+http_archive(
+    name = "com_google_dagger"
+    urls = ["https://github.com/google/dagger/archive/dagger-<version>.zip"],
+)
+```
+
+### Other build systems
+
 You will need to include the `dagger-2.x.jar` in your application's runtime.
 In order to activate code generation and generate implementations to manage
 your graph you will need to include `dagger-compiler-2.x.jar` in your build
 at compile time.
 
-### Maven
+#### Maven
 
 In a Maven project, include the `dagger` artifact in the dependencies section
 of your `pom.xml` and the `dagger-compiler` artifact as an
@@ -107,7 +124,7 @@ parallelizable execution graphs), then add this to your maven configuration:
 </dependencies>
 ```
 
-### Java Gradle
+#### Java Gradle
 ```groovy
 // Add plugin https://plugins.gradle.org/plugin/net.ltgt.apt
 plugins {
@@ -121,7 +138,7 @@ dependencies {
 }
 ```
 
-### Android Gradle
+#### Android Gradle
 ```groovy
 // Add Dagger dependencies
 dependencies {
@@ -203,6 +220,7 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 
 [20api]: https://google.github.io/dagger/api/2.0/
 [`bazel`]: https://bazel.build
+[bazel-external-deps]: https://docs.bazel.build/versions/master/external.html#depending-on-other-bazel-projects
 [community]: https://plus.google.com/communities/111933036769103367883
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/

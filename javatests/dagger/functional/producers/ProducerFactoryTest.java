@@ -101,6 +101,7 @@ public class ProducerFactoryTest {
     ProducerToken token = ProducerToken.create(SimpleProducerModule_SettableFutureStrFactory.class);
 
     SettableFuture<String> strFuture = SettableFuture.create();
+    @SuppressWarnings("FutureReturnValueIgnored")
     SettableFuture<SettableFuture<String>> strFutureFuture = SettableFuture.create();
     Producer<SettableFuture<String>> strFutureProducer = producerOfFuture(strFutureFuture);
     Producer<String> producer =
@@ -128,6 +129,7 @@ public class ProducerFactoryTest {
     ProducerToken token = ProducerToken.create(SimpleProducerModule_SettableFutureStrFactory.class);
 
     SettableFuture<String> strFuture = SettableFuture.create();
+    @SuppressWarnings("FutureReturnValueIgnored")
     SettableFuture<SettableFuture<String>> strFutureFuture = SettableFuture.create();
     Producer<SettableFuture<String>> strFutureProducer = producerOfFuture(strFutureFuture);
     Producer<String> producer =

@@ -21,7 +21,6 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import dagger.model.Key;
 import dagger.model.RequestKind;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -61,11 +60,12 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   Expression getDependencyExpression(ClassName requestingClass) {
     if (requestKind().equals(frameworkRequestKind())) {
       MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
+      TypeMirror contributedType = resolvedBindings().contributionBinding().contributedType();
       TypeMirror expressionType =
           frameworkInstanceSupplier.specificType().isPresent()
-                  || isTypeAccessibleFrom(instanceType(), requestingClass.packageName())
+                  || isTypeAccessibleFrom(contributedType, requestingClass.packageName())
                   || isInlinedFactoryCreation(memberSelect)
-              ? types.wrapType(instanceType(), resolvedBindings().frameworkClass())
+              ? types.wrapType(contributedType, resolvedBindings().frameworkClass())
               : rawFrameworkType();
       return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
     }
@@ -94,27 +94,15 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
   }
 
   /**
-   * The instance type {@code T} of this {@code FrameworkType<T>}. For {@link
-   * MembersInjectionBinding}s, this is the {@linkplain Key#type() key type}; for {@link
-   * ContributionBinding}s, this the {@link ContributionBinding#contributedType()}.
-   */
-  private TypeMirror instanceType() {
-    return resolvedBindings()
-        .membersInjectionBinding()
-        .map(binding -> binding.key().type())
-        .orElseGet(() -> resolvedBindings().contributionBinding().contributedType());
-  }
-
-  /**
    * Returns {@code true} if a factory is created inline each time it is requested. For example, in
    * the initialization {@code this.fooProvider = Foo_Factory.create(Bar_Factory.create());}, {@code
    * Bar_Factory} is considered to be inline.
    *
    * <p>This is used in {@link #getDependencyExpression(ClassName)} when determining the type of a
-   * factory. Normally if the {@link #instanceType()} is not accessible from the component, the type
-   * of the expression will be a raw {@link javax.inject.Provider}. However, if the factory is
-   * created inline, even if contributed type is not accessible, javac will still be able to
-   * determine the type that is returned from the {@code Foo_Factory.create()} method.
+   * factory. Normally if the {@link ContributionBinding#contributedType()} is not accessible from
+   * the component, the type of the expression will be a raw {@link javax.inject.Provider}. However,
+   * if the factory is created inline, even if contributed type is not accessible, javac will still
+   * be able to determine the type that is returned from the {@code Foo_Factory.create()} method.
    */
   private static boolean isInlinedFactoryCreation(MemberSelect memberSelect) {
     return memberSelect.staticMember();

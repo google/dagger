@@ -21,6 +21,7 @@ import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.producers.ProducerModule;
@@ -278,5 +279,26 @@ public final class ModuleValidatorTest {
         .hadErrorContaining("test.BadModule has errors")
         .inFile(module)
         .onLine(5);
+  }
+
+  @Test
+  public void scopeOnModule() {
+    JavaFileObject badModule =
+        JavaFileObjects.forSourceLines(
+            "test.BadModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Module",
+            "interface BadModule {}");
+    Compilation compilation = daggerCompiler().compile(badModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Modules cannot be scoped")
+        .inFile(badModule)
+        .onLineContaining("@Singleton");
   }
 }

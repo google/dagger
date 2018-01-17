@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
@@ -71,6 +72,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Scope;
 import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -211,6 +213,7 @@ final class ModuleValidator {
     validateModifiers(module, builder);
     validateReferencedModules(module, moduleKind, builder);
     validateReferencedSubcomponents(module, moduleKind, builder);
+    validateNoScopeAnnotationsOnModuleElement(module, moduleKind, builder);
 
     return builder.build();
   }
@@ -487,6 +490,20 @@ final class ModuleValidator {
         break;
       default:
         throw new AssertionError();
+    }
+  }
+
+  private void validateNoScopeAnnotationsOnModuleElement(
+      TypeElement module,
+      ModuleDescriptor.Kind moduleKind,
+      ValidationReport.Builder<TypeElement> report) {
+    for (AnnotationMirror scope : getAnnotatedAnnotations(module, Scope.class)) {
+      report.addError(
+          String.format(
+              "@%ss cannot be scoped. Did you mean to scope a method instead?",
+              moduleKind.moduleAnnotation().getSimpleName()),
+          module,
+          scope);
     }
   }
 

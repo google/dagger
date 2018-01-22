@@ -51,6 +51,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -110,6 +111,12 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     TypeSpec.Builder factoryBuilder =
         classBuilder(generatedTypeName)
+            .addAnnotation(
+                // TODO(beder): examine if we can remove this or prevent subtypes of Future from
+                // being produced
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "$S", "FutureReturnValueIgnored")
+                    .build())
             .addModifiers(PUBLIC, FINAL)
             .superclass(abstractProducerOf(providedTypeName))
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));

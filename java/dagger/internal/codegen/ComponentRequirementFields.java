@@ -86,18 +86,9 @@ final class ComponentRequirementFields {
   /**
    * Adds a component requirement field for a single component requirement owned by this component.
    */
+  // TODO(user): remove this method and create ComponentRequirementFields lazily, on demand.
   void add(ComponentRequirementField field) {
     componentRequirementFieldsMaps.get(0).put(field.componentRequirement(), field);
-  }
-
-  /**
-   * Returns {@code true} if the component that owns this {@link ComponentRequirementFields} has a
-   * registered {@link ComponentRequirementField} for {@code componentRequirement}.
-   */
-  boolean contains(ComponentRequirement componentRequirement) {
-    return componentRequirementFieldsMaps
-        .stream()
-        .anyMatch(map -> map.containsKey(componentRequirement));
   }
 
   private static Map<ComponentRequirement, ComponentRequirementField>

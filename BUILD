@@ -62,8 +62,10 @@ jarjar_library(
         "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
+        "//java/dagger/model:internal-proxies",
         "@com_google_auto_auto_common//jar",
     ],
 )
@@ -72,6 +74,7 @@ jarjar_library(
     name = "shaded_spi",
     rules_file = "shade_rules.txt",
     deps = [
+        "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/model",
         "@com_google_auto_auto_common//jar",
     ],

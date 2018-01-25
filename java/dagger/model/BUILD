@@ -23,9 +23,14 @@ load(
     "DOCLINT_REFERENCES",
 )
 
+INTERNAL_PROXIES = ["BindingGraphProxies.java"]
+
 filegroup(
     name = "model-srcs",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = INTERNAL_PROXIES,
+    ),
 )
 
 java_library(
@@ -34,12 +39,22 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/producers",
         "//third_party:auto_common",
         "//third_party:auto_value",
         "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:jsr330_inject",
+    ],
+)
+
+java_library(
+    name = "internal-proxies",
+    srcs = INTERNAL_PROXIES,
+    deps = [
+        ":model",
+        "//third_party:guava",
     ],
 )
 

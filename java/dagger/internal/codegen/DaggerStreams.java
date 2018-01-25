@@ -30,13 +30,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Utilities for streams. */
-final class DaggerStreams {
+public final class DaggerStreams {
 
   /**
    * Returns a {@link Collector} that accumulates the input elements into a new {@link
    * ImmutableList}, in encounter order.
    */
-  static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
+  public static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
     return collectingAndThen(toList(), ImmutableList::copyOf);
   }
 
@@ -44,7 +44,7 @@ final class DaggerStreams {
    * Returns a {@link Collector} that accumulates the input elements into a new {@link
    * ImmutableSet}, in encounter order.
    */
-  static <T> Collector<T, ?, ImmutableSet<T>> toImmutableSet() {
+  public static <T> Collector<T, ?, ImmutableSet<T>> toImmutableSet() {
     return collectingAndThen(toList(), ImmutableSet::copyOf);
   }
 
@@ -53,7 +53,7 @@ final class DaggerStreams {
    * and values are the result of applying the provided mapping functions to the input elements.
    * Entries appear in the result {@code ImmutableMap} in encounter order.
    */
-  static <T, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+  public static <T, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
       Function<? super T, K> keyMapper, Function<? super T, V> valueMapper) {
     return Collectors.mapping(
         value -> Maps.immutableEntry(keyMapper.apply(value), valueMapper.apply(value)),
@@ -72,7 +72,7 @@ final class DaggerStreams {
    *
    * <pre>{@code Stream<Bar>} barStream = fooStream.flatMap(instancesOf(Bar.class));</pre>
    */
-  static <T> Function<Object, Stream<T>> instancesOf(Class<T> to) {
+  public static <T> Function<Object, Stream<T>> instancesOf(Class<T> to) {
     return f -> to.isInstance(f) ? Stream.of(to.cast(f)) : Stream.empty();
   }
 

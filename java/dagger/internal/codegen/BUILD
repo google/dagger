@@ -51,11 +51,25 @@ CODEGEN_SHARED_DEPS = [
     "//java/dagger:core",
     "//java/dagger/producers",
     "//java/dagger/model",
+    "//java/dagger/model:internal-proxies",
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
     "//third_party:guava",
+    ":shared-with-spi",
 ]
+
+# Code that is shared with the dagger.model and dagger.spi packages. This code is merged into both
+# the dagger-compiler and dagger-spi artifacts that are sent to Maven
+java_library(
+    name = "shared-with-spi",
+    srcs = ["DaggerStreams.java"],
+    plugins = CODEGEN_PLUGINS,
+    tags = ["maven:merged"],
+    deps = [
+        "//third_party:guava",
+    ],
+)
 
 # Common types needed across all of the codegen package
 java_library(
@@ -67,12 +81,10 @@ java_library(
         "CompilerOptions.java",
         "ContributionType.java",
         "DaggerElements.java",
-        "DaggerStreams.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
         "Expression.java",
         "FeatureStatus.java",
-        "ForwardingNetwork.java",
         "FrameworkTypes.java",
         "InjectionAnnotations.java",
         "Keys.java",
@@ -112,7 +124,6 @@ java_library(
         "BindingFactory.java",
         "BindingGraph.java",
         "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to its own model target
-        "BindingNetwork.java",
         "BindingType.java",
         "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
@@ -259,6 +270,7 @@ java_library(
 java_library(
     name = "processor",
     srcs = [
+        "BindingGraphConverter.java",
         "BindingGraphPluginsModule.java",
         "BindingMethodValidatorsModule.java",
         "CanReleaseReferencesProcessingStep.java",
@@ -340,6 +352,7 @@ java_plugin(
     deps = [
         ":base",
         ":binding",
+        "//java/dagger/model",
         "//third_party:auto_service",
         "//third_party:error_prone_annotations",
         "//third_party:guava",

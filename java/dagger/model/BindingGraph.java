@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.model;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -28,24 +24,20 @@ import static com.google.common.graph.Graphs.transpose;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.ImmutableNetwork;
-import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
-import com.google.common.graph.NetworkBuilder;
 import dagger.BindsOptionalOf;
 import dagger.Module;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
+import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.Node;
 import dagger.multibindings.Multibinds;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -78,18 +70,9 @@ import javax.lang.model.element.TypeElement;
  * the parent.
  */
 // TODO(dpb): Represent graphs with missing or conflicting bindings.
-public final class BindingNetwork
-    extends ForwardingNetwork<BindingNetwork.Node, BindingNetwork.Edge> {
-
-  /** Creates a {@link BindingNetwork} representing the given root {@link BindingGraph}. */
-  static BindingNetwork create(BindingGraph graph) {
-    Factory factory = new Factory(graph);
-    factory.traverseComponents();
-    return factory.bindingNetwork();
-  }
-
-  private BindingNetwork(Network<Node, Edge> bindingNetwork) {
-    super(ImmutableNetwork.copyOf(bindingNetwork));
+public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
+  BindingGraph(Network<Node, Edge> network) {
+    super(ImmutableNetwork.copyOf(network));
   }
 
   /** Returns the binding nodes. */
@@ -110,23 +93,23 @@ public final class BindingNetwork
   }
 
   /** Returns the component node for a component. */
-  public Optional<ComponentNode> componentNode(ComponentTreePath component) {
+  public Optional<ComponentNode> componentNode(ComponentPath component) {
     return componentNodeStream()
-        .filter(node -> node.componentTreePath().equals(component))
+        .filter(node -> node.componentPath().equals(component))
         .findFirst();
   }
 
   /** Returns the component nodes for a component. */
   public ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
     return componentNodeStream()
-        .filter(node -> node.componentTreePath().currentComponent().equals(component))
+        .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
   }
 
   /** Returns the component node for the root component. */
   public ComponentNode rootComponentNode() {
     return componentNodeStream()
-        .filter(node -> node.componentTreePath().atRoot())
+        .filter(node -> node.componentPath().atRoot())
         .findFirst()
         .get();
   }
@@ -163,7 +146,7 @@ public final class BindingNetwork
    * Returns the dependency edges for the entry points of a given {@code component}. Each edge's
    * source node is that component's component node.
    */
-  public ImmutableSet<DependencyEdge> entryPointEdges(ComponentTreePath component) {
+  public ImmutableSet<DependencyEdge> entryPointEdges(ComponentPath component) {
     return outEdges(componentNode(component).get())
         .stream()
         .flatMap(instancesOf(DependencyEdge.class))
@@ -220,7 +203,7 @@ public final class BindingNetwork
     private final DependencyRequest dependencyRequest;
     private final boolean entryPoint;
 
-    private DependencyEdge(DependencyRequest dependencyRequest, boolean entryPoint) {
+    DependencyEdge(DependencyRequest dependencyRequest, boolean entryPoint) {
       this.dependencyRequest = dependencyRequest;
       this.entryPoint = entryPoint;
     }
@@ -252,7 +235,7 @@ public final class BindingNetwork
 
     private final ExecutableElement factoryMethod;
 
-    private ChildFactoryMethodEdge(ExecutableElement factoryMethod) {
+    ChildFactoryMethodEdge(ExecutableElement factoryMethod) {
       this.factoryMethod = factoryMethod;
     }
 
@@ -269,37 +252,38 @@ public final class BindingNetwork
 
   /**
    * An edge that represents the link between a parent component and a child subcomponent implied by
-   * a subcomponent builder binding.
+   * a subcomponent builder binding. The {@linkplain com.google.common.graph.EndpointPair#source()
+   * source node} of this edge is a {@link BindingNode} for the subcomponent builder {@link Key} and
+   * the {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
+   * ComponentNode} for the child subcomponent.
    */
   public static final class SubcomponentBuilderBindingEdge implements Edge {
 
-    private final ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations;
+    private final ImmutableSet<TypeElement> declaringModules;
 
-    private SubcomponentBuilderBindingEdge(
-        Iterable<SubcomponentDeclaration> subcomponentDeclarations) {
-      this.subcomponentDeclarations = ImmutableSet.copyOf(subcomponentDeclarations);
+    SubcomponentBuilderBindingEdge(Iterable<TypeElement> declaringModules) {
+      this.declaringModules = ImmutableSet.copyOf(declaringModules);
     }
 
     /**
-     * The {@code @Module.subcomponents} declarations that generated this edge. May be empty if the
-     * parent component has a subcomponent builder method.
+     * The modules that {@linkplain Module#subcomponents() declare the subcomponent} that generated
+     * this edge. Empty if the parent component has a subcomponent builder method and there are no
+     * declaring modules.
      */
-    public ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations() {
-      return subcomponentDeclarations;
+    public ImmutableSet<TypeElement> declaringModules() {
+      return declaringModules;
     }
 
     @Override
     public String toString() {
-      return toStringHelper(this)
-          .add("subcomponentDeclarations", subcomponentDeclarations)
-          .toString();
+      return toStringHelper(this).add("declaringModules", declaringModules).toString();
     }
   }
 
   /** A node in the binding graph. Either a {@link BindingNode} or a {@link ComponentNode}. */
   public interface Node {
     /** The component this node belongs to. */
-    ComponentTreePath componentTreePath();
+    ComponentPath componentPath();
   }
 
   /**
@@ -309,14 +293,12 @@ public final class BindingNetwork
   // TODO(dpb): Should this be a value type?
   public static final class BindingNode implements Node {
 
-    private final ComponentTreePath component;
+    private final ComponentPath component;
     private final Binding binding;
-    private final ImmutableSet<BindingDeclaration> associatedDeclarations;
+    private final ImmutableSet<Element> associatedDeclarations;
 
-    private BindingNode(
-        ComponentTreePath component,
-        Binding binding,
-        Iterable<BindingDeclaration> associatedDeclarations) {
+    BindingNode(
+        ComponentPath component, Binding binding, Iterable<Element> associatedDeclarations) {
       this.component = component;
       this.binding = binding;
       this.associatedDeclarations = ImmutableSet.copyOf(associatedDeclarations);
@@ -324,28 +306,26 @@ public final class BindingNetwork
 
     /** The component that owns the {@link #binding()}. */
     @Override
-    public ComponentTreePath componentTreePath() {
+    public ComponentPath componentPath() {
       return component;
     }
 
     /** The binding. */
-    Binding binding() {
+    public Binding binding() {
       return binding;
     }
 
     /**
-     * The declarations (other than the binding's {@link Binding#bindingElement()}) that are
+     * The {@link Element}s (other than the binding's {@link Binding#bindingElement()}) that are
      * associated with the binding.
      *
      * <ul>
-     *   <li>For {@linkplain BindsOptionalOf optional bindings}, the {@link
-     *       OptionalBindingDeclaration}s.
-     *   <li>For {@linkplain Module#subcomponents() module subcomponents}, the {@link
-     *       SubcomponentDeclaration}s.
-     *   <li>For {@linkplain Multibinds multibindings}, the {@link MultibindingDeclaration}s.
+     *   <li>{@linkplain BindsOptionalOf optional binding} declarations
+     *   <li>{@linkplain Module#subcomponents() module subcomponent} declarations
+     *   <li>{@linkplain Multibinds multibinding} declarations
      * </ul>
      */
-    public ImmutableSet<BindingDeclaration> associatedDeclarations() {
+    public ImmutableSet<Element> associatedDeclarations() {
       return associatedDeclarations;
     }
 
@@ -365,119 +345,12 @@ public final class BindingNetwork
    */
   @AutoValue
   public abstract static class ComponentNode implements Node {
+    static ComponentNode create(ComponentPath componentPath) {
+      return new AutoValue_BindingGraph_ComponentNode(componentPath);
+    }
 
     /** The component represented by this node. */
     @Override
-    public abstract ComponentTreePath componentTreePath();
-
-    private static ComponentNode create(ComponentTreePath component) {
-      return new AutoValue_BindingNetwork_ComponentNode(component);
-    }
-  }
-
-  private static class Factory extends ComponentTreeTraverser {
-
-    private final MutableNetwork<Node, Edge> network =
-        NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
-
-    private ComponentNode parentComponent;
-    private ComponentNode currentComponent;
-
-    Factory(BindingGraph graph) {
-      super(graph);
-    }
-
-    @Override
-    protected void visitComponent(BindingGraph graph) {
-      ComponentNode grandparentNode = parentComponent;
-      parentComponent = currentComponent;
-      currentComponent = ComponentNode.create(componentTreePath());
-      network.addNode(currentComponent);
-      super.visitComponent(graph);
-      currentComponent = parentComponent;
-      parentComponent = grandparentNode;
-    }
-
-    @Override
-    protected void visitSubcomponentFactoryMethod(
-        BindingGraph graph, BindingGraph parent, ExecutableElement factoryMethod) {
-      network.addEdge(parentComponent, currentComponent, new ChildFactoryMethodEdge(factoryMethod));
-      super.visitSubcomponentFactoryMethod(graph, parent, factoryMethod);
-    }
-
-    @Override
-    protected BindingGraphTraverser bindingGraphTraverser(
-        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-      return new BindingGraphVisitor(componentPath, entryPointMethod);
-    }
-
-    BindingNetwork bindingNetwork() {
-      return new BindingNetwork(network);
-    }
-
-    private final class BindingGraphVisitor extends BindingGraphTraverser {
-
-      private Node current;
-
-      BindingGraphVisitor(
-          ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-        super(componentPath, entryPointMethod);
-        current = currentComponent;
-        network.addNode(current);
-      }
-
-      @Override
-      protected void visitBinding(Binding binding, ComponentDescriptor owningComponent) {
-        // TODO(dpb): Should we visit only bindings owned by the current component, since other
-        // bindings will be visited in the parent?
-        Node previous = current;
-        current = newBindingNode(resolvedBindings(), binding, owningComponent);
-        network.addNode(current);
-        if (binding instanceof ContributionBinding) {
-          ContributionBinding contributionBinding = (ContributionBinding) binding;
-          if (contributionBinding.kind().equals(SUBCOMPONENT_BUILDER)) {
-            network.addEdge(
-                current,
-                subcomponentNode(contributionBinding, owningComponent),
-                new SubcomponentBuilderBindingEdge(resolvedBindings().subcomponentDeclarations()));
-          }
-        }
-        if (network
-            .edgesConnecting(previous, current)
-            .stream()
-            .flatMap(instancesOf(DependencyEdge.class))
-            .noneMatch(e -> e.dependencyRequest().equals(dependencyRequest()))) {
-          network.addEdge(
-              previous, current, new DependencyEdge(dependencyRequest(), atEntryPoint()));
-          super.visitBinding(binding, owningComponent);
-        }
-        current = previous;
-      }
-
-      private ComponentNode subcomponentNode(
-          ContributionBinding binding, ComponentDescriptor subcomponentParent) {
-        checkArgument(binding.kind().equals(SUBCOMPONENT_BUILDER));
-        TypeElement builderType = asTypeElement(binding.key().type());
-        TypeElement subcomponentType = asType(builderType.getEnclosingElement());
-        ComponentTreePath childPath =
-            componentTreePath()
-                .pathFromRootToAncestor(subcomponentParent)
-                .childPath(subcomponentType);
-        ComponentNode childNode = ComponentNode.create(childPath);
-        network.addNode(childNode);
-        return childNode;
-      }
-
-      private BindingNode newBindingNode(
-          ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
-        return new BindingNode(
-            componentTreePath().pathFromRootToAncestor(owningComponent),
-            binding,
-            concat(
-                resolvedBindings.multibindingDeclarations(),
-                resolvedBindings.optionalBindingDeclarations(),
-                resolvedBindings.subcomponentDeclarations()));
-      }
-    }
+    public abstract ComponentPath componentPath();
   }
 }

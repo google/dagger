@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import dagger.model.BindingGraph;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +25,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 
 /**
- * A pluggable visitor for {@link BindingNetwork}.
+ * A pluggable visitor for {@link BindingGraph}.
  *
  * <p>Note: This is still experimental and will change.
  */
@@ -44,8 +45,8 @@ public abstract class BindingGraphPlugin {
     return filer;
   }
 
-  /** Called once for each valid root binding graph encountered by the Dagger processor. */
-  protected abstract void visitGraph(BindingNetwork bindingNetwork);
+  /** Called once for each valid binding graph encountered by the Dagger processor. */
+  protected abstract void visitGraph(BindingGraph bindingGraph);
 
   /**
    * Returns the annotation-processing options that this plugin uses to configure behavior.

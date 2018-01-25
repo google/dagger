@@ -146,8 +146,8 @@ final class ComponentProcessingStep implements ProcessingStep {
         }
 
         if (!bindingGraphPlugins.isEmpty()) {
-          BindingNetwork bindingNetwork = BindingNetwork.create(bindingGraph);
-          bindingGraphPlugins.forEach(plugin -> plugin.visitGraph(bindingNetwork));
+          dagger.model.BindingGraph graph = BindingGraphConverter.convert(bindingGraph);
+          bindingGraphPlugins.forEach(plugin -> plugin.visitGraph(graph));
         }
 
         generateComponent(bindingGraph);

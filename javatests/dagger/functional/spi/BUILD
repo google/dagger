@@ -24,6 +24,7 @@ java_plugin(
     srcs = ["TestPlugin.java"],
     deps = [
         "//java/dagger/internal/codegen:binding",
+        "//java/dagger/model",
         "//third_party:auto_service",
         "//third_party:guava",
         "//third_party:javapoet",

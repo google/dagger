@@ -22,8 +22,8 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Joiner;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.BindingGraphPlugin;
-import dagger.internal.codegen.BindingNetwork;
-import dagger.internal.codegen.BindingNetwork.ComponentNode;
+import dagger.model.BindingGraph;
+import dagger.model.BindingGraph.ComponentNode;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -33,19 +33,19 @@ import java.util.Properties;
 public final class TestPlugin extends BindingGraphPlugin {
 
   @Override
-  protected void visitGraph(BindingNetwork bindingNetwork) {
+  protected void visitGraph(BindingGraph bindingGraph) {
     Properties properties = new Properties();
     int i = 0;
-    for (ComponentNode node : bindingNetwork.componentNodes()) {
+    for (ComponentNode node : bindingGraph.componentNodes()) {
       properties.setProperty(
-          String.format("component[%s]", i++), node.componentTreePath().toString());
+          String.format("component[%s]", i++), node.componentPath().toString());
     }
-    write(bindingNetwork, properties);
+    write(bindingGraph, properties);
   }
 
-  private void write(BindingNetwork bindingNetwork, Properties properties) {
+  private void write(BindingGraph bindingGraph, Properties properties) {
     ClassName rootComponentName =
-        ClassName.get(bindingNetwork.rootComponentNode().componentTreePath().currentComponent());
+        ClassName.get(bindingGraph.rootComponentNode().componentPath().currentComponent());
     try (Writer writer =
         filer()
             .createResource(

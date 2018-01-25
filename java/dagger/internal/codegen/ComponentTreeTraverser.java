@@ -29,6 +29,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.FluentIterable;
@@ -39,6 +40,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.LinkedHashMultiset;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
+import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.ArrayDeque;
@@ -648,6 +650,12 @@ public class ComponentTreeTraverser {
 
     private BindingGraph rootmostGraph(Predicate<? super BindingGraph> predicate) {
       return graphsInPath().stream().filter(predicate).findFirst().get();
+    }
+
+    /** Converts this {@link ComponentTreePath} into a {@link ComponentPath}. */
+    ComponentPath toComponentPath() {
+      return ComponentPath.create(
+          graphsInPath().stream().map(BindingGraph::componentType).collect(toList()));
     }
 
     @Override

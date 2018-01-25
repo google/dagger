@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.model;
 
 import static dagger.internal.Preconditions.checkNotNull;
 

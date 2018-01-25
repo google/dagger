@@ -28,13 +28,15 @@ import com.google.common.collect.Iterators;
 import com.google.common.graph.EndpointPair;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.BindingNetwork.BindingNode;
-import dagger.internal.codegen.BindingNetwork.ChildFactoryMethodEdge;
-import dagger.internal.codegen.BindingNetwork.DependencyEdge;
-import dagger.internal.codegen.BindingNetwork.Edge;
-import dagger.internal.codegen.BindingNetwork.Node;
-import dagger.internal.codegen.BindingNetwork.SubcomponentBuilderBindingEdge;
-import dagger.internal.codegen.ComponentTreeTraverser.ComponentTreePath;
+import dagger.model.BindingGraph;
+import dagger.model.BindingGraph.BindingNode;
+import dagger.model.BindingGraph.ChildFactoryMethodEdge;
+import dagger.model.BindingGraph.DependencyEdge;
+import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.Node;
+import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
+import dagger.model.BindingKind;
+import dagger.model.ComponentPath;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -80,10 +82,10 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
           "/set312/12");
 
   @Override
-  public void visitGraph(BindingNetwork bindingNetwork) {
+  public void visitGraph(BindingGraph bindingGraph) {
     TypeElement componentElement =
-        bindingNetwork.rootComponentNode().componentTreePath().currentComponent();
-    DotGraph graph = new NodesGraph(bindingNetwork).graph();
+        bindingGraph.rootComponentNode().componentPath().currentComponent();
+    DotGraph graph = new NodesGraph(bindingGraph).graph();
     ClassName componentName = ClassName.get(componentElement);
     try {
       FileObject file =
@@ -201,20 +203,20 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
                     .addAttribute("labeljust", "l")
                     .addAttribute("compound", true));
 
-    private final BindingNetwork bindingNetwork;
+    private final BindingGraph bindingGraph;
     private final Map<Node, UUID> nodeIds = new HashMap<>();
 
-    NodesGraph(BindingNetwork bindingNetwork) {
-      this.bindingNetwork = bindingNetwork;
+    NodesGraph(BindingGraph bindingGraph) {
+      this.bindingGraph = bindingGraph;
     }
 
     DotGraph graph() {
       if (nodeIds.isEmpty()) {
         Iterator<String> colors = Iterators.cycle(BindingNetworkVisualizer.COMPONENT_COLORS);
-        bindingNetwork
+        bindingGraph
             .nodes()
             .stream()
-            .collect(groupingBy(Node::componentTreePath))
+            .collect(groupingBy(Node::componentPath))
             .forEach(
                 (component, networkNodes) -> {
                   DotGraph subgraph = subgraph(component);
@@ -228,14 +230,14 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
                     subgraph.add(dotNode(node));
                   }
                 });
-        for (Edge edge : bindingNetwork.edges()) {
+        for (Edge edge : bindingGraph.edges()) {
           dotEdge(edge).ifPresent(graph::add);
         }
       }
       return graph;
     }
 
-    DotGraph subgraph(ComponentTreePath component) {
+    DotGraph subgraph(ComponentPath component) {
       DotGraph subgraph = new DotGraph("subgraph " + quote(clusterName(component)));
       graph.add(subgraph);
       return subgraph;
@@ -246,7 +248,7 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
     }
 
     Optional<DotEdge> dotEdge(Edge edge) {
-      EndpointPair<Node> incidentNodes = bindingNetwork.incidentNodes(edge);
+      EndpointPair<Node> incidentNodes = bindingGraph.incidentNodes(edge);
       DotEdge dotEdge = new DotEdge(nodeId(incidentNodes.source()), nodeId(incidentNodes.target()));
       if (edge instanceof DependencyEdge) {
         if (((DependencyEdge) edge).isEntryPoint()) {
@@ -254,12 +256,12 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
         }
       } else if (edge instanceof ChildFactoryMethodEdge) {
         dotEdge.addAttribute("style", "dashed");
-        dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentTreePath()));
-        dotEdge.addAttribute("ltail", clusterName(incidentNodes.source().componentTreePath()));
+        dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentPath()));
+        dotEdge.addAttribute("ltail", clusterName(incidentNodes.source().componentPath()));
         dotEdge.addAttribute("taillabel", ((ChildFactoryMethodEdge) edge).factoryMethod());
       } else if (edge instanceof SubcomponentBuilderBindingEdge) {
         dotEdge.addAttribute("style", "dashed");
-        dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentTreePath()));
+        dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentPath()));
         dotEdge.addAttribute("taillabel", "subcomponent");
       }
       return Optional.of(dotEdge);
@@ -268,25 +270,16 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
     DotNode dotNode(Node node) {
       DotNode dotNode = new DotNode(nodeId(node));
       if (node instanceof BindingNode) {
-        Binding binding = ((BindingNode) node).binding();
-        switch (binding.bindingType()) {
-          case PROVISION:
-            dotNode.addAttribute("label", binding.key());
-            break;
-
-          case PRODUCTION:
-            dotNode.addAttributeFormat("label", "@Produces %s", binding.key());
-            break;
-
-          case MEMBERS_INJECTION:
-            dotNode.addAttributeFormat("label", "MembersInjector<%s>", binding.key());
-            break;
-
-          default:
-            throw new AssertionError(binding);
+        dagger.model.Binding binding = ((BindingNode) node).binding();
+        if (binding.kind().equals(BindingKind.MEMBERS_INJECTION)) {
+          dotNode.addAttributeFormat("label", "inject(%s)", binding.key());
+        } else if (binding.isProduction()) {
+          dotNode.addAttributeFormat("label", "@Produces %s", binding.key());
+        } else {
+          dotNode.addAttribute("label", binding.key());
         }
         dotNode.addAttribute("tooltip", "");
-        if (bindingNetwork.entryPointBindingNodes().contains(node)) {
+        if (bindingGraph.entryPointBindingNodes().contains(node)) {
           dotNode.addAttribute("penwidth", 3);
         }
       } else {
@@ -295,7 +288,7 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
       return dotNode;
     }
 
-    private static String clusterName(ComponentTreePath owningComponentPath) {
+    private static String clusterName(ComponentPath owningComponentPath) {
       return "cluster" + owningComponentPath;
     }
   }

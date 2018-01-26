@@ -73,8 +73,8 @@ maven_jar(
 
 maven_jar(
     name = "com_google_auto_auto_common",
-    artifact = "com.google.auto:auto-common:0.9",
-    sha1 = "766dd79e7e81cfefec890ffd6d63aa2807538def",
+    artifact = "com.google.auto:auto-common:0.10",
+    sha1 = "c8f153ebe04a17183480ab4016098055fb474364",
 )
 
 maven_jar(

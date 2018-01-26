@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -80,8 +81,8 @@ import javax.lang.model.util.SimpleTypeVisitor6;
 class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
 
   @Inject
-  AnnotationCreatorGenerator(Filer filer, Elements elements) {
-    super(filer, elements);
+  AnnotationCreatorGenerator(Filer filer, Elements elements, SourceVersion sourceVersion) {
+    super(filer, elements, sourceVersion);
   }
 
   @Override

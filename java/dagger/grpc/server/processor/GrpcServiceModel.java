@@ -32,6 +32,7 @@ import dagger.grpc.server.processor.SourceGenerator.IoGrpc;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -48,6 +49,7 @@ class GrpcServiceModel {
 
   private final Types types;
   private final Elements elements;
+  private final SourceVersion sourceVersion;
   private final Messager messager;
   final TypeElement serviceImplementation;
   final ClassName serviceImplementationClassName;
@@ -60,6 +62,7 @@ class GrpcServiceModel {
   GrpcServiceModel(ProcessingEnvironment processingEnv, TypeElement serviceImplementation) {
     this.types = processingEnv.getTypeUtils();
     this.elements = processingEnv.getElementUtils();
+    this.sourceVersion = processingEnv.getSourceVersion();
     this.messager = processingEnv.getMessager();
     this.serviceImplementation = serviceImplementation;
     this.serviceImplementationClassName = ClassName.get(serviceImplementation);
@@ -115,6 +118,7 @@ class GrpcServiceModel {
   protected final Optional<AnnotationSpec> generatedAnnotation() {
     return generatedAnnotationSpec(
         elements,
+        sourceVersion,
         GrpcService.class,
         String.format(
             "@%s annotation on %s",

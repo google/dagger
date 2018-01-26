@@ -24,6 +24,7 @@ import dagger.Component;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -44,10 +45,11 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   ComponentGenerator(
       Filer filer,
       Elements elements,
+      SourceVersion sourceVersion,
       DaggerTypes types,
       KeyFactory keyFactory,
       CompilerOptions compilerOptions) {
-    super(filer, elements);
+    super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;

@@ -53,6 +53,7 @@ import java.util.stream.Stream;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -76,6 +77,7 @@ import javax.lang.model.util.Types;
  */
 final class ComponentHjarProcessingStep implements ProcessingStep {
   private final Elements elements;
+  private final SourceVersion sourceVersion;
   private final Types types;
   private final Filer filer;
   private final Messager messager;
@@ -85,12 +87,14 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   @Inject
   ComponentHjarProcessingStep(
       Elements elements,
+      SourceVersion sourceVersion,
       Types types,
       Filer filer,
       Messager messager,
       ComponentValidator componentValidator,
       Factory componentDescriptorFactory) {
     this.elements = elements;
+    this.sourceVersion = sourceVersion;
     this.types = types;
     this.filer = filer;
     this.messager = messager;
@@ -123,7 +127,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
             componentValidator.validate(componentTypeElement, ImmutableSet.of(), ImmutableSet.of());
         validationReport.report().printMessagesTo(messager);
         if (validationReport.report().isClean()) {
-          new EmptyComponentGenerator(filer, elements)
+          new EmptyComponentGenerator(filer, elements, sourceVersion)
               .generate(componentDescriptorFactory.forComponent(componentTypeElement), messager);
         }
       } catch (TypeNotPresentException e) {
@@ -134,8 +138,8 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   }
 
   private final class EmptyComponentGenerator extends SourceFileGenerator<ComponentDescriptor> {
-    EmptyComponentGenerator(Filer filer, Elements elements) {
-      super(filer, elements);
+    EmptyComponentGenerator(Filer filer, Elements elements, SourceVersion sourceVersion) {
+      super(filer, elements, sourceVersion);
     }
 
     @Override

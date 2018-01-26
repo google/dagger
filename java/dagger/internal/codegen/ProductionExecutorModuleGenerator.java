@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -42,8 +43,8 @@ import javax.lang.model.util.Elements;
 final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeElement> {
 
   @Inject
-  ProductionExecutorModuleGenerator(Filer filer, Elements elements) {
-    super(filer, elements);
+  ProductionExecutorModuleGenerator(Filer filer, Elements elements, SourceVersion sourceVersion) {
+    super(filer, elements, sourceVersion);
   }
 
   @Override

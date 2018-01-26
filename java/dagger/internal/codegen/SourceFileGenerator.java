@@ -27,6 +27,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
 
@@ -42,10 +43,12 @@ abstract class SourceFileGenerator<T> {
 
   private final Filer filer;
   private final Elements elements;
+  private final SourceVersion sourceVersion;
 
-  SourceFileGenerator(Filer filer, Elements elements) {
+  SourceFileGenerator(Filer filer, Elements elements, SourceVersion sourceVersion) {
     this.filer = checkNotNull(filer);
     this.elements = checkNotNull(elements);
+    this.sourceVersion = checkNotNull(sourceVersion);
   }
 
   /**
@@ -81,7 +84,7 @@ abstract class SourceFileGenerator<T> {
   private JavaFile buildJavaFile(
       ClassName generatedTypeName, TypeSpec.Builder typeSpecBuilder) {
     Optional<AnnotationSpec> generatedAnnotation =
-        generatedAnnotation(elements)
+        generatedAnnotation(elements, sourceVersion)
             .map(
                 annotation ->
                     AnnotationSpec.builder(ClassName.get(annotation))

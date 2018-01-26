@@ -80,6 +80,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         DaggerComponentProcessor_ProcessorComponent.builder()
             .types(processingEnv.getTypeUtils())
             .elements(elements)
+            .sourceVersion(processingEnv.getSourceVersion())
             .messager(messager)
             .processingOptions(processingEnv.getOptions())
             .compilerOptions(compilerOptions);
@@ -115,6 +116,10 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
       @BindsInstance Builder filer(Filer filer);
       @BindsInstance Builder types(Types types);
       @BindsInstance Builder elements(Elements elements);
+
+      @BindsInstance
+      Builder sourceVersion(SourceVersion sourceVersion);
+
       @BindsInstance Builder compilerOptions(CompilerOptions compilerOptions);
       @BindsInstance Builder processingOptions(@ProcessingOptions Map<String, String> options);
       @CheckReturnValue ProcessorComponent build();

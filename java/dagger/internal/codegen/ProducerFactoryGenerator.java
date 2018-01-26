@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -84,8 +85,12 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
   @Inject
   ProducerFactoryGenerator(
-      Filer filer, Elements elements, Types types, CompilerOptions compilerOptions) {
-    super(filer, elements);
+      Filer filer,
+      Elements elements,
+      SourceVersion sourceVersion,
+      Types types,
+      CompilerOptions compilerOptions) {
+    super(filer, elements, sourceVersion);
     this.types = types;
     this.compilerOptions = compilerOptions;
   }

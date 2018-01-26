@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -79,9 +80,10 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   FactoryGenerator(
       Filer filer,
       Elements elements,
+      SourceVersion sourceVersion,
       Types types,
       CompilerOptions compilerOptions) {
-    super(filer, elements);
+    super(filer, elements, sourceVersion);
     this.types = types;
     this.compilerOptions = compilerOptions;
   }

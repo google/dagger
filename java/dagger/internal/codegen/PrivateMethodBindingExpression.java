@@ -54,7 +54,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
       methodName = generatedComponentModel.getUniqueMethodName(methodName());
-      createMethod(methodName, requestingClass);
+      createMethod(methodName);
     }
 
     // TODO(user): This logic is repeated in multiple places. Can we extract it somewhere?
@@ -67,7 +67,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   /** Creates the no-arg method used for dependency expressions. */
-  private void createMethod(String name, ClassName requestingClass) {
+  private void createMethod(String name) {
     // TODO(user): Consider when we can make this method static.
     // TODO(user): Fix the order that these generated methods are written to the component.
     generatedComponentModel.addMethod(
@@ -75,7 +75,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
         methodBuilder(name)
             .addModifiers(PRIVATE)
             .returns(TypeName.get(methodImplementation.returnType()))
-            .addCode(methodImplementation.body(requestingClass))
+            .addCode(methodImplementation.body())
             .build());
   }
 

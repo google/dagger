@@ -2589,6 +2589,143 @@ public class ComponentProcessorTest {
         .containsElementsIn(generatedComponent);
   }
 
+  @Test
+  public void privateMethodUsedOnlyInChildDoesNotUseQualifiedThis() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component(modules=TestModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides @Singleton static Number number() {",
+            "    return 3;",
+            "  }",
+            "",
+            "  @Provides static String string(Number number) {",
+            "    return number.toString();",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child {",
+            "  String string();",
+            "}");
+
+    JavaFileObject expectedPattern =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerParent",
+            "package test;",
+            GENERATED_ANNOTATION,
+            "public final class DaggerParent implements Parent {",
+            "  private String getString() {",
+            "    return TestModule_StringFactory.proxyString(numberProvider.get());",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, testModule, child);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .containsElementsIn(expectedPattern);
+  }
+
+  @Test
+  public void componentMethodInChildCallsComponentMethodInParent() {
+    JavaFileObject supertype =
+        JavaFileObjects.forSourceLines(
+            "test.Supertype",
+            "package test;",
+            "",
+            "interface Supertype {",
+            "  String string();",
+            "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component(modules=TestModule.class)",
+            "interface Parent extends Supertype {",
+            "  Child child();",
+            "}");
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides @Singleton static Number number() {",
+            "    return 3;",
+            "  }",
+            "",
+            "  @Provides static String string(Number number) {",
+            "    return number.toString();",
+            "  }",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child extends Supertype {}");
+
+    JavaFileObject expectedPattern =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerParent",
+            "package test;",
+            GENERATED_ANNOTATION,
+            "public final class DaggerParent implements Parent {",
+            "  private final class ChildImpl implements Child {",
+            "    @Override",
+            "    public String string() {",
+            "      return DaggerParent.this.string();",
+            "    }",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(supertype, parent, testModule, child);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .containsElementsIn(expectedPattern);
+  }
+
   private static Compiler daggerCompiler(Processor... extraProcessors) {
     return javac().withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors));
   }

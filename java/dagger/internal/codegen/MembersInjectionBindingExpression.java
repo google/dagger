@@ -51,7 +51,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   // better suited as a method on MembersInjectionMethods
   @Override
   protected CodeBlock doGetComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
+      ComponentMethodDescriptor componentMethod, ClassName componentName) {
     ExecutableElement methodElement = componentMethod.methodElement();
     ParameterSpec parameter = ParameterSpec.get(getOnlyElement(methodElement.getParameters()));
 

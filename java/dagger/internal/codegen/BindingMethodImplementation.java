@@ -56,9 +56,9 @@ class BindingMethodImplementation {
    * <p>If the implementation has a non-void return type, the body will also include the {@code
    * return} statement.
    */
-  CodeBlock body(ClassName requestingClass) {
+  CodeBlock body() {
     return CodeBlock.of(
-        "return $L;", bindingExpression.getDependencyExpression(requestingClass).codeBlock());
+        "return $L;", bindingExpression.getDependencyExpression(componentName).codeBlock());
   }
 
   /** Returns the return type for the dependency request. */

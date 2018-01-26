@@ -494,7 +494,7 @@ final class ComponentBindingExpressions {
             resolvedBindings,
             requestKind,
             methodImplementation(inlineBindingExpression),
-            generatedComponentModel.name(),
+            generatedComponentModel,
             componentMethod.get(),
             componentBindingExpressions);
       } else if (shouldUsePrivateMethod(resolvedBindings.contributionBinding(), requestKind)) {

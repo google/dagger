@@ -65,7 +65,7 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
   }
 
   @Override
-  CodeBlock body(ClassName requestingClass) {
+  CodeBlock body() {
     // TODO(user): split this class into 1 class for each request?
     switch (requestKind()) {
       case PROVIDER:
@@ -85,7 +85,7 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
       default:
         break;
     }
-    return super.body(requestingClass);
+    return super.body();
   }
 
   /**

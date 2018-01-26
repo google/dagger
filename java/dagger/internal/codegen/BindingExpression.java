@@ -60,13 +60,17 @@ abstract class BindingExpression {
    */
   abstract Expression getDependencyExpression(ClassName requestingClass);
 
-  /** Returns an expression for the implementation of a component method with the given request. */
+  /**
+   * Returns an expression for the implementation of a component method with the given request.
+   *
+   * @param componentName the component that will contain the implemented method
+   */
   final CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
+      ComponentMethodDescriptor componentMethod, ClassName componentName) {
     DependencyRequest request = componentMethod.dependencyRequest().get();
     checkArgument(request.key().equals(key()));
     checkArgument(request.kind().equals(requestKind()));
-    return doGetComponentMethodImplementation(componentMethod, requestingClass);
+    return doGetComponentMethodImplementation(componentMethod, componentName);
   }
 
   /**
@@ -74,10 +78,12 @@ abstract class BindingExpression {
    *
    * <p>This method is called only if {@code componentMethod}'s request key and kind matches this
    * binding expression's.
+   *
+   * @param componentName the component that will contain the implemented method
    */
   protected CodeBlock doGetComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName requestingClass) {
+      ComponentMethodDescriptor componentMethod, ClassName componentName) {
     // By default, just delegate to #getDependencyExpression().
-    return CodeBlock.of("return $L;", getDependencyExpression(requestingClass).codeBlock());
+    return CodeBlock.of("return $L;", getDependencyExpression(componentName).codeBlock());
   }
 }

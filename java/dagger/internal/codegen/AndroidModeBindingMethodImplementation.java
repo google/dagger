@@ -19,7 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.CodeBlocks.anonymousProvider;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
+import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
+import static dagger.model.BindingKind.DELEGATE;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
@@ -40,6 +42,7 @@ import javax.lang.model.util.Elements;
  * which optionally inlines provider and locking optimizations.
  */
 final class AndroidModeBindingMethodImplementation extends BindingMethodImplementation {
+  private final BindingGraph graph;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingExpression bindingExpression;
@@ -52,10 +55,12 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
       BindingExpression bindingExpression,
       DaggerTypes types,
       Elements elements,
+      BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ReferenceReleasingManagerFields referenceReleasingManagerFields) {
     super(bindingExpression, generatedComponentModel.name(), types, elements);
+    this.graph = graph;
     this.generatedComponentModel = generatedComponentModel;
     this.componentName = generatedComponentModel.name();
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
@@ -104,8 +109,15 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
   }
 
   private boolean shouldInlineScope(Scope scope) {
-    // TODO(user): enable for releasable references.
-    return !referenceReleasingManagerFields.requiresReleasableReferences(scope);
+    if (referenceReleasingManagerFields.requiresReleasableReferences(scope)) {
+      // TODO(user): enable for releasable references.
+      return false;
+    } else if (binding.kind().equals(DELEGATE)) {
+      // Only scope a delegate binding if its scope is stronger than its dependency's scope.
+      return isBindsScopeStrongerThanDependencyScope(resolvedBindings(), graph);
+    } else {
+      return true;
+    }
   }
 
   private CodeBlock singleCheck() {

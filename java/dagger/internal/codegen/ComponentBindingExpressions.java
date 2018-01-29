@@ -257,7 +257,7 @@ final class ComponentBindingExpressions {
     // TODO(user): Consider using PrivateMethodBindingExpression for other/all BEs?
     private static final ImmutableSet<BindingKind> PRIVATE_METHOD_KINDS =
         ImmutableSet.copyOf(
-            EnumSet.of(MULTIBOUND_SET, MULTIBOUND_MAP, INJECTION, PROVISION));
+            EnumSet.of(MULTIBOUND_SET, MULTIBOUND_MAP, INJECTION, PROVISION, DELEGATE));
 
     private final BindingGraph graph;
     private final GeneratedComponentModel generatedComponentModel;
@@ -497,7 +497,7 @@ final class ComponentBindingExpressions {
             componentBindingExpressions);
       }
 
-      if (shouldUsePrivateMethod(resolvedBindings.contributionBinding(), requestKind)) {
+      if (shouldUsePrivateMethod(resolvedBindings, requestKind)) {
         return new PrivateMethodBindingExpression(
             resolvedBindings,
             requestKind,
@@ -514,6 +514,7 @@ final class ComponentBindingExpressions {
               bindingExpression,
               types,
               elements,
+              graph,
               generatedComponentModel,
               componentBindingExpressions,
               referenceReleasingManagerFields)
@@ -531,21 +532,23 @@ final class ComponentBindingExpressions {
      * <p>In Android mode, private methods are used for all provision bindings unless the request:
      *
      * <ul>
-     *   <li>has releasable reference scope; TODO(user): enable for releasable reference scope
+     *   <li>is a delegate binding with a scope that is not stronger than its dependency scope,
+     *   <li>has releasable reference scope; TODO(user): enable for releasable reference scope,
      *   <li>is for an unscoped framework type (Provider, Lazy, ProviderOfLazy) that can use the
-     *       singleton instance of the factory class.
+     *       singleton instance of the factory class,
      *   <li>is for an unscoped non-framework type that has no dependencies, which means users can
      *       call a nullary method anyway.
      * </ul>
      */
-    private boolean shouldUsePrivateMethod(ContributionBinding binding, RequestKind requestKind) {
-      // TODO(user): enable for releasable references.
-      Optional<Scope> releasableReferenceScope =
-          binding.scope().filter(referenceReleasingManagerFields::requiresReleasableReferences);
-      if (!PRIVATE_METHOD_KINDS.contains(binding.kind()) || releasableReferenceScope.isPresent()) {
+    private boolean shouldUsePrivateMethod(
+        ResolvedBindings resolvedBindings, RequestKind requestKind) {
+      ContributionBinding binding = resolvedBindings.contributionBinding();
+      if (!PRIVATE_METHOD_KINDS.contains(binding.kind())
+          || (binding.kind().equals(DELEGATE)
+              && !isBindsScopeStrongerThanDependencyScope(resolvedBindings, graph))) {
         return false;
       }
-      if (compilerOptions.experimentalAndroidMode()) {
+      if (useExperimentalAndroidMode(binding)) {
         switch (requestKind) {
           case PROVIDER:
           case LAZY:
@@ -614,11 +617,11 @@ final class ComponentBindingExpressions {
      */
     private BindingExpression basicProvisionBindingExpression(
         ResolvedBindings resolvedBindings, RequestKind requestKind) {
-      if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
-          && !isBindsScopeStrongerThanDependencyScope(resolvedBindings, graph)) {
+      if (shouldUseDelegateBindingExpression(resolvedBindings)) {
         return new DelegateBindingExpression(
             resolvedBindings, requestKind, componentBindingExpressions, types, elements);
       }
+
       switch (requestKind) {
         case PRODUCER:
           return producerFromProviderInstanceBindingExpression(resolvedBindings, requestKind);
@@ -705,18 +708,39 @@ final class ComponentBindingExpressions {
       return frameworkInstanceBindingExpression(resolvedBindings, requestKind);
     }
 
+    private boolean shouldUseDelegateBindingExpression(ResolvedBindings resolvedBindings) {
+      if (!resolvedBindings.contributionBinding().kind().equals(DELEGATE)) {
+        return false;
+      }
+      if (useExperimentalAndroidMode(resolvedBindings.contributionBinding())) {
+        // In Android mode, we should always use the delegate binding expression.
+        return true;
+      } else {
+        // In default mode, we should only use delegate binding expressions if
+        // bindsScope <= dependencyScope.
+        return !isBindsScopeStrongerThanDependencyScope(resolvedBindings, graph);
+      }
+    }
+
     private boolean canCallSimpleMethod(ResolvedBindings resolvedBindings) {
-      Optional<Scope> scope = resolvedBindings.contributionBinding().scope();
-      if (compilerOptions.experimentalAndroidMode()) {
-        // In Android mode we can call simple methods unless the scope is a releasable-references
-        // scope.
-        // TODO(user): Also inline releasable references in experimentalAndroidMode
-        return !scope.isPresent()
-            || !referenceReleasingManagerFields.requiresReleasableReferences(scope.get());
+      Binding binding = resolvedBindings.contributionBinding();
+      if (useExperimentalAndroidMode(binding)) {
+        // In Android mode, always call simple methods.
+        return true;
       } else {
         // In default mode, we can call simple methods unless the binding is scoped.
-        return !scope.isPresent();
+        return !binding.scope().isPresent();
       }
+    }
+
+    // TODO(user): Enable releasable references in experimentalAndroidMode
+    private boolean useExperimentalAndroidMode(Binding binding) {
+      return compilerOptions.experimentalAndroidMode() && !usesReleasableReferences(binding);
+    }
+
+    private boolean usesReleasableReferences(Binding binding) {
+      return binding.scope().isPresent()
+          && referenceReleasingManagerFields.requiresReleasableReferences(binding.scope().get());
     }
   }
 }

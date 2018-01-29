@@ -198,23 +198,10 @@ public class DelegateBindingExpressionTest {
                     "    }",
                     "    return (ReusableScoped) reusableScoped;",
                     "  }",
-                    "",
-                    "  private Provider<ReusableScoped> getReusableScopedProvider() {",
-                    "    return new Provider<ReusableScoped>() {",
-                    "      @Override",
-                    "      public ReusableScoped get() {",
-                    "        return getReusableScoped();",
-                    "      }",
-                    "    };",
-                    "  }",
                     "")
                 .addLines(
                     "  @SuppressWarnings(\"unchecked\")",
                     "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
-                    "    this.reusableProvider = DoubleCheck.provider(",
-                    "        (Provider) getReusableScopedProvider());")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "    this.regularScopedProvider = ",
@@ -226,11 +213,14 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "    this.releasableScopedProvider = ",
                     "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
+                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
+                .addLinesIn(
+                    DEFAULT_MODE,
                     "    this.releasableProvider = DoubleCheck.provider(",
                     "        (Provider) releasableScopedProvider);",
                     "    this.unscopedProvider = DoubleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());",
+                    "        (Provider) Unscoped_Factory.create());")
+                .addLines(
                     "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
                     "        new Provider<ReleasableReferenceManager>() {",
                     "          @Override",
@@ -313,11 +303,14 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "    this.releasableScopedProvider = ",
                     "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
+                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
+                .addLinesIn(
+                    DEFAULT_MODE,
                     "    this.releasableProvider = SingleCheck.provider(",
                     "        (Provider) releasableScopedProvider);",
                     "    this.unscopedProvider = SingleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());",
+                    "        (Provider) Unscoped_Factory.create());")
+                .addLines(
                     "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
                     "        new Provider<ReleasableReferenceManager>() {",
                     "          @Override",
@@ -845,6 +838,115 @@ public class DelegateBindingExpressionTest {
                 "    return (Provider) Subtype_Factory.create();",
                 "  }",
                 "}"));
+  }
+
+  @Test
+  public void providerWhenBindsScopeGreaterThanDependencyScope() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Reusable;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "public abstract class TestModule {",
+            "  @Reusable",
+            "  @Provides",
+            "  static String provideString() {",
+            "    return \"\";",
+            "  }",
+            "",
+            "  @Binds",
+            "  @Singleton",
+            "  abstract Object bindString(String str);",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "import javax.inject.Provider;",
+            "",
+            "@Singleton",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<Object> getObject();",
+            "}");
+
+    Compilation compilation = daggerCompiler()
+        .withOptions(compilerMode.javacopts())
+        .compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("test.DaggerTestComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  private Provider<String> provideStringProvider;",
+                    "  private Provider<Object> bindStringProvider;",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Builder builder) {",
+                    "    this.provideStringProvider =",
+                    "        SingleCheck.provider(TestModule_ProvideStringFactory.create());",
+                    "    this.bindStringProvider =",
+                    "        DoubleCheck.provider((Provider) provideStringProvider);",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Object> getObject() {",
+                    "    return bindStringProvider;",
+                    "  }",
+                    "}")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object object = new MemoizedSentinel();",
+                    "  private volatile Object string = new MemoizedSentinel();",
+                    "",
+                    "  private String getString() {",
+                    "    if (string instanceof MemoizedSentinel) {",
+                    "      string = TestModule_ProvideStringFactory.proxyProvideString();",
+                    "    }",
+                    "    return (String) string;",
+                    "  }",
+                    "",
+                    "  private Object getObject2() {",
+                    "    Object local = object;",
+                    "    if (local instanceof MemoizedSentinel) {",
+                    "      synchronized (local) {",
+                    "        if (local == object) {",
+                    "          object = getString();",
+                    "        }",
+                    "        local = object;",
+                    "      }",
+                    "    }",
+                    "    return (Object) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Object> getObject() {",
+                    "    return new Provider<Object>() {",
+                    "      @Override",
+                    "      public Object get() {",
+                    "        return getObject2();",
+                    "      }",
+                    "    };",
+                    "  }")
+                .build());
   }
 
   private CompilationSubject assertThatCompilationWithModule(JavaFileObject module) {

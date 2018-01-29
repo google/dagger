@@ -42,25 +42,25 @@ import javax.lang.model.util.Elements;
 final class AndroidModeBindingMethodImplementation extends BindingMethodImplementation {
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final BindingExpression delegate;
+  private final BindingExpression bindingExpression;
   private final ContributionBinding binding;
   private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final ClassName componentName;
   private final Supplier<String> fieldName = Suppliers.memoize(this::createField);
 
   AndroidModeBindingMethodImplementation(
-      BindingExpression delegate,
+      BindingExpression bindingExpression,
       DaggerTypes types,
       Elements elements,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       ReferenceReleasingManagerFields referenceReleasingManagerFields) {
-    super(delegate, generatedComponentModel.name(), types, elements);
+    super(bindingExpression, generatedComponentModel.name(), types, elements);
     this.generatedComponentModel = generatedComponentModel;
     this.componentName = generatedComponentModel.name();
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.delegate = delegate;
-    this.binding = delegate.resolvedBindings().contributionBinding();
+    this.bindingExpression = bindingExpression;
+    this.binding = bindingExpression.resolvedBindings().contributionBinding();
     this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
   }
 
@@ -112,7 +112,9 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
     return CodeBlock.builder()
         .beginControlFlow("if ($N instanceof $T)", fieldName.get(), MemoizedSentinel.class)
         .addStatement(
-            "$N = $L", fieldName.get(), delegate.getDependencyExpression(componentName).codeBlock())
+            "$N = $L",
+            fieldName.get(),
+            bindingExpression.getDependencyExpression(componentName).codeBlock())
         .endControlFlow()
         .addStatement("return ($T) $N", returnType(), fieldName.get())
         .build();
@@ -128,7 +130,9 @@ final class AndroidModeBindingMethodImplementation extends BindingMethodImplemen
         // TODO(user): benchmark to see if this is really faster than instanceof check?
         .beginControlFlow("if (local == $L)", fieldExpression)
         .addStatement(
-            "$L = $L", fieldExpression, delegate.getDependencyExpression(componentName).codeBlock())
+            "$L = $L",
+            fieldExpression,
+            bindingExpression.getDependencyExpression(componentName).codeBlock())
         .endControlFlow()
         .addStatement("local = $L", fieldExpression)
         .endControlFlow()

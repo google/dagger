@@ -30,6 +30,7 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.MapBuilder;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
+import dagger.model.RequestKind;
 import java.util.Collections;
 import java.util.Map;
 import javax.lang.model.type.TypeMirror;
@@ -46,16 +47,16 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private final Elements elements;
 
   MapBindingExpression(
-      ProvisionBinding binding,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
-      BindingExpression delegate,
       DaggerTypes types,
       Elements elements) {
-    super(delegate, types);
-    BindingKind bindingKind = binding.kind();
+    super(resolvedBindings, requestKind, types);
+    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
-    this.binding = binding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.elements = elements;
     this.dependencies =

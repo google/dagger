@@ -30,6 +30,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import dagger.model.DependencyRequest;
+import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -50,21 +51,21 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final Elements elements;
 
   SimpleMethodBindingExpression(
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       CompilerOptions compilerOptions,
-      ProvisionBinding provisionBinding,
-      BindingExpression delegate,
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementFields componentRequirementFields,
       DaggerTypes types,
       Elements elements) {
-    super(delegate, types);
+    super(resolvedBindings, requestKind, types);
+    this.compilerOptions = compilerOptions;
+    this.provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
     checkArgument(provisionBinding.bindingElement().isPresent());
-    this.compilerOptions = compilerOptions;
-    this.provisionBinding = provisionBinding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementFields = componentRequirementFields;

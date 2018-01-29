@@ -23,6 +23,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
 import dagger.model.DependencyRequest;
+import dagger.model.RequestKind;
 import javax.inject.Inject;
 import javax.lang.model.util.Types;
 
@@ -34,12 +35,12 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
 
   @Inject
   OptionalBindingExpression(
-      ProvisionBinding binding,
-      BindingExpression delegate,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    super(delegate, types);
-    this.binding = binding;
+    super(resolvedBindings, requestKind, types);
+    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
   }

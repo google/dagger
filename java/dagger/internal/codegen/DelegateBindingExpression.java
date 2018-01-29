@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.RequestKinds.requestType;
+import static dagger.model.BindingKind.DELEGATE;
 
 import com.squareup.javapoet.ClassName;
 import dagger.model.RequestKind;
@@ -34,7 +36,7 @@ final class DelegateBindingExpression extends BindingExpression {
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
 
-  private DelegateBindingExpression(
+  DelegateBindingExpression(
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
@@ -47,24 +49,22 @@ final class DelegateBindingExpression extends BindingExpression {
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
   }
 
-  static BindingExpression create(
-      BindingGraph graph,
-      BindingExpression bindingExpression,
-      ComponentBindingExpressions componentBindingExpressions,
-      DaggerTypes types,
-      Elements elements) {
-    ResolvedBindings resolvedBindings = bindingExpression.resolvedBindings();
-    ContributionBinding binding = resolvedBindings.contributionBinding();
-    Binding delegateBinding =
-        graph.contributionBindings().get(getOnlyElement(binding.dependencies()).key()).binding();
-    ScopeKind bindsScope = ScopeKind.get(binding, graph, elements);
-    ScopeKind delegateScope = ScopeKind.get(delegateBinding, graph, elements);
-    if (bindsScope.isSimilarOrWeakerScopeThan(delegateScope)) {
-      RequestKind requestKind = bindingExpression.requestKind();
-      return new DelegateBindingExpression(
-          resolvedBindings, requestKind, componentBindingExpressions, types, elements);
-    }
-    return bindingExpression;
+  /**
+   * Returns {@code true} if the {@code @Binds} binding's scope is stronger than the scope of the
+   * binding it depends on.
+   */
+  static boolean isBindsScopeStrongerThanDependencyScope(
+      ResolvedBindings resolvedBindings, BindingGraph graph) {
+    ContributionBinding bindsBinding = resolvedBindings.contributionBinding();
+    checkArgument(bindsBinding.kind().equals(DELEGATE));
+    Binding dependencyBinding =
+        graph
+            .contributionBindings()
+            .get(getOnlyElement(bindsBinding.dependencies()).key())
+            .binding();
+    ScopeKind bindsScope = ScopeKind.get(bindsBinding, graph);
+    ScopeKind dependencyScope = ScopeKind.get(dependencyBinding, graph);
+    return bindsScope.isStrongerScopeThan(dependencyScope);
   }
 
   @Override
@@ -116,7 +116,7 @@ final class DelegateBindingExpression extends BindingExpression {
     DOUBLE_CHECK,
     ;
 
-    static ScopeKind get(Binding binding, BindingGraph graph, Elements elements) {
+    static ScopeKind get(Binding binding, BindingGraph graph) {
       if (!binding.scope().isPresent()) {
         return UNSCOPED;
       }
@@ -128,8 +128,8 @@ final class DelegateBindingExpression extends BindingExpression {
       return scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK;
     }
 
-    boolean isSimilarOrWeakerScopeThan(ScopeKind other) {
-      return ordinal() <= other.ordinal();
+    boolean isStrongerScopeThan(ScopeKind other) {
+      return this.ordinal() > other.ordinal();
     }
   }
 }

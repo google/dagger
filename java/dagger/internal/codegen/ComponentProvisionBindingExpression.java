@@ -22,6 +22,7 @@ import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
+import dagger.model.RequestKind;
 
 /** A binding expression for component provision methods. */
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {
@@ -31,14 +32,14 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   private final CompilerOptions compilerOptions;
 
   ComponentProvisionBindingExpression(
-      BindingExpression providerBindingExpression,
-      ProvisionBinding binding,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       BindingGraph bindingGraph,
       ComponentRequirementFields componentRequirementFields,
       CompilerOptions compilerOptions,
       DaggerTypes types) {
-    super(providerBindingExpression, types);
-    this.binding = checkNotNull(binding);
+    super(resolvedBindings, requestKind, types);
+    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.bindingGraph = checkNotNull(bindingGraph);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.compilerOptions = checkNotNull(compilerOptions);

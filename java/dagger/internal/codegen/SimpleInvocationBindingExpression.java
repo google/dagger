@@ -16,22 +16,30 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.RequestKind;
 
 /**
  * A binding expression that can use a simple expression for instance requests, and delegates to
  * another expression for other requests.
  */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
-  private final BindingExpression delegate;
+
+  private static final ImmutableSet<RequestKind> REQUEST_KINDS =
+      ImmutableSet.of(RequestKind.INSTANCE, RequestKind.FUTURE);
+
   private final DaggerTypes types;
 
-  SimpleInvocationBindingExpression(BindingExpression delegate, DaggerTypes types) {
-    super(delegate.resolvedBindings(), delegate.requestKind());
-    this.delegate = delegate;
+  SimpleInvocationBindingExpression(
+      ResolvedBindings resolvedBindings, RequestKind requestKind, DaggerTypes types) {
+    super(resolvedBindings, requestKind);
+    checkArgument(REQUEST_KINDS.contains(requestKind));
     this.types = types;
   }
 
@@ -68,7 +76,7 @@ abstract class SimpleInvocationBindingExpression extends BindingExpression {
                 .add("immediateFuture($L)", expression.codeBlock())
                 .build());
       default:
-        return delegate.getDependencyExpression(requestingClass);
+        throw new AssertionError(requestKind());
     }
   }
 }

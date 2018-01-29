@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
+import dagger.model.RequestKind;
 
 /**
  * A binding expression for instances bound with {@link dagger.BindsInstance} and instances of
@@ -28,11 +29,12 @@ final class ComponentRequirementBindingExpression extends SimpleInvocationBindin
   private final ComponentRequirementFields componentRequirementFields;
 
   ComponentRequirementBindingExpression(
-      BindingExpression delegate,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       ComponentRequirement componentRequirement,
       ComponentRequirementFields componentRequirementFields,
       DaggerTypes types) {
-    super(delegate, types);
+    super(resolvedBindings, requestKind, types);
     this.componentRequirement = componentRequirement;
     this.componentRequirementFields = componentRequirementFields;
   }

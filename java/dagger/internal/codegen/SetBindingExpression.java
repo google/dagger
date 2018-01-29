@@ -25,6 +25,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
 import dagger.model.DependencyRequest;
+import dagger.model.RequestKind;
 import java.util.Collections;
 import java.util.Set;
 import javax.lang.model.type.TypeMirror;
@@ -38,14 +39,14 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final Elements elements;
 
   SetBindingExpression(
-      ProvisionBinding binding,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
-      BindingExpression delegate,
       DaggerTypes types,
       Elements elements) {
-    super(delegate, types);
-    this.binding = binding;
+    super(resolvedBindings, requestKind, types);
+    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
     this.elements = elements;

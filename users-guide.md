@@ -173,7 +173,7 @@ CoffeeShop coffeeShop = DaggerCoffeeShop.builder()
 ```
 
 _Note_: If your `@Component` is not a top-level type, the generated component's
-name will be include its enclosing types' names, joined with an underscore. For
+name will include its enclosing types' names, joined with an underscore. For
 example, this code:
 
 ```java

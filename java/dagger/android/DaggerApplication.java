@@ -64,7 +64,7 @@ public abstract class DaggerApplication extends Application
    * Lazily injects the {@link DaggerApplication}'s members. Injection cannot be performed in {@link
    * Application#onCreate()} since {@link android.content.ContentProvider}s' {@link
    * android.content.ContentProvider#onCreate() onCreate()} method will be called first and might
-   * need injected members on the application. Injection is not performed in the the constructor, as
+   * need injected members on the application. Injection is not performed in the constructor, as
    * that may result in members-injection methods being called before the constructor has completed,
    * allowing for a partially-constructed instance to escape.
    */

@@ -78,6 +78,7 @@ This has a few problems:
 
 The classes in [`dagger.android`] offer one approach to simplify this pattern.
 
+
 ### Injecting `Activity` objects
 
 1.  Install [`AndroidInjectionModule`] in your application component to ensure

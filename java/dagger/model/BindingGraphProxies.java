@@ -42,7 +42,7 @@ public final class BindingGraphProxies {
   /** Creates a new {@link BindingNode}. */
   public static BindingNode bindingNode(
       ComponentPath component, Binding binding, Iterable<Element> associatedDeclarations) {
-    return new BindingNode(component, binding, associatedDeclarations);
+    return BindingNode.create(component, binding, associatedDeclarations);
   }
 
   /** Creates a new {@link ComponentNode}. */

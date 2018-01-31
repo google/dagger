@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Network;
+import com.google.errorprone.annotations.DoNotMock;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.model.BindingGraph.Edge;
@@ -290,30 +291,21 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * A <b>binding node</b> in the binding graph. If a binding is owned by more than one component,
    * there is one binding node for that binding for every owning component.
    */
-  // TODO(dpb): Should this be a value type?
-  public static final class BindingNode implements Node {
-
-    private final ComponentPath component;
-    private final Binding binding;
-    private final ImmutableSet<Element> associatedDeclarations;
-
-    BindingNode(
+  @AutoValue
+  @DoNotMock("Use Dagger-supplied implementations")
+  public abstract static class BindingNode implements Node {
+    static BindingNode create(
         ComponentPath component, Binding binding, Iterable<Element> associatedDeclarations) {
-      this.component = component;
-      this.binding = binding;
-      this.associatedDeclarations = ImmutableSet.copyOf(associatedDeclarations);
+      return new AutoValue_BindingGraph_BindingNode(
+          component, binding, ImmutableSet.copyOf(associatedDeclarations));
     }
 
     /** The component that owns the {@link #binding()}. */
     @Override
-    public ComponentPath componentPath() {
-      return component;
-    }
+    public abstract ComponentPath componentPath();
 
     /** The binding. */
-    public Binding binding() {
-      return binding;
-    }
+    public abstract Binding binding();
 
     /**
      * The {@link Element}s (other than the binding's {@link Binding#bindingElement()}) that are
@@ -325,18 +317,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
      *   <li>{@linkplain Multibinds multibinding} declarations
      * </ul>
      */
-    public ImmutableSet<Element> associatedDeclarations() {
-      return associatedDeclarations;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this)
-          .add("component", component)
-          .add("binding", binding)
-          .add("associatedDeclarations", associatedDeclarations)
-          .toString();
-    }
+    public abstract ImmutableSet<Element> associatedDeclarations();
   }
 
   /**

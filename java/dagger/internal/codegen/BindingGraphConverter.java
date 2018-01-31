@@ -21,7 +21,6 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.concat;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.model.BindingGraphProxies.bindingNode;
 import static dagger.model.BindingGraphProxies.childFactoryMethodEdge;
 import static dagger.model.BindingGraphProxies.componentNode;
 import static dagger.model.BindingGraphProxies.dependencyEdge;
@@ -106,7 +105,7 @@ final class BindingGraphConverter extends ComponentTreeTraverser {
       // TODO(dpb): Should we visit only bindings owned by the current component, since other
       // bindings will be visited in the parent?
       Node previous = current;
-      current = newBindingNode(resolvedBindings(), binding, owningComponent);
+      current = bindingNode(resolvedBindings(), binding, owningComponent);
       network.addNode(current);
       if (binding instanceof ContributionBinding) {
         ContributionBinding contributionBinding = (ContributionBinding) binding;
@@ -148,7 +147,7 @@ final class BindingGraphConverter extends ComponentTreeTraverser {
       return childNode;
     }
 
-    private BindingNode newBindingNode(
+    private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
       ImmutableList.Builder<Element> associatedDeclarations = ImmutableList.builder();
       for (BindingDeclaration declaration :
@@ -158,7 +157,7 @@ final class BindingGraphConverter extends ComponentTreeTraverser {
               resolvedBindings.subcomponentDeclarations())) {
         associatedDeclarations.add(declaration.bindingElement().get());
       }
-      return bindingNode(
+      return BindingGraphProxies.bindingNode(
           componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
           binding,
           associatedDeclarations.build());

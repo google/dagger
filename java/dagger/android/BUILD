@@ -38,6 +38,7 @@ android_library(
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
+    proguard_specs = ["proguard.cfg"],
     deps = [
         "//:dagger_with_compiler",
         "//third_party:auto_value",

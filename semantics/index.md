@@ -494,7 +494,7 @@ these types defer computation, if a binding's logic throws an exception in some
 ancestor dependency of a `Provider` or `Lazy` injection, then the `get()` method
 will throw that exception, and the user could catch it there. However, it's
 often considered a code smell to catch exceptions this way, since binding
-methods should rarely throw exeptions.
+methods should rarely throw exceptions.
 
 ## Parameterization: Component Builders
 

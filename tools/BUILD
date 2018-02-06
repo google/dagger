@@ -37,6 +37,7 @@ sh_test(
         "@local_jdk//:bin/java",
         "@local_jdk//:jre",
     ],
+    toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
 )
 
 java_binary(

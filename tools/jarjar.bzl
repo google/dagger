@@ -137,4 +137,5 @@ def jarjar_library(name, deps, rules_file):
       """.format(
           deps=" ".join(["$(location %s)" % dep for dep in deps]),
           rules="$(location %s)" % rules_file),
+      toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
   )

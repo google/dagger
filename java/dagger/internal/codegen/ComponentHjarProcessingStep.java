@@ -72,8 +72,7 @@ import javax.lang.model.util.Types;
  * compilation succeeded.
  *
  * <p>The components emitted by this processing step include all of the API elements exposed by the
- * normal {@link AbstractComponentWriter}. Method bodies are omitted as Turbine ignores them
- * entirely.
+ * normal {@link ComponentWriter}. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarProcessingStep implements ProcessingStep {
   private final Elements elements;

@@ -201,7 +201,6 @@ java_library(
 java_library(
     name = "writing",
     srcs = [
-        "AbstractComponentWriter.java",
         "AndroidModeBindingMethodImplementation.java",
         "AnnotationCreatorGenerator.java",
         "BindingExpression.java",
@@ -255,7 +254,6 @@ java_library(
         "SubcomponentBuilderBindingExpression.java",
         "SubcomponentBuilderProviderCreationExpression.java",
         "SubcomponentNames.java",
-        "SubcomponentWriter.java",
         "UnwrappedMapKeyGenerator.java",
     ],
     plugins = CODEGEN_PLUGINS,

@@ -44,7 +44,7 @@ def _javadoc_libary(ctx):
 
   inputs += classpath.to_list()
 
-  include_packages = ":".join(ctx.attr.root_packages)
+  include_packages = " ".join(ctx.attr.root_packages)
   javadoc_command = [
       ctx.file._javadoc_binary.path,
       '-sourcepath $(find * -type d -name "*java" -print0 | tr "\\0" :)',

@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2018 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Description:
-#   Dagger's core APIs exposed for plugins
+#   The Service Provider Interface for Dagger's binding graph model
 
 package(default_visibility = ["//:src"])
 
@@ -23,38 +23,21 @@ load(
     "DOCLINT_REFERENCES",
 )
 
-INTERNAL_PROXIES = ["BindingGraphProxies.java"]
-
 filegroup(
-    name = "model-srcs",
-    srcs = glob(
-        ["*.java"],
-        exclude = INTERNAL_PROXIES,
-    ),
+    name = "spi-srcs",
+    srcs = glob(["*.java"]),
 )
 
 java_library(
-    name = "model",
-    srcs = [":model-srcs"],
+    name = "spi",
+    srcs = [":spi-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/codegen:shared-with-spi",
-        "//java/dagger/producers",
-        "//third_party:auto_common",
+        "//java/dagger/model",
         "//third_party:auto_value",
         "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:jsr330_inject",
-    ],
-)
-
-java_library(
-    name = "internal-proxies",
-    srcs = INTERNAL_PROXIES,
-    tags = ["maven:merged"],
-    deps = [
-        ":model",
-        "//third_party:guava",
     ],
 )

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import dagger.Module;
 import dagger.Provides;
+import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -40,10 +41,10 @@ interface BindingGraphPluginsModule {
     ImmutableList<BindingGraphPlugin> bindingGraphPlugins =
         ImmutableList.copyOf(ServiceLoader.load(BindingGraphPlugin.class, classLoader));
     for (BindingGraphPlugin plugin : bindingGraphPlugins) {
-      plugin.setFiler(filer);
-      Set<String> supportedOptions = plugin.getSupportedOptions();
+      plugin.initFiler(filer);
+      Set<String> supportedOptions = plugin.supportedOptions();
       if (!supportedOptions.isEmpty()) {
-        plugin.setOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));
+        plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));
       }
     }
     return bindingGraphPlugins;

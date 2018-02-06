@@ -77,6 +77,10 @@ METADATA = {
         'name': 'Dagger SPI',
         'artifact': 'dagger-spi',
     },
+    '//java/dagger/spi:spi': {
+        'name': 'Dagger SPI',
+        'artifact': 'dagger-spi',
+    },
     '//java/dagger/android:android': {
         'name': 'Dagger Android',
         'artifact': 'dagger-android',
@@ -163,6 +167,7 @@ def main():
     metadata = METADATA[arg]
     with open('%s.pom.xml' % metadata['artifact'], 'w') as pom_file:
       deps = map(artifact_for_dep, pom_deps(arg))
+      deps = list(set(deps)) # remove duplicates
       deps.sort(cmp=dependencies_comparator)
       pom_file.write(generate_pom(artifacts[arg], metadata, deps, version))
 

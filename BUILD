@@ -19,6 +19,8 @@ package_group(
     packages = ["//..."],
 )
 
+load("//tools:javadoc.bzl", "javadoc_library")
+
 py_test(
     name = "maven_sha1_test",
     srcs = ["maven_sha1_test.py"],
@@ -71,24 +73,52 @@ jarjar_library(
 )
 
 jarjar_library(
-    name = "shaded_spi",
-    rules_file = "shade_rules.txt",
-    deps = [
-        "//java/dagger/internal/codegen:shared-with-spi",
-        "//java/dagger/model",
-        "@com_google_auto_auto_common//jar",
-    ],
-)
-
-jarjar_library(
     name = "shaded_compiler_src",
     rules_file = "merge_all_rules.txt",
     deps = [
         "//java/dagger/internal/codegen:libbase-src.jar",
         "//java/dagger/internal/codegen:libbinding-src.jar",
         "//java/dagger/internal/codegen:libprocessor-src.jar",
+        "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
+    ],
+)
+
+jarjar_library(
+    name = "shaded_spi",
+    rules_file = "shade_rules.txt",
+    deps = [
+        "//java/dagger/internal/codegen:shared-with-spi",
+        "//java/dagger/model",
+        "//java/dagger/spi",
+        "@com_google_auto_auto_common//jar",
+    ],
+)
+
+jarjar_library(
+    name = "shaded_spi_src",
+    rules_file = "merge_all_rules.txt",
+    deps = [
+        "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
+        "//java/dagger/model:libmodel-src.jar",
+        "//java/dagger/spi:libspi-src.jar",
+    ],
+)
+
+javadoc_library(
+    name = "spi-javadoc",
+    srcs = [
+        "//java/dagger/model:model-srcs",
+        "//java/dagger/spi:spi-srcs",
+    ],
+    root_packages = [
+        "dagger.model",
+        "dagger.spi",
+    ],
+    deps = [
+        "//java/dagger/model",
+        "//java/dagger/spi",
     ],
 )
 
@@ -110,8 +140,6 @@ jarjar_library(
     ],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
-
 # coalesced javadocs used for the gh-pages site
 javadoc_library(
     name = "user-docs",
@@ -123,6 +151,7 @@ javadoc_library(
         "//java/dagger/grpc/server/processor:javadoc-srcs",
         "//java/dagger/model:model-srcs",
         "//java/dagger/producers:producers-srcs",
+        "//java/dagger/spi:spi-srcs",
     ],
     android_api_level = 26,
     # TODO(ronshapiro): figure out how to specify the version number for release builds
@@ -141,5 +170,6 @@ javadoc_library(
         "//java/dagger/grpc/server/processor",
         "//java/dagger/model",
         "//java/dagger/producers",
+        "//java/dagger/spi",
     ],
 )

@@ -20,34 +20,46 @@ import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.BindingGraphPlugin;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ComponentNode;
+import dagger.spi.BindingGraphPlugin;
+import dagger.spi.ValidationItem;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.util.List;
 import java.util.Properties;
+import javax.annotation.processing.Filer;
 
 @AutoService(BindingGraphPlugin.class)
-public final class TestPlugin extends BindingGraphPlugin {
+public final class TestPlugin implements BindingGraphPlugin {
+  private Filer filer;
 
   @Override
-  protected void visitGraph(BindingGraph bindingGraph) {
+  public void initFiler(Filer filer) {
+    this.filer = filer;
+  }
+
+  @Override
+  public List<ValidationItem> visitGraph(BindingGraph bindingGraph) {
     Properties properties = new Properties();
     int i = 0;
     for (ComponentNode node : bindingGraph.componentNodes()) {
       properties.setProperty(
           String.format("component[%s]", i++), node.componentPath().toString());
     }
+
     write(bindingGraph, properties);
+    return ImmutableList.of();
   }
 
   private void write(BindingGraph bindingGraph, Properties properties) {
     ClassName rootComponentName =
         ClassName.get(bindingGraph.rootComponentNode().componentPath().currentComponent());
     try (Writer writer =
-        filer()
+        filer
             .createResource(
                 CLASS_OUTPUT,
                 rootComponentName.packageName(),

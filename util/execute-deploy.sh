@@ -76,8 +76,8 @@ deploy_library \
 
 deploy_library \
   shaded_spi.jar \
-  java/dagger/model/libmodel-src.jar \
-  java/dagger/model/model-javadoc.jar \
+  shaded_spi_src.jar \
+  spi-javadoc.jar \
   dagger-spi.pom.xml
 
 deploy_library \

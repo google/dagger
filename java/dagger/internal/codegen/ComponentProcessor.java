@@ -28,6 +28,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Filer;
@@ -66,7 +67,7 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ImmutableSet.Builder<String> options = ImmutableSet.builder();
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
     for (BindingGraphPlugin plugin : bindingGraphPlugins) {
-      options.addAll(plugin.getSupportedOptions());
+      options.addAll(plugin.supportedOptions());
     }
     return options.build();
   }

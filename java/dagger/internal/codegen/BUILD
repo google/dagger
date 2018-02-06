@@ -51,6 +51,7 @@ CODEGEN_SHARED_DEPS = [
     "//java/dagger:core",
     "//java/dagger/producers",
     "//java/dagger/model",
+    "//java/dagger/spi",
     "//java/dagger/model:internal-proxies",
 ]
 
@@ -123,7 +124,6 @@ java_library(
         "BindingDeclaration.java",
         "BindingFactory.java",
         "BindingGraph.java",
-        "BindingGraphPlugin.java",  # TODO(ronshapiro): this should move to its own model target
         "BindingType.java",
         "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
@@ -283,6 +283,7 @@ java_library(
         "ModuleProcessingStep.java",
         "ProcessingOptions.java",
         "ProductionExecutorModuleProcessingStep.java",
+        "SpiDiagnosticReporter.java",
     ],
     plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS + [
@@ -344,20 +345,6 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS,
-)
-
-java_plugin(
-    name = "dagger-experimental-visualizer",
-    srcs = EXPERIMENTAL_VISUALIZER_SRCS,
-    deps = [
-        ":base",
-        ":binding",
-        "//java/dagger/model",
-        "//third_party:auto_service",
-        "//third_party:error_prone_annotations",
-        "//third_party:guava",
-        "//third_party:javapoet",
-    ],
 )
 
 java_plugin(

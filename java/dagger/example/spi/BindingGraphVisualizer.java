@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.example.spi;
 
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Matcher.quoteReplacement;
@@ -37,6 +37,8 @@ import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
 import dagger.model.BindingKind;
 import dagger.model.ComponentPath;
+import dagger.spi.BindingGraphPlugin;
+import dagger.spi.ValidationItem;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -48,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.processing.Filer;
 import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
@@ -63,7 +66,13 @@ import javax.tools.StandardLocation;
  * Foo_Bar.dot}.
  */
 @AutoService(BindingGraphPlugin.class)
-public final class BindingNetworkVisualizer extends BindingGraphPlugin {
+public final class BindingGraphVisualizer implements BindingGraphPlugin {
+  private Filer filer;
+
+  @Override
+  public void initFiler(Filer filer) {
+    this.filer = filer;
+  }
 
   /** Graphviz color names to use for binding nodes within each component. */
   private static final ImmutableList<String> COMPONENT_COLORS =
@@ -82,14 +91,14 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
           "/set312/12");
 
   @Override
-  public void visitGraph(BindingGraph bindingGraph) {
+  public List<ValidationItem> visitGraph(BindingGraph bindingGraph) {
     TypeElement componentElement =
         bindingGraph.rootComponentNode().componentPath().currentComponent();
     DotGraph graph = new NodesGraph(bindingGraph).graph();
     ClassName componentName = ClassName.get(componentElement);
     try {
       FileObject file =
-          filer()
+          filer
               .createResource(
                   StandardLocation.CLASS_OUTPUT,
                   componentName.packageName(),
@@ -101,6 +110,7 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    return ImmutableList.of();
   }
 
   private abstract static class Indented {
@@ -212,7 +222,7 @@ public final class BindingNetworkVisualizer extends BindingGraphPlugin {
 
     DotGraph graph() {
       if (nodeIds.isEmpty()) {
-        Iterator<String> colors = Iterators.cycle(BindingNetworkVisualizer.COMPONENT_COLORS);
+        Iterator<String> colors = Iterators.cycle(COMPONENT_COLORS);
         bindingGraph
             .nodes()
             .stream()

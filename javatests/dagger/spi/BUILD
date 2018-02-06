@@ -13,42 +13,32 @@
 # limitations under the License.
 
 # Description:
-#   Functional tests for the experimental Dagger SPI
+#   Tests for the Dagger SPI
 
 package(default_visibility = ["//:src"])
 
 load("//:test_defs.bzl", "GenJavaTests")
-
-java_plugin(
-    name = "test_plugin",
-    srcs = ["TestPlugin.java"],
-    deps = [
-        "//java/dagger/model",
-        "//java/dagger/spi",
-        "//third_party:auto_service",
-        "//third_party:guava",
-        "//third_party:javapoet",
-    ],
-)
-
-java_library(
-    name = "test_lib",
-    exported_plugins = [":test_plugin"],
+load(
+    "//:build_defs.bzl",
+    "DOCLINT_HTML_AND_SYNTAX",
+    "DOCLINT_REFERENCES",
 )
 
 GenJavaTests(
-    name = "tests",
-    srcs = glob(
-        ["*.java"],
-        exclude = ["TestPlugin.java"],
-    ),
-    test_only_deps = [
-        "//third_party:truth",
-        "//third_party:junit",
-    ],
+    name = "spi_tests",
+    srcs = glob(["*.java"]),
+    functional = False,
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        ":test_lib",
-        "//:dagger_with_compiler",
+        "//java/dagger:core",
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/model",
+        "//java/dagger/spi",
+        "//third_party:auto_service",
+        "//third_party:compile_testing",
         "//third_party:guava",
+        "//third_party:jsr330_inject",
+        "//third_party:junit",
+        "//third_party:truth",
     ],
 )

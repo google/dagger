@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2018 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,42 +13,19 @@
 # limitations under the License.
 
 # Description:
-#   Functional tests for the experimental Dagger SPI
+#   An example of the dagger.spi.BindingGraphPlugin usage
 
 package(default_visibility = ["//:src"])
 
-load("//:test_defs.bzl", "GenJavaTests")
-
 java_plugin(
-    name = "test_plugin",
-    srcs = ["TestPlugin.java"],
+    name = "binding-graph-visualizer",
+    srcs = glob(["*.java"]),
     deps = [
         "//java/dagger/model",
         "//java/dagger/spi",
         "//third_party:auto_service",
+        "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:javapoet",
-    ],
-)
-
-java_library(
-    name = "test_lib",
-    exported_plugins = [":test_plugin"],
-)
-
-GenJavaTests(
-    name = "tests",
-    srcs = glob(
-        ["*.java"],
-        exclude = ["TestPlugin.java"],
-    ),
-    test_only_deps = [
-        "//third_party:truth",
-        "//third_party:junit",
-    ],
-    deps = [
-        ":test_lib",
-        "//:dagger_with_compiler",
-        "//third_party:guava",
     ],
 )

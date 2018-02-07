@@ -307,7 +307,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
                 "  }",
                 "",
                 "  @Override",
@@ -398,18 +398,20 @@ public class ComponentProcessorTest {
                 "    }",
                 "    return (SomeInjectableType) local;")
             .addLinesIn(
-                DEFAULT_MODE,
-                // TODO(ronshapiro): It's a little weird that the component method is used instead
-                // of the instance. This only really happens because the same key is scoped and
-                // exposed as a component method for both an instance and a Provider, so probably
-                // not so common. Are there any other cases where this might come up?
-                "    return someInjectableTypeProvider().get();")
+                DEFAULT_MODE, //
+                "    return someInjectableTypeProvider.get();")
             .addLines(
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());",
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
+            .addLinesIn(
+                DEFAULT_MODE, //
+                "    return DoubleCheck.lazy(someInjectableTypeProvider);")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
+            .addLines(
                 "  }",
                 "",
                 "  @Override",
@@ -482,7 +484,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @CanIgnoreReturnValue",
                 "  private OuterType.B injectB(OuterType.B instance) {",
-                "    OuterType_B_MembersInjector.injectA(instance, a());",
+                "    OuterType_B_MembersInjector.injectA(instance, new OuterType.A());",
                 "    return instance;",
                 "  }",
                 "}")
@@ -1113,7 +1115,7 @@ public class ComponentProcessorTest {
             "",
             "  @SuppressWarnings(\"unchecked\")",
             "  private void initialize(final Builder builder) {",
-            "    this.simpleComponentProvider = InstanceFactory.<SimpleComponent>create(this);",
+            "    this.simpleComponentProvider = InstanceFactory.create((SimpleComponent) this);",
             "  }",
             "",
             "  @Override",
@@ -1558,7 +1560,7 @@ public class ComponentProcessorTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
                 "  private B getB() {",
-                "    return new B(c());",
+                "    return new B(new C());",
                 "  }",
                 "",
                 "  @Override",
@@ -1573,7 +1575,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public X x() {",
-                "    return new X(c());",
+                "    return new X(new C());",
                 "  }",
                 "}")
             .build();
@@ -2488,7 +2490,8 @@ public class ComponentProcessorTest {
                 "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(instance, nonNullableString());",
+                "    InjectsMember_MembersInjector.injectMember(instance,",
+                "        TestModule_NonNullableStringFactory.proxyNonNullableString());",
                 "    return instance;",
                 "  }",
                 "}")
@@ -2578,7 +2581,8 @@ public class ComponentProcessorTest {
                 "",
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
-                "    InjectsMember_MembersInjector.injectMember(instance, nonNullableInteger());",
+                "    InjectsMember_MembersInjector.injectMember(",
+                "        instance, TestModule.primitiveInteger());",
                 "    return instance;",
                 "  }",
                 "}")

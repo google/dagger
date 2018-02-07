@@ -19,35 +19,30 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.model.Key;
 import dagger.model.RequestKind;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** Defines a method body and return type for a given {@link BindingExpression}. */
 class BindingMethodImplementation {
+  private final ContributionBinding binding;
+  private final RequestKind requestKind;
   private final BindingExpression bindingExpression;
   private final ClassName componentName;
-  private final ResolvedBindings resolvedBindings;
-  private final RequestKind requestKind;
   private final DaggerTypes types;
-  private final Elements elements;
 
   BindingMethodImplementation(
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind,
       BindingExpression bindingExpression,
       ClassName componentName,
-      DaggerTypes types,
-      Elements elements) {
+      DaggerTypes types) {
+    this.binding = resolvedBindings.contributionBinding();
+    this.requestKind = checkNotNull(requestKind);
     this.bindingExpression = checkNotNull(bindingExpression);
     this.componentName = checkNotNull(componentName);
     this.types = checkNotNull(types);
-    this.elements = checkNotNull(elements);
-    this.resolvedBindings = bindingExpression.resolvedBindings();
-    this.requestKind = bindingExpression.requestKind();
   }
 
   /**
@@ -57,45 +52,21 @@ class BindingMethodImplementation {
    * return} statement.
    */
   CodeBlock body() {
-    return CodeBlock.of(
-        "return $L;", bindingExpression.getDependencyExpression(componentName).codeBlock());
+    return CodeBlock.of("return $L;", simpleBindingExpression());
+  }
+
+  /** Returns the code for the binding expression. */
+  protected final CodeBlock simpleBindingExpression() {
+    return bindingExpression.getDependencyExpression(componentName).codeBlock();
   }
 
   /** Returns the return type for the dependency request. */
   final TypeMirror returnType() {
-    ContributionBinding binding = resolvedBindings.contributionBinding();
     if (requestKind.equals(RequestKind.INSTANCE)
         && binding.contributedPrimitiveType().isPresent()) {
       return binding.contributedPrimitiveType().get();
     }
-    return accessibleType(requestType(requestKind, binding.contributedType(), types));
-  }
-
-  /** Returns the {@linkplain Key} for this expression. */
-  protected final Key key() {
-    return resolvedBindings.key();
-  }
-
-  /** Returns the {#linkplain RequestKind request kind} handled by this expression. */
-  protected final RequestKind requestKind() {
-    return requestKind;
-  }
-
-  /** The binding this instance uses to fulfill requests. */
-  protected final ResolvedBindings resolvedBindings() {
-    return resolvedBindings;
-  }
-
-  // TODO(user): Move this to Accessibility.java or DaggerTypes.java?
-  /** Returns a {@link TypeMirror} for the binding that is accessible to the component. */
-  protected final TypeMirror accessibleType(TypeMirror type) {
-    if (Accessibility.isTypeAccessibleFrom(type, componentName.packageName())) {
-      return type;
-    } else if (type.getKind().equals(TypeKind.DECLARED)
-        && Accessibility.isRawTypeAccessible(type, componentName.packageName())) {
-      return types.getDeclaredType(MoreTypes.asTypeElement(type));
-    } else {
-      return elements.getTypeElement(Object.class.getName()).asType();
-    }
+    return types.accessibleType(
+        requestType(requestKind, binding.contributedType(), types), componentName);
   }
 }

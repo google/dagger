@@ -23,7 +23,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
 import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
 import javax.inject.Inject;
 import javax.lang.model.util.Types;
 
@@ -36,17 +35,16 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
   @Inject
   OptionalBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    super(resolvedBindings, requestKind, types);
+    super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
   }
 
   @Override
-  Expression getInstanceDependencyExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
@@ -77,5 +75,11 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
         : Expression.create(
             types.erasure(binding.key().type()),
             optionalKind.presentObjectExpression(dependencyExpression));
+  }
+
+  @Override
+  boolean requiresMethodEncapsulation() {
+    // TODO(dpb): Maybe require it for present bindings.
+    return false;
   }
 }

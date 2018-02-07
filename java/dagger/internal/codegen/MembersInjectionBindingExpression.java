@@ -23,7 +23,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.model.RequestKind;
 import javax.lang.model.element.ExecutableElement;
 
 /**
@@ -36,8 +35,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
 
   MembersInjectionBindingExpression(
       ResolvedBindings resolvedBindings, MembersInjectionMethods membersInjectionMethods) {
-    super(resolvedBindings, RequestKind.MEMBERS_INJECTION);
-    this.binding = resolvedBindings().membersInjectionBinding().get();
+    this.binding = resolvedBindings.membersInjectionBinding().get();
     this.membersInjectionMethods = membersInjectionMethods;
   }
 
@@ -50,7 +48,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   // getDependencyExpression() should never be called for members injection methods. It's probably
   // better suited as a method on MembersInjectionMethods
   @Override
-  protected CodeBlock doGetComponentMethodImplementation(
+  protected CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName componentName) {
     ExecutableElement methodElement = componentMethod.methodElement();
     ParameterSpec parameter = ParameterSpec.get(getOnlyElement(methodElement.getParameters()));

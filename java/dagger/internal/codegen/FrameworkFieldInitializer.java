@@ -57,6 +57,15 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     default Optional<ClassName> alternativeFrameworkClass() {
       return Optional.empty();
     }
+
+    /**
+     * Returns {@code true} if the factory created for a binding is not worth inlining because it's
+     * a singleton or an {@link dagger.internal.InstanceFactory} or a nested {@code Provider} for a
+     * component dependency provision method.
+     */
+    default boolean isSimpleFactory() {
+      return false;
+    }
   }
 
   private final GeneratedComponentModel generatedComponentModel;

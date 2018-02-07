@@ -30,9 +30,8 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.MapBuilder;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
 import java.util.Collections;
-import java.util.Map;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -44,20 +43,21 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final ImmutableMap<DependencyRequest, ContributionBinding> dependencies;
   private final ComponentBindingExpressions componentBindingExpressions;
+  private final DaggerTypes types;
   private final Elements elements;
 
   MapBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings, requestKind, types);
+    super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
     this.componentBindingExpressions = componentBindingExpressions;
+    this.types = types;
     this.elements = elements;
     this.dependencies =
         Maps.toMap(
@@ -66,26 +66,24 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  Expression getInstanceDependencyExpression(ClassName requestingClass) {
-    return Expression.create(binding.key().type(), mapExpression(requestingClass));
-  }
-
-  private CodeBlock mapExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableMap version of MapFactory
     boolean isImmutableMapAvailable = isImmutableMapAvailable();
     // TODO(ronshapiro, gak): Use Maps.immutableEnumMap() if it's available?
     if (isImmutableMapAvailable && dependencies.size() <= MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS) {
-      return CodeBlock.builder()
-          .add("$T.", ImmutableMap.class)
-          .add(maybeTypeParameters(requestingClass))
-          .add(
-              "of($L)",
-              dependencies
-                  .keySet()
-                  .stream()
-                  .map(dependency -> keyAndValueExpression(dependency, requestingClass))
-                  .collect(toParametersCodeBlock()))
-          .build();
+      return Expression.create(
+          immutableMapType(),
+          CodeBlock.builder()
+              .add("$T.", ImmutableMap.class)
+              .add(maybeTypeParameters(requestingClass))
+              .add(
+                  "of($L)",
+                  dependencies
+                      .keySet()
+                      .stream()
+                      .map(dependency -> keyAndValueExpression(dependency, requestingClass))
+                      .collect(toParametersCodeBlock()))
+              .build());
     }
     switch (dependencies.size()) {
       case 0:
@@ -110,8 +108,18 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
         for (DependencyRequest dependency : dependencies.keySet()) {
           instantiation.add(".put($L)", keyAndValueExpression(dependency, requestingClass));
         }
-        return instantiation.add(".build()").build();
+        return Expression.create(
+            isImmutableMapAvailable ? immutableMapType() : binding.key().type(),
+            instantiation.add(".build()").build());
     }
+  }
+
+  private DeclaredType immutableMapType() {
+    MapType mapType = MapType.from(binding.key());
+    return types.getDeclaredType(
+        elements.getTypeElement(ImmutableMap.class.getName()),
+        mapType.keyType(),
+        mapType.valueType());
   }
 
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
@@ -123,13 +131,15 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
             .codeBlock());
   }
 
-  private CodeBlock collectionsStaticFactoryInvocation(
+  private Expression collectionsStaticFactoryInvocation(
       ClassName requestingClass, CodeBlock methodInvocation) {
-    return CodeBlock.builder()
-        .add("$T.", Collections.class)
-        .add(maybeTypeParameters(requestingClass))
-        .add(methodInvocation)
-        .build();
+    return Expression.create(
+        binding.key().type(),
+        CodeBlock.builder()
+            .add("$T.", Collections.class)
+            .add(maybeTypeParameters(requestingClass))
+            .add(methodInvocation)
+            .build());
   }
 
   private CodeBlock maybeTypeParameters(ClassName requestingClass) {
@@ -142,16 +152,5 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
 
   private boolean isImmutableMapAvailable() {
     return elements.getTypeElement(ImmutableMap.class.getCanonicalName()) != null;
-  }
-
-  @Override
-  protected CodeBlock explicitTypeParameter(ClassName requestingClass) {
-    if (isImmutableMapAvailable()) {
-      TypeMirror keyType = binding.key().type();
-      return CodeBlock.of(
-          "<$T>",
-          isTypeAccessibleFrom(keyType, requestingClass.packageName()) ? keyType : Map.class);
-    }
-    return CodeBlock.of("");
   }
 }

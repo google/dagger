@@ -25,6 +25,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.squareup.javapoet.ClassName;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -137,6 +138,18 @@ final class DaggerTypes implements Types {
         return types.getDeclaredType(wrappingType, getOnlyElement(typeArguments));
       default:
         throw new IllegalArgumentException(type + " has more than 1 type argument");
+    }
+  }
+
+  /** Returns a {@link TypeMirror} for the binding that is accessible to the component. */
+  protected final TypeMirror accessibleType(TypeMirror type, ClassName requestingClass) {
+    if (Accessibility.isTypeAccessibleFrom(type, requestingClass.packageName())) {
+      return type;
+    } else if (type.getKind().equals(TypeKind.DECLARED)
+        && Accessibility.isRawTypeAccessible(type, requestingClass.packageName())) {
+      return getDeclaredType(MoreTypes.asTypeElement(type));
+    } else {
+      return elements.getTypeElement(Object.class.getName()).asType();
     }
   }
 

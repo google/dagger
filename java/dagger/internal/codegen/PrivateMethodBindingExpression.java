@@ -35,6 +35,8 @@ import dagger.model.RequestKind;
  * <p>Dependents of this binding expression will just call the no-arg private method.
  */
 final class PrivateMethodBindingExpression extends BindingExpression {
+  private final ContributionBinding binding;
+  private final RequestKind requestKind;
   private final BindingMethodImplementation methodImplementation;
   private final GeneratedComponentModel generatedComponentModel;
   private String methodName;
@@ -44,7 +46,8 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       RequestKind requestKind,
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel) {
-    super(resolvedBindings, requestKind);
+    this.binding = resolvedBindings.contributionBinding();
+    this.requestKind = checkNotNull(requestKind);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
   }
@@ -83,15 +86,14 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   private String methodName() {
     // TODO(user): Use a better name for @MapKey binding instances.
     // TODO(user): Include the binding method as part of the method name.
-    if (requestKind().equals(RequestKind.INSTANCE)) {
+    if (requestKind.equals(RequestKind.INSTANCE)) {
       return "get" + bindingName();
     }
-    return "get" + bindingName() + dependencyKindName(requestKind());
+    return "get" + bindingName() + dependencyKindName(requestKind);
   }
 
   /** Returns the canonical name for the {@link Binding}. */
   private String bindingName() {
-    ContributionBinding binding = resolvedBindings().contributionBinding();
     return LOWER_CAMEL.to(UPPER_CAMEL, BindingVariableNamer.name(binding));
   }
 

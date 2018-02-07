@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 
 import com.squareup.javapoet.ClassName;
@@ -28,6 +29,8 @@ import javax.lang.model.util.Elements;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
 final class FrameworkInstanceBindingExpression extends BindingExpression {
+  private final ResolvedBindings resolvedBindings;
+  private final RequestKind requestKind;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
   private final FrameworkType frameworkType;
@@ -42,12 +45,13 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings, requestKind);
-    this.componentBindingExpressions = componentBindingExpressions;
-    this.frameworkType = frameworkType;
-    this.frameworkInstanceSupplier = frameworkInstanceSupplier;
-    this.types = types;
-    this.elements = elements;
+    this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.requestKind = checkNotNull(requestKind);
+    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.frameworkType = checkNotNull(frameworkType);
+    this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
+    this.types = checkNotNull(types);
+    this.elements = checkNotNull(elements);
   }
 
   /**
@@ -58,14 +62,14 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    */
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    if (requestKind().equals(frameworkRequestKind())) {
+    if (requestKind.equals(frameworkRequestKind())) {
       MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
-      TypeMirror contributedType = resolvedBindings().contributionBinding().contributedType();
+      TypeMirror contributedType = resolvedBindings.contributionBinding().contributedType();
       TypeMirror expressionType =
           frameworkInstanceSupplier.specificType().isPresent()
                   || isTypeAccessibleFrom(contributedType, requestingClass.packageName())
                   || isInlinedFactoryCreation(memberSelect)
-              ? types.wrapType(contributedType, resolvedBindings().frameworkClass())
+              ? types.wrapType(contributedType, resolvedBindings.frameworkClass())
               : rawFrameworkType();
       return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
     }
@@ -75,9 +79,9 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     // RequestKind.PROVIDER (the framework type):
     //    lazyExpression = DoubleCheck.lazy(providerExpression);
     return frameworkType.to(
-        requestKind(),
+        requestKind,
         componentBindingExpressions.getDependencyExpression(
-            key(), frameworkRequestKind(), requestingClass),
+            resolvedBindings.key(), frameworkRequestKind(), requestingClass),
         types);
   }
 
@@ -110,6 +114,6 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
 
   private DeclaredType rawFrameworkType() {
     return types.getDeclaredType(
-        elements.getTypeElement(resolvedBindings().frameworkClass().getCanonicalName()));
+        elements.getTypeElement(resolvedBindings.frameworkClass().getCanonicalName()));
   }
 }

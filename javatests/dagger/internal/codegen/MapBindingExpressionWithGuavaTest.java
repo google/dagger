@@ -380,8 +380,8 @@ public class MapBindingExpressionWithGuavaTest {
             "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public ListenableFuture<Map<String, String>> stringMap() {",
-            "    return Futures.<Map<String, String>>immediateFuture(",
-            "        ImmutableMap.<String, String>of());",
+            "    return Futures.immediateFuture(",
+            "        (Map<String, String>) ImmutableMap.<String, String>of());",
             "  }",
             "}");
     Compilation compilation =

@@ -472,17 +472,31 @@ public class SubcomponentValidationTest {
                 "    private ChildComponentImpl() {",
                 "      this.childModule = new ChildModule();",
                 "    }",
-                "",
+                "")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    private NeedsDep1 getNeedsDep1() {",
+                "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());",
+                "    }")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
                 "    private NeedsDep1 getNeedsDep1() {",
                 "      return new NeedsDep1(DaggerParentComponent.this.getDep1());",
-                "    }",
-                "",
+                "    }")
+            .addLines(
                 "    private A getA() {",
                 "      return injectA(",
                 "          A_Factory.newA(",
-                "              getNeedsDep1(),",
+                "              getNeedsDep1(),")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "              DaggerParentComponent.this.dep1Provider.get(),",
+                "              DaggerParentComponent.this.dep2Provider.get()));")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
                 "              DaggerParentComponent.this.getDep1(),",
-                "              DaggerParentComponent.this.getDep2()));",
+                "              DaggerParentComponent.this.getDep2()));")
+            .addLines(
                 "    }",
                 "",
                 "    @Override",

@@ -32,6 +32,7 @@ import javax.lang.model.util.Elements;
 /** A {@link BindingExpression} for {@code @Binds} methods. */
 final class DelegateBindingExpression extends BindingExpression {
   private final ContributionBinding binding;
+  private final RequestKind requestKind;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
@@ -42,8 +43,8 @@ final class DelegateBindingExpression extends BindingExpression {
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings, requestKind);
     this.binding = checkNotNull(resolvedBindings.contributionBinding());
+    this.requestKind = checkNotNull(requestKind);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
@@ -71,17 +72,17 @@ final class DelegateBindingExpression extends BindingExpression {
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression delegateExpression =
         componentBindingExpressions.getDependencyExpression(
-            getOnlyElement(binding.dependencies()).key(), requestKind(), requestingClass);
+            getOnlyElement(binding.dependencies()).key(), requestKind, requestingClass);
 
     TypeMirror contributedType = binding.contributedType();
-    switch (requestKind()) {
+    switch (requestKind) {
       case INSTANCE:
         return instanceRequiresCast(delegateExpression, requestingClass)
             ? delegateExpression.castTo(contributedType)
             : delegateExpression;
       default:
         return castToRawTypeIfNecessary(
-            delegateExpression, requestType(requestKind(), contributedType, types));
+            delegateExpression, requestType(requestKind, contributedType, types));
     }
   }
 

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.model.RequestKind;
 
 /** A binding expression for a subcomponent builder that just invokes the constructor. */
 final class SubcomponentBuilderBindingExpression extends SimpleInvocationBindingExpression {
@@ -26,17 +25,14 @@ final class SubcomponentBuilderBindingExpression extends SimpleInvocationBinding
   private final ContributionBinding binding;
 
   SubcomponentBuilderBindingExpression(
-      ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
-      String subcomponentBuilderName,
-      DaggerTypes types) {
-    super(resolvedBindings, requestKind, types);
+      ResolvedBindings resolvedBindings, String subcomponentBuilderName) {
+    super(resolvedBindings);
     this.subcomponentBuilderName = subcomponentBuilderName;
     this.binding = resolvedBindings.contributionBinding();
   }
 
   @Override
-  Expression getInstanceDependencyExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         binding.key().type(), CodeBlock.of("new $LBuilder()", subcomponentBuilderName));
   }

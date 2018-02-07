@@ -22,7 +22,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.model.RequestKind;
 
 /**
  * A binding expression that implements and uses a component method.
@@ -36,13 +35,10 @@ final class ComponentMethodBindingExpression extends BindingExpression {
   private final ComponentBindingExpressions componentBindingExpressions;
 
   ComponentMethodBindingExpression(
-      ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel,
       ComponentMethodDescriptor componentMethod,
       ComponentBindingExpressions componentBindingExpressions) {
-    super(resolvedBindings, requestKind);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentMethod = checkNotNull(componentMethod);
@@ -50,12 +46,12 @@ final class ComponentMethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  protected CodeBlock doGetComponentMethodImplementation(
+  protected CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName componentName) {
     // There could be several methods on the component for the same request key and kind.
     // Only one should use the BindingMethodImplementation; the others can delegate that one. So
     // use methodImplementation.body() only if componentMethod equals the method for this instance.
-    
+
     // Separately, the method might be defined on a supertype that is also a supertype of some
     // parent component. In that case, the same ComponentMethodDescriptor will be used to add a CMBE
     // for the parent and the child. Only the parent's should use the BindingMethodImplementation;
@@ -64,7 +60,7 @@ final class ComponentMethodBindingExpression extends BindingExpression {
     return componentMethod.equals(this.componentMethod)
             && componentName.equals(generatedComponentModel.name())
         ? methodImplementation.body()
-        : super.doGetComponentMethodImplementation(componentMethod, componentName);
+        : super.getComponentMethodImplementation(componentMethod, componentName);
   }
 
   @Override

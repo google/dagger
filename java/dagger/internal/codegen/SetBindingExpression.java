@@ -25,9 +25,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
 import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
 import java.util.Collections;
-import java.util.Set;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -36,43 +35,42 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final ComponentBindingExpressions componentBindingExpressions;
+  private final DaggerTypes types;
   private final Elements elements;
 
   SetBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings, requestKind, types);
+    super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
+    this.types = types;
     this.elements = elements;
   }
 
   @Override
-  Expression getInstanceDependencyExpression(ClassName requestingClass) {
-    return Expression.create(binding.key().type(), setExpression(requestingClass));
-  }
-
-  private CodeBlock setExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
     if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
-      return CodeBlock.builder()
-          .add("$T.", ImmutableSet.class)
-          .add(maybeTypeParameter(requestingClass))
-          .add(
-              "of($L)",
-              binding
-                  .dependencies()
-                  .stream()
-                  .map(dependency -> getContributionExpression(dependency, requestingClass))
-                  .collect(toParametersCodeBlock()))
-          .build();
+      return Expression.create(
+          immutableSetType(),
+          CodeBlock.builder()
+              .add("$T.", ImmutableSet.class)
+              .add(maybeTypeParameter(requestingClass))
+              .add(
+                  "of($L)",
+                  binding
+                      .dependencies()
+                      .stream()
+                      .map(dependency -> getContributionExpression(dependency, requestingClass))
+                      .collect(toParametersCodeBlock()))
+              .build());
     }
     switch (binding.dependencies().size()) {
       case 0:
@@ -85,11 +83,13 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
             return collectionsStaticFactoryInvocation(
                 requestingClass, CodeBlock.of("singleton($L)", contributionExpression));
           } else if (isImmutableSetAvailable) {
-            return CodeBlock.builder()
-                .add("$T.", ImmutableSet.class)
-                .add(maybeTypeParameter(requestingClass))
-                .add("copyOf($L)", contributionExpression)
-                .build();
+            return Expression.create(
+                immutableSetType(),
+                CodeBlock.builder()
+                    .add("$T.", ImmutableSet.class)
+                    .add(maybeTypeParameter(requestingClass))
+                    .add("copyOf($L)", contributionExpression)
+                    .build());
           }
         }
         // fall through
@@ -108,8 +108,17 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
           instantiation.add(
               ".$L($L)", builderMethod, getContributionExpression(dependency, requestingClass));
         }
-        return instantiation.add(".build()").build();
+        instantiation.add(".build()");
+        return Expression.create(
+            isImmutableSetAvailable ? immutableSetType() : binding.key().type(),
+            instantiation.build());
     }
+  }
+
+  private DeclaredType immutableSetType() {
+    return types.getDeclaredType(
+        elements.getTypeElement(ImmutableSet.class.getName()),
+        SetType.from(binding.key()).elementType());
   }
 
   private CodeBlock getContributionExpression(
@@ -119,13 +128,15 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         .codeBlock();
   }
 
-  private CodeBlock collectionsStaticFactoryInvocation(
+  private Expression collectionsStaticFactoryInvocation(
       ClassName requestingClass, CodeBlock methodInvocation) {
-    return CodeBlock.builder()
-        .add("$T.", Collections.class)
-        .add(maybeTypeParameter(requestingClass))
-        .add(methodInvocation)
-        .build();
+    return Expression.create(
+        binding.key().type(),
+        CodeBlock.builder()
+            .add("$T.", Collections.class)
+            .add(maybeTypeParameter(requestingClass))
+            .add(methodInvocation)
+            .build());
   }
 
   private CodeBlock maybeTypeParameter(ClassName requestingClass) {
@@ -146,16 +157,5 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private boolean isImmutableSetAvailable() {
     return elements.getTypeElement(ImmutableSet.class.getCanonicalName()) != null;
-  }
-
-  @Override
-  protected CodeBlock explicitTypeParameter(ClassName requestingClass) {
-    if (isImmutableSetAvailable()) {
-      TypeMirror keyType = binding.key().type();
-      return CodeBlock.of(
-          "<$T>",
-          isTypeAccessibleFrom(keyType, requestingClass.packageName()) ? keyType : Set.class);
-    }
-    return CodeBlock.of("");
   }
 }

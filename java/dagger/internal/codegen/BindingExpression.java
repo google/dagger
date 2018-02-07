@@ -16,41 +16,13 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
 // TODO(user): Rename this to RequestExpression?
 abstract class BindingExpression {
-  private final ResolvedBindings resolvedBindings;
-  private final RequestKind requestKind;
-
-  BindingExpression(ResolvedBindings resolvedBindings, RequestKind requestKind) {
-    this.resolvedBindings = checkNotNull(resolvedBindings);
-    this.requestKind = checkNotNull(requestKind);
-  }
-
-  /** Returns the {@link Key} for this expression. */
-  final Key key() {
-    return resolvedBindings.key();
-  }
-
-  /** Returns the {@link RequestKind} handled by this expression. */
-  final RequestKind requestKind() {
-    return requestKind;
-  }
-
-  /** The binding this instance uses to fulfill requests. */
-  final ResolvedBindings resolvedBindings() {
-    return resolvedBindings;
-  }
 
   /**
    * Returns an expression that evaluates to the value of a request based on the given requesting
@@ -60,28 +32,17 @@ abstract class BindingExpression {
    */
   abstract Expression getDependencyExpression(ClassName requestingClass);
 
-  /**
-   * Returns an expression for the implementation of a component method with the given request.
-   *
-   * @param componentName the component that will contain the implemented method
-   */
-  final CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName componentName) {
-    DependencyRequest request = componentMethod.dependencyRequest().get();
-    checkArgument(request.key().equals(key()));
-    checkArgument(request.kind().equals(requestKind()));
-    return doGetComponentMethodImplementation(componentMethod, componentName);
+  /** Returns {@code true} if this binding expression should be encapsulated in a method. */
+  boolean requiresMethodEncapsulation() {
+    return false;
   }
 
   /**
    * Returns an expression for the implementation of a component method with the given request.
    *
-   * <p>This method is called only if {@code componentMethod}'s request key and kind matches this
-   * binding expression's.
-   *
    * @param componentName the component that will contain the implemented method
    */
-  protected CodeBlock doGetComponentMethodImplementation(
+  CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ClassName componentName) {
     // By default, just delegate to #getDependencyExpression().
     return CodeBlock.of("return $L;", getDependencyExpression(componentName).codeBlock());

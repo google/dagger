@@ -30,7 +30,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -39,8 +38,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /**
- * A binding expression that invokes methods or constructors directly for a provision binding when
- * possible.
+ * A binding expression that invokes methods or constructors directly (without attempting to scope)
+ * {@link dagger.model.RequestKind#INSTANCE} requests.
  */
 final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpression {
   private final CompilerOptions compilerOptions;
@@ -52,14 +51,12 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
   SimpleMethodBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
       CompilerOptions compilerOptions,
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementFields componentRequirementFields,
-      DaggerTypes types,
       Elements elements) {
-    super(resolvedBindings, requestKind, types);
+    super(resolvedBindings);
     this.compilerOptions = compilerOptions;
     this.provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
     checkArgument(
@@ -73,7 +70,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   @Override
-  Expression getInstanceDependencyExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     return requiresInjectionMethod(provisionBinding, compilerOptions, requestingClass.packageName())
         ? invokeInjectionMethod(requestingClass)
         : invokeMethod(requestingClass);

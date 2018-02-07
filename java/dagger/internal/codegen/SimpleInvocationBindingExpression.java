@@ -16,67 +16,19 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import dagger.model.RequestKind;
-
-/**
- * A binding expression that can use a simple expression for instance requests, and delegates to
- * another expression for other requests.
- */
+/** A simple binding expression for instance requests. Does not scope. */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
+  // TODO(dpb): Take ContributionBinding instead of ResolvedBindings.
+  private final ResolvedBindings resolvedBindings;
 
-  private static final ImmutableSet<RequestKind> REQUEST_KINDS =
-      ImmutableSet.of(RequestKind.INSTANCE, RequestKind.FUTURE);
-
-  private final DaggerTypes types;
-
-  SimpleInvocationBindingExpression(
-      ResolvedBindings resolvedBindings, RequestKind requestKind, DaggerTypes types) {
-    super(resolvedBindings, requestKind);
-    checkArgument(REQUEST_KINDS.contains(requestKind));
-    this.types = types;
-  }
-
-  /**
-   * Returns an expression that evaluates to an instance of a dependency.
-   *
-   * @param requestingClass the class that will contain the expression
-   */
-  abstract Expression getInstanceDependencyExpression(ClassName requestingClass);
-
-  /**
-   * Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
-   * make type parameters for {@link Futures#immediateFuture(Object)} explicit.
-   *
-   * <p>For example, {@code javac7} cannot detect that Futures.immediateFuture(ImmutableSet.of(T))}
-   * can safely be assigned to {@code ListenableFuture<Set<T>>}.
-   */
-  protected CodeBlock explicitTypeParameter(ClassName requestingClass) {
-    return CodeBlock.of("");
+  SimpleInvocationBindingExpression(ResolvedBindings resolvedBindings) {
+    this.resolvedBindings = checkNotNull(resolvedBindings);
   }
 
   @Override
-  final Expression getDependencyExpression(ClassName requestingClass) {
-    switch (requestKind()) {
-      case INSTANCE:
-        return getInstanceDependencyExpression(requestingClass);
-      case FUTURE:
-        Expression expression = getInstanceDependencyExpression(requestingClass);
-        return Expression.create(
-            types.wrapType(expression.type(), ListenableFuture.class),
-            CodeBlock.builder()
-                .add("$T.", Futures.class)
-                .add(explicitTypeParameter(requestingClass))
-                .add("immediateFuture($L)", expression.codeBlock())
-                .build());
-      default:
-        throw new AssertionError(requestKind());
-    }
+  boolean requiresMethodEncapsulation() {
+    return !resolvedBindings.contributionBinding().dependencies().isEmpty();
   }
 }

@@ -79,7 +79,7 @@ abstract class MemberSelect {
    * this method returns the static member select that returns the factory or no-op members
    * injector.
    */
-  static Optional<MemberSelect> staticMemberSelect(ResolvedBindings resolvedBindings) {
+  static Optional<MemberSelect> staticFactoryCreation(ResolvedBindings resolvedBindings) {
     if (resolvedBindings.contributionBindings().isEmpty()) {
       throw new AssertionError(
           "Expected a contribution binding, but none found. *THIS IS A DAGGER BUG* - please "

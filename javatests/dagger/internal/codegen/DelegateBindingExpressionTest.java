@@ -770,7 +770,7 @@ public class DelegateBindingExpressionTest {
                 "  }",
                 "  @Override",
                 "  public Provider<Object> object() {",
-                "    return (Provider) charSequence();",
+                "    return (Provider) TestModule_ProvideStringFactory.create();",
                 "  }",
                 "}"));
   }

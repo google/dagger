@@ -270,8 +270,8 @@ The *edges* of the graph are directed edges consisting of:
     models **dependencies of bindings**;
 -   for each entry point, an edge from the entry point's key to the entry point;
     this models **dependencies of entry points**;
--   for each key, an edge to the key from any binding that has this key as its
-    binding key; this models **resolution of keys**.
+-   for each key, an edge from any binding that has this key as its binding key,
+    to the key itself; this models **resolution of keys**.
 
 The graph is **well-formed** if:
 
@@ -667,7 +667,7 @@ a corresponding setter method in the component builder.
 Component dependencies add two new kinds of bindings:
 
 -   A **component dependency method binding** is a non-void, zero-arg method on
-    component dependency; with
+    a component dependency; with
     -   key signature `component dependency -> declared key of the return type
         of the method`
     -   binding logic is the method itself

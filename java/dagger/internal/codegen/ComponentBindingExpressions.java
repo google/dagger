@@ -248,7 +248,7 @@ final class ComponentBindingExpressions {
     switch (resolvedBindings.bindingType()) {
       case MEMBERS_INJECTION:
         checkArgument(requestKind.equals(RequestKind.MEMBERS_INJECTION));
-        return membersInjectionBindingExpression(resolvedBindings);
+        return new MembersInjectionBindingExpression(resolvedBindings, membersInjectionMethods);
 
       case PROVISION:
         return provisionBindingExpression(resolvedBindings, requestKind);
@@ -259,12 +259,6 @@ final class ComponentBindingExpressions {
       default:
         throw new AssertionError(resolvedBindings);
     }
-  }
-
-  /** Returns a binding expression for a members injection binding. */
-  private MembersInjectionBindingExpression membersInjectionBindingExpression(
-      ResolvedBindings resolvedBindings) {
-    return new MembersInjectionBindingExpression(resolvedBindings, membersInjectionMethods);
   }
 
   /**

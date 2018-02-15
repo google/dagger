@@ -31,7 +31,7 @@ A **qualifier** is a Java annotation that's annotated `@Qualifier`. For example,
 }
 ```
 
-define qualifiers.
+define `@Blue` and `@Name` as qualifiers.
 
 We also use the term qualifier for the concrete use of the qualifier in code.
 For example:
@@ -59,8 +59,8 @@ are all keys.
 We often refer to a key as `@Q T`; by this, we mean that `Q` is a qualifier and
 `T` is a type.
 
-Two keys are the **same** if their types are the same, up to unboxing, and their
-qualifiers are the same. For example,
+Two keys are the **same** if they have the same type (after unboxing) and the
+same qualifier. For example,
 
 ```java
 @Blue int
@@ -80,10 +80,11 @@ It is always an error to apply multiple qualifiers to the same type.
 ## Bindings
 
 A **binding** is a function that tells Dagger how to compute an instance of a
-binding key (which is essentially the return type of the method; see below). It
-can be either **user-defined** or **synthetic**:
+particular key. This key, which is the function's **binding key**, is
+essentially the return type of the function (see [Signatures](#signatures)
+below). It can be either **user-defined** or **synthetic**:
 
-A **user-defined** binding is a Java method that is:
+A **user-defined** binding is a Java method that is any of the following:
 
 -   A non-abstract method annotated `@Provides`
 -   An abstract method annotated `@Binds`, which has exactly one argument, and
@@ -100,10 +101,9 @@ constraints that will be discussed later.
 ### Signatures
 
 Recall that the signature of a Java method describes the inputs and outputs of
-that methods; these inputs and outputs are, of course, Java types. Sometimes
-this signature is considered to include annotations, and sometimes it's not; in
-our case, we want to consider the annotations on method parameters, and on the
-method itself, as part of the Java signature. For example,
+that method; these inputs and outputs are, of course, Java types. In our case,
+we will also include the annotations as part of the signature, both for the
+method parameters and the method itself. For example,
 
 ```java
 // Java signature = (@Blue Set<Bar>, @Nullable Provider<Integer>) -> @Nullable Foo
@@ -172,7 +172,7 @@ Of the bindings discussed so far:
 -   the binding logic of a `@Provides` method is the method itself;
 -   the binding logic of a `@Binds` method is the identity function;
 -   the binding logic of an `@Inject` constructor is the constructor itself,
-    thinking of it as a function from its arguments to the class type;
+    thinking of it as a function from its arguments to the class type.
 
 ## Modules
 
@@ -199,10 +199,11 @@ A **component** is an interface or abstract class annotated `@Component`.
 The **modules** of a component are the transitive closure of the list of modules
 specified in the `modules` field on its annotation.
 
-The **entry points** of the component are the abstract, zero-arg, non-void
-methods on the interface or abstract class. It is an error to have any abstract
-methods that have arguments or are void. The **entry point key** is defined
-analogously to a binding key, that is, the key associated with its return type.
+The **entry points** of the component are its abstract, zero-arg, non-void
+methods. It is an error for a component to have any abstract methods that have
+arguments or are void. Each entry point has an **entry point key** that is
+defined as the key associated with the method's return type (analogous to a
+binding key).
 
 The **bindings** of a component are the union of the set of bindings in all of
 the component's modules.
@@ -243,16 +244,25 @@ interface C {
 
 In the above example:
 
-- The component `C` has modules `{M, N}`;
-- Its bindings are:
-  - `M#v` (signature = `() -> int`)
-  - `M#foo` (signature = `X, int -> Foo`)
-  - `M#bar` (signature = `BarImpl -> Bar`)
-  - `N#y` (signature = `X -> @Blue Y`)
-  - `BarImpl` (signature = `@Blue Y, int -> BarImpl`)
-- Its entry points are:
-  - `C#foo` (key = `Foo`)
-  - `C#bar` (key = `Bar`)
+-   The component `C` has modules `{M, N}`;
+-   Its bindings are:
+    -   `M#v` (signature = `() -> int`)
+    -   `M#foo` (signature = `X, int -> Foo`)
+    -   `M#bar` (signature = `BarImpl -> Bar`)
+    -   `N#y` (signature = `X -> @Blue Y`)
+    -   `X` (signature = `() -> X`)
+    -   `BarImpl` (signature = `@Blue Y, int -> BarImpl`)
+-   Its entry points are:
+    -   `C#foo` (key = `Foo`)
+    -   `C#bar` (key = `Bar`)
+
+<!-- TODO(beder): Explain @Inject bindings better, in (1) components, and (2) to
+clarify that they can never include qualifiers, since constructors cannot take
+qualifiers. -->
+Note that `X` and `BarImpl` are included as bindings for C even though they do
+not appear as functions in C's included modules. This is because any
+`@Inject`-annotated constructor is implicitly included in any component that
+needs it, i.e. has a dependency key of that constructor's class.
 
 ## Resolution: Construction of the Graph
 

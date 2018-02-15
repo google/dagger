@@ -272,6 +272,7 @@ java_library(
     name = "processor",
     srcs = [
         "BindingGraphConverter.java",
+        "BindingGraphFactory.java",
         "BindingGraphPluginsModule.java",
         "BindingMethodValidatorsModule.java",
         "CanReleaseReferencesProcessingStep.java",

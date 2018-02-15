@@ -37,7 +37,7 @@ import javax.tools.Diagnostic;
  */
 final class KytheBindingGraphFactory {
   private final ComponentDescriptor.Factory componentDescriptorFactory;
-  private final BindingGraph.Factory bindingGraphFactory;
+  private final BindingGraphFactory bindingGraphFactory;
 
   KytheBindingGraphFactory(Types types, Elements elements) {
     DaggerElements daggerElements = new DaggerElements(elements, types);
@@ -86,7 +86,7 @@ final class KytheBindingGraphFactory {
         elements, types, dependencyRequestFactory, moduleDescriptorFactory);
   }
 
-  private static BindingGraph.Factory createBindingGraphFactory(
+  private static BindingGraphFactory createBindingGraphFactory(
       DaggerTypes types, DaggerElements elements) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
     DependencyRequestFactory dependencyRequestFactory =
@@ -120,7 +120,7 @@ final class KytheBindingGraphFactory {
             bindingFactory,
             compilerOptions);
 
-    return new BindingGraph.Factory(elements, injectBindingRegistry, keyFactory, bindingFactory);
+    return new BindingGraphFactory(elements, injectBindingRegistry, keyFactory, bindingFactory);
   }
 
   private static class NullMessager implements Messager {

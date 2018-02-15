@@ -59,7 +59,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentHierarchyValidator componentHierarchyValidator;
   private final BindingGraphValidator bindingGraphValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
-  private final BindingGraph.Factory bindingGraphFactory;
+  private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
   private final ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
   private final SpiDiagnosticReporter spiDiagnosticReporter;
@@ -72,7 +72,7 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentHierarchyValidator componentHierarchyValidator,
       BindingGraphValidator bindingGraphValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
-      BindingGraph.Factory bindingGraphFactory,
+      BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
       ImmutableList<BindingGraphPlugin> bindingGraphPlugins,
       SpiDiagnosticReporter spiDiagnosticReporter) {

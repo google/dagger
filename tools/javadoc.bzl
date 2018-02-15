@@ -28,7 +28,7 @@ def _android_jar(android_api_level):
     return None
   return Label("@androidsdk//:platforms/android-%s/android.jar" % android_api_level)
 
-def _javadoc_libary(ctx):
+def _javadoc_library(ctx):
   _check_non_empty(ctx.attr.root_packages, "root_packages")
 
   inputs = []
@@ -102,7 +102,7 @@ javadoc_library = rule(
         ),
     },
     outputs = {"jar": "%{name}.jar"},
-    implementation = _javadoc_libary,
+    implementation = _javadoc_library,
 )
 """
 Generates a Javadoc jar path/to/target/<name>.jar.

@@ -34,6 +34,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.NullType;
@@ -158,9 +159,27 @@ final class DaggerTypes implements Types {
    * javax.lang.model.type.ErrorType}.
    */
   static void checkTypePresent(TypeMirror type) {
-    if (type.getKind().equals(TypeKind.ERROR)) {
-      throw new TypeNotPresentException(type.toString(), null);
-    }
+    type.accept(
+        // TODO(ronshapiro): Extract a base class that visits all components of a complex type
+        // and put it in auto.common
+        new SimpleTypeVisitor8<Void, Void>() {
+          @Override
+          public Void visitArray(ArrayType arrayType, Void p) {
+            return arrayType.getComponentType().accept(this, p);
+          }
+
+          @Override
+          public Void visitDeclared(DeclaredType declaredType, Void p) {
+            declaredType.getTypeArguments().forEach(t -> t.accept(this, p));
+            return null;
+          }
+
+          @Override
+          public Void visitError(ErrorType errorType, Void p) {
+            throw new TypeNotPresentException(type.toString(), null);
+          }
+        },
+        null);
   }
 
   private static final ImmutableSet<Class<?>> FUTURE_TYPES =

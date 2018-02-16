@@ -638,7 +638,7 @@ final class ComponentBindingExpressions {
         .<BindingExpression>map(
             componentMethod ->
                 new ComponentMethodBindingExpression(
-                    methodImplementation, generatedComponentModel, componentMethod, this))
+                    methodImplementation, generatedComponentModel, componentMethod))
         .orElseGet(
             () ->
                 new PrivateMethodBindingExpression(

@@ -237,6 +237,7 @@ java_library(
         "MembersInjectionMethods.java",
         "MembersInjectorGenerator.java",
         "MembersInjectorProviderCreationExpression.java",
+        "MethodBindingExpression.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
         "OptionalBindingExpression.java",

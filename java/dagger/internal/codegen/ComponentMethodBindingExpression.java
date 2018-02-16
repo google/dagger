@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 
 /**
@@ -28,21 +27,19 @@ import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
  *
  * <p>Dependents of this binding expression will just call the component method.
  */
-final class ComponentMethodBindingExpression extends BindingExpression {
+final class ComponentMethodBindingExpression extends MethodBindingExpression {
   private final BindingMethodImplementation methodImplementation;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentMethodDescriptor componentMethod;
-  private final ComponentBindingExpressions componentBindingExpressions;
 
   ComponentMethodBindingExpression(
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel,
-      ComponentMethodDescriptor componentMethod,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentMethodDescriptor componentMethod) {
+    super(methodImplementation, generatedComponentModel);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentMethod = checkNotNull(componentMethod);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
 
   @Override
@@ -64,12 +61,10 @@ final class ComponentMethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  Expression getDependencyExpression(ClassName requestingClass) {
-    MethodSpec implementedMethod = componentBindingExpressions.getComponentMethod(componentMethod);
-    return Expression.create(
-        methodImplementation.returnType(),
-        requestingClass.equals(generatedComponentModel.name())
-            ? CodeBlock.of("$N()", implementedMethod)
-            : CodeBlock.of("$T.this.$N()", generatedComponentModel.name(), implementedMethod));
+  protected void addMethod() {}
+
+  @Override
+  protected String methodName() {
+    return componentMethod.methodElement().getSimpleName().toString();
   }
 }

@@ -20,12 +20,11 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRIVATE_METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.model.RequestKind;
 
@@ -34,7 +33,7 @@ import dagger.model.RequestKind;
  *
  * <p>Dependents of this binding expression will just call the no-arg private method.
  */
-final class PrivateMethodBindingExpression extends BindingExpression {
+final class PrivateMethodBindingExpression extends MethodBindingExpression {
   private final ContributionBinding binding;
   private final RequestKind requestKind;
   private final BindingMethodImplementation methodImplementation;
@@ -46,6 +45,7 @@ final class PrivateMethodBindingExpression extends BindingExpression {
       RequestKind requestKind,
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel) {
+    super(methodImplementation, generatedComponentModel);
     this.binding = resolvedBindings.contributionBinding();
     this.requestKind = checkNotNull(requestKind);
     this.methodImplementation = checkNotNull(methodImplementation);
@@ -53,52 +53,43 @@ final class PrivateMethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  Expression getDependencyExpression(ClassName requestingClass) {
+  protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = generatedComponentModel.getUniqueMethodName(methodName());
-      createMethod(methodName);
+      methodName = chooseMethodName();
+      // TODO(user): Fix the order that these generated methods are written to the component.
+      generatedComponentModel.addMethod(
+          PRIVATE_METHOD,
+          methodBuilder(methodName)
+              .addModifiers(PRIVATE)
+              .returns(TypeName.get(methodImplementation.returnType()))
+              .addCode(methodImplementation.body())
+              .build());
     }
-
-    // TODO(user): This logic is repeated in multiple places. Can we extract it somewhere?
-    ClassName componentName = generatedComponentModel.name();
-    CodeBlock invocation =
-        componentName.equals(requestingClass)
-            ? CodeBlock.of("$N()", methodName)
-            : CodeBlock.of("$T.this.$N()", componentName, methodName);
-    return Expression.create(methodImplementation.returnType(), invocation);
   }
 
-  /** Creates the no-arg method used for dependency expressions. */
-  private void createMethod(String name) {
-    // TODO(user): Consider when we can make this method static.
-    // TODO(user): Fix the order that these generated methods are written to the component.
-    generatedComponentModel.addMethod(
-        PRIVATE_METHOD,
-        methodBuilder(name)
-            .addModifiers(PRIVATE)
-            .returns(TypeName.get(methodImplementation.returnType()))
-            .addCode(methodImplementation.body())
-            .build());
+  @Override
+  protected String methodName() {
+    checkState(methodName != null, "addMethod() must be called before methodName()");
+    return methodName;
   }
 
-  /** Returns the canonical name for a no-arg dependency expression method. */
-  private String methodName() {
+  private String chooseMethodName() {
     // TODO(user): Use a better name for @MapKey binding instances.
     // TODO(user): Include the binding method as part of the method name.
-    if (requestKind.equals(RequestKind.INSTANCE)) {
-      return "get" + bindingName();
-    }
-    return "get" + bindingName() + dependencyKindName(requestKind);
+    return generatedComponentModel.getUniqueMethodName(
+        "get" + bindingName() + dependencyKindName());
   }
 
-  /** Returns the canonical name for the {@link Binding}. */
+  /** Returns the canonical method name suffix for the binding. */
   private String bindingName() {
     return LOWER_CAMEL.to(UPPER_CAMEL, BindingVariableNamer.name(binding));
   }
 
-  /** Returns a canonical name for the {@link RequestKind}. */
-  private static String dependencyKindName(RequestKind kind) {
-    return UPPER_UNDERSCORE.to(UPPER_CAMEL, kind.name());
+  /** Returns a canonical method name suffix for the request kind. */
+  private String dependencyKindName() {
+    return requestKind.equals(RequestKind.INSTANCE)
+        ? ""
+        : UPPER_UNDERSCORE.to(UPPER_CAMEL, requestKind.name());
   }
 }

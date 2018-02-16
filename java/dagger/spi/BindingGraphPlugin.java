@@ -25,6 +25,8 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * A pluggable visitor for {@link BindingGraph}.
@@ -46,6 +48,22 @@ public interface BindingGraphPlugin {
    * {@linkplain #visitGraph(BindingGraph) visited}.
    */
   default void initFiler(Filer filer) {}
+
+  /**
+   * Initializes this plugin with a {@link Types} instance. This will be called once per instance of
+   * this plugin, before any graph is {@linkplain #visitGraph(BindingGraph) visited}.
+   *
+   * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils()
+   */
+  default void initTypes(Types types) {}
+
+  /**
+   * Initializes this plugin with a {@link Elements} instance. This will be called once per instance
+   * of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph) visited}.
+   *
+   * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils()
+   */
+  default void initElements(Elements elements) {}
 
   /**
    * Initializes this plugin with a filtered view of the options passed on the {@code javac}

@@ -26,6 +26,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Singleton;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * Provides and configures the {@link BindingGraphPlugin}s available on the annotation processing
@@ -36,12 +38,17 @@ interface BindingGraphPluginsModule {
   @Provides
   @Singleton
   static ImmutableList<BindingGraphPlugin> bindingGraphPlugins(
-      Filer filer, @ProcessingOptions Map<String, String> processingOptions) {
+      Filer filer,
+      Types types,
+      Elements elements,
+      @ProcessingOptions Map<String, String> processingOptions) {
     ClassLoader classLoader = BindingGraphPluginsModule.class.getClassLoader();
     ImmutableList<BindingGraphPlugin> bindingGraphPlugins =
         ImmutableList.copyOf(ServiceLoader.load(BindingGraphPlugin.class, classLoader));
     for (BindingGraphPlugin plugin : bindingGraphPlugins) {
       plugin.initFiler(filer);
+      plugin.initTypes(types);
+      plugin.initElements(elements);
       Set<String> supportedOptions = plugin.supportedOptions();
       if (!supportedOptions.isEmpty()) {
         plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));

@@ -72,7 +72,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -739,16 +738,14 @@ abstract class ComponentDescriptor {
   private static final ImmutableSet<String> NON_CONTRIBUTING_OBJECT_METHOD_NAMES =
       ImmutableSet.of("toString", "hashCode", "clone", "getClass");
 
-  static boolean isComponentContributionMethod(Elements elements, ExecutableElement method) {
+  static boolean isComponentContributionMethod(DaggerElements elements, ExecutableElement method) {
     return method.getParameters().isEmpty()
         && !method.getReturnType().getKind().equals(VOID)
-        && !elements
-            .getTypeElement(Object.class.getCanonicalName())
-            .equals(method.getEnclosingElement())
+        && !elements.getTypeElement(Object.class).equals(method.getEnclosingElement())
         && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
   }
 
-  static boolean isComponentProductionMethod(Elements elements, ExecutableElement method) {
+  static boolean isComponentProductionMethod(DaggerElements elements, ExecutableElement method) {
     return isComponentContributionMethod(elements, method) && isFutureType(method.getReturnType());
   }
 }

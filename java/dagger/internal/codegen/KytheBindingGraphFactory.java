@@ -41,7 +41,7 @@ final class KytheBindingGraphFactory {
 
   KytheBindingGraphFactory(Types types, Elements elements) {
     DaggerElements daggerElements = new DaggerElements(elements, types);
-    DaggerTypes daggerTypes = new DaggerTypes(types, elements);
+    DaggerTypes daggerTypes = new DaggerTypes(types, daggerElements);
     this.componentDescriptorFactory = createComponentDescriptorFactory(daggerElements, daggerTypes);
     this.bindingGraphFactory = createBindingGraphFactory(daggerTypes, daggerElements);
   }

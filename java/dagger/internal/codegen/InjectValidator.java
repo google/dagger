@@ -60,7 +60,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
@@ -73,18 +72,18 @@ import javax.tools.Diagnostic;
  */
 final class InjectValidator {
   private final Types types;
-  private final Elements elements;
+  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
 
   @Inject
-  InjectValidator(Types types, Elements elements, CompilerOptions compilerOptions) {
+  InjectValidator(Types types, DaggerElements elements, CompilerOptions compilerOptions) {
     this(types, elements, compilerOptions, Optional.empty());
   }
 
   private InjectValidator(
       Types types,
-      Elements elements,
+      DaggerElements elements,
       CompilerOptions compilerOptions,
       Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind) {
     this.types = types;
@@ -324,9 +323,8 @@ final class InjectValidator {
 
   /** Returns true if the given method element declares a checked exception. */
   private boolean throwsCheckedExceptions(ExecutableElement methodElement) {
-    TypeMirror runtimeExceptionType =
-        elements.getTypeElement(RuntimeException.class.getCanonicalName()).asType();
-    TypeMirror errorType = elements.getTypeElement(Error.class.getCanonicalName()).asType();
+    TypeMirror runtimeExceptionType = elements.getTypeElement(RuntimeException.class).asType();
+    TypeMirror errorType = elements.getTypeElement(Error.class).asType();
     for (TypeMirror thrownType : methodElement.getThrownTypes()) {
       if (!types.isSubtype(thrownType, runtimeExceptionType)
           && !types.isSubtype(thrownType, errorType)) {

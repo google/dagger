@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -43,7 +42,6 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
 
@@ -51,16 +49,12 @@ import javax.lang.model.util.Types;
 final class DaggerTypes implements Types {
 
   private final Types types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   @Inject
-  DaggerTypes(Types types, Elements elements) {
+  DaggerTypes(Types types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
-  }
-
-  DaggerTypes(ProcessingEnvironment processingEnv) {
-    this(processingEnv.getTypeUtils(), processingEnv.getElementUtils());
   }
 
   /**
@@ -94,8 +88,7 @@ final class DaggerTypes implements Types {
    *     type argument.
    */
   TypeMirror unwrapTypeOrObject(TypeMirror type) {
-    return unwrapTypeOrDefault(
-        type, elements.getTypeElement(Object.class.getCanonicalName()).asType());
+    return unwrapTypeOrDefault(type, elements.getTypeElement(Object.class).asType());
   }
 
   private TypeMirror unwrapTypeOrDefault(TypeMirror type, TypeMirror defaultType) {
@@ -150,7 +143,7 @@ final class DaggerTypes implements Types {
         && Accessibility.isRawTypeAccessible(type, requestingClass.packageName())) {
       return getDeclaredType(MoreTypes.asTypeElement(type));
     } else {
-      return elements.getTypeElement(Object.class.getName()).asType();
+      return elements.getTypeElement(Object.class).asType();
     }
   }
 

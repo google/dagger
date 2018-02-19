@@ -65,13 +65,12 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /** A validator for methods that represent binding declarations. */
 abstract class BindingMethodValidator {
 
-  private final Elements elements;
+  private final DaggerElements elements;
   private final Types types;
   private final Class<? extends Annotation> methodAnnotation;
   private final ImmutableSet<? extends Class<? extends Annotation>> enclosingElementAnnotations;
@@ -88,7 +87,7 @@ abstract class BindingMethodValidator {
    *     with this annotation
    */
   protected BindingMethodValidator(
-      Elements elements,
+      DaggerElements elements,
       Types types,
       Class<? extends Annotation> methodAnnotation,
       Class<? extends Annotation> enclosingElementAnnotation,
@@ -113,7 +112,7 @@ abstract class BindingMethodValidator {
    *     annotated with one of these annotations
    */
   protected BindingMethodValidator(
-      Elements elements,
+      DaggerElements elements,
       Types types,
       Class<? extends Annotation> methodAnnotation,
       Iterable<? extends Class<? extends Annotation>> enclosingElementAnnotations,
@@ -445,8 +444,7 @@ abstract class BindingMethodValidator {
         BindingMethodValidator validator, ValidationReport.Builder<ExecutableElement> builder) {
       TypeMirror exceptionSupertype =
           validator.elements.getTypeElement(superclass.getCanonicalName()).asType();
-      TypeMirror errorType =
-          validator.elements.getTypeElement(Error.class.getCanonicalName()).asType();
+      TypeMirror errorType = validator.elements.getTypeElement(Error.class).asType();
       for (TypeMirror thrownType : builder.getSubject().getThrownTypes()) {
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)
             && !validator.types.isSubtype(thrownType, errorType)) {

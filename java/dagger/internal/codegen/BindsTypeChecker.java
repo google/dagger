@@ -29,7 +29,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -40,10 +39,10 @@ import javax.lang.model.util.Types;
  */
 final class BindsTypeChecker {
   private final Types types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   @Inject
-  BindsTypeChecker(Types types, Elements elements) {
+  BindsTypeChecker(Types types, DaggerElements elements) {
     this.types = types;
     this.elements = elements;
   }
@@ -94,11 +93,11 @@ final class BindsTypeChecker {
   }
 
   private TypeElement setElement() {
-    return elements.getTypeElement(Set.class.getName());
+    return elements.getTypeElement(Set.class);
   }
 
   private TypeElement mapElement() {
-    return elements.getTypeElement(Map.class.getName());
+    return elements.getTypeElement(Map.class);
   }
 
   private TypeMirror unboundedWildcard() {

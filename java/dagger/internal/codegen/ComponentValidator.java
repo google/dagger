@@ -59,7 +59,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
@@ -70,14 +69,14 @@ import javax.lang.model.util.Types;
  * @author Gregory Kick
  */
 final class ComponentValidator {
-  private final Elements elements;
+  private final DaggerElements elements;
   private final Types types;
   private final ModuleValidator moduleValidator;
   private final BuilderValidator builderValidator;
 
   @Inject
   ComponentValidator(
-      Elements elements,
+      DaggerElements elements,
       Types types,
       ModuleValidator moduleValidator,
       BuilderValidator builderValidator) {

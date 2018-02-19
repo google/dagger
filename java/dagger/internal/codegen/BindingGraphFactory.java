@@ -73,18 +73,17 @@ import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /** A factory for {@link BindingGraph} objects. */
 final class BindingGraphFactory {
-  private final Elements elements;
+  private final DaggerElements elements;
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
 
   @Inject
   BindingGraphFactory(
-      Elements elements,
+      DaggerElements elements,
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory) {

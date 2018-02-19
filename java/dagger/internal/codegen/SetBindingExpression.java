@@ -28,7 +28,6 @@ import dagger.model.DependencyRequest;
 import java.util.Collections;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A binding expression for multibound sets. */
 final class SetBindingExpression extends SimpleInvocationBindingExpression {
@@ -36,14 +35,14 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final BindingGraph graph;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   SetBindingExpression(
       ResolvedBindings resolvedBindings,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
-      Elements elements) {
+      DaggerElements elements) {
     super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.graph = graph;
@@ -117,8 +116,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private DeclaredType immutableSetType() {
     return types.getDeclaredType(
-        elements.getTypeElement(ImmutableSet.class.getName()),
-        SetType.from(binding.key()).elementType());
+        elements.getTypeElement(ImmutableSet.class), SetType.from(binding.key()).elementType());
   }
 
   private CodeBlock getContributionExpression(
@@ -156,6 +154,6 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   private boolean isImmutableSetAvailable() {
-    return elements.getTypeElement(ImmutableSet.class.getCanonicalName()) != null;
+    return elements.getTypeElement(ImmutableSet.class) != null;
   }
 }

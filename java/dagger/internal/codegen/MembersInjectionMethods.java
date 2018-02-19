@@ -37,7 +37,6 @@ import java.util.Map;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** Manages the member injection methods for a component. */
 final class MembersInjectionMethods {
@@ -45,14 +44,14 @@ final class MembersInjectionMethods {
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions bindingExpressions;
   private final BindingGraph graph;
-  private final Elements elements;
+  private final DaggerElements elements;
   private final DaggerTypes types;
 
   MembersInjectionMethods(
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions bindingExpressions,
       BindingGraph graph,
-      Elements elements,
+      DaggerElements elements,
       DaggerTypes types) {
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.bindingExpressions = checkNotNull(bindingExpressions);
@@ -77,7 +76,7 @@ final class MembersInjectionMethods {
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, generatedComponentModel.name().packageName())
             ? keyType
-            : elements.getTypeElement("java.lang.Object").asType();
+            : elements.getTypeElement(Object.class).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
     Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class

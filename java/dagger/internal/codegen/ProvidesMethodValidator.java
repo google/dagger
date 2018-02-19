@@ -28,7 +28,6 @@ import dagger.producers.ProducerModule;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -40,7 +39,7 @@ import javax.lang.model.util.Types;
 final class ProvidesMethodValidator extends BindingMethodValidator {
 
   @Inject
-  ProvidesMethodValidator(Elements elements, Types types) {
+  ProvidesMethodValidator(DaggerElements elements, Types types) {
     super(
         elements,
         types,

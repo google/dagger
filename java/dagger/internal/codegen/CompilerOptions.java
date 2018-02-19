@@ -24,7 +24,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
@@ -66,12 +65,12 @@ abstract class CompilerOptions {
     return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
   }
 
-  static CompilerOptions create(ProcessingEnvironment processingEnv, Elements elements) {
+  static CompilerOptions create(ProcessingEnvironment processingEnv, DaggerElements elements) {
     return builder()
-        .usesProducers(elements.getTypeElement(Produces.class.getCanonicalName()) != null)
+        .usesProducers(elements.getTypeElement(Produces.class) != null)
         .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
-        .experimentalAndroidMode(experimentalAndroidMode(processingEnv)
-            .equals(FeatureStatus.ENABLED))
+        .experimentalAndroidMode(
+            experimentalAndroidMode(processingEnv).equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
             writeProducerNameInToken(processingEnv).equals(FeatureStatus.ENABLED))
         .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())

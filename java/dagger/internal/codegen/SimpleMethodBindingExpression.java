@@ -35,7 +35,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /**
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
@@ -47,7 +46,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ComponentBindingExpressions componentBindingExpressions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementFields componentRequirementFields;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   SimpleMethodBindingExpression(
       ResolvedBindings resolvedBindings,
@@ -55,7 +54,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementFields componentRequirementFields,
-      Elements elements) {
+      DaggerElements elements) {
     super(resolvedBindings);
     this.compilerOptions = compilerOptions;
     this.provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
@@ -144,7 +143,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     MethodSpec membersInjectionMethod = membersInjectionMethods.getOrCreate(provisionBinding.key());
     TypeMirror returnType =
         membersInjectionMethod.returnType.equals(TypeName.OBJECT)
-            ? elements.getTypeElement(Object.class.getCanonicalName()).asType()
+            ? elements.getTypeElement(Object.class).asType()
             : provisionBinding.key().type();
     return Expression.create(returnType, CodeBlock.of("$N($L)", membersInjectionMethod, instance));
   }

@@ -33,7 +33,6 @@ import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -44,7 +43,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
   private final BindsTypeChecker bindsTypeChecker;
 
   @Inject
-  BindsMethodValidator(Elements elements, Types types) {
+  BindsMethodValidator(DaggerElements elements, Types types) {
     super(
         elements,
         types,

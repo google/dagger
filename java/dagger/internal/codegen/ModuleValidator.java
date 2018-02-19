@@ -83,7 +83,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
@@ -116,7 +115,7 @@ final class ModuleValidator {
   }
 
   private final Types types;
-  private final Elements elements;
+  private final DaggerElements elements;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
@@ -125,7 +124,7 @@ final class ModuleValidator {
   @Inject
   ModuleValidator(
       Types types,
-      Elements elements,
+      DaggerElements elements,
       AnyBindingMethodValidator anyBindingMethodValidator,
       MethodSignatureFormatter methodSignatureFormatter) {
     this.types = types;
@@ -409,7 +408,7 @@ final class ModuleValidator {
     // a method marked @Provides in Parent, and "c" because Child is defining an @Provides
     // method that overrides Parent.
     TypeElement currentClass = subject;
-    TypeMirror objectType = elements.getTypeElement(Object.class.getCanonicalName()).asType();
+    TypeMirror objectType = elements.getTypeElement(Object.class).asType();
     // We keep track of methods that failed so we don't spam with multiple failures.
     Set<ExecutableElement> failedMethods = Sets.newHashSet();
     while (!types.isSameType(currentClass.getSuperclass(), objectType)) {

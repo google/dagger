@@ -33,7 +33,6 @@ import dagger.model.DependencyRequest;
 import java.util.Collections;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A {@link BindingExpression} for multibound maps. */
 final class MapBindingExpression extends SimpleInvocationBindingExpression {
@@ -44,14 +43,14 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private final ImmutableMap<DependencyRequest, ContributionBinding> dependencies;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   MapBindingExpression(
       ResolvedBindings resolvedBindings,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
-      Elements elements) {
+      DaggerElements elements) {
     super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     BindingKind bindingKind = this.binding.kind();
@@ -117,9 +116,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private DeclaredType immutableMapType() {
     MapType mapType = MapType.from(binding.key());
     return types.getDeclaredType(
-        elements.getTypeElement(ImmutableMap.class.getName()),
-        mapType.keyType(),
-        mapType.valueType());
+        elements.getTypeElement(ImmutableMap.class), mapType.keyType(), mapType.valueType());
   }
 
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
@@ -151,6 +148,6 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   private boolean isImmutableMapAvailable() {
-    return elements.getTypeElement(ImmutableMap.class.getCanonicalName()) != null;
+    return elements.getTypeElement(ImmutableMap.class) != null;
   }
 }

@@ -73,6 +73,16 @@ final class DaggerElements implements Elements {
         .toSet();
   }
 
+  /** Returns the type element for a class. */
+  TypeElement getTypeElement(Class<?> clazz) {
+    return getTypeElement(clazz.getCanonicalName());
+  }
+
+  @Override
+  public TypeElement getTypeElement(CharSequence name) {
+    return elements.getTypeElement(name);
+  }
+
   /**
    * A visitor that returns the input or the closest enclosing element that is a
    * {@link TypeElement}.
@@ -203,11 +213,6 @@ final class DaggerElements implements Elements {
   @Override
   public PackageElement getPackageElement(CharSequence name) {
     return elements.getPackageElement(name);
-  }
-
-  @Override
-  public TypeElement getTypeElement(CharSequence name) {
-    return elements.getTypeElement(name);
   }
 
   @Override

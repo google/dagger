@@ -31,7 +31,6 @@ import dagger.producers.ProducerModule;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /** A validator for {@link Multibinds} methods. */
@@ -39,7 +38,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
 
   /** Creates a validator for {@link Multibinds @Multibinds} methods. */
   @Inject
-  MultibindsMethodValidator(Elements elements, Types types) {
+  MultibindsMethodValidator(DaggerElements elements, Types types) {
     super(
         elements,
         types,

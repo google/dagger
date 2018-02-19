@@ -65,7 +65,7 @@ import javax.lang.model.util.Elements;
 abstract class ComponentWriter {
   static TypeSpec.Builder writeComponent(
       DaggerTypes types,
-      Elements elements,
+      DaggerElements elements,
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,

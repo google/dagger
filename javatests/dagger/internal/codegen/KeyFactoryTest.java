@@ -39,7 +39,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,13 +52,13 @@ import org.junit.runners.JUnit4;
 public class KeyFactoryTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
-  private Elements elements;
+  private DaggerElements elements;
   private DaggerTypes types;
   private KeyFactory keyFactory;
 
   @Before public void setUp() {
-    this.elements = compilationRule.getElements();
-    this.types = new DaggerTypes(compilationRule.getTypes(), compilationRule.getElements());
+    this.elements = new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
+    this.types = new DaggerTypes(compilationRule.getTypes(), elements);
     this.keyFactory = new KeyFactory(types, elements);
   }
 

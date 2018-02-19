@@ -27,7 +27,6 @@ import com.squareup.javapoet.ClassName;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A {@link BindingExpression} for {@code @Binds} methods. */
 final class DelegateBindingExpression extends BindingExpression {
@@ -42,7 +41,7 @@ final class DelegateBindingExpression extends BindingExpression {
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
-      Elements elements) {
+      DaggerElements elements) {
     this.binding = checkNotNull(resolvedBindings.contributionBinding());
     this.requestKind = checkNotNull(requestKind);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);

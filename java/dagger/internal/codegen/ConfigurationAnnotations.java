@@ -50,7 +50,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /**
@@ -166,15 +165,15 @@ final class ConfigurationAnnotations {
 
   /**
    * Returns the full set of modules transitively {@linkplain Module#includes included} from the
-   * given seed modules.  If a module is malformed and a type listed in {@link Module#includes}
-   * is not annotated with {@link Module}, it is ignored.
+   * given seed modules. If a module is malformed and a type listed in {@link Module#includes} is
+   * not annotated with {@link Module}, it is ignored.
    *
    * @deprecated Use {@link ComponentDescriptor#transitiveModules}.
    */
   @Deprecated
   static ImmutableSet<TypeElement> getTransitiveModules(
-      Types types, Elements elements, Iterable<TypeElement> seedModules) {
-    TypeMirror objectType = elements.getTypeElement(Object.class.getCanonicalName()).asType();
+      Types types, DaggerElements elements, Iterable<TypeElement> seedModules) {
+    TypeMirror objectType = elements.getTypeElement(Object.class).asType();
     Queue<TypeElement> moduleQueue = new ArrayDeque<>();
     Iterables.addAll(moduleQueue, seedModules);
     Set<TypeElement> moduleElements = Sets.newLinkedHashSet();

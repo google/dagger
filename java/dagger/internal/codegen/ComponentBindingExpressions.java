@@ -48,7 +48,6 @@ import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A central repository of code expressions used to access any binding available to a component. */
 final class ComponentBindingExpressions {
@@ -65,7 +64,7 @@ final class ComponentBindingExpressions {
   private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
-  private final Elements elements;
+  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final Table<Key, RequestKind, BindingExpression> expressions = HashBasedTable.create();
@@ -77,7 +76,7 @@ final class ComponentBindingExpressions {
       ComponentRequirementFields componentRequirementFields,
       OptionalFactories optionalFactories,
       DaggerTypes types,
-      Elements elements,
+      DaggerElements elements,
       CompilerOptions compilerOptions) {
     this(
         Optional.empty(),
@@ -101,7 +100,7 @@ final class ComponentBindingExpressions {
       ReferenceReleasingManagerFields referenceReleasingManagerFields,
       OptionalFactories optionalFactories,
       DaggerTypes types,
-      Elements elements,
+      DaggerElements elements,
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;

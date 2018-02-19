@@ -34,7 +34,6 @@ import dagger.producers.ProducerModule;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /** A validator for {@link BindsOptionalOf} methods. */
@@ -43,7 +42,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
   private final Types types;
 
   @Inject
-  BindsOptionalOfMethodValidator(Elements elements, Types types) {
+  BindsOptionalOfMethodValidator(DaggerElements elements, Types types) {
     super(
         elements,
         types,

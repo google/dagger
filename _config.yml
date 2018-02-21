@@ -2,6 +2,50 @@ auto: true
 url: "https://google.github.io"
 baseurl: '/dagger'
 markdown: kramdown
-dagger:
-  groupId: com.google.dagger
-  version: 2.2
+repository: google/dagger
+
+title: Dagger
+description:
+  Dagger is a fully static, compile-time dependency injection framework for both
+  Java and Android. It is developed by the Java Core Libraries Team at Google.
+
+themeColor: blue
+fixedNav: 'true' # true or false
+
+exclude: [_site, CHANGELOG.md, LICENSE, README.md, Gemfile, Gemfile.lock]
+sass:
+  style: compressed
+
+googleAnalyticsId: UA-43772875-7
+
+nav:
+  - item:
+      name: Home
+      url: /
+  - item:
+      name: "User's Guide"
+      url: /users-guide
+  - item:
+      name: Android
+      url: /android
+  - item:
+      name: Multibindings
+      url: /multibindings
+  - item:
+      name: Subcomponents
+      url: /subcomponents
+  - item:
+      name: Producers
+      url: /producers
+  - item:
+      name: Testing
+      url: /testing
+  - item:
+      name: Dagger 1 Migration
+      url: /dagger-1-migration
+  - item:
+      name: Resources
+      url: /resources
+  - item:
+      name: FAQ
+      url: /faq

@@ -13,16 +13,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-layout: base
+# Only the main Sass file needs front matter (the dashes are enough)
 ---
-<article class="c-article">
-  <header class="c-header c-article__header">
-    <div class="u-container">
-      <h1 class="c-header__title">{{ page.title }}</h1>
-    </div>
-  </header>
+@charset "utf-8";
 
-  <div class="c-article__main">
-    {{ content }}
-  </div>
-</article>
+// Helpers
+@import
+  'helpers/variables',
+  'helpers/mixins';
+
+// Base
+@import
+  'base/reset';
+
+// Utilities
+@import
+  'utilities/layout';
+
+// Components
+@import
+  'components/header',
+  'components/navigation',
+  'components/article',
+  'components/archives',
+  'components/social',
+  'components/buttons',
+  'components/footer';
+
+// Themes
+@import
+  'themes/blue',
+  'themes/green',
+  'themes/grey',
+  'themes/orange',
+  'themes/purple';
+
+// Vendor
+@import
+  'vendor/syntax-highlighting';

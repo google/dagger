@@ -21,7 +21,6 @@ import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
@@ -900,8 +899,8 @@ final class BindingGraphFactory {
             Resolver.this,
             key);
         ResolvedBindings previouslyResolvedBindings = getPreviouslyResolvedBindings(key).get();
-        if (hasLocalMultibindingContributions(previouslyResolvedBindings)
-            || hasLocallyPresentOptionalBinding(previouslyResolvedBindings)) {
+        if (hasLocalMultibindingContributions(key)
+            || hasLocalOptionalBindingContribution(previouslyResolvedBindings)) {
           return true;
         }
 
@@ -944,30 +943,33 @@ final class BindingGraphFactory {
       }
 
       /**
-       * Returns {@code true} if {@code resolvedBindings} contains a synthetic multibinding with at
-       * least one contribution declared within this component's modules.
+       * Returns {@code true} if there is at least one multibinding contribution declared within
+       * this component's modules that matches the key.
        */
-      private boolean hasLocalMultibindingContributions(ResolvedBindings resolvedBindings) {
-        return any(
-                resolvedBindings.contributionBindings(),
-                ContributionBinding::isSyntheticMultibinding)
-            && keysMatchingRequest(resolvedBindings.key())
-                .stream()
-                .anyMatch(key -> !getLocalExplicitMultibindings(key).isEmpty());
+      private boolean hasLocalMultibindingContributions(Key requestKey) {
+        return keysMatchingRequest(requestKey)
+            .stream()
+            .anyMatch(key -> !getLocalExplicitMultibindings(key).isEmpty());
       }
 
       /**
-       * Returns {@code true} if {@code resolvedBindings} contains a synthetic optional binding for
-       * which there is an explicit present binding in this component.
+       * Returns {@code true} if there is a contribution in this component for an {@code
+       * Optional<Foo>} key that has not been contributed in a parent.
        */
-      private boolean hasLocallyPresentOptionalBinding(ResolvedBindings resolvedBindings) {
-        return resolvedBindings
-                .contributionBindings()
-                .stream()
-                .map(ContributionBinding::kind)
-                .anyMatch(isEqual(OPTIONAL))
-            && !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
-                .isEmpty();
+      private boolean hasLocalOptionalBindingContribution(ResolvedBindings resolvedBindings) {
+        if (resolvedBindings
+            .contributionBindings()
+            .stream()
+            .map(ContributionBinding::kind)
+            .anyMatch(isEqual(OPTIONAL))) {
+          return !getLocalExplicitBindings(keyFactory.unwrapOptional(resolvedBindings.key()).get())
+              .isEmpty();
+        } else {
+          // If a parent contributes a @Provides Optional<Foo> binding and a child has a
+          // @BindsOptionalOf Foo method, the two should conflict, even if there is no binding for
+          // Foo on its own
+          return !getOptionalBindingDeclarations(resolvedBindings.key()).isEmpty();
+        }
       }
     }
   }

@@ -191,4 +191,75 @@ public class MultibindingTest {
         .onLineContaining("setOfProduced()");
 
   }
+
+  @Test
+  public void provideExplicitSetInParent_AndMultibindingContributionInChild() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Set<String> set();",
+            "  Child child();",
+            "}");
+    JavaFileObject parentModule =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.HashSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class ParentModule {",
+            "  @Provides",
+            "  Set<String> set() {",
+            "    return new HashSet();",
+            "  }",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Set<String> set();",
+            "}");
+    JavaFileObject childModule =
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.multibindings.IntoSet;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  String setContribution() {",
+            "    return new String();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, parentModule, child, childModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("incompatible bindings or declarations")
+        .inFile(parent)
+        .onLineContaining("interface Parent");
+  }
 }

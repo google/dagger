@@ -16,15 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
-import static javax.lang.model.element.Modifier.PRIVATE;
-
-import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.TypeName;
 
 /**
  * A factory for expressions of {@link ComponentRequirement}s in the generated component. This is
@@ -32,23 +25,13 @@ import com.squareup.javapoet.TypeName;
  * {@link dagger.model.Key}. See {@link ComponentRequirementBindingExpression} for binding
  * expressions that are themselves a component requirement.
  */
-abstract class ComponentRequirementField {
-  private final ComponentRequirement componentRequirement;
-
-  private ComponentRequirementField(ComponentRequirement componentRequirement) {
-    this.componentRequirement = checkNotNull(componentRequirement);
-  }
-
-  final ComponentRequirement componentRequirement() {
-    return componentRequirement;
-  }
-
+interface ComponentRequirementField {
   /**
    * Returns an expression for the {@link ComponentRequirement} to be used when implementing a
    * component method. This may add a field to the component in order to reference the component
    * requirement outside of the {@code initialize()} methods.
    */
-  abstract CodeBlock getExpression(ClassName requestingClass);
+  CodeBlock getExpression(ClassName requestingClass);
 
   /**
    * Returns an expression for the {@link ComponentRequirement} to be used only within {@code
@@ -57,123 +40,5 @@ abstract class ComponentRequirementField {
    * <p>When accessing this field from a subcomponent, this may cause a field to be initialized in
    * the component that owns this {@link ComponentRequirement}.
    */
-  abstract CodeBlock getExpressionDuringInitialization(ClassName requestingClass);
-
-  /**
-   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a corresponding
-   * field on the component builder.
-   */
-  private static final class BuilderField extends ComponentRequirementField {
-    private final GeneratedComponentModel generatedComponentModel;
-    private final ClassName owningComponent;
-    private final FieldSpec builderField;
-    private MemberSelect field;
-
-    private BuilderField(
-        ComponentRequirement componentRequirement,
-        GeneratedComponentModel generatedComponentModel,
-        ClassName owningComponent,
-        FieldSpec builderField) {
-      super(componentRequirement);
-      this.generatedComponentModel = checkNotNull(generatedComponentModel);
-      this.owningComponent = checkNotNull(owningComponent);
-      this.builderField = checkNotNull(builderField);
-    }
-
-    @Override
-    CodeBlock getExpression(ClassName requestingClass) {
-      return getField().getExpressionFor(requestingClass);
-    }
-
-    @Override
-    CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      if (owningComponent.equals(requestingClass)) {
-        return CodeBlock.of("builder.$N", builderField);
-      } else {
-        // requesting this component requirement during initialization of a child component requires
-        // the it to be access from a field and not the builder (since it is no longer available)
-        return getExpression(requestingClass);
-      }
-    }
-
-    private MemberSelect getField() {
-      if (field == null) {
-        // TODO(dpb,ronshapiro): think about whether GeneratedComponentModel.addField should make a
-        // unique name for the field.
-        String fieldName =
-            generatedComponentModel.getUniqueFieldName(componentRequirement().variableName());
-        FieldSpec componentField =
-            FieldSpec.builder(TypeName.get(componentRequirement().type()), fieldName, PRIVATE)
-                .build();
-        generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, componentField);
-        generatedComponentModel.addInitialization(
-            CodeBlock.of("this.$N = builder.$N;", componentField, builderField));
-        field = MemberSelect.localField(owningComponent, fieldName);
-      }
-      return field;
-    }
-  }
-
-  /**
-   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a corresponding
-   * field already added on the component.
-   */
-  private static final class ComponentField extends ComponentRequirementField {
-    private final MemberSelect memberSelect;
-
-    private ComponentField(
-        ComponentRequirement componentRequirement,
-        FieldSpec componentField,
-        ClassName owningComponent) {
-      super(componentRequirement);
-      this.memberSelect = MemberSelect.localField(owningComponent, componentField.name);
-    }
-
-    @Override
-    CodeBlock getExpression(ClassName requestingClass) {
-      return memberSelect.getExpressionFor(requestingClass);
-    }
-
-    @Override
-    CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      return getExpression(requestingClass);
-    }
-  }
-
-  static final class Factory {
-    private final GeneratedComponentModel generatedComponentModel;
-    private final ClassName owningComponent;
-    private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
-
-    Factory(
-        GeneratedComponentModel generatedComponentModel,
-        ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
-      this.generatedComponentModel = checkNotNull(generatedComponentModel);
-      this.owningComponent = checkNotNull(generatedComponentModel.name());
-      this.builderFields = checkNotNull(builderFields);
-    }
-
-    /**
-     * Returns a {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a
-     * corresponding field on the component builder.
-     */
-    ComponentRequirementField forBuilderField(ComponentRequirement componentRequirement) {
-      return new BuilderField(
-          componentRequirement,
-          generatedComponentModel,
-          owningComponent,
-          builderFields.get(componentRequirement));
-    }
-  }
-
-  /**
-   * Returns a {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a
-   * corresponding field already added on the component.
-   */
-  static ComponentRequirementField componentField(
-      ComponentRequirement componentRequirement,
-      FieldSpec componentField,
-      ClassName owningComponent) {
-    return new ComponentField(componentRequirement, componentField, owningComponent);
-  }
+  CodeBlock getExpressionDuringInitialization(ClassName requestingClass);
 }

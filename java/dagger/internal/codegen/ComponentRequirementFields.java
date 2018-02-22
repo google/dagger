@@ -16,12 +16,21 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Suppliers.memoize;
+import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
+import static javax.lang.model.element.Modifier.PRIVATE;
+
+import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
+import dagger.internal.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A central repository of fields used to access any {@link ComponentRequirement} available to a
@@ -33,21 +42,38 @@ final class ComponentRequirementFields {
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
   // parents? If so, maybe make ComponentRequirementField.Factory create it.
 
-  /**
-   * A list of component requirement field maps. The first element contains the fields on this
-   * component; the second contains the fields owned by its parent; and so on.
-   */
-  private final ImmutableList<Map<ComponentRequirement, ComponentRequirementField>>
-      componentRequirementFieldsMaps;
+  private final Optional<ComponentRequirementFields> parent;
+  private final Map<ComponentRequirement, ComponentRequirementField> componentRequirementFields =
+      new HashMap<>();
+  private final BindingGraph graph;
+  private final GeneratedComponentModel generatedComponentModel;
+  private final Optional<ComponentBuilder> componentBuilder;
 
   private ComponentRequirementFields(
-      ImmutableList<Map<ComponentRequirement, ComponentRequirementField>>
-          componentRequirementFieldsMaps) {
-    this.componentRequirementFieldsMaps = componentRequirementFieldsMaps;
+      Optional<ComponentRequirementFields> parent,
+      BindingGraph graph,
+      GeneratedComponentModel generatedComponentModel,
+      Optional<ComponentBuilder> componentBuilder) {
+    this.parent = parent;
+    this.graph = graph;
+    this.generatedComponentModel = generatedComponentModel;
+    this.componentBuilder = componentBuilder;
   }
 
-  ComponentRequirementFields() {
-    this(ImmutableList.of(newComponentRequirementsMap()));
+  ComponentRequirementFields(
+      BindingGraph graph,
+      GeneratedComponentModel generatedComponentModel,
+      Optional<ComponentBuilder> componentBuilder) {
+    this(Optional.empty(), graph, generatedComponentModel, componentBuilder);
+  }
+
+  /** Returns a new object representing the fields available from a child component of this one. */
+  ComponentRequirementFields forChildComponent(
+      BindingGraph graph,
+      GeneratedComponentModel generatedComponentModel,
+      Optional<ComponentBuilder> componentBuilder) {
+    return new ComponentRequirementFields(
+        Optional.of(this), graph, generatedComponentModel, componentBuilder);
   }
 
   /**
@@ -71,38 +97,139 @@ final class ComponentRequirementFields {
     return getField(componentRequirement).getExpressionDuringInitialization(requestingClass);
   }
 
-  private ComponentRequirementField getField(ComponentRequirement componentRequirement) {
-    for (Map<ComponentRequirement, ComponentRequirementField> componentRequirementFieldsMap :
-        componentRequirementFieldsMaps) {
-      ComponentRequirementField field = componentRequirementFieldsMap.get(componentRequirement);
-      if (field != null) {
-        return field;
-      }
+  ComponentRequirementField getField(ComponentRequirement componentRequirement) {
+    if (graph.componentRequirements().contains(componentRequirement)) {
+      return componentRequirementFields.computeIfAbsent(componentRequirement, this::create);
+    }
+    if (parent.isPresent()) {
+      return parent.get().getField(componentRequirement);
     }
     throw new IllegalStateException(
         "no component requirement field found for " + componentRequirement);
   }
 
-  /**
-   * Adds a component requirement field for a single component requirement owned by this component.
-   */
-  // TODO(user): remove this method and create ComponentRequirementFields lazily, on demand.
-  void add(ComponentRequirementField field) {
-    componentRequirementFieldsMaps.get(0).put(field.componentRequirement(), field);
+  /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
+  private ComponentRequirementField create(ComponentRequirement requirement) {
+    if (componentBuilder.isPresent()) {
+      FieldSpec builderField = componentBuilder.get().builderFields().get(requirement);
+      return new BuilderField(requirement, generatedComponentModel, builderField);
+    } else if (graph.factoryMethodParameters().containsKey(requirement)) {
+      ParameterSpec factoryParameter =
+          ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
+      return new ComponentParameterField(requirement, generatedComponentModel, factoryParameter);
+    } else if (graph.componentRequirements().contains(requirement)) {
+      return new ComponentInstantiableField(requirement, generatedComponentModel);
+    } else {
+      throw new AssertionError();
+    }
   }
 
-  private static Map<ComponentRequirement, ComponentRequirementField>
-      newComponentRequirementsMap() {
-    return new HashMap<>();
+  private abstract static class AbstractField implements ComponentRequirementField {
+    private final ComponentRequirement componentRequirement;
+    private final GeneratedComponentModel generatedComponentModel;
+    private final Supplier<MemberSelect> field = memoize(this::createField);
+
+    private AbstractField(
+        ComponentRequirement componentRequirement,
+        GeneratedComponentModel generatedComponentModel) {
+      this.componentRequirement = checkNotNull(componentRequirement);
+      this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    }
+
+    @Override
+    public CodeBlock getExpression(ClassName requestingClass) {
+      return field.get().getExpressionFor(requestingClass);
+    }
+
+    @Override
+    public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
+      return getExpression(requestingClass);
+    }
+
+    private MemberSelect createField() {
+      // TODO(dpb,ronshapiro): think about whether GeneratedComponentModel.addField
+      // should make a unique name for the field.
+      String fieldName =
+          generatedComponentModel.getUniqueFieldName(componentRequirement.variableName());
+      FieldSpec field =
+          FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE).build();
+      generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, field);
+      generatedComponentModel.addInitialization(fieldInitialization(field));
+      return MemberSelect.localField(generatedComponentModel.name(), fieldName);
+    }
+
+    /** Returns the {@link CodeBlock} that initializes the component field during construction. */
+    abstract CodeBlock fieldInitialization(FieldSpec componentField);
   }
 
   /**
-   * Returns a new object representing the fields available from a child component of this one.
+   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a corresponding
+   * field on the component builder.
    */
-  ComponentRequirementFields forChildComponent() {
-    return new ComponentRequirementFields(
-        FluentIterable.of(newComponentRequirementsMap())
-            .append(componentRequirementFieldsMaps)
-            .toList());
+  private static final class BuilderField extends AbstractField {
+    private final FieldSpec builderField;
+
+    private BuilderField(
+        ComponentRequirement componentRequirement,
+        GeneratedComponentModel generatedComponentModel,
+        FieldSpec builderField) {
+      super(componentRequirement, generatedComponentModel);
+      this.builderField = checkNotNull(builderField);
+    }
+
+    @Override
+    public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
+      if (super.generatedComponentModel.name().equals(requestingClass)) {
+        return CodeBlock.of("builder.$N", builderField);
+      } else {
+        // requesting this component requirement during initialization of a child component requires
+        // the it to be access from a field and not the builder (since it is no longer available)
+        return getExpression(requestingClass);
+      }
+    }
+
+    @Override
+    CodeBlock fieldInitialization(FieldSpec componentField) {
+      return CodeBlock.of("this.$N = builder.$N;", componentField, builderField);
+    }
+  }
+
+  /**
+   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that can be instantiated
+   * by the component (i.e. a static class with a no-arg constructor).
+   */
+  private static final class ComponentInstantiableField extends AbstractField {
+    private ComponentInstantiableField(
+        ComponentRequirement componentRequirement,
+        GeneratedComponentModel generatedComponentModel) {
+      super(componentRequirement, generatedComponentModel);
+    }
+
+    @Override
+    CodeBlock fieldInitialization(FieldSpec componentField) {
+      return CodeBlock.of("this.$N = new $T();", componentField, componentField.type);
+    }
+  }
+
+  /**
+   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that are passed in
+   * as parameters to a component factory method.
+   */
+  private static final class ComponentParameterField extends AbstractField {
+    private final ParameterSpec factoryParameter;
+
+    private ComponentParameterField(
+        ComponentRequirement componentRequirement,
+        GeneratedComponentModel generatedComponentModel,
+        ParameterSpec factoryParameter) {
+      super(componentRequirement, generatedComponentModel);
+      this.factoryParameter = checkNotNull(factoryParameter);
+    }
+
+    @Override
+    CodeBlock fieldInitialization(FieldSpec componentField) {
+      return CodeBlock.of(
+          "this.$N = $T.checkNotNull($N);", componentField, Preconditions.class, factoryParameter);
+    }
   }
 }

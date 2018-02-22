@@ -75,13 +75,20 @@ final class ComponentBuilder {
     return builderFields;
   }
 
-  static ComponentBuilder create(
+  static Optional<ComponentBuilder> create(
       ClassName componentName,
       BindingGraph graph,
       SubcomponentNames subcomponentNames,
       Elements elements,
       Types types) {
-    return new Creator(componentName, graph, subcomponentNames, elements, types).create();
+    return hasBuilder(graph.componentDescriptor())
+        ? Optional.of(
+            new Creator(componentName, graph, subcomponentNames, elements, types).create())
+        : Optional.empty();
+  }
+
+  private static boolean hasBuilder(ComponentDescriptor component) {
+    return component.kind().isTopLevel() || component.builderSpec().isPresent();
   }
 
   private static final class Creator {

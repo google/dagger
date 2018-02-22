@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -37,7 +38,9 @@ import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 /**
  * The canonical representation of a full-resolved graph.
@@ -135,6 +138,39 @@ abstract class BindingGraph {
     return FluentIterable.from(ownedModules()).transform(ModuleDescriptor::moduleElement).toSet();
   }
 
+  /**
+   * Returns the factory method for this subcomponent, if it exists.
+   *
+   * <p>This factory method is the one defined in the parent component's interface.
+   *
+   * <p>In the example below, the {@link BindingGraph#factoryMethod} for {@code ChildComponent}
+   * would return the {@link ExecutableElement}: {@code childComponent(ChildModule1)} .
+   *
+   * <pre><code>
+   *   {@literal @Component}
+   *   interface ParentComponent {
+   *     ChildComponent childComponent(ChildModule1 childModule);
+   *   }
+   * </code></pre>
+   */
+  // TODO(b/73294201): Consider returning the resolved ExecutableType for the factory method.
+  abstract Optional<ExecutableElement> factoryMethod();
+
+  /**
+   * Returns a map between the {@linkplain ComponentRequirement component requirement} and the
+   * corresponding {@link VariableElement} for each module parameter in the {@linkplain
+   * BindingGraph#factoryMethod factory method}.
+   */
+  // TODO(dpb): Consider disallowing modules if none of their bindings are used.
+  ImmutableMap<ComponentRequirement, VariableElement> factoryMethodParameters() {
+    checkState(factoryMethod().isPresent());
+    ImmutableMap.Builder<ComponentRequirement, VariableElement> builder = ImmutableMap.builder();
+    for (VariableElement parameter : factoryMethod().get().getParameters()) {
+      builder.put(ComponentRequirement.forModule(parameter.asType()), parameter);
+    }
+    return builder.build();
+  }
+
   private static final Traverser<BindingGraph> SUBGRAPH_TRAVERSER =
       Traverser.forTree(BindingGraph::subgraphs);
 
@@ -161,6 +197,9 @@ abstract class BindingGraph {
         .filter(module -> ownedModuleTypes().contains(module))
         .map(module -> ComponentRequirement.forModule(module.asType()))
         .forEach(requirements::add);
+    if (factoryMethod().isPresent()) {
+      factoryMethodParameters().keySet().forEach(requirements::add);
+    }
     componentDescriptor()
         .dependencies()
         .stream()
@@ -209,13 +248,15 @@ abstract class BindingGraph {
       ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
       ImmutableSet<BindingGraph> subgraphs,
       ImmutableSet<Scope> scopesRequiringReleasableReferenceManagers,
-      ImmutableSet<ModuleDescriptor> ownedModules) {
+      ImmutableSet<ModuleDescriptor> ownedModules,
+      Optional<ExecutableElement> factoryMethod) {
     return new AutoValue_BindingGraph(
         componentDescriptor,
         resolvedContributionBindingsMap,
         resolvedMembersInjectionBindings,
         subgraphs,
         scopesRequiringReleasableReferenceManagers,
-        ownedModules);
+        ownedModules,
+        factoryMethod);
   }
 }

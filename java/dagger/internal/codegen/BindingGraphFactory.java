@@ -211,7 +211,8 @@ final class BindingGraphFactory {
         subgraphs.build(),
         getScopesRequiringReleasableReferenceManagers(
             releasableReferenceManagerBindings, resolvedContributionBindingsMap.keySet()),
-        requestResolver.getOwnedModules());
+        requestResolver.getOwnedModules(),
+        requestResolver.getFactoryMethod());
   }
 
   /**
@@ -321,6 +322,20 @@ final class BindingGraphFactory {
       this.delegateMultibindingDeclarations =
           multibindingContributionsByMultibindingKey(delegateDeclarations.values());
       subcomponentsToResolve.addAll(componentDescriptor.subcomponentsFromEntryPoints());
+    }
+
+    /** Returns the optional factory method for this component. */
+    Optional<ExecutableElement> getFactoryMethod() {
+      return parentResolver
+          .map(
+              parent -> {
+                return parent
+                    .componentDescriptor
+                    .subcomponentsByFactoryMethod()
+                    .inverse()
+                    .get(componentDescriptor);
+              })
+          .map(method -> method.methodElement());
     }
 
     /**

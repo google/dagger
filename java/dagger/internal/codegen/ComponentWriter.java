@@ -82,7 +82,6 @@ abstract class ComponentWriter {
     return new RootComponentWriter(
             types,
             elements,
-            compilerOptions,
             graph,
             generatedComponentModel,
             subcomponentNames,
@@ -122,7 +121,6 @@ abstract class ComponentWriter {
 
   private final Elements elements;
   private final DaggerTypes types;
-  private final CompilerOptions compilerOptions;
   private final BindingGraph graph;
   private final SubcomponentNames subcomponentNames;
   private final ComponentBindingExpressions bindingExpressions;
@@ -135,7 +133,6 @@ abstract class ComponentWriter {
   private ComponentWriter(
       DaggerTypes types,
       Elements elements,
-      CompilerOptions compilerOptions,
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
       SubcomponentNames subcomponentNames,
@@ -145,7 +142,6 @@ abstract class ComponentWriter {
       Optional<ComponentBuilder> builder) {
     this.types = types;
     this.elements = elements;
-    this.compilerOptions = compilerOptions;
     this.graph = graph;
     this.subcomponentNames = subcomponentNames;
     this.generatedComponentModel = generatedComponentModel;
@@ -278,7 +274,6 @@ abstract class ComponentWriter {
     RootComponentWriter(
         DaggerTypes types,
         Elements elements,
-        CompilerOptions compilerOptions,
         BindingGraph graph,
         GeneratedComponentModel generatedComponentModel,
         SubcomponentNames subcomponentNames,
@@ -289,7 +284,6 @@ abstract class ComponentWriter {
       super(
           types,
           elements,
-          compilerOptions,
           graph,
           generatedComponentModel,
           subcomponentNames,
@@ -359,7 +353,6 @@ abstract class ComponentWriter {
       super(
           parent.types,
           parent.elements,
-          parent.compilerOptions,
           graph,
           generatedComponentModel,
           parent.subcomponentNames,

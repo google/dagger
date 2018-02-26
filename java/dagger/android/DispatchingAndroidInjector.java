@@ -127,9 +127,9 @@ public final class DispatchingAndroidInjector<T> implements AndroidInjector<T> {
     }
     Collections.sort(suggestions);
 
-    return String.format(
-        suggestions.isEmpty() ? NO_SUPERTYPES_BOUND_FORMAT : SUPERTYPES_BOUND_FORMAT,
-        instance.getClass().getCanonicalName(),
-        suggestions);
+    return suggestions.isEmpty()
+        ? String.format(NO_SUPERTYPES_BOUND_FORMAT, instance.getClass().getCanonicalName())
+        : String.format(
+            SUPERTYPES_BOUND_FORMAT, instance.getClass().getCanonicalName(), suggestions);
   }
 }

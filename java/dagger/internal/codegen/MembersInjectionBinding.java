@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -54,12 +53,6 @@ abstract class MembersInjectionBinding extends Binding {
 
   /** The set of individual sites where {@link Inject} is applied. */
   abstract ImmutableSortedSet<InjectionSite> injectionSites();
-
-  /**
-   * The {@link Key} for the non-object superclass of {@link #bindingElement()}. Absent if
-   * {@link #bindingElement()} is a direct subclass of {@link Object}. 
-   */
-  abstract Optional<Key> parentKey();
 
   @Override
   BindingType bindingType() {

@@ -271,8 +271,10 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (report.isClean()) {
       MembersInjectionBinding binding = bindingFactory.membersInjectionBinding(type, resolvedType);
       registerBinding(binding, warnIfNotAlreadyGenerated);
-      if (binding.parentKey().isPresent() && !binding.injectionSites().isEmpty()) {
-        getOrFindMembersInjectionBinding(binding.parentKey().get());
+      for (Optional<DeclaredType> supertype = types.nonObjectSuperclass(type);
+          supertype.isPresent();
+          supertype = types.nonObjectSuperclass(supertype.get())) {
+        getOrFindMembersInjectionBinding(keyFactory.forMembersInjectedType(supertype.get()));
       }
       return Optional.of(binding);
     }

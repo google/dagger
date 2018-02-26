@@ -547,9 +547,6 @@ final class BindingFactory {
             .flatMap(injectionSite -> injectionSite.dependencies().stream())
             .collect(toImmutableSet());
 
-    Optional<Key> parentKey =
-        types.nonObjectSuperclass(declaredType).map(keyFactory::forMembersInjectedType);
-
     Key key = keyFactory.forMembersInjectedType(declaredType);
     TypeElement typeElement = MoreElements.asType(declaredType.asElement());
     return new AutoValue_MembersInjectionBinding(
@@ -560,8 +557,7 @@ final class BindingFactory {
             ? Optional.of(
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
             : Optional.empty(),
-        injectionSites,
-        parentKey);
+        injectionSites);
   }
 
   private final ElementVisitor<Optional<InjectionSite>, DeclaredType> injectionSiteVisitor =

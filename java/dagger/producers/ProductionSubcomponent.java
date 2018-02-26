@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  * <code>{@literal @}Production Executor</code>, similar to {@link ProductionComponent}. Note that
  * this binding may be in an ancestor component.
  *
- * @author Jesse Beder
+ * @since 2.1
  */
 @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
 @Target(TYPE)

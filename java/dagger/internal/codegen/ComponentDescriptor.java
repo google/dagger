@@ -76,9 +76,6 @@ import javax.lang.model.util.Types;
 
 /**
  * The logical representation of a {@link Component} or {@link ProductionComponent} definition.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 @AutoValue
 abstract class ComponentDescriptor {

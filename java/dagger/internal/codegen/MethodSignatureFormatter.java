@@ -37,9 +37,6 @@ import javax.lang.model.util.Types;
 
 /**
  * Formats the signature of an {@link ExecutableElement} suitable for use in error messages.
- *
- * @author Christian Gruber
- * @since 2.0
  */
 final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
   private final Types types;

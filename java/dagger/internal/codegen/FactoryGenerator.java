@@ -68,9 +68,6 @@ import javax.lang.model.util.Types;
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
  * {@link Inject} constructors.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final Types types;

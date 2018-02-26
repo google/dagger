@@ -34,9 +34,6 @@ import javax.lang.model.element.TypeElement;
 
 /**
  * Represents the full members injection of a particular type.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 @AutoValue
 abstract class MembersInjectionBinding extends Binding {

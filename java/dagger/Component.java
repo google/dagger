@@ -199,7 +199,6 @@ import javax.inject.Singleton;
  * on the dependency is bound as a provider. Note that <em>only</em> the bindings exposed as
  * provision methods are available through component dependencies.
  *
- * @author Gregory Kick
  * @since 2.0
  */
 @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.

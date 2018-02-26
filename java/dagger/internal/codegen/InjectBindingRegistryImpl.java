@@ -55,8 +55,6 @@ import javax.tools.Diagnostic.Kind;
  * injection bindings from {@link Inject} fields and methods known to the annotation processor.
  * Note that this registry <b>does not</b> handle any explicit bindings (those from {@link Provides}
  * methods, {@link Component} dependencies, etc.).
- *
- * @author Gregory Kick
  */
 @Singleton
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {

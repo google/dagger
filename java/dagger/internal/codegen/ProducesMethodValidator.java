@@ -42,9 +42,6 @@ import javax.lang.model.util.Types;
 
 /**
  * A validator for {@link Produces} methods.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 final class ProducesMethodValidator extends BindingMethodValidator {
 

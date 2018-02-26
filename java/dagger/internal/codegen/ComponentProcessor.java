@@ -46,9 +46,6 @@ import javax.lang.model.util.Types;
  * implementation.
  *
  * TODO(gak): give this some better documentation
- *
- * @author Gregory Kick
- * @since 2.0
  */
 @AutoService(Processor.class)
 public final class ComponentProcessor extends BasicAnnotationProcessor {

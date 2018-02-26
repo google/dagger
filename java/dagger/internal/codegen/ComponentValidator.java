@@ -65,8 +65,6 @@ import javax.lang.model.util.Types;
 /**
  * Performs superficial validation of the contract of the {@link Component} and {@link
  * ProductionComponent} annotations.
- *
- * @author Gregory Kick
  */
 final class ComponentValidator {
   private final DaggerElements elements;

@@ -27,8 +27,6 @@ import com.google.common.collect.Iterables;
  * representation.
  *
  * @param <T> the type of the object to be transformed.
- * @author Christian Gruber
- * @since 2.0
  */
 abstract class Formatter<T> implements Function<T, String> {
 

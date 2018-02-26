@@ -30,7 +30,7 @@ import dagger.producers.ProductionComponent;
  * <p>If any of these methods throw, then the exception will be logged, and the framework will act
  * as though a no-op timing recorder was returned.
  *
- * @author Jesse Beder
+ * @since 2.1
  */
 public interface ProductionComponentTimingRecorder {
   /** Returns a timing recorder for an individual {@linkplain Produces producer method}. */

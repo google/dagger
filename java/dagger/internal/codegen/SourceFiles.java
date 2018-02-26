@@ -72,9 +72,6 @@ import javax.lang.model.element.TypeParameterElement;
 
 /**
  * Utilities for generating files.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 class SourceFiles {
 

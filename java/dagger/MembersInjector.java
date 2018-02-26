@@ -22,8 +22,6 @@ package dagger;
  *
  * @param <T> type to inject members of
  *
- * @author Bob Lee
- * @author Jesse Wilson
  * @since 2.0 (since 1.0 without the provision that {@link #injectMembers} cannot accept
  *      {@code null})
  */

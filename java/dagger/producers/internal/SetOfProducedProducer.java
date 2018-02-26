@@ -37,9 +37,6 @@ import java.util.concurrent.ExecutionException;
  * A {@link Producer} implementation used to implement {@link Set} bindings. This producer returns a
  * future {@code Set<Produced<T>>} whose elements are populated by subsequent calls to the delegate
  * {@link Producer#get} methods.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 public final class SetOfProducedProducer<T> extends AbstractProducer<Set<Produced<T>>> {
   public static <T> Producer<Set<T>> empty() {

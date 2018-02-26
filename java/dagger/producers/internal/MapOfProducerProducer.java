@@ -29,8 +29,6 @@ import javax.inject.Provider;
 /**
  * A {@link Producer} implementation used to implement {@link Map} bindings. This factory returns an
  * immediate future of {@code Map<K, Producer<V>>} when calling {@link #get}.
- *
- * @author Jesse Beder
  */
 public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, Producer<V>>> {
   private final ImmutableMap<K, Producer<V>> contributingMap;

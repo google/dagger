@@ -34,9 +34,6 @@ import javax.lang.model.util.SimpleTypeVisitor6;
 /**
  * Suggests a variable name for a type based on a {@link Binding}. Prefer
  * {@link DependencyVariableNamer} for cases where a specific {@link DependencyRequest} is present.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class BindingVariableNamer {
   private static final TypeVisitor<Void, StringBuilder> TYPE_NAMER =

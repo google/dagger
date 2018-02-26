@@ -72,7 +72,7 @@ import dagger.producers.Produces;
  * <p>If any of the monitor's methods throw, then the exception will be logged and processing will
  * continue unaffected.
  *
- * @author Jesse Beder
+ * @since 2.1
  */
 public abstract class ProducerMonitor {
   /**

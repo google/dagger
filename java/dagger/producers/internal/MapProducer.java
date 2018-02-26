@@ -35,8 +35,6 @@ import javax.inject.Provider;
 /**
  * A {@link Producer} implementation used to implement {@link Map} bindings. This producer returns a
  * {@code Map<K, V>} which is populated by calls to the delegate {@link Producer#get} methods.
- *
- * @author Jesse Beder
  */
 public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
   private final ImmutableMap<K, Producer<V>> mapOfProducers;

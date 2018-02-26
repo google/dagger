@@ -66,9 +66,6 @@ import javax.tools.Diagnostic;
 /**
  * A {@linkplain ValidationReport validator} for {@link Inject}-annotated elements and the types
  * that contain them.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class InjectValidator {
   private final Types types;

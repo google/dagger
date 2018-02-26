@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * to the value that the future produces; otherwise, the return type is bound to the returned value.
  * The production component will pass dependencies to the method as parameters.
  *
- * @author Jesse Beder
+ * @since 2.0
  */
 @Documented
 @Target(METHOD)

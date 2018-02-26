@@ -40,8 +40,6 @@ import java.lang.annotation.Target;
  * allow injection into sites that are marked {@code @Nullable} as well. A component that
  * attempts to pair a {@code @Nullable} provision with a non-{@code @Nullable} injection site
  * will fail to compile.
- *
- * @author Bob Lee
  */
 @Documented @Target(METHOD) @Retention(RUNTIME)
 public @interface Provides {

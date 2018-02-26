@@ -30,9 +30,6 @@ import javax.lang.model.element.Element;
  * <p>This exception <b>should not</b> be used to report detectable, logical errors as it may mask
  * other errors that might have been caught upon further processing.  Use a {@link ValidationReport}
  * for that.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class SourceFileGenerationException extends Exception {
   // TODO(ronshapiro): remove these unused values

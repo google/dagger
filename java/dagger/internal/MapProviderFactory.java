@@ -28,9 +28,6 @@ import javax.inject.Provider;
 /**
  * A {@link Factory} implementation used to implement {@link Map} bindings. This factory returns a
  * {@code Map<K, Provider<V>>} when calling {@link #get} (as specified by {@link Factory}).
- *
- * @author Chenying Hou
- * @since 2.0
  */
 public final class MapProviderFactory<K, V>
     implements Factory<Map<K, Provider<V>>>, Lazy<Map<K, Provider<V>>> {

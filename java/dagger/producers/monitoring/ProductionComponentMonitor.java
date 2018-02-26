@@ -44,7 +44,7 @@ import dagger.producers.ProductionComponent;
  * <p>If any of these methods throw, then the exception will be logged, and the framework will act
  * as though a no-op monitor was returned.
  *
- * @author Jesse Beder
+ * @since 2.1
  */
 public abstract class ProductionComponentMonitor {
   /** Returns a monitor for an individual {@linkplain Produces producer method}. */

@@ -38,9 +38,6 @@ import javax.lang.model.util.Types;
 /**
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
- *
- * @author Chenying Hou
- * @since 2.0
  */
 public class MapKeyProcessingStep implements BasicAnnotationProcessor.ProcessingStep {
   private final Messager messager;

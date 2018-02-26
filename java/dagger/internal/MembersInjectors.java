@@ -23,9 +23,6 @@ import javax.inject.Inject;
 
 /**
  * Basic {@link MembersInjector} implementations used by the framework.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 public final class MembersInjectors {
   /**

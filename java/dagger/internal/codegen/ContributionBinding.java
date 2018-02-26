@@ -52,9 +52,6 @@ import javax.lang.model.type.TypeMirror;
 /**
  * An abstract class for a value object representing the mechanism by which a {@link Key} can be
  * contributed to a dependency graph.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 abstract class ContributionBinding extends Binding implements HasContributionType {
 

@@ -33,9 +33,6 @@ import javax.lang.model.element.TypeElement;
 
 /**
  * Utilities relating to annotations defined in the {@code javax.inject} package.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class InjectionAnnotations {
   static Optional<AnnotationMirror> getQualifier(Element e) {

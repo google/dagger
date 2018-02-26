@@ -32,7 +32,7 @@ import dagger.producers.ProductionComponent;
  * update at nanosecond resolution. For example, {@link System#nanoTime()} would satisfy these
  * constraints.
  *
- * @author Jesse Beder
+ * @since 2.1
  */
 public abstract class ProducerTimingRecorder {
   /**

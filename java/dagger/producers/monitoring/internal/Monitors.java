@@ -29,8 +29,6 @@ import javax.inject.Provider;
 
 /**
  * Utility methods relating to monitoring, for use in generated producers code.
- *
- * @author Jesse Beder
  */
 public final class Monitors {
   private static final Logger logger = Logger.getLogger(Monitors.class.getName());

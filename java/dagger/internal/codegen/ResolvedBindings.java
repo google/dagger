@@ -42,8 +42,6 @@ import java.util.Optional;
  * component. (this will only happen if a type has an {@code @Inject} constructor and members, the
  * component has a {@link ComponentDescriptor.ComponentMethodKind#MEMBERS_INJECTION members
  * injection method}, and the type is also requested normally.
- *
- * @author Gregory Kick
  */
 @AutoValue
 abstract class ResolvedBindings implements HasContributionType {

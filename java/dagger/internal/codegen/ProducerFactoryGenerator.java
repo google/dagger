@@ -75,9 +75,6 @@ import javax.lang.model.util.Types;
 
 /**
  * Generates {@link Producer} implementations from {@link ProductionBinding} instances.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
   private final Types types;

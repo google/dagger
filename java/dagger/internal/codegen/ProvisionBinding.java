@@ -34,9 +34,6 @@ import java.util.Optional;
 
 /**
  * A value object representing the mechanism by which a {@link Key} can be provided.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 @AutoValue
 abstract class ProvisionBinding extends ContributionBinding {

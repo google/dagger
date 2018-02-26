@@ -55,8 +55,6 @@ import javax.lang.model.util.Types;
 /**
  * Utility methods related to dagger configuration annotations (e.g.: {@link Component}
  * and {@link Module}).
- *
- * @author Gregory Kick
  */
 final class ConfigurationAnnotations {
 

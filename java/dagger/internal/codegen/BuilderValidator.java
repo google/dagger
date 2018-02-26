@@ -45,8 +45,6 @@ import javax.lang.model.util.Types;
 
 /**
  * Validates {@link dagger.Component.Builder} annotations.
- *
- * @author sameb@google.com (Sam Berlin)
  */
 class BuilderValidator {
 

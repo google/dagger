@@ -30,9 +30,6 @@ import javax.lang.model.element.TypeElement;
 
 /**
  * Generates the implementation of the abstract types annotated with {@link Component}.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final DaggerTypes types;

@@ -28,7 +28,6 @@ import java.lang.annotation.Target;
  * {@link Subcomponent}. The details of how to associate a subcomponent with a parent are described
  * in the documentation for {@link Component}.
  *
- * @author Gregory Kick
  * @since 2.0
  */
 @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.

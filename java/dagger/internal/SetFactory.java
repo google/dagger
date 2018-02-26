@@ -33,9 +33,6 @@ import javax.inject.Provider;
  * A {@link Factory} implementation used to implement {@link Set} bindings. This factory always
  * returns a new {@link Set} instance for each call to {@link #get} (as required by {@link Factory})
  * whose elements are populated by subsequent calls to their {@link Provider#get} methods.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 public final class SetFactory<T> implements Factory<Set<T>> {
   private static final Factory<Set<Object>> EMPTY_FACTORY = InstanceFactory.create(emptySet());

@@ -49,8 +49,6 @@ import javax.lang.model.element.TypeElement;
 /**
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
  * as part of the {@link ComponentProcessor}.
- *
- * @author Gregory Kick
  */
 final class ComponentProcessingStep implements ProcessingStep {
   private final Messager messager;

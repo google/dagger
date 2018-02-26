@@ -31,9 +31,6 @@ import javax.inject.Scope;
  * as those created by {@link Inject} constructors, a new instance is not guaranteed by all
  * bindings. For example, {@link Provides} methods may be implemented in ways that return the same
  * instance for each call.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 public interface Factory<T> extends Provider<T> {
 }

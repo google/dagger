@@ -36,9 +36,6 @@ import java.util.Set;
  * A {@link Producer} implementation used to implement {@link Set} bindings. This producer returns
  * a future {@link Set} whose elements are populated by subsequent calls to the delegate
  * {@link Producer#get} methods.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 public final class SetProducer<T> extends AbstractProducer<Set<T>> {
   private static final Producer<Set<Object>> EMPTY_PRODUCER =

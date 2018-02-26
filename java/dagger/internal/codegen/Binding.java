@@ -50,9 +50,6 @@ import javax.lang.model.util.Types;
  * {@link Element} that generated the binding and the {@link DependencyRequest} instances that are
  * required to satisfy the binding, but leaves the specifics of the <i>mechanism</i> of the binding
  * to the subtypes.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 abstract class Binding extends BindingDeclaration implements dagger.model.Binding {
 

@@ -40,9 +40,6 @@ import javax.lang.model.util.ElementKindVisitor6;
  *   <li>{@code Producer<Widget>}
  *   <li>{@code Provider<Map<SomeMapKey, MapValue>>}.
  * </ul>
- *
- * @author Jesse Beder
- * @since 2.0
  */
 @AutoValue
 abstract class FrameworkField {

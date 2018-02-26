@@ -89,9 +89,6 @@ import javax.lang.model.util.Types;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link Module}s or {@link ProducerModule}s.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 @Singleton
 final class ModuleValidator {

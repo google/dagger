@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 /**
  * Annotates a class that contributes {@link Produces} bindings to the production component.
  *
- * @author Jesse Beder
+ * @since 2.0
  */
 @Documented
 @Target(TYPE)

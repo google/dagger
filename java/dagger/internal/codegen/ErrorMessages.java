@@ -40,9 +40,6 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * The collection of error messages to be reported back to users.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class ErrorMessages {
   /*

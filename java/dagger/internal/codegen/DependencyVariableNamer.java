@@ -32,9 +32,6 @@ import javax.inject.Provider;
  * with the {@link DependencyRequest}.  I.e. strips out words like "lazy" and "provider" if we
  * believe that those refer to {@link Lazy} and {@link Provider} rather than the type being
  * provided.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 //TODO(gak): develop the heuristics to get better names
 final class DependencyVariableNamer {

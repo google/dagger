@@ -36,9 +36,6 @@ import javax.inject.Provider;
 
 /**
  * Utility methods for use in generated producer code.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 public final class Producers {
   /**

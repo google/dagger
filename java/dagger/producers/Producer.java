@@ -89,7 +89,7 @@ import dagger.internal.Beta;
  *   Retrieved c
  * </code></pre>
  *
- * @author Jesse Beder
+ * @since 2.0
  */
 @Beta
 public interface Producer<T> {

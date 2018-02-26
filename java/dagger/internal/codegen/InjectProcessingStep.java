@@ -31,9 +31,6 @@ import javax.lang.model.util.ElementKindVisitor6;
 /**
  * An annotation processor for generating Dagger implementation code based on the {@link Inject}
  * annotation.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class InjectProcessingStep implements BasicAnnotationProcessor.ProcessingStep {
   private final InjectBindingRegistry injectBindingRegistry;

@@ -32,9 +32,6 @@ import javax.lang.model.util.Elements;
 
 /**
  * A validator for {@link MapKey} annotations.
- *
- * @author Chenying Hou
- * @since 2.0
  */
 // TODO(dpb,gak): Should unwrapped MapKeys be required to have their single member be named "value"?
 final class MapKeyValidator {

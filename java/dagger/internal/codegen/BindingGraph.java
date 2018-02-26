@@ -44,8 +44,6 @@ import javax.lang.model.element.VariableElement;
 
 /**
  * The canonical representation of a full-resolved graph.
- *
- * @author Gregory Kick
  */
 @AutoValue
 abstract class BindingGraph {

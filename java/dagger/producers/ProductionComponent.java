@@ -72,7 +72,7 @@ import javax.inject.Qualifier;
  * provided executor will be used by the framework to schedule all producer methods (for this
  * component, and any {@link ProductionSubcomponent} it may have.
  *
- * @author Jesse Beder
+ * @since 2.0
  */
 @Documented
 @Target(TYPE)

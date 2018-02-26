@@ -32,9 +32,6 @@ import javax.lang.model.util.Types;
 
 /**
  * A validator for {@link Provides} methods.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class ProvidesMethodValidator extends BindingMethodValidator {
 

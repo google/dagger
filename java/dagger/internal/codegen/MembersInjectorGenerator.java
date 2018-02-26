@@ -62,9 +62,6 @@ import javax.lang.model.util.Types;
 
 /**
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final Types types;

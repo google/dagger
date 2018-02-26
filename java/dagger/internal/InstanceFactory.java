@@ -28,9 +28,6 @@ import dagger.Lazy;
  * {@link #get} will always return the same instance. As such, any scoping applied to this factory
  * is redundant and unnecessary. However, using this with {@link DoubleCheck#provider} is valid and
  * may be desired for testing or contractual guarantees.
- *
- * @author Gregory Kick
- * @since 2.0
  */
 public final class InstanceFactory<T> implements Factory<T>, Lazy<T> {
   public static <T> Factory<T> create(T instance) {

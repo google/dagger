@@ -32,9 +32,6 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * A value object representing the mechanism by which a {@link Key} can be produced.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 @AutoValue
 abstract class ProductionBinding extends ContributionBinding {

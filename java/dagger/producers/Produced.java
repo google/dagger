@@ -42,7 +42,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  *   }
  * </code></pre>
  *
- * @author Jesse Beder
+ * @since 2.0
  */
 @Beta
 @CheckReturnValue

@@ -29,9 +29,6 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * An abstract {@link Producer} implementation that memoizes the result of its compute method.
- *
- * @author Jesse Beder
- * @since 2.0
  */
 public abstract class AbstractProducer<T> implements Producer<T> {
   private final Provider<ProductionComponentMonitor> monitorProvider;

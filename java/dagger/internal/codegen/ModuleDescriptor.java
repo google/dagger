@@ -51,6 +51,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -214,7 +215,10 @@ abstract class ModuleDescriptor {
       }
       Optional<AnnotationMirror> moduleAnnotation = getModuleAnnotation(moduleElement);
       if (moduleAnnotation.isPresent()) {
-        includedModules.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleAnnotation.get())));
+        includedModules.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleAnnotation.get())
+                .stream()
+                .peek(DaggerTypes::checkTypePresent)
+                .collect(Collectors.toList())));
         includedModules.addAll(implicitlyIncludedModules(moduleElement));
       }
       return includedModules;

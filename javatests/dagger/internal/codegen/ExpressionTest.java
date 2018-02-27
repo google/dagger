@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.testing.compile.CompilationRule;
-import com.squareup.javapoet.CodeBlock;
 import javax.lang.model.type.TypeMirror;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class ExpressionTest {
   public void castTo() {
     TypeMirror subtype = type(Subtype.class);
     TypeMirror supertype = type(Supertype.class);
-    Expression expression = Expression.create(subtype, CodeBlock.of("new $T() {}", subtype));
+    Expression expression = Expression.create(subtype, "new $T() {}", subtype);
 
     Expression castTo = expression.castTo(supertype);
 

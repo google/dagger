@@ -47,11 +47,19 @@ final class Expression {
     return new Expression(type, expression);
   }
 
+  /**
+   * Creates a new {@link Expression} with a {@link TypeMirror}, {@linkplain CodeBlock#of(String,
+   * Object[]) format, and arguments}.
+   */
+  static Expression create(TypeMirror type, String format, Object... args) {
+    return create(type, CodeBlock.of(format, args));
+  }
+
   /** Returns a new expression that casts the current expression to {@code newType}. */
   // TODO(ronshapiro): consider overloads that take a Types and Elements and only cast if necessary,
   // or just embedding a Types/Elements instance in an Expression.
   Expression castTo(TypeMirror newType) {
-    return Expression.create(newType, CodeBlock.of("($T) $L", newType, codeBlock));
+    return create(newType, "($T) $L", newType, codeBlock);
   }
 
   /** The {@link TypeMirror type} to which the expression evaluates. */

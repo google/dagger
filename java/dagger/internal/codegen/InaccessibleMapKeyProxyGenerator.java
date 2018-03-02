@@ -16,8 +16,10 @@
 
 package dagger.internal.codegen;
 
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.ClassName;
@@ -55,6 +57,11 @@ final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<Contrib
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedName, ContributionBinding binding) {
     return MapKeys.mapKeyFactoryMethod(binding, types)
-        .map(method -> classBuilder(generatedName).addModifiers(PUBLIC, FINAL).addMethod(method));
+        .map(
+            method ->
+                classBuilder(generatedName)
+                    .addModifiers(PUBLIC, FINAL)
+                    .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
+                    .addMethod(method));
   }
 }

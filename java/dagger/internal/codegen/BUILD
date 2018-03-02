@@ -227,6 +227,7 @@ java_library(
         "GeneratedComponentModel.java",
         "GwtCompatibility.java",
         "ImmediateFutureBindingExpression.java",
+        "InaccessibleMapKeyProxyGenerator.java",
         "InjectionMethods.java",
         "InjectionOrProvisionProviderCreationExpression.java",
         "InstanceFactoryCreationExpression.java",

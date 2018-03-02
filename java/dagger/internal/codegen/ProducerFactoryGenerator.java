@@ -24,7 +24,6 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
-import static dagger.internal.codegen.MapKeys.mapKeyFactoryMethod;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
@@ -71,13 +70,11 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Generates {@link Producer} implementations from {@link ProductionBinding} instances.
  */
 final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
-  private final Types types;
   private final CompilerOptions compilerOptions;
 
   @Inject
@@ -85,10 +82,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       Filer filer,
       Elements elements,
       SourceVersion sourceVersion,
-      Types types,
       CompilerOptions compilerOptions) {
     super(filer, elements, sourceVersion);
-    this.types = types;
     this.compilerOptions = compilerOptions;
   }
 
@@ -231,7 +226,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     factoryBuilder.addMethod(executeMethodBuilder.build());
 
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
-    mapKeyFactoryMethod(binding, types).ifPresent(factoryBuilder::addMethod);
 
     // TODO(gak): write a sensible toString
     return Optional.of(factoryBuilder);

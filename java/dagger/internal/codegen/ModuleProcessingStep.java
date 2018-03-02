@@ -24,8 +24,10 @@ import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.DelegateDeclaration.Factory;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
@@ -47,6 +49,8 @@ final class ModuleProcessingStep implements ProcessingStep {
   private final BindingFactory bindingFactory;
   private final FactoryGenerator factoryGenerator;
   private final ProducerFactoryGenerator producerFactoryGenerator;
+  private final InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator;
+  private final DelegateDeclaration.Factory delegateDeclarationFactory;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
 
   @Inject
@@ -55,12 +59,16 @@ final class ModuleProcessingStep implements ProcessingStep {
       ModuleValidator moduleValidator,
       BindingFactory bindingFactory,
       FactoryGenerator factoryGenerator,
-      ProducerFactoryGenerator producerFactoryGenerator) {
+      ProducerFactoryGenerator producerFactoryGenerator,
+      InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
+      Factory delegateDeclarationFactory) {
     this.messager = messager;
     this.moduleValidator = moduleValidator;
     this.bindingFactory = bindingFactory;
     this.factoryGenerator = factoryGenerator;
     this.producerFactoryGenerator = producerFactoryGenerator;
+    this.inaccessibleMapKeyProxyGenerator = inaccessibleMapKeyProxyGenerator;
+    this.delegateDeclarationFactory = delegateDeclarationFactory;
   }
 
   @Override
@@ -87,12 +95,24 @@ final class ModuleProcessingStep implements ProcessingStep {
     if (report.isClean()) {
       for (ExecutableElement method : methodsIn(module.getEnclosedElements())) {
         if (isAnnotationPresent(method, Provides.class)) {
-          factoryGenerator.generate(bindingFactory.providesMethodBinding(method, module), messager);
+          generate(factoryGenerator, bindingFactory.providesMethodBinding(method, module));
         } else if (isAnnotationPresent(method, Produces.class)) {
-          producerFactoryGenerator.generate(
-              bindingFactory.producesMethodBinding(method, module), messager);
+          generate(producerFactoryGenerator, bindingFactory.producesMethodBinding(method, module));
+        } else if (isAnnotationPresent(method, Binds.class)) {
+          inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
         }
       }
     }
+  }
+
+  private <B extends ContributionBinding> void generate(
+      SourceFileGenerator<B> generator, B binding) {
+    generator.generate(binding, messager);
+    inaccessibleMapKeyProxyGenerator.generate(binding, messager);
+  }
+
+  private ContributionBinding bindsMethodBinding(TypeElement module, ExecutableElement method) {
+    return bindingFactory.unresolvedDelegateBinding(
+        delegateDeclarationFactory.create(method, module));
   }
 }

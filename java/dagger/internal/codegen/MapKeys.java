@@ -22,11 +22,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.MapKeyAccessibility.isMapKeyPubliclyAccessible;
-import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.SourceFiles.elementBasedClassName;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -149,7 +150,7 @@ final class MapKeys {
     return MapKeyAccessibility.isMapKeyAccessibleFrom(
             mapKeyAnnotation, requestingClass.packageName())
         ? directMapKeyExpression(mapKeyAnnotation)
-        : CodeBlock.of("$T.mapKey()", generatedClassNameForBinding(binding));
+        : CodeBlock.of("$T.create()", mapKeyProxyClassName(binding));
   }
 
   /**
@@ -177,8 +178,18 @@ final class MapKeys {
   }
 
   /**
-   * A {@code static mapKey()} method to be added to generated factories when the {@code @MapKey}
-   * annotation is not publicly accessible.
+   * Returns the {@link ClassName} in which {@link #mapKeyFactoryMethod(ContributionBinding, Types)}
+   * is generated.
+   */
+  static ClassName mapKeyProxyClassName(ContributionBinding binding) {
+    return elementBasedClassName(
+        MoreElements.asExecutable(binding.bindingElement().get()), "MapKey");
+  }
+
+  /**
+   * A {@code static create()} method to be added to {@link
+   * #mapKeyProxyClassName(ContributionBinding)} when the {@code @MapKey} annotation is not publicly
+   * accessible.
    */
   static Optional<MethodSpec> mapKeyFactoryMethod(ContributionBinding binding, Types types) {
     return binding
@@ -186,7 +197,7 @@ final class MapKeys {
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
         .map(
             mapKey ->
-                methodBuilder("mapKey")
+                methodBuilder("create")
                     .addModifiers(PUBLIC, STATIC)
                     .returns(TypeName.get(mapKeyType(mapKey, types)))
                     .addStatement("return $L", directMapKeyExpression(mapKey))

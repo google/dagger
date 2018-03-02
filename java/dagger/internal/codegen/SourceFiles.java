@@ -40,6 +40,7 @@ import static dagger.model.BindingKind.MULTIBOUND_SET;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -67,6 +68,8 @@ import java.util.List;
 import javax.inject.Provider;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 
@@ -184,19 +187,12 @@ class SourceFiles {
       case PROVISION:
       case PRODUCTION:
         ContributionBinding contribution = (ContributionBinding) binding;
-        checkArgument(contribution.bindingTypeElement().isPresent());
-        ClassName enclosingClassName = ClassName.get(contribution.bindingTypeElement().get());
         switch (contribution.kind()) {
           case INJECTION:
           case PROVISION:
           case PRODUCTION:
-            return enclosingClassName
-                .topLevelClassName()
-                .peerClass(
-                    classFileName(enclosingClassName)
-                        + "_"
-                        + factoryPrefix(contribution)
-                        + "Factory");
+            return elementBasedClassName(
+                MoreElements.asExecutable(binding.bindingElement().get()), "Factory");
 
           default:
             throw new AssertionError();
@@ -209,6 +205,25 @@ class SourceFiles {
       default:
         throw new AssertionError();
     }
+  }
+
+  /**
+   * Calculates an appropriate {@link ClassName} for a generated class that is based on {@code
+   * element}, appending {@code suffix} at the end.
+   *
+   * <p>This will always return a {@linkplain ClassName#topLevelClassName() top level class name},
+   * even if {@code element}'s enclosing class is a nested type.
+   */
+  static ClassName elementBasedClassName(ExecutableElement element, String suffix) {
+    ClassName enclosingClassName =
+        ClassName.get(MoreElements.asType(element.getEnclosingElement()));
+    String methodName =
+        element.getKind().equals(ElementKind.CONSTRUCTOR)
+            ? ""
+            : LOWER_CAMEL.to(UPPER_CAMEL, element.getSimpleName().toString());
+    return ClassName.get(
+        enclosingClassName.packageName(),
+        classFileName(enclosingClassName) + "_" + methodName + suffix);
   }
 
   static TypeName parameterizedGeneratedTypeNameForBinding(Binding binding) {
@@ -277,21 +292,6 @@ class SourceFiles {
             : MAP_PRODUCER;
       default:
         throw new IllegalArgumentException(binding.bindingType().toString());
-    }
-  }
-
-  private static String factoryPrefix(ContributionBinding binding) {
-    switch (binding.kind()) {
-      case INJECTION:
-        return "";
-
-      case PROVISION:
-      case PRODUCTION:
-        return CaseFormat.LOWER_CAMEL.to(
-            UPPER_CAMEL, binding.bindingElement().get().getSimpleName().toString());
-
-      default:
-        throw new IllegalArgumentException();
     }
   }
 

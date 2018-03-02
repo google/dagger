@@ -408,7 +408,7 @@ final class BindingFactory {
    * Returns a {@link dagger.model.BindingKind#DELEGATE} binding used when there is no binding that
    * satisfies the {@code @Binds} declaration.
    */
-  ContributionBinding missingDelegateBinding(DelegateDeclaration delegateDeclaration) {
+  ContributionBinding unresolvedDelegateBinding(DelegateDeclaration delegateDeclaration) {
     return buildDelegateBinding(
         ProvisionBinding.builder().scope(uniqueScopeOf(delegateDeclaration.bindingElement().get())),
         delegateDeclaration,

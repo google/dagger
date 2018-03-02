@@ -509,7 +509,7 @@ final class BindingGraphFactory {
     private ContributionBinding createDelegateBinding(DelegateDeclaration delegateDeclaration) {
       Key delegateKey = delegateDeclaration.delegateRequest().key();
       if (cycleStack.contains(delegateKey)) {
-        return bindingFactory.missingDelegateBinding(delegateDeclaration);
+        return bindingFactory.unresolvedDelegateBinding(delegateDeclaration);
       }
 
       ResolvedBindings resolvedDelegate;
@@ -529,7 +529,7 @@ final class BindingGraphFactory {
         // is needed.
         // TODO(gak): revisit how we model missing delegates if/when we clean up how we model
         // binding declarations
-        return bindingFactory.missingDelegateBinding(delegateDeclaration);
+        return bindingFactory.unresolvedDelegateBinding(delegateDeclaration);
       }
       // It doesn't matter which of these is selected, since they will later on produce a
       // duplicate binding error.

@@ -233,12 +233,8 @@ final class ComponentBindingExpressions {
       }
       return expressions.get(key, requestKind);
     }
-    return parent
-        .map(p -> p.getBindingExpression(key, requestKind))
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    String.format("no expression found for %s-%s", key, requestKind)));
+    checkArgument(parent.isPresent(), "no expression found for %s-%s", key, requestKind);
+    return parent.get().getBindingExpression(key, requestKind);
   }
 
   /** Creates a binding expression. */

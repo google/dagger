@@ -228,4 +228,3 @@ You create and start the server in the same way as above.
 [`ServerInterceptor`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/ServerInterceptor.java
 [`ServerServiceDefinition`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/ServerServiceDefinition.java
 [`@Singleton`]: https://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
-

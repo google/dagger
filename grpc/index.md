@@ -31,4 +31,3 @@ server](servers#call-scope), bindings in call scope can inject the
 [`Metadata`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Metadata.java
 [Protocol Buffer]: https://developers.google.com/protocol-buffers/docs/overview
 [scopes]: https://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
-

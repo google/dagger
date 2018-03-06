@@ -187,18 +187,17 @@ error.
 
 <!-- References -->
 
-[Component]: api/latest/dagger/Component.html
-[Component-modules]: api/latest/dagger/Component.html#modules()
-[component-relationships]: api/latest/dagger/Component.html#component-relationships
-[component-subcomponents]: api/latest/dagger/Component.html#subcomponents
+[Component]: https://google.github.io/dagger/api/latest/dagger/Component.html
+[Component-modules]: https://google.github.io/dagger/api/latest/dagger/Component.html#modules()
+[component-relationships]: https://google.github.io/dagger/api/latest/dagger/Component.html#component-relationships
+[component-subcomponents]: https://google.github.io/dagger/api/latest/dagger/Component.html#subcomponents
 [Inject]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [JSR 330]: https://jcp.org/en/jsr/detail?id=330
-[Lazy]: api/latest/dagger/Lazy.html
-[MembersInjector]: api/latest/dagger/MembersInjector.html
-[Module]: api/latest/dagger/Module.html
+[Lazy]: https://google.github.io/dagger/api/latest/dagger/Lazy.html
+[MembersInjector]: https://google.github.io/dagger/api/latest/dagger/MembersInjector.html
+[Module]: https://google.github.io/dagger/api/latest/dagger/Module.html
 [Provider]: http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html
-[Provides]: api/latest/dagger/Provides.html
+[Provides]: https://google.github.io/dagger/api/latest/dagger/Provides.html
 [Scope]: http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [Singleton]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
-[Subcomponent]: api/latest/dagger/Subcomponent.html
-
+[Subcomponent]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html

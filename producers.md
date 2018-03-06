@@ -345,4 +345,3 @@ for `Foo`, then a `@Produces` method can depend on any of:
 [Provider]: http://docs.oracle.com/javaee/6/api/javax/inject/Provider.html
 [Provides]: https://google.github.io/dagger/api/latest/dagger/Provides.html
 [Subcomponent]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html
-

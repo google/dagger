@@ -67,6 +67,11 @@ import javax.inject.Provider;
 /** The nested class and static methods required by the component to implement optional bindings. */
 // TODO(dpb): Name members simply if a component uses only one of Guava or JDK Optional.
 final class OptionalFactories {
+  private final GeneratedComponentModel generatedComponentModel;
+
+  OptionalFactories(GeneratedComponentModel generatedComponentModel) {
+    this.generatedComponentModel = generatedComponentModel;
+  }
 
   /**
    * The factory classes that implement {@code Provider<Optional<T>>} or {@code
@@ -105,7 +110,12 @@ final class OptionalFactories {
     return CodeBlock.of(
         "$N()",
         absentOptionalProviderMethods.computeIfAbsent(
-            optionalKind, this::absentOptionalProviderMethod));
+            optionalKind,
+            kind -> {
+              MethodSpec method = absentOptionalProviderMethod(kind);
+              generatedComponentModel.addMethod(ABSENT_OPTIONAL_METHOD, method);
+              return method;
+            }));
   }
 
   /**
@@ -129,7 +139,12 @@ final class OptionalFactories {
             "$1T provider = ($1T) $2N;",
             providerOf(optionalKind.of(typeVariable)),
             absentOptionalProviderFields.computeIfAbsent(
-                optionalKind, this::absentOptionalProviderField))
+                optionalKind,
+                kind -> {
+                  FieldSpec field = absentOptionalProviderField(kind);
+                  generatedComponentModel.addField(ABSENT_OPTIONAL_FIELD, field);
+                  return field;
+                }))
         .addCode("return provider;")
         .build();
   }
@@ -235,7 +250,12 @@ final class OptionalFactories {
     return CodeBlock.of(
         "$N.of($L)",
         presentFactoryClasses.computeIfAbsent(
-            PresentFactorySpec.of(binding), this::presentOptionalFactoryClass),
+            PresentFactorySpec.of(binding),
+            spec -> {
+              TypeSpec type = presentOptionalFactoryClass(spec);
+              generatedComponentModel.addType(PRESENT_FACTORY, type);
+              return type;
+            }),
         delegateFactory);
   }
 
@@ -243,65 +263,6 @@ final class OptionalFactories {
     FieldSpec delegateField =
         FieldSpec.builder(spec.delegateType(), "delegate", PRIVATE, FINAL).build();
     ParameterSpec delegateParameter = ParameterSpec.builder(delegateField.type, "delegate").build();
-
-    MethodSpec.Builder getMethodBuilder =
-        methodBuilder("get").addAnnotation(Override.class).addModifiers(PUBLIC);
-    switch (spec.bindingType()) {
-      case PROVISION:
-        getMethodBuilder
-            .returns(spec.optionalType())
-            .addCode(
-                "return $L;",
-                spec.optionalKind()
-                    .presentExpression(
-                        FrameworkType.PROVIDER.to(
-                            spec.valueKind(), CodeBlock.of("$N", delegateField))));
-        break;
-
-      case PRODUCTION:
-        getMethodBuilder.returns(listenableFutureOf(spec.optionalType()));
-
-        switch (spec.valueKind()) {
-          case FUTURE: // return a ListenableFuture<Optional<ListenableFuture<T>>>
-          case PRODUCER: // return a ListenableFuture<Optional<Producer<T>>>
-            getMethodBuilder.addCode(
-                "return $T.immediateFuture($L);",
-                Futures.class,
-                spec.optionalKind()
-                    .presentExpression(
-                        FrameworkType.PRODUCER.to(
-                            spec.valueKind(), CodeBlock.of("$N", delegateField))));
-            break;
-
-          case INSTANCE: // return a ListenableFuture<Optional<T>>
-            getMethodBuilder.addCode(
-                "return $L;",
-                transformFutureToOptional(
-                    spec.optionalKind(),
-                    spec.typeVariable(),
-                    CodeBlock.of("$N.get()", delegateField)));
-            break;
-
-          case PRODUCED: // return a ListenableFuture<Optional<Produced<T>>>
-            getMethodBuilder.addCode(
-                "return $L;",
-                transformFutureToOptional(
-                    spec.optionalKind(),
-                    spec.valueType(),
-                    CodeBlock.of(
-                        "$T.createFutureProduced($N.get())", Producers.class, delegateField)));
-            break;
-
-          default:
-            throw new UnsupportedOperationException(
-                spec.factoryType() + " objects are not supported");
-        }
-        break;
-
-      default:
-        throw new AssertionError(spec.bindingType());
-    }
-
     return classBuilder(spec.factoryClassName())
         .addTypeVariable(spec.typeVariable())
         .addModifiers(PRIVATE, STATIC, FINAL)
@@ -319,7 +280,7 @@ final class OptionalFactories {
                     Preconditions.class,
                     delegateParameter)
                 .build())
-        .addMethod(getMethodBuilder.build())
+        .addMethod(presentOptionalFactoryGetMethod(spec, delegateField))
         .addMethod(
             methodBuilder("of")
                 .addModifiers(PRIVATE, STATIC)
@@ -333,6 +294,70 @@ final class OptionalFactories {
                     delegateParameter)
                 .build())
         .build();
+  }
+
+  private MethodSpec presentOptionalFactoryGetMethod(
+      PresentFactorySpec spec, FieldSpec delegateField) {
+    MethodSpec.Builder getMethodBuilder =
+        methodBuilder("get").addAnnotation(Override.class).addModifiers(PUBLIC);
+
+    switch (spec.bindingType()) {
+      case PROVISION:
+        return getMethodBuilder
+            .returns(spec.optionalType())
+            .addCode(
+                "return $L;",
+                spec.optionalKind()
+                    .presentExpression(
+                        FrameworkType.PROVIDER.to(
+                            spec.valueKind(), CodeBlock.of("$N", delegateField))))
+            .build();
+
+      case PRODUCTION:
+        getMethodBuilder.returns(listenableFutureOf(spec.optionalType()));
+
+        switch (spec.valueKind()) {
+          case FUTURE: // return a ListenableFuture<Optional<ListenableFuture<T>>>
+          case PRODUCER: // return a ListenableFuture<Optional<Producer<T>>>
+            return getMethodBuilder
+                .addCode(
+                    "return $T.immediateFuture($L);",
+                    Futures.class,
+                    spec.optionalKind()
+                        .presentExpression(
+                            FrameworkType.PRODUCER.to(
+                                spec.valueKind(), CodeBlock.of("$N", delegateField))))
+                .build();
+
+          case INSTANCE: // return a ListenableFuture<Optional<T>>
+            return getMethodBuilder
+                .addCode(
+                    "return $L;",
+                    transformFutureToOptional(
+                        spec.optionalKind(),
+                        spec.typeVariable(),
+                        CodeBlock.of("$N.get()", delegateField)))
+                .build();
+
+          case PRODUCED: // return a ListenableFuture<Optional<Produced<T>>>
+            return getMethodBuilder
+                .addCode(
+                    "return $L;",
+                    transformFutureToOptional(
+                        spec.optionalKind(),
+                        spec.valueType(),
+                        CodeBlock.of(
+                            "$T.createFutureProduced($N.get())", Producers.class, delegateField)))
+                .build();
+
+          default:
+            throw new UnsupportedOperationException(
+                spec.factoryType() + " objects are not supported");
+        }
+
+      default:
+        throw new AssertionError(spec.bindingType());
+    }
   }
 
   /**
@@ -362,17 +387,5 @@ final class OptionalFactories {
                     .build())
             .build(),
         MoreExecutors.class);
-  }
-
-  /**
-   * Adds classes and methods required by previous calls to {@link
-   * #absentOptionalProvider(ContributionBinding)} and {@link
-   * #presentOptionalFactory(ContributionBinding, CodeBlock)} to the top-level {@code component}.
-   */
-  void addMembers(GeneratedComponentModel generatedComponentModel) {
-    generatedComponentModel.addTypes(PRESENT_FACTORY, presentFactoryClasses.values());
-    generatedComponentModel.addMethods(
-        ABSENT_OPTIONAL_METHOD, absentOptionalProviderMethods.values());
-    generatedComponentModel.addFields(ABSENT_OPTIONAL_FIELD, absentOptionalProviderFields.values());
   }
 }

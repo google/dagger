@@ -64,7 +64,7 @@ abstract class ComponentWriter {
       BindingGraph graph) {
     GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.forComponent(name);
     SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
-    OptionalFactories optionalFactories = new OptionalFactories();
+    OptionalFactories optionalFactories = new OptionalFactories(generatedComponentModel);
     Optional<ComponentBuilder> builder =
         ComponentBuilder.create(name, graph, subcomponentNames, elements, types);
     ComponentRequirementFields componentRequirementFields =
@@ -170,9 +170,6 @@ abstract class ComponentWriter {
     addSubcomponents();
     addConstructor();
 
-    if (graph.componentDescriptor().kind().isTopLevel()) {
-      optionalFactories.addMembers(generatedComponentModel);
-    }
     done = true;
     return generatedComponentModel.generate();
   }

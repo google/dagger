@@ -127,6 +127,7 @@ def jarjar_library(name, deps, rules_file):
           "@local_jdk//:jre",
       ],
       outs = [name + ".jar"],
+      toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
       cmd = """
       export JAVA_HOME=$(JAVABASE)
       $(location //tools:jarjar_library_impl) $@ "{deps}" {rules} \

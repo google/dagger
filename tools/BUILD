@@ -26,6 +26,7 @@ sh_test(
     name = "jarjar_library_impl_test",
     srcs = ["jarjar_library_impl_test.sh"],
     args = ["$(JAVABASE)"],
+    toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
     data = [
         ":jarjar_deploy.jar",
         ":jarjar_library_impl",

@@ -37,7 +37,7 @@ abstract class CompilerOptions {
    *
    * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
    *
-   * <p> Issues related to this flag will not be supported. This flag could break your build, cause
+   * <p>Issues related to this flag will not be supported. This flag could break your build, cause
    * memory leaks in your app, or cause other unknown issues at runtime.
    *
    * <p>If enabled, the generated code will attempt to more aggressively inline creation logic for
@@ -47,7 +47,9 @@ abstract class CompilerOptions {
    * classloading on Android, these trade-offs are potentially advantageous.
    */
   abstract boolean experimentalAndroidMode();
+
   abstract boolean writeProducerNameInToken();
+
   abstract Diagnostic.Kind nullableValidationKind();
 
   boolean doCheckForNulls() {
@@ -55,10 +57,15 @@ abstract class CompilerOptions {
   }
 
   abstract Diagnostic.Kind privateMemberValidationKind();
+
   abstract Diagnostic.Kind staticMemberValidationKind();
+
   abstract boolean ignorePrivateAndStaticInjectionForComponent();
+
   abstract ValidationType scopeCycleValidationType();
+
   abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
+
   abstract boolean headerCompilation();
 
   static Builder builder() {
@@ -70,37 +77,48 @@ abstract class CompilerOptions {
         .usesProducers(elements.getTypeElement(Produces.class) != null)
         .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
         .experimentalAndroidMode(
-            experimentalAndroidMode(processingEnv).equals(FeatureStatus.ENABLED))
+            experimentalAndroidModeFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
-            writeProducerNameInToken(processingEnv).equals(FeatureStatus.ENABLED))
+            writeProducerNameInTokenFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
         .privateMemberValidationKind(
             privateMemberValidationType(processingEnv).diagnosticKind().get())
         .staticMemberValidationKind(
             staticMemberValidationType(processingEnv).diagnosticKind().get())
         .ignorePrivateAndStaticInjectionForComponent(
-            ignorePrivateAndStaticInjectionForComponent(processingEnv)
+            ignorePrivateAndStaticInjectionForComponentFeatureStatus(processingEnv)
                 .equals(FeatureStatus.DISABLED))
         .scopeCycleValidationType(scopeValidationType(processingEnv))
         .warnIfInjectionFactoryNotGeneratedUpstream(
-            warnIfInjectionFactoryNotGeneratedUpstream(processingEnv).equals(FeatureStatus.ENABLED))
+            warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(processingEnv)
+                .equals(FeatureStatus.ENABLED))
         .build();
   }
 
   @AutoValue.Builder
   interface Builder {
     Builder usesProducers(boolean usesProduces);
+
     Builder headerCompilation(boolean headerCompilation);
+
     Builder experimentalAndroidMode(boolean experimentalAndroidMode);
+
     Builder writeProducerNameInToken(boolean writeProducerNameInToken);
+
     Builder nullableValidationKind(Diagnostic.Kind kind);
+
     Builder privateMemberValidationKind(Diagnostic.Kind kind);
+
     Builder staticMemberValidationKind(Diagnostic.Kind kind);
+
     Builder ignorePrivateAndStaticInjectionForComponent(
         boolean ignorePrivateAndStaticInjectionForComponent);
+
     Builder scopeCycleValidationType(ValidationType type);
+
     Builder warnIfInjectionFactoryNotGeneratedUpstream(
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
+
     CompilerOptions build();
   }
 
@@ -123,8 +141,8 @@ abstract class CompilerOptions {
       "dagger.warnIfInjectionFactoryNotGeneratedUpstream";
 
   /**
-   * If true, Dagger will generate factories and components even if some members-injected types
-   * have private or static {@code @Inject}-annotated members.
+   * If true, Dagger will generate factories and components even if some members-injected types have
+   * private or static {@code @Inject}-annotated members.
    *
    * <p>This defaults to false, and should only ever be enabled by the TCK tests. Disabling this
    * validation could lead to generating code that does not compile.
@@ -144,7 +162,8 @@ abstract class CompilerOptions {
           WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
           IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
 
-  private static FeatureStatus experimentalAndroidMode(ProcessingEnvironment processingEnv) {
+  private static FeatureStatus experimentalAndroidModeFeatureStatus(
+      ProcessingEnvironment processingEnv) {
     return valueOf(
         processingEnv,
         EXPERIMENTAL_ANDROID_MODE,
@@ -152,7 +171,8 @@ abstract class CompilerOptions {
         EnumSet.allOf(FeatureStatus.class));
   }
 
-  private static FeatureStatus writeProducerNameInToken(ProcessingEnvironment processingEnv) {
+  private static FeatureStatus writeProducerNameInTokenFeatureStatus(
+      ProcessingEnvironment processingEnv) {
     return valueOf(
         processingEnv,
         WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
@@ -192,7 +212,7 @@ abstract class CompilerOptions {
         EnumSet.of(ValidationType.ERROR, ValidationType.WARNING));
   }
 
-  private static FeatureStatus ignorePrivateAndStaticInjectionForComponent(
+  private static FeatureStatus ignorePrivateAndStaticInjectionForComponentFeatureStatus(
       ProcessingEnvironment processingEnv) {
     return valueOf(
         processingEnv,
@@ -201,7 +221,7 @@ abstract class CompilerOptions {
         EnumSet.allOf(FeatureStatus.class));
   }
 
-  private static FeatureStatus warnIfInjectionFactoryNotGeneratedUpstream(
+  private static FeatureStatus warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(
       ProcessingEnvironment processingEnv) {
     return valueOf(
         processingEnv,

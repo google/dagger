@@ -84,7 +84,11 @@ final class KeyVNameFactory {
       // the *type*? Also, this seems to return null for all boxed primitive types if boxed
       // primitive is not mentioned in the compilation (i.e. if you @Provides int and then request
       // int from a binding, but never java.lang.Integer) - we have to synthesize those
-      VName rawType = kytheGraph.getNode(classSymbol).get().getVName();
+      VName rawType =
+          kytheGraph
+              .getNode(classSymbol)
+              .orElseThrow(() -> new TypeNotPresentException(classSymbol.toString(), null))
+              .getVName();
       if (classSymbol.getTypeParameters().isEmpty()) {
         return rawType;
       }

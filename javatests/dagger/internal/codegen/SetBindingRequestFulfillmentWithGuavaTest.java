@@ -107,7 +107,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public Set<String> strings() {",
-            "    return ImmutableSet.<String>builder()",
+            "    return ImmutableSet.<String>builderWithExpectedSize(2)",
             "        .addAll(EmptySetModule_EmptySetFactory.proxyEmptySet())",
             "        .add(SetModule_StringFactory.proxyString())",
             "        .build();",

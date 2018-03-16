@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -54,6 +55,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
+    boolean isImmutableSetBuilderWithExpectedSizeAvailable = isImmutableSetBuilderWithExpectedSizeAvailable();
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
     if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
@@ -97,7 +99,9 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         instantiation
             .add("$T.", isImmutableSetAvailable ? ImmutableSet.class : SetBuilder.class)
             .add(maybeTypeParameter(requestingClass));
-        if (isImmutableSetAvailable) {
+        if (isImmutableSetBuilderWithExpectedSizeAvailable) {
+          instantiation.add("builderWithExpectedSize($L)", binding.dependencies().size());
+        } else if (isImmutableSetAvailable) {
           instantiation.add("builder()");
         } else {
           instantiation.add("newSetBuilder($L)", binding.dependencies().size());
@@ -151,6 +155,15 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         .contributionBinding()
         .contributionType()
         .equals(ContributionType.SET);
+  }
+
+  private boolean isImmutableSetBuilderWithExpectedSizeAvailable() {
+    if (isImmutableSetAvailable()) {
+      return methodsIn(elements.getTypeElement(ImmutableSet.class).getEnclosedElements())
+          .stream()
+          .anyMatch(method -> method.getSimpleName().contentEquals("builderWithExpectedSize"));
+    }
+    return false;
   }
 
   private boolean isImmutableSetAvailable() {

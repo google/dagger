@@ -20,9 +20,9 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.devtools.kythe.analyzers.base.EdgeKind.DEFINES_BINDING;
+import static com.google.devtools.kythe.analyzers.base.EdgeKind.PARAM;
 import static com.google.devtools.kythe.analyzers.base.EdgeKind.REF;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
@@ -36,18 +36,18 @@ import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.kythe.analyzers.base.CorpusPath;
-import com.google.devtools.kythe.analyzers.base.EdgeKind;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
 import com.google.devtools.kythe.analyzers.base.FactEmitter;
 import com.google.devtools.kythe.analyzers.base.KytheEntrySets;
+import com.google.devtools.kythe.analyzers.base.KytheEntrySets.NodeBuilder;
+import com.google.devtools.kythe.analyzers.base.NodeKind;
 import com.google.devtools.kythe.analyzers.java.Plugin;
 import com.google.devtools.kythe.proto.Storage.VName;
 import com.google.devtools.kythe.util.Span;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.api.JavacTrees;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.tree.JCTree;
@@ -62,6 +62,7 @@ import dagger.Component;
 import dagger.MembersInjector;
 import dagger.Provides;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
@@ -96,6 +97,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   @Inject BindingFactory bindingFactory;
   @Inject DelegateDeclaration.Factory delegateDeclarationFactory;
   @Inject MultibindingDeclaration.Factory multibindingDeclarationFactory;
+  @Inject OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory;
   @Inject SubcomponentDeclaration.Factory subcomponentDeclarationFactory;
   @Inject KeyFactory keyFactory;
   @Inject DaggerTypes types;
@@ -159,12 +161,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
         addBindingDeclarationEdge(
             multibindingDeclarationFactory.forMultibindsMethod(element, enclosingType));
       } else if (isAnnotationPresent(element, BindsOptionalOf.class)) {
-        Key key = keyFactory.forBindsOptionalOfMethod(element, enclosingType);
-        for (Class<?> optionalClass : optionalClasses()) {
-          Key wrappedOptionalKey =
-              key.toBuilder().type(types.wrapType(key.type(), optionalClass)).build();
-          addBindingDeclarationEdge(wrappedOptionalKey, element);
-        }
+        addOptionalBindingDeclarationEdge(
+            optionalBindingDeclarationFactory.forMethod(element, enclosingType));
       } else if (isAnnotationPresent(element, BindsInstance.class)) {
         VariableElement parameter = getOnlyElement(element.getParameters());
         Key key = Key.builder(parameter.asType()).qualifier(getQualifier(parameter)).build();
@@ -179,6 +177,14 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
         graph.componentDescriptor().componentMethods()) {
       componentMethod.dependencyRequest().ifPresent(this::addDependencyEdge);
     }
+
+    graph
+        .contributionBindings()
+        .values()
+        .stream()
+        .flatMap(resolvedBindings -> resolvedBindings.contributionBindings().stream())
+        .filter(binding -> binding.kind().equals(BindingKind.OPTIONAL))
+        .forEach(this::addOptionalBindingJoinsEdge);
   }
 
   private void addBindingAndDependencyEdges(Binding binding) {
@@ -191,16 +197,13 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   /**
-   * Adds a {@code defines/binding} edge between {@code bindingElement} and the node for {@code
-   * key}.
+   * Adds a {@code defines/binding} edge from {@code bindingElement} to the node for {@code key}.
    */
   private void addBindingDeclarationEdge(Key key, Element bindingElement) {
     if (hasTypeVariable(key.type())) {
       return;
     }
-    EntrySet bindingAnchor =
-        entrySets.newAnchorAndEmit(fileVName, bindingElementSpan(bindingElement), null);
-
+    EntrySet bindingAnchor = anchor(bindingElementSpan(bindingElement));
     entrySets.emitEdge(bindingAnchor, DEFINES_BINDING, keyNode(key));
   }
 
@@ -213,16 +216,15 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   /**
-   * Adds a {@code ref} edge between {@code dependencyRequest} and it's {@link
-   * DependencyRequest#key() key's} node.
+   * Adds a {@code ref} edge from {@code dependencyRequest} to its {@link DependencyRequest#key()
+   * key's} node.
    */
   private void addDependencyEdge(DependencyRequest dependencyRequest) {
     if (!dependencyRequest.requestElement().isPresent()
         || hasTypeVariable(dependencyRequest.key().type())) {
       return;
     }
-    EntrySet dependencyRequestAnchor =
-        entrySets.newAnchorAndEmit(fileVName, dependencyRequestSpan(dependencyRequest), null);
+    EntrySet dependencyRequestAnchor = anchor(dependencyRequestSpan(dependencyRequest));
     entrySets.emitEdge(dependencyRequestAnchor, REF, keyNode(dependencyRequest.key()));
   }
 
@@ -231,55 +233,106 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     return span(requestElement.getSimpleName(), trees.getTree(requestElement));
   }
 
+  /**
+   * Adds a {@code defines/binding} edge from {@code declaration}'s {@link
+   * OptionalBindingDeclaration#bindingElement()} to {@link #bindsOptionalOfKeyNode(Key)}. When a
+   * binding is resolved to {@code declaration}, a {@code /dagger/joins} edge will be added from the
+   * binding's key to the {@link #bindsOptionalOfKeyNode(Key)}. Kythe's post-processing will "merge"
+   * the {@code /dagger/joins} edge so that tools see edges from the {@code @BindsOptionalOf} method
+   * directly to the dependency requests that are resolved by this declaration and the bindings (if
+   * any) that satisfy it.
+   *
+   * <p>This process is used because {@code @BindsOptionalOf} methods may bind several binding keys,
+   * some of which may reference optional types (like {@link com.google.common.base.Optional}) that
+   * are not present in the current compilation, but will be when a component is resolved.
+   */
+  private void addOptionalBindingDeclarationEdge(OptionalBindingDeclaration declaration) {
+    EntrySet declarationAnchor = anchor(bindingElementSpan(declaration.bindingElement().get()));
+    entrySets.emitEdge(
+        declarationAnchor, DEFINES_BINDING, bindsOptionalOfKeyNode(declaration.key()));
+  }
+
+  /**
+   * Adds a {@code /dagger/joins} edge from {@code binding}'s key to the synthetic
+   * {@code @BindsOptionalOf} node created in {@link
+   * #addOptionalBindingDeclarationEdge(OptionalBindingDeclaration)}.
+   */
+  private void addOptionalBindingJoinsEdge(ContributionBinding binding) {
+    emitDaggerJoinsEdge(
+        keyNode(binding.key()),
+        bindsOptionalOfKeyNode(keyFactory.unwrapOptional(binding.key()).get()));
+  }
+
+  /** A synthetic node for a {@link BindsOptionalOf} method. */
+  private EntrySet bindsOptionalOfKeyNode(Key key) {
+    EntrySet node = newInjectNode("key", String.format("@BindsOptionalOf %s", formatKey(key)));
+    entrySets.emitEdge(node, PARAM, bindsOptionalOfTypeApplication(key), 0);
+    addEdgeFromKeyToQualifier(node, key);
+    return node;
+  }
+
+  private EntrySet bindsOptionalOfTypeApplication(Key optionalBindingDeclarationKey) {
+    EntrySet genericBindsOptionalOfNode = newNode(NodeKind.ABS, "abs for @BindsOptionalOf");
+    EntrySet bindsOptionalOfTypeVariable = newNode(NodeKind.ABS_VAR, "absvar for @BindsOptionalOf");
+    entrySets.emitEdge(genericBindsOptionalOfNode, PARAM, bindsOptionalOfTypeVariable, 0);
+
+    return entrySets.newTApplyAndEmit(
+        genericBindsOptionalOfNode.getVName(),
+        hasTypeVariable(optionalBindingDeclarationKey.type())
+            ? ImmutableList.of() /* // TODO(ronshapiro): should this have a /dagger/joins edge?
+             Or should it reuse bindsOptionalOfTypeVariable?*/
+            : ImmutableList.of(keys.vname(optionalBindingDeclarationKey)));
+  }
+
   private Span span(Name name, JCTree tree) {
     return kytheGraph.findIdentifier(name, tree.getPreferredPosition()).get();
   }
 
   private EntrySet keyNode(Key key) {
-    EntrySet keyNode = newNode("key", formatKey(key));
+    EntrySet keyNode = newInjectNode("key", formatKey(key));
 
-    entrySets.emitEdge(keyNode.getVName(), EdgeKind.PARAM, keys.vname(key), 0);
-    key.qualifier()
-        .ifPresent(
-            qualifier -> {
-              entrySets.emitEdge(
-                  keyNode.getVName(), EdgeKind.PARAM, qualifierNode(qualifier).getVName(), 1);
-            });
+    entrySets.emitEdge(keyNode.getVName(), PARAM, keys.vname(key), 0);
+    addEdgeFromKeyToQualifier(keyNode, key);
 
     return keyNode;
   }
 
-  private EntrySet qualifierNode(AnnotationMirror qualifier) {
-    return newNode("qualifier", formatAnnotation(qualifier));
+  private void addEdgeFromKeyToQualifier(EntrySet source, Key key) {
+    key.qualifier()
+        .map(qualifier -> newInjectNode("qualifier", formatAnnotation(qualifier)))
+        .ifPresent(qualifier -> entrySets.emitEdge(source, PARAM, qualifier, 1));
   }
 
-  private EntrySet newNode(String nodeKind, String format) {
-    EntrySet node = entrySets
-        .newNode("inject/" + nodeKind)
-        .setCorpusPath(corpusPath)
-        .setSignature(String.format("inject_%s:%s", nodeKind, format))
-        .build();
+  /** Adds a new node in the {@code inject/} namespace. */
+  private EntrySet newInjectNode(String nodeKind, String format) {
+    return completeNodeAndEmit(
+        entrySets
+            .newNode("inject/" + nodeKind)
+            .setSignature(String.format("inject_%s:%s", nodeKind, format)));
+  }
+
+  private EntrySet newNode(NodeKind nodeKind, String signature) {
+    return completeNodeAndEmit(entrySets.newNode(nodeKind).setSignature(signature));
+  }
+
+  private EntrySet completeNodeAndEmit(NodeBuilder nodeBuilder) {
+    EntrySet node = nodeBuilder.setCorpusPath(corpusPath).build();
     node.emit(emitter);
     return node;
   }
 
-  private ImmutableSet<Class<?>> optionalClasses() {
-    // TODO(user): Can the plugin infrastructure be modified to guarantee certain types are
-    // always available to plugins via kytheGraph.getNode() even if they haven't been scanned yet?
-    return ImmutableSet.of(java.util.Optional.class, com.google.common.base.Optional.class)
-        .stream()
-        .filter(this::isClassAvailable)
-        .collect(toImmutableSet());
-  }
-
-  private boolean isClassAvailable(Class<?> clazz) {
-    return kytheGraph
-        .getNode((Symbol) elements.getTypeElement(clazz.getCanonicalName()))
-        .isPresent();
+  private EntrySet anchor(Span location) {
+    return entrySets.newAnchorAndEmit(fileVName, location, null);
   }
 
   private Element getElement(Tree tree) {
     return trees.getElement(trees.getPath(compilationUnit, tree));
+  }
+
+  private void emitDaggerJoinsEdge(EntrySet source, EntrySet target) {
+    new EntrySet.Builder(source.getVName(), "/dagger/joins", target.getVName())
+        .build()
+        .emit(emitter);
   }
 
   @Override

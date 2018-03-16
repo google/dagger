@@ -22,6 +22,7 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -98,8 +99,9 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
         instantiation
             .add("$T.", isImmutableMapAvailable ? ImmutableMap.class : MapBuilder.class)
             .add(maybeTypeParameters(requestingClass));
-        if (isImmutableMapAvailable) {
-          // TODO(ronshapiro): builderWithExpectedSize
+        if (isImmutableMapBuilderWithExpectedSizeAvailable()) {
+          instantiation.add("builderWithExpectedSize($L)", dependencies.size());
+        } else if (isImmutableMapAvailable) {
           instantiation.add("builder()");
         } else {
           instantiation.add("newMapBuilder($L)", dependencies.size());
@@ -145,6 +147,15 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
     return isTypeAccessibleFrom(bindingKeyType, requestingClass.packageName())
         ? CodeBlock.of("<$T, $T>", mapType.keyType(), mapType.valueType())
         : CodeBlock.of("");
+  }
+
+  private boolean isImmutableMapBuilderWithExpectedSizeAvailable() {
+    if (isImmutableMapAvailable()) {
+      return methodsIn(elements.getTypeElement(ImmutableMap.class).getEnclosedElements())
+          .stream()
+          .anyMatch(method -> method.getSimpleName().contentEquals("builderWithExpectedSize"));
+    }
+    return false;
   }
 
   private boolean isImmutableMapAvailable() {

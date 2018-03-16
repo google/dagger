@@ -20,6 +20,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.devtools.kythe.analyzers.base.EdgeKind.DEFINES_BINDING;
 import static com.google.devtools.kythe.analyzers.base.EdgeKind.PARAM;
@@ -109,7 +110,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     bindingGraphFactory.create(type).ifPresent(this::addNodesForGraph);
 
     if (getModuleAnnotation(type).isPresent()) {
-      subcomponentDeclarationFactory.forModule(type).forEach(this::addBindingDeclarationEdge);
+      subcomponentDeclarationFactory.forModule(type).forEach(this::addSubcomponentDeclarationNode);
     }
 
     Optional<AnnotationMirror> componentAnnotation = getComponentAnnotation(type);
@@ -212,7 +213,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
         bindingElement.getKind().equals(ElementKind.CONSTRUCTOR)
             ? bindingElement.getEnclosingElement().getSimpleName()
             : bindingElement.getSimpleName();
-    return span(name, trees.getTree(bindingElement));
+    return span(name, getTree(bindingElement));
   }
 
   /**
@@ -230,7 +231,16 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   private Span dependencyRequestSpan(DependencyRequest dependency) {
     Element requestElement = dependency.requestElement().get();
-    return span(requestElement.getSimpleName(), trees.getTree(requestElement));
+    return span(requestElement.getSimpleName(), getTree(requestElement));
+  }
+
+  private void addSubcomponentDeclarationNode(SubcomponentDeclaration declaration) {
+    TypeElement module = declaration.contributingModule().get();
+    // getTree(bindingElement) doesn't seem to work as expected, and instead searches for the
+    // subcomponents() attribute's Tree in dagger/Module.java
+    JCTree tree = trees.getTree(module, declaration.moduleAnnotation());
+    EntrySet bindingAnchor = anchor(span(declaration.bindingElement().get().getSimpleName(), tree));
+    entrySets.emitEdge(bindingAnchor, DEFINES_BINDING, keyNode(declaration.key()));
   }
 
   /**
@@ -327,6 +337,22 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   private Element getElement(Tree tree) {
     return trees.getElement(trees.getPath(compilationUnit, tree));
+  }
+
+  /**
+   * A wrapper for {@link JavacTrees#getTree(Element)} that checks for {@code null} and reports
+   * debug information in the exception.
+   *
+   * <p>This should only be necessary in cases where there's a bug in the plugin, but it makes
+   * fixing the bug significantly easier.
+   */
+  private JCTree getTree(Element element) {
+    return checkNotNull(
+        trees.getTree(element),
+        "No Tree available for %s. This likely means that the element is being accessed from a "
+            + "different compilation. The current file being scanned is: %s.",
+        element,
+        fileVName.getPath());
   }
 
   private void emitDaggerJoinsEdge(EntrySet source, EntrySet target) {

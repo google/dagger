@@ -82,6 +82,7 @@ java_library(
         "CompilerOptions.java",
         "ContributionType.java",
         "DaggerElements.java",
+        "DaggerGraphs.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
         "Expression.java",

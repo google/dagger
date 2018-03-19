@@ -260,6 +260,7 @@ java_library(
         "SubcomponentBuilderBindingExpression.java",
         "SubcomponentBuilderProviderCreationExpression.java",
         "SubcomponentNames.java",
+        "SwitchingProviders.java",
         "UnwrappedMapKeyGenerator.java",
     ],
     plugins = CODEGEN_PLUGINS,

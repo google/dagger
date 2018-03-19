@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
@@ -33,6 +35,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -44,6 +47,7 @@ final class GeneratedComponentModel {
   // TODO(user, dpb): Move component requirements and reference managers to top? The order should
   // be component requirements, referencemanagers, framework fields, private method fields, ... etc
   static enum FieldSpecKind {
+
     /**
      * A field for the lock and cached value for {@linkplain PrivateMethodBindingExpression
      * private-method scoped bindings}.
@@ -116,6 +120,7 @@ final class GeneratedComponentModel {
       MultimapBuilder.enumKeys(MethodSpecKind.class).arrayListValues().build();
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
+  private Optional<Supplier<TypeSpec>> switchingProviderSupplier = Optional.empty();
 
   private GeneratedComponentModel(ClassName name, Modifier... modifiers) {
     this.name = name;
@@ -177,6 +182,12 @@ final class GeneratedComponentModel {
     typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
+  /** Adds a {@link Supplier} for the SwitchingProvider for the component. */
+  void addSwitchingProvider(Supplier<TypeSpec> typeSpecSupplier) {
+    checkState(!switchingProviderSupplier.isPresent());
+    switchingProviderSupplier = Optional.of(typeSpecSupplier);
+  }
+
   /** Adds the given code block to the initialize methods of the component. */
   void addInitialization(CodeBlock codeBlock) {
     initializations.add(codeBlock);
@@ -207,6 +218,7 @@ final class GeneratedComponentModel {
     fieldSpecsMap.asMap().values().forEach(component::addFields);
     methodSpecsMap.asMap().values().forEach(component::addMethods);
     typeSpecsMap.asMap().values().forEach(component::addTypes);
+    switchingProviderSupplier.map(Supplier::get).ifPresent(component::addType);
     return component;
   }
 }

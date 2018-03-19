@@ -379,6 +379,10 @@ public class DelegateBindingExpressionTest {
                     "    }",
                     "    return (ReusableScoped) reusableScoped;",
                     "  }",
+                    "",
+                    "  private Provider<Unscoped> getUnscopedProvider() {",
+                    "    return new SwitchingProvider<>(0);",
+                    "  }",
                     "")
                 .addLines(
                     "  @SuppressWarnings(\"unchecked\")",
@@ -394,8 +398,14 @@ public class DelegateBindingExpressionTest {
                     "         ReferenceReleasingProvider.create(",
                     "             ReleasableScoped_Factory.create(), customScopeReferences);",
                     "    this.unscopedProvider =",
-                    "        ReferenceReleasingProvider.create(",
-                    "            (Provider) Unscoped_Factory.create(), customScopeReferences);",
+                    "        ReferenceReleasingProvider.create(")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "            (Provider) Unscoped_Factory.create(), customScopeReferences);")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "            (Provider) getUnscopedProvider(), customScopeReferences);")
+                .addLines(
                     "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
                     "        new Provider<ReleasableReferenceManager>() {",
                     "          @Override",
@@ -403,8 +413,20 @@ public class DelegateBindingExpressionTest {
                     "            return customScopeReferences;",
                     "          }",
                     "        };",
-                    "  }",
-                    "}")
+                    "  }")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  private final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) new Unscoped();",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .addLines("}")
                 .build());
   }
 
@@ -939,12 +961,18 @@ public class DelegateBindingExpressionTest {
                     "",
                     "  @Override",
                     "  public Provider<Object> getObject() {",
-                    "    return new Provider<Object>() {",
-                    "      @Override",
-                    "      public Object get() {",
-                    "        return getObject2();",
+                    "    return new SwitchingProvider<>(0);",
+                    "  }",
+                    "",
+                    "  private final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) getObject2();",
+                    "        default: throw new AssertionError(id);",
                     "      }",
-                    "    };",
+                    "    }",
                     "  }")
                 .build());
   }

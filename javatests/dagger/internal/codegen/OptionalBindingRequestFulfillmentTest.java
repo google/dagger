@@ -17,6 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
+import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -103,37 +105,73 @@ public class OptionalBindingRequestFulfillmentTest {
             "  Optional<DefinitelyNot> definitelyNot();",
             "  Optional<Provider<Lazy<DefinitelyNot>>> providerOfLazyOfDefinitelyNot();",
             "}");
+
     JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import com.google.common.base.Optional;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
-            "  @Override",
-            "  public Optional<Maybe> maybe() {",
-            "    return Optional.of(Maybe_MaybeModule_ProvideMaybeFactory.proxyProvideMaybe());",
-            "  }",
-            "",
-            "  @Override",
-            "  public Optional<Provider<Lazy<Maybe>>> providerOfLazyOfMaybe() {",
-            "    return Optional.of(",
-            "        ProviderOfLazy.create(Maybe_MaybeModule_ProvideMaybeFactory.create()));",
-            "  }",
-            "",
-            "  @Override",
-            "  public Optional<DefinitelyNot> definitelyNot() {",
-            "    return Optional.<DefinitelyNot>absent();",
-            "  }",
-            "",
-            "  @Override",
-            "  public Optional<Provider<Lazy<DefinitelyNot>>>",
-            "      providerOfLazyOfDefinitelyNot() {",
-            "    return Optional.<Provider<Lazy<DefinitelyNot>>>absent();",
-            "  }",
-            "}");
+        compilerMode
+            .javaFileBuilder("test.DaggerTestComponent")
+            .addLines(
+                "package test;",
+                "",
+                "import com.google.common.base.Optional;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private Provider<Maybe> getMaybeProvider() {",
+                "    return new SwitchingProvider<>(0);",
+                "  }")
+            .addLines(
+                "  @Override",
+                "  public Optional<Maybe> maybe() {",
+                "    return Optional.of(",
+                "        Maybe_MaybeModule_ProvideMaybeFactory.proxyProvideMaybe());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Optional<Provider<Lazy<Maybe>>> providerOfLazyOfMaybe() {",
+                "    return Optional.of(ProviderOfLazy.create(")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "        Maybe_MaybeModule_ProvideMaybeFactory.create()));")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "        getMaybeProvider()));")
+            .addLines(
+                "  }",
+                "",
+                "  @Override",
+                "  public Optional<DefinitelyNot> definitelyNot() {",
+                "    return Optional.<DefinitelyNot>absent();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Optional<Provider<Lazy<DefinitelyNot>>>",
+                "      providerOfLazyOfDefinitelyNot() {",
+                "    return Optional.<Provider<Lazy<DefinitelyNot>>>absent();",
+                "  }")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    private final int id;",
+                "",
+                "    SwitchingProvider(int id) {",
+                "      this.id = id;",
+                "    }",
+                "",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) Maybe_MaybeModule_ProvideMaybeFactory.proxyProvideMaybe();",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }",
+                "}")
+            .build();
     Compilation compilation =
         daggerCompiler()
             .withOptions(compilerMode.javacopts())

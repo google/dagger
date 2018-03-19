@@ -67,6 +67,7 @@ final class ComponentBindingExpressions {
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
+  private final SwitchingProviders switchingProviders;
   private final Table<Key, RequestKind, BindingExpression> expressions = HashBasedTable.create();
 
   ComponentBindingExpressions(
@@ -114,6 +115,7 @@ final class ComponentBindingExpressions {
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
         new MembersInjectionMethods(generatedComponentModel, this, graph, elements, types);
+    this.switchingProviders = new SwitchingProviders(generatedComponentModel, this, graph, types);
   }
 
   /**
@@ -583,20 +585,21 @@ final class ComponentBindingExpressions {
    *
    * <p>In Android mode, if {@linkplain #instanceBindingExpression(ResolvedBindings) instance
    * binding expressions} don't call {@code Provider.get()} on the provider binding expression, and
-   * there's no {@linkplain #isFactorySimple(ResolvedBindings) simple factory}, then return an
-   * {@link AnonymousProviderBindingExpression} wrapped in a method.
+   * there's no simple factory, then return a {@link SwitchingProviders} binding expression wrapped
+   * in a method.
    *
    * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
    */
   private BindingExpression providerBindingExpression(ResolvedBindings resolvedBindings) {
     if (compilerOptions.experimentalAndroidMode()) {
-      if (!isFactorySimple(resolvedBindings)
+      if (!frameworkInstanceCreationExpression(resolvedBindings).isSimpleFactory()
           && !(instanceBindingExpression(resolvedBindings)
               instanceof DerivedFromProviderBindingExpression)) {
+        // TODO(user): Cache the provider.
         return wrapInMethod(
             resolvedBindings,
             RequestKind.PROVIDER,
-            new AnonymousProviderBindingExpression(resolvedBindings, this, types));
+            switchingProviders.newBindingExpression(resolvedBindings.key()));
       }
     } else if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
         && !needsCaching(resolvedBindings)) {
@@ -604,17 +607,6 @@ final class ComponentBindingExpressions {
           resolvedBindings, RequestKind.PROVIDER, this, types, elements);
     }
     return frameworkInstanceBindingExpression(resolvedBindings, RequestKind.PROVIDER);
-  }
-
-  /**
-   * Returns {@code true} if the factory created for a binding is not worth inlining because it's a
-   * singleton or an {@link dagger.internal.InstanceFactory} or a nested {@code Provider} for a
-   * component dependency provision method.
-   */
-  // TODO(dpb): Lazily create the component dependency provision method provider.
-  private boolean isFactorySimple(ResolvedBindings resolvedBindings) {
-    return staticFactoryCreation(resolvedBindings).isPresent()
-        || frameworkInstanceCreationExpression(resolvedBindings).isSimpleFactory();
   }
 
   /**

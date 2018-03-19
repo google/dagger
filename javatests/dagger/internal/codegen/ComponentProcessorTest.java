@@ -306,13 +306,25 @@ public class ComponentProcessorTest {
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
-                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
+            .addLinesIn(
+                DEFAULT_MODE, //
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
+            .addLines(
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
-                "    return SomeInjectableType_Factory.create();",
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
+            .addLinesIn(
+                DEFAULT_MODE, //
+                "    return SomeInjectableType_Factory.create();")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE, //
+                "    return new SwitchingProvider<>(0);")
+            .addLines(
                 "  }",
                 "",
                 "  public static final class Builder {",
@@ -321,8 +333,25 @@ public class ComponentProcessorTest {
                 "    public SimpleComponent build() {",
                 "      return new DaggerSimpleComponent(this);",
                 "    }",
-                "  }",
-                "}")
+                "  }")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    private final int id;",
+                "",
+                "    SwitchingProvider(int id) {",
+                "      this.id = id;",
+                "    }",
+                "",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0: return (T) new SomeInjectableType();",
+                "        default: throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }")
             .build();
 
     Compilation compilation =
@@ -417,19 +446,31 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
-                "    return new Provider<SomeInjectableType>() {",
-                "      @Override",
-                "      public SomeInjectableType get() {",
-                "        return someInjectableType();",
-                "      }",
-                "    };")
+                EXPERIMENTAL_ANDROID_MODE, //
+                "    return new SwitchingProvider<>(0);")
             .addLinesIn(
                 DEFAULT_MODE, //
                 "    return someInjectableTypeProvider;")
-            .addLines(
-                "  }", //
-                "}")
+            .addLines( //
+                "  }")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    private final int id;",
+                "",
+                "    SwitchingProvider(int id) {",
+                "      this.id = id;",
+                "    }",
+                "",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0: return (T) someInjectableType();",
+                "        default: throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }")
             .build();
     Compilation compilation =
         daggerCompiler()

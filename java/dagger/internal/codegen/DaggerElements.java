@@ -48,7 +48,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleElementVisitor6;
+import javax.lang.model.util.SimpleElementVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Elements} that adds Dagger-specific methods. */
@@ -83,23 +83,24 @@ final class DaggerElements implements Elements {
     return elements.getTypeElement(name);
   }
 
-  /**
-   * A visitor that returns the input or the closest enclosing element that is a
-   * {@link TypeElement}.
-   */
-  static final ElementVisitor<TypeElement, Void> ENCLOSING_TYPE_ELEMENT =
-      new SimpleElementVisitor6<TypeElement, Void>() {
+  /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
+  static TypeElement closestEnclosingTypeElement(Element element) {
+    return element.accept(CLOSEST_ENCLOSING_TYPE_ELEMENT, null);
+  }
+
+  private static final ElementVisitor<TypeElement, Void> CLOSEST_ENCLOSING_TYPE_ELEMENT =
+      new SimpleElementVisitor8<TypeElement, Void>() {
         @Override
-        protected TypeElement defaultAction(Element e, Void p) {
-          return visit(e.getEnclosingElement());
+        protected TypeElement defaultAction(Element element, Void p) {
+          return element.getEnclosingElement().accept(this, null);
         }
-  
+
         @Override
-        public TypeElement visitType(TypeElement e, Void p) {
-          return e;
+        public TypeElement visitType(TypeElement type, Void p) {
+          return type;
         }
       };
-      
+
   /**
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose
    * {@linkplain AnnotationMirror#getAnnotationType() annotation type} has the same canonical name

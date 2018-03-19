@@ -31,7 +31,6 @@ import static dagger.model.RequestKind.MEMBERS_INJECTION;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
@@ -187,11 +186,9 @@ final class DependencyRequestFactory {
   }
 
   DependencyRequest forProductionImplementationExecutor() {
-    Key key = keyFactory.forProductionImplementationExecutor();
     return DependencyRequest.builder()
         .kind(PROVIDER)
-        .key(key)
-        .requestElement(MoreTypes.asElement(key.type()))
+        .key(keyFactory.forProductionImplementationExecutor())
         .build();
   }
 

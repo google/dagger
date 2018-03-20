@@ -103,6 +103,7 @@ final class KytheBindingGraphFactory {
             .scopeCycleValidationType(ValidationType.NONE)
             .warnIfInjectionFactoryNotGeneratedUpstream(false)
             .experimentalAndroidMode(false)
+            .aheadOfTimeComponents(false)
             .build();
 
     BindingFactory bindingFactory =

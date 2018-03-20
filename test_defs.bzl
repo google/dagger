@@ -16,6 +16,9 @@
 # The key will be appended to the generated test names to ensure uniqueness.
 BUILD_VARIANTS = {
     "ExperimentalAndroidMode": ["-Adagger.experimentalAndroidMode=enabled"],
+    "ExperimentalAheadOfTimeComponents": ["-Adagger.experimentalAheadOfTimeComponents=enabled"],
+    "ExperimentalAndroidModeAndAheadOfTimeComponents": ["-Adagger.experimentalAndroidMode=enabled",
+                                                        "-Adagger.experimentalAheadOfTimeComponents=enabled"],
 }
 
 # TODO(user): split into two functions for functional vs non-functional tests?
@@ -37,9 +40,9 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
 
   if functional:
     for (variant_name, extra_lib_javacopts) in BUILD_VARIANTS.items():
-      lib_javacopts = (lib_javacopts or []) + extra_lib_javacopts
+      variant_lib_javacopts = (lib_javacopts or []) + extra_lib_javacopts
       _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-                 plugins, javacopts, lib_javacopts, test_javacopts, variant_name)
+                 plugins, javacopts, variant_lib_javacopts, test_javacopts, variant_name)
 
 def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
                plugins, javacopts, lib_javacopts, test_javacopts, variant_name=None):

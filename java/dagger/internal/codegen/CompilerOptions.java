@@ -68,6 +68,8 @@ abstract class CompilerOptions {
 
   abstract boolean headerCompilation();
 
+  abstract boolean aheadOfTimeComponents();
+
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
   }
@@ -92,6 +94,8 @@ abstract class CompilerOptions {
         .warnIfInjectionFactoryNotGeneratedUpstream(
             warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(processingEnv)
                 .equals(FeatureStatus.ENABLED))
+        .aheadOfTimeComponents(
+            aheadOfTimeComponentsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .build();
   }
 
@@ -118,6 +122,8 @@ abstract class CompilerOptions {
 
     Builder warnIfInjectionFactoryNotGeneratedUpstream(
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
+
+    Builder aheadOfTimeComponents(boolean aheadOfTimeComponents);
 
     CompilerOptions build();
   }
@@ -150,6 +156,8 @@ abstract class CompilerOptions {
   static final String IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT =
       "dagger.ignorePrivateAndStaticInjectionForComponent";
 
+  static final String AHEAD_OF_TIME_COMPONENTS_KEY = "dagger.experimentalAheadOfTimeComponents";
+
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
           EXPERIMENTAL_ANDROID_MODE,
@@ -160,7 +168,8 @@ abstract class CompilerOptions {
           PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
           STATIC_MEMBER_VALIDATION_TYPE_KEY,
           WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
-          IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
+          IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
+          AHEAD_OF_TIME_COMPONENTS_KEY);
 
   private static FeatureStatus experimentalAndroidModeFeatureStatus(
       ProcessingEnvironment processingEnv) {
@@ -226,6 +235,15 @@ abstract class CompilerOptions {
     return valueOf(
         processingEnv,
         WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
+
+  private static FeatureStatus aheadOfTimeComponentsFeatureStatus(
+      ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        AHEAD_OF_TIME_COMPONENTS_KEY,
         FeatureStatus.DISABLED,
         EnumSet.allOf(FeatureStatus.class));
   }

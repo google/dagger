@@ -44,6 +44,9 @@ public class LongCycleTest {
   @Test
   public void longCycleHasMoreThanOneInitializeMethod() throws NoSuchMethodException {
     assume().that(System.getProperty("dagger.mode")).isNotEqualTo("ExperimentalAndroidMode");
+    assume()
+        .that(System.getProperty("dagger.mode"))
+        .isNotEqualTo("ExperimentalAndroidModeAndAheadOfTimeComponents");
     DaggerLongCycle_LongCycleComponent.class
         .getDeclaredMethod("initialize2", DaggerLongCycle_LongCycleComponent.Builder.class);
   }

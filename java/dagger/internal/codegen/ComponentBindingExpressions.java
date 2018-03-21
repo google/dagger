@@ -595,7 +595,6 @@ final class ComponentBindingExpressions {
       if (!frameworkInstanceCreationExpression(resolvedBindings).isSimpleFactory()
           && !(instanceBindingExpression(resolvedBindings)
               instanceof DerivedFromProviderBindingExpression)) {
-        // TODO(user): Cache the provider.
         return wrapInMethod(
             resolvedBindings,
             RequestKind.PROVIDER,
@@ -657,17 +656,21 @@ final class ComponentBindingExpressions {
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       BindingExpression bindingExpression) {
-    return compilerOptions.experimentalAndroidMode()
-            && requestKind.equals(RequestKind.INSTANCE)
-            && needsCaching(resolvedBindings)
-        ? new ScopedInstanceMethodImplementation(
-            resolvedBindings, requestKind, bindingExpression, types, generatedComponentModel)
-        : new BindingMethodImplementation(
-            resolvedBindings,
-            requestKind,
-            bindingExpression,
-            generatedComponentModel.name(),
-            types);
+    if (compilerOptions.experimentalAndroidMode()) {
+      if (requestKind.equals(RequestKind.PROVIDER)) {
+        return new SingleCheckedMethodImplementation(
+            resolvedBindings, requestKind, bindingExpression, types, generatedComponentModel);
+      } else if (requestKind.equals(RequestKind.INSTANCE) && needsCaching(resolvedBindings)) {
+        return resolvedBindings.scope().get().isReusable()
+            ? new SingleCheckedMethodImplementation(
+                resolvedBindings, requestKind, bindingExpression, types, generatedComponentModel)
+            : new DoubleCheckedMethodImplementation(
+                resolvedBindings, requestKind, bindingExpression, types, generatedComponentModel);
+      }
+    }
+
+    return new BindingMethodImplementation(
+        resolvedBindings, requestKind, bindingExpression, generatedComponentModel.name(), types);
   }
 
   /**

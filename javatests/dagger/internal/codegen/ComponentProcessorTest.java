@@ -289,7 +289,11 @@ public class ComponentProcessorTest {
                 "import javax.inject.Provider;",
                 "",
                 GENERATED_ANNOTATION,
-                "public final class DaggerSimpleComponent implements SimpleComponent {",
+                "public final class DaggerSimpleComponent implements SimpleComponent {")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
+            .addLines(
                 "  private DaggerSimpleComponent(Builder builder) {}",
                 "",
                 "  public static Builder builder() {",
@@ -323,7 +327,10 @@ public class ComponentProcessorTest {
                 "    return SomeInjectableType_Factory.create();")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE, //
-                "    return new SwitchingProvider<>(0);")
+                "    if (someInjectableTypeProvider == null) {",
+                "      someInjectableTypeProvider = new SwitchingProvider<>(0);",
+                "    }",
+                "    return someInjectableTypeProvider;")
             .addLines(
                 "  }",
                 "",
@@ -400,7 +407,8 @@ public class ComponentProcessorTest {
                 "public final class DaggerSimpleComponent implements SimpleComponent {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
-                "  private volatile Object someInjectableType = new MemoizedSentinel();")
+                "  private volatile Object someInjectableType = new MemoizedSentinel();",
+                "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
             .addLinesIn(
                 DEFAULT_MODE,
                 "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
@@ -447,11 +455,11 @@ public class ComponentProcessorTest {
                 "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE, //
-                "    return new SwitchingProvider<>(0);")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return someInjectableTypeProvider;")
-            .addLines( //
+                "    if (someInjectableTypeProvider == null) {",
+                "      someInjectableTypeProvider = new SwitchingProvider<>(0);",
+                "    }")
+            .addLines(
+                "    return someInjectableTypeProvider;",
                 "  }")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
@@ -1291,10 +1299,14 @@ public class ComponentProcessorTest {
                 "  private test_AComponent_a aProvider;")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
+                "  private volatile Provider<A> aProvider;",
                 "  private AComponent aComponent;",
                 "",
                 "  private Provider<A> getAProvider() {",
-                "    return new SwitchingProvider<>(0);",
+                "    if (aProvider == null) {",
+                "      aProvider = new SwitchingProvider<>(0);",
+                "    }",
+                "    return aProvider;",
                 "  }")
             .addLines(
                 "  @SuppressWarnings(\"unchecked\")",

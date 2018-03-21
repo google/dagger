@@ -26,4 +26,5 @@ interface NullComponent {
   Provider<String> stringProvider();
   Number number();
   Provider<Number> numberProvider();
+  @Nullable Integer integer();
 }

@@ -178,6 +178,9 @@ public class DelegateBindingExpressionTest {
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object regularScoped = new MemoizedSentinel();",
+                    "  private volatile ReusableScoped reusableScoped;",
+                    "",
                     "  private RegularScoped getRegularScoped() {",
                     "    Object local = regularScoped;",
                     "    if (local instanceof MemoizedSentinel) {",
@@ -192,10 +195,10 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "",
                     "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
+                    "    if (reusableScoped == null) {",
                     "      reusableScoped = new ReusableScoped();",
                     "    }",
-                    "    return (ReusableScoped) reusableScoped;",
+                    "    return reusableScoped;",
                     "  }",
                     "")
                 .addLines(
@@ -270,6 +273,9 @@ public class DelegateBindingExpressionTest {
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object regularScoped = new MemoizedSentinel();",
+                    "  private volatile ReusableScoped reusableScoped;",
+                    "",
                     "  private RegularScoped getRegularScoped() {",
                     "    Object local = regularScoped;",
                     "    if (local instanceof MemoizedSentinel) {",
@@ -284,10 +290,10 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "",
                     "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
+                    "    if (reusableScoped == null) {",
                     "      reusableScoped = new ReusableScoped();",
                     "    }",
-                    "    return (ReusableScoped) reusableScoped;",
+                    "    return reusableScoped;",
                     "  }",
                     "")
                 .addLines(
@@ -359,6 +365,10 @@ public class DelegateBindingExpressionTest {
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object regularScoped = new MemoizedSentinel();",
+                    "  private volatile ReusableScoped reusableScoped;",
+                    "  private volatile Provider<Unscoped> unscopedProvider;",
+                    "",
                     "  private RegularScoped getRegularScoped() {",
                     "    Object local = regularScoped;",
                     "    if (local instanceof MemoizedSentinel) {",
@@ -373,14 +383,17 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "",
                     "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
+                    "    if (reusableScoped == null) {",
                     "      reusableScoped = new ReusableScoped();",
                     "    }",
-                    "    return (ReusableScoped) reusableScoped;",
+                    "    return reusableScoped;",
                     "  }",
                     "",
                     "  private Provider<Unscoped> getUnscopedProvider() {",
-                    "    return new SwitchingProvider<>(0);",
+                    "    if (unscopedProvider == null) {",
+                    "      unscopedProvider = new SwitchingProvider<>(0);",
+                    "    }",
+                    "    return unscopedProvider;",
                     "  }",
                     "")
                 .addLines(
@@ -395,14 +408,16 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "    this.releasableScopedProvider = ",
                     "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.unscopedProvider =",
-                    "        ReferenceReleasingProvider.create(")
+                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
                 .addLinesIn(
                     DEFAULT_MODE,
+                    "    this.unscopedProvider =",
+                    "        ReferenceReleasingProvider.create(",
                     "            (Provider) Unscoped_Factory.create(), customScopeReferences);")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "    this.unscopedProvider2 =",
+                    "        ReferenceReleasingProvider.create(",
                     "            (Provider) getUnscopedProvider(), customScopeReferences);")
                 .addLines(
                     "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
@@ -466,6 +481,9 @@ public class DelegateBindingExpressionTest {
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object regularScoped = new MemoizedSentinel();",
+                    "  private volatile ReusableScoped reusableScoped;",
+                    "",
                     "  private RegularScoped getRegularScoped() {",
                     "    Object local = regularScoped;",
                     "    if (local instanceof MemoizedSentinel) {",
@@ -480,10 +498,10 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "",
                     "  private ReusableScoped getReusableScoped() {",
-                    "    if (reusableScoped instanceof MemoizedSentinel) {",
+                    "    if (reusableScoped == null) {",
                     "      reusableScoped = new ReusableScoped();",
                     "    }",
-                    "    return (ReusableScoped) reusableScoped;",
+                    "    return reusableScoped;",
                     "  }",
                     "")
                 .addLines(
@@ -784,14 +802,23 @@ public class DelegateBindingExpressionTest {
                     "}")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Provider<CharSequence> charSequenceProvider;",
+                    "  private volatile Provider<String> namedStringProvider;",
+                    "",
                     "  @Override",
                     "  public Provider<CharSequence> charSequence() {",
-                    "    return new SwitchingProvider<>(0);",
+                    "    if (charSequenceProvider == null) {",
+                    "      charSequenceProvider = new SwitchingProvider<>(0);",
+                    "    }",
+                    "    return charSequenceProvider;",
                     "  }",
                     "",
                     "  @Override",
                     "  public Provider<String> namedString() {",
-                    "    return new SwitchingProvider<>(1);",
+                    "    if (namedStringProvider == null) {",
+                    "      namedStringProvider = new SwitchingProvider<>(1);",
+                    "    }",
+                    "    return namedStringProvider;",
                     "  }",
                     "",
                     "  private final class SwitchingProvider<T> implements Provider<T> {",
@@ -877,14 +904,23 @@ public class DelegateBindingExpressionTest {
                     "}")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Provider<CharSequence> charSequenceProvider;",
+                    "  private volatile Provider<Object> objectProvider;",
+                    "",
                     "  @Override",
                     "  public Provider<CharSequence> charSequence() {",
-                    "    return new SwitchingProvider<>(0);",
+                    "    if (charSequenceProvider == null) {",
+                    "      charSequenceProvider = new SwitchingProvider<>(0);",
+                    "    }",
+                    "    return charSequenceProvider;",
                     "  }",
                     "",
                     "  @Override",
                     "  public Provider<Object> object() {",
-                    "    return new SwitchingProvider<>(1);",
+                    "    if (objectProvider == null) {",
+                    "      objectProvider = new SwitchingProvider<>(1);",
+                    "    }",
+                    "    return objectProvider;",
                     "  }",
                     "",
                     "  private final class SwitchingProvider<T> implements Provider<T> {",
@@ -971,9 +1007,14 @@ public class DelegateBindingExpressionTest {
                     "}")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Provider<Supertype> toProvider;",
+                    "",
                     "  @Override",
                     "  public Provider<Supertype> supertypeProvider() {",
-                    "    return new SwitchingProvider<>(0);",
+                    "    if (toProvider == null) {",
+                    "      toProvider = new SwitchingProvider<>(0);",
+                    "    }",
+                    "    return toProvider;",
                     "  }",
                     "",
                     "  private final class SwitchingProvider<T> implements Provider<T> {",
@@ -1063,14 +1104,15 @@ public class DelegateBindingExpressionTest {
                     "}")
                 .addLinesIn(
                     EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Provider<Object> bindStringProvider;",
                     "  private volatile Object object = new MemoizedSentinel();",
-                    "  private volatile Object string = new MemoizedSentinel();",
+                    "  private volatile String string;",
                     "",
                     "  private String getString() {",
-                    "    if (string instanceof MemoizedSentinel) {",
+                    "    if (string == null) {",
                     "      string = TestModule_ProvideStringFactory.proxyProvideString();",
                     "    }",
-                    "    return (String) string;",
+                    "    return string;",
                     "  }",
                     "",
                     "  private Object getObject2() {",
@@ -1088,7 +1130,10 @@ public class DelegateBindingExpressionTest {
                     "",
                     "  @Override",
                     "  public Provider<Object> getObject() {",
-                    "    return new SwitchingProvider<>(0);",
+                    "    if (bindStringProvider == null) {",
+                    "      bindStringProvider = new SwitchingProvider<>(0);",
+                    "    }",
+                    "    return bindStringProvider;",
                     "  }",
                     "",
                     "  private final class SwitchingProvider<T> implements Provider<T> {",

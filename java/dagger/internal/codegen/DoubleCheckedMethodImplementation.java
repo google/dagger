@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -29,14 +28,17 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.MemoizedSentinel;
 import dagger.model.RequestKind;
 
-/** Defines a scoping method body and return type for a given instance {@link BindingExpression}. */
-final class ScopedInstanceMethodImplementation extends BindingMethodImplementation {
+/**
+ * Defines a method body and return type for double checked locking of the given {@link
+ * BindingExpression}.
+ */
+final class DoubleCheckedMethodImplementation extends BindingMethodImplementation {
 
   private final GeneratedComponentModel generatedComponentModel;
   private final ContributionBinding binding;
   private final Supplier<String> fieldName = Suppliers.memoize(this::createField);
 
-  ScopedInstanceMethodImplementation(
+  DoubleCheckedMethodImplementation(
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       BindingExpression bindingExpression,
@@ -45,24 +47,10 @@ final class ScopedInstanceMethodImplementation extends BindingMethodImplementati
     super(resolvedBindings, requestKind, bindingExpression, generatedComponentModel.name(), types);
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings.contributionBinding();
-    checkArgument(binding.scope().isPresent(), "expected binding to be scoped: %s", binding);
   }
 
   @Override
   CodeBlock body() {
-    return binding.scope().get().isReusable() ? singleCheck() : doubleCheck();
-  }
-
-  private CodeBlock singleCheck() {
-    return CodeBlock.builder()
-        .beginControlFlow("if ($N instanceof $T)", fieldName.get(), MemoizedSentinel.class)
-        .addStatement("$N = $L", fieldName.get(), simpleBindingExpression())
-        .endControlFlow()
-        .addStatement("return ($T) $N", returnType(), fieldName.get())
-        .build();
-  }
-
-  private CodeBlock doubleCheck() {
     String fieldExpression =
         fieldName.get().equals("local") ? "this." + fieldName.get() : fieldName.get();
     return CodeBlock.builder()

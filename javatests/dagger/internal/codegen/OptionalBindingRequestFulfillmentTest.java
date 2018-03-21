@@ -118,8 +118,13 @@ public class OptionalBindingRequestFulfillmentTest {
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
+                "  private volatile Provider<Maybe> provideMaybeProvider;",
+                "",
                 "  private Provider<Maybe> getMaybeProvider() {",
-                "    return new SwitchingProvider<>(0);",
+                "    if (provideMaybeProvider == null) {",
+                "      provideMaybeProvider = new SwitchingProvider<>(0);",
+                "    }",
+                "    return provideMaybeProvider;",
                 "  }")
             .addLines(
                 "  @Override",

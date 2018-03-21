@@ -18,10 +18,12 @@ package dagger.functional.nullables;
 
 import dagger.Module;
 import dagger.Provides;
+import dagger.Reusable;
 
 @Module
 class NullModule {
   Number numberValue = null;
+  Integer integerCallCount = 0;
 
   @Nullable
   @Provides
@@ -32,5 +34,13 @@ class NullModule {
   @Provides
   Number provideNumber() {
     return numberValue;
+  }
+
+  @Nullable
+  @Provides
+  @Reusable
+  Integer provideNullReusableInteger() {
+    integerCallCount++;
+    return null;
   }
 }

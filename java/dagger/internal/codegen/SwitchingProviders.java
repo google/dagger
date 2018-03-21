@@ -115,8 +115,8 @@ final class SwitchingProviders {
 
     return CodeBlock.builder()
         // TODO(user): Is there something else more useful than the key?
-        .addStatement("// @$L", key)
-        .addStatement("case $L: return ($T) $L", switchIds.get(key), T, instanceCodeBlock)
+        .add("case $L: // $L \n", switchIds.get(key), key)
+        .addStatement("return ($T) $L", T, instanceCodeBlock)
         .build();
   }
 

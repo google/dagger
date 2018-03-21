@@ -1279,55 +1279,95 @@ public class ComponentProcessorTest {
         "  B b();",
         "}");
     JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerBComponent",
-            "package test;",
-            "",
-            GENERATED_ANNOTATION,
-            "public final class DaggerBComponent implements BComponent {",
-            "  private test_AComponent_a aProvider;",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
-            "    this.aProvider = new test_AComponent_a(builder.aComponent);",
-            "  }",
-            "",
-            "  @Override",
-            "  public B b() {",
-            "    return new B(aProvider);",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private AComponent aComponent;",
-            "",
-            "    public BComponent build() {",
-            "      if (aComponent == null) {",
-            "        throw new IllegalStateException(AComponent.class.getCanonicalName()",
-            "            + \" must be set\");",
-            "      }",
-            "      return new DaggerBComponent(this);",
-            "    }",
-            "",
-            "    public Builder aComponent(AComponent aComponent) {",
-            "      this.aComponent = Preconditions.checkNotNull(aComponent);",
-            "      return this;",
-            "    }",
-            "  }",
-            "",
-            "  private static class test_AComponent_a implements Provider<A> {",
-            "    private final AComponent aComponent;",
-            "    ",
-            "    test_AComponent_a(AComponent aComponent) {",
-            "        this.aComponent = aComponent;",
-            "    }",
-            "    ",
-            "    @Override()",
-            "    public A get() {",
-            "      return Preconditions.checkNotNull(",
-            "          aComponent.a(), " + NPE_FROM_COMPONENT_METHOD + ");",
-            "    }",
-            "  }",
-            "}");
+        compilerMode
+            .javaFileBuilder("test.DaggerBComponent")
+            .addLines(
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerBComponent implements BComponent {")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private test_AComponent_a aProvider;")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private AComponent aComponent;",
+                "",
+                "  private Provider<A> getAProvider() {",
+                "    return new SwitchingProvider<>(0);",
+                "  }")
+            .addLines(
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    this.aProvider = new test_AComponent_a(builder.aComponent);")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "    this.aComponent = builder.aComponent;")
+            .addLines(
+                "  }",
+                "",
+                "  @Override",
+                "  public B b() {")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "    return new B(aProvider);")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "    return new B(getAProvider());")
+            .addLines(
+                "  }",
+                "",
+                "  public static final class Builder {",
+                "    private AComponent aComponent;",
+                "",
+                "    public BComponent build() {",
+                "      if (aComponent == null) {",
+                "        throw new IllegalStateException(AComponent.class.getCanonicalName()",
+                "            + \" must be set\");",
+                "      }",
+                "      return new DaggerBComponent(this);",
+                "    }",
+                "",
+                "    public Builder aComponent(AComponent aComponent) {",
+                "      this.aComponent = Preconditions.checkNotNull(aComponent);",
+                "      return this;",
+                "    }",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private static class test_AComponent_a implements Provider<A> {",
+                "    private final AComponent aComponent;",
+                "    ",
+                "    test_AComponent_a(AComponent aComponent) {",
+                "        this.aComponent = aComponent;",
+                "    }",
+                "    ",
+                "    @Override()",
+                "    public A get() {",
+                "      return Preconditions.checkNotNull(",
+                "          aComponent.a(), " + NPE_FROM_COMPONENT_METHOD + ");",
+                "    }",
+                "  }",
+                "}")
+            .addLinesIn(
+                EXPERIMENTAL_ANDROID_MODE,
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T)",
+                "              Preconditions.checkNotNull(",
+                "                  aComponent.a(), " + NPE_FROM_COMPONENT_METHOD + ");",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }")
+            .build();
     Compilation compilation =
         daggerCompiler()
             .withOptions(compilerMode.javacopts())

@@ -108,11 +108,6 @@ final class DependencyMethodProviderCreationExpression
             dependency(), generatedComponentModel.name()));
   }
 
-  @Override
-  public boolean isSimpleFactory() {
-    return true;
-  }
-
   private ClassName factoryClassName() {
     String factoryName =
         ClassName.get(dependency().typeElement()).toString().replace('.', '_')

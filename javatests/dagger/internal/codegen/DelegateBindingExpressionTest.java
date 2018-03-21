@@ -21,7 +21,6 @@ import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
@@ -559,36 +558,56 @@ public class DelegateBindingExpressionTest {
             "  other.Supertype supertype();",
             "}");
     Compilation compilation =
-        daggerCompiler().compile(accessibleSupertype, inaccessibleSubtype, module, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(accessibleSupertype, inaccessibleSubtype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.DaggerTestComponent",
-                "package test;",
-                "",
-                "import dagger.internal.DoubleCheck;",
-                IMPORT_GENERATED_ANNOTATION,
-                "import javax.inject.Provider;",
-                "import other.Subtype_Factory;",
-                "import other.Supertype;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {",
-                "  @SuppressWarnings(\"rawtypes\")",
-                "  private Provider subtypeProvider;",
-                "",
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());",
-                "  }",
-                "",
-                "  @Override",
-                "  public Supertype supertype() {",
-                "    return (Supertype) subtypeProvider.get();",
-                "  }",
-                "}"));
+            compilerMode
+                .javaFileBuilder("test.DaggerTestComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @SuppressWarnings(\"rawtypes\")",
+                    "  private Provider subtypeProvider;",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Builder builder) {",
+                    "    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Supertype supertype() {",
+                    "    return (Supertype) subtypeProvider.get();",
+                    "  }")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object subtype = new MemoizedSentinel();",
+                    "",
+                    "  private Object getSubtype() {",
+                    "    Object local = subtype;",
+                    "    if (local instanceof MemoizedSentinel) {",
+                    "      synchronized (local) {",
+                    "        if (local == subtype) {",
+                    "          subtype = Subtype_Factory.newSubtype();",
+                    "        }",
+                    "        local = subtype;",
+                    "      }",
+                    "    }",
+                    "    return (Object) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Supertype supertype() {",
+                    "    return (Supertype) getSubtype();",
+                    "  }")
+                .build());
   }
 
   @Test
@@ -647,30 +666,53 @@ public class DelegateBindingExpressionTest {
             "  other.UsesSupertype usesSupertype();",
             "}");
     Compilation compilation =
-        daggerCompiler().compile(supertype, subtype, usesSupertype, module, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(supertype, subtype, usesSupertype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.DaggerTestComponent",
-                "package test;",
-                "",
-                "import other.Subtype_Factory;",
-                "import other.UsesSupertype;",
-                "import other.UsesSupertype_Factory;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {",
-                "  @SuppressWarnings(\"rawtypes\")",
-                "  private Provider subtypeProvider;",
-                "",
-                "  @Override",
-                "  public UsesSupertype usesSupertype() {",
-                //   can't cast the provider.get() to a type that's not accessible
-                "    return UsesSupertype_Factory.newUsesSupertype(subtypeProvider.get());",
-                "  }",
-                "}"));
+            compilerMode
+                .javaFileBuilder("test.DaggerTestComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @SuppressWarnings(\"rawtypes\")",
+                    "  private Provider subtypeProvider;",
+                    "",
+                    "  @Override",
+                    "  public UsesSupertype usesSupertype() {",
+                    //   can't cast the provider.get() to a type that's not accessible
+                    "    return UsesSupertype_Factory.newUsesSupertype(subtypeProvider.get());",
+                    "  }",
+                    "}")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  private volatile Object subtype = new MemoizedSentinel();",
+                    "",
+                    "  private Object getSubtype() {",
+                    "    Object local = subtype;",
+                    "    if (local instanceof MemoizedSentinel) {",
+                    "      synchronized (local) {",
+                    "        if (local == subtype) {",
+                    "          subtype = Subtype_Factory.newSubtype();",
+                    "        }",
+                    "        local = subtype;",
+                    "      }",
+                    "    }",
+                    "    return (Object) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public UsesSupertype usesSupertype() {",
+                    "    return UsesSupertype_Factory.newUsesSupertype(getSubtype());",
+                    "  }")
+                .build());
   }
 
   @Test
@@ -713,28 +755,61 @@ public class DelegateBindingExpressionTest {
             "  @Named(\"named\") Provider<String> namedString();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(module, component);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.DaggerTestComponent",
-                "",
-                "package test;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {",
-                "  @Override",
-                "  public Provider<CharSequence> charSequence() {",
-                "    return (Provider) TestModule_ProvideStringFactory.create();",
-                "  }",
-                "",
-                "  @Override",
-                "  public Provider<String> namedString() {",
-                "    return TestModule_ProvideStringFactory.create();",
-                "  }",
-                "}"));
+            compilerMode
+                .javaFileBuilder("test.DaggerTestComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @Override",
+                    "  public Provider<CharSequence> charSequence() {",
+                    "    return (Provider) TestModule_ProvideStringFactory.create();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<String> namedString() {",
+                    "    return TestModule_ProvideStringFactory.create();",
+                    "  }",
+                    "}")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  @Override",
+                    "  public Provider<CharSequence> charSequence() {",
+                    "    return new SwitchingProvider<>(0);",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<String> namedString() {",
+                    "    return new SwitchingProvider<>(1);",
+                    "  }",
+                    "",
+                    "  private final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    // TODO(cl/189031410): Dedupe identical cases in SwitchingProviders.
+                    "        case 0:",
+                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "        case 1:",
+                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "        default:",
+                    "            throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   @Test
@@ -774,27 +849,59 @@ public class DelegateBindingExpressionTest {
             "  Provider<Object> object();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(module, component);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.DaggerTestComponent",
-                "",
-                "package test;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {",
-                "  @Override",
-                "  public Provider<CharSequence> charSequence() {",
-                "    return (Provider) TestModule_ProvideStringFactory.create();",
-                "  }",
-                "  @Override",
-                "  public Provider<Object> object() {",
-                "    return (Provider) TestModule_ProvideStringFactory.create();",
-                "  }",
-                "}"));
+            compilerMode
+                .javaFileBuilder("test.DaggerTestComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @Override",
+                    "  public Provider<CharSequence> charSequence() {",
+                    "    return (Provider) TestModule_ProvideStringFactory.create();",
+                    "  }",
+                    "  @Override",
+                    "  public Provider<Object> object() {",
+                    "    return (Provider) TestModule_ProvideStringFactory.create();",
+                    "  }",
+                    "}")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  @Override",
+                    "  public Provider<CharSequence> charSequence() {",
+                    "    return new SwitchingProvider<>(0);",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Object> object() {",
+                    "    return new SwitchingProvider<>(1);",
+                    "  }",
+                    "",
+                    "  private final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0:",
+                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "        case 1:",
+                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "        default:",
+                    "            throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   @Test
@@ -840,26 +947,46 @@ public class DelegateBindingExpressionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(supertype, injectableSubtype, module, component);
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(supertype, injectableSubtype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerRequestsSubtypeAsProvider")
         .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.DaggerRequestsSubtypeAsProvider",
-                "package test;",
-                "",
-                "import other.Subtype_Factory;",
-                "import other.Supertype;",
-                "",
-                GENERATED_ANNOTATION,
-                "public final class DaggerRequestsSubtypeAsProvider ",
-                "    implements RequestsSubtypeAsProvider {",
-                "  @Override",
-                "  public Provider<Supertype> supertypeProvider() {",
-                "    return (Provider) Subtype_Factory.create();",
-                "  }",
-                "}"));
+            compilerMode
+                .javaFileBuilder("test.DaggerRequestsSubtypeAsProvider")
+                .addLines(
+                    "package test;",
+                    "",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerRequestsSubtypeAsProvider",
+                    "    implements RequestsSubtypeAsProvider {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @Override",
+                    "  public Provider<Supertype> supertypeProvider() {",
+                    "    return (Provider) Subtype_Factory.create();",
+                    "  }",
+                    "}")
+                .addLinesIn(
+                    EXPERIMENTAL_ANDROID_MODE,
+                    "  @Override",
+                    "  public Provider<Supertype> supertypeProvider() {",
+                    "    return new SwitchingProvider<>(0);",
+                    "  }",
+                    "",
+                    "  private final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) Subtype_Factory.newSubtype();",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   @Test

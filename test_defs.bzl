@@ -85,9 +85,10 @@ def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_de
   for test_file in test_files:
     test_name = test_file.replace(".java", "")
     prefix_path = "src/test/java/"
-    if PACKAGE_NAME.find("javatests/") != -1:
+    package_name = native.package_name()
+    if package_name.find("javatests/") != -1:
       prefix_path = "javatests/"
-    test_class = (PACKAGE_NAME + "/" + test_name).rpartition(prefix_path)[2].replace("/",".")
+    test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/",".")
     test_rule_type(
         name = test_name + suffix,
         deps = test_deps,

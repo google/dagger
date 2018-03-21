@@ -84,7 +84,7 @@ final class ErrorMessages {
   static final String INJECT_ON_PRIVATE_CONSTRUCTOR =
       "Dagger does not support injection into private constructors";
   static final String INJECT_CONSTRUCTOR_ON_INNER_CLASS =
-      "@Inject constructors are invalid on inner classes";
+      "@Inject constructors are invalid on inner classes. Did you mean to make the class static?";
   static final String INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS =
       "@Inject is nonsense on the constructor of an abstract class";
   static final String QUALIFIER_ON_INJECT_CONSTRUCTOR =

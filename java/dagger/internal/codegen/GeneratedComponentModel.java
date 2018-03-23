@@ -109,7 +109,6 @@ final class GeneratedComponentModel {
   }
 
   private final ClassName name;
-  // TODO(user): This is only non-private to ease migration with AbstractComponentWriter!
   private final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();

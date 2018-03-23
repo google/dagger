@@ -38,7 +38,7 @@ import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
 import dagger.model.BindingKind;
 import dagger.model.ComponentPath;
 import dagger.spi.BindingGraphPlugin;
-import dagger.spi.ValidationItem;
+import dagger.spi.DiagnosticReporter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
           "/set312/12");
 
   @Override
-  public List<ValidationItem> visitGraph(BindingGraph bindingGraph) {
+  public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     TypeElement componentElement =
         bindingGraph.rootComponentNode().componentPath().currentComponent();
     DotGraph graph = new NodesGraph(bindingGraph).graph();
@@ -110,7 +110,6 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return ImmutableList.of();
   }
 
   private abstract static class Indented {

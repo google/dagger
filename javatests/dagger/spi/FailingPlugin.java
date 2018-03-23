@@ -16,11 +16,9 @@
 
 package dagger.spi;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import dagger.model.BindingGraph;
 import java.util.Map;
@@ -42,34 +40,32 @@ public final class FailingPlugin implements BindingGraphPlugin {
   }
 
   @Override
-  public ImmutableList<ValidationItem> visitGraph(BindingGraph bindingGraph) {
+  public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     if (options.containsKey("error_on_binding")) {
       String key = options.get("error_on_binding");
-      return bindingGraph
+      bindingGraph
           .bindingNodes()
           .stream()
           .filter(node -> node.binding().key().toString().equals(key))
-          .map(node -> ValidationItem.create(ERROR, node, "Bad Binding!"))
-          .collect(toImmutableList());
+          .forEach(node -> diagnosticReporter.reportBinding(ERROR, node, "Bad %s!", "Binding"));
     }
 
     if (options.containsKey("error_on_component")) {
-      return ImmutableList.of(
-          ValidationItem.create(ERROR, bindingGraph.rootComponentNode(), "Bad Component!"));
+      diagnosticReporter.reportComponent(
+          ERROR, bindingGraph.rootComponentNode(), "Bad %s!", "Component");
     }
 
     if (options.containsKey("error_on_subcomponents")) {
-      return bindingGraph
+      bindingGraph
           .componentNodes()
           .stream()
           .filter(node -> !node.componentPath().atRoot())
-          .map(node -> ValidationItem.create(ERROR, node, "Bad Subcomponent!"))
-          .collect(toImmutableList());
+          .forEach(node -> diagnosticReporter.reportComponent(ERROR, node, "Bad Subcomponent!"));
     }
 
     if (options.containsKey("error_on_dependency")) {
       String dependency = options.get("error_on_dependency");
-      return bindingGraph
+      bindingGraph
           .dependencyEdges()
           .stream()
           .filter(
@@ -79,11 +75,9 @@ public final class FailingPlugin implements BindingGraphPlugin {
                       .get()
                       .getSimpleName()
                       .contentEquals(dependency))
-          .map(edge -> ValidationItem.create(ERROR, edge, "Bad Dependency!"))
-          .collect(toImmutableList());
+          .forEach(
+              edge -> diagnosticReporter.reportDependency(ERROR, edge, "Bad %s!", "Dependency"));
     }
-
-    return ImmutableList.of();
   }
 
   @Override

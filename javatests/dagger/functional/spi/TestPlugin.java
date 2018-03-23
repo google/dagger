@@ -20,16 +20,14 @@ import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.spi.BindingGraphPlugin;
-import dagger.spi.ValidationItem;
+import dagger.spi.DiagnosticReporter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.util.List;
 import java.util.Properties;
 import javax.annotation.processing.Filer;
 
@@ -43,7 +41,7 @@ public final class TestPlugin implements BindingGraphPlugin {
   }
 
   @Override
-  public List<ValidationItem> visitGraph(BindingGraph bindingGraph) {
+  public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     Properties properties = new Properties();
     int i = 0;
     for (ComponentNode node : bindingGraph.componentNodes()) {
@@ -52,7 +50,6 @@ public final class TestPlugin implements BindingGraphPlugin {
     }
 
     write(bindingGraph, properties);
-    return ImmutableList.of();
   }
 
   private void write(BindingGraph bindingGraph, Properties properties) {

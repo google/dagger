@@ -17,28 +17,24 @@
 package dagger.internal.codegen;
 
 import static javax.lang.model.util.ElementFilter.typesIn;
-import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import dagger.Component;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
+import dagger.internal.codegen.DiagnosticReporterFactory.ErrorCountingDiagnosticReporter;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import dagger.spi.BindingGraphPlugin;
-import dagger.spi.ValidationItem;
+import dagger.spi.DiagnosticReporter;
 import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Messager;
@@ -60,7 +56,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
   private final ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
-  private final SpiDiagnosticReporter spiDiagnosticReporter;
+  private final DiagnosticReporterFactory diagnosticReporterFactory;
 
   @Inject
   ComponentProcessingStep(
@@ -73,7 +69,7 @@ final class ComponentProcessingStep implements ProcessingStep {
       BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
       ImmutableList<BindingGraphPlugin> bindingGraphPlugins,
-      SpiDiagnosticReporter spiDiagnosticReporter) {
+      DiagnosticReporterFactory diagnosticReporterFactory) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
@@ -83,7 +79,7 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
     this.bindingGraphPlugins = bindingGraphPlugins;
-    this.spiDiagnosticReporter = spiDiagnosticReporter;
+    this.diagnosticReporterFactory = diagnosticReporterFactory;
   }
 
   @Override
@@ -154,9 +150,8 @@ final class ComponentProcessingStep implements ProcessingStep {
         }
 
         if (!bindingGraphPlugins.isEmpty()) {
-          Collection<ValidationItem> items =
-              executePlugins(BindingGraphConverter.convert(bindingGraph));
-          if (items.stream().anyMatch(item -> item.diagnosticKind().equals(ERROR))) {
+          boolean reportedErrors = executePlugins(BindingGraphConverter.convert(bindingGraph));
+          if (reportedErrors) {
             continue;
           }
         }
@@ -170,25 +165,21 @@ final class ComponentProcessingStep implements ProcessingStep {
   }
 
   /**
-   * Calls {@link BindingGraphPlugin#visitGraph(dagger.model.BindingGraph)} on each of {@code
-   * bindingGraphPlugins} and reports any extra validation return from the plugins to the {@link
-   * Messager}.
+   * Calls {@link BindingGraphPlugin#visitGraph(dagger.model.BindingGraph, DiagnosticReporter)} on
+   * each of {@code bindingGraphPlugins}.
    *
-   * @return every {@link ValidationItem} returned by the plugins
+   * @return {@code true} if any plugin reported errors
    */
-  private Collection<ValidationItem> executePlugins(dagger.model.BindingGraph graph) {
+  private boolean executePlugins(dagger.model.BindingGraph graph) {
     // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
-    ListMultimap<String, ValidationItem> items =
-        MultimapBuilder.linkedHashKeys().arrayListValues().build();
+    boolean reportedErrors = false;
     for (BindingGraphPlugin plugin : bindingGraphPlugins) {
-      items.putAll(plugin.pluginName(), plugin.visitGraph(graph));
+      ErrorCountingDiagnosticReporter reporter = diagnosticReporterFactory.reporter(graph, plugin);
+      plugin.visitGraph(graph, reporter);
+      reportedErrors |= reporter.reportedErrors();
     }
 
-    if (!items.isEmpty()) {
-      spiDiagnosticReporter.report(graph, ImmutableListMultimap.copyOf(items));
-    }
-
-    return items.values();
+    return reportedErrors;
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

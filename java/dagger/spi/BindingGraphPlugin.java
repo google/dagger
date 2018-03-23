@@ -18,13 +18,10 @@ package dagger.spi;
 
 import dagger.model.BindingGraph;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -35,23 +32,24 @@ import javax.lang.model.util.Types;
  */
 public interface BindingGraphPlugin {
   /**
-   * Called once for each valid root binding graph encountered by the Dagger processor.
-   *
-   * @return items used to print notes, warnings, and errors about the binding graph to the {@link
-   *     Messager}
+   * Called once for each valid root binding graph encountered by the Dagger processor. May report
+   * diagnostics using {@code diagnosticReporter}.
    */
-  List<ValidationItem> visitGraph(BindingGraph bindingGraph);
+  void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter);
 
   /**
    * Initializes this plugin with a {@link Filer} that it can use to write Java or other files based
    * on the binding graph. This will be called once per instance of this plugin, before any graph is
-   * {@linkplain #visitGraph(BindingGraph) visited}.
+   * {@linkplain #visitGraph(BindingGraph, DiagnosticReporter) visited}.
+   *
+   * @see javax.annotation.processing.ProcessingEnvironment#getFiler()
    */
   default void initFiler(Filer filer) {}
 
   /**
    * Initializes this plugin with a {@link Types} instance. This will be called once per instance of
-   * this plugin, before any graph is {@linkplain #visitGraph(BindingGraph) visited}.
+   * this plugin, before any graph is {@linkplain #visitGraph(BindingGraph, DiagnosticReporter)
+   * visited}.
    *
    * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils()
    */
@@ -59,7 +57,8 @@ public interface BindingGraphPlugin {
 
   /**
    * Initializes this plugin with a {@link Elements} instance. This will be called once per instance
-   * of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph) visited}.
+   * of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph, DiagnosticReporter)
+   * visited}.
    *
    * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils()
    */
@@ -68,16 +67,17 @@ public interface BindingGraphPlugin {
   /**
    * Initializes this plugin with a filtered view of the options passed on the {@code javac}
    * command-line for all keys from {@link #supportedOptions()}. This will be called once per
-   * instance of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph) visited}.
+   * instance of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph,
+   * DiagnosticReporter) visited}.
    *
-   * @see ProcessingEnvironment#getOptions()
+   * @see javax.annotation.processing.ProcessingEnvironment#getOptions()
    */
   default void initOptions(Map<String, String> options) {}
 
   /**
    * Returns the annotation-processing options that this plugin uses to configure behavior.
    *
-   * @see Processor#getSupportedOptions()
+   * @see javax.annotation.processing.Processor#getSupportedOptions()
    */
   default Set<String> supportedOptions() {
     return Collections.emptySet();

@@ -177,7 +177,7 @@ public final class SpiPluginTest {
                 "          test.TestComponent.entryPoint()"))
         .inFile(component)
         .onLineContaining("EntryPoint entryPoint();");
-    // Note that this compilation results in one ValidationItem being reported twice since there are
+    // Note that this compilation results in one error being reported twice since there are
     // two entry points that depend on test.Foo
     Compilation inFooDepCompilation =
         compilationFactory.compilationWithErrorOnDependency("inFooDep");

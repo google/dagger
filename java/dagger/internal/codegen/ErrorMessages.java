@@ -295,13 +295,6 @@ final class ErrorMessages {
 
   static final String CONTAINS_DEPENDENCY_CYCLE_FORMAT = "Found a dependency cycle:\n%s";
 
-  static String nullableToNonNullable(String typeName, String bindingString) {
-    return String.format(
-            "%s is not nullable, but is being provided by %s",
-            typeName,
-            bindingString);
-  }
-
   static final String CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD =
       "Cannot return null from a non-@Nullable component method";
 

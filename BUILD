@@ -63,6 +63,7 @@ jarjar_library(
     deps = [
         "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
+        "//java/dagger/internal/codegen:internal_validation",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/internal/codegen:validation",
@@ -78,6 +79,7 @@ jarjar_library(
     deps = [
         "//java/dagger/internal/codegen:libbase-src.jar",
         "//java/dagger/internal/codegen:libbinding-src.jar",
+        "//java/dagger/internal/codegen:libinternal_validation-src.jar",
         "//java/dagger/internal/codegen:libprocessor-src.jar",
         "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",

@@ -55,7 +55,9 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
-  private final ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
+  private final BindingGraphConverter bindingGraphConverter;
+  private final ImmutableSet<BindingGraphPlugin> validationPlugins;
+  private final ImmutableList<BindingGraphPlugin> spiPlugins;
   private final DiagnosticReporterFactory diagnosticReporterFactory;
 
   @Inject
@@ -68,7 +70,9 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
-      ImmutableList<BindingGraphPlugin> bindingGraphPlugins,
+      @Validation Set<BindingGraphPlugin> validationPlugins,
+      BindingGraphConverter bindingGraphConverter,
+      ImmutableList<BindingGraphPlugin> spiPlugins,
       DiagnosticReporterFactory diagnosticReporterFactory) {
     this.messager = messager;
     this.componentValidator = componentValidator;
@@ -78,7 +82,9 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
-    this.bindingGraphPlugins = bindingGraphPlugins;
+    this.validationPlugins = ImmutableSet.copyOf(validationPlugins);
+    this.bindingGraphConverter = bindingGraphConverter;
+    this.spiPlugins = spiPlugins;
     this.diagnosticReporterFactory = diagnosticReporterFactory;
   }
 
@@ -149,8 +155,11 @@ final class ComponentProcessingStep implements ProcessingStep {
           continue;
         }
 
-        if (!bindingGraphPlugins.isEmpty()) {
-          boolean reportedErrors = executePlugins(BindingGraphConverter.convert(bindingGraph));
+        if (!validationPlugins.isEmpty() || !spiPlugins.isEmpty()) {
+          dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
+          boolean reportedErrors =
+              executePlugins(modelGraph, validationPlugins)
+                  || executePlugins(modelGraph, spiPlugins);
           if (reportedErrors) {
             continue;
           }
@@ -166,14 +175,15 @@ final class ComponentProcessingStep implements ProcessingStep {
 
   /**
    * Calls {@link BindingGraphPlugin#visitGraph(dagger.model.BindingGraph, DiagnosticReporter)} on
-   * each of {@code bindingGraphPlugins}.
+   * each of {@code plugins}.
    *
    * @return {@code true} if any plugin reported errors
    */
-  private boolean executePlugins(dagger.model.BindingGraph graph) {
+  private boolean executePlugins(
+      dagger.model.BindingGraph graph, Iterable<BindingGraphPlugin> plugins) {
     // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
     boolean reportedErrors = false;
-    for (BindingGraphPlugin plugin : bindingGraphPlugins) {
+    for (BindingGraphPlugin plugin : plugins) {
       ErrorCountingDiagnosticReporter reporter = diagnosticReporterFactory.reporter(graph, plugin);
       plugin.visitGraph(graph, reporter);
       reportedErrors |= reporter.reportedErrors();

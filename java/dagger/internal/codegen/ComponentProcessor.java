@@ -97,11 +97,12 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Singleton
   @Component(
-      modules = {
-          BindingMethodValidatorsModule.class,
-          BindingGraphPluginsModule.class,
-          ProcessingStepsModule.class,
-      }
+    modules = {
+      BindingGraphPluginsModule.class,
+      BindingGraphValidationModule.class,
+      BindingMethodValidatorsModule.class,
+      ProcessingStepsModule.class,
+    }
   )
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);

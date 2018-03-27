@@ -22,7 +22,7 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
+import static dagger.internal.codegen.NonNullableRequestForNullableBindingValidation.nullableToNonNullable;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;

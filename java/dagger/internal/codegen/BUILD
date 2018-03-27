@@ -198,6 +198,19 @@ java_library(
     ],
 )
 
+java_library(
+    name = "internal_validation",
+    srcs = [
+        "BindingGraphValidationModule.java",
+        "NonNullableRequestForNullableBindingValidation.java",
+        "Validation.java",
+    ],
+    deps = CODEGEN_DEPS + [
+        ":base",
+        ":binding",
+    ],
+)
+
 # Classes that assemble the model of the generated code and write to the Filer
 java_library(
     name = "writing",
@@ -296,6 +309,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
+        ":internal_validation",
         ":writing",
         ":validation",
     ],

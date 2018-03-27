@@ -53,7 +53,6 @@ import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_OR_PRODUCE
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
 import static dagger.internal.codegen.ErrorMessages.inconsistentMapKeyAnnotationsError;
-import static dagger.internal.codegen.ErrorMessages.nullableToNonNullable;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
@@ -90,7 +89,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import com.squareup.javapoet.TypeName;
 import dagger.BindsOptionalOf;
 import dagger.Component;
 import dagger.Lazy;
@@ -628,9 +626,6 @@ final class BindingGraphValidator {
       protected void visitContributionBinding(
           ContributionBinding binding, ComponentDescriptor owningComponent) {
         checkBindingScope(binding, owningComponent);
-        if (!dependencyRequest().isNullable() && binding.nullableType().isPresent()) {
-          reportNullableBindingForNonNullableRequest(binding);
-        }
         if (binding.kind().equals(INJECTION)) {
           TypeMirror type = binding.key().type();
           ValidationReport<TypeElement> report =
@@ -722,25 +717,6 @@ final class BindingGraphValidator {
         }
 
         return declarations.build();
-      }
-
-      private void reportNullableBindingForNonNullableRequest(ContributionBinding binding) {
-        // Note: the method signature will include the @Nullable in it!
-        /* TODO(sameb): Sometimes javac doesn't include the Element in its output.
-         * (Maybe this happens if the code was already compiled before this point?)
-         * ... we manually print out the request in that case, otherwise the error
-         * message is kind of useless. */
-        FluentIterable<ContributionBinding> dependentContributions =
-            FluentIterable.from(dependentBindings()).filter(ContributionBinding.class);
-        report(owningGraph(dependentContributions.append(binding)))
-            .addItem(
-                nullableToNonNullable(
-                        TypeName.get(dependencyRequest().key().type()).toString(),
-                        bindingDeclarationFormatter.format(binding))
-                    + "\n at: "
-                    + formatDependencyTrace(),
-                compilerOptions.nullableValidationKind(),
-                entryPointElement());
       }
 
       private void validateMapKeys(

@@ -17,6 +17,7 @@
 package dagger.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -37,6 +38,7 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.multibindings.Multibinds;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -295,10 +297,18 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   @DoNotMock("Use Dagger-supplied implementations")
   public abstract static class BindingNode implements Node {
     static BindingNode create(
-        ComponentPath component, Binding binding, Iterable<Element> associatedDeclarations) {
-      return new AutoValue_BindingGraph_BindingNode(
-          component, binding, ImmutableSet.copyOf(associatedDeclarations));
+        ComponentPath component,
+        Binding binding,
+        Iterable<Element> associatedDeclarations,
+        Supplier<String> toStringFunction) {
+      BindingNode bindingNode =
+          new AutoValue_BindingGraph_BindingNode(
+              component, binding, ImmutableSet.copyOf(associatedDeclarations));
+      bindingNode.toStringFunction = checkNotNull(toStringFunction);
+      return bindingNode;
     }
+
+    private Supplier<String> toStringFunction;
 
     /** The component that owns the {@link #binding()}. */
     @Override
@@ -318,6 +328,11 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
      * </ul>
      */
     public abstract ImmutableSet<Element> associatedDeclarations();
+
+    @Override
+    public String toString() {
+      return toStringFunction.get();
+    }
   }
 
   /**

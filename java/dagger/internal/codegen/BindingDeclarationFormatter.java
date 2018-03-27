@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
@@ -33,7 +32,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import dagger.model.BindingKind;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -103,24 +101,26 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
       }
     }
 
-    checkArgument(
-        bindingDeclaration.bindingElement().isPresent(),
-        "Cannot format bindings without source elements: %s",
-        bindingDeclaration);
-
-    Element bindingElement = bindingDeclaration.bindingElement().get();
-    switch (bindingElement.asType().getKind()) {
-      case EXECUTABLE:
-        return methodSignatureFormatter.format(
-            MoreElements.asExecutable(bindingElement),
-            bindingDeclaration
-                .contributingModule()
-                .map(module -> MoreTypes.asDeclared(module.asType())));
-      case DECLARED:
-        return stripCommonTypePrefixes(bindingElement.asType().toString());
-      default:
-        throw new IllegalArgumentException("Formatting unsupported for element: " + bindingElement);
-    }
+    return bindingDeclaration
+        .bindingElement()
+        .map(
+            bindingElement -> {
+              switch (bindingElement.asType().getKind()) {
+                case EXECUTABLE:
+                  return methodSignatureFormatter.format(
+                      MoreElements.asExecutable(bindingElement),
+                      bindingDeclaration
+                          .contributingModule()
+                          .map(module -> MoreTypes.asDeclared(module.asType())));
+                case DECLARED:
+                  return stripCommonTypePrefixes(bindingElement.asType().toString());
+                default:
+                  throw new IllegalArgumentException(
+                      "Formatting unsupported for element: " + bindingElement);
+              }
+            })
+        // TODO(dpb): Give synthetic bindings a better string representation.
+        .orElseGet(() -> "synthetic binding for " + bindingDeclaration.key());
   }
 
   private String formatSubcomponentDeclaration(SubcomponentDeclaration subcomponentDeclaration) {

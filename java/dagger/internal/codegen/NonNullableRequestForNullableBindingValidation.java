@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -72,8 +73,7 @@ final class NonNullableRequestForNullableBindingValidation implements BindingGra
     return bindingGraph
         .inEdges(bindingNode)
         .stream()
-        .filter(edge -> edge instanceof DependencyEdge)
-        .map(edge -> (DependencyEdge) edge)
+        .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> !edge.dependencyRequest().isNullable())
         .collect(toImmutableList());
   }

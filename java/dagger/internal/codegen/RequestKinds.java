@@ -165,5 +165,25 @@ final class RequestKinds {
     return Optional.ofNullable(FRAMEWORK_CLASSES.get(requestKind));
   }
 
+  /**
+   * Returns {@code true} if entry points with the given request kind may be satisfied with a
+   * production binding.
+   */
+  static boolean entryPointCanUseProduction(RequestKind requestKind) {
+    switch (requestKind) {
+      case INSTANCE:
+      case PROVIDER:
+      case LAZY:
+      case PROVIDER_OF_LAZY:
+      case MEMBERS_INJECTION:
+        return false;
+      case PRODUCER:
+      case PRODUCED:
+      case FUTURE:
+        return true;
+    }
+    throw new AssertionError();
+  }
+
   private RequestKinds() {}
 }

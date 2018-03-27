@@ -253,12 +253,6 @@ final class ErrorMessages {
   static final String MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT =
       "%s has incompatible bindings or declarations:\n";
 
-  static final String PROVIDER_ENTRY_POINT_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT =
-      "%s is a provision entry-point, which cannot depend on a production.";
-
-  static final String PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT =
-      "%s is a provision, which cannot depend on a production.";
-
   static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
       "%s may not depend on the production executor.";
 

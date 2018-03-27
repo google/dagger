@@ -29,4 +29,9 @@ interface BindingGraphValidationModule {
   @IntoSet
   @Validation
   BindingGraphPlugin nullable(NonNullableRequestForNullableBindingValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
+  BindingGraphPlugin providerDependsOnProducer(ProviderDependsOnProducerValidation validation);
 }

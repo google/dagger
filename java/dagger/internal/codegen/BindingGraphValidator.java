@@ -25,8 +25,9 @@ import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingType.PRODUCTION;
+import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
+import static dagger.internal.codegen.ComponentRequirement.Kind.MODULE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
@@ -44,8 +45,6 @@ import static dagger.internal.codegen.ErrorMessages.INDENT;
 import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_RAW_TYPE;
 import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_UNBOUNDED_TYPE;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.PROVIDER_ENTRY_POINT_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_FORMAT;
@@ -59,6 +58,7 @@ import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotIn
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
+import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Scopes.getReadableSource;
@@ -69,6 +69,7 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
+import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
@@ -78,7 +79,6 @@ import static java.util.stream.Collectors.toSet;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -98,6 +98,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -222,9 +223,7 @@ final class BindingGraphValidator {
           graph
               .componentRequirements()
               .stream()
-              .filter(
-                  componentRequirement ->
-                      componentRequirement.kind().equals(ComponentRequirement.Kind.MODULE))
+              .filter(componentRequirement -> componentRequirement.kind().equals(MODULE))
               .map(ComponentRequirement::typeElement)
               .filter(
                   moduleType ->
@@ -399,7 +398,7 @@ final class BindingGraphValidator {
               .map(BuilderRequirementMethod::requirement)
               .collect(toImmutableSet());
 
-      ErrorMessages.ComponentBuilderMessages msgs =
+      ComponentBuilderMessages msgs =
           ErrorMessages.builderMsgsFor(graph.componentDescriptor().kind());
       Set<ComponentRequirement> extraSetters =
           Sets.difference(declaredRequirements, availableDependencies);
@@ -634,9 +633,6 @@ final class BindingGraphValidator {
             report(currentGraph()).addSubreport(report);
           }
         }
-        if (binding.bindingType().equals(PRODUCTION) && doesPathRequireProvisionOnly()) {
-          reportProviderMayNotDependOnProducer(binding);
-        }
         if (compilerOptions.usesProducers()) {
           // TODO(dpb,beder): Validate this during @Inject/@Provides/@Produces validation.
           // Only the Dagger-specific binding may depend on the production executor.
@@ -848,22 +844,6 @@ final class BindingGraphValidator {
             }
           };
 
-      // TODO(b/29509141): Clarify the error.
-      private void reportProviderMayNotDependOnProducer(ContributionBinding productionBinding) {
-        if (atEntryPoint()) {
-          reportErrorAtEntryPoint(
-              PROVIDER_ENTRY_POINT_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT,
-              formatCurrentDependencyRequestKey());
-        } else {
-          // TODO(beder): Consider displaying all dependent provisions in the error message. If we
-          // do that, should we display all productions that depend on them also?
-          reportErrorAtEntryPoint(
-              owningGraph(provisionsDependingOnLatestRequest().append(productionBinding)),
-              PROVIDER_MAY_NOT_DEPEND_ON_PRODUCER_FORMAT,
-              provisionsDependingOnLatestRequest().iterator().next().key());
-        }
-      }
-
       /**
        * Descriptive portion of the error message for when the given request has no binding.
        * Currently, the only other portions of the message are the dependency path, line number and
@@ -876,15 +856,15 @@ final class BindingGraphValidator {
         if (key.type().getKind().equals(TypeKind.WILDCARD)) {
           requiresErrorMessageFormat = CANNOT_INJECT_WILDCARD_TYPE;
         } else {
-          boolean requiresProvision = doesPathRequireProvisionOnly();
+          boolean canUseProduction = dependencyRequestCanUseProduction();
           if (!isValidImplicitProvisionKey(key, types)) {
             requiresErrorMessageFormat =
-                requiresProvision ? REQUIRES_PROVIDER_FORMAT : REQUIRES_PROVIDER_OR_PRODUCER_FORMAT;
+                canUseProduction ? REQUIRES_PROVIDER_OR_PRODUCER_FORMAT : REQUIRES_PROVIDER_FORMAT;
           } else {
             requiresErrorMessageFormat =
-                requiresProvision
-                    ? REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT
-                    : REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT;
+                canUseProduction
+                    ? REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT
+                    : REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT;
           }
         }
         StringBuilder errorMessage =
@@ -1140,41 +1120,21 @@ final class BindingGraphValidator {
       }
 
       /**
-       * Returns whether the given dependency path would require the most recent request to be
-       * resolved by only provision bindings.
+       * Returns true if the current dependency request can be satisfied by a production binding.
        */
-      private boolean doesPathRequireProvisionOnly() {
-        // The second-most-recent bindings determine whether the most recent one must be a
-        // provision.
-        if (!atEntryPoint()) {
-          return !provisionsDependingOnLatestRequest().isEmpty();
-        }
-
-        // Check the request kind for entry points.
-        switch (dependencyRequest().kind()) {
-          case INSTANCE:
-          case PROVIDER:
-          case LAZY:
-          case MEMBERS_INJECTION:
-            return true;
-          case PRODUCER:
-          case PRODUCED:
-          case FUTURE:
-            return false;
-          default:
-            throw new AssertionError();
+      private boolean dependencyRequestCanUseProduction() {
+        if (atEntryPoint()) {
+          return entryPointCanUseProduction(dependencyRequest().kind());
+        } else {
+          // The current request can be satisfied by a production binding if it's not from a
+          // provision binding
+          return !hasDependentProvisionBindings();
         }
       }
 
-      /**
-       * Returns any provision bindings resolved for the second-most-recent request in the given
-       * path; that is, returns those provision bindings that depend on the latest request in the
-       * path.
-       */
-      private FluentIterable<ContributionBinding> provisionsDependingOnLatestRequest() {
-        return FluentIterable.from(dependentBindings())
-            .filter(ContributionBinding.class)
-            .filter(binding -> binding.bindingType().equals(BindingType.PROVISION));
+      /** Returns {@code true} if any provision bindings contain the latest request in the path. */
+      private boolean hasDependentProvisionBindings() {
+        return dependentBindings().stream().map(Binding::bindingType).anyMatch(isEqual(PROVISION));
       }
 
       private String formatCurrentDependencyRequestKey() {

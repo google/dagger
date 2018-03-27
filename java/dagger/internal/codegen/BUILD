@@ -203,6 +203,7 @@ java_library(
     srcs = [
         "BindingGraphValidationModule.java",
         "NonNullableRequestForNullableBindingValidation.java",
+        "ProviderDependsOnProducerValidation.java",
         "Validation.java",
     ],
     deps = CODEGEN_DEPS + [

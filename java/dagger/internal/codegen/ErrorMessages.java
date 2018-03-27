@@ -112,10 +112,6 @@ final class ErrorMessages {
   static final String INJECT_INTO_PRIVATE_CLASS =
       "Dagger does not support injection into private classes";
 
-  static final String CANNOT_INJECT_WILDCARD_TYPE =
-      "Dagger does not support injecting Provider<T>, Lazy<T> or Produced<T> when T is a wildcard "
-          + "type such as <%s>.";
-
   /*
    * Configuration errors
    *
@@ -255,19 +251,6 @@ final class ErrorMessages {
 
   static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
       "%s may not depend on the production executor.";
-
-  static final String REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT =
-      "%s cannot be provided without an @Inject constructor or from an @Provides-annotated method.";
-
-  static final String REQUIRES_PROVIDER_FORMAT =
-      "%s cannot be provided without an @Provides-annotated method.";
-
-  static final String REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT =
-      "%s cannot be provided without an @Inject constructor or from an @Provides- or "
-      + "@Produces-annotated method.";
-
-  static final String REQUIRES_PROVIDER_OR_PRODUCER_FORMAT =
-      "%s cannot be provided without an @Provides- or @Produces-annotated method.";
 
   private static final String PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT =
       "%s may only be injected in @Produces methods.";

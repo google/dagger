@@ -78,12 +78,15 @@ public class ProductionGraphValidationTest {
         "    return null;",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(EXECUTOR_MODULE, module, component))
+    assertAbout(javaSources())
+        .that(ImmutableList.of(EXECUTOR_MODULE, module, component))
         .processedWith(new ComponentProcessor())
         .failsToCompile()
-        .withErrorContaining("test.Bar cannot be provided without an @Inject constructor or from "
-            + "an @Provides- or @Produces-annotated method.")
-            .in(component).onLine(8);
+        .withErrorContaining(
+            "test.Bar cannot be provided without an @Inject constructor or an @Provides- or "
+                + "@Produces-annotated method.")
+        .in(component)
+        .onLine(8);
   }
 
   @Test public void componentProductionWithNoDependencyChain() {

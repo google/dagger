@@ -128,8 +128,9 @@ public class GraphValidationTest {
         "    A getA();",
         "  }",
         "}");
-    String expectedError = "test.TestClass.A cannot be provided without an "
-        + "@Inject constructor or from an @Provides-annotated method.";
+    String expectedError =
+        "test.TestClass.A cannot be provided without an @Inject constructor or an "
+            + "@Provides-annotated method.";
     assertAbout(javaSource()).that(component)
         .processedWith(new ComponentProcessor())
         .failsToCompile()
@@ -159,9 +160,10 @@ public class GraphValidationTest {
         "    B getB();",
         "  }",
         "}");
-    String expectedError = "test.TestClass.B cannot be provided without an "
-        + "@Inject constructor or from an @Provides-annotated method. "
-        + "This type supports members injection but cannot be implicitly provided.";
+    String expectedError =
+        "test.TestClass.B cannot be provided without an @Inject constructor or an "
+            + "@Provides-annotated method. This type supports members injection but cannot be "
+            + "implicitly provided.";
     assertAbout(javaSource()).that(component)
         .processedWith(new ComponentProcessor())
         .failsToCompile()
@@ -1365,8 +1367,8 @@ public class GraphValidationTest {
         .withErrorContaining(
             Joiner.on("\n      ")
                 .join(
-                    "java.lang.String cannot be provided without an @Inject constructor or from "
-                        + "an @Provides-annotated method.",
+                    "java.lang.String cannot be provided without an @Inject constructor or an "
+                        + "@Provides-annotated method.",
                     "java.lang.String is injected at",
                     "    TestImplementation.<init>(missingBinding)",
                     "TestImplementation is injected at",

@@ -36,7 +36,6 @@ import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
-import static dagger.internal.codegen.ErrorMessages.CANNOT_INJECT_WILDCARD_TYPE;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_FORMAT;
@@ -45,10 +44,6 @@ import static dagger.internal.codegen.ErrorMessages.INDENT;
 import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_RAW_TYPE;
 import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_UNBOUNDED_TYPE;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.REQUIRES_PROVIDER_OR_PRODUCER_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
 import static dagger.internal.codegen.ErrorMessages.inconsistentMapKeyAnnotationsError;
@@ -851,25 +846,27 @@ final class BindingGraphValidator {
        */
       private StringBuilder requiresErrorMessageBase() {
         Key key = dependencyRequest().key();
-        String requiresErrorMessageFormat;
+        StringBuilder errorMessage = new StringBuilder();
         // TODO(dpb): Check for wildcard injection somewhere else first?
         if (key.type().getKind().equals(TypeKind.WILDCARD)) {
-          requiresErrorMessageFormat = CANNOT_INJECT_WILDCARD_TYPE;
+          errorMessage
+              .append("Dagger does not support injecting Provider<T>, Lazy<T> or Produced<T> when ")
+              .append("T is a wildcard type such as ")
+              .append(formatCurrentDependencyRequestKey());
         } else {
-          boolean canUseProduction = dependencyRequestCanUseProduction();
-          if (!isValidImplicitProvisionKey(key, types)) {
-            requiresErrorMessageFormat =
-                canUseProduction ? REQUIRES_PROVIDER_OR_PRODUCER_FORMAT : REQUIRES_PROVIDER_FORMAT;
-          } else {
-            requiresErrorMessageFormat =
-                canUseProduction
-                    ? REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_OR_PRODUCER_FORMAT
-                    : REQUIRES_AT_INJECT_CONSTRUCTOR_OR_PROVIDER_FORMAT;
+          // TODO(ronshapiro): replace "provided" with "satisfied"?
+          errorMessage
+              .append(formatCurrentDependencyRequestKey())
+              .append(" cannot be provided without ");
+          if (isValidImplicitProvisionKey(key, types)) {
+            errorMessage.append("an @Inject constructor or ");
           }
+          errorMessage.append("an @Provides-");
+          if (dependencyRequestCanUseProduction()) {
+            errorMessage.append(" or @Produces-");
+          }
+          errorMessage.append("annotated method.");
         }
-        StringBuilder errorMessage =
-            new StringBuilder(
-                String.format(requiresErrorMessageFormat, formatCurrentDependencyRequestKey()));
         if (isValidMembersInjectionKey(key)
             && injectBindingRegistry.getOrFindMembersInjectionBinding(key)
                 .map(binding -> !binding.injectionSites().isEmpty())

@@ -239,7 +239,7 @@ public class SubcomponentValidationTest {
         .failsToCompile()
         .withErrorContaining(
             "[test.ChildComponent.getString()] "
-                + "java.lang.Integer cannot be provided without an @Inject constructor or from an "
+                + "java.lang.Integer cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method")
         .in(componentFile)
         .onLine(6);

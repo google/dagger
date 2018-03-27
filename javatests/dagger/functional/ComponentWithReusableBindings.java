@@ -39,6 +39,9 @@ interface ComponentWithReusableBindings {
 
   ChildTwo childTwo();
 
+  // b/77150738
+  int primitive();
+
   @Subcomponent
   interface ChildOne {
     @InParent
@@ -71,6 +74,13 @@ interface ComponentWithReusableBindings {
     @InChildren
     static Object inChildren() {
       return new Object();
+    }
+
+    // b/77150738
+    @Provides
+    @Reusable
+    static int primitive() {
+      return 0;
     }
   }
 }

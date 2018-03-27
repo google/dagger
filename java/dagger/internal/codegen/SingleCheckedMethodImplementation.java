@@ -83,16 +83,24 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
                 ? BindingVariableNamer.name(binding)
                 : FrameworkField.forResolvedBindings(resolvedBindings, Optional.empty()).name());
 
-    FieldSpec field =
-        // Nullable instances use `MemoizedSentinel` instead of `null` as the initialization value.
-        isNullable()
-            ? FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)
-                .initializer("new $T()", MemoizedSentinel.class)
-                .build()
-            : FieldSpec.builder(TypeName.get(returnType()), name, PRIVATE, VOLATILE).build();
+    FieldSpec.Builder builder = FieldSpec.builder(fieldType(), name, PRIVATE, VOLATILE);
+    if (isNullable()) {
+      builder.initializer("new $T()", MemoizedSentinel.class);
+    }
 
+    FieldSpec field = builder.build();
     generatedComponentModel.addField(PRIVATE_METHOD_SCOPED_FIELD, field);
     return field;
+  }
+
+  private TypeName fieldType() {
+    if (isNullable()) {
+      // Nullable instances use `MemoizedSentinel` instead of `null` as the initialization value, so
+      // the field type must accept that and the return type
+      return TypeName.OBJECT;
+    }
+    TypeName returnType = TypeName.get(returnType());
+    return returnType.isPrimitive() ? returnType.box() : returnType;
   }
 
   private boolean isNullable() {

@@ -10,7 +10,6 @@ description:
   Java and Android. It is developed by the Java Core Libraries Team at Google.
 
 themeColor: blue
-fixedNav: 'true' # true or false
 
 exclude: [_site, CHANGELOG.md, LICENSE, README.md, Gemfile, Gemfile.lock]
 sass:

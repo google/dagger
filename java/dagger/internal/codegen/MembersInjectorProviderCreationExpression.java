@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
@@ -32,16 +31,13 @@ import javax.lang.model.type.TypeMirror;
 final class MembersInjectorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
-  private final GeneratedComponentModel generatedComponentModel;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ContributionBinding binding;
 
   MembersInjectorProviderCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
 
@@ -56,9 +52,7 @@ final class MembersInjectorProviderCreationExpression
             : CodeBlock.of(
                 "$T.create($L)",
                 membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
-                makeParametersCodeBlock(
-                    componentBindingExpressions.getDependencyExpressions(
-                        binding.frameworkDependencies(), generatedComponentModel.name())));
+                componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
 
     // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
     // (as it's rarely requested as a Provider).

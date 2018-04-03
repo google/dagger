@@ -23,7 +23,6 @@ import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
@@ -177,15 +176,31 @@ final class ComponentBindingExpressions {
   }
 
   /**
-   * Returns the expressions for each of the given {@linkplain FrameworkDependency framework
-   * dependencies}.
+   * Returns the {@link CodeBlock} for the method argmuments used with the factory {@code create()}
+   * method for the given {@link ContributionBinding binding}.
    */
-  ImmutableList<CodeBlock> getDependencyExpressions(
-      ImmutableList<FrameworkDependency> frameworkDependencies, ClassName requestingClass) {
-    return frameworkDependencies
+  CodeBlock getCreateMethodArgumentsCodeBlock(ContributionBinding binding) {
+    return makeParametersCodeBlock(getCreateMethodArgumentsCodeBlocks(binding));
+  }
+
+  private ImmutableList<CodeBlock> getCreateMethodArgumentsCodeBlocks(ContributionBinding binding) {
+    ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
+
+    if (binding.requiresModuleInstance()) {
+      arguments.add(
+          componentRequirementFields.getExpressionDuringInitialization(
+              ComponentRequirement.forModule(binding.contributingModule().get().asType()),
+              generatedComponentModel.name()));
+    }
+
+    binding
+        .frameworkDependencies()
         .stream()
-        .map(dependency -> getDependencyExpression(dependency, requestingClass).codeBlock())
-        .collect(toImmutableList());
+        .map(dependency -> getDependencyExpression(dependency, generatedComponentModel.name()))
+        .map(Expression::codeBlock)
+        .forEach(arguments::add);
+
+    return arguments.build();
   }
 
   /**
@@ -333,16 +348,14 @@ final class ComponentBindingExpressions {
 
       case INJECTION:
       case PROVISION:
-        return new InjectionOrProvisionProviderCreationExpression(
-            binding, generatedComponentModel, this, componentRequirementFields);
+        return new InjectionOrProvisionProviderCreationExpression(binding, this);
 
       case COMPONENT_PRODUCTION:
         return new DependencyMethodProducerCreationExpression(
             binding, generatedComponentModel, componentRequirementFields, graph);
 
       case PRODUCTION:
-        return new ProducerCreationExpression(
-            binding, generatedComponentModel, this, componentRequirementFields);
+        return new ProducerCreationExpression(binding, this);
 
       case MULTIBOUND_SET:
         return new SetFactoryCreationExpression(binding, generatedComponentModel, this, graph);
@@ -389,9 +402,7 @@ final class ComponentBindingExpressions {
                   CodeBlock.of(
                       "$T.create($L)",
                       membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
-                      makeParametersCodeBlock(
-                          getDependencyExpressions(
-                              binding.frameworkDependencies(), generatedComponentModel.name()))));
+                      getCreateMethodArgumentsCodeBlock(binding)));
         }
 
       default:

@@ -28,6 +28,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin membersInjection(MembersInjectionValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin nullable(NonNullableRequestForNullableBindingValidation validation);
 
   @Binds

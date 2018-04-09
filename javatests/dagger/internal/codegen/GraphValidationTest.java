@@ -30,6 +30,7 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -202,8 +203,8 @@ public class GraphValidationTest {
         .withErrorContaining(
             Joiner.on('\n')
                 .join(
-                    "Type parameters must be bounded for members injection."
-                        + " ? required by java.util.ArrayList<?>, via:",
+                    "Cannot inject members into types with unbounded type arguments: "
+                        + "java.util.ArrayList<?>",
                     "      dagger.MembersInjector<java.util.ArrayList<?>> is injected at",
                     "          test.InjectsUnboundedType.listInjector",
                     "      test.InjectsUnboundedType is injected at",
@@ -212,8 +213,94 @@ public class GraphValidationTest {
         .onLine(7);
   }
 
+  @Ignore // TODO(b/77220343)
   @Test
-  public void invalidMembersInjection() {
+  public void membersInjectPrimitive() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  void inject(int primitive);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into int")
+        .inFile(component)
+        .onLineContaining("void inject(int primitive);");
+  }
+
+  @Ignore // TODO(b/77220343)
+  @Test
+  public void membersInjectArray() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  void inject(Object[] array);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into java.lang.Object[]")
+        .inFile(component)
+        .onLineContaining("void inject(Object[] array);");
+  }
+
+  @Ignore // TODO(b/77220343)
+  @Test
+  public void membersInjectorOfArray() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.MembersInjector;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  MembersInjector<Object[]> objectArrayInjector();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into java.lang.Object[]")
+        .inFile(component)
+        .onLineContaining("objectArrayInjector();");
+  }
+
+  @Test
+  public void membersInjectRawType() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  void inject(Set rawSet);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("Cannot inject members into raw type java.util.Set");
+  }
+
+  @Test
+  public void staticFieldInjection() {
     JavaFileObject injected =
         JavaFileObjects.forSourceLines(
             "test.Injected",

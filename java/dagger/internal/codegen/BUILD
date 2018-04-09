@@ -200,6 +200,7 @@ java_library(
     name = "internal_validation",
     srcs = [
         "BindingGraphValidationModule.java",
+        "MembersInjectionValidation.java",
         "NonNullableRequestForNullableBindingValidation.java",
         "ProviderDependsOnProducerValidation.java",
         "Validation.java",

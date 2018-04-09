@@ -41,8 +41,6 @@ import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUT
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
-import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_RAW_TYPE;
-import static dagger.internal.codegen.ErrorMessages.MEMBERS_INJECTION_WITH_UNBOUNDED_TYPE;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
@@ -62,7 +60,6 @@ import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.INJECTION;
-import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
@@ -120,15 +117,11 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /** Reports errors in the shape of the binding graph. */
 final class BindingGraphValidator {
@@ -645,17 +638,8 @@ final class BindingGraphValidator {
         }
         if (binding.kind().equals(MULTIBOUND_MAP)) {
           validateMapKeys(binding, owningComponent);
-        } else if (binding.kind().equals(MEMBERS_INJECTOR)) {
-          validateMembersInjectionType(binding);
         }
         super.visitContributionBinding(binding, owningComponent);
-      }
-
-      @Override
-      protected void visitMembersInjectionBinding(
-          MembersInjectionBinding binding, ComponentDescriptor owningComponent) {
-        validateMembersInjectionType(binding);
-        super.visitMembersInjectionBinding(binding, owningComponent);
       }
 
       /**
@@ -750,94 +734,6 @@ final class BindingGraphValidator {
           reportInconsistentMapKeyAnnotations(mapBindingsByAnnotationType);
         }
       }
-
-      /** Reports errors if a members injection binding is invalid. */
-      // TODO(dpb): Can this be done while validating @Inject?
-      private void validateMembersInjectionType(Binding binding) {
-        TypeMirror type =
-            binding.bindingType().equals(BindingType.MEMBERS_INJECTION)
-                ? binding.key().type()
-                : types.unwrapType(binding.key().type());
-        type.accept(membersInjectionBindingValidator, binding);
-      }
-
-      private final TypeVisitor<Void, Binding> membersInjectionBindingValidator =
-          new SimpleTypeVisitor8<Void, Binding>() {
-            @Override
-            protected Void defaultAction(TypeMirror e, Binding binding) {
-              report(currentGraph())
-                  .addError(
-                      "Invalid members injection request.", binding.bindingTypeElement().get());
-              return null;
-            }
-
-            @Override
-            public Void visitDeclared(DeclaredType type, Binding binding) {
-              // If the key has type arguments, validate that each type argument is declared.
-              // Otherwise the type argument may be a wildcard (or other type), and we can't
-              // resolve that to actual types.  If the arg was an array, validate the type
-              // of the array.
-              for (TypeMirror arg : type.getTypeArguments()) {
-                boolean declared =
-                    arg.accept(
-                        new SimpleTypeVisitor8<Boolean, Void>(false) {
-                          @Override
-                          public Boolean visitArray(ArrayType t, Void p) {
-                            return t.getComponentType()
-                                .accept(
-                                    new SimpleTypeVisitor8<Boolean, Void>(false) {
-                                      @Override
-                                      public Boolean visitDeclared(DeclaredType t, Void p) {
-                                        for (TypeMirror arg : t.getTypeArguments()) {
-                                          if (!arg.accept(this, null)) {
-                                            return false;
-                                          }
-                                        }
-                                        return true;
-                                      }
-
-                                      @Override
-                                      public Boolean visitArray(ArrayType t, Void p) {
-                                        return t.getComponentType().accept(this, null);
-                                      }
-
-                                      @Override
-                                      public Boolean visitPrimitive(PrimitiveType t, Void p) {
-                                        return true;
-                                      }
-                                    },
-                                    null);
-                          }
-
-                          @Override
-                          public Boolean visitDeclared(DeclaredType t, Void p) {
-                            return true;
-                          }
-                        },
-                        null);
-                if (!declared) {
-                  reportErrorAtEntryPoint(
-                      MEMBERS_INJECTION_WITH_UNBOUNDED_TYPE,
-                      arg.toString(),
-                      type.toString(),
-                      formatDependencyTrace());
-                  return null;
-                }
-              }
-
-              TypeElement element = MoreElements.asType(type.asElement());
-              // Also validate that the key is not the erasure of a generic type.
-              // If it is, that means the user referred to Foo<T> as just 'Foo',
-              // which we don't allow.  (This is a judgement call -- we *could*
-              // allow it and instantiate the type bounds... but we don't.)
-              if (!MoreTypes.asDeclared(element.asType()).getTypeArguments().isEmpty()
-                  && types.isSameType(types.erasure(element.asType()), type)) {
-                reportErrorAtEntryPoint(
-                    MEMBERS_INJECTION_WITH_RAW_TYPE, type.toString(), formatDependencyTrace());
-              }
-              return null;
-            }
-          };
 
       /**
        * Descriptive portion of the error message for when the given request has no binding.

@@ -112,25 +112,19 @@ final class InjectionMethods {
 
     /**
      * Returns a method that invokes the binding's {@linkplain ProvisionBinding#bindingElement()
-     * constructor} and injects the instance's members, if necessary. If {@link
-     * #shouldCreateInjectionMethod(ProvisionBinding, CompilerOptions)} no method is necessary},
-     * then {@link Optional#empty()} is returned.
+     * constructor} and injects the instance's members.
      */
-    static Optional<MethodSpec> create(ProvisionBinding binding, CompilerOptions compilerOptions) {
-      if (!shouldCreateInjectionMethod(binding, compilerOptions)) {
-        return Optional.empty();
-      }
+    static MethodSpec create(ProvisionBinding binding, CompilerOptions compilerOptions) {
       ExecutableElement element = MoreElements.asExecutable(binding.bindingElement().get());
       switch (element.getKind()) {
         case CONSTRUCTOR:
-          return Optional.of(constructorProxy(element));
+          return constructorProxy(element);
         case METHOD:
-          return Optional.of(
-              methodProxy(
-                  element,
-                  methodName(element),
-                  ReceiverAccessibility.IGNORE,
-                  CheckNotNullPolicy.get(binding, compilerOptions)));
+          return methodProxy(
+              element,
+              methodName(element),
+              ReceiverAccessibility.IGNORE,
+              CheckNotNullPolicy.get(binding, compilerOptions));
         default:
           throw new AssertionError(element);
       }
@@ -152,7 +146,7 @@ final class InjectionMethods {
           injectionMethodArguments(
               binding.provisionDependencies(), dependencyUsage, requestingClass));
       return callInjectionMethod(
-          create(binding, compilerOptions).get().name,
+          create(binding, compilerOptions).name,
           arguments.build(),
           generatedClassNameForBinding(binding),
           requestingClass);
@@ -190,11 +184,6 @@ final class InjectionMethods {
           .stream()
           .map(VariableElement::asType)
           .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
-    }
-
-    private static boolean shouldCreateInjectionMethod(
-        ProvisionBinding binding, CompilerOptions compilerOptions) {
-      return requiresInjectionMethod(binding, compilerOptions, "dagger.should.never.exist");
     }
 
     /**

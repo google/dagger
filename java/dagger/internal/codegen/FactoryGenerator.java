@@ -30,6 +30,7 @@ import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkFieldUsages;
+import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
@@ -116,7 +117,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     factoryBuilder.addMethod(getMethod(binding));
     addCreateMethod(binding, factoryBuilder);
 
-    ProvisionMethod.create(binding, compilerOptions).ifPresent(factoryBuilder::addMethod);
+    factoryBuilder.addMethod(ProvisionMethod.create(binding, compilerOptions));
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return factoryBuilder;
@@ -223,24 +224,21 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());
 
     if (binding.kind().equals(PROVISION)) {
-      // TODO(dpb): take advantage of the code in InjectionMethods so this doesn't have to be
-      // duplicated
       binding
           .nullableType()
           .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethodBuilder, nullableType));
-      CodeBlock methodCall =
-          CodeBlock.of(
-              "$L.$L($L)",
-              binding.requiresModuleInstance()
-                  ? "module"
-                  : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
-              binding.bindingElement().get().getSimpleName(),
-              parametersCodeBlock);
       getMethodBuilder.addStatement(
           "return $L",
-          binding.shouldCheckForNull(compilerOptions)
-              ? checkNotNullProvidesMethod(methodCall)
-              : methodCall);
+          ProvisionMethod.invoke(
+              binding,
+              request ->
+                  frameworkTypeUsageStatement(
+                      CodeBlock.of("$N", frameworkFields.get(request.key())), request.kind()),
+              nameGeneratedType(binding),
+              binding.requiresModuleInstance()
+                  ? Optional.of(CodeBlock.of("module"))
+                  : Optional.empty(),
+              compilerOptions));
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");
       getMethodBuilder

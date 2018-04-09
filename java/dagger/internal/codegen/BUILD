@@ -24,8 +24,6 @@ EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 KYTHE_SRCS = [
     "KytheBindingGraphFactory.java",
     "DaggerKythePlugin.java",
-    "KytheFormatting.java",
-    "KeyVNameFactory.java",
 ]
 
 CODEGEN_SRCS = glob(

@@ -21,6 +21,7 @@ import dagger.Component;
 import dagger.producers.ProductionComponent;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -39,6 +40,7 @@ final class KytheBindingGraphFactory {
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
 
+  @Inject
   KytheBindingGraphFactory(Types types, Elements elements) {
     DaggerElements daggerElements = new DaggerElements(elements, types);
     DaggerTypes daggerTypes = new DaggerTypes(types, daggerElements);

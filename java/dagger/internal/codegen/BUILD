@@ -215,7 +215,6 @@ java_library(
     name = "writing",
     srcs = [
         "AnnotationCreatorGenerator.java",
-        "AnonymousProviderBindingExpression.java",
         "BindingExpression.java",
         "BindingMethodImplementation.java",
         "ComponentBindingExpressions.java",

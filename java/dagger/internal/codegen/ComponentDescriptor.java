@@ -228,24 +228,6 @@ abstract class ComponentDescriptor {
         .toSet();
   }
 
-  private static ImmutableSet<ModuleDescriptor> transitiveModules(
-      Iterable<ModuleDescriptor> topLevelModules) {
-    Set<ModuleDescriptor> transitiveModules = new LinkedHashSet<>();
-    for (ModuleDescriptor module : topLevelModules) {
-      addTransitiveModules(transitiveModules, module);
-    }
-    return ImmutableSet.copyOf(transitiveModules);
-  }
-
-  private static void addTransitiveModules(
-      Set<ModuleDescriptor> transitiveModules, ModuleDescriptor module) {
-    if (transitiveModules.add(module)) {
-      for (ModuleDescriptor includedModule : module.includedModules()) {
-        addTransitiveModules(transitiveModules, includedModule);
-      }
-    }
-  }
-
   /**
    * This component's {@linkplain #dependencies() dependencies} keyed by each provision or
    * production method implemented by that dependency. Note that the dependencies' types are not
@@ -726,6 +708,24 @@ abstract class ComponentDescriptor {
       TypeElement productionExecutorModule =
           elements.checkTypePresent(productionExecutorModuleName.toString());
       return moduleDescriptorFactory.create(productionExecutorModule);
+    }
+
+    private ImmutableSet<ModuleDescriptor> transitiveModules(
+        Iterable<ModuleDescriptor> topLevelModules) {
+      Set<ModuleDescriptor> transitiveModules = new LinkedHashSet<>();
+      for (ModuleDescriptor module : topLevelModules) {
+        addTransitiveModules(transitiveModules, module);
+      }
+      return ImmutableSet.copyOf(transitiveModules);
+    }
+
+    private void addTransitiveModules(
+        Set<ModuleDescriptor> transitiveModules, ModuleDescriptor module) {
+      if (transitiveModules.add(module)) {
+        for (TypeElement includedModule : module.includedModules()) {
+          addTransitiveModules(transitiveModules, moduleDescriptorFactory.create(includedModule));
+        }
+      }
     }
   }
 

@@ -47,6 +47,7 @@ import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -220,7 +221,7 @@ final class ComponentValidator {
     }
     builder.addSubreport(
         moduleValidator.validateReferencedModules(
-            subject, componentMirror, componentKind.moduleKinds()));
+            subject, componentMirror, componentKind.moduleKinds(), new HashSet<>()));
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.

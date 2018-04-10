@@ -26,6 +26,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotati
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.SourceFiles.classFileName;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
@@ -61,7 +62,7 @@ abstract class ModuleDescriptor {
 
   abstract TypeElement moduleElement();
 
-  abstract ImmutableSet<ModuleDescriptor> includedModules();
+  abstract ImmutableSet<TypeElement> includedModules();
 
   abstract ImmutableSet<ContributionBinding> bindings();
 
@@ -200,8 +201,9 @@ abstract class ModuleDescriptor {
     }
 
     @CanIgnoreReturnValue
-    private Set<ModuleDescriptor> collectIncludedModules(
-        Set<ModuleDescriptor> includedModules, TypeElement moduleElement) {
+    private Set<TypeElement> collectIncludedModules(
+        Set<TypeElement> includedModules,
+        TypeElement moduleElement) {
       TypeMirror superclass = moduleElement.getSuperclass();
       if (!superclass.getKind().equals(NONE)) {
         verify(superclass.getKind().equals(DECLARED));
@@ -212,32 +214,25 @@ abstract class ModuleDescriptor {
       }
       Optional<AnnotationMirror> moduleAnnotation = getModuleAnnotation(moduleElement);
       if (moduleAnnotation.isPresent()) {
-        getModuleIncludes(moduleAnnotation.get())
-            .stream()
-            .map(MoreTypes::asTypeElement)
-            .map(this::create)
-            .forEach(includedModules::add);
-
-        collectImplicitlyIncludedModules(includedModules, moduleElement);
+        includedModules.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleAnnotation.get())));
+        includedModules.addAll(implicitlyIncludedModules(moduleElement));
       }
       return includedModules;
     }
 
     // @ContributesAndroidInjector generates a module that is implicitly included in the enclosing
     // module
-    private void collectImplicitlyIncludedModules(
-        Set<ModuleDescriptor> includedModules, TypeElement moduleElement) {
+    private ImmutableSet<TypeElement> implicitlyIncludedModules(TypeElement moduleElement) {
       TypeElement contributesAndroidInjector =
           elements.getTypeElement("dagger.android.ContributesAndroidInjector");
       if (contributesAndroidInjector == null) {
-        return;
+        return ImmutableSet.of();
       }
-      for (ExecutableElement method : methodsIn(moduleElement.getEnclosedElements())) {
-        if (isAnnotationPresent(method, contributesAndroidInjector.asType())) {
-          includedModules.add(
-              create(elements.checkTypePresent(implicitlyIncludedModuleName(method))));
-        }
-      }
+      return methodsIn(moduleElement.getEnclosedElements())
+          .stream()
+          .filter(method -> isAnnotationPresent(method, contributesAndroidInjector.asType()))
+          .map(method -> elements.checkTypePresent(implicitlyIncludedModuleName(method)))
+          .collect(toImmutableSet());
     }
 
     private String implicitlyIncludedModuleName(ExecutableElement method) {

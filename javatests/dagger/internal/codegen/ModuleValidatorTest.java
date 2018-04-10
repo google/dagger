@@ -244,7 +244,7 @@ public final class ModuleValidatorTest {
         .in(module)
         .onLine(5);
   }
-  
+
   @Test
   public void tooManyAnnotations() {
     assertThatModuleMethod(
@@ -300,5 +300,42 @@ public final class ModuleValidatorTest {
         .hadErrorContaining("@Modules cannot be scoped")
         .inFile(badModule)
         .onLineContaining("@Singleton");
+  }
+
+  @Test
+  public void moduleIncludesSelfCycle() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            moduleType.importStatement(),
+            "import dagger.Provides;",
+            "",
+            String.format("@%s(", moduleType.simpleName()),
+            "  includes = {",
+            "      TestModule.class, // first",
+            "      OtherModule.class,",
+            "      TestModule.class, // second",
+            "  }",
+            ")",
+            "class TestModule {",
+            "  @Provides int i() { return 0; }",
+            "}");
+
+    JavaFileObject otherModule =
+        JavaFileObjects.forSourceLines(
+            "test.OtherModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "class OtherModule {}");
+
+    Compilation compilation = daggerCompiler().compile(module, otherModule);
+    assertThat(compilation).failed();
+    String error = String.format("@%s cannot include themselves", moduleType.simpleName());
+    assertThat(compilation).hadErrorContaining(error).inFile(module).onLineContaining("Module(");
   }
 }

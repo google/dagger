@@ -17,10 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
+import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
@@ -79,10 +81,12 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
@@ -138,7 +142,7 @@ final class ModuleValidator {
    *
    * <p>This logic depends on this method being called before {@linkplain #validate(TypeElement)
    * validating} any module or {@linkplain #validateReferencedModules(TypeElement, AnnotationMirror,
-   * ImmutableSet) component}.
+   * ImmutableSet, Set) component}.
    */
   void addKnownModules(Collection<TypeElement> modules) {
     knownModules.addAll(modules);
@@ -146,10 +150,19 @@ final class ModuleValidator {
 
   /** Returns a validation report for a module type. */
   ValidationReport<TypeElement> validate(TypeElement module) {
-    return reentrantComputeIfAbsent(cache, module, this::validateUncached);
+    return validate(module, new HashSet<>());
   }
 
-  private ValidationReport<TypeElement> validateUncached(TypeElement module) {
+  private ValidationReport<TypeElement> validate(
+      TypeElement module, Set<TypeElement> visitedModules) {
+    if (visitedModules.add(module)) {
+      return reentrantComputeIfAbsent(cache, module, m -> validateUncached(module, visitedModules));
+    }
+    return ValidationReport.about(module).build();
+  }
+
+  private ValidationReport<TypeElement> validateUncached(
+      TypeElement module, Set<TypeElement> visitedModules) {
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(module);
     ModuleDescriptor.Kind moduleKind = ModuleDescriptor.Kind.forAnnotatedElement(module).get();
 
@@ -207,9 +220,10 @@ final class ModuleValidator {
           module, moduleKind, builder, allMethodsByName, bindingMethodsByName);
     }
     validateModifiers(module, builder);
-    validateReferencedModules(module, moduleKind, builder);
+    validateReferencedModules(module, moduleKind, visitedModules, builder);
     validateReferencedSubcomponents(module, moduleKind, builder);
     validateNoScopeAnnotationsOnModuleElement(module, moduleKind, builder);
+    validateSelfCycles(module, builder);
 
     return builder.build();
   }
@@ -309,10 +323,12 @@ final class ModuleValidator {
   private void validateReferencedModules(
       TypeElement subject,
       ModuleDescriptor.Kind moduleKind,
+      Set<TypeElement> visitedModules,
       ValidationReport.Builder<TypeElement> builder) {
     // Validate that all the modules we include are valid for inclusion.
     AnnotationMirror mirror = moduleKind.getModuleAnnotationMirror(subject).get();
-    builder.addSubreport(validateReferencedModules(subject, mirror, moduleKind.includesKinds()));
+    builder.addSubreport(
+        validateReferencedModules(subject, mirror, moduleKind.includesKinds(), visitedModules));
   }
 
   /**
@@ -333,7 +349,8 @@ final class ModuleValidator {
   ValidationReport<TypeElement> validateReferencedModules(
       TypeElement annotatedType,
       AnnotationMirror annotation,
-      ImmutableSet<ModuleDescriptor.Kind> validModuleKinds) {
+      ImmutableSet<ModuleDescriptor.Kind> validModuleKinds,
+      Set<TypeElement> visitedModules) {
     ValidationReport.Builder<TypeElement> subreport = ValidationReport.about(annotatedType);
     ImmutableSet<? extends Class<? extends Annotation>> validModuleAnnotations =
         validModuleKinds
@@ -367,7 +384,8 @@ final class ModuleValidator {
                                 .stream()
                                 .map(otherClass -> "@" + otherClass.getSimpleName())
                                 .collect(joining(", ")));
-                  } else if (knownModules.contains(module) && !validate(module).isClean()) {
+                  } else if (knownModules.contains(module)
+                      && !validate(module, visitedModules).isClean()) {
                     reportError("%s has errors", module.getQualifiedName());
                   }
                   return null;
@@ -501,6 +519,35 @@ final class ModuleValidator {
           module,
           scope);
     }
+  }
+
+  private void validateSelfCycles(
+      TypeElement module, ValidationReport.Builder<TypeElement> builder) {
+    AnnotationMirror moduleAnnotation = getModuleAnnotation(module).get();
+    getAnnotationValue(moduleAnnotation, "includes")
+        .accept(
+            new SimpleAnnotationValueVisitor8<Void, AnnotationValue>() {
+              @Override
+              public Void visitType(TypeMirror includedModule, AnnotationValue value) {
+                if (MoreTypes.equivalence().equivalent(module.asType(), includedModule)) {
+                  Name moduleKind =
+                      moduleAnnotation.getAnnotationType().asElement().getSimpleName();
+                  builder.addError(
+                      String.format("@%s cannot include themselves.", moduleKind),
+                      module,
+                      moduleAnnotation,
+                      value);
+                }
+                return null;
+              }
+
+              @Override
+              public Void visitArray(List<? extends AnnotationValue> values, AnnotationValue p) {
+                values.stream().forEach(value -> value.accept(this, value));
+                return null;
+              }
+            },
+            null);
   }
 
   private static String formatListForErrorMessage(List<?> things) {

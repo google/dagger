@@ -200,9 +200,9 @@ java_library(
     name = "internal_validation",
     srcs = [
         "BindingGraphValidationModule.java",
-        "MembersInjectionValidation.java",
+        "MembersInjectionBindingValidation.java",
         "NonNullableRequestForNullableBindingValidation.java",
-        "ProviderDependsOnProducerValidation.java",
+        "ProvisionDependencyOnProducerBindingValidation.java",
         "Validation.java",
     ],
     deps = CODEGEN_DEPS + [

@@ -32,14 +32,14 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 
 /**
- * Reports an error for each dependency of a provision binding that is satisfied by a production
+ * Reports an error for each provision-only dependency request that is satisfied by a production
  * binding.
  */
 // TODO(b/29509141): Clarify the error.
-final class ProviderDependsOnProducerValidation implements BindingGraphPlugin {
+final class ProvisionDependencyOnProducerBindingValidation implements BindingGraphPlugin {
 
   @Inject
-  ProviderDependsOnProducerValidation() {}
+  ProvisionDependencyOnProducerBindingValidation() {}
 
   @Override
   public String pluginName() {

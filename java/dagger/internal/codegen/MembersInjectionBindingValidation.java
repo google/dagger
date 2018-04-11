@@ -33,15 +33,15 @@ import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
- * Validates types for which members injection is requested, either via a members-injecting entry
- * point method or a request for a {@link dagger.MembersInjector}.
+ * Validates bindings that satisfy members-injecting entry point methods or requests for a {@link
+ * dagger.MembersInjector}.
  */
-final class MembersInjectionValidation implements BindingGraphPlugin {
+final class MembersInjectionBindingValidation implements BindingGraphPlugin {
 
   private final DaggerTypes types;
 
   @Inject
-  MembersInjectionValidation(DaggerTypes types) {
+  MembersInjectionBindingValidation(DaggerTypes types) {
     this.types = types;
   }
 

@@ -28,7 +28,7 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin membersInjection(MembersInjectionValidation validation);
+  BindingGraphPlugin membersInjection(MembersInjectionBindingValidation validation);
 
   @Binds
   @IntoSet
@@ -38,5 +38,6 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin providerDependsOnProducer(ProviderDependsOnProducerValidation validation);
+  BindingGraphPlugin providerDependsOnProducer(
+      ProvisionDependencyOnProducerBindingValidation validation);
 }

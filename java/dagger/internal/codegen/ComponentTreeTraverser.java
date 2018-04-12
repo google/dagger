@@ -32,7 +32,6 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -639,7 +638,8 @@ public class ComponentTreeTraverser {
     ComponentTreePath childPath(TypeElement subcomponent) {
       for (BindingGraph child : currentGraph().subgraphs()) {
         if (child.componentType().equals(subcomponent)) {
-          return create(FluentIterable.from(graphsInPath()).append(child));
+          return create(
+              ImmutableList.<BindingGraph>builder().addAll(graphsInPath()).add(child).build());
         }
       }
       throw new IllegalArgumentException(

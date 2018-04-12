@@ -545,7 +545,8 @@ abstract class ComponentDescriptor {
 
       ImmutableSet<Scope> scopes = scopesOf(componentDefinitionType);
       if (kind.isProducer()) {
-        scopes = FluentIterable.from(scopes).append(productionScope(elements)).toSet();
+        scopes =
+            ImmutableSet.<Scope>builder().addAll(scopes).add(productionScope(elements)).build();
       }
 
       return new AutoValue_ComponentDescriptor(

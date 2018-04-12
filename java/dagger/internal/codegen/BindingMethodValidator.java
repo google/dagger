@@ -40,6 +40,7 @@ import static dagger.internal.codegen.ErrorMessages.MULTIPLE_MULTIBINDING_ANNOTA
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.type.TypeKind.ARRAY;
@@ -47,8 +48,6 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
@@ -168,9 +167,10 @@ abstract class BindingMethodValidator {
       builder.addError(
           formatErrorMessage(
               BINDING_METHOD_NOT_IN_MODULE,
-              FluentIterable.from(enclosingElementAnnotations)
-                  .transform(Class::getSimpleName)
-                  .join(Joiner.on(" or @"))));
+              enclosingElementAnnotations
+                  .stream()
+                  .map(Class::getSimpleName)
+                  .collect(joining(" or @"))));
     }
   }
 

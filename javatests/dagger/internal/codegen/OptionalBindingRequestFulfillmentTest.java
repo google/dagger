@@ -121,10 +121,12 @@ public class OptionalBindingRequestFulfillmentTest {
                 "  private volatile Provider<Maybe> provideMaybeProvider;",
                 "",
                 "  private Provider<Maybe> getMaybeProvider() {",
-                "    if (provideMaybeProvider == null) {",
-                "      provideMaybeProvider = new SwitchingProvider<>(0);",
+                "    Object local = provideMaybeProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      provideMaybeProvider = (Provider<Maybe>) local;",
                 "    }",
-                "    return provideMaybeProvider;",
+                "    return (Provider<Maybe>) local;",
                 "  }")
             .addLines(
                 "  @Override",

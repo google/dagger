@@ -327,10 +327,12 @@ public class ComponentProcessorTest {
                 "    return SomeInjectableType_Factory.create();")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE, //
-                "    if (someInjectableTypeProvider == null) {",
-                "      someInjectableTypeProvider = new SwitchingProvider<>(0);",
+                "    Object local = someInjectableTypeProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      someInjectableTypeProvider = (Provider<SomeInjectableType>) local;",
                 "    }",
-                "    return someInjectableTypeProvider;")
+                "    return (Provider<SomeInjectableType>) local;")
             .addLines(
                 "  }",
                 "",
@@ -455,11 +457,16 @@ public class ComponentProcessorTest {
                 "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE, //
-                "    if (someInjectableTypeProvider == null) {",
-                "      someInjectableTypeProvider = new SwitchingProvider<>(0);",
-                "    }")
-            .addLines(
-                "    return someInjectableTypeProvider;",
+                "    Object local = someInjectableTypeProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      someInjectableTypeProvider = (Provider<SomeInjectableType>) local;",
+                "    }",
+                "    return (Provider<SomeInjectableType>) local;")
+            .addLinesIn(
+                DEFAULT_MODE, //
+                "    return someInjectableTypeProvider;")
+            .addLines( //
                 "  }")
             .addLinesIn(
                 EXPERIMENTAL_ANDROID_MODE,
@@ -1303,10 +1310,12 @@ public class ComponentProcessorTest {
                 "  private AComponent aComponent;",
                 "",
                 "  private Provider<A> getAProvider() {",
-                "    if (aProvider == null) {",
-                "      aProvider = new SwitchingProvider<>(0);",
+                "    Object local = aProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      aProvider = (Provider<A>) local;",
                 "    }",
-                "    return aProvider;",
+                "    return (Provider<A>) local;",
                 "  }")
             .addLines(
                 "  @SuppressWarnings(\"unchecked\")",

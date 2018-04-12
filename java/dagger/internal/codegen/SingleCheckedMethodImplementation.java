@@ -57,23 +57,23 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
 
   @Override
   CodeBlock body() {
-    CodeBlock.Builder builder = CodeBlock.builder();
-    if (isNullable()) {
-      builder.beginControlFlow("if ($N instanceof $T)", field.get(), MemoizedSentinel.class);
-    } else {
-      builder.beginControlFlow("if ($N == null)", field.get());
-    }
+    String fieldExpression = field.get().name.equals("local") ? "this.local" : field.get().name;
 
-    builder
-        .addStatement("$N = $L", field.get(), simpleBindingExpression())
-        .endControlFlow();
+    CodeBlock.Builder builder = CodeBlock.builder()
+        .addStatement("Object local = $N", fieldExpression);
 
     if (isNullable()) {
-      builder.addStatement("return ($T) $N", returnType(), field.get());
+      builder.beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class);
     } else {
-      builder.addStatement("return $N", field.get());
+      builder.beginControlFlow("if (local == null)");
     }
-    return builder.build();
+
+    return builder
+        .addStatement("local = $L", simpleBindingExpression())
+        .addStatement("$N = ($T) local", fieldExpression, returnType())
+        .endControlFlow()
+        .addStatement("return ($T) local", returnType())
+        .build();
   }
 
   private FieldSpec createField() {

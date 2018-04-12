@@ -39,18 +39,23 @@ public final class SingleCheck<T> implements Provider<T>, Lazy<T> {
   @SuppressWarnings("unchecked") // cast only happens when result comes from the delegate provider
   @Override
   public T get() {
-    // provider is volatile and might become null after the check to instance == UNINITIALIZED, so
-    // retrieve the provider first, which should not be null if instance is UNINITIALIZED.
-    // This relies upon instance also being volatile so that the reads and writes of both variables
-    // cannot be reordered.
-    Provider<T> providerReference = provider;
-    if (instance == UNINITIALIZED) {
-      instance = providerReference.get();
-      // Null out the reference to the provider. We are never going to need it again, so we can make
-      // it eligible for GC.
-      provider = null;
+    Object local = instance;
+    if (local == UNINITIALIZED) {
+      // provider is volatile and might become null after the check, so retrieve the provider first
+      Provider<T> providerReference = provider;
+      if (providerReference == null) {
+        // The provider was null, so the instance must already be set
+        local = instance;
+      } else {
+        local = providerReference.get();
+        instance = local;
+
+        // Null out the reference to the provider. We are never going to need it again, so we can
+        // make it eligible for GC.
+        provider = null;
+      }
     }
-    return (T) instance;
+    return (T) local;
   }
 
   /** Returns a {@link Provider} that caches the value from the given delegate provider. */

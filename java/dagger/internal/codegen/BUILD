@@ -329,7 +329,6 @@ java_library(
         "//third_party:auto_common",
         "//third_party:auto_service",
         "//third_party:guava",
-        "//third_party:javapoet",
         "//third_party:kythe_plugin",
         "@bazel_tools//third_party/java/jdk/langtools:javac",
     ],

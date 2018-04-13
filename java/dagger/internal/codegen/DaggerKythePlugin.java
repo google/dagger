@@ -19,7 +19,6 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
@@ -27,8 +26,6 @@ import com.google.devtools.kythe.analyzers.base.FactEmitter;
 import com.google.devtools.kythe.analyzers.base.KytheEntrySets;
 import com.google.devtools.kythe.analyzers.java.Plugin;
 import com.google.devtools.kythe.proto.Storage.VName;
-import com.sun.source.tree.Tree;
-import com.sun.tools.javac.api.JavacTrees;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
@@ -46,7 +43,6 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -57,15 +53,15 @@ import javax.lang.model.util.Types;
 @AutoService(Plugin.class)
 public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private static final Logger logger = Logger.getLogger(DaggerKythePlugin.class.getCanonicalName());
-  private JavacTrees trees;
   private FactEmitter emitter;
-  private JCCompilationUnit compilationUnit;
   @Inject KytheBindingGraphFactory bindingGraphFactory;
 
   @Override
   public Void visitClassDef(JCClassDecl tree, Void p) {
-    TypeElement type = MoreElements.asType(getElement(tree));
-    bindingGraphFactory.create(type).ifPresent(this::addNodesForGraph);
+    Optional.ofNullable(tree.sym)
+        .flatMap(bindingGraphFactory::create)
+        .ifPresent(this::addNodesForGraph);
+
     return super.visitClassDef(tree, p);
   }
 
@@ -150,16 +146,11 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     return kytheGraph.getJvmNode((Symbol) element).map(KytheNode::getVName);
   }
 
-  private Element getElement(Tree tree) {
-    return trees.getElement(trees.getPath(compilationUnit, tree));
-  }
-
   @Override
   public void run(
       JCCompilationUnit compilationUnit, KytheEntrySets entrySets, KytheGraph kytheGraph) {
     if (bindingGraphFactory == null) {
       Context javaContext = kytheGraph.getJavaContext();
-      trees = JavacTrees.instance(javaContext);
       emitter = entrySets.getEmitter();
       DaggerDaggerKythePlugin_PluginComponent.builder()
           .types(JavacTypes.instance(javaContext))
@@ -167,7 +158,6 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
           .build()
           .inject(this);
     }
-    this.compilationUnit = compilationUnit;
     super.run(compilationUnit, entrySets, kytheGraph);
   }
 

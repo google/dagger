@@ -32,18 +32,46 @@ java_library(
     name = "processor",
     srcs = [":srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-android-processor:${project.version}"],
     deps = [
-        "//third_party:guava",
+        ":dagger-android-jars",
+        "//java/dagger:core",
+        "//third_party:auto_common",
         "//third_party:auto_service",
         "//third_party:auto_value",
-        "//third_party:auto_common",
-        "//third_party:javapoet",
         "//third_party:google_java_format",
-        "//java/dagger:core",
-        # https://github.com/bazelbuild/bazel/issues/2517
+        "//third_party:guava",
+        "//third_party:javapoet",
+    ],
+)
+
+# https://github.com/bazelbuild/bazel/issues/2517
+# This target serves two (related) purposes:
+# 1. Bazel does not allow a java_library to depend on an android_library, even if that java_library
+# will be used in a java_plugin.
+# 2. It stores the metadata for the "jarimpl" targets that we use to work-around Gradle not loading
+# aar artifacts that are declared as deps of an annotation processor. Our pom.xml generator reads
+# the tags and includes them apppropriately.
+java_import(
+    name = "dagger-android-jars",
+    jars = [
         "//java/dagger/android:libandroid.jar",
         "//java/dagger/android/support:libsupport.jar",
     ],
+    tags = [
+        "maven_coordinates=com.google.dagger:dagger-android-jarimpl:${project.version}",
+        "maven_coordinates=com.google.dagger:dagger-android-support-jarimpl:${project.version}",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-android-processor",
+    artifact_name = "Dagger Android Processor",
+    targets = [":processor"],
 )
 
 java_plugin(

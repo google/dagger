@@ -27,8 +27,18 @@ java_library(
     name = "core",
     srcs = glob(["**/*.java"]),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
+    tags = ["maven_coordinates=com.google.dagger:dagger:${project.version}"],
     exports = ["//third_party:jsr330_inject"],
     deps = ["//third_party:jsr330_inject"],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger",
+    artifact_name = "Dagger",
+    targets = [":core"],
 )
 
 filegroup(

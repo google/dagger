@@ -17,6 +17,8 @@
 
 package(default_visibility = ["//:src"])
 
+exports_files(["pom-template.xml"])
+
 sh_binary(
     name = "jarjar_library_impl",
     srcs = ["jarjar_library_impl.sh"],
@@ -62,4 +64,9 @@ java_binary(
         "@org_ow2_asm_asm_tree//jar",
         "@org_pantsbuild_jarjar//jar",
     ],
+)
+
+py_binary(
+    name = "replace_bazel_deps",
+    srcs = ["replace_bazel_deps.py"],
 )

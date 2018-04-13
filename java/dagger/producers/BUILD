@@ -40,6 +40,7 @@ java_library(
     plugins = [
         # TODO(cgruber): Enable Beta checker.
     ],
+    tags = ["maven_coordinates=com.google.dagger:dagger-producers:${project.version}"],
     exports = [
         # TODO(dpb): Don't export any of Guava.
         "//third_party:guava",
@@ -52,6 +53,15 @@ java_library(
         "//third_party:guava",
         "//third_party:jsr330_inject",
     ],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-producers",
+    artifact_name = "Dagger Producers",
+    targets = [":producers"],
 )
 
 load("//tools:javadoc.bzl", "javadoc_library")

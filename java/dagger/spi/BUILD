@@ -32,6 +32,8 @@ java_library(
     name = "spi",
     srcs = [":spi-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    # DO NOT SUBMIT: should this also be added on dagger.model?
+    tags = ["maven_coordinates=com.google.dagger:dagger-spi:${project.version}"],
     deps = [
         "//java/dagger:core",
         "//java/dagger/model",
@@ -39,5 +41,17 @@ java_library(
         "//third_party:error_prone_annotations",
         "//third_party:guava",
         "//third_party:jsr330_inject",
+    ],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-spi",
+    artifact_name = "Dagger SPI",
+    targets = [
+        ":spi",
+        "//java/dagger/model",
     ],
 )

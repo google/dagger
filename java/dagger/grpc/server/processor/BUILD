@@ -6,6 +6,7 @@ java_library(
     name = "processor",
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
+    tags = ["maven_coordinates=com.google.dagger:dagger-grpc-server-processor:${project.version}"],
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/grpc/server:annotations",
@@ -23,6 +24,15 @@ java_plugin(
     generates_api = 1,
     processor_class = "dagger.grpc.server.processor.GrpcServiceProcessor",
     deps = [":processor"],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-grpc-server-processor",
+    artifact_name = "Dagger gRPC Server Processor",
+    targets = [":processor"],
 )
 
 filegroup(

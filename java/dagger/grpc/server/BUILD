@@ -14,6 +14,7 @@ java_library(
     name = "annotations",
     srcs = ANNOTATIONS_SRCS,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
+    tags = ["maven_coordinates=com.google.dagger:dagger-grpc-server-annotations:${project.version}"],
     deps = [
         "//third_party:jsr330_inject",
     ],
@@ -28,6 +29,7 @@ java_library(
     ),
     exported_plugins = ["//java/dagger/grpc/server/processor:plugin"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-grpc-server:${project.version}"],
     exports = [":annotations"],
     deps = [
         "//:dagger_with_compiler",
@@ -40,6 +42,22 @@ java_library(
         "//third_party:jsr330_inject",
         "//third_party:protobuf",
     ],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "annotations-pom.xml",
+    artifact_id = "dagger-grpc-server-annotations",
+    artifact_name = "Dagger gRPC Server Annotations",
+    targets = [":annotations"],
+)
+
+dagger_pom_file(
+    name = "server-pom.xml",
+    artifact_id = "dagger-grpc-server",
+    artifact_name = "Dagger gRPC Server",
+    targets = [":server"],
 )
 
 filegroup(

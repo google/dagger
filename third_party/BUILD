@@ -14,35 +14,45 @@
 
 package(default_visibility = ["//visibility:public"])
 
+# DO NOT SUBMIT: audit all of the tags here
+
 java_library(
     name = "jsr250_annotations",
+    tags = ["maven_coordinates=javax.annotation:jsr250-api:1.0"],
     exports = ["@javax_annotation_jsr250_api//jar"],
 )
 
 java_library(
     name = "jsr305_annotations",
+    tags = ["maven_coordinates=com.google.code.findbugs:jsr305:3.0.1"],
     exports = ["@com_google_code_findbugs_jsr305//jar"],
 )
 
 java_library(
     name = "jsr330_inject",
+    tags = ["maven_coordinates=javax.inject:javax.inject:1"],
     exports = ["@javax_inject_javax_inject//jar"],
 )
 
 java_library(
     name = "jsr330_inject_tck",
+    tags = ["maven_coordinates=TESTONLY DO NOT USE"],
     exports = ["@javax_inject_javax_inject_tck//jar"],
 )
 
 java_library(
     name = "error_prone_annotations",
-    tags = ["maven:compile_only"],
+    tags = [
+        "maven:compile_only",
+        "maven_coordinates=COMPILE ONLY DO NOT USE",
+    ],
     exports = ["@com_google_errorprone_error_prone_annotations//jar"],
 )
 
 java_library(
     name = "junit",
     testonly = 1,
+    tags = ["maven_coordinates=TESTONLY DO NOT USE"],
     exports = [
         "@junit_junit//jar",
         "@org_hamcrest_hamcrest_core//jar",
@@ -52,12 +62,14 @@ java_library(
 java_library(
     name = "truth",
     testonly = 1,
+    tags = ["maven_coordinates=TESTONLY DO NOT USE"],
     exports = ["@com_google_truth_truth//jar"],
 )
 
 java_library(
     name = "truth8",
     testonly = 1,
+    tags = ["maven_coordinates=TESTONLY DO NOT USE"],
     exports = [
         ":truth",
         "@com_google_truth_extensions_truth_java8_extension//jar",
@@ -66,6 +78,7 @@ java_library(
 
 java_library(
     name = "guava",
+    tags = ["maven_coordinates=com.google.guava:guava:23.3-jre"],
     exports = ["@com_google_guava_guava//jar"],
 )
 
@@ -77,7 +90,10 @@ java_library(
 
 java_library(
     name = "auto_common",
-    tags = ["maven:shaded"],
+    tags = [
+        "maven:shaded",
+        "maven_coordinates=com.google.auto:auto-common:0.10",
+    ],
     exports = ["@com_google_auto_auto_common//jar"],
 )
 
@@ -158,6 +174,7 @@ java_library(
 
 java_library(
     name = "google_java_format",
+    tags = ["maven_coordinates=com.google.googlejavaformat:google-java-format:1.4"],
     exports = [
         "@com_google_googlejavaformat_google_java_format//jar",
     ],
@@ -169,6 +186,7 @@ java_library(
 
 java_library(
     name = "javapoet",
+    tags = ["maven_coordinates=com.squareup:javapoet:1.8.0"],
     exports = ["@com_squareup_javapoet//jar"],
 )
 
@@ -184,36 +202,43 @@ java_library(
 
 java_library(
     name = "grpc",
+    tags = ["maven_coordinates=io.grpc:grpc-all:1.2.0"],
     exports = ["@io_grpc_grpc_all//jar"],
 )
 
 java_library(
     name = "grpc_core",
+    tags = ["maven_coordinates=io.grpc:grpc-core:1.2.0"],
     exports = ["@io_grpc_grpc_core//jar"],
 )
 
 java_library(
     name = "grpc_netty",
+    tags = ["maven_coordinates=io.grpc:grpc-netty:1.2.0"],
     exports = ["@io_grpc_grpc_netty//jar"],
 )
 
 java_library(
     name = "grpc_context",
+    tags = ["maven_coordinates=io.grpc:grpc-context:1.2.0"],
     exports = ["@io_grpc_grpc_context//jar"],
 )
 
 java_library(
     name = "grpc_protobuf",
+    tags = ["maven_coordinates=io.grpc:grpc-protobuf:1.2.0"],
     exports = ["@io_grpc_grpc_protobuf//jar"],
 )
 
 java_library(
     name = "grpc_stub",
+    tags = ["maven_coordinates=io.grpc:grpc-stub:1.2.0"],
     exports = ["@io_grpc_grpc_stub//jar"],
 )
 
 java_library(
     name = "protobuf",
+    tags = ["maven_coordinates=com.google.protobuf:protobuf-java:3.5.0"],
     exports = ["@com_google_protobuf_protobuf_java//jar"],
 )
 
@@ -236,6 +261,7 @@ java_library(
 
 java_library(
     name = "checker_framework_annotations",
+    tags = ["maven_coordinates=org.checkerframework:checker-compat-qual:2.3.0"],
     exports = ["@org_checkerframework_checker_compat_qual//jar"],
 )
 

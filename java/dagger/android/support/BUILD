@@ -29,14 +29,40 @@ android_library(
     srcs = glob(["*.java"]),
     javacopts = SOURCE_7_TARGET_7,
     manifest = "AndroidManifest.xml",
+    tags = ["maven_coordinates=com.google.dagger:dagger-android-support:${project.version}"],
     deps = [
+        ":manual-maven-deps",
         "//:dagger_with_compiler",
         "//java/dagger/android",
         "//third_party:error_prone_annotations",
+    ],
+)
+
+# Our pom.xml generator does not have a way to add manual maven deps. This target exports the
+# targets that don't have the necessary maven_coordinates tags.
+android_library(
+    name = "manual-maven-deps",
+    tags = [
+        "maven_coordinates=com.android.support:appcompat-v7:25.0.0",
+        "maven_coordinates=com.android.support:support-annotations:25.0.0",
+        "maven_coordinates=com.android.support:support-fragment:25.0.0",
+    ],
+    visibility = ["//visibility:private"],
+    exports = [
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
         "@androidsdk//com.android.support:support-annotations-25.0.0",
         "@androidsdk//com.android.support:support-fragment-25.0.0",
     ],
+)
+
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-android-support",
+    artifact_name = "Dagger Android Support",
+    packaging = "aar",
+    targets = [":support"],
 )
 
 load("//tools:javadoc.bzl", "javadoc_library")

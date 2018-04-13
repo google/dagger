@@ -314,6 +314,21 @@ java_library(
     ],
 )
 
+load("//tools:mvn.bzl", "dagger_pom_file")
+
+dagger_pom_file(
+    name = "pom.xml",
+    artifact_id = "dagger-compiler",
+    artifact_name = "Dagger Compiler",
+    targets = [
+        ":base",
+        ":binding",
+        ":processor",
+        ":validation",
+        ":writing",
+    ],
+)
+
 java_library(
     name = "kythe",
     srcs = KYTHE_SRCS,

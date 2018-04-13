@@ -73,6 +73,8 @@ jarjar_library(
     ],
 )
 
+# DO NOT SUBMIT: make sure grpc/gwt poms have been handled
+
 jarjar_library(
     name = "shaded_compiler_src",
     rules_file = "merge_all_rules.txt",

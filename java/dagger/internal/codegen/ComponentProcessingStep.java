@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static javax.lang.model.util.ElementFilter.typesIn;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
@@ -29,7 +30,7 @@ import com.google.common.collect.SetMultimap;
 import dagger.Component;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
-import dagger.internal.codegen.DiagnosticReporterFactory.ErrorCountingDiagnosticReporter;
+import dagger.internal.codegen.DiagnosticReporterFactory.DiagnosticReporterImpl;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import dagger.spi.BindingGraphPlugin;
@@ -41,6 +42,7 @@ import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 
 /**
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
@@ -149,23 +151,9 @@ final class ComponentProcessingStep implements ProcessingStep {
           continue;
         }
         BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
-        ValidationReport<TypeElement> graphReport = bindingGraphValidator.validate(bindingGraph);
-        graphReport.printMessagesTo(messager);
-        if (!graphReport.isClean()) {
-          continue;
+        if (isValid(bindingGraph)) {
+          generateComponent(bindingGraph);
         }
-
-        if (!validationPlugins.isEmpty() || !spiPlugins.isEmpty()) {
-          dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
-          boolean reportedErrors =
-              executePlugins(modelGraph, validationPlugins)
-                  || executePlugins(modelGraph, spiPlugins);
-          if (reportedErrors) {
-            continue;
-          }
-        }
-
-        generateComponent(bindingGraph);
       } catch (TypeNotPresentException e) {
         rejectedElements.add(componentTypeElement);
       }
@@ -173,23 +161,34 @@ final class ComponentProcessingStep implements ProcessingStep {
     return rejectedElements.build();
   }
 
+  private boolean isValid(BindingGraph bindingGraph) {
+    ValidationReport<TypeElement> graphReport = bindingGraphValidator.validate(bindingGraph);
+    graphReport.printMessagesTo(messager);
+
+    dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
+    if (executePlugins(modelGraph, validationPlugins).contains(ERROR) || !graphReport.isClean()) {
+      return false;
+    }
+    return !executePlugins(modelGraph, spiPlugins).contains(ERROR);
+  }
+
   /**
    * Calls {@link BindingGraphPlugin#visitGraph(dagger.model.BindingGraph, DiagnosticReporter)} on
    * each of {@code plugins}.
    *
-   * @return {@code true} if any plugin reported errors
+   * @return the kinds of diagnostics that were reported
    */
-  private boolean executePlugins(
+  private ImmutableSet<Diagnostic.Kind> executePlugins(
       dagger.model.BindingGraph graph, Iterable<BindingGraphPlugin> plugins) {
     // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
-    boolean reportedErrors = false;
+    ImmutableSet.Builder<Diagnostic.Kind> diagnosticKinds = ImmutableSet.builder();
     for (BindingGraphPlugin plugin : plugins) {
-      ErrorCountingDiagnosticReporter reporter = diagnosticReporterFactory.reporter(graph, plugin);
+      DiagnosticReporterImpl reporter = diagnosticReporterFactory.reporter(graph, plugin);
       plugin.visitGraph(graph, reporter);
-      reportedErrors |= reporter.reportedErrors();
+      diagnosticKinds.addAll(reporter.reportedDiagnosticKinds());
     }
 
-    return reportedErrors;
+    return diagnosticKinds.build();
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

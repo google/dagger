@@ -19,9 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerGraphs.shortestPath;
-import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -58,26 +58,30 @@ final class DiagnosticReporterFactory {
   }
 
   /** Creates a reporter for a binding graph and a plugin. */
-  ErrorCountingDiagnosticReporter reporter(BindingGraph graph, BindingGraphPlugin plugin) {
-    return new ErrorCountingDiagnosticReporter(graph, plugin.pluginName());
+  DiagnosticReporterImpl reporter(BindingGraph graph, BindingGraphPlugin plugin) {
+    return new DiagnosticReporterImpl(graph, plugin.pluginName());
   }
 
-  /** A {@link DiagnosticReporter} that can tell how many errors were reported. */
-  class ErrorCountingDiagnosticReporter implements DiagnosticReporter {
-    private final dagger.model.BindingGraph graph;
+  /**
+   * A {@link DiagnosticReporter} that keeps track of which {@linkplain Diagnostic.Kind kinds} of
+   * diagnostics were reported.
+   */
+  final class DiagnosticReporterImpl implements DiagnosticReporter {
+    private final BindingGraph graph;
     private final String plugin;
     private final TypeElement rootComponent;
-    private boolean reportedErrors;
+    private final ImmutableSet.Builder<Diagnostic.Kind> reportedDiagnosticKinds =
+        ImmutableSet.builder();
 
-    ErrorCountingDiagnosticReporter(dagger.model.BindingGraph graph, String plugin) {
+    DiagnosticReporterImpl(BindingGraph graph, String plugin) {
       this.graph = graph;
       this.plugin = plugin;
       this.rootComponent = graph.rootComponentNode().componentPath().currentComponent();
     }
 
-    /** Returns whether any errors were reported. */
-    boolean reportedErrors() {
-      return reportedErrors;
+    /** Returns which {@linkplain Diagnostic.Kind kinds} of diagnostics were reported. */
+    ImmutableSet<Diagnostic.Kind> reportedDiagnosticKinds() {
+      return reportedDiagnosticKinds.build();
     }
 
     @Override
@@ -214,9 +218,7 @@ final class DiagnosticReporterFactory {
 
     private void printMessage(
         Diagnostic.Kind diagnosticKind, CharSequence message, Element elementToReport) {
-      if (diagnosticKind.equals(ERROR)) {
-        reportedErrors = true;
-      }
+      reportedDiagnosticKinds.add(diagnosticKind);
       messager.printMessage(diagnosticKind, message, elementToReport);
     }
 

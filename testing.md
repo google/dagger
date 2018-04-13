@@ -8,36 +8,6 @@ it makes testing your code easier. This document explores some strategies for
 testing applications built with Dagger.
 
 
-## Don’t use Dagger for [unit testing]
-
-If you want to write a small unit test that tests one `@Inject`-annotated
-class, you don’t need to use Dagger in your test at all. Just call the
-`@Inject`-annotated constructor and methods and set the `@Inject`-annotated
-fields, if any, passing fake or mock dependencies directly.
-
-```java
-final class ThingDoer {
-  private final ThingGetter getter;
-  private final ThingPutter putter;
-
-  @Inject ThingDoer(ThingGetter getter, ThingPutter putter) {
-    this.getter = getter;
-    this.putter = putter;
-  }
-
-  String doTheThing(int howManyTimes) { /* … */ }
-}
-
-public class ThingDoerTest {
-  @Test
-  public void testDoTheThing() {
-    ThingDoer doer = new ThingDoer(fakeGetter, fakePutter);
-    assertEquals("done", doer.doTheThing(5));
-  }
-}
-```
-
-
 ## Replace bindings for functional/integration/end-to-end testing
 
 Functional/integration/end-to-end tests typically use the production
@@ -249,13 +219,43 @@ Then your production configuration will use the real modules, and the testing
 configuration the fake modules, as described
 [above](#separate-component-configurations).
 
+## Don’t use Dagger for single-class [unit tests]
+
+If you want to write a small unit test that tests only one `@Inject`-annotated
+class, you don’t need to use Dagger in your test at all. Just call the
+`@Inject`-annotated constructor and methods and set the `@Inject`-annotated
+fields, if any, passing fake or mock dependencies directly.
+
+
+```java
+final class ThingDoer {
+  private final ThingGetter getter;
+  private final ThingPutter putter;
+
+  @Inject ThingDoer(ThingGetter getter, ThingPutter putter) {
+    this.getter = getter;
+    this.putter = putter;
+  }
+
+  String doTheThing(int howManyTimes) { /* … */ }
+}
+
+public class ThingDoerTest {
+  @Test
+  public void testDoTheThing() {
+    ThingDoer doer = new ThingDoer(fakeGetter, fakePutter);
+    assertEquals("done", doer.doTheThing(5));
+  }
+}
+```
+
 
 <!-- References -->
 
 [cohesive]: https://en.wikipedia.org/wiki/Cohesion_(computer_science)
 [fakes]: http://googletesting.blogspot.com/2013/07/testing-on-toilet-know-your-test-doubles.html
 [single responsibility principle]: https://en.wikipedia.org/wiki/Single_responsibility_principle
-[unit testing]: https://en.wikipedia.org/wiki/Unit_testing
+[unit tests]: https://en.wikipedia.org/wiki/Unit_testing
 [utility class]: https://en.wikipedia.org/wiki/Utility_class
 
 <!-- TODO(gak): Document the elision of static module instances somewhere externally. -->

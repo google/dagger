@@ -39,10 +39,10 @@ def _GenTests(library_rule_type, test_rule_type, name, srcs, deps, test_only_dep
              plugins, javacopts, lib_javacopts, test_javacopts)
 
   if functional:
-    for (variant_name, extra_lib_javacopts) in BUILD_VARIANTS.items():
-      variant_lib_javacopts = (lib_javacopts or []) + extra_lib_javacopts
+    for (variant_name, extra_javacopts) in BUILD_VARIANTS.items():
+      variant_javacopts = (javacopts or []) + extra_javacopts
       _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
-                 plugins, javacopts, variant_lib_javacopts, test_javacopts, variant_name)
+                 plugins, variant_javacopts, lib_javacopts, test_javacopts, variant_name)
 
 def _gen_tests(library_rule_type, test_rule_type, name, srcs, deps, test_only_deps,
                plugins, javacopts, lib_javacopts, test_javacopts, variant_name=None):

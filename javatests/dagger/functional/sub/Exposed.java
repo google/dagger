@@ -16,20 +16,53 @@
 
 package dagger.functional.sub;
 
+import dagger.Lazy;
 import dagger.functional.Generic;
 import dagger.functional.Generic2;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class Exposed {
-  
+
+  @Inject public PackagePrivate pp2;
+  @Inject public Provider<PackagePrivate> ppp2;
+  @Inject public Lazy<PackagePrivate> lpp2;
+  @Inject public Provider<Lazy<PackagePrivate>> plpp2;
   @Inject public Generic2<PackagePrivate> gpp2;
   @Inject public Generic2<PackagePrivateContainer.PublicEnclosed> gppc2;
+  @Inject public Provider<Generic2<PackagePrivate>> pgpp2;
+  @Inject public Lazy<Generic2<PackagePrivate>> lgpp2;
+  @Inject public Provider<Lazy<Generic2<PackagePrivate>>> plgpp2;
 
+  public PackagePrivate pp;
+  public Provider<PackagePrivate> ppp;
+  public Lazy<PackagePrivate> lpp;
+  public Provider<Lazy<PackagePrivate>> plpp;
   public Generic<PackagePrivate> gpp;
   public Generic<PackagePrivateContainer.PublicEnclosed> gppc;
-  
-  @Inject Exposed(Generic<PackagePrivate> gpp, Generic<PackagePrivateContainer.PublicEnclosed> gppc) {
+  public Provider<Generic<PackagePrivate>> pgpp;
+  public Lazy<Generic<PackagePrivate>> lgpp;
+  public Provider<Lazy<Generic<PackagePrivate>>> plgpp;
+
+  /** Injects inaccessible dependencies to test casting of these dependency arguments. */
+  @Inject Exposed(
+      PackagePrivate pp,
+      Provider<PackagePrivate> ppp,
+      Lazy<PackagePrivate> lpp,
+      Provider<Lazy<PackagePrivate>> plpp,
+      Generic<PackagePrivate> gpp,
+      Generic<PackagePrivateContainer.PublicEnclosed> gppc,
+      Provider<Generic<PackagePrivate>> pgpp,
+      Lazy<Generic<PackagePrivate>> lgpp,
+      Provider<Lazy<Generic<PackagePrivate>>> plgpp) {
+    this.pp = pp;
+    this.ppp = ppp;
+    this.lpp = lpp;
+    this.plpp = plpp;
     this.gpp = gpp;
     this.gppc = gppc;
+    this.pgpp = pgpp;
+    this.lgpp = lgpp;
+    this.plgpp = plgpp;
   }
 }

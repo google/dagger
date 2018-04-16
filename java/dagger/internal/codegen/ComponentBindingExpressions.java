@@ -222,7 +222,8 @@ final class ComponentBindingExpressions {
     TypeMirror dependencyType = dependencyRequest.key().type();
     Expression dependencyExpression = getDependencyExpression(dependencyRequest, requestingClass);
 
-    if (!isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
+    if (dependencyRequest.kind().equals(RequestKind.INSTANCE)
+        && !isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
         && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
       return dependencyExpression.castTo(types.erasure(dependencyType));
     }

@@ -101,20 +101,11 @@ final class SwitchingProviders {
   }
 
   private CodeBlock createSwitchCaseCodeBlock(Key key) {
-    Expression instanceExpression =
-        componentBindingExpressions.getDependencyExpression(key, INSTANCE, owningComponent);
-
-    CodeBlock instanceCodeBlock = instanceExpression.codeBlock();
-
-    // Primitives cannot be cast directly to the method's parameterized type, T. We have to first
-    // cast them to their boxed type.
-    // TODO(user): Shouldn't we be able to rely soley on the instance expression type? However,
-    // that currently fails. Does that indicate that those dependency expression types are wrong?
-    if (binding(key).contributedPrimitiveType().isPresent()
-        || instanceExpression.type().getKind().isPrimitive()) {
-      TypeName boxedType = TypeName.get(binding(key).contributedType()).box();
-      instanceCodeBlock = CodeBlock.of("($T) $L", boxedType, instanceCodeBlock);
-    }
+    CodeBlock instanceCodeBlock =
+        componentBindingExpressions
+            .getDependencyExpression(key, INSTANCE, owningComponent)
+            .box(types)
+            .codeBlock();
 
     return CodeBlock.builder()
         // TODO(user): Is there something else more useful than the key?
@@ -146,9 +137,5 @@ final class SwitchingProviders {
                 .endControlFlow()
                 .build())
         .build();
-  }
-
-  private ContributionBinding binding(Key key) {
-    return graph.contributionBindings().get(key).contributionBinding();
   }
 }

@@ -219,12 +219,13 @@ Then your production configuration will use the real modules, and the testing
 configuration the fake modules, as described
 [above](#separate-component-configurations).
 
-## Don’t use Dagger for single-class [unit tests]
+## You don’t have to use Dagger for single-class [unit tests]
 
 If you want to write a small unit test that tests only one `@Inject`-annotated
-class, you don’t need to use Dagger in your test at all. Just call the
-`@Inject`-annotated constructor and methods and set the `@Inject`-annotated
-fields, if any, passing fake or mock dependencies directly.
+class, you don’t need to use Dagger to instantiate that class. If you want to
+write a traditional unit test, you can directly call the `@Inject`-annotated
+constructor and methods and set the `@Inject`-annotated fields, if any, passing
+fake or mock dependencies directly, just as you would if they weren’t annotated.
 
 
 ```java

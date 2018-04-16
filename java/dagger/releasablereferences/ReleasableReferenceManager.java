@@ -68,9 +68,13 @@ import javax.inject.Provider;
  * <p>This interface is implemented by Dagger.
  *
  * @since 2.8
+ * @deprecated The releasable references feature is deprecated and scheduled for removal in July
+ *     2018. If you use it or are planning to add usages, please
+ *     <a href="https://github.com/google/dagger/issues/1117">this bug</a>.
  */
 @Beta
 @GwtIncompatible
+@Deprecated
 public interface ReleasableReferenceManager {
 
   /** The scope whose references are managed by this object. */

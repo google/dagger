@@ -70,6 +70,9 @@ import javax.inject.Qualifier;
  *
  * @see <a href="https://google.github.io/dagger/users-guide.html#releasable-references">Releasable references</a>
  * @since 2.8
+ * @deprecated The releasable references feature is deprecated and scheduled for removal in July
+ *     2018. If you use it or are planning to add usages, please
+ *     <a href="https://github.com/google/dagger/issues/1117">this bug</a>.
  */
 @Beta
 @Documented
@@ -77,6 +80,7 @@ import javax.inject.Qualifier;
 @Target({FIELD, PARAMETER, METHOD})
 @Retention(RUNTIME)
 @Qualifier
+@Deprecated
 public @interface ForReleasableReferences {
   /** The {@linkplain CanReleaseReferences reference-releasing} scope annotation type. */
   Class<? extends Annotation> value();

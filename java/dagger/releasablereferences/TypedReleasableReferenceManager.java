@@ -50,9 +50,13 @@ import java.lang.annotation.Annotation;
  * <p>This interface is implemented by Dagger.
  *
  * @param <M> the type of the metadata annotation
+ * @deprecated The releasable references feature is deprecated and scheduled for removal in July
+ *     2018. If you use it or are planning to add usages, please
+ *     <a href="https://github.com/google/dagger/issues/1117">this bug</a>.
  */
 @Beta
 @GwtIncompatible
+@Deprecated
 public interface TypedReleasableReferenceManager<M extends Annotation>
     extends ReleasableReferenceManager {
 

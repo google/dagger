@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
+import static dagger.internal.codegen.SourceFiles.protectAgainstKeywords;
 
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -89,7 +90,7 @@ final class BindingVariableNamer {
     TypeMirror type = typeToName(binding);
     type.accept(TYPE_NAMER, builder);
 
-    return UPPER_CAMEL.to(LOWER_CAMEL, builder.toString());
+    return protectAgainstKeywords(UPPER_CAMEL.to(LOWER_CAMEL, builder.toString()));
   }
 
   private static TypeMirror typeToName(Binding binding) {

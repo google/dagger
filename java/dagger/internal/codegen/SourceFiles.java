@@ -321,7 +321,7 @@ class SourceFiles {
     return variableName;
   }
 
-  private static String protectAgainstKeywords(String candidateName) {
+  static String protectAgainstKeywords(String candidateName) {
     switch (candidateName) {
       case "package":
         return "pkg";

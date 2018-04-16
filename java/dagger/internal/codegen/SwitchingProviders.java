@@ -108,7 +108,10 @@ final class SwitchingProviders {
 
     // Primitives cannot be cast directly to the method's parameterized type, T. We have to first
     // cast them to their boxed type.
-    if (binding(key).contributedPrimitiveType().isPresent()) {
+    // TODO(user): Shouldn't we be able to rely soley on the instance expression type? However,
+    // that currently fails. Does that indicate that those dependency expression types are wrong?
+    if (binding(key).contributedPrimitiveType().isPresent()
+        || instanceExpression.type().getKind().isPrimitive()) {
       TypeName boxedType = TypeName.get(binding(key).contributedType()).box();
       instanceCodeBlock = CodeBlock.of("($T) $L", boxedType, instanceCodeBlock);
     }

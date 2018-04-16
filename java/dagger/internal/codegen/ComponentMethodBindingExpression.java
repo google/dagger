@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A binding expression that implements and uses a component method.
@@ -58,6 +59,16 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
             && componentName.equals(generatedComponentModel.name())
         ? methodImplementation.body()
         : super.getComponentMethodImplementation(componentMethod, componentName);
+  }
+
+  @Override
+  Expression getDependencyExpression(ClassName requestingClass) {
+    // If a component method returns a primitive, update the expression's type which might be boxed.
+    Expression expression = super.getDependencyExpression(requestingClass);
+    TypeMirror methodReturnType = componentMethod.methodElement().getReturnType();
+    return methodReturnType.getKind().isPrimitive()
+        ? Expression.create(methodReturnType, expression.codeBlock())
+        : expression;
   }
 
   @Override

@@ -35,7 +35,7 @@ abstract class MethodBindingExpression extends BindingExpression {
   }
 
   @Override
-  final Expression getDependencyExpression(ClassName requestingClass) {
+  Expression getDependencyExpression(ClassName requestingClass) {
     addMethod();
     return Expression.create(
         methodImplementation.returnType(),

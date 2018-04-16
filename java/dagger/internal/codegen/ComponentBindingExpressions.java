@@ -30,6 +30,8 @@ import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
+import static dagger.model.BindingKind.MULTIBOUND_MAP;
+import static dagger.model.BindingKind.MULTIBOUND_SET;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashBasedTable;
@@ -114,7 +116,7 @@ final class ComponentBindingExpressions {
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
         new MembersInjectionMethods(generatedComponentModel, this, graph, elements, types);
-    this.switchingProviders = new SwitchingProviders(generatedComponentModel, this, graph, types);
+    this.switchingProviders = new SwitchingProviders(generatedComponentModel, this, types);
   }
 
   /**
@@ -279,7 +281,11 @@ final class ComponentBindingExpressions {
    */
   private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings, RequestKind requestKind) {
-    Optional<MemberSelect> staticMethod = staticFactoryCreation(resolvedBindings);
+    // TODO(user): Consider merging the static factory creation logic into CreationExpressions?
+    Optional<MemberSelect> staticMethod =
+        useStaticFactoryCreation(resolvedBindings.contributionBinding())
+            ? staticFactoryCreation(resolvedBindings)
+            : Optional.empty();
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         resolvedBindings.scope().isPresent()
             ? scope(resolvedBindings, frameworkInstanceCreationExpression(resolvedBindings))
@@ -574,6 +580,20 @@ final class ComponentBindingExpressions {
   }
 
   /**
+   * Returns {@code true} if the binding should use the static factory creation strategy.
+   *
+   * In default mode, we always use the static factory creation strategy. In Android mode, we
+   * prefer to use the SwitchingProvider than the static factories to reduce class loading; however,
+   * we allow static factories that can reused across multiple bindings, e.g. {@code MapFactory} or
+   * {@code SetFactory}.
+   */
+  private boolean useStaticFactoryCreation(ContributionBinding binding) {
+    return !compilerOptions.experimentalAndroidMode()
+        || binding.kind().equals(MULTIBOUND_MAP)
+        || binding.kind().equals(MULTIBOUND_SET);
+  }
+
+  /**
    * Returns {@code true} if we can use a direct (not {@code Provider.get()}) expression for this
    * binding. If the binding doesn't {@linkplain #needsCaching(ResolvedBindings) need to be cached},
    * we can.
@@ -609,7 +629,7 @@ final class ComponentBindingExpressions {
         return wrapInMethod(
             resolvedBindings,
             RequestKind.PROVIDER,
-            switchingProviders.newBindingExpression(resolvedBindings.key()));
+            switchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
       }
     } else if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
         && !needsCaching(resolvedBindings)) {

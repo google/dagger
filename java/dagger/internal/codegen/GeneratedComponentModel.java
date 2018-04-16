@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -35,7 +34,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
@@ -119,7 +117,7 @@ final class GeneratedComponentModel {
       MultimapBuilder.enumKeys(MethodSpecKind.class).arrayListValues().build();
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
-  private Optional<Supplier<TypeSpec>> switchingProviderSupplier = Optional.empty();
+  private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
 
   private GeneratedComponentModel(ClassName name, Modifier... modifiers) {
     this.name = name;
@@ -183,8 +181,7 @@ final class GeneratedComponentModel {
 
   /** Adds a {@link Supplier} for the SwitchingProvider for the component. */
   void addSwitchingProvider(Supplier<TypeSpec> typeSpecSupplier) {
-    checkState(!switchingProviderSupplier.isPresent());
-    switchingProviderSupplier = Optional.of(typeSpecSupplier);
+    switchingProviderSupplier.add(typeSpecSupplier);
   }
 
   /** Adds the given code block to the initialize methods of the component. */
@@ -217,7 +214,7 @@ final class GeneratedComponentModel {
     fieldSpecsMap.asMap().values().forEach(component::addFields);
     methodSpecsMap.asMap().values().forEach(component::addMethods);
     typeSpecsMap.asMap().values().forEach(component::addTypes);
-    switchingProviderSupplier.map(Supplier::get).ifPresent(component::addType);
+    switchingProviderSupplier.stream().map(Supplier::get).forEach(component::addType);
     return component;
   }
 }

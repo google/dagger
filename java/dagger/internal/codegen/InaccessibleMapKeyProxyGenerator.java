@@ -31,8 +31,8 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 
 /**
- * Generates a class that exposes a non-{@code public} {@link ContributionBinding#mapKey()} @MapKey}
- * annotation.
+ * Generates a class that exposes a non-{@code public} {@link
+ * ContributionBinding#mapKeyAnnotation()} @MapKey} annotation.
  */
 final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<ContributionBinding> {
   private final DaggerTypes types;

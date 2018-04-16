@@ -121,14 +121,6 @@ final class ErrorMessages {
   static final String DUPLICATE_BINDINGS_FOR_KEY_FORMAT =
       "%s is bound multiple times:";
 
-  static String duplicateMapKeysError(String key) {
-    return "The same map key is bound more than once for " + key;
-  }
-
-  static String inconsistentMapKeyAnnotationsError(String key) {
-    return key + " uses more than one @MapKey annotation type";
-  }
-
   static final String COMPONENT_ANNOTATED_REUSABLE =
       "@Reusable cannot be applied to components or subcomponents.";
 

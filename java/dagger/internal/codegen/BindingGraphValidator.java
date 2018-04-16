@@ -22,7 +22,6 @@ import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.PROVISION;
@@ -30,8 +29,6 @@ import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ComponentRequirement.Kind.MODULE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByAnnotationType;
-import static dagger.internal.codegen.ContributionBinding.indexMapBindingsByMapKey;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -43,8 +40,6 @@ import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.ErrorMessages.INDENT;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
-import static dagger.internal.codegen.ErrorMessages.duplicateMapKeysError;
-import static dagger.internal.codegen.ErrorMessages.inconsistentMapKeyAnnotationsError;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
@@ -60,7 +55,6 @@ import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.INJECTION;
-import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -77,14 +71,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.BindsOptionalOf;
 import dagger.Component;
 import dagger.Lazy;
-import dagger.MapKey;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -101,7 +93,6 @@ import dagger.releasablereferences.ForReleasableReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
 import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Formatter;
 import java.util.LinkedHashMap;
@@ -636,9 +627,6 @@ final class BindingGraphValidator {
             }
           }
         }
-        if (binding.kind().equals(MULTIBOUND_MAP)) {
-          validateMapKeys(binding, owningComponent);
-        }
         super.visitContributionBinding(binding, owningComponent);
       }
 
@@ -692,47 +680,6 @@ final class BindingGraphValidator {
         }
 
         return declarations.build();
-      }
-
-      private void validateMapKeys(
-          ContributionBinding binding, ComponentDescriptor owningComponent) {
-        checkArgument(
-            binding.kind().equals(MULTIBOUND_MAP),
-            "binding must be a synthetic multibound map: %s",
-            binding);
-        ImmutableSet<ContributionBinding> multibindingContributions =
-            componentTreePath()
-                .graphForComponent(owningComponent)
-                .resolvedDependencies(binding)
-                .stream()
-                .map(ResolvedBindings::contributionBinding)
-                .collect(toImmutableSet());
-        validateMapKeySet(multibindingContributions);
-        validateMapKeyAnnotationTypes(multibindingContributions);
-      }
-
-      /**
-       * Reports errors if there is more than one map binding contribution with the same map key.
-       */
-      private void validateMapKeySet(Set<ContributionBinding> mapBindingContributions) {
-        for (Collection<ContributionBinding> mapBindingsForMapKey :
-            indexMapBindingsByMapKey(mapBindingContributions).asMap().values()) {
-          if (mapBindingsForMapKey.size() > 1) {
-            reportDuplicateMapKeys(mapBindingsForMapKey);
-          }
-        }
-      }
-
-      /**
-       * Reports errors if there is more than one {@link MapKey} annotation type within the map
-       * binding contributions' map keys.
-       */
-      private void validateMapKeyAnnotationTypes(Set<ContributionBinding> mapBindingContributions) {
-        ImmutableSetMultimap<Equivalence.Wrapper<DeclaredType>, ContributionBinding>
-            mapBindingsByAnnotationType = indexMapBindingsByAnnotationType(mapBindingContributions);
-        if (mapBindingsByAnnotationType.keySet().size() > 1) {
-          reportInconsistentMapKeyAnnotations(mapBindingsByAnnotationType);
-        }
       }
 
       /**
@@ -909,34 +856,6 @@ final class BindingGraphValidator {
                 });
         reportErrorAtEntryPoint(
             componentTreePath().rootmostGraph(duplicateDeclarations.keySet()), builder.toString());
-      }
-
-      private void reportDuplicateMapKeys(Collection<ContributionBinding> mapBindings) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(duplicateMapKeysError(formatCurrentDependencyRequestKey()));
-        bindingDeclarationFormatter.formatIndentedList(
-            builder, mapBindings, 1, DUPLICATE_SIZE_LIMIT);
-        reportErrorAtEntryPoint(owningGraph(mapBindings), builder.toString());
-      }
-
-      private void reportInconsistentMapKeyAnnotations(
-          Multimap<Equivalence.Wrapper<DeclaredType>, ContributionBinding>
-              mapBindingsByAnnotationType) {
-        StringBuilder builder =
-            new StringBuilder(
-                inconsistentMapKeyAnnotationsError(formatCurrentDependencyRequestKey()));
-        for (Map.Entry<Equivalence.Wrapper<DeclaredType>, Collection<ContributionBinding>> entry :
-            mapBindingsByAnnotationType.asMap().entrySet()) {
-          DeclaredType annotationType = entry.getKey().get();
-          Collection<ContributionBinding> bindings = entry.getValue();
-
-          builder.append('\n').append(INDENT).append(annotationType).append(':');
-
-          bindingDeclarationFormatter.formatIndentedList(
-              builder, bindings, 2, DUPLICATE_SIZE_LIMIT);
-        }
-        reportErrorAtEntryPoint(
-            owningGraph(mapBindingsByAnnotationType.values()), builder.toString());
       }
 
       // TODO(cgruber): Provide a hint for the start and end of the cycle.

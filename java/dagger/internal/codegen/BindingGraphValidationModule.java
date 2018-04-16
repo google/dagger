@@ -28,6 +28,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin mapMultibinding(MapMultibindingValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin membersInjection(MembersInjectionBindingValidation validation);
 
   @Binds

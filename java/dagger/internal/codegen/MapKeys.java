@@ -137,16 +137,16 @@ final class MapKeys {
   }
 
   /**
-   * Returns a code block for {@code binding}'s {@link ContributionBinding#mapKey() map key}. If for
-   * whatever reason the map key is not accessible from within {@code requestingClass} (i.e. it has
-   * a package-private {@code enum} from a different package), this will return an invocation of a
-   * proxy-method giving it access.
+   * Returns a code block for {@code binding}'s {@link ContributionBinding#mapKeyAnnotation() map
+   * key}. If for whatever reason the map key is not accessible from within {@code requestingClass}
+   * (i.e. it has a package-private {@code enum} from a different package), this will return an
+   * invocation of a proxy-method giving it access.
    *
    * @throws IllegalStateException if {@code binding} is not a {@link dagger.multibindings.IntoMap
    *     map} contribution.
    */
   static CodeBlock getMapKeyExpression(ContributionBinding binding, ClassName requestingClass) {
-    AnnotationMirror mapKeyAnnotation = binding.mapKey().get();
+    AnnotationMirror mapKeyAnnotation = binding.mapKeyAnnotation().get();
     return MapKeyAccessibility.isMapKeyAccessibleFrom(
             mapKeyAnnotation, requestingClass.packageName())
         ? directMapKeyExpression(mapKeyAnnotation)
@@ -193,7 +193,7 @@ final class MapKeys {
    */
   static Optional<MethodSpec> mapKeyFactoryMethod(ContributionBinding binding, Types types) {
     return binding
-        .mapKey()
+        .mapKeyAnnotation()
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
         .map(
             mapKey ->

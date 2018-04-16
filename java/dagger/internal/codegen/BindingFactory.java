@@ -225,7 +225,7 @@ final class BindingFactory {
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
                 method.getParameters(), methodType.getParameterTypes()))
-        .wrappedMapKey(wrapOptionalInEquivalence(getMapKey(method)));
+        .wrappedMapKeyAnnotation(wrapOptionalInEquivalence(getMapKey(method)));
   }
 
   /**
@@ -425,7 +425,7 @@ final class BindingFactory {
         .contributingModule(delegateDeclaration.contributingModule().get())
         .key(keyFactory.forDelegateBinding(delegateDeclaration, frameworkType))
         .dependencies(delegateDeclaration.delegateRequest())
-        .wrappedMapKey(delegateDeclaration.wrappedMapKey())
+        .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())
         .kind(DELEGATE)
         .build();
   }

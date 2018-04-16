@@ -200,6 +200,7 @@ java_library(
     name = "internal_validation",
     srcs = [
         "BindingGraphValidationModule.java",
+        "MapMultibindingValidation.java",
         "MembersInjectionBindingValidation.java",
         "NonNullableRequestForNullableBindingValidation.java",
         "ProvisionDependencyOnProducerBindingValidation.java",
@@ -208,6 +209,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
+        ":validation",
     ],
 )
 

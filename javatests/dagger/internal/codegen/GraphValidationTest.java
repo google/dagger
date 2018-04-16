@@ -1532,21 +1532,32 @@ public class GraphValidationTest {
             "  Map<Long, BoundTwice> longMap();",
             "}");
 
-    assertThat(duplicates, component)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("test.Duplicates.BoundTwice is bound multiple times:")
-            .in(component).onLine(10)
-        .and().withErrorContaining("test.Duplicates.DuplicatesModule.bindWithUnresolvedKey")
-            .in(component).onLine(10)
-        .and().withErrorContaining("test.Duplicates.NotBound cannot be provided")
-            .in(component).onLine(11)
-        .and().withErrorContaining("test.Duplicates.NotBound cannot be provided")
-            .in(component).onLine(12)
-        .and().withErrorContaining("test.Duplicates.NotBound cannot be provided")
-            .in(component).onLine(13)
-        .and().withErrorContaining("same map key is bound more than once")
-            .in(component).onLine(14);
+    Compilation compilation = daggerCompiler().compile(duplicates, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.BoundTwice is bound multiple times:")
+        .inFile(component)
+        .onLineContaining("boundTwice();");
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.DuplicatesModule.bindWithUnresolvedKey")
+        .inFile(component)
+        .onLineContaining("boundTwice();");
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
+        .inFile(component)
+        .onLineContaining("object();");
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
+        .inFile(component)
+        .onLineContaining("set();");
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
+        .inFile(component)
+        .onLineContaining("intMap();");
+    assertThat(compilation)
+        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
+        .inFile(component)
+        .onLineContaining("longMap();");
   }
 
   @Test public void resolvedParametersInDependencyTrace() {

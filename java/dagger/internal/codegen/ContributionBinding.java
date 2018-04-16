@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.CLASS_CONSTRUCTOR;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.DELEGATE;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
@@ -26,14 +27,9 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Equivalence.Wrapper;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimaps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import dagger.MapKey;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
@@ -58,10 +54,21 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   /** Returns the type that specifies this' nullability, absent if not nullable. */
   abstract Optional<DeclaredType> nullableType();
 
-  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
+  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation();
 
-  final Optional<AnnotationMirror> mapKey() {
-    return unwrapOptionalEquivalence(wrappedMapKey());
+  final Optional<AnnotationMirror> mapKeyAnnotation() {
+    return unwrapOptionalEquivalence(wrappedMapKeyAnnotation());
+  }
+
+  /**
+   * If this is a map contribution, returns the key of its map entry.
+   *
+   * @throws IllegalStateException if {@link #mapKeyAnnotation()} returns an empty value.
+   */
+  final Object mapKey() {
+    checkState(mapKeyAnnotation().isPresent());
+    AnnotationMirror mapKeyAnnotation = mapKeyAnnotation().get();
+    return unwrapValue(mapKeyAnnotation).map(AnnotationValue::getValue).orElse(mapKeyAnnotation);
   }
 
   /**
@@ -174,34 +181,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   }
 
   /**
-   * Indexes map-multibindings by map key (the result of calling
-   * {@link AnnotationValue#getValue()} on a single member or the whole {@link AnnotationMirror}
-   * itself, depending on {@link MapKey#unwrapValue()}).
-   */
-  static ImmutableSetMultimap<Object, ContributionBinding> indexMapBindingsByMapKey(
-      Set<ContributionBinding> mapBindings) {
-    return ImmutableSetMultimap.copyOf(
-        Multimaps.index(
-            mapBindings,
-            mapBinding -> {
-              AnnotationMirror mapKey = mapBinding.mapKey().get();
-              return unwrapValue(mapKey).map(AnnotationValue::getValue).orElse(mapKey);
-            }));
-  }
-
-  /**
-   * Indexes map-multibindings by map key annotation type.
-   */
-  static ImmutableSetMultimap<Wrapper<DeclaredType>, ContributionBinding>
-      indexMapBindingsByAnnotationType(Set<ContributionBinding> mapBindings) {
-    return ImmutableSetMultimap.copyOf(
-        Multimaps.index(
-            mapBindings,
-            mapBinding ->
-                MoreTypes.equivalence().wrap(mapBinding.mapKey().get().getAnnotationType())));
-  }
-
-  /**
    * Base builder for {@link com.google.auto.value.AutoValue @AutoValue} subclasses of {@link
    * ContributionBinding}.
    */
@@ -225,7 +204,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
     abstract B nullableType(Optional<DeclaredType> nullableType);
 
-    abstract B wrappedMapKey(Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey);
+    abstract B wrappedMapKeyAnnotation(
+        Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation);
 
     abstract B kind(BindingKind kind);
 

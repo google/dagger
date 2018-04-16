@@ -98,12 +98,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       default:
         throw new IllegalStateException();
     }
-
-    return Expression.create(
-        method.getReturnType().getKind().isPrimitive()
-            ? method.getReturnType()
-            : provisionBinding.key().type(),
-        invocation);
+    return Expression.create(provisionBinding.key().type(), invocation);
   }
 
   private TypeName constructorTypeName(ClassName requestingClass) {

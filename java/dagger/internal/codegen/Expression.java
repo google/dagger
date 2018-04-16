@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
 import javax.lang.model.type.TypeMirror;
 
@@ -61,16 +60,6 @@ final class Expression {
   // or just embedding a Types/Elements instance in an Expression.
   Expression castTo(TypeMirror newType) {
     return create(newType, "($T) $L", newType, codeBlock);
-  }
-
-  /**
-   * Returns a new expression that {@link #castTo(TypeMirror)} casts the current expression to its
-   * boxed type if this expression has a primitive type.
-   */
-  Expression box(DaggerTypes types) {
-    return type.getKind().isPrimitive()
-        ? castTo(types.boxedClass(MoreTypes.asPrimitiveType(type)).asType())
-        : this;
   }
 
   /** The {@link TypeMirror type} to which the expression evaluates. */

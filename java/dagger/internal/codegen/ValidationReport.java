@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.graph.Traverser;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import java.util.Optional;
@@ -30,7 +32,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.util.SimpleElementVisitor6;
+import javax.lang.model.util.SimpleElementVisitor8;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
@@ -47,8 +49,24 @@ abstract class ValidationReport<T extends Element> {
   /** The items to report for the {@linkplain #subject() subject}. */
   abstract ImmutableSet<Item> items();
 
+  /** Returns the {@link #items()} from this report and all transitive subreports. */
+  ImmutableSet<Item> allItems() {
+    return allReports()
+        .stream()
+        .flatMap(report -> report.items().stream())
+        .collect(toImmutableSet());
+  }
+
   /** Other reports associated with this one. */
   abstract ImmutableSet<ValidationReport<?>> subreports();
+
+  private static final Traverser<ValidationReport<?>> SUBREPORTS =
+      Traverser.forTree(ValidationReport::subreports);
+
+  /** Returns this report and all transitive subreports. */
+  ImmutableSet<ValidationReport<?>> allReports() {
+    return ImmutableSet.copyOf(SUBREPORTS.depthFirstPreOrder(this));
+  }
 
   /** Returns {@code true} if there are no errors in this report or any subreports. */
   boolean isClean() {
@@ -106,7 +124,7 @@ abstract class ValidationReport<T extends Element> {
 
   private static String elementString(Element element) {
     return element.accept(
-        new SimpleElementVisitor6<String, Void>() {
+        new SimpleElementVisitor8<String, Void>() {
           @Override
           protected String defaultAction(Element e, Void p) {
             return e.toString();
@@ -114,7 +132,7 @@ abstract class ValidationReport<T extends Element> {
 
           @Override
           public String visitExecutable(ExecutableElement e, Void p) {
-            return e.getEnclosingElement().accept(this, null) + '.' + e.toString();
+            return e.getEnclosingElement().accept(this, null) + '.' + e;
           }
         },
         null);

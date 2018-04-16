@@ -120,7 +120,6 @@ final class BindingGraphValidator {
   private final Elements elements;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
-  private final InjectValidator injectValidator;
   private final InjectBindingRegistry injectBindingRegistry;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
@@ -132,7 +131,6 @@ final class BindingGraphValidator {
       Elements elements,
       DaggerTypes types,
       CompilerOptions compilerOptions,
-      InjectValidator injectValidator,
       InjectBindingRegistry injectBindingRegistry,
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
@@ -141,7 +139,6 @@ final class BindingGraphValidator {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
-    this.injectValidator = injectValidator.whenGeneratingCode();
     this.injectBindingRegistry = injectBindingRegistry;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
@@ -604,14 +601,6 @@ final class BindingGraphValidator {
       protected void visitContributionBinding(
           ContributionBinding binding, ComponentDescriptor owningComponent) {
         checkBindingScope(binding, owningComponent);
-        if (binding.kind().equals(INJECTION)) {
-          TypeMirror type = binding.key().type();
-          ValidationReport<TypeElement> report =
-              injectValidator.validateType(MoreTypes.asTypeElement(type));
-          if (!report.isClean()) {
-            report(currentGraph()).addSubreport(report);
-          }
-        }
         if (compilerOptions.usesProducers()) {
           // TODO(dpb,beder): Validate this during @Inject/@Provides/@Produces validation.
           // Only the Dagger-specific binding may depend on the production executor.
@@ -992,8 +981,7 @@ final class BindingGraphValidator {
         return "Set";
       case UNIQUE:
         return "Unique";
-      default:
-        throw new IllegalStateException("Unknown binding type: " + type);
     }
+    throw new AssertionError(type);
   }
 }

@@ -218,14 +218,14 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-[20api]: http://google.github.io/dagger/api/2.0/
+[20api]: https://google.github.io/dagger/api/2.0/
 [`bazel`]: https://bazel.build
 [bazel-external-deps]: https://docs.bazel.build/versions/master/external.html#depending-on-other-bazel-projects
 [community]: https://plus.google.com/communities/111933036769103367883
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
-[latestapi]: http://google.github.io/dagger/api/latest/
+[latestapi]: https://google.github.io/dagger/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
 [mavenbadge]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger
 [mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.google.dagger%22
@@ -233,4 +233,4 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 [proposal]: https://github.com/square/dagger/issues/366
 [square]: http://github.com/square/dagger/
 [squarecommunity]: https://plus.google.com/communities/109244258569782858265
-[website]: http://google.github.io/dagger
+[website]: https://google.github.io/dagger

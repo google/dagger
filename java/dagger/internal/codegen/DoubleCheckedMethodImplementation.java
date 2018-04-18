@@ -25,6 +25,7 @@ import com.google.common.base.Suppliers;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.DoubleCheck;
 import dagger.internal.MemoizedSentinel;
 import dagger.model.RequestKind;
 
@@ -51,17 +52,16 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
 
   @Override
   CodeBlock body() {
-    String fieldExpression =
-        fieldName.get().equals("local") ? "this." + fieldName.get() : fieldName.get();
+    String fieldExpression = fieldName.get().equals("local") ? "this.local" : fieldName.get();
     return CodeBlock.builder()
         .addStatement("$T local = $L", TypeName.OBJECT, fieldExpression)
         .beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class)
         .beginControlFlow("synchronized (local)")
-        // TODO(user): benchmark to see if this is really faster than instanceof check?
-        .beginControlFlow("if (local == $L)", fieldExpression)
-        .addStatement("$L = $L", fieldExpression, simpleBindingExpression())
-        .endControlFlow()
         .addStatement("local = $L", fieldExpression)
+        .beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class)
+        .addStatement("local = $L", simpleBindingExpression())
+        .addStatement("$1L = $2T.reentrantCheck($1L, local)", fieldExpression, DoubleCheck.class)
+        .endControlFlow()
         .endControlFlow()
         .endControlFlow()
         .addStatement("return ($T) local", returnType())

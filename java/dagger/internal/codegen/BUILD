@@ -293,6 +293,7 @@ java_library(
     srcs = [
         "BindingGraphConverter.java",
         "BindingGraphFactory.java",
+        "BindingGraphPlugins.java",
         "BindingGraphPluginsModule.java",
         "BindingMethodValidatorsModule.java",
         "CanReleaseReferencesProcessingStep.java",

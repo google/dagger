@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -28,8 +29,11 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.BindingGraphPlugins.TestingPlugins;
 import dagger.spi.BindingGraphPlugin;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -45,14 +49,44 @@ import javax.lang.model.util.Types;
  * The annotation processor responsible for generating the classes that drive the Dagger 2.0
  * implementation.
  *
- * TODO(gak): give this some better documentation
+ * <p>TODO(gak): give this some better documentation
  */
 @AutoService(Processor.class)
-public final class ComponentProcessor extends BasicAnnotationProcessor {
+public class ComponentProcessor extends BasicAnnotationProcessor {
+  private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
+
   @Inject InjectBindingRegistry injectBindingRegistry;
   @Inject FactoryGenerator factoryGenerator;
   @Inject MembersInjectorGenerator membersInjectorGenerator;
-  @Inject ImmutableList<BindingGraphPlugin> bindingGraphPlugins;
+  @Inject ImmutableList<ProcessingStep> processingSteps;
+  @Inject BindingGraphPlugins spiPlugins;
+  @Inject @Validation BindingGraphPlugins validationPlugins;
+
+  public ComponentProcessor() {
+    this.testingPlugins = Optional.empty();
+  }
+
+  private ComponentProcessor(Iterable<BindingGraphPlugin> testingPlugins) {
+    this.testingPlugins = Optional.of(ImmutableSet.copyOf(testingPlugins));
+  }
+
+  /**
+   * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+   * them from a {@link java.util.ServiceLoader}.
+   */
+  @VisibleForTesting
+  public static ComponentProcessor forTesting(BindingGraphPlugin... testingPlugins) {
+    return forTesting(Arrays.asList(testingPlugins));
+  }
+
+  /**
+   * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+   * them from a {@link java.util.ServiceLoader}.
+   */
+  @VisibleForTesting
+  public static ComponentProcessor forTesting(Iterable<BindingGraphPlugin> testingPlugins) {
+    return new ComponentProcessor(testingPlugins);
+  }
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
@@ -63,9 +97,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   public Set<String> getSupportedOptions() {
     ImmutableSet.Builder<String> options = ImmutableSet.builder();
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
-    for (BindingGraphPlugin plugin : bindingGraphPlugins) {
-      options.addAll(plugin.supportedOptions());
-    }
+    options.addAll(spiPlugins.allSupportedOptions());
+    options.addAll(validationPlugins.allSupportedOptions());
     return options.build();
   }
 
@@ -81,7 +114,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
             .sourceVersion(processingEnv.getSourceVersion())
             .messager(messager)
             .processingOptions(processingEnv.getOptions())
-            .compilerOptions(compilerOptions);
+            .compilerOptions(compilerOptions)
+            .testingPlugins(testingPlugins);
 
     Filer filer;
     if (compilerOptions.headerCompilation()) {
@@ -92,7 +126,9 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
     ProcessorComponent component = builder.build();
     component.inject(this);
-    return component.processingSteps();
+    spiPlugins.initializePlugins();
+    validationPlugins.initializePlugins();
+    return processingSteps;
   }
 
   @Singleton
@@ -106,7 +142,6 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   )
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
-    ImmutableList<ProcessingStep> processingSteps();
 
     @CanIgnoreReturnValue
     @Component.Builder
@@ -121,6 +156,11 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
       @BindsInstance Builder compilerOptions(CompilerOptions compilerOptions);
       @BindsInstance Builder processingOptions(@ProcessingOptions Map<String, String> options);
+
+      @BindsInstance
+      Builder testingPlugins(
+          @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins);
+
       @CheckReturnValue ProcessorComponent build();
     }
   }

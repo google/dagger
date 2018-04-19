@@ -22,7 +22,6 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
@@ -30,11 +29,8 @@ import com.google.common.collect.SetMultimap;
 import dagger.Component;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
-import dagger.internal.codegen.DiagnosticReporterFactory.DiagnosticReporterImpl;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +38,6 @@ import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 
 /**
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
@@ -58,9 +53,8 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
-  private final ImmutableSet<BindingGraphPlugin> validationPlugins;
-  private final ImmutableList<BindingGraphPlugin> spiPlugins;
-  private final DiagnosticReporterFactory diagnosticReporterFactory;
+  private final BindingGraphPlugins validationPlugins;
+  private final BindingGraphPlugins spiPlugins;
 
   @Inject
   ComponentProcessingStep(
@@ -72,10 +66,9 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
-      @Validation Set<BindingGraphPlugin> validationPlugins,
       BindingGraphConverter bindingGraphConverter,
-      ImmutableList<BindingGraphPlugin> spiPlugins,
-      DiagnosticReporterFactory diagnosticReporterFactory) {
+      @Validation BindingGraphPlugins validationPlugins,
+      BindingGraphPlugins spiPlugins) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
@@ -84,10 +77,9 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
-    this.validationPlugins = ImmutableSet.copyOf(validationPlugins);
     this.bindingGraphConverter = bindingGraphConverter;
+    this.validationPlugins = validationPlugins;
     this.spiPlugins = spiPlugins;
-    this.diagnosticReporterFactory = diagnosticReporterFactory;
   }
 
   @Override
@@ -166,29 +158,10 @@ final class ComponentProcessingStep implements ProcessingStep {
     graphReport.printMessagesTo(messager);
 
     dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
-    if (executePlugins(modelGraph, validationPlugins).contains(ERROR) || !graphReport.isClean()) {
+    if (validationPlugins.visitGraph(modelGraph).contains(ERROR) || !graphReport.isClean()) {
       return false;
     }
-    return !executePlugins(modelGraph, spiPlugins).contains(ERROR);
-  }
-
-  /**
-   * Calls {@link BindingGraphPlugin#visitGraph(dagger.model.BindingGraph, DiagnosticReporter)} on
-   * each of {@code plugins}.
-   *
-   * @return the kinds of diagnostics that were reported
-   */
-  private ImmutableSet<Diagnostic.Kind> executePlugins(
-      dagger.model.BindingGraph graph, Iterable<BindingGraphPlugin> plugins) {
-    // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
-    ImmutableSet.Builder<Diagnostic.Kind> diagnosticKinds = ImmutableSet.builder();
-    for (BindingGraphPlugin plugin : plugins) {
-      DiagnosticReporterImpl reporter = diagnosticReporterFactory.reporter(graph, plugin);
-      plugin.visitGraph(graph, reporter);
-      diagnosticKinds.addAll(reporter.reportedDiagnosticKinds());
-    }
-
-    return diagnosticKinds.build();
+    return !spiPlugins.visitGraph(modelGraph).contains(ERROR);
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

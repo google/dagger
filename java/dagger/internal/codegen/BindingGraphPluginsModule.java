@@ -16,12 +16,13 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.BindingGraphPlugins.TestingPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 import javax.annotation.processing.Filer;
@@ -29,31 +30,45 @@ import javax.inject.Singleton;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/**
- * Provides and configures the {@link BindingGraphPlugin}s available on the annotation processing
- * path.
- */
+/** Contains the bindings for {@link BindingGraphPlugins}. */
 @Module
-interface BindingGraphPluginsModule {
+abstract class BindingGraphPluginsModule {
+  private BindingGraphPluginsModule() {}
+
   @Provides
   @Singleton
-  static ImmutableList<BindingGraphPlugin> bindingGraphPlugins(
+  static BindingGraphPlugins spiPlugins(
+      @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins,
       Filer filer,
       Types types,
       Elements elements,
-      @ProcessingOptions Map<String, String> processingOptions) {
-    ClassLoader classLoader = BindingGraphPluginsModule.class.getClassLoader();
-    ImmutableList<BindingGraphPlugin> bindingGraphPlugins =
-        ImmutableList.copyOf(ServiceLoader.load(BindingGraphPlugin.class, classLoader));
-    for (BindingGraphPlugin plugin : bindingGraphPlugins) {
-      plugin.initFiler(filer);
-      plugin.initTypes(types);
-      plugin.initElements(elements);
-      Set<String> supportedOptions = plugin.supportedOptions();
-      if (!supportedOptions.isEmpty()) {
-        plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));
-      }
-    }
-    return bindingGraphPlugins;
+      @ProcessingOptions Map<String, String> processingOptions,
+      DiagnosticReporterFactory diagnosticReporterFactory) {
+    return new BindingGraphPlugins(
+        testingPlugins.orElseGet(BindingGraphPluginsModule::loadPlugins),
+        filer,
+        types,
+        elements,
+        processingOptions,
+        diagnosticReporterFactory);
+  }
+
+  @Provides
+  @Singleton
+  @Validation
+  static BindingGraphPlugins validationPlugins(
+      @Validation Set<BindingGraphPlugin> validationPlugins,
+      Filer filer,
+      Types types,
+      Elements elements,
+      @ProcessingOptions Map<String, String> processingOptions,
+      DiagnosticReporterFactory diagnosticReporterFactory) {
+    return new BindingGraphPlugins(
+        validationPlugins, filer, types, elements, processingOptions, diagnosticReporterFactory);
+  }
+
+  private static ImmutableSet<BindingGraphPlugin> loadPlugins() {
+    return ImmutableSet.copyOf(
+        ServiceLoader.load(BindingGraphPlugin.class, BindingGraphPlugins.class.getClassLoader()));
   }
 }

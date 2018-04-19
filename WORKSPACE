@@ -133,14 +133,14 @@ maven_jar(
 
 maven_jar(
     name = "com_google_truth_truth",
-    artifact = "com.google.truth:truth:0.36",
-    sha1 = "7485219d2c1d341097a19382c02bde07e69ff5d2",
+    artifact = "com.google.truth:truth:0.40",
+    sha1 = "0d74e716afec045cc4a178dbbfde2a8314ae5574",
 )
 
 maven_jar(
     name = "com_google_truth_extensions_truth_java8_extension",
-    artifact = "com.google.truth.extensions:truth-java8-extension:0.36",
-    sha1 = "dcc60988c8f9a051840766ef192a2ef41e7992f1",
+    artifact = "com.google.truth.extensions:truth-java8-extension:0.40",
+    sha1 = "636e49d675bc28e0b3ae0edd077d6acbbb159166",
 )
 
 maven_jar(

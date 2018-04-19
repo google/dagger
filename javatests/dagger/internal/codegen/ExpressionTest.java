@@ -18,8 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.auto.common.MoreTypes;
 import com.google.testing.compile.CompilationRule;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,10 +32,18 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ExpressionTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
+  private DaggerElements elements;
+  private DaggerTypes types;
 
   interface Supertype {}
 
   interface Subtype extends Supertype {}
+
+  @Before
+  public void setUp() {
+    elements = new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
+    types = new DaggerTypes(compilationRule.getTypes(), elements);
+  }
 
   @Test
   public void castTo() {
@@ -48,7 +60,19 @@ public class ExpressionTest {
                 + "new dagger.internal.codegen.ExpressionTest.Subtype() {}");
   }
 
+  @Test
+  public void box() {
+    PrimitiveType primitiveInt = types.getPrimitiveType(TypeKind.INT);
+
+    Expression primitiveExpression = Expression.create(primitiveInt, "5");
+    Expression boxedExpression = primitiveExpression.box(types);
+
+    assertThat(boxedExpression.codeBlock().toString()).isEqualTo("(java.lang.Integer) 5");
+    assertThat(MoreTypes.equivalence().equivalent(boxedExpression.type(), type(Integer.class)))
+        .isTrue();
+  }
+
   private TypeMirror type(Class<?> clazz) {
-    return compilationRule.getElements().getTypeElement(clazz.getCanonicalName()).asType();
+    return elements.getTypeElement(clazz).asType();
   }
 }

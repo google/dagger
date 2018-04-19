@@ -48,6 +48,19 @@ abstract class CompilerOptions {
    */
   abstract boolean experimentalAndroidMode();
 
+  /**
+   * Returns true if the experimental Android mode 2 is enabled.
+   *
+   * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
+   *
+   * <p>Issues related to this flag will not be supported. This flag could break your build,
+   * or cause other unknown issues at runtime.
+   *
+   * <p>If enabled, the generated code will try to reduce class loading due to providers by using
+   * a single {@code Provider} class to replace all factory classes.
+   */
+  abstract boolean experimentalAndroidMode2();
+
   abstract boolean writeProducerNameInToken();
 
   abstract Diagnostic.Kind nullableValidationKind();
@@ -80,6 +93,8 @@ abstract class CompilerOptions {
         .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
         .experimentalAndroidMode(
             experimentalAndroidModeFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
+        .experimentalAndroidMode2(
+            experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
             writeProducerNameInTokenFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
@@ -107,6 +122,8 @@ abstract class CompilerOptions {
 
     Builder experimentalAndroidMode(boolean experimentalAndroidMode);
 
+    Builder experimentalAndroidMode2(boolean experimentalAndroidMode2);
+
     Builder writeProducerNameInToken(boolean writeProducerNameInToken);
 
     Builder nullableValidationKind(Diagnostic.Kind kind);
@@ -131,6 +148,8 @@ abstract class CompilerOptions {
   private static final String HEADER_COMPILATION = "experimental_turbine_hjar";
 
   static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
+
+  static final String EXPERIMENTAL_ANDROID_MODE2 = "dagger.experimentalAndroidMode2";
 
   static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
 
@@ -176,6 +195,15 @@ abstract class CompilerOptions {
     return valueOf(
         processingEnv,
         EXPERIMENTAL_ANDROID_MODE,
+        FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
+
+  private static FeatureStatus experimentalAndroidMode2FeatureStatus(
+      ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        EXPERIMENTAL_ANDROID_MODE2,
         FeatureStatus.DISABLED,
         EnumSet.allOf(FeatureStatus.class));
   }

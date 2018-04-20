@@ -54,7 +54,6 @@ import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static dagger.model.BindingKind.INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -583,8 +582,9 @@ final class BindingGraphValidator {
       protected void visitDependencyRequest(DependencyRequest dependencyRequest) {
         if (atDependencyCycle()) {
           reportDependencyCycle();
+        } else {
+          super.visitDependencyRequest(dependencyRequest);
         }
-        super.visitDependencyRequest(dependencyRequest);
       }
 
       @Override

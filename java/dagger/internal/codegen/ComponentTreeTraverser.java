@@ -243,13 +243,12 @@ public class ComponentTreeTraverser {
      * request. They should call the {@code super} implementation if they want to continue the
      * traversal in the standard order.
      *
-     * <p>This implementation calls {@link #visitResolvedBindings(ResolvedBindings)} unless the
-     * dependency request introduces a cycle.
+     * <p>This implementation calls {@link #visitResolvedBindings(ResolvedBindings)}.
      *
      * @param dependencyRequest the object returned by {@link #dependencyRequest()}
      */
     protected void visitDependencyRequest(DependencyRequest dependencyRequest) {
-      if (visitedDependencyRequests.add(dependencyRequest) && !atDependencyCycle()) {
+      if (visitedDependencyRequests.add(dependencyRequest)) {
         visitResolvedBindings(resolvedBindingsPath.getLast());
       }
     }
@@ -373,13 +372,17 @@ public class ComponentTreeTraverser {
      *
      * <p>This implementation calls {@link #visitDependencyRequest(DependencyRequest)} for each
      * dependency of the binding, resolved within {@code owningComponent}, that has not already been
-     * visited while traversing the current entry point.
+     * visited while traversing the current entry point — unless the dependency request introduces a
+     * cycle.
      *
      * @param binding a value of {@code resolvedBindings().allBindings()}
      * @param owningComponent the key of {@code resolvedBindings().allBindings()} for {@code
      *     binding}. The binding's dependencies should be resolved within this component.
      */
     protected void visitBinding(Binding binding, ComponentDescriptor owningComponent) {
+      if (atDependencyCycle()) {
+        return;
+      }
       BindingGraph owningGraph = componentTreePath.graphForComponent(owningComponent);
       for (DependencyRequest dependency : binding.dependencies()) {
         nextDependencyRequest(dependency, owningGraph);

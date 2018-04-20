@@ -348,5 +348,10 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     /** The component represented by this node. */
     @Override
     public abstract ComponentPath componentPath();
+
+    @Override
+    public final String toString() {
+      return componentPath().toString();
+    }
   }
 }

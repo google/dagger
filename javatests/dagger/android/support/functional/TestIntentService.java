@@ -24,8 +24,8 @@ import javax.inject.Inject;
 public final class TestIntentService extends DaggerIntentService {
   @Inject Set<Class<?>> componentHierarchy;
 
-  public TestIntentService(String name) {
-    super(name);
+  public TestIntentService() {
+    super("TestIntentService");
   }
 
   @Override

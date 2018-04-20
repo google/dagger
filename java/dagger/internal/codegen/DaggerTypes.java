@@ -107,7 +107,7 @@ final class DaggerTypes implements Types {
    * <p>For example, if {@code type} is {@code List<Number>} and {@code wrappingClass} is {@code
    * Set.class}, this will return {@code Set<List<Number>>}.
    */
-  TypeMirror wrapType(TypeMirror type, Class<?> wrappingClass) {
+  DeclaredType wrapType(TypeMirror type, Class<?> wrappingClass) {
     return types.getDeclaredType(elements.getTypeElement(wrappingClass.getCanonicalName()), type);
   }
 
@@ -127,9 +127,9 @@ final class DaggerTypes implements Types {
     TypeElement wrappingType = elements.getTypeElement(wrappingClass.getCanonicalName());
     switch (typeArguments.size()) {
       case 0:
-        return types.getDeclaredType(wrappingType);
+        return getDeclaredType(wrappingType);
       case 1:
-        return types.getDeclaredType(wrappingType, getOnlyElement(typeArguments));
+        return getDeclaredType(wrappingType, getOnlyElement(typeArguments));
       default:
         throw new IllegalArgumentException(type + " has more than 1 type argument");
     }

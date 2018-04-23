@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableSet;
@@ -88,6 +90,11 @@ abstract class CompilerOptions {
   }
 
   static CompilerOptions create(ProcessingEnvironment processingEnv, DaggerElements elements) {
+    checkState(
+        !(experimentalAndroidModeFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED)
+            && experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED)),
+        "experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
+
     return builder()
         .usesProducers(elements.getTypeElement(Produces.class) != null)
         .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))

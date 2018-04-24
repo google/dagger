@@ -341,13 +341,17 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    */
   @AutoValue
   public abstract static class ComponentNode implements Node {
-    static ComponentNode create(ComponentPath componentPath) {
-      return new AutoValue_BindingGraph_ComponentNode(componentPath);
+    static ComponentNode create(
+        ComponentPath componentPath, ImmutableSet<DependencyRequest> entryPoints) {
+      return new AutoValue_BindingGraph_ComponentNode(componentPath, entryPoints);
     }
 
     /** The component represented by this node. */
     @Override
     public abstract ComponentPath componentPath();
+
+    /** The entry points on this component. */
+    public abstract ImmutableSet<DependencyRequest> entryPoints();
 
     @Override
     public final String toString() {

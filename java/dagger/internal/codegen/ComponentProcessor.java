@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Binds;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -32,18 +31,13 @@ import dagger.Provides;
 import dagger.internal.codegen.BindingGraphPlugins.TestingPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * The annotation processor responsible for generating the classes that drive the Dagger 2.0
@@ -104,28 +98,12 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected Iterable<? extends ProcessingStep> initSteps() {
-    Messager messager = processingEnv.getMessager();
-    DaggerElements elements = new DaggerElements(processingEnv);
-    CompilerOptions compilerOptions = CompilerOptions.create(processingEnv, elements);
-    ProcessorComponent.Builder builder =
-        DaggerComponentProcessor_ProcessorComponent.builder()
-            .types(processingEnv.getTypeUtils())
-            .elements(elements)
-            .sourceVersion(processingEnv.getSourceVersion())
-            .messager(messager)
-            .processingOptions(processingEnv.getOptions())
-            .compilerOptions(compilerOptions)
-            .testingPlugins(testingPlugins);
+    ProcessorComponent.builder()
+        .processingEnvironmentModule(new ProcessingEnvironmentModule(processingEnv))
+        .testingPlugins(testingPlugins)
+        .build()
+        .inject(this);
 
-    Filer filer;
-    if (compilerOptions.headerCompilation()) {
-      builder.filer(processingEnv.getFiler());
-    } else {
-      builder.filer(new FormattingFiler(processingEnv.getFiler()));
-    }
-
-    ProcessorComponent component = builder.build();
-    component.inject(this);
     spiPlugins.initializePlugins();
     validationPlugins.initializePlugins();
     return processingSteps;
@@ -133,29 +111,24 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Singleton
   @Component(
-    modules = {
-      BindingGraphPluginsModule.class,
-      BindingGraphValidationModule.class,
-      BindingMethodValidatorsModule.class,
-      ProcessingStepsModule.class,
-    }
-  )
+      modules = {
+        ProcessingEnvironmentModule.class,
+        BindingGraphPluginsModule.class,
+        BindingGraphValidationModule.class,
+        BindingMethodValidatorsModule.class,
+        ProcessingStepsModule.class,
+      })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
+
+    static Builder builder() {
+      return DaggerComponentProcessor_ProcessorComponent.builder();
+    }
 
     @CanIgnoreReturnValue
     @Component.Builder
     interface Builder {
-      @BindsInstance Builder messager(Messager messager);
-      @BindsInstance Builder filer(Filer filer);
-      @BindsInstance Builder types(Types types);
-      @BindsInstance Builder elements(Elements elements);
-
-      @BindsInstance
-      Builder sourceVersion(SourceVersion sourceVersion);
-
-      @BindsInstance Builder compilerOptions(CompilerOptions compilerOptions);
-      @BindsInstance Builder processingOptions(@ProcessingOptions Map<String, String> options);
+      Builder processingEnvironmentModule(ProcessingEnvironmentModule module);
 
       @BindsInstance
       Builder testingPlugins(

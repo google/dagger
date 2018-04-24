@@ -307,6 +307,7 @@ java_library(
         "InjectProcessingStep.java",
         "MapKeyProcessingStep.java",
         "ModuleProcessingStep.java",
+        "ProcessingEnvironmentModule.java",
         "ProcessingOptions.java",
         "ProductionExecutorModuleProcessingStep.java",
     ],

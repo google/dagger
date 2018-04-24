@@ -42,11 +42,6 @@ import javax.lang.model.type.TypeMirror;
  * The collection of error messages to be reported back to users.
  */
 final class ErrorMessages {
-  /*
-   * Common constants.
-   */
-  static final String INDENT = "    ";
-  static final String DOUBLE_INDENT = INDENT + INDENT;
   static final int DUPLICATE_SIZE_LIMIT = 10;
 
   /*

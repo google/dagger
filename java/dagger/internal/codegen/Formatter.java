@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
-import static dagger.internal.codegen.ErrorMessages.INDENT;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -29,6 +28,9 @@ import com.google.common.collect.Iterables;
  * @param <T> the type of the object to be transformed.
  */
 abstract class Formatter<T> implements Function<T, String> {
+
+  static final String INDENT = "    ";
+  static final String DOUBLE_INDENT = INDENT + INDENT;
 
   /**
    * Performs the transformation of an object into a string representation.
@@ -85,7 +87,7 @@ abstract class Formatter<T> implements Function<T, String> {
     }
   }
 
-  protected String formatArgumentInList(int index, int size, CharSequence name) {
+  static String formatArgumentInList(int index, int size, CharSequence name) {
     checkElementIndex(index, size);
     StringBuilder builder = new StringBuilder();
     if (index > 0) {

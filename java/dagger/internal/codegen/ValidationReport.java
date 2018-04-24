@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
@@ -31,8 +32,6 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.util.SimpleElementVisitor8;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
@@ -113,29 +112,13 @@ abstract class ValidationReport<T extends Element> {
           messager.printMessage(item.kind(), item.message(), item.element());
         }
       } else {
-        String message = String.format("[%s] %s", elementString(item.element()), item.message());
+        String message = String.format("[%s] %s", elementToString(item.element()), item.message());
         messager.printMessage(item.kind(), message, subject());
       }
     }
     for (ValidationReport<?> subreport : subreports()) {
       subreport.printMessagesTo(messager);
     }
-  }
-
-  private static String elementString(Element element) {
-    return element.accept(
-        new SimpleElementVisitor8<String, Void>() {
-          @Override
-          protected String defaultAction(Element e, Void p) {
-            return e.toString();
-          }
-
-          @Override
-          public String visitExecutable(ExecutableElement e, Void p) {
-            return e.getEnclosingElement().accept(this, null) + '.' + e;
-          }
-        },
-        null);
   }
 
   private static boolean isEnclosedIn(Element parent, Element child) {

@@ -37,12 +37,12 @@ import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FO
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
-import static dagger.internal.codegen.ErrorMessages.INDENT;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
 import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
+import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
@@ -526,7 +526,7 @@ final class BindingGraphValidator {
       }
       for (ContributionBinding binding :
           incompatiblyScopedBindings.get(graph.componentDescriptor())) {
-        message.append(ErrorMessages.INDENT);
+        message.append(INDENT);
 
         switch (binding.kind()) {
           case DELEGATE:

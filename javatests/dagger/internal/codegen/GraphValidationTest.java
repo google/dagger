@@ -208,7 +208,7 @@ public class GraphValidationTest {
                     "      dagger.MembersInjector<java.util.ArrayList<?>> is injected at",
                     "          test.InjectsUnboundedType.listInjector",
                     "      test.InjectsUnboundedType is injected at",
-                    "          test.TestComponent.injectsUnboundedType(injects)"))
+                    "          test.TestComponent.injectsUnboundedType(test.InjectsUnboundedType)"))
         .in(component)
         .onLine(7);
   }
@@ -859,17 +859,18 @@ public class GraphValidationTest {
     Compilation compilation = daggerCompiler().compile(a, b, component);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(Joiner.on('\n')
-            .join(
-                "Found a dependency cycle:",
-                "      test.B is injected at",
-                "          test.A.b",
-                "      test.A is injected at",
-                "          test.B.a",
-                "      test.B is injected at",
-                "          test.A.b",
-                "      test.A is injected at",
-                "          test.CycleComponent.inject(a)"))
+        .hadErrorContaining(
+            Joiner.on('\n')
+                .join(
+                    "Found a dependency cycle:",
+                    "      test.B is injected at",
+                    "          test.A.b",
+                    "      test.A is injected at",
+                    "          test.B.a",
+                    "      test.B is injected at",
+                    "          test.A.b",
+                    "      test.A is injected at",
+                    "          test.CycleComponent.inject(test.A)"))
         .inFile(component)
         .onLineContaining("void inject(A a);");
   }
@@ -1368,52 +1369,50 @@ public class GraphValidationTest {
             "}");
     String errorText = "test.TestClass.A cannot be provided without an @Provides-annotated method.";
     String firstError =
-        Joiner.on("\n      ")
-            .join(
-                errorText,
-                "test.TestClass.A is injected at",
-                "    test.TestClass.B.<init>(a)",
-                "test.TestClass.B is injected at",
-                "    test.TestClass.C.b",
-                "test.TestClass.C is injected at",
-                "    test.TestClass.DImpl.<init>(c, …)",
-                "test.TestClass.DImpl is injected at",
-                "    test.TestClass.DModule.d(…, impl, …)",
-                "@javax.inject.Named(\"slim shady\") test.TestClass.D is provided at",
-                "    test.TestClass.AComponent.getFoo()");
+        error(
+            errorText,
+            "test.TestClass.A is injected at",
+            "    test.TestClass.B.<init>(a)",
+            "test.TestClass.B is injected at",
+            "    test.TestClass.C.b",
+            "test.TestClass.C is injected at",
+            "    test.TestClass.DImpl.<init>(c, …)",
+            "test.TestClass.DImpl is injected at",
+            "    test.TestClass.DModule.d(…, impl, …)",
+            "@javax.inject.Named(\"slim shady\") test.TestClass.D is provided at",
+            "    test.TestClass.AComponent.getFoo()");
     String otherErrorFormat =
-        Joiner.on("\n      ")
-            .join(
-                errorText,
-                "test.TestClass.A is injected at",
-                "    test.TestClass.B.<init>(a)",
-                "test.TestClass.B is injected at",
-                "    test.TestClass.C.b",
-                "test.TestClass.C is %s at",
-                "    test.TestClass.AComponent.%s");
-    assertAbout(javaSource())
-        .that(component)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(firstError)
-        .in(component)
-        .onLine(40)
-        .and()
-        .withErrorContaining(String.format(otherErrorFormat, "injected", "injectC(c)"))
-        .in(component)
-        .onLine(41)
-        .and()
-        .withErrorContaining(String.format(otherErrorFormat, "provided", "cProvider()"))
-        .in(component)
-        .onLine(42)
-        .and()
-        .withErrorContaining(String.format(otherErrorFormat, "provided", "lazyC()"))
-        .in(component)
-        .onLine(43)
-        .and()
-        .withErrorContaining(String.format(otherErrorFormat, "provided", "lazyCProvider()"))
-        .in(component)
-        .onLine(44);
+        error(
+            errorText,
+            "test.TestClass.A is injected at",
+            "    test.TestClass.B.<init>(a)",
+            "test.TestClass.B is injected at",
+            "    test.TestClass.C.b",
+            "test.TestClass.C is %s at",
+            "    test.TestClass.AComponent.%s");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(firstError)
+        .inFile(component)
+        .onLineContaining("getFoo();");
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(otherErrorFormat, "injected", "injectC(test.TestClass.C)"))
+        .inFile(component)
+        .onLineContaining("injectC(C c);");
+    assertThat(compilation)
+        .hadErrorContaining(String.format(otherErrorFormat, "provided", "cProvider()"))
+        .inFile(component)
+        .onLineContaining("cProvider();");
+    assertThat(compilation)
+        .hadErrorContaining(String.format(otherErrorFormat, "provided", "lazyC()"))
+        .inFile(component)
+        .onLineContaining("lazyC();");
+    assertThat(compilation)
+        .hadErrorContaining(String.format(otherErrorFormat, "provided", "lazyCProvider()"))
+        .inFile(component)
+        .onLineContaining("lazyCProvider();");
   }
 
   @Test

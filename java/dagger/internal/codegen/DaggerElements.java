@@ -16,11 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.Formatter.formatArgumentInList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
@@ -47,7 +50,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementKindVisitor8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleElementVisitor8;
 import javax.lang.model.util.Types;
@@ -84,6 +89,69 @@ final class DaggerElements implements Elements {
   public TypeElement getTypeElement(CharSequence name) {
     return elements.getTypeElement(name);
   }
+
+  /**
+   * Returns a useful string form for an element.
+   *
+   * <p>Elements directly enclosed by a type are preceded by the enclosing type's qualified name.
+   *
+   * <p>Parameters are given with their enclosing executable, with other parameters elided.
+   */
+  static String elementToString(Element element) {
+    return element.accept(ELEMENT_TO_STRING, null);
+  }
+
+  private static final ElementVisitor<String, Void> ELEMENT_TO_STRING =
+      new ElementKindVisitor8<String, Void>() {
+        @Override
+        public String visitExecutable(ExecutableElement executableElement, Void aVoid) {
+          return enclosingTypeAndMemberName(executableElement)
+              .append(
+                  executableElement
+                      .getParameters()
+                      .stream()
+                      .map(parameter -> parameter.asType().toString())
+                      .collect(joining(", ", "(", ")")))
+              .toString();
+        }
+
+        @Override
+        public String visitVariableAsParameter(VariableElement parameter, Void aVoid) {
+          ExecutableElement methodOrConstructor = asExecutable(parameter.getEnclosingElement());
+          return enclosingTypeAndMemberName(methodOrConstructor)
+              .append('(')
+              .append(
+                  formatArgumentInList(
+                      methodOrConstructor.getParameters().indexOf(parameter),
+                      methodOrConstructor.getParameters().size(),
+                      parameter.getSimpleName()))
+              .append(')')
+              .toString();
+        }
+
+        @Override
+        public String visitVariableAsField(VariableElement field, Void aVoid) {
+          return enclosingTypeAndMemberName(field).toString();
+        }
+
+        @Override
+        public String visitType(TypeElement type, Void aVoid) {
+          return type.getQualifiedName().toString();
+        }
+
+        @Override
+        protected String defaultAction(Element element, Void aVoid) {
+          throw new UnsupportedOperationException(
+              "Can't determine string for " + element.getKind() + " element " + element);
+        }
+
+        private StringBuilder enclosingTypeAndMemberName(Element element) {
+          return new StringBuilder()
+              .append(element.getEnclosingElement().accept(this, null))
+              .append('.')
+              .append(element.getSimpleName());
+        }
+      };
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
   static TypeElement closestEnclosingTypeElement(Element element) {

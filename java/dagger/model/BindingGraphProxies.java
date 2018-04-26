@@ -23,6 +23,7 @@ import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
 import java.util.function.Supplier;
@@ -50,10 +51,17 @@ public final class BindingGraphProxies {
     return BindingNode.create(component, binding, associatedDeclarations, toStringFunction);
   }
 
+  /** Creates a new {@link MissingBindingNode}. */
+  public static MissingBindingNode missingBindingNode(ComponentPath component, Key key) {
+    return MissingBindingNode.create(component, key);
+  }
+
   /** Creates a new {@link ComponentNode}. */
   public static ComponentNode componentNode(
-      ComponentPath component, ImmutableSet<DependencyRequest> entryPoints) {
-    return ComponentNode.create(component, entryPoints);
+      ComponentPath component,
+      ImmutableSet<DependencyRequest> entryPoints,
+      ImmutableSet<Scope> scopes) {
+    return ComponentNode.create(component, entryPoints, scopes);
   }
 
   /** Creates a new {@link DependencyEdge}. */

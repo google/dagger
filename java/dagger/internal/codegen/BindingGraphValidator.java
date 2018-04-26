@@ -16,21 +16,16 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.asTypeElements;
-import static com.google.auto.common.MoreTypes.isType;
-import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ComponentRequirement.Kind.MODULE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
@@ -39,14 +34,7 @@ import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_F
 import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
 import static dagger.internal.codegen.Formatter.INDENT;
-import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
-import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
-import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
-import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Scopes.getReadableSource;
@@ -54,7 +42,6 @@ import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
@@ -87,10 +74,6 @@ import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
-import dagger.releasablereferences.CanReleaseReferences;
-import dagger.releasablereferences.ForReleasableReferences;
-import dagger.releasablereferences.ReleasableReferenceManager;
-import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Formatter;
@@ -109,7 +92,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -119,7 +101,6 @@ final class BindingGraphValidator {
   private final Elements elements;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
-  private final InjectBindingRegistry injectBindingRegistry;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFormatter dependencyRequestFormatter;
@@ -130,7 +111,6 @@ final class BindingGraphValidator {
       Elements elements,
       DaggerTypes types,
       CompilerOptions compilerOptions,
-      InjectBindingRegistry injectBindingRegistry,
       BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFormatter dependencyRequestFormatter,
@@ -138,7 +118,6 @@ final class BindingGraphValidator {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
-    this.injectBindingRegistry = injectBindingRegistry;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
@@ -589,9 +568,7 @@ final class BindingGraphValidator {
 
       @Override
       protected void visitResolvedBindings(ResolvedBindings resolvedBindings) {
-        if (resolvedBindings.isEmpty()) {
-          reportMissingBinding();
-        } else if (resolvedBindings.bindings().size() > 1) {
+        if (resolvedBindings.bindings().size() > 1) {
           reportDuplicateBindings();
         }
         super.visitResolvedBindings(resolvedBindings);
@@ -669,119 +646,6 @@ final class BindingGraphValidator {
         }
 
         return declarations.build();
-      }
-
-      /**
-       * Descriptive portion of the error message for when the given request has no binding.
-       * Currently, the only other portions of the message are the dependency path, line number and
-       * filename.
-       */
-      private StringBuilder requiresErrorMessageBase() {
-        Key key = dependencyRequest().key();
-        StringBuilder errorMessage = new StringBuilder();
-        // TODO(dpb): Check for wildcard injection somewhere else first?
-        if (key.type().getKind().equals(TypeKind.WILDCARD)) {
-          errorMessage
-              .append("Dagger does not support injecting Provider<T>, Lazy<T> or Produced<T> when ")
-              .append("T is a wildcard type such as ")
-              .append(formatCurrentDependencyRequestKey());
-        } else {
-          // TODO(ronshapiro): replace "provided" with "satisfied"?
-          errorMessage
-              .append(formatCurrentDependencyRequestKey())
-              .append(" cannot be provided without ");
-          if (isValidImplicitProvisionKey(key, types)) {
-            errorMessage.append("an @Inject constructor or ");
-          }
-          errorMessage.append("an @Provides-");
-          if (dependencyRequestCanUseProduction()) {
-            errorMessage.append(" or @Produces-");
-          }
-          errorMessage.append("annotated method.");
-        }
-        if (isValidMembersInjectionKey(key)
-            && injectBindingRegistry.getOrFindMembersInjectionBinding(key)
-                .map(binding -> !binding.injectionSites().isEmpty())
-                .orElse(false)) {
-          errorMessage.append(" ").append(ErrorMessages.MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION);
-        }
-        return errorMessage.append('\n');
-      }
-
-      private void reportMissingBinding() {
-        if (reportMissingReleasableReferenceManager()) {
-          return;
-        }
-        StringBuilder errorMessage = requiresErrorMessageBase().append(formatDependencyTrace());
-        for (String suggestion :
-            MissingBindingSuggestions.forKey(rootGraph, dependencyRequest().key())) {
-          errorMessage.append('\n').append(suggestion);
-        }
-        reportErrorAtEntryPoint(rootGraph, errorMessage.toString());
-      }
-
-      /**
-       * If the current dependency request is missing a binding because it's an invalid
-       * {@code @ForReleasableReferences} request, reports that.
-       *
-       * <p>An invalid request is one whose type is either {@link ReleasableReferenceManager} or
-       * {@link TypedReleasableReferenceManager}, and whose scope:
-       *
-       * <ul>
-       *   <li>does not annotate any component in the hierarchy, or
-       *   <li>is not annotated with the metadata annotation type that is the {@link
-       *       TypedReleasableReferenceManager}'s type argument
-       * </ul>
-       *
-       * @return {@code true} if the request was invalid and an error was reported
-       */
-      private boolean reportMissingReleasableReferenceManager() {
-        Key key = dependencyRequest().key();
-        if (!key.qualifier().isPresent()
-            || !isTypeOf(ForReleasableReferences.class, key.qualifier().get().getAnnotationType())
-            || !isType(key.type())) {
-          return false;
-        }
-
-        Optional<DeclaredType> metadataType;
-        if (isTypeOf(ReleasableReferenceManager.class, key.type())) {
-          metadataType = Optional.empty();
-        } else if (isTypeOf(TypedReleasableReferenceManager.class, key.type())) {
-          List<? extends TypeMirror> typeArguments =
-              MoreTypes.asDeclared(key.type()).getTypeArguments();
-          if (typeArguments.size() != 1
-              || !typeArguments.get(0).getKind().equals(TypeKind.DECLARED)) {
-            return false;
-          }
-          metadataType = Optional.of(MoreTypes.asDeclared(typeArguments.get(0)));
-        } else {
-          return false;
-        }
-
-        Scope scope =
-            Scopes.scope(MoreTypes.asTypeElement(getTypeValue(key.qualifier().get(), "value")));
-        String missingRequestKey = formatCurrentDependencyRequestKey();
-        if (!rootGraph.componentDescriptor().releasableReferencesScopes().contains(scope)) {
-          reportErrorAtEntryPoint(
-              rootGraph,
-              referenceReleasingScopeNotInComponentHierarchy(missingRequestKey, scope, rootGraph));
-          return true;
-        }
-        if (metadataType.isPresent()) {
-          if (!isAnnotationPresent(scope.scopeAnnotationElement(), metadataType.get())) {
-            reportErrorAtEntryPoint(
-                rootGraph,
-                referenceReleasingScopeNotAnnotatedWithMetadata(
-                    missingRequestKey, scope, metadataType.get()));
-          }
-          if (!isAnnotationPresent(metadataType.get().asElement(), CanReleaseReferences.class)) {
-            reportErrorAtEntryPoint(
-                rootGraph,
-                referenceReleasingScopeMetadataMissingCanReleaseReferences(
-                    missingRequestKey, metadataType.get()));
-          }
-        }
-        return false;
       }
 
       @SuppressWarnings("resource") // Appendable is a StringBuilder.
@@ -918,24 +782,6 @@ final class BindingGraphValidator {
           default:
             return false;
         }
-      }
-
-      /**
-       * Returns true if the current dependency request can be satisfied by a production binding.
-       */
-      private boolean dependencyRequestCanUseProduction() {
-        if (atEntryPoint()) {
-          return entryPointCanUseProduction(dependencyRequest().kind());
-        } else {
-          // The current request can be satisfied by a production binding if it's not from a
-          // provision binding
-          return !hasDependentProvisionBindings();
-        }
-      }
-
-      /** Returns {@code true} if any provision bindings contain the latest request in the path. */
-      private boolean hasDependentProvisionBindings() {
-        return dependentBindings().stream().map(Binding::bindingType).anyMatch(isEqual(PROVISION));
       }
 
       private String formatCurrentDependencyRequestKey() {

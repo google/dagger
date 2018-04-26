@@ -99,9 +99,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         throw new IllegalStateException();
     }
 
-    return Expression.create(
-        provisionBinding.contributedPrimitiveType().orElse(provisionBinding.key().type()),
-        invocation);
+    return Expression.create(simpleMethodReturnType(), invocation);
   }
 
   private TypeName constructorTypeName(ClassName requestingClass) {
@@ -133,7 +131,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
   private Expression injectMembers(CodeBlock instance) {
     if (provisionBinding.injectionSites().isEmpty()) {
-      return Expression.create(provisionBinding.key().type(), instance);
+      return Expression.create(simpleMethodReturnType(), instance);
     }
     // Java 7 type inference can't figure out that instance in
     // injectParameterized(Parameterized_Factory.newParameterized()) is Parameterized<T> and not
@@ -161,5 +159,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
                 requirement ->
                     componentRequirementFields.getExpression(requirement, requestingClass))
         : Optional.empty();
+  }
+
+  private TypeMirror simpleMethodReturnType() {
+    return provisionBinding.contributedPrimitiveType().orElse(provisionBinding.key().type());
   }
 }

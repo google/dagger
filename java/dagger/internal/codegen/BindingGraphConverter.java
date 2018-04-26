@@ -29,6 +29,7 @@ import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraphProxies;
 import dagger.model.DependencyRequest;
@@ -75,7 +76,9 @@ final class BindingGraphConverter {
       parentComponent = currentComponent;
       currentComponent =
           componentNode(
-              componentTreePath().toComponentPath(), graph.componentDescriptor().entryPoints());
+              componentTreePath().toComponentPath(),
+              graph.componentDescriptor().entryPoints(),
+              graph.componentDescriptor().scopes());
 
       network.addNode(currentComponent);
 
@@ -106,11 +109,21 @@ final class BindingGraphConverter {
      */
     private void addDependencyEdges(
         Node source, DependencyRequest dependencyRequest, BindingGraph graph) {
-      for (BindingNode dependency :
-          bindingNodes(graph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key()))) {
-        network.addEdge(
-            source, dependency, dependencyEdge(dependencyRequest, source instanceof ComponentNode));
+      ResolvedBindings dependencies =
+          graph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key());
+      if (dependencies.isEmpty()) {
+        addDependencyEdge(source, dependencyRequest, missingBindingNode(dependencies));
+      } else {
+        for (Node dependency : bindingNodes(dependencies)) {
+          addDependencyEdge(source, dependencyRequest, dependency);
+        }
       }
+    }
+
+    private void addDependencyEdge(
+        Node source, DependencyRequest dependencyRequest, Node dependency) {
+      network.addEdge(
+          source, dependency, dependencyEdge(dependencyRequest, source instanceof ComponentNode));
     }
 
     private ImmutableSet<BindingNode> bindingNodes(ResolvedBindings resolvedBindings) {
@@ -153,6 +166,14 @@ final class BindingGraphConverter {
           .flatMap(Collection::stream)
           .map(declaration -> declaration.bindingElement().get())
           .collect(toImmutableSet());
+    }
+
+    private MissingBindingNode missingBindingNode(ResolvedBindings dependencies) {
+      return BindingGraphProxies.missingBindingNode(
+          componentTreePath()
+              .pathFromRootToAncestor(dependencies.owningComponent())
+              .toComponentPath(),
+          dependencies.key());
     }
   }
 }

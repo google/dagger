@@ -43,6 +43,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin missingBinding(MissingBindingValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin nullable(NonNullableRequestForNullableBindingValidation validation);
 
   @Binds

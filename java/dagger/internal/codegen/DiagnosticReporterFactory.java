@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Lists.asList;
+import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerGraphs.shortestPath;
 
 import com.google.common.collect.ImmutableList;
@@ -87,7 +88,7 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportComponent(
         Diagnostic.Kind diagnosticKind, ComponentNode componentNode, String messageFormat) {
-      StringBuilder messageBuilder = messagePrefix(messageFormat);
+      StringBuilder messageBuilder = new StringBuilder(messageFormat);
       if (!componentNode.componentPath().currentComponent().equals(rootComponent)) {
         appendComponentPath(messageBuilder, componentNode);
       }
@@ -110,7 +111,8 @@ final class DiagnosticReporterFactory {
     public void reportBinding(
         Diagnostic.Kind diagnosticKind, BindingNode bindingNode, String message) {
       // TODO(ronshapiro): should this also include the binding element?
-      reportAtEntryPointsWithDependencyTrace(diagnosticKind, messagePrefix(message), bindingNode);
+      reportAtEntryPointsWithDependencyTrace(
+          diagnosticKind, new StringBuilder(message), bindingNode);
     }
 
     @Override
@@ -127,7 +129,7 @@ final class DiagnosticReporterFactory {
     public void reportDependency(
         Diagnostic.Kind diagnosticKind, DependencyEdge dependencyEdge, String message) {
       StringBuilder messageBuilder =
-          messagePrefix(message)
+          new StringBuilder(message)
               .append('\n')
               .append(dependencyRequestFormatter.format(dependencyEdge.dependencyRequest()));
 
@@ -202,24 +204,29 @@ final class DiagnosticReporterFactory {
         Diagnostic.Kind diagnosticKind, CharSequence message, DependencyEdge entryPoint) {
       checkArgument(entryPoint.isEntryPoint());
       Element entryPointElement = entryPoint.dependencyRequest().requestElement().get();
-      Element elementToReport =
-          // TODO(ronshapiro): should we create a HashSet out of getEnclosedElements() so we don't
-          // need to do an O(n) contains() each time?
-          rootComponent.getEnclosedElements().contains(entryPointElement)
-              ? entryPointElement
-              : rootComponent;
 
+      StringBuilder messageBuilder = new StringBuilder(message);
       Node component = graph.incidentNodes(entryPoint).source();
       if (!component.equals(graph.rootComponentNode())) {
-        message = appendComponentPath(new StringBuilder(message), component);
+        appendComponentPath(messageBuilder, component);
       }
-      printMessage(diagnosticKind, message, elementToReport);
+
+      // TODO(ronshapiro): should we create a HashSet out of getEnclosedElements() so we don't
+      // need to do an O(n) contains() each time?
+      if (rootComponent.getEnclosedElements().contains(entryPointElement)) {
+        printMessage(diagnosticKind, messageBuilder, entryPointElement);
+      } else {
+        printMessage(
+            diagnosticKind,
+            insertBracketPrefix(messageBuilder, elementToString(entryPointElement)),
+            rootComponent);
+      }
     }
 
     private void printMessage(
-        Diagnostic.Kind diagnosticKind, CharSequence message, Element elementToReport) {
+        Diagnostic.Kind diagnosticKind, StringBuilder message, Element elementToReport) {
       reportedDiagnosticKinds.add(diagnosticKind);
-      messager.printMessage(diagnosticKind, message, elementToReport);
+      messager.printMessage(diagnosticKind, insertBracketPrefix(message, plugin), elementToReport);
     }
 
     @CanIgnoreReturnValue
@@ -227,8 +234,9 @@ final class DiagnosticReporterFactory {
       return message.append("\ncomponent path: ").append(node.componentPath());
     }
 
-    private StringBuilder messagePrefix(String message) {
-      return new StringBuilder(String.format("[%s] ", plugin)).append(message);
+    @CanIgnoreReturnValue
+    private StringBuilder insertBracketPrefix(StringBuilder messageBuilder, String prefix) {
+      return messageBuilder.insert(0, String.format("[%s] ", prefix));
     }
   }
 }

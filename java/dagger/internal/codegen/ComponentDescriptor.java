@@ -310,6 +310,14 @@ abstract class ComponentDescriptor {
         .collect(toImmutableSet());
   }
 
+  /** The entry point dependency requests on the component type. */
+  ImmutableSet<DependencyRequest> entryPoints() {
+    return entryPointMethods()
+        .stream()
+        .map(method -> method.dependencyRequest().get())
+        .collect(toImmutableSet());
+  }
+
   // TODO(gak): Consider making this non-optional and revising the
   // interaction between the spec & generation
   abstract Optional<BuilderSpec> builderSpec();

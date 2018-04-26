@@ -80,32 +80,32 @@ abstract class ResolvedBindings implements HasContributionType {
   /**
    * All bindings for {@link #key()}, indexed by the component in which the binding was resolved.
    */
-  private ImmutableSetMultimap<ComponentDescriptor, ? extends Binding> allBindings() {
+  final ImmutableSetMultimap<ComponentDescriptor, ? extends Binding> allBindings() {
     return !allMembersInjectionBindings().isEmpty()
         ? allMembersInjectionBindings().asMultimap()
         : allContributionBindings();
   }
 
   /** All bindings for {@link #key()}, regardless of in which component they were resolved. */
-  ImmutableSet<? extends Binding> bindings() {
+  final ImmutableSet<? extends Binding> bindings() {
     return ImmutableSet.copyOf(allBindings().values());
   }
 
   /**
    * Returns the single binding.
    *
-   * @throws IllegalStateException if there is not exactly one element in {@link #bindings()},
-   *     which will never happen for contributions in valid graphs
+   * @throws IllegalStateException if there is not exactly one element in {@link #bindings()}, which
+   *     will never happen for contributions in valid graphs
    */
-  Binding binding() {
+  final Binding binding() {
     return getOnlyElement(bindings());
   }
 
   /**
-   * {@code true} if there are no {@link #bindings()}, {@link #multibindingDeclarations()},
-   * {@link #optionalBindingDeclarations()}, or {@link #subcomponentDeclarations()}.
+   * {@code true} if there are no {@link #bindings()}, {@link #multibindingDeclarations()}, {@link
+   * #optionalBindingDeclarations()}, or {@link #subcomponentDeclarations()}.
    */
-  boolean isEmpty() {
+  final boolean isEmpty() {
     return bindings().isEmpty()
         && multibindingDeclarations().isEmpty()
         && optionalBindingDeclarations().isEmpty()
@@ -121,12 +121,12 @@ abstract class ResolvedBindings implements HasContributionType {
    * All contribution bindings, regardless of owning component. Empty if this is a members-injection
    * binding.
    */
-  ImmutableSet<ContributionBinding> contributionBindings() {
+  final ImmutableSet<ContributionBinding> contributionBindings() {
     return ImmutableSet.copyOf(allContributionBindings().values());
   }
 
   /** The component that owns {@code binding}. */
-  ComponentDescriptor owningComponent(ContributionBinding binding) {
+  final ComponentDescriptor owningComponent(ContributionBinding binding) {
     checkArgument(
         contributionBindings().contains(binding),
         "binding is not resolved for %s: %s",
@@ -139,7 +139,7 @@ abstract class ResolvedBindings implements HasContributionType {
    * The members-injection binding, regardless of owning component. Absent if these are contribution
    * bindings, or if there is no members-injection binding because the type fails validation.
    */
-  Optional<MembersInjectionBinding> membersInjectionBinding() {
+  final Optional<MembersInjectionBinding> membersInjectionBinding() {
     ImmutableSet<MembersInjectionBinding> membersInjectionBindings =
         FluentIterable.from(allMembersInjectionBindings().values()).toSet();
     return membersInjectionBindings.isEmpty()
@@ -164,7 +164,7 @@ abstract class ResolvedBindings implements HasContributionType {
         ImmutableSet.copyOf(subcomponentDeclarations),
         ImmutableSet.copyOf(optionalBindingDeclarations));
   }
-  
+
   /**
    * Creates a {@link ResolvedBindings} for members injection bindings.
    */

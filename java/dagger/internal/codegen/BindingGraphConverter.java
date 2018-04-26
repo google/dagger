@@ -16,16 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreTypes.asTypeElement;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.concat;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.model.BindingGraphProxies.childFactoryMethodEdge;
 import static dagger.model.BindingGraphProxies.componentNode;
 import static dagger.model.BindingGraphProxies.dependencyEdge;
-import static dagger.model.BindingGraphProxies.subcomponentBuilderBindingEdge;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -34,14 +28,14 @@ import com.google.common.graph.NetworkBuilder;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraphProxies;
+import dagger.model.DependencyRequest;
+import java.util.Collection;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /** Converts {@link dagger.internal.codegen.BindingGraph}s to {@link dagger.model.BindingGraph}s. */
 final class BindingGraphConverter {
@@ -57,8 +51,8 @@ final class BindingGraphConverter {
    * Creates the external {@link dagger.model.BindingGraph} representing the given internal root
    * {@link dagger.internal.codegen.BindingGraph}.
    */
-  dagger.model.BindingGraph convert(BindingGraph graph) {
-    Traverser traverser = new Traverser(graph);
+  dagger.model.BindingGraph convert(BindingGraph rootGraph) {
+    Traverser traverser = new Traverser(rootGraph);
     traverser.traverseComponents();
     return BindingGraphProxies.bindingGraph(traverser.network);
   }
@@ -77,13 +71,26 @@ final class BindingGraphConverter {
 
     @Override
     protected void visitComponent(BindingGraph graph) {
-      ComponentNode grandparentNode = parentComponent;
+      ComponentNode grandparentComponent = parentComponent;
       parentComponent = currentComponent;
-      currentComponent = componentNode(componentTreePath().toComponentPath());
+      currentComponent =
+          componentNode(
+              componentTreePath().toComponentPath(), graph.componentDescriptor().entryPoints());
+
       network.addNode(currentComponent);
+
+      for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
+        addDependencyEdges(currentComponent, method.dependencyRequest().get(), graph);
+      }
+
+      for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
+        bindingNodes(resolvedBindings).forEach(node -> addBindingNode(node, graph));
+      }
+
       super.visitComponent(graph);
+
       currentComponent = parentComponent;
-      parentComponent = grandparentNode;
+      parentComponent = grandparentComponent;
     }
 
     @Override
@@ -93,85 +100,59 @@ final class BindingGraphConverter {
       super.visitSubcomponentFactoryMethod(graph, parent, factoryMethod);
     }
 
-    @Override
-    protected BindingGraphTraverser bindingGraphTraverser(
-        ComponentTreePath componentTreePath, ComponentMethodDescriptor entryPointMethod) {
-      return new BindingGraphVisitor(componentTreePath, entryPointMethod);
+    /**
+     * Adds a {@link dagger.model.BindingGraph.DependencyEdge} from a node to the binding(s) that
+     * satisfy a dependency request.
+     */
+    private void addDependencyEdges(
+        Node source, DependencyRequest dependencyRequest, BindingGraph graph) {
+      for (BindingNode dependency :
+          bindingNodes(graph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key()))) {
+        network.addEdge(
+            source, dependency, dependencyEdge(dependencyRequest, source instanceof ComponentNode));
+      }
     }
 
-    private final class BindingGraphVisitor extends BindingGraphTraverser {
+    private ImmutableSet<BindingNode> bindingNodes(ResolvedBindings resolvedBindings) {
+      ImmutableSet.Builder<BindingNode> bindingNodes = ImmutableSet.builder();
+      resolvedBindings
+          .allBindings()
+          .asMap()
+          .forEach(
+              (component, bindings) -> {
+                for (Binding binding : bindings) {
+                  bindingNodes.add(bindingNode(resolvedBindings, binding, component));
+                }
+              });
+      return bindingNodes.build();
+    }
 
-      private Node current;
-
-      BindingGraphVisitor(
-          ComponentTreePath componentTreePath, ComponentMethodDescriptor entryPointMethod) {
-        super(componentTreePath, entryPointMethod);
-        current = currentComponent;
-        network.addNode(current);
+    /** Adds a binding node and edges for all its dependencies. */
+    private void addBindingNode(BindingNode node, BindingGraph graph) {
+      network.addNode(node);
+      for (DependencyRequest dependencyRequest : node.binding().dependencies()) {
+        addDependencyEdges(node, dependencyRequest, graph);
       }
+    }
 
-      @Override
-      protected void visitBinding(Binding binding, ComponentDescriptor owningComponent) {
-        // TODO(dpb): Should we visit only bindings owned by the current component, since other
-        // bindings will be visited in the parent?
-        Node previous = current;
-        current = bindingNode(resolvedBindings(), binding, owningComponent);
-        network.addNode(current);
-        if (binding instanceof ContributionBinding) {
-          ContributionBinding contributionBinding = (ContributionBinding) binding;
-          if (contributionBinding.kind().equals(SUBCOMPONENT_BUILDER)) {
-            ImmutableSet.Builder<TypeElement> modules = ImmutableSet.builder();
-            for (SubcomponentDeclaration subcomponentDeclaration :
-                resolvedBindings().subcomponentDeclarations()) {
-              modules.add(subcomponentDeclaration.contributingModule().get());
-            }
-            network.addEdge(
-                current,
-                subcomponentNode(contributionBinding, owningComponent),
-                subcomponentBuilderBindingEdge(modules.build()));
-          }
-        }
-        if (network
-            .edgesConnecting(previous, current)
-            .stream()
-            .flatMap(instancesOf(DependencyEdge.class))
-            .noneMatch(e -> e.dependencyRequest().equals(dependencyRequest()))) {
-          network.addEdge(previous, current, dependencyEdge(dependencyRequest(), atEntryPoint()));
-          super.visitBinding(binding, owningComponent);
-        }
-        current = previous;
-      }
+    private BindingNode bindingNode(
+        ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
+      return BindingGraphProxies.bindingNode(
+          componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
+          binding,
+          associatedDeclaringElements(resolvedBindings),
+          () -> bindingDeclarationFormatter.format(binding));
+    }
 
-      private ComponentNode subcomponentNode(
-          ContributionBinding binding, ComponentDescriptor subcomponentParent) {
-        checkArgument(binding.kind().equals(SUBCOMPONENT_BUILDER));
-        TypeElement builderType = asTypeElement(binding.key().type());
-        TypeElement subcomponentType = asType(builderType.getEnclosingElement());
-        ComponentTreePath childPath =
-            componentTreePath()
-                .pathFromRootToAncestor(subcomponentParent)
-                .childPath(subcomponentType);
-        ComponentNode childNode = componentNode(childPath.toComponentPath());
-        network.addNode(childNode);
-        return childNode;
-      }
-
-      private BindingNode bindingNode(
-          ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
-        ImmutableList.Builder<Element> associatedDeclarations = ImmutableList.builder();
-        for (BindingDeclaration declaration :
-            concat(
-                resolvedBindings.multibindingDeclarations(),
-                resolvedBindings.optionalBindingDeclarations(),
-                resolvedBindings.subcomponentDeclarations())) {
-          associatedDeclarations.add(declaration.bindingElement().get());
-        }
-        return BindingGraphProxies.bindingNode(
-            componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
-            binding,
-            associatedDeclarations.build(),
-            () -> bindingDeclarationFormatter.format(binding));
-      }
+    private ImmutableSet<Element> associatedDeclaringElements(ResolvedBindings resolvedBindings) {
+      return ImmutableList.of(
+              resolvedBindings.multibindingDeclarations(),
+              resolvedBindings.optionalBindingDeclarations(),
+              resolvedBindings.subcomponentDeclarations())
+          .stream()
+          .flatMap(Collection::stream)
+          .map(declaration -> declaration.bindingElement().get())
+          .collect(toImmutableSet());
     }
   }
 }

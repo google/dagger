@@ -68,7 +68,8 @@ final class ComponentBindingExpressions {
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
-  private final SwitchingProviders switchingProviders;
+  private final InnerSwitchingProviders innerSwitchingProviders;
+  private final StaticSwitchingProviders staticSwitchingProviders;
   private final Table<Key, RequestKind, BindingExpression> expressions = HashBasedTable.create();
 
   ComponentBindingExpressions(
@@ -87,6 +88,7 @@ final class ComponentBindingExpressions {
         subcomponentNames,
         componentRequirementFields,
         new ReferenceReleasingManagerFields(graph, generatedComponentModel),
+        new StaticSwitchingProviders(generatedComponentModel, types),
         optionalFactories,
         types,
         elements,
@@ -100,6 +102,7 @@ final class ComponentBindingExpressions {
       SubcomponentNames subcomponentNames,
       ComponentRequirementFields componentRequirementFields,
       ReferenceReleasingManagerFields referenceReleasingManagerFields,
+      StaticSwitchingProviders staticSwitchingProviders,
       OptionalFactories optionalFactories,
       DaggerTypes types,
       DaggerElements elements,
@@ -116,7 +119,9 @@ final class ComponentBindingExpressions {
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
         new MembersInjectionMethods(generatedComponentModel, this, graph, elements, types);
-    this.switchingProviders = new SwitchingProviders(generatedComponentModel, this, types);
+    this.innerSwitchingProviders =
+        new InnerSwitchingProviders(generatedComponentModel, this, types);
+    this.staticSwitchingProviders = staticSwitchingProviders;
   }
 
   /**
@@ -133,6 +138,7 @@ final class ComponentBindingExpressions {
         subcomponentNames,
         childComponentRequirementFields,
         referenceReleasingManagerFields,
+        staticSwitchingProviders,
         optionalFactories,
         types,
         elements,
@@ -355,7 +361,9 @@ final class ComponentBindingExpressions {
 
       case INJECTION:
       case PROVISION:
-        return new InjectionOrProvisionProviderCreationExpression(binding, this);
+        return compilerOptions.experimentalAndroidMode2()
+            ? staticSwitchingProviders.newCreationExpression(binding, this)
+            : new InjectionOrProvisionProviderCreationExpression(binding, this);
 
       case COMPONENT_PRODUCTION:
         return new DependencyMethodProducerCreationExpression(
@@ -589,7 +597,8 @@ final class ComponentBindingExpressions {
    * {@code SetFactory}.
    */
   private boolean useStaticFactoryCreation(ContributionBinding binding) {
-    return !compilerOptions.experimentalAndroidMode()
+    return !(compilerOptions.experimentalAndroidMode2()
+            || compilerOptions.experimentalAndroidMode())
         || binding.kind().equals(MULTIBOUND_MAP)
         || binding.kind().equals(MULTIBOUND_SET);
   }
@@ -630,7 +639,7 @@ final class ComponentBindingExpressions {
         return wrapInMethod(
             resolvedBindings,
             RequestKind.PROVIDER,
-            switchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
+            innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
       }
     } else if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
         && !needsCaching(resolvedBindings)) {

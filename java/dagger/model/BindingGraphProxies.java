@@ -16,6 +16,7 @@
 
 package dagger.model;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Network;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
@@ -50,8 +51,9 @@ public final class BindingGraphProxies {
   }
 
   /** Creates a new {@link ComponentNode}. */
-  public static ComponentNode componentNode(ComponentPath component) {
-    return ComponentNode.create(component);
+  public static ComponentNode componentNode(
+      ComponentPath component, ImmutableSet<DependencyRequest> entryPoints) {
+    return ComponentNode.create(component, entryPoints);
   }
 
   /** Creates a new {@link DependencyEdge}. */

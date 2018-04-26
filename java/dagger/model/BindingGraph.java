@@ -71,8 +71,9 @@ import javax.lang.model.element.TypeElement;
  * binding node for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
  * ChildFactoryMethodEdge subcomponent factory methods}, the source node is the component node for
  * the parent.
+ *
+ * <p><b>Note that this API is experimental and will change.</b>
  */
-// TODO(dpb): Represent graphs with missing or conflicting bindings.
 public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   BindingGraph(Network<Node, Edge> network) {
     super(ImmutableNetwork.copyOf(network));
@@ -87,6 +88,14 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   public ImmutableSet<BindingNode> bindingNodes(Key key) {
     return bindingNodesStream()
         .filter(node -> node.binding().key().equals(key))
+        .collect(toImmutableSet());
+  }
+
+  /** Returns the nodes that represent missing bindings. */
+  public ImmutableSet<MissingBindingNode> missingBindingNodes() {
+    return nodes()
+        .stream()
+        .flatMap(instancesOf(MissingBindingNode.class))
         .collect(toImmutableSet());
   }
 
@@ -130,7 +139,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
         .collect(toImmutableMap(DependencyEdge::dependencyRequest, edge -> edge));
   }
 
-  /** Returns the dependency edges from any binding for a dependency request. */
+  /** Returns the dependency edges for a dependency request. */
   public ImmutableSet<DependencyEdge> dependencyEdges(DependencyRequest dependencyRequest) {
     return dependencyEdgeStream()
         .filter(edge -> edge.dependencyRequest().equals(dependencyRequest))
@@ -200,6 +209,12 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * <p>Because one {@link DependencyRequest} may represent a dependency from two bindings (e.g., a
    * dependency of {@code Foo<String>} and {@code Foo<Number>} may have the same key and request
    * element), this class does not override {@link #equals(Object)} to use value semantics.
+   *
+   * <p>For entry points, the source node is the {@link ComponentNode} that contains the entry
+   * point. Otherwise the source node is a {@link BindingNode}.
+   *
+   * <p>For dependencies on missing bindings, the target node is a {@link MissingBindingNode}.
+   * Otherwise the target node is a {@link BindingNode}.
    */
   public static final class DependencyEdge implements Edge {
 
@@ -335,6 +350,27 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     }
   }
 
+  /** A node in the binding graph that represents a missing binding for a key in a component. */
+  @AutoValue
+  @DoNotMock("Use Dagger-supplied implementations")
+  public abstract static class MissingBindingNode implements Node {
+    static MissingBindingNode create(ComponentPath component, Key key) {
+      return new AutoValue_BindingGraph_MissingBindingNode(component, key);
+    }
+
+    /** The component in which the binding is missing. */
+    @Override
+    public abstract ComponentPath componentPath();
+
+    /** The key for which there is no binding. */
+    public abstract Key key();
+
+    @Override
+    public String toString() {
+      return String.format("missing binding for %s in %s", key(), componentPath());
+    }
+  }
+
   /**
    * A <b>component node</b> in the graph. Every entry point {@linkplain DependencyEdge dependency
    * edge}'s source node is a component node for the component containing the entry point.
@@ -342,8 +378,10 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   @AutoValue
   public abstract static class ComponentNode implements Node {
     static ComponentNode create(
-        ComponentPath componentPath, ImmutableSet<DependencyRequest> entryPoints) {
-      return new AutoValue_BindingGraph_ComponentNode(componentPath, entryPoints);
+        ComponentPath componentPath,
+        ImmutableSet<DependencyRequest> entryPoints,
+        ImmutableSet<Scope> scopes) {
+      return new AutoValue_BindingGraph_ComponentNode(componentPath, entryPoints, scopes);
     }
 
     /** The component represented by this node. */
@@ -352,6 +390,9 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
     /** The entry points on this component. */
     public abstract ImmutableSet<DependencyRequest> entryPoints();
+
+    /** The scopes declared on this component. */
+    public abstract ImmutableSet<Scope> scopes();
 
     @Override
     public final String toString() {

@@ -81,46 +81,43 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
   /** Returns the binding nodes. */
   public ImmutableSet<BindingNode> bindingNodes() {
-    return bindingNodesStream().collect(toImmutableSet());
+    return nodes(BindingNode.class);
   }
 
   /** Returns the binding nodes for a key. */
   public ImmutableSet<BindingNode> bindingNodes(Key key) {
-    return bindingNodesStream()
+    return nodeStream(BindingNode.class)
         .filter(node -> node.binding().key().equals(key))
         .collect(toImmutableSet());
   }
 
   /** Returns the nodes that represent missing bindings. */
   public ImmutableSet<MissingBindingNode> missingBindingNodes() {
-    return nodes()
-        .stream()
-        .flatMap(instancesOf(MissingBindingNode.class))
-        .collect(toImmutableSet());
+    return nodes(MissingBindingNode.class);
   }
 
   /** Returns the component nodes. */
   public ImmutableSet<ComponentNode> componentNodes() {
-    return componentNodeStream().collect(toImmutableSet());
+    return nodes(ComponentNode.class);
   }
 
   /** Returns the component node for a component. */
   public Optional<ComponentNode> componentNode(ComponentPath component) {
-    return componentNodeStream()
+    return nodeStream(ComponentNode.class)
         .filter(node -> node.componentPath().equals(component))
         .findFirst();
   }
 
   /** Returns the component nodes for a component. */
   public ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
-    return componentNodeStream()
+    return nodeStream(ComponentNode.class)
         .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
   }
 
   /** Returns the component node for the root component. */
   public ComponentNode rootComponentNode() {
-    return componentNodeStream()
+    return nodeStream(ComponentNode.class)
         .filter(node -> node.componentPath().atRoot())
         .findFirst()
         .get();
@@ -133,9 +130,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
   /** Returns the dependency edges for the dependencies of a binding. */
   public ImmutableMap<DependencyRequest, DependencyEdge> dependencyEdges(BindingNode bindingNode) {
-    return outEdges(bindingNode)
-        .stream()
-        .flatMap(instancesOf(DependencyEdge.class))
+    return dependencyEdgeStream(bindingNode)
         .collect(toImmutableMap(DependencyEdge::dependencyRequest, edge -> edge));
   }
 
@@ -147,22 +142,23 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   /**
+   * Returns the dependency edges for the entry points of a given {@code component}. Each edge's
+   * source node is that component's component node.
+   */
+  public ImmutableSet<DependencyEdge> entryPointEdges(ComponentPath component) {
+    return dependencyEdgeStream(componentNode(component).get()).collect(toImmutableSet());
+  }
+
+  private Stream<DependencyEdge> dependencyEdgeStream(Node node) {
+    return outEdges(node).stream().flatMap(instancesOf(DependencyEdge.class));
+  }
+
+  /**
    * Returns the dependency edges for all entry points for all components and subcomponents. Each
    * edge's source node is a component node.
    */
   public ImmutableSet<DependencyEdge> entryPointEdges() {
     return entryPointEdgeStream().collect(toImmutableSet());
-  }
-
-  /**
-   * Returns the dependency edges for the entry points of a given {@code component}. Each edge's
-   * source node is that component's component node.
-   */
-  public ImmutableSet<DependencyEdge> entryPointEdges(ComponentPath component) {
-    return outEdges(componentNode(component).get())
-        .stream()
-        .flatMap(instancesOf(DependencyEdge.class))
-        .collect(toImmutableSet());
   }
 
   /** Returns the binding nodes for bindings that directly satisfy entry points. */
@@ -181,12 +177,12 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
         intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()));
   }
 
-  private Stream<BindingNode> bindingNodesStream() {
-    return nodes().stream().flatMap(instancesOf(BindingNode.class));
+  private <N extends Node> ImmutableSet<N> nodes(Class<N> clazz) {
+    return nodeStream(clazz).collect(toImmutableSet());
   }
 
-  private Stream<ComponentNode> componentNodeStream() {
-    return nodes().stream().flatMap(instancesOf(ComponentNode.class));
+  private <N extends Node> Stream<N> nodeStream(Class<N> clazz) {
+    return nodes().stream().flatMap(instancesOf(clazz));
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream() {

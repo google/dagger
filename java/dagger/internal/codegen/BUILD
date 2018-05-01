@@ -377,6 +377,13 @@ java_library(
 java_plugin(
     name = "component-codegen",
     generates_api = 1,
+    output_licenses = ["unencumbered"],
     processor_class = "dagger.internal.codegen.ComponentProcessor",
+    tags = [
+        "annotation=dagger.Component;" +
+        "genclass=${package}.Dagger${outerclasses}${classname}",
+        "annotation=dagger.producers.ProductionComponent;" +
+        "genclass=${package}.Dagger${outerclasses}${classname}",
+    ],
     deps = [":processor"],
 )

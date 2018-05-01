@@ -18,35 +18,19 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
-import java.util.Collection;
-import javax.annotation.processing.Processor;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
 
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public class SwitchingProviderTest {
-  @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
-    return CompilerMode.TEST_PARAMETERS;
-  }
-
-  private final CompilerMode compilerMode;
-
-  public SwitchingProviderTest(CompilerMode compilerMode) {
-    this.compilerMode = compilerMode;
-  }
-
   @Test
   public void switchingProviderTest() {
     ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
@@ -81,14 +65,11 @@ public class SwitchingProviderTest {
             "}"));
 
     JavaFileObject generatedComponent =
-        compilerMode
-            .javaFileBuilder("test.DaggerTestComponent")
-            .addLines(
+        JavaFileObjects.forSourceLines(
+            "test.DaggerTestComponent",
                 "package test;",
                 GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {")
-            .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                "public final class DaggerTestComponent implements TestComponent {",
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    private T get0() {",
@@ -213,19 +194,408 @@ public class SwitchingProviderTest {
                 "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
-                "  }")
-            .build();
+                "  }",
+                "}");
 
-    Compilation compilation = daggerCompiler().compile(javaFileObjects.build());
+    Compilation compilation = compilerWithAndroidMode().compile(javaFileObjects.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(generatedComponent);
   }
 
-  private Compiler daggerCompiler(Processor... extraProcessors) {
+  @Test
+  public void unscopedBinds() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String s() {",
+            "    return new String();",
+            "  }",
+            "",
+            "  @Binds CharSequence c(String s);",
+            "  @Binds Object o(CharSequence c);",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<Object> objectProvider();",
+            "  Provider<CharSequence> charSequenceProvider();",
+            "}");
+
+    Compilation compilation = compilerWithAndroidMode().compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private volatile Provider<String> sProvider;",
+                "",
+                "  private Provider<String> getStringProvider() {",
+                "    Object local = sProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      sProvider = (Provider<String>) local;",
+                "    }",
+                "    return (Provider<String>) local;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Object> objectProvider() {",
+                "    return (Provider) getStringProvider();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<CharSequence> charSequenceProvider() {",
+                "    return (Provider) getStringProvider();",
+                "  }",
+                "",
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) TestModule_SFactory.proxyS();",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void scopedBinds() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String s() {",
+            "    return new String();",
+            "  }",
+            "",
+            "  @Binds @Singleton Object o(CharSequence s);",
+            "  @Binds @Singleton CharSequence c(String s);",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<Object> objectProvider();",
+            "  Provider<CharSequence> charSequenceProvider();",
+            "}");
+
+    Compilation compilation = compilerWithAndroidMode().compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private volatile Provider<CharSequence> cProvider;",
+                "  private volatile Object charSequence = new MemoizedSentinel();",
+                "",
+                "  private CharSequence getCharSequence() {",
+                "    Object local = charSequence;",
+                "    if (local instanceof MemoizedSentinel) {",
+                "      synchronized (local) {",
+                "        local = charSequence;",
+                "        if (local instanceof MemoizedSentinel) {",
+                "          local = TestModule_SFactory.proxyS();",
+                "          charSequence = DoubleCheck.reentrantCheck(charSequence, local);",
+                "        }",
+                "      }",
+                "    }",
+                "    return (CharSequence) local;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Object> objectProvider() {",
+                "    return (Provider) charSequenceProvider();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<CharSequence> charSequenceProvider() {",
+                "    Object local = cProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      cProvider = (Provider<CharSequence>) local;",
+                "    }",
+                "    return (Provider<CharSequence>) local;",
+                "  }",
+                "",
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) getCharSequence();",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void emptyMultibindings_avoidSwitchProviders() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.multibindings.Multibinds;",
+            "import dagger.Module;",
+            "import java.util.Map;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Multibinds Set<String> set();",
+            "  @Multibinds Map<String, String> map();",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "import java.util.Set;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<Set<String>> setProvider();",
+            "  Provider<Map<String, String>> mapProvider();",
+            "}");
+
+    Compilation compilation = compilerWithAndroidMode().compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  @Override",
+                "  public Provider<Set<String>> setProvider() {",
+                "    return SetFactory.<String>empty();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Map<String, String>> mapProvider() {",
+                "    return MapFactory.<String, String>emptyMapProvider();",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void memberInjectors() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "class Foo {}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.MembersInjector;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Provider<MembersInjector<Foo>> providerOfMembersInjector();",
+            "}");
+
+    Compilation compilation = compilerWithAndroidMode().compile(foo, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+                "  private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.fooMembersInjectorProvider = ",
+                "        InstanceFactory.create(MembersInjectors.<Foo>noOp());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<MembersInjector<Foo>> providerOfMembersInjector() {",
+                "    return fooMembersInjectorProvider;",
+                "  }",
+                "}"));
+  }
+
+  @Test
+  public void optionals() {
+    JavaFileObject present =
+        JavaFileObjects.forSourceLines(
+            "test.Present",
+            "package test;",
+            "",
+            "class Present {}");
+    JavaFileObject absent =
+        JavaFileObjects.forSourceLines(
+            "test.Absent",
+            "package test;",
+            "",
+            "class Absent {}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @BindsOptionalOf Present bindOptionalOfPresent();",
+            "  @BindsOptionalOf Absent bindOptionalOfAbsent();",
+            "",
+            "  @Provides static Present p() { return new Present(); }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Optional;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Provider<Optional<Present>> providerOfOptionalOfPresent();",
+            "  Provider<Optional<Absent>> providerOfOptionalOfAbsent();",
+            "}");
+
+    Compilation compilation = compilerWithAndroidMode().compile(present, absent, module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerTestComponent",
+                "package test;",
+                "",
+                GENERATED_ANNOTATION,
+                "public final class DaggerTestComponent implements TestComponent {",
+
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private static final Provider ABSENT_JDK_OPTIONAL_PROVIDER =",
+                "      InstanceFactory.create(Optional.empty());",
+                "",
+                "  private volatile Provider<Optional<Present>> optionalOfPresentProvider;",
+                "",
+                "  private Provider<Optional<Absent>> optionalOfAbsentProvider;",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.optionalOfAbsentProvider = absentJdkOptionalProvider();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Optional<Present>> providerOfOptionalOfPresent() {",
+                "    Object local = optionalOfPresentProvider;",
+                "    if (local == null) {",
+                "      local = new SwitchingProvider<>(0);",
+                "      optionalOfPresentProvider = (Provider<Optional<Present>>) local;",
+                "    }",
+                "    return (Provider<Optional<Present>>) local;",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<Optional<Absent>> providerOfOptionalOfAbsent() {",
+                "    return optionalOfAbsentProvider;",
+                "  }",
+                "",
+                "  private static <T> Provider<Optional<T>> absentJdkOptionalProvider() {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    Provider<Optional<T>> provider = ",
+                "          (Provider<Optional<T>>) ABSENT_JDK_OPTIONAL_PROVIDER;",
+                "    return provider;",
+                "  }",
+                "",
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0: // java.util.Optional<test.Present>",
+                "          return (T) Optional.of(TestModule_PFactory.proxyP());",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  private Compiler compilerWithAndroidMode() {
     return javac()
-        .withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors))
-        .withOptions(compilerMode.javacopts());
+        .withProcessors(new ComponentProcessor())
+        .withOptions(CompilerMode.EXPERIMENTAL_ANDROID_MODE.javacopts());
   }
 }

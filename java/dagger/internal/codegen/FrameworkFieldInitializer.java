@@ -59,12 +59,15 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     }
 
     /**
-     * Returns {@code true} if the factory created for a binding is not worth inlining because it's
-     * a singleton or an {@link dagger.internal.InstanceFactory} or a nested {@code Provider} for a
-     * component dependency provision method.
+     * Returns {@code true} if instead of using {@link #creationExpression()} to create a framework
+     * instance, a case in {@link InnerSwitchingProviders} should be created for this binding.
      */
-    default boolean isSimpleFactory() {
-      return false;
+    // TODO(ronshapiro): perhaps this isn't the right approach. Instead of saying "Use
+    // SetFactory.EMPTY because you will only get 1 class for all types of bindings that use
+    // SetFactory", maybe we should still use an inner switching provider but the same switching
+    // provider index for all cases.
+    default boolean useInnerSwitchingProvider() {
+      return true;
     }
   }
 

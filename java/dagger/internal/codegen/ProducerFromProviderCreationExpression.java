@@ -56,4 +56,6 @@ final class ProducerFromProviderCreationExpression implements FrameworkInstanceC
   public Optional<ClassName> alternativeFrameworkClass() {
     return Optional.of(ClassName.get(Producer.class));
   }
+
+  // TODO(ronshapiro): should this have a simple factory if the delegate expression is simple?
 }

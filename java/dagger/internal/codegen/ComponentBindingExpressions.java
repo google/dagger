@@ -18,14 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
-import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
@@ -40,7 +38,6 @@ import com.google.common.collect.Table;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import dagger.internal.MembersInjectors;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.model.DependencyRequest;
@@ -391,34 +388,11 @@ final class ComponentBindingExpressions {
             binding, generatedComponentModel, this);
 
       case OPTIONAL:
-        if (binding.explicitDependencies().isEmpty()) {
-          return () -> optionalFactories.absentOptionalProvider(binding);
-        } else {
-          return () ->
-              optionalFactories.presentOptionalFactory(
-                  binding,
-                  getDependencyExpression(
-                          getOnlyElement(binding.frameworkDependencies()),
-                          generatedComponentModel.name())
-                      .codeBlock());
-        }
+        return new OptionalFactoryInstanceCreationExpression(
+            optionalFactories, binding, generatedComponentModel, this);
 
       case MEMBERS_INJECTOR:
-        TypeMirror membersInjectedType =
-            getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
-
-        if (((ProvisionBinding) binding).injectionSites().isEmpty()) {
-          return new InstanceFactoryCreationExpression(
-              // The type parameter can be removed when we drop Java 7 source support.
-              () -> CodeBlock.of("$T.<$T>noOp()", MembersInjectors.class, membersInjectedType));
-        } else {
-          return new InstanceFactoryCreationExpression(
-              () ->
-                  CodeBlock.of(
-                      "$T.create($L)",
-                      membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
-                      getCreateMethodArgumentsCodeBlock(binding)));
-        }
+        return new MembersInjectorProviderCreationExpression((ProvisionBinding) binding, this);
 
       default:
         throw new AssertionError(binding);
@@ -621,30 +595,28 @@ final class ComponentBindingExpressions {
   /**
    * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
    *
-   * <p>In default mode, {@code @Binds} bindings that don't {@linkplain
-   * #needsCaching(ResolvedBindings) need to be cached} can use a {@link DelegateBindingExpression}.
+   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ResolvedBindings) need to be
+   * cached} can use a {@link DelegateBindingExpression}.
    *
-   * <p>In Android mode, if {@linkplain #instanceBindingExpression(ResolvedBindings) instance
-   * binding expressions} don't call {@code Provider.get()} on the provider binding expression, and
-   * there's no simple factory, then return a {@link SwitchingProviders} binding expression wrapped
-   * in a method.
+   * <p>In Android mode, use an {@link InnerSwitchingProviders inner switching provider} unless that
+   * provider's case statement will simply call {@code get()} on another {@link Provider} (in which
+   * case, just use that Provider directly).
    *
    * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
    */
   private BindingExpression providerBindingExpression(ResolvedBindings resolvedBindings) {
-    if (compilerOptions.experimentalAndroidMode()) {
-      if (!frameworkInstanceCreationExpression(resolvedBindings).isSimpleFactory()
-          && !(instanceBindingExpression(resolvedBindings)
-              instanceof DerivedFromProviderBindingExpression)) {
-        return wrapInMethod(
-            resolvedBindings,
-            RequestKind.PROVIDER,
-            innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
-      }
-    } else if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
+    if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
         && !needsCaching(resolvedBindings)) {
       return new DelegateBindingExpression(
           resolvedBindings, RequestKind.PROVIDER, this, types, elements);
+    } else if (compilerOptions.experimentalAndroidMode()
+        && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
+        && !(instanceBindingExpression(resolvedBindings)
+            instanceof DerivedFromProviderBindingExpression)) {
+      return wrapInMethod(
+          resolvedBindings,
+          RequestKind.PROVIDER,
+          innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
     }
     return frameworkInstanceBindingExpression(resolvedBindings, RequestKind.PROVIDER);
   }

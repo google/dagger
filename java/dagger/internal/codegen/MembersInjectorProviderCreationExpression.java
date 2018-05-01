@@ -32,11 +32,10 @@ final class MembersInjectorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final ContributionBinding binding;
+  private final ProvisionBinding binding;
 
   MembersInjectorProviderCreationExpression(
-      ContributionBinding binding,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ProvisionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
@@ -47,7 +46,7 @@ final class MembersInjectorProviderCreationExpression
         getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
 
     CodeBlock membersInjector =
-        ((ProvisionBinding) binding).injectionSites().isEmpty()
+        binding.injectionSites().isEmpty()
             ? CodeBlock.of("$T.<$T>noOp()", MEMBERS_INJECTORS, membersInjectedType)
             : CodeBlock.of(
                 "$T.create($L)",
@@ -57,5 +56,10 @@ final class MembersInjectorProviderCreationExpression
     // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
     // (as it's rarely requested as a Provider).
     return CodeBlock.of("$T.create($L)", INSTANCE_FACTORY, membersInjector);
+  }
+
+  @Override
+  public boolean useInnerSwitchingProvider() {
+    return !binding.injectionSites().isEmpty();
   }
 }

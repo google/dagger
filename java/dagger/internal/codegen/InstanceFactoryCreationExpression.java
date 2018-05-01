@@ -51,7 +51,7 @@ final class InstanceFactoryCreationExpression implements FrameworkInstanceCreati
   }
 
   @Override
-  public boolean isSimpleFactory() {
-    return true;
+  public boolean useInnerSwitchingProvider() {
+    return false;
   }
 }

@@ -261,6 +261,7 @@ java_library(
         "MonitoringModuleProcessingStep.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
+        "OptionalFactoryInstanceCreationExpression.java",
         "PrivateMethodBindingExpression.java",
         "ProducerCreationExpression.java",
         "ProducerFactoryGenerator.java",

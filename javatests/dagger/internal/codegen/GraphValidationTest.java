@@ -1551,8 +1551,11 @@ public class GraphValidationTest {
         .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
         .inFile(component)
         .onLineContaining("intMap();");
+    // Some javacs report only the first error for each source line.
+    // Assert that one of the expected errors is reported.
     assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
+        .hadErrorContainingMatch(
+            "test\\.Duplicates\\.NotBound cannot be provided|same map key is bound more than once")
         .inFile(component)
         .onLineContaining("longMap();");
   }

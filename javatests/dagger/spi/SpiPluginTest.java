@@ -261,7 +261,7 @@ public final class SpiPluginTest {
     assertThat(compilationFactory.compilationWithErrorOnDependency("childEntryPoint"))
         .hadErrorContaining(
             lines(
-                "[FailingPlugin] Bad Dependency!",
+                "[FailingPlugin] [test.TestSubcomponent.childEntryPoint()] Bad Dependency!",
                 "      test.EntryPoint is provided at",
                 "          test.TestSubcomponent.childEntryPoint()",
                 "  component path: test.TestComponent → test.TestSubcomponent"))
@@ -270,7 +270,7 @@ public final class SpiPluginTest {
     assertThat(compilationFactory.compilationWithErrorOnDependency("foo"))
         .hadErrorContaining(
             lines(
-                "[FailingPlugin] Bad Dependency!",
+                "[FailingPlugin] [test.TestSubcomponent.childEntryPoint()] Bad Dependency!",
                 "      test.Foo is injected at",
                 "          test.EntryPoint.<init>(foo)",
                 "      test.EntryPoint is provided at",
@@ -463,7 +463,7 @@ public final class SpiPluginTest {
             lines(
                 // TODO(ronshapiro): should this error be reported if it's already been reported at
                 // an ancestor component?
-                "[FailingPlugin] Bad Binding!",
+                "[FailingPlugin] [test.TestSubcomponent.exposedOnSubcomponent()] Bad Binding!",
                 "      test.ExposedOnSubcomponent is provided at",
                 "          test.TestSubcomponent.exposedOnSubcomponent()",
                 "  component path: test.TestComponent → test.TestSubcomponent"))

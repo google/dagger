@@ -16,6 +16,7 @@
 
 package dagger.android.processor;
 
+import static com.google.auto.common.GeneratedAnnotationSpecs.generatedAnnotationSpec;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
@@ -47,23 +48,31 @@ import dagger.Subcomponent;
 import dagger.Subcomponent.Builder;
 import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
+import dagger.android.processor.AndroidInjectorDescriptor.Validator;
 import dagger.multibindings.IntoMap;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Filer;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.util.Elements;
 
 /** Generates the implementation specified in {@link ContributesAndroidInjector}. */
 final class ContributesAndroidInjectorGenerator implements ProcessingStep {
 
-  private final Filer filer;
   private final AndroidInjectorDescriptor.Validator validator;
+  private final Filer filer;
+  private final Elements elements;
+  private final SourceVersion sourceVersion;
 
-  ContributesAndroidInjectorGenerator(Filer filer, AndroidInjectorDescriptor.Validator validator) {
+  ContributesAndroidInjectorGenerator(
+      Validator validator, Filer filer, Elements elements, SourceVersion sourceVersion) {
     this.filer = filer;
     this.validator = validator;
+    this.elements = elements;
+    this.sourceVersion = sourceVersion;
   }
 
   @Override
@@ -94,19 +103,21 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
     ClassName subcomponentName = moduleName.nestedClass(baseName + "Subcomponent");
     ClassName subcomponentBuilderName = subcomponentName.nestedClass("Builder");
 
-    TypeSpec module =
+    TypeSpec.Builder module =
         classBuilder(moduleName)
-            .addModifiers(PUBLIC, ABSTRACT)
             .addAnnotation(
                 AnnotationSpec.builder(Module.class)
                     .addMember("subcomponents", "$T.class", subcomponentName)
                     .build())
+            .addModifiers(PUBLIC, ABSTRACT)
             .addMethod(bindAndroidInjectorFactory(descriptor, subcomponentBuilderName))
             .addType(subcomponent(descriptor, subcomponentName, subcomponentBuilderName))
-            .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
-            .build();
+            .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
+    generatedAnnotationSpec(elements, sourceVersion, AndroidProcessor.class)
+        .ifPresent(module::addAnnotation);
+
     try {
-      JavaFile.builder(moduleName.packageName(), module)
+      JavaFile.builder(moduleName.packageName(), module.build())
           .skipJavaLangImports(true)
           .build()
           .writeTo(filer);

@@ -337,6 +337,9 @@ class CoffeeFilter {
 
 ### Releasable references
 
+_**DEPRECATED:** This feature is deprecated and scheduled for removal in July
+2018._
+
 When a binding uses a scope annotation, that means that the component object
 holds a reference to the bound object until the component object itself is
 garbage-collected. In memory-sensitive environments such as Android, you may

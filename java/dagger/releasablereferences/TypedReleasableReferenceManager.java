@@ -52,7 +52,7 @@ import java.lang.annotation.Annotation;
  * @param <M> the type of the metadata annotation
  * @deprecated The releasable references feature is deprecated and scheduled for removal in July
  *     2018. If you use it or are planning to add usages, please
- *     <a href="https://github.com/google/dagger/issues/1117">this bug</a>.
+ *     comment on <a href="https://github.com/google/dagger/issues/1117">this bug</a>.
  */
 @Beta
 @GwtIncompatible

@@ -19,7 +19,6 @@ package dagger.model;
 import com.google.auto.value.AutoValue;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.google.errorprone.annotations.DoNotMock;
 import dagger.Provides;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -36,7 +35,6 @@ import javax.lang.model.element.Element;
  * asynchronously even though it is not directly specified as a parameter to the binding method.
  */
 @AutoValue
-@DoNotMock("Use DependencyRequest.builder() to create an instance")
 public abstract class DependencyRequest {
   /** The kind of this request. */
   public abstract RequestKind kind();

@@ -22,12 +22,10 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.errorprone.annotations.DoNotMock;
 import javax.lang.model.element.TypeElement;
 
 /** A path containing a component and all of its ancestor components. */
 @AutoValue
-@DoNotMock("Use ComponentPath.create() to create an instance.")
 public abstract class ComponentPath {
   /** Returns a new {@link ComponentPath} from {@code components}. */
   public static ComponentPath create(Iterable<TypeElement> components) {

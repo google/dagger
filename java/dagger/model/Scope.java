@@ -26,7 +26,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.DoNotMock;
 import dagger.Reusable;
 import dagger.producers.ProductionScope;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -40,7 +39,6 @@ import javax.lang.model.type.TypeMirror;
 /** A representation of a {@link javax.inject.Scope}. */
 @AutoValue
 // TODO(ronshapiro): point to SimpleAnnotationMirror
-@DoNotMock("Use Scope.scope(AnnotationMirror) to create an instance")
 public abstract class Scope {
   abstract Equivalence.Wrapper<AnnotationMirror> wrappedScopeAnnotation();
 

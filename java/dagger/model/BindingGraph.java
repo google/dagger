@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Network;
-import com.google.errorprone.annotations.DoNotMock;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.model.BindingGraph.Edge;
@@ -305,7 +304,6 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * there is one binding node for that binding for every owning component.
    */
   @AutoValue
-  @DoNotMock("Use Dagger-supplied implementations")
   public abstract static class BindingNode implements Node {
     static BindingNode create(
         ComponentPath component,
@@ -348,7 +346,6 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */
   @AutoValue
-  @DoNotMock("Use Dagger-supplied implementations")
   public abstract static class MissingBindingNode implements Node {
     static MissingBindingNode create(ComponentPath component, Key key) {
       return new AutoValue_BindingGraph_MissingBindingNode(component, key);

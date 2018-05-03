@@ -31,10 +31,7 @@ CODEGEN_SRCS = glob(
     exclude = EXPERIMENTAL_VISUALIZER_SRCS + KYTHE_SRCS,
 )
 
-CODEGEN_PLUGINS = [
-    ":bootstrap_compiler_plugin",
-    # TODO(cgruber): Enable Beta checker.
-]
+CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
 
 CODEGEN_SHARED_DEPS = [
     "//third_party:auto_service",

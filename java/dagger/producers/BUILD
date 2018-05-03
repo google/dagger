@@ -37,9 +37,6 @@ java_library(
     name = "producers",
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    plugins = [
-        # TODO(cgruber): Enable Beta checker.
-    ],
     exports = [
         # TODO(dpb): Don't export any of Guava.
         "//third_party:guava",

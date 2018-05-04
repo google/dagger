@@ -206,6 +206,7 @@ java_library(
         "ProvisionDependencyOnProducerBindingValidation.java",
         "Validation.java",
     ],
+    tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",

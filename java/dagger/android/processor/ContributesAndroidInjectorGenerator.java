@@ -131,7 +131,10 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
     return methodBuilder("bindAndroidInjectorFactory")
         .addAnnotation(Binds.class)
         .addAnnotation(IntoMap.class)
-        .addAnnotation(descriptor.mapKeyAnnotation())
+        .addAnnotation(
+            AnnotationSpec.builder(descriptor.mapKeyType())
+                .addMember("value", "$T.class", descriptor.injectedType())
+                .build())
         .addModifiers(ABSTRACT)
         .returns(
             parameterizedTypeName(

@@ -17,7 +17,6 @@
 package dagger.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -31,15 +30,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Network;
-import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
-import dagger.multibindings.Multibinds;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -303,45 +298,14 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * A <b>binding node</b> in the binding graph. If a binding is owned by more than one component,
    * there is one binding node for that binding for every owning component.
    */
-  @AutoValue
-  public abstract static class BindingNode implements Node {
-    static BindingNode create(
-        ComponentPath component,
-        Binding binding,
-        Iterable<Element> associatedDeclarations,
-        Supplier<String> toStringFunction) {
-      BindingNode bindingNode =
-          new AutoValue_BindingGraph_BindingNode(
-              component, binding, ImmutableSet.copyOf(associatedDeclarations));
-      bindingNode.toStringFunction = checkNotNull(toStringFunction);
-      return bindingNode;
-    }
-
-    private Supplier<String> toStringFunction;
+  public interface BindingNode extends Node {
 
     /** The component that owns the {@link #binding()}. */
     @Override
-    public abstract ComponentPath componentPath();
+    ComponentPath componentPath();
 
     /** The binding. */
-    public abstract Binding binding();
-
-    /**
-     * The {@link Element}s (other than the binding's {@link Binding#bindingElement()}) that are
-     * associated with the binding.
-     *
-     * <ul>
-     *   <li>{@linkplain BindsOptionalOf optional binding} declarations
-     *   <li>{@linkplain Module#subcomponents() module subcomponent} declarations
-     *   <li>{@linkplain Multibinds multibinding} declarations
-     * </ul>
-     */
-    public abstract ImmutableSet<Element> associatedDeclarations();
-
-    @Override
-    public String toString() {
-      return toStringFunction.get();
-    }
+    Binding binding();
   }
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */

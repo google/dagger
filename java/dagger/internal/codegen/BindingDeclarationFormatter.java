@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import dagger.model.BindingKind;
 import javax.inject.Inject;
+import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -85,42 +86,34 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
       return formatSubcomponentDeclaration((SubcomponentDeclaration) bindingDeclaration);
     }
 
-    if (bindingDeclaration instanceof ContributionBinding) {
-      ContributionBinding binding = (ContributionBinding) bindingDeclaration;
-      switch (binding.kind()) {
-        case RELEASABLE_REFERENCE_MANAGER:
-          return String.format(
-              "binding for %s from the scope declaration",
-              stripCommonTypePrefixes(binding.key().toString()));
-        case RELEASABLE_REFERENCE_MANAGERS:
-          return String.format(
-              "Dagger-generated binding for %s",
-              stripCommonTypePrefixes(binding.key().toString()));
+    if (bindingDeclaration.bindingElement().isPresent()) {
+      Element bindingElement = bindingDeclaration.bindingElement().get();
+      switch (bindingElement.asType().getKind()) {
+        case EXECUTABLE:
+          return methodSignatureFormatter.format(
+              MoreElements.asExecutable(bindingElement),
+              bindingDeclaration
+                  .contributingModule()
+                  .map(module -> MoreTypes.asDeclared(module.asType())));
+
+        case DECLARED:
+          return stripCommonTypePrefixes(bindingElement.asType().toString());
+
         default:
-          break;
+          throw new IllegalArgumentException(
+              "Formatting unsupported for element: " + bindingElement);
       }
     }
 
-    return bindingDeclaration
-        .bindingElement()
-        .map(
-            bindingElement -> {
-              switch (bindingElement.asType().getKind()) {
-                case EXECUTABLE:
-                  return methodSignatureFormatter.format(
-                      MoreElements.asExecutable(bindingElement),
-                      bindingDeclaration
-                          .contributingModule()
-                          .map(module -> MoreTypes.asDeclared(module.asType())));
-                case DECLARED:
-                  return stripCommonTypePrefixes(bindingElement.asType().toString());
-                default:
-                  throw new IllegalArgumentException(
-                      "Formatting unsupported for element: " + bindingElement);
-              }
-            })
-        // TODO(dpb): Give synthetic bindings a better string representation.
-        .orElseGet(() -> "synthetic binding for " + bindingDeclaration.key());
+    if (isReleasableReferenceManagerBinding(bindingDeclaration)) {
+      return String.format(
+          "binding for %s from the scope declaration",
+          stripCommonTypePrefixes(bindingDeclaration.key().toString()));
+    }
+
+    return String.format(
+        "Dagger-generated binding for %s",
+        stripCommonTypePrefixes(bindingDeclaration.key().toString()));
   }
 
   private String formatSubcomponentDeclaration(SubcomponentDeclaration subcomponentDeclaration) {
@@ -149,5 +142,10 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
         simpleName(subcomponentDeclaration.moduleAnnotation()),
         annotationValue,
         subcomponentDeclaration.contributingModule().get());
+  }
+
+  private boolean isReleasableReferenceManagerBinding(BindingDeclaration bindingDeclaration) {
+    return bindingDeclaration instanceof ContributionBinding
+        && ((ContributionBinding) bindingDeclaration).kind().equals(RELEASABLE_REFERENCE_MANAGER);
   }
 }

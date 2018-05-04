@@ -121,6 +121,7 @@ java_library(
         "BindingDeclaration.java",
         "BindingFactory.java",
         "BindingGraph.java",
+        "BindingNodeImpl.java",
         "BindingType.java",
         "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
@@ -196,6 +197,7 @@ java_library(
     name = "internal_validation",
     srcs = [
         "BindingGraphValidationModule.java",
+        "DuplicateBindingsValidation.java",
         "InjectBindingValidation.java",
         "MapMultibindingValidation.java",
         "MembersInjectionBindingValidation.java",

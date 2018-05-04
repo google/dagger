@@ -943,9 +943,11 @@ public class GraphValidationTest {
         "  }",
         "}");
 
-    String expectedError = "test.Outer.A is bound multiple times:\n"
-        + "      test.Outer.A test.Outer.Parent.getA()\n"
-        + "      @Provides test.Outer.A test.Outer.AModule.provideA(String)";
+    String expectedError =
+        error(
+            "test.Outer.A is bound multiple times:",
+            "@Provides test.Outer.A test.Outer.AModule.provideA(String)",
+            "test.Outer.A test.Outer.Parent.getA()");
 
     assertAbout(javaSource()).that(component)
         .processedWith(new ComponentProcessor())
@@ -1101,27 +1103,29 @@ public class GraphValidationTest {
         "}");
 
     String expectedSetError =
-        "java.util.Set<java.lang.String> has incompatible bindings or declarations:\n"
-            + "      Set bindings and declarations:\n"
-            + "          @Provides @dagger.multibindings.IntoSet String "
-            + "test.Outer.TestModule1.stringSetElement()\n"
-            + "          @Binds @dagger.multibindings.IntoSet String "
-            + "test.Outer.TestModule1.bindStringSetElement(@test.Outer.SomeQualifier String)\n"
-            + "      Unique bindings and declarations:\n"
-            + "          @Provides Set<String> test.Outer.TestModule2.stringSet()";
+        error(
+            "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
+            "Set bindings and declarations:",
+            "    @Binds @dagger.multibindings.IntoSet String "
+                + "test.Outer.TestModule1.bindStringSetElement(@test.Outer.SomeQualifier String)",
+            "    @Provides @dagger.multibindings.IntoSet String "
+                + "test.Outer.TestModule1.stringSetElement()",
+            "Unique bindings and declarations:",
+            "    @Provides Set<String> test.Outer.TestModule2.stringSet()");
 
     String expectedMapError =
-        "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
-            + "or declarations:\n"
-            + "      Map bindings and declarations:\n"
-            + "          @Provides @dagger.multibindings.IntoMap "
-            + "@test.Outer.StringKey(\"foo\") String"
-            + " test.Outer.TestModule1.stringMapEntry()\n"
-            + "          @Binds @dagger.multibindings.IntoMap "
-            + "@test.Outer.StringKey(\"bar\") String"
-            + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier String)\n"
-            + "      Unique bindings and declarations:\n"
-            + "          @Provides Map<String,String> test.Outer.TestModule2.stringMap()";
+        error(
+            "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+                + "or declarations:",
+            "Map bindings and declarations:",
+            "    @Binds @dagger.multibindings.IntoMap "
+                + "@test.Outer.StringKey(\"bar\") String"
+                + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier String)",
+            "    @Provides @dagger.multibindings.IntoMap "
+                + "@test.Outer.StringKey(\"foo\") String"
+                + " test.Outer.TestModule1.stringMapEntry()",
+            "Unique bindings and declarations:",
+            "    @Provides Map<String,String> test.Outer.TestModule2.stringMap()");
 
     assertAbout(javaSource())
         .that(component)
@@ -1208,113 +1212,117 @@ public class GraphValidationTest {
   }
 
   @Test public void duplicateBindings_TruncateAfterLimit() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "final class Outer {",
-        "  interface A {}",
-        "",
-        "  @Module",
-        "  static class Module1 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module2 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module3 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module4 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module5 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module6 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module7 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module8 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module9 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module10 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module11 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module12 {",
-        "    @Provides A provideA() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Component(modules = {",
-        "    Module1.class,",
-        "    Module2.class,",
-        "    Module3.class,",
-        "    Module4.class,",
-        "    Module5.class,",
-        "    Module6.class,",
-        "    Module7.class,",
-        "    Module8.class,",
-        "    Module9.class,",
-        "    Module10.class,",
-        "    Module11.class,",
-        "    Module12.class",
-        "  })",
-        "  interface TestComponent {",
-        "    A getA();",
-        "  }",
-        "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "final class Outer {",
+            "  interface A {}",
+            "",
+            "  @Module",
+            "  static class Module01 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module02 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module03 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module04 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module05 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module06 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module07 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module08 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module09 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module10 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module11 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module12 {",
+            "    @Provides A provideA() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Component(modules = {",
+            "    Module01.class,",
+            "    Module02.class,",
+            "    Module03.class,",
+            "    Module04.class,",
+            "    Module05.class,",
+            "    Module06.class,",
+            "    Module07.class,",
+            "    Module08.class,",
+            "    Module09.class,",
+            "    Module10.class,",
+            "    Module11.class,",
+            "    Module12.class",
+            "  })",
+            "  interface TestComponent {",
+            "    A getA();",
+            "  }",
+            "}");
 
-    String expectedError = "test.Outer.A is bound multiple times:\n"
-        + "      @Provides test.Outer.A test.Outer.Module1.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module2.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module3.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module4.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module5.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module6.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module7.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module8.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module9.provideA()\n"
-        + "      @Provides test.Outer.A test.Outer.Module10.provideA()\n"
-        + "      and 2 others";
-
-    assertAbout(javaSource()).that(component)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(expectedError).in(component).onLine(86);
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "test.Outer.A is bound multiple times:",
+                "@Provides test.Outer.A test.Outer.Module01.provideA()",
+                "@Provides test.Outer.A test.Outer.Module02.provideA()",
+                "@Provides test.Outer.A test.Outer.Module03.provideA()",
+                "@Provides test.Outer.A test.Outer.Module04.provideA()",
+                "@Provides test.Outer.A test.Outer.Module05.provideA()",
+                "@Provides test.Outer.A test.Outer.Module06.provideA()",
+                "@Provides test.Outer.A test.Outer.Module07.provideA()",
+                "@Provides test.Outer.A test.Outer.Module08.provideA()",
+                "@Provides test.Outer.A test.Outer.Module09.provideA()",
+                "@Provides test.Outer.A test.Outer.Module10.provideA()",
+                "and 2 others"))
+        .inFile(component)
+        .onLineContaining("getA();");
   }
 
   @Test public void longChainOfDependencies() {
@@ -1532,11 +1540,15 @@ public class GraphValidationTest {
     Compilation compilation = daggerCompiler().compile(duplicates, component);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.BoundTwice is bound multiple times:")
-        .inFile(component)
-        .onLineContaining("boundTwice();");
-    assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.DuplicatesModule.bindWithUnresolvedKey")
+        .hadErrorContaining(
+            error(
+                "test.Duplicates.BoundTwice is bound multiple times:",
+                "@Binds test.Duplicates.BoundTwice "
+                    + "test.Duplicates.DuplicatesModule"
+                    + ".bindWithResolvedKey(test.Duplicates.BoundImpl)",
+                "@Binds test.Duplicates.BoundTwice "
+                    + "test.Duplicates.DuplicatesModule"
+                    + ".bindWithUnresolvedKey(test.Duplicates.NotBound)"))
         .inFile(component)
         .onLineContaining("boundTwice();");
     assertThat(compilation)
@@ -2091,178 +2103,197 @@ public class GraphValidationTest {
   }
 
   @Test
-  public void subcomponentBindingConflictsWithParent() {
-    JavaFileObject parentChildConflict =
+  public void childBindingConflictsWithParent() {
+    JavaFileObject aComponent =
         JavaFileObjects.forSourceLines(
-            "test.ParentChildConflict",
-            "package test;",
-            "",
-            "import javax.inject.Qualifier;",
-            "",
-            "@Qualifier @interface ParentChildConflict {}");
-    JavaFileObject parentGrandchildConflict =
-        JavaFileObjects.forSourceLines(
-            "test.ParentGrandchildConflict",
-            "package test;",
-            "",
-            "import javax.inject.Qualifier;",
-            "",
-            "@Qualifier @interface ParentGrandchildConflict {}");
-    JavaFileObject childGrandchildConflict =
-        JavaFileObjects.forSourceLines(
-            "test.ChildGrandchildConflict",
-            "package test;",
-            "",
-            "import javax.inject.Qualifier;",
-            "",
-            "@Qualifier @interface ChildGrandchildConflict {}");
-
-    /* Some annotation processor implementations do not report more than one error per element. So
-     * separate parents for testing parent-conflicts-with-child and
-     * parent-conflicts-with-grandchild.
-     */
-    JavaFileObject parentConflictsWithChild =
-        JavaFileObjects.forSourceLines(
-            "test.ParentConflictsWithChild",
+            "test.A",
             "package test;",
             "",
             "import dagger.Component;",
             "import dagger.Module;",
             "import dagger.Provides;",
             "",
-            "@Component(modules = ParentConflictsWithChild.ParentModule.class)",
-            "interface ParentConflictsWithChild {",
-            "  @ParentChildConflict Object parentChildConflict();",
+            "@Component(modules = A.AModule.class)",
+            "interface A {",
+            "  Object conflict();",
             "",
-            "  Child child();",
+            "  B b();",
             "",
             "  @Module",
-            "  static class ParentModule {",
-            "    @Provides @ParentChildConflict static Object parentChildConflict() {",
-            "      return \"parent\";",
+            "  static class AModule {",
+            "    @Provides static Object abConflict() {",
+            "      return \"a\";",
             "    }",
             "  }",
             "}");
-    JavaFileObject parentConflictsWithGrandchild =
+    JavaFileObject bComponent =
         JavaFileObjects.forSourceLines(
-            "test.ParentConflictsWithGrandchild",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "",
-            "@Component(modules = ParentConflictsWithGrandchild.ParentModule.class)",
-            "interface ParentConflictsWithGrandchild {",
-            "  @ParentGrandchildConflict Object parentGrandchildConflict();",
-            "",
-            "  Child child();",
-            "",
-            "  @Module",
-            "  static class ParentModule {",
-            "    @Provides @ParentGrandchildConflict static Object parentGrandchildConflict() {",
-            "      return \"parent\";",
-            "    }",
-            "  }",
-            "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
-            "test.Child",
+            "test.B",
             "package test;",
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent(modules = Child.ChildModule.class)",
-            "interface Child {",
-            "  @ParentChildConflict Object parentChildConflict();",
-            "  @ChildGrandchildConflict Object childGrandchildConflict();",
-            "",
-            "  Grandchild grandchild();",
+            "@Subcomponent(modules = B.BModule.class)",
+            "interface B {",
+            "  Object conflict();",
             "",
             "  @Module",
-            "  static class ChildModule {",
-            "    @Provides @ParentChildConflict static Object parentChildConflict() {",
-            "      return \"child\";",
-            "    }",
-            "",
-            "    @Provides @ChildGrandchildConflict static Object childGrandchildConflict() {",
-            "      return \"child\";",
+            "  static class BModule {",
+            "    @Provides static Object abConflict() {",
+            "      return \"b\";",
             "    }",
             "  }",
             "}");
-    JavaFileObject grandchild =
-        JavaFileObjects.forSourceLines(
-            "test.Grandchild",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "import dagger.Subcomponent;",
-            "",
-            "@Subcomponent(modules = Grandchild.GrandchildModule.class)",
-            "interface Grandchild {",
-            "  @ParentChildConflict Object parentChildConflict();",
-            "  @ParentGrandchildConflict Object parentGrandchildConflict();",
-            "  @ChildGrandchildConflict Object childGrandchildConflict();",
-            "",
-            "  @Module",
-            "  static class GrandchildModule {",
-            "    @Provides @ParentGrandchildConflict static Object parentGrandchildConflict() {",
-            "      return \"grandchild\";",
-            "    }",
-            "",
-            "    @Provides @ChildGrandchildConflict static Object childGrandchildConflict() {",
-            "      return \"grandchild\";",
-            "    }",
-            "  }",
-            "}");
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
-                parentChildConflict,
-                parentGrandchildConflict,
-                childGrandchildConflict,
-                parentConflictsWithChild,
-                parentConflictsWithGrandchild,
-                child,
-                grandchild))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            "[test.Child.parentChildConflict()] "
-                + "@test.ParentChildConflict java.lang.Object is bound multiple times:\n"
-                + "      @Provides @test.ParentChildConflict Object"
-                + " test.ParentConflictsWithChild.ParentModule.parentChildConflict()\n"
-                + "      @Provides @test.ParentChildConflict Object"
-                + " test.Child.ChildModule.parentChildConflict()")
-        .in(parentConflictsWithChild)
-        .onLine(8)
-        .and()
-        .withErrorContaining(
-            "[test.Grandchild.parentGrandchildConflict()] "
-                + "@test.ParentGrandchildConflict java.lang.Object is bound multiple times:\n"
-                + "      @Provides @test.ParentGrandchildConflict Object"
-                + " test.ParentConflictsWithGrandchild.ParentModule.parentGrandchildConflict()\n"
-                + "      @Provides @test.ParentGrandchildConflict Object"
-                + " test.Grandchild.GrandchildModule.parentGrandchildConflict()")
-        .in(parentConflictsWithGrandchild)
-        .onLine(8)
-        .and()
-        .withErrorContaining(
-            "[test.Grandchild.childGrandchildConflict()] "
-                + "@test.ChildGrandchildConflict java.lang.Object is bound multiple times:\n"
-                + "      @Provides @test.ChildGrandchildConflict Object"
-                + " test.Child.ChildModule.childGrandchildConflict()\n"
-                + "      @Provides @test.ChildGrandchildConflict Object"
-                + " test.Grandchild.GrandchildModule.childGrandchildConflict()")
-        .in(child)
-        .onLine(8);
+    Compilation compilation = daggerCompiler().compile(aComponent, bComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "[test.B.conflict()] java.lang.Object is bound multiple times:",
+                "@Provides Object test.A.AModule.abConflict()",
+                "@Provides Object test.B.BModule.abConflict()"))
+        .inFile(aComponent)
+        .onLineContaining("interface A {");
   }
 
   @Test
-  public void subcomponentBindingConflictsWithParentWithNullableViolationAsWarning() {
+  public void grandchildBindingConflictsWithGrandparent() {
+    JavaFileObject aComponent =
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Component(modules = A.AModule.class)",
+            "interface A {",
+            "  Object conflict();",
+            "",
+            "  B b();",
+            "",
+            "  @Module",
+            "  static class AModule {",
+            "    @Provides static Object acConflict() {",
+            "      return \"a\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject bComponent =
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface B {",
+            "  C c();",
+            "}");
+    JavaFileObject cComponent =
+        JavaFileObjects.forSourceLines(
+            "test.C",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = C.CModule.class)",
+            "interface C {",
+            "  Object conflict();",
+            "",
+            "  @Module",
+            "  static class CModule {",
+            "    @Provides static Object acConflict() {",
+            "      return \"c\";",
+            "    }",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(aComponent, bComponent, cComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "[test.C.conflict()] java.lang.Object is bound multiple times:",
+                "@Provides Object test.A.AModule.acConflict()",
+                "@Provides Object test.C.CModule.acConflict()"))
+        .inFile(aComponent)
+        .onLineContaining("interface A {");
+  }
+
+  @Test
+  public void grandchildBindingConflictsWithChild() {
+    JavaFileObject aComponent =
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface A {",
+            "  B b();",
+            "}");
+    JavaFileObject bComponent =
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = B.BModule.class)",
+            "interface B {",
+            "  Object conflict();",
+            "",
+            "  C c();",
+            "",
+            "  @Module",
+            "  static class BModule {",
+            "    @Provides static Object bcConflict() {",
+            "      return \"b\";",
+            "    }",
+            "  }",
+            "}");
+    JavaFileObject cComponent =
+        JavaFileObjects.forSourceLines(
+            "test.C",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = C.CModule.class)",
+            "interface C {",
+            "  Object conflict();",
+            "",
+            "  @Module",
+            "  static class CModule {",
+            "    @Provides static Object bcConflict() {",
+            "      return \"c\";",
+            "    }",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(aComponent, bComponent, cComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "[test.C.conflict()] java.lang.Object is bound multiple times:",
+                "@Provides Object test.B.BModule.bcConflict()",
+                "@Provides Object test.C.CModule.bcConflict()"))
+        .inFile(aComponent)
+        .onLineContaining("interface A {");
+  }
+
+  @Test
+  public void grandchildBindingConflictsWithParentWithNullableViolationAsWarning() {
     JavaFileObject parentConflictsWithChild =
         JavaFileObjects.forSourceLines(
             "test.ParentConflictsWithChild",
@@ -2310,12 +2341,12 @@ public class GraphValidationTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(
-            "[test.Child.parentChildConflictThatViolatesNullability()] "
-                + "java.lang.Object is bound multiple times:\n"
-                + "      @Provides @javax.annotation.Nullable Object"
-                + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()\n"
-                + "      @Provides Object"
-                + " test.Child.ChildModule.nonNullableParentChildConflict()")
+            error(
+                "[test.Child.parentChildConflictThatViolatesNullability()] "
+                    + "java.lang.Object is bound multiple times:",
+                "@Provides Object test.Child.ChildModule.nonNullableParentChildConflict()",
+                "@Provides @javax.annotation.Nullable Object"
+                    + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
         .in(parentConflictsWithChild)
         .onLine(9);
   }

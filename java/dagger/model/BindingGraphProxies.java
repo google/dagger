@@ -18,7 +18,6 @@ package dagger.model;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Network;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
@@ -26,8 +25,6 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
-import java.util.function.Supplier;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -40,15 +37,6 @@ public final class BindingGraphProxies {
   /** Creates a new {@link BindingGraph}. */
   public static BindingGraph bindingGraph(Network<Node, Edge> network) {
     return new BindingGraph(network);
-  }
-
-  /** Creates a new {@link BindingNode}. */
-  public static BindingNode bindingNode(
-      ComponentPath component,
-      Binding binding,
-      Iterable<Element> associatedDeclarations,
-      Supplier<String> toStringFunction) {
-    return BindingNode.create(component, binding, associatedDeclarations, toStringFunction);
   }
 
   /** Creates a new {@link MissingBindingNode}. */

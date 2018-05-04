@@ -109,9 +109,6 @@ final class ErrorMessages {
    * These are errors that relate specifically to the Dagger configuration API (@Module, @Provides,
    * etc.)
    */
-  static final String DUPLICATE_BINDINGS_FOR_KEY_FORMAT =
-      "%s is bound multiple times:";
-
   static final String COMPONENT_ANNOTATED_REUSABLE =
       "@Reusable cannot be applied to components or subcomponents.";
 
@@ -133,9 +130,6 @@ final class ErrorMessages {
 
   static final String BINDING_METHOD_SET_VALUES_RAW_SET =
       "@%s methods of type set values cannot return a raw Set";
-
-  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RAW_SET_PARAMETER =
-      "@Binds @ElementsIntoSet methods cannot take a raw Set parameter";
 
   static final String BINDING_METHOD_SET_VALUES_RETURN_SET =
       "@%s methods of type set values must return a Set";
@@ -218,9 +212,8 @@ final class ErrorMessages {
   static final String BINDING_METHOD_MULTIPLE_QUALIFIERS =
       "Cannot use more than one @Qualifier";
 
-  /* mapKey errors*/
-  static final String MAPKEY_WITHOUT_MEMBERS =
-      "Map key annotations must have members";
+  /* mapKey errors */
+  static final String MAPKEY_WITHOUT_MEMBERS = "Map key annotations must have members";
 
   static final String UNWRAPPED_MAP_KEY_WITH_TOO_MANY_MEMBERS=
       "Map key annotations with unwrapped values must have exactly one member";
@@ -228,10 +221,7 @@ final class ErrorMessages {
   static final String UNWRAPPED_MAP_KEY_WITH_ARRAY_MEMBER =
       "Map key annotations with unwrapped values cannot use arrays";
 
-  /* collection binding errors */
-  static final String MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT =
-      "%s has incompatible bindings or declarations:\n";
-
+  /* producer errors */
   static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
       "%s may not depend on the production executor.";
 

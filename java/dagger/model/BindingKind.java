@@ -106,4 +106,19 @@ public enum BindingKind {
   /** A binding for a members injection method on a component. */
   MEMBERS_INJECTION,
   ;
+
+  /**
+   * Returns {@code true} if this is a kind of multibinding (not a contribution to a multibinding,
+   * but the multibinding itself).
+   */
+  public boolean isMultibinding() {
+    switch (this) {
+      case MULTIBOUND_MAP:
+      case MULTIBOUND_SET:
+        return true;
+
+      default:
+        return false;
+    }
+  }
 }

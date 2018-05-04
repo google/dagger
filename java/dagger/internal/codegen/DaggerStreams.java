@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.function.Function;
@@ -36,6 +37,7 @@ public final class DaggerStreams {
    * Returns a {@link Collector} that accumulates the input elements into a new {@link
    * ImmutableList}, in encounter order.
    */
+  // TODO(b/68008628): Use ImmutableList.toImmutableList().
   public static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
     return collectingAndThen(toList(), ImmutableList::copyOf);
   }
@@ -44,6 +46,7 @@ public final class DaggerStreams {
    * Returns a {@link Collector} that accumulates the input elements into a new {@link
    * ImmutableSet}, in encounter order.
    */
+  // TODO(b/68008628): Use ImmutableSet.toImmutableSet().
   public static <T> Collector<T, ?, ImmutableSet<T>> toImmutableSet() {
     return collectingAndThen(toList(), ImmutableSet::copyOf);
   }
@@ -53,6 +56,7 @@ public final class DaggerStreams {
    * and values are the result of applying the provided mapping functions to the input elements.
    * Entries appear in the result {@code ImmutableMap} in encounter order.
    */
+  // TODO(b/68008628): Use ImmutableMap.toImmutableMap().
   public static <T, K, V> Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
       Function<? super T, K> keyMapper, Function<? super T, V> valueMapper) {
     return Collectors.mapping(
@@ -62,6 +66,24 @@ public final class DaggerStreams {
             (ImmutableMap.Builder<K, V> builder, Map.Entry<K, V> entry) -> builder.put(entry),
             (left, right) -> left.putAll(right.build()),
             ImmutableMap.Builder::build));
+  }
+
+  /**
+   * Returns a {@link Collector} that accumulates elements into an {@code ImmutableSetMultimap}
+   * whose keys and values are the result of applying the provided mapping functions to the input
+   * elements. Entries appear in the result {@code ImmutableSetMultimap} in encounter order.
+   */
+  // TODO(b/68008628): Use ImmutableSetMultimap.toImmutableSetMultimap().
+  public static <T, K, V> Collector<T, ?, ImmutableSetMultimap<K, V>> toImmutableSetMultimap(
+      Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends V> valueMapper) {
+    return Collectors.mapping(
+        value -> Maps.immutableEntry(keyMapper.apply(value), valueMapper.apply(value)),
+        Collector.of(
+            ImmutableSetMultimap::builder,
+            (ImmutableSetMultimap.Builder<K, V> builder, Map.Entry<K, V> entry) ->
+                builder.put(entry),
+            (left, right) -> left.putAll(right.build()),
+            ImmutableSetMultimap.Builder::build));
   }
 
   /**

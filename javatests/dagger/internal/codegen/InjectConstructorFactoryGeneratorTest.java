@@ -1102,54 +1102,6 @@ public final class InjectConstructorFactoryGeneratorTest {
   }
 
   @Test
-  public void neitherTypeNorSupertypeRequiresMemberInjection() {
-    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
-        "package test;",
-        "",
-        "class A {}");
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
-        "package test;",
-        "",
-        "import javax.inject.Inject;",
-        "",
-        "class B extends A {",
-        "  @Inject B() {}",
-        "}");
-    JavaFileObject expectedFactory =
-        JavaFileObjects.forSourceLines(
-            "test.B_Factory",
-            "package test;",
-            "",
-            "import dagger.internal.Factory;",
-            IMPORT_GENERATED_ANNOTATION,
-            "",
-            GENERATED_ANNOTATION,
-            "public final class B_Factory implements Factory<B> {",
-            "  private static final B_Factory INSTANCE = new B_Factory();",
-            "",
-            "  @Override public B get() {",
-            "    return provideInstance();",
-            "  }",
-            "",
-            "  public static B provideInstance() {",
-            "    return new B();",
-            "  }",
-            "",
-            "  public static B_Factory create() {",
-            "    return INSTANCE;",
-            "  }",
-            "",
-            "  public static B newB() {",
-            "    return new B();",
-            "  }",
-            "}");
-    assertAbout(javaSources()).that(ImmutableList.of(aFile, bFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and().generatesSources(expectedFactory);
-  }
-
-  @Test
   public void wildcardDependency() {
     JavaFileObject file = JavaFileObjects.forSourceLines("test.InjectConstructor",
         "package test;",
@@ -1453,10 +1405,6 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "  static class B {",
         "    @Inject A a;",
-        "  }",
-        "  @Component interface SimpleComponent {",
-        "    A a();",
-        "    void inject(B b);",
         "  }",
         "}");
     JavaFileObject aFactory =

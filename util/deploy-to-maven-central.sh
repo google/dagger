@@ -20,16 +20,6 @@ if [[ "$version_name" =~ " " ]]; then
   exit 3
 fi
 
-#validate key
-keystatus=$(gpg --list-keys | grep ${key} | awk '{print $1}')
-if [ "${keystatus}" != "pub" ]; then
-  echo "Could not find public key with label ${key}"
-  echo -n "Available keys from: "
-  gpg --list-keys | grep --invert-match '^sub'
-
-  exit 64
-fi
-
 bazel test //...
 
 bash $(dirname $0)/execute-deploy.sh \
@@ -60,4 +50,5 @@ for generated_pom_file in dagger*pom.xml; do
   rm "${generated_pom_file}.asc"
 done
 
-
+git tag dagger-"${version_name}"
+git push --tags origin master

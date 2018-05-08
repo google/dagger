@@ -68,12 +68,9 @@ final class Scopes {
    *
    * <p>It's readable source because it has had common package prefixes removed, e.g.
    * {@code @javax.inject.Singleton} is returned as {@code @Singleton}.
-   *
-   * <p>Does not return any annotation values, since {@link javax.inject.Scope @Scope} annotations
-   * are not supposed to have any.
    */
   static String getReadableSource(Scope scope) {
-    return stripCommonTypePrefixes("@" + scope.scopeAnnotationElement().getQualifiedName());
+    return stripCommonTypePrefixes(scope.toString());
   }
 
   /** Returns all of the associated scopes for a source code element. */

@@ -90,6 +90,17 @@ public class GraphValidationScopingTest {
         "",
         "@Scope",
         "@interface PerTest {}");
+    JavaFileObject scopeWithAttribute =
+        JavaFileObjects.forSourceLines(
+            "test.Per",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface Per {",
+            "  Class<?> value();",
+            "}");
     JavaFileObject typeFile = JavaFileObjects.forSourceLines("test.ScopedType",
         "package test;",
         "",
@@ -97,7 +108,7 @@ public class GraphValidationScopingTest {
         "",
         "@PerTest", // incompatible scope
         "class ScopedType {",
-        "  @Inject ScopedType(String s, long l, float f) {}",
+        "  @Inject ScopedType(String s, long l, float f, boolean b) {}",
         "}");
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.ScopedModule",
         "package test;",
@@ -111,14 +122,17 @@ public class GraphValidationScopingTest {
         "  @Provides @PerTest String string() { return \"a string\"; }", // incompatible scope
         "  @Provides long integer() { return 0L; }", // unscoped - valid
         "  @Provides @Singleton float floatingPoint() { return 0.0f; }", // same scope - valid
+        "  @Provides @Per(MyComponent.class) boolean bool() { return false; }", // incompatible
         "}");
     String errorMessage =
         "test.MyComponent scoped with @Singleton "
             + "may not reference bindings with different scopes:\n"
             + "      @test.PerTest class test.ScopedType\n"
-            + "      @Provides @test.PerTest String test.ScopedModule.string()";
+            + "      @Provides @test.PerTest String test.ScopedModule.string()\n"
+            + "      @Provides @test.Per(test.MyComponent.class) boolean test.ScopedModule.bool()";
     Compilation compilation =
-        daggerCompiler().compile(componentFile, scopeFile, typeFile, moduleFile);
+        daggerCompiler()
+            .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(errorMessage);
   }

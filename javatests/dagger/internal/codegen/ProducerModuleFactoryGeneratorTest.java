@@ -18,8 +18,9 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatProductionModuleMethod;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
@@ -38,8 +39,8 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_R
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.inject.Qualifier;
 import javax.tools.JavaFileObject;
@@ -185,11 +186,10 @@ public class ProducerModuleFactoryGeneratorTest {
         "  }",
         "}");
     String errorMessage = String.format(BINDING_METHOD_WITH_SAME_NAME, "Produces");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage).in(moduleFile).onLine(8)
-        .and().withErrorContaining(errorMessage).in(moduleFile).onLine(12);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage).inFile(moduleFile).onLine(8);
+    assertThat(compilation).hadErrorContaining(errorMessage).inFile(moduleFile).onLine(12);
   }
 
   @Test
@@ -216,12 +216,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "  @ProducerModule private static final class PrivateModule {",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Modules cannot be private.")
-        .in(moduleFile).onLine(6);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Modules cannot be private.")
+        .inFile(moduleFile)
+        .onLine(6);
   }
 
   @Test
@@ -237,12 +237,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "    }",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Modules cannot be enclosed in private types.")
-        .in(moduleFile).onLine(7);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Modules cannot be enclosed in private types.")
+        .inFile(moduleFile)
+        .onLine(7);
   }
 
   @Test
@@ -259,11 +259,10 @@ public class ProducerModuleFactoryGeneratorTest {
             "@ProducerModule(includes = X.class)",
             "public final class FooModule {",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(xFile, moduleFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(xFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED,
                 "X",
@@ -306,16 +305,22 @@ public class ProducerModuleFactoryGeneratorTest {
         "@ProducerModule",
         "public final class OtherPublicModule {",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(
-            publicModuleFile, nonPublicModule1File, nonPublicModule2File, otherPublicModuleFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("This module is public, but it includes non-public "
-            + "(or effectively non-public) modules. "
-            + "Either reduce the visibility of this module or make "
-            + "test.NonPublicModule1 and test.NonPublicModule2 public.")
-        .in(publicModuleFile).onLine(8);
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                publicModuleFile,
+                nonPublicModule1File,
+                nonPublicModule2File,
+                otherPublicModuleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "This module is public, but it includes non-public "
+                + "(or effectively non-public) modules. "
+                + "Either reduce the visibility of this module or make "
+                + "test.NonPublicModule1 and test.NonPublicModule2 public.")
+        .inFile(publicModuleFile)
+        .onLine(8);
   }
 
   @Test public void argumentNamedModuleCompiles() {
@@ -331,10 +336,8 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).succeeded();
   }
 
   @Test public void singleProducesMethodNoArgsFuture() {

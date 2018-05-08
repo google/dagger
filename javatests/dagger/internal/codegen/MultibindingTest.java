@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.testing.compile.Compilation;
@@ -49,12 +48,12 @@ public class MultibindingTest {
             "  }",
             "}");
 
-    assertThat(module)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "Multiple multibinding annotations cannot be placed on the same Provides method")
-        .in(module)
+        .inFile(module)
         .onLine(10);
   }
 
@@ -78,22 +77,22 @@ public class MultibindingTest {
             "  @IntoMap Map<Integer, Double> map();",
             "}");
 
-    assertThat(component)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .in(component)
-        .onLine(11)
-        .and()
-        .withErrorContaining(
+        .inFile(component)
+        .onLine(11);
+    assertThat(compilation)
+        .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .in(component)
-        .onLine(12)
-        .and()
-        .withErrorContaining(
+        .inFile(component)
+        .onLine(12);
+    assertThat(compilation)
+        .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .in(component)
+        .inFile(component)
         .onLine(13);
   }
 

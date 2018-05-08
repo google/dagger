@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -91,12 +91,11 @@ public class MissingBindingSuggestionsTest {
         "  BarComponent getBar(BarModule barModule);",
         "}");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(
-            fooComponent, barComponent, topComponent, foo, bar, barModule))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("A binding with matching key exists in component: test.BarComponent");
+    Compilation compilation =
+        daggerCompiler().compile(fooComponent, barComponent, topComponent, foo, bar, barModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("A binding with matching key exists in component: test.BarComponent");
   }
 
   @Test public void suggestsBindingInNestedSubcomponent() {
@@ -151,11 +150,11 @@ public class MissingBindingSuggestionsTest {
         "  BarComponent getBar();",
         "}");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(
-            fooComponent, barComponent, bazComponent, topComponent, foo, baz, bazModule))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("A binding with matching key exists in component: test.BazComponent");
+    Compilation compilation =
+        daggerCompiler()
+            .compile(fooComponent, barComponent, bazComponent, topComponent, foo, baz, bazModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("A binding with matching key exists in component: test.BazComponent");
   }
 }

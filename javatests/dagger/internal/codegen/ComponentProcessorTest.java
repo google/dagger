@@ -21,6 +21,7 @@ import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CodeBlocks.stringLiteral;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
@@ -29,10 +30,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
 import com.squareup.javapoet.CodeBlock;
 import dagger.MembersInjector;
@@ -2518,10 +2517,6 @@ public class ComponentProcessorTest {
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
         .containsElementsIn(expectedPattern);
-  }
-
-  private static Compiler daggerCompiler(Processor... extraProcessors) {
-    return javac().withProcessors(Lists.asList(new ComponentProcessor(), extraProcessors));
   }
 
   /**

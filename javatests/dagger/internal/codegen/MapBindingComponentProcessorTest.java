@@ -16,13 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
-import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
@@ -1127,18 +1124,13 @@ public class MapBindingComponentProcessorTest {
             "interface TestComponent {",
             "  Map<String, Object> objects();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(module, componentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("The same map key is bound more than once")
-        .and()
-        .withErrorContaining("provideObjectForAKey()")
-        .and()
-        .withErrorContaining("provideObjectForAKeyAgain()")
-        .and()
-        .withErrorCount(1);
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(module, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("The same map key is bound more than once");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKeyAgain()");
+    assertThat(compilation).hadErrorCount(1);
   }
 
   @Test
@@ -1186,17 +1178,14 @@ public class MapBindingComponentProcessorTest {
             "interface TestComponent {",
             "  Map<String, Object> objects();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(module, stringKeyTwoFile, componentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("uses more than one @MapKey annotation type")
-        .and()
-        .withErrorContaining("provideObjectForAKey()")
-        .and()
-        .withErrorContaining("provideObjectForBKey()")
-        .and()
-        .withErrorCount(1);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module, stringKeyTwoFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
+    assertThat(compilation).hadErrorContaining("provideObjectForBKey()");
+    assertThat(compilation).hadErrorCount(1);
   }
 }

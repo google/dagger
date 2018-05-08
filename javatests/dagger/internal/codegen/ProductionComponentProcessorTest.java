@@ -17,12 +17,13 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
-import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -52,10 +53,9 @@ public class ProductionComponentProcessorTest {
         "",
         "@ProductionComponent",
         "final class NotAComponent {}");
-    assertAbout(javaSource()).that(componentFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("interface");
+    Compilation compilation = daggerCompiler().compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("interface");
   }
 
   @Test public void componentOnEnum() {
@@ -68,12 +68,10 @@ public class ProductionComponentProcessorTest {
         "enum NotAComponent {",
         "  INSTANCE",
         "}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("interface");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("interface");
   }
 
   @Test public void componentOnAnnotation() {
@@ -84,12 +82,10 @@ public class ProductionComponentProcessorTest {
         "",
         "@ProductionComponent",
         "@interface NotAComponent {}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("interface");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("interface");
   }
 
   @Test public void nonModuleModule() {
@@ -100,12 +96,11 @@ public class ProductionComponentProcessorTest {
         "",
         "@ProductionComponent(modules = Object.class)",
         "interface NotAComponent {}");
-    assertAbout(javaSource())
-        .that(componentFile)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("is not annotated with one of @Module, @ProducerModule");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("is not annotated with one of @Module, @ProducerModule");
   }
 
   @Test
@@ -161,12 +156,12 @@ public class ProductionComponentProcessorTest {
             "    SimpleComponent build();",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, producerModuleFile, componentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("may not depend on the production executor");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(moduleFile, producerModuleFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("may not depend on the production executor");
   }
 
   @Test
@@ -576,17 +571,16 @@ public class ProductionComponentProcessorTest {
         "    ListenableFuture<A> a();",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(component)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .withWarningContaining("@Nullable on @Produces methods does not do anything")
-        .in(component)
-        .onLine(33)
-        .and()
-        .withWarningContaining("@Nullable on @Produces methods does not do anything")
-        .in(component)
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining("@Nullable on @Produces methods does not do anything")
+        .inFile(component)
+        .onLine(33);
+    assertThat(compilation)
+        .hadWarningContaining("@Nullable on @Produces methods does not do anything")
+        .inFile(component)
         .onLine(36);
   }
 }

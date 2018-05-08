@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -63,12 +59,13 @@ public class SubcomponentBuilderValidationTest {
         "    ChildComponent build();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.moreThanOneRefToSubcomponent(),
-            "test.ChildComponent", "[child(), builder()]"))
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.moreThanOneRefToSubcomponent(), "test.ChildComponent", "[child(), builder()]"))
+        .inFile(componentFile);
   }
 
   @Test
@@ -96,12 +93,15 @@ public class SubcomponentBuilderValidationTest {
         "    ChildComponent build();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.moreThanOneRefToSubcomponent(),
-            "test.ChildComponent", "[builder1(), builder2()]"))
-        .in(componentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.moreThanOneRefToSubcomponent(),
+                "test.ChildComponent",
+                "[builder1(), builder2()]"))
+        .inFile(componentFile);
   }
 
   @Test
@@ -133,12 +133,13 @@ public class SubcomponentBuilderValidationTest {
         "    ChildComponent build();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.moreThanOne(),
-            "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]"))
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.moreThanOne(), "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]"))
+        .inFile(childComponentFile);
   }
 
   @Test
@@ -165,11 +166,9 @@ public class SubcomponentBuilderValidationTest {
         "     ChildComponent build();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.generics())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.generics()).inFile(childComponentFile);
   }
 
   @Test
@@ -181,11 +180,9 @@ public class SubcomponentBuilderValidationTest {
         "",
         "@Subcomponent.Builder",
         "interface Builder {}");
-    assertAbout(javaSource()).that(builder)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeInComponent())
-        .in(builder);
+    Compilation compilation = daggerCompiler().compile(builder);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeInComponent()).inFile(builder);
   }
 
   @Test
@@ -210,11 +207,11 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.missingBuildMethod())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.missingBuildMethod())
+        .inFile(childComponentFile);
   }
 
   @Test
@@ -229,11 +226,9 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  private interface Builder {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.isPrivate())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.isPrivate()).inFile(childComponentFile);
   }
 
   @Test
@@ -248,11 +243,9 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  abstract class Builder {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeStatic())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeStatic()).inFile(childComponentFile);
   }
 
   @Test
@@ -267,11 +260,9 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  static class Builder {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeAbstract())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(MSGS.mustBeAbstract()).inFile(childComponentFile);
   }
 
   @Test
@@ -288,11 +279,11 @@ public class SubcomponentBuilderValidationTest {
         "    Builder(String unused) {}",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
+        .inFile(childComponentFile);
   }
 
   @Test
@@ -310,11 +301,11 @@ public class SubcomponentBuilderValidationTest {
         "    Builder(String unused) {}",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
+        .inFile(childComponentFile);
   }
 
   @Test
@@ -329,11 +320,11 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  enum Builder {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.mustBeClassOrInterface())
-        .in(childComponentFile);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.mustBeClassOrInterface())
+        .inFile(childComponentFile);
   }
 
   @Test
@@ -350,11 +341,12 @@ public class SubcomponentBuilderValidationTest {
         "    String build();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.buildMustReturnComponentType())
-            .in(childComponentFile).onLine(9);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.buildMustReturnComponentType())
+        .inFile(childComponentFile)
+        .onLine(9);
   }
 
   @Test
@@ -373,12 +365,12 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
-            .in(childComponentFile).onLine(12);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
+        .inFile(childComponentFile)
+        .onLine(12);
   }
 
   @Test
@@ -396,11 +388,12 @@ public class SubcomponentBuilderValidationTest {
         "    ChildComponent create();",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
-            .in(childComponentFile).onLine(10);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
+        .inFile(childComponentFile)
+        .onLine(10);
   }
 
   @Test
@@ -420,12 +413,12 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
-            .in(childComponentFile).onLine(13);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
+        .inFile(childComponentFile)
+        .onLine(13);
   }
 
   @Test
@@ -444,13 +437,16 @@ public class SubcomponentBuilderValidationTest {
         "    Builder set(Number n, Double d);",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustTakeOneArg())
-            .in(childComponentFile).onLine(10)
-        .and().withErrorContaining(MSGS.methodsMustTakeOneArg())
-            .in(childComponentFile).onLine(11);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(childComponentFile)
+        .onLine(10);
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .inFile(childComponentFile)
+        .onLine(11);
   }
 
   @Test
@@ -470,13 +466,14 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(MSGS.inheritedMethodsMustTakeOneArg(),
-                "set1(java.lang.String,java.lang.Integer)"))
-            .in(childComponentFile).onLine(13);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.inheritedMethodsMustTakeOneArg(), "set1(java.lang.String,java.lang.Integer)"))
+        .inFile(childComponentFile)
+        .onLine(13);
   }
 
   @Test
@@ -494,11 +491,12 @@ public class SubcomponentBuilderValidationTest {
         "    String set(Integer i);",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
-            .in(childComponentFile).onLine(10);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
+        .inFile(childComponentFile)
+        .onLine(10);
   }
 
   @Test
@@ -518,13 +516,13 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(),
-                "set(java.lang.Integer)"))
-            .in(childComponentFile).onLine(13);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
+        .inFile(childComponentFile)
+        .onLine(13);
   }
 
   @Test
@@ -542,11 +540,12 @@ public class SubcomponentBuilderValidationTest {
         "    <T> Builder set(T t);",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-            .in(childComponentFile).onLine(10);
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
+        .inFile(childComponentFile)
+        .onLine(10);
   }
 
   @Test
@@ -566,12 +565,13 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-            .in(childComponentFile).onLine(13);
+        .inFile(childComponentFile)
+        .onLine(13);
   }
 
   @Test
@@ -617,16 +617,16 @@ public class SubcomponentBuilderValidationTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().compile(moduleFile, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(),
                 "test.TestModule",
                 "[set1(test.TestModule), set2(test.TestModule)]"))
-        .in(childComponentFile)
+        .inFile(childComponentFile)
         .onLine(10);
   }
 
@@ -676,14 +676,14 @@ public class SubcomponentBuilderValidationTest {
             "    void set2(TestModule s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler().compile(moduleFile, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
-        .in(childComponentFile)
+        .inFile(childComponentFile)
         .onLine(14);
   }
 
@@ -758,14 +758,16 @@ public class SubcomponentBuilderValidationTest {
         "    void set2(Integer s);",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
-            String.format(MSGS.extraSetters(),
-                  "[void test.ChildComponent.Builder.set1(String),"
-                  + " void test.ChildComponent.Builder.set2(Integer)]"))
-            .in(childComponentFile).onLine(8);
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.extraSetters(),
+                "[void test.ChildComponent.Builder.set1(String),"
+                    + " void test.ChildComponent.Builder.set2(Integer)]"))
+        .inFile(childComponentFile)
+        .onLine(8);
   }
 
   @Test
@@ -827,19 +829,17 @@ public class SubcomponentBuilderValidationTest {
         "    ChildComponent create();",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile,
-            module2File,
-            module3File,
-            componentFile,
-            childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(moduleFile, module2File, module3File, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             // Ignores Test2Module because we can construct it ourselves.
             // TODO(sameb): Ignore Test3Module because it's not used within transitive dependencies.
             String.format(MSGS.missingSetters(), "[test.TestModule, test.Test3Module]"))
-            .in(childComponentFile).onLine(11);
+        .inFile(childComponentFile)
+        .onLine(11);
   }
 
   @Test

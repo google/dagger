@@ -17,9 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
@@ -39,7 +40,7 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.CompileTester;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import com.squareup.javapoet.CodeBlock;
 import javax.tools.JavaFileObject;
@@ -147,12 +148,11 @@ public class ModuleFactoryGeneratorTest {
         "",
         "@Module",
         "final class TestModule<A> {}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT)
-        .in(moduleFile)
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT)
+        .inFile(moduleFile)
         .onLine(6);
   }
 
@@ -226,11 +226,10 @@ public class ModuleFactoryGeneratorTest {
         "",
         "@Module(includes = Void.class)",
         "class TestModule {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(module))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             String.format(
                 ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED, "java.lang.Void", "@Module"));
   }
@@ -692,12 +691,16 @@ public class ModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-    .withErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME)).in(moduleFile).onLine(8)
-        .and().withErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME))
-        .in(moduleFile).onLine(12);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME))
+        .inFile(moduleFile)
+        .onLine(8);
+    assertThat(compilation)
+        .hadErrorContaining(formatErrorMessage(BINDING_METHOD_WITH_SAME_NAME))
+        .inFile(moduleFile)
+        .onLine(12);
   }
 
   @Test
@@ -720,16 +723,15 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(formatErrorMessage(BINDING_METHOD_THROWS_CHECKED))
-        .in(moduleFile)
-        .onLine(8)
-        .and()
-        .withErrorContaining(formatErrorMessage(BINDING_METHOD_THROWS_CHECKED))
-        .in(moduleFile)
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(formatErrorMessage(BINDING_METHOD_THROWS_CHECKED))
+        .inFile(moduleFile)
+        .onLine(8);
+    assertThat(compilation)
+        .hadErrorContaining(formatErrorMessage(BINDING_METHOD_THROWS_CHECKED))
+        .inFile(moduleFile)
         .onLine(12);
   }
 
@@ -769,9 +771,8 @@ public class ModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).succeeded();
   }
 
   @Test
@@ -785,12 +786,12 @@ public class ModuleFactoryGeneratorTest {
         "  @Module private static final class PrivateModule {",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Modules cannot be private.")
-        .in(moduleFile).onLine(6);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Modules cannot be private.")
+        .inFile(moduleFile)
+        .onLine(6);
   }
 
   @Test
@@ -806,12 +807,12 @@ public class ModuleFactoryGeneratorTest {
         "    }",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Modules cannot be enclosed in private types.")
-        .in(moduleFile).onLine(7);
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Modules cannot be enclosed in private types.")
+        .inFile(moduleFile)
+        .onLine(7);
   }
 
   @Test
@@ -850,16 +851,22 @@ public class ModuleFactoryGeneratorTest {
         "@Module",
         "public final class OtherPublicModule {",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(
-            publicModuleFile, nonPublicModule1File, nonPublicModule2File, otherPublicModuleFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("This module is public, but it includes non-public "
-            + "(or effectively non-public) modules. "
-            + "Either reduce the visibility of this module or make "
-            + "test.NonPublicModule1 and test.NonPublicModule2 public.")
-        .in(publicModuleFile).onLine(8);
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                publicModuleFile,
+                nonPublicModule1File,
+                nonPublicModule2File,
+                otherPublicModuleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "This module is public, but it includes non-public "
+                + "(or effectively non-public) modules. "
+                + "Either reduce the visibility of this module or make "
+                + "test.NonPublicModule1 and test.NonPublicModule2 public.")
+        .inFile(publicModuleFile)
+        .onLine(8);
   }
 
   @Test
@@ -1309,10 +1316,9 @@ public class ModuleFactoryGeneratorTest {
         "    return \"foo\";",
         "  }",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, QUALIFIER_A, QUALIFIER_B))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(BINDING_METHOD_MULTIPLE_QUALIFIERS);
+    Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(BINDING_METHOD_MULTIPLE_QUALIFIERS);
   }
 
   @Test public void providerDependsOnProduced() {
@@ -1329,10 +1335,10 @@ public class ModuleFactoryGeneratorTest {
         "    return \"foo\";",
         "  }",
         "}");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Producer may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Producer may only be injected in @Produces methods");
   }
 
   @Test public void providerDependsOnProducer() {
@@ -1349,10 +1355,10 @@ public class ModuleFactoryGeneratorTest {
         "    return \"foo\";",
         "  }",
         "}");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Produced may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Produced may only be injected in @Produces methods");
   }
 
   private static final String BINDS_METHOD = "@Binds abstract Foo bindFoo(FooImpl impl);";
@@ -1364,25 +1370,47 @@ public class ModuleFactoryGeneratorTest {
   private static final String SOME_ABSTRACT_METHOD = "abstract void blah();";
 
   @Test
-  public void moduleMethodPermutations() {
-    assertThatMethodCombination(BINDS_METHOD, INSTANCE_PROVIDES_METHOD)
-        .failsToCompile()
-        .withErrorContaining(
+  public void bindsWithInstanceProvides() {
+    Compilation compilation = compileMethodCombination(BINDS_METHOD, INSTANCE_PROVIDES_METHOD);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "A @Module may not contain both non-static @Provides methods and "
                 + "abstract @Binds or @Multibinds declarations");
-    assertThatMethodCombination(MULTIBINDS_METHOD, INSTANCE_PROVIDES_METHOD)
-        .failsToCompile()
-        .withErrorContaining(
-            "A @Module may not contain both non-static @Provides methods and "
-                + "abstract @Binds or @Multibinds declarations");
-    assertThatMethodCombination(BINDS_METHOD, STATIC_PROVIDES_METHOD).compilesWithoutError();
-    assertThatMethodCombination(BINDS_METHOD, MULTIBINDS_METHOD).compilesWithoutError();
-    assertThatMethodCombination(MULTIBINDS_METHOD, STATIC_PROVIDES_METHOD).compilesWithoutError();
-    assertThatMethodCombination(INSTANCE_PROVIDES_METHOD, SOME_ABSTRACT_METHOD)
-        .compilesWithoutError();
   }
 
-  private CompileTester assertThatMethodCombination(String... methodLines) {
+  @Test
+  public void multibindsWithInstanceProvides() {
+    Compilation compilation = compileMethodCombination(MULTIBINDS_METHOD, INSTANCE_PROVIDES_METHOD);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "A @Module may not contain both non-static @Provides methods and "
+                + "abstract @Binds or @Multibinds declarations");
+  }
+
+  @Test
+  public void bindsWithStaticProvides() {
+    assertThat(compileMethodCombination(BINDS_METHOD, STATIC_PROVIDES_METHOD)).succeeded();
+  }
+
+  @Test
+  public void bindsWithMultibinds() {
+    assertThat(compileMethodCombination(BINDS_METHOD, MULTIBINDS_METHOD)).succeeded();
+  }
+
+  @Test
+  public void multibindsWithStaticProvides() {
+    assertThat(compileMethodCombination(MULTIBINDS_METHOD, STATIC_PROVIDES_METHOD)).succeeded();
+  }
+
+  @Test
+  public void instanceProvidesWithAbstractMethod() {
+    assertThat(compileMethodCombination(INSTANCE_PROVIDES_METHOD, SOME_ABSTRACT_METHOD))
+        .succeeded();
+  }
+
+  private Compilation compileMethodCombination(String... methodLines) {
     JavaFileObject fooFile =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -1430,8 +1458,8 @@ public class ModuleFactoryGeneratorTest {
 
     JavaFileObject bindsMethodAndInstanceProvidesMethodModuleFile =
         JavaFileObjects.forSourceLines("test.TestModule", moduleLines);
-    return assertThat(
-            fooFile, fooImplFile, barFile, bazFile, bindsMethodAndInstanceProvidesMethodModuleFile)
-        .processedWith(new ComponentProcessor());
+    return daggerCompiler()
+        .compile(
+            fooFile, fooImplFile, barFile, bazFile, bindsMethodAndInstanceProvidesMethodModuleFile);
   }
 }

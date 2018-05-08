@@ -16,8 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -54,16 +56,16 @@ public class ComponentHierarchyValidatorTest {
             "@Subcomponent",
             "interface Child {}");
 
-    assertThat(component, subcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("conflicting scopes")
-        .and().withErrorContaining("test.Parent also has @Singleton");
+    Compilation compilation = daggerCompiler().compile(component, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("conflicting scopes");
+    assertThat(compilation).hadErrorContaining("test.Parent also has @Singleton");
 
-    assertThat(component, subcomponent)
-        .withCompilerOptions("-Adagger.disableInterComponentScopeValidation=none")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation withoutScopeValidation =
+        daggerCompiler()
+            .withOptions("-Adagger.disableInterComponentScopeValidation=none")
+            .compile(component, subcomponent);
+    assertThat(withoutScopeValidation).succeeded();
   }
   
   @Test
@@ -117,8 +119,8 @@ public class ComponentHierarchyValidatorTest {
             "class ChildModule {",
             "  @Provides @ProductionScope String childScopedString() { return new String(); }",
             "}");
-    assertThat(component, subcomponent, parentModule, childModule)
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation =
+        daggerCompiler().compile(component, subcomponent, parentModule, childModule);
+    assertThat(compilation).succeeded();
   }
 }

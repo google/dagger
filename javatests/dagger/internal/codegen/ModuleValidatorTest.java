@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
@@ -85,12 +84,12 @@ public final class ModuleValidatorTest {
     JavaFileObject notASubcomponent =
         JavaFileObjects.forSourceLines(
             "test.NotASubcomponent", "package test;", "", "class NotASubcomponent {}");
-    assertThat(module, notASubcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module, notASubcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.NotASubcomponent is not a @Subcomponent or @ProductionSubcomponent")
-        .in(module)
+        .inFile(module)
         .onLine(5);
   }
 
@@ -119,12 +118,12 @@ public final class ModuleValidatorTest {
             "    Sub build();",
             "  }",
             "}");
-    assertThat(module, subcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.Sub.Builder is a @Subcomponent.Builder. Did you mean to use test.Sub?")
-        .in(module)
+        .inFile(module)
         .onLine(5);
   }
 
@@ -153,12 +152,12 @@ public final class ModuleValidatorTest {
             "    Sub build();",
             "  }",
             "}");
-    assertThat(module, subcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.Sub.Builder is a @ProductionSubcomponent.Builder. Did you mean to use test.Sub?")
-        .in(module)
+        .inFile(module)
         .onLine(5);
   }
 
@@ -182,15 +181,15 @@ public final class ModuleValidatorTest {
             "",
             "@Subcomponent",
             "interface NoBuilder {}");
-    assertThat(module, subcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.NoBuilder doesn't have a @Subcomponent.Builder, which is required when used "
                 + "with @"
                 + moduleType.simpleName()
                 + ".subcomponents")
-        .in(module)
+        .inFile(module)
         .onLine(5);
   }
 
@@ -214,15 +213,15 @@ public final class ModuleValidatorTest {
             "",
             "@ProductionSubcomponent",
             "interface NoBuilder {}");
-    assertThat(module, subcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.NoBuilder doesn't have a @ProductionSubcomponent.Builder, which is required "
                 + "when used with @"
                 + moduleType.simpleName()
                 + ".subcomponents")
-        .in(module)
+        .inFile(module)
         .onLine(5);
   }
 
@@ -237,11 +236,11 @@ public final class ModuleValidatorTest {
             "",
             "@Module(subcomponents = int.class)",
             "class TestModule {}");
-    assertThat(module)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("int is not a valid subcomponent type")
-        .in(module)
+    Compilation compilation = daggerCompiler().compile(module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("int is not a valid subcomponent type")
+        .inFile(module)
         .onLine(5);
   }
 

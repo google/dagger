@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -48,15 +48,14 @@ public class ForReleasableReferencesValidatorTest {
             "interface Injects {",
             "  @ForReleasableReferences(NotAScope.class) ReleasableReferenceManager manager();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(notAScope, injects))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(notAScope, injects);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "The value of @ForReleasableReferences must be a reference-releasing scope. "
                 + "Did you mean to annotate test.NotAScope with @javax.inject.Scope and "
                 + "@dagger.releasablereferences.CanReleaseReferences?")
-        .in(injects)
+        .inFile(injects)
         .onLine(7)
         .atColumn(3);
   }
@@ -87,15 +86,14 @@ public class ForReleasableReferencesValidatorTest {
             "interface Injects {",
             "  @ForReleasableReferences(TestScope.class) ReleasableReferenceManager manager();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(testScope, injects))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(testScope, injects);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "The value of @ForReleasableReferences must be a reference-releasing scope. "
                 + "Did you mean to annotate test.TestScope with "
                 + "@dagger.releasablereferences.CanReleaseReferences?")
-        .in(injects)
+        .inFile(injects)
         .onLine(7)
         .atColumn(3);
   }

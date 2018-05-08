@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
@@ -853,13 +852,12 @@ public class MembersInjectionTest {
             "  void inject(foo target);",
             "}");
 
-    assertAbout(javaSources())
-        .that(ImmutableList.of(foo, fooModule, fooComponent))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .and()
-        .generatesFileNamed(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(foo, fooModule, fooComponent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation).generatedFile(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
   }
 
   @Test
@@ -972,14 +970,9 @@ public class MembersInjectionTest {
         "    @Inject int field;",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(file)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS)
-        .in(file)
-        .onLine(6);
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(INJECT_INTO_PRIVATE_CLASS).inFile(file).onLine(6);
   }
 
   @Test public void privateNestedClassWarning() {
@@ -993,15 +986,13 @@ public class MembersInjectionTest {
         "    @Inject int field;",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(file)
-        .withCompilerOptions(
-            compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS)
-        .in(file)
-        .onLine(6);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(
+                compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
+            .compile(file);
+    assertThat(compilation).succeeded();
+    assertThat(compilation).hadWarningContaining(INJECT_INTO_PRIVATE_CLASS).inFile(file).onLine(6);
   }
 
   @Test public void privateSuperclassIsOkIfNotInjectedInto() {
@@ -1017,11 +1008,8 @@ public class MembersInjectionTest {
         "    @Inject int field;",
         "  }",
         "}");
-    assertAbout(javaSource())
-        .that(file)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).succeeded();
   }
 
   @Test public void rawFrameworkTypes() {
@@ -1047,16 +1035,15 @@ public class MembersInjectionTest {
             "  void inject(RawProviderField rawProviderField);",
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
-    assertThat(file)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("javax.inject.Provider cannot be provided")
-        .in(file)
-        .onLine(17)
-        .and()
-        .withErrorContaining("javax.inject.Provider cannot be provided")
-        .in(file)
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .inFile(file)
+        .onLine(17);
+    assertThat(compilation)
+        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .inFile(file)
         .onLine(18);
   }
 

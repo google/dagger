@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -61,12 +61,12 @@ public class RepeatedModuleValidationTest {
             "interface TestComponent {",
             "  TestSubcomponent newTestSubcomponent(TestModule module);",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(MODULE_FILE, subcomponentFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("TestModule is present in test.TestComponent.")
-        .in(componentFile)
+    Compilation compilation =
+        daggerCompiler().compile(MODULE_FILE, subcomponentFile, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("TestModule is present in test.TestComponent.")
+        .inFile(componentFile)
         .onLine(7)
         .atColumn(51);
   }
@@ -99,10 +99,9 @@ public class RepeatedModuleValidationTest {
             "interface TestComponent {",
             "  TestSubcomponent.Builder newTestSubcomponentBuilder();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(MODULE_FILE, subcomponentFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation =
+        daggerCompiler().compile(MODULE_FILE, subcomponentFile, componentFile);
+    assertThat(compilation).succeeded();
     // TODO(gak): assert about the warning when we have that ability
   }
 
@@ -129,9 +128,8 @@ public class RepeatedModuleValidationTest {
             "interface TestComponent {",
             "  TestSubcomponent newTestSubcomponent();",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(MODULE_FILE, subcomponentFile, componentFile))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+    Compilation compilation =
+        daggerCompiler().compile(MODULE_FILE, subcomponentFile, componentFile);
+    assertThat(compilation).succeeded();
   }
 }

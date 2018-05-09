@@ -16,7 +16,6 @@
 
 package dagger.android;
 
-import com.google.errorprone.annotations.DoNotMock;
 import dagger.BindsInstance;
 import dagger.internal.Beta;
 
@@ -33,8 +32,6 @@ import dagger.internal.Beta;
  * @see DispatchingAndroidInjector
  */
 @Beta
-@DoNotMock(
-    "Faked versions of AndroidInjector are much clearer than a mock. See https://google.github.io/dagger/testing")
 public interface AndroidInjector<T> {
 
   /** Injects the members of {@code instance}. */
@@ -45,7 +42,6 @@ public interface AndroidInjector<T> {
    *
    * @param <T> the concrete type to be injected
    */
-  @DoNotMock
   interface Factory<T> {
     /**
      * Creates an {@link AndroidInjector} for {@code instance}. This should be the same instance
@@ -60,7 +56,6 @@ public interface AndroidInjector<T> {
    *
    * @param <T> the concrete type to be injected
    */
-  @DoNotMock
   abstract class Builder<T> implements AndroidInjector.Factory<T> {
     @Override
     public final AndroidInjector<T> create(T instance) {

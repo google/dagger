@@ -16,37 +16,21 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.asTypeElements;
-import static com.google.auto.common.MoreTypes.isType;
-import static com.google.auto.common.MoreTypes.isTypeOf;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ComponentRequirement.Kind.MODULE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.DUPLICATE_BINDINGS_FOR_KEY_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
-import static dagger.internal.codegen.ErrorMessages.INDENT;
-import static dagger.internal.codegen.ErrorMessages.MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT;
 import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeMetadataMissingCanReleaseReferences;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotAnnotatedWithMetadata;
-import static dagger.internal.codegen.ErrorMessages.referenceReleasingScopeNotInComponentHierarchy;
-import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
-import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
-import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
-import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
+import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Scopes.getReadableSource;
@@ -54,7 +38,6 @@ import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
@@ -65,12 +48,8 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.BindsOptionalOf;
@@ -80,25 +59,17 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
-import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
-import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
-import dagger.releasablereferences.CanReleaseReferences;
-import dagger.releasablereferences.ForReleasableReferences;
-import dagger.releasablereferences.ReleasableReferenceManager;
-import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Formatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
@@ -109,7 +80,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
@@ -119,8 +89,6 @@ final class BindingGraphValidator {
   private final Elements elements;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
-  private final InjectBindingRegistry injectBindingRegistry;
-  private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFormatter dependencyRequestFormatter;
   private final KeyFactory keyFactory;
@@ -130,16 +98,12 @@ final class BindingGraphValidator {
       Elements elements,
       DaggerTypes types,
       CompilerOptions compilerOptions,
-      InjectBindingRegistry injectBindingRegistry,
-      BindingDeclarationFormatter bindingDeclarationFormatter,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFormatter dependencyRequestFormatter,
       KeyFactory keyFactory) {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
-    this.injectBindingRegistry = injectBindingRegistry;
-    this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
     this.keyFactory = keyFactory;
@@ -526,7 +490,7 @@ final class BindingGraphValidator {
       }
       for (ContributionBinding binding :
           incompatiblyScopedBindings.get(graph.componentDescriptor())) {
-        message.append(ErrorMessages.INDENT);
+        message.append(INDENT);
 
         switch (binding.kind()) {
           case DELEGATE:
@@ -588,16 +552,6 @@ final class BindingGraphValidator {
       }
 
       @Override
-      protected void visitResolvedBindings(ResolvedBindings resolvedBindings) {
-        if (resolvedBindings.isEmpty()) {
-          reportMissingBinding();
-        } else if (resolvedBindings.bindings().size() > 1) {
-          reportDuplicateBindings();
-        }
-        super.visitResolvedBindings(resolvedBindings);
-      }
-
-      @Override
       protected void visitContributionBinding(
           ContributionBinding binding, ComponentDescriptor owningComponent) {
         checkBindingScope(binding, owningComponent);
@@ -619,232 +573,10 @@ final class BindingGraphValidator {
         super.visitContributionBinding(binding, owningComponent);
       }
 
-      /**
-       * Returns the binding declarations that can be reported for {@code resolvedBindings}, indexed
-       * by the component that owns each declaration.
-       *
-       * <p>Contains all {@link MultibindingDeclaration}s, {@link SubcomponentDeclaration}s, and
-       * {@link OptionalBindingDeclaration}s within {@code resolvedBindings}, as well as all {@link
-       * ContributionBinding}s with present {@linkplain BindingDeclaration#bindingElement() binding
-       * elements}.
-       *
-       * <p>Includes {@link BindingKind#RELEASABLE_REFERENCE_MANAGER} or
-       * {@link BindingKind#RELEASABLE_REFERENCE_MANAGERS} bindings, even
-       * though they have no binding elements, because they will be reported via the declared
-       * scopes.
-       *
-       * <p>For other bindings without binding elements, such as the {@link
-       * ContributionBinding#isSyntheticMultibinding()}, includes the conflicting declarations in
-       * their resolved dependencies.
-       */
-      private ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration>
-          reportableDeclarations() {
-        ImmutableSetMultimap.Builder<ComponentDescriptor, BindingDeclaration> declarations =
-            ImmutableSetMultimap.builder();
-
-        Queue<ResolvedBindings> queue = new ArrayDeque<>();
-        queue.add(resolvedBindings());
-
-        while (!queue.isEmpty()) {
-          ResolvedBindings queued = queue.remove();
-          declarations
-              .putAll(queued.owningComponent(), queued.multibindingDeclarations())
-              .putAll(queued.owningComponent(), queued.subcomponentDeclarations())
-              .putAll(queued.owningComponent(), queued.optionalBindingDeclarations());
-          queued
-              .allContributionBindings()
-              .asMap()
-              .forEach(
-                  (owningComponent, bindings) -> {
-                    BindingGraph owningGraph =
-                        componentTreePath().graphForComponent(owningComponent);
-                    for (ContributionBinding binding : bindings) {
-                      if (bindingDeclarationFormatter.canFormat(binding)) {
-                        declarations.put(owningComponent, binding);
-                      } else {
-                        queue.addAll(owningGraph.resolvedDependencies(binding));
-                      }
-                    }
-                  });
-        }
-
-        return declarations.build();
-      }
-
-      /**
-       * Descriptive portion of the error message for when the given request has no binding.
-       * Currently, the only other portions of the message are the dependency path, line number and
-       * filename.
-       */
-      private StringBuilder requiresErrorMessageBase() {
-        Key key = dependencyRequest().key();
-        StringBuilder errorMessage = new StringBuilder();
-        // TODO(dpb): Check for wildcard injection somewhere else first?
-        if (key.type().getKind().equals(TypeKind.WILDCARD)) {
-          errorMessage
-              .append("Dagger does not support injecting Provider<T>, Lazy<T> or Produced<T> when ")
-              .append("T is a wildcard type such as ")
-              .append(formatCurrentDependencyRequestKey());
-        } else {
-          // TODO(ronshapiro): replace "provided" with "satisfied"?
-          errorMessage
-              .append(formatCurrentDependencyRequestKey())
-              .append(" cannot be provided without ");
-          if (isValidImplicitProvisionKey(key, types)) {
-            errorMessage.append("an @Inject constructor or ");
-          }
-          errorMessage.append("an @Provides-");
-          if (dependencyRequestCanUseProduction()) {
-            errorMessage.append(" or @Produces-");
-          }
-          errorMessage.append("annotated method.");
-        }
-        if (isValidMembersInjectionKey(key)
-            && injectBindingRegistry.getOrFindMembersInjectionBinding(key)
-                .map(binding -> !binding.injectionSites().isEmpty())
-                .orElse(false)) {
-          errorMessage.append(" ").append(ErrorMessages.MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION);
-        }
-        return errorMessage.append('\n');
-      }
-
-      private void reportMissingBinding() {
-        if (reportMissingReleasableReferenceManager()) {
-          return;
-        }
-        StringBuilder errorMessage = requiresErrorMessageBase().append(formatDependencyTrace());
-        for (String suggestion :
-            MissingBindingSuggestions.forKey(rootGraph, dependencyRequest().key())) {
-          errorMessage.append('\n').append(suggestion);
-        }
-        reportErrorAtEntryPoint(rootGraph, errorMessage.toString());
-      }
-
-      /**
-       * If the current dependency request is missing a binding because it's an invalid
-       * {@code @ForReleasableReferences} request, reports that.
-       *
-       * <p>An invalid request is one whose type is either {@link ReleasableReferenceManager} or
-       * {@link TypedReleasableReferenceManager}, and whose scope:
-       *
-       * <ul>
-       *   <li>does not annotate any component in the hierarchy, or
-       *   <li>is not annotated with the metadata annotation type that is the {@link
-       *       TypedReleasableReferenceManager}'s type argument
-       * </ul>
-       *
-       * @return {@code true} if the request was invalid and an error was reported
-       */
-      private boolean reportMissingReleasableReferenceManager() {
-        Key key = dependencyRequest().key();
-        if (!key.qualifier().isPresent()
-            || !isTypeOf(ForReleasableReferences.class, key.qualifier().get().getAnnotationType())
-            || !isType(key.type())) {
-          return false;
-        }
-
-        Optional<DeclaredType> metadataType;
-        if (isTypeOf(ReleasableReferenceManager.class, key.type())) {
-          metadataType = Optional.empty();
-        } else if (isTypeOf(TypedReleasableReferenceManager.class, key.type())) {
-          List<? extends TypeMirror> typeArguments =
-              MoreTypes.asDeclared(key.type()).getTypeArguments();
-          if (typeArguments.size() != 1
-              || !typeArguments.get(0).getKind().equals(TypeKind.DECLARED)) {
-            return false;
-          }
-          metadataType = Optional.of(MoreTypes.asDeclared(typeArguments.get(0)));
-        } else {
-          return false;
-        }
-
-        Scope scope =
-            Scopes.scope(MoreTypes.asTypeElement(getTypeValue(key.qualifier().get(), "value")));
-        String missingRequestKey = formatCurrentDependencyRequestKey();
-        if (!rootGraph.componentDescriptor().releasableReferencesScopes().contains(scope)) {
-          reportErrorAtEntryPoint(
-              rootGraph,
-              referenceReleasingScopeNotInComponentHierarchy(missingRequestKey, scope, rootGraph));
-          return true;
-        }
-        if (metadataType.isPresent()) {
-          if (!isAnnotationPresent(scope.scopeAnnotationElement(), metadataType.get())) {
-            reportErrorAtEntryPoint(
-                rootGraph,
-                referenceReleasingScopeNotAnnotatedWithMetadata(
-                    missingRequestKey, scope, metadataType.get()));
-          }
-          if (!isAnnotationPresent(metadataType.get().asElement(), CanReleaseReferences.class)) {
-            reportErrorAtEntryPoint(
-                rootGraph,
-                referenceReleasingScopeMetadataMissingCanReleaseReferences(
-                    missingRequestKey, metadataType.get()));
-          }
-        }
-        return false;
-      }
-
       @SuppressWarnings("resource") // Appendable is a StringBuilder.
       private void reportDependsOnProductionExecutor() {
         reportErrorAtEntryPoint(
             DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT, formatCurrentDependencyRequestKey());
-      }
-
-      @SuppressWarnings("resource") // Appendable is a StringBuilder.
-      private void reportDuplicateBindings() {
-        // If any of the duplicate bindings results from multibinding contributions or declarations,
-        // report the conflict using those contributions and declarations.
-        if (resolvedBindings()
-            .contributionBindings()
-            .stream()
-            // TODO(dpb): Kill with fire.
-            .anyMatch(ContributionBinding::isSyntheticMultibinding)) {
-          reportMultipleContributionTypes();
-          return;
-        }
-        StringBuilder builder = new StringBuilder();
-        new Formatter(builder)
-            .format(DUPLICATE_BINDINGS_FOR_KEY_FORMAT, formatCurrentDependencyRequestKey());
-        ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration> duplicateDeclarations =
-            reportableDeclarations();
-        bindingDeclarationFormatter.formatIndentedList(
-            builder, duplicateDeclarations.values(), 1, DUPLICATE_SIZE_LIMIT);
-        reportErrorAtEntryPoint(
-            componentTreePath().rootmostGraph(duplicateDeclarations.keySet()), builder.toString());
-      }
-
-      @SuppressWarnings("resource") // Appendable is a StringBuilder.
-      private void reportMultipleContributionTypes() {
-        StringBuilder builder = new StringBuilder();
-        new Formatter(builder)
-            .format(
-                MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT, formatCurrentDependencyRequestKey());
-        ImmutableSetMultimap<ComponentDescriptor, BindingDeclaration> duplicateDeclarations =
-            reportableDeclarations();
-        ImmutableListMultimap<ContributionType, BindingDeclaration> duplicateDeclarationsByType =
-            Multimaps.index(
-                duplicateDeclarations.values(),
-                declaration ->
-                    declaration instanceof HasContributionType
-                        ? ((HasContributionType) declaration).contributionType()
-                        : ContributionType.UNIQUE);
-        verify(
-            duplicateDeclarationsByType.keySet().size() > 1,
-            "expected multiple contribution types for %s: %s",
-            dependencyRequest().key(),
-            duplicateDeclarationsByType);
-        ImmutableSortedMap.copyOf(Multimaps.asMap(duplicateDeclarationsByType))
-            .forEach(
-                (contributionType, declarations) -> {
-                  builder.append(INDENT);
-                  builder.append(formatContributionType(contributionType));
-                  builder.append(" bindings and declarations:");
-                  bindingDeclarationFormatter.formatIndentedList(
-                      builder, declarations, 2, DUPLICATE_SIZE_LIMIT);
-                  builder.append('\n');
-                });
-        reportErrorAtEntryPoint(
-            componentTreePath().rootmostGraph(duplicateDeclarations.keySet()), builder.toString());
       }
 
       // TODO(cgruber): Provide a hint for the start and end of the cycle.
@@ -920,24 +652,6 @@ final class BindingGraphValidator {
         }
       }
 
-      /**
-       * Returns true if the current dependency request can be satisfied by a production binding.
-       */
-      private boolean dependencyRequestCanUseProduction() {
-        if (atEntryPoint()) {
-          return entryPointCanUseProduction(dependencyRequest().kind());
-        } else {
-          // The current request can be satisfied by a production binding if it's not from a
-          // provision binding
-          return !hasDependentProvisionBindings();
-        }
-      }
-
-      /** Returns {@code true} if any provision bindings contain the latest request in the path. */
-      private boolean hasDependentProvisionBindings() {
-        return dependentBindings().stream().map(Binding::bindingType).anyMatch(isEqual(PROVISION));
-      }
-
       private String formatCurrentDependencyRequestKey() {
         return dependencyRequest().key().toString();
       }
@@ -970,18 +684,5 @@ final class BindingGraphValidator {
    */
   private ImmutableSet<TypeElement> scopedTypesIn(Set<TypeElement> types) {
     return types.stream().filter(type -> !scopesOf(type).isEmpty()).collect(toImmutableSet());
-  }
-
-  private String formatContributionType(ContributionType type) {
-    switch (type) {
-      case MAP:
-        return "Map";
-      case SET:
-      case SET_VALUES:
-        return "Set";
-      case UNIQUE:
-        return "Unique";
-    }
-    throw new AssertionError(type);
   }
 }

@@ -31,10 +31,7 @@ CODEGEN_SRCS = glob(
     exclude = EXPERIMENTAL_VISUALIZER_SRCS + KYTHE_SRCS,
 )
 
-CODEGEN_PLUGINS = [
-    ":bootstrap_compiler_plugin",
-    # TODO(cgruber): Enable Beta checker.
-]
+CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
 
 CODEGEN_SHARED_DEPS = [
     "//third_party:auto_service",
@@ -85,6 +82,7 @@ java_library(
         "DiagnosticFormatting.java",
         "Expression.java",
         "FeatureStatus.java",
+        "Formatter.java",
         "FrameworkTypes.java",
         "InjectionAnnotations.java",
         "Keys.java",
@@ -123,6 +121,7 @@ java_library(
         "BindingDeclaration.java",
         "BindingFactory.java",
         "BindingGraph.java",
+        "BindingNodeImpl.java",
         "BindingType.java",
         "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
@@ -176,11 +175,9 @@ java_library(
         "ComponentValidator.java",
         "DependencyRequestFormatter.java",
         "ForReleasableReferencesValidator.java",
-        "Formatter.java",
         "InjectValidator.java",
         "MapKeyValidator.java",
         "MethodSignatureFormatter.java",
-        "MissingBindingSuggestions.java",
         "ModuleValidator.java",
         "MultibindingAnnotationsProcessingStep.java",
         "MultibindsMethodValidator.java",
@@ -200,13 +197,16 @@ java_library(
     name = "internal_validation",
     srcs = [
         "BindingGraphValidationModule.java",
+        "DuplicateBindingsValidation.java",
         "InjectBindingValidation.java",
         "MapMultibindingValidation.java",
         "MembersInjectionBindingValidation.java",
+        "MissingBindingValidation.java",
         "NonNullableRequestForNullableBindingValidation.java",
         "ProvisionDependencyOnProducerBindingValidation.java",
         "Validation.java",
     ],
+    tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
@@ -261,6 +261,7 @@ java_library(
         "MonitoringModuleProcessingStep.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
+        "OptionalFactoryInstanceCreationExpression.java",
         "PrivateMethodBindingExpression.java",
         "ProducerCreationExpression.java",
         "ProducerFactoryGenerator.java",
@@ -376,6 +377,13 @@ java_library(
 java_plugin(
     name = "component-codegen",
     generates_api = 1,
+    output_licenses = ["unencumbered"],
     processor_class = "dagger.internal.codegen.ComponentProcessor",
+    tags = [
+        "annotation=dagger.Component;" +
+        "genclass=${package}.Dagger${outerclasses}${classname}",
+        "annotation=dagger.producers.ProductionComponent;" +
+        "genclass=${package}.Dagger${outerclasses}${classname}",
+    ],
     deps = [":processor"],
 )

@@ -91,4 +91,9 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
 
     return builder.build();
   }
+
+  @Override
+  public boolean useInnerSwitchingProvider() {
+    return !binding.dependencies().isEmpty();
+  }
 }

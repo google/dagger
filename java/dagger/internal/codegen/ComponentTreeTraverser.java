@@ -616,19 +616,16 @@ public class ComponentTreeTraverser {
      * Returns the subpath from the root component to the matching {@code ancestor} of the current
      * component.
      */
-    ComponentTreePath pathFromRootToAncestor(ComponentDescriptor ancestor) {
-      checkNotNull(ancestor);
+    ComponentTreePath pathFromRootToAncestor(TypeElement ancestor) {
       ImmutableList.Builder<BindingGraph> path = ImmutableList.builder();
       for (BindingGraph graph : graphsInPath()) {
         path.add(graph);
-        if (graph.componentDescriptor().equals(ancestor)) {
+        if (graph.componentDescriptor().componentDefinitionType().equals(ancestor)) {
           return create(path.build());
         }
       }
       throw new IllegalArgumentException(
-          String.format(
-              "%s is not in the current path: %s",
-              ancestor.componentDefinitionType().getQualifiedName(), this));
+          String.format("%s is not in the current path: %s", ancestor.getQualifiedName(), this));
     }
 
     /**

@@ -17,7 +17,6 @@
 package dagger.model;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.DoNotMock;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -27,7 +26,6 @@ import javax.lang.model.element.TypeElement;
  * Includes any {@linkplain DependencyRequest dependencies} that are needed in order to provide the
  * instances.
  */
-@DoNotMock("Equality semantics are important but not specified, so use only Dagger implementations")
 public interface Binding {
   /** The binding's key. */
   Key key();

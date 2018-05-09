@@ -52,19 +52,23 @@ public final class Producers {
   // trigger one in a test.
   public static <T> ListenableFuture<Produced<T>> createFutureProduced(ListenableFuture<T> future) {
     return catchingAsync(
-        transform(
-            future,
-            new Function<T, Produced<T>>() {
-              @Override
-              public Produced<T> apply(final T value) {
-                return Produced.successful(value);
-              }
-            },
-            directExecutor()),
+        transform(future, Producers.<T>resultToProduced(), directExecutor()),
         Throwable.class,
         Producers.<T>futureFallbackForProduced(),
         directExecutor());
+  }
 
+  private static final Function<Object, Produced<Object>> RESULT_TO_PRODUCED =
+      new Function<Object, Produced<Object>>() {
+        @Override
+        public Produced<Object> apply(Object result) {
+          return Produced.successful(result);
+        }
+      };
+
+  @SuppressWarnings({"unchecked", "rawtypes"}) // bivariant implementation
+  private static <T> Function<T, Produced<T>> resultToProduced() {
+    return (Function) RESULT_TO_PRODUCED;
   }
 
   private static final AsyncFunction<Throwable, Produced<Object>> FUTURE_FALLBACK_FOR_PRODUCED =

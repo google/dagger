@@ -18,14 +18,11 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
-import static dagger.internal.codegen.Scopes.getReadableSource;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
-import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
@@ -35,18 +32,12 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
  * The collection of error messages to be reported back to users.
  */
 final class ErrorMessages {
-  /*
-   * Common constants.
-   */
-  static final String INDENT = "    ";
-  static final String DOUBLE_INDENT = INDENT + INDENT;
   static final int DUPLICATE_SIZE_LIMIT = 10;
 
   /*
@@ -118,9 +109,6 @@ final class ErrorMessages {
    * These are errors that relate specifically to the Dagger configuration API (@Module, @Provides,
    * etc.)
    */
-  static final String DUPLICATE_BINDINGS_FOR_KEY_FORMAT =
-      "%s is bound multiple times:";
-
   static final String COMPONENT_ANNOTATED_REUSABLE =
       "@Reusable cannot be applied to components or subcomponents.";
 
@@ -142,9 +130,6 @@ final class ErrorMessages {
 
   static final String BINDING_METHOD_SET_VALUES_RAW_SET =
       "@%s methods of type set values cannot return a raw Set";
-
-  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RAW_SET_PARAMETER =
-      "@Binds @ElementsIntoSet methods cannot take a raw Set parameter";
 
   static final String BINDING_METHOD_SET_VALUES_RETURN_SET =
       "@%s methods of type set values must return a Set";
@@ -227,9 +212,8 @@ final class ErrorMessages {
   static final String BINDING_METHOD_MULTIPLE_QUALIFIERS =
       "Cannot use more than one @Qualifier";
 
-  /* mapKey errors*/
-  static final String MAPKEY_WITHOUT_MEMBERS =
-      "Map key annotations must have members";
+  /* mapKey errors */
+  static final String MAPKEY_WITHOUT_MEMBERS = "Map key annotations must have members";
 
   static final String UNWRAPPED_MAP_KEY_WITH_TOO_MANY_MEMBERS=
       "Map key annotations with unwrapped values must have exactly one member";
@@ -237,10 +221,7 @@ final class ErrorMessages {
   static final String UNWRAPPED_MAP_KEY_WITH_ARRAY_MEMBER =
       "Map key annotations with unwrapped values cannot use arrays";
 
-  /* collection binding errors */
-  static final String MULTIPLE_CONTRIBUTION_TYPES_FOR_KEY_FORMAT =
-      "%s has incompatible bindings or declarations:\n";
-
+  /* producer errors */
   static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
       "%s may not depend on the production executor.";
 
@@ -252,15 +233,6 @@ final class ErrorMessages {
         PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT,
         MoreTypes.asTypeElement(type).getSimpleName());
   }
-
-  static final String MEMBERS_INJECTION_DOES_NOT_IMPLY_PROVISION =
-      "This type supports members injection but cannot be implicitly provided.";
-
-  static final String MEMBERS_INJECTION_WITH_RAW_TYPE =
-      "%s has type parameters, cannot members inject the raw type. via:\n%s";
-
-  static final String MEMBERS_INJECTION_WITH_UNBOUNDED_TYPE =
-      "Type parameters must be bounded for members injection. %s required by %s, via:\n%s";
 
   static final String CONTAINS_DEPENDENCY_CYCLE_FORMAT = "Found a dependency cycle:\n%s";
 
@@ -329,36 +301,6 @@ final class ErrorMessages {
         "The value of @%s must be a reference-releasing scope. "
             + "Did you mean to annotate %s with %s? Or did you mean to use a different class here?",
         ForReleasableReferences.class.getSimpleName(), scopeType.getQualifiedName(), annotations);
-  }
-
-  static String referenceReleasingScopeNotInComponentHierarchy(
-      String formattedKey, Scope scope, BindingGraph topLevelGraph) {
-    return String.format(
-        "There is no binding for %s because no component in %s's component hierarchy is "
-            + "annotated with %s. The available reference-releasing scopes are %s.",
-        formattedKey,
-        topLevelGraph.componentType().getQualifiedName(),
-        getReadableSource(scope),
-        topLevelGraph
-            .componentDescriptor()
-            .releasableReferencesScopes()
-            .stream()
-            .map(Scopes::getReadableSource)
-            .collect(toList()));
-  }
-
-  static String referenceReleasingScopeMetadataMissingCanReleaseReferences(
-      String formattedKey, DeclaredType metadataType) {
-    return String.format(
-        "There is no binding for %s because %s is not annotated with @%s.",
-        formattedKey, metadataType, CanReleaseReferences.class.getCanonicalName());
-  }
-
-  static String referenceReleasingScopeNotAnnotatedWithMetadata(
-      String formattedKey, Scope scope, TypeMirror metadataType) {
-    return String.format(
-        "There is no binding for %s because %s is not annotated with @%s.",
-        formattedKey, scope.scopeAnnotationElement().getQualifiedName(), metadataType);
   }
 
   /**

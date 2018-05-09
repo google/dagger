@@ -33,7 +33,9 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
+import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
@@ -64,6 +66,9 @@ abstract class AndroidInjectorDescriptor {
    */
   abstract ClassName frameworkType();
 
+  /** The {@link dagger.MapKey} type for the associated {@link #frameworkType()}. */
+  abstract ClassName mapKeyType();
+
   /** Scopes to apply to the generated {@link dagger.Subcomponent}. */
   abstract ImmutableSet<AnnotationSpec> scopes();
 
@@ -76,20 +81,6 @@ abstract class AndroidInjectorDescriptor {
   /** Simple name of the {@link ContributesAndroidInjector} method. */
   abstract String methodName();
 
-  /**
-   * The {@link dagger.MapKey} annotation that groups {@link #frameworkType()}s, e.g.
-   * {@code @ActivityKey(MyActivity.class)}.
-   */
-  AnnotationSpec mapKeyAnnotation() {
-    String packageName =
-        frameworkType().packageName().contains(".support.")
-            ? "dagger.android.support"
-            : "dagger.android";
-    return AnnotationSpec.builder(ClassName.get(packageName, frameworkType().simpleName() + "Key"))
-        .addMember("value", "$T.class", injectedType())
-        .build();
-  }
-
   @AutoValue.Builder
   abstract static class Builder {
     abstract Builder injectedType(ClassName injectedType);
@@ -99,6 +90,8 @@ abstract class AndroidInjectorDescriptor {
     abstract ImmutableSet.Builder<ClassName> modulesBuilder();
 
     abstract Builder frameworkType(ClassName frameworkType);
+
+    abstract Builder mapKeyType(ClassName mapKeyType);
 
     abstract Builder enclosingModule(ClassName enclosingModule);
 
@@ -142,14 +135,19 @@ abstract class AndroidInjectorDescriptor {
       builder.enclosingModule(ClassName.get(enclosingElement));
 
       TypeMirror injectedType = method.getReturnType();
-      Optional<TypeMirror> maybeFrameworkType =
+      Optional<? extends Class<? extends Annotation>> maybeMapKeyAnnotation =
           annotationsAndFrameworkTypes(elements)
-              .values()
+              .entrySet()
               .stream()
-              .filter(frameworkType -> types.isAssignable(injectedType, frameworkType))
+              .filter(entry -> types.isAssignable(injectedType, entry.getValue()))
+              .map(Map.Entry::getKey)
               .findFirst();
-      if (maybeFrameworkType.isPresent()) {
-        builder.frameworkType((ClassName) TypeName.get(maybeFrameworkType.get()));
+      if (maybeMapKeyAnnotation.isPresent()) {
+        Class<? extends Annotation> mapKeyAnnotation = maybeMapKeyAnnotation.get();
+        TypeMirror frameworkType = annotationsAndFrameworkTypes(elements).get(mapKeyAnnotation);
+        builder
+            .mapKeyType(ClassName.get(mapKeyAnnotation))
+            .frameworkType((ClassName) TypeName.get(frameworkType));
         if (MoreTypes.asDeclared(injectedType).getTypeArguments().isEmpty()) {
           builder.injectedType(ClassName.get(MoreTypes.asTypeElement(injectedType)));
         } else {

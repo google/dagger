@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Dagger Authors.
+ * Copyright (C) 2018 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.functional.multipackage.primitives;
 
-import static com.google.common.truth.Truth.assertThat;
+import dagger.Module;
+import dagger.Provides;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-@RunWith(JUnit4.class)
-public class ErrorMessagesTest {
-  @Test public void stripCommonTypePrefixes() {
-    String typeName = "com.google.common.collect.ImmutableList<java.lang.Boolean>";
-    assertThat(DiagnosticFormatting.stripCommonTypePrefixes(typeName)).isEqualTo("ImmutableList<Boolean>");
+@Module
+public final class PrimitiveAcrossPackagesModule {
+  // This method should be package-private so that a proxy method is created
+  @Provides
+  static boolean primitive() {
+    return false;
   }
 }

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
 
 import java.util.Comparator;
@@ -30,6 +31,11 @@ final class Optionals {
   static <C extends Comparable<C>> Comparator<Optional<C>> optionalComparator() {
     return Comparator.comparing((Optional<C> optional) -> optional.isPresent())
         .thenComparing(Optional::get);
+  }
+
+  static <T> Comparator<Optional<T>> emptiesLast(Comparator<? super T> valueComparator) {
+    checkNotNull(valueComparator);
+    return Comparator.comparing(o -> o.orElse(null), Comparator.nullsLast(valueComparator));
   }
 
   /** Returns the first argument that is present, or empty if none are. */

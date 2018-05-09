@@ -89,4 +89,9 @@ final class SetFactoryCreationExpression implements FrameworkInstanceCreationExp
     builder.add(builderMethodCalls.build());
     return builder.add(".build()").build();
   }
+
+  @Override
+  public boolean useInnerSwitchingProvider() {
+    return !binding.dependencies().isEmpty();
+  }
 }

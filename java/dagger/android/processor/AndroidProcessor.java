@@ -43,7 +43,10 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
     return ImmutableList.of(
         new AndroidMapKeyValidator(elements, types, messager),
         new ContributesAndroidInjectorGenerator(
-            filer, new AndroidInjectorDescriptor.Validator(types, elements, messager)));
+            new AndroidInjectorDescriptor.Validator(types, elements, messager),
+            filer,
+            elements,
+            processingEnv.getSourceVersion()));
   }
 
   @Override

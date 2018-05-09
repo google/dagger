@@ -719,18 +719,17 @@ public class SubcomponentBuilderValidationTest {
             "    @BindsInstance void set2(String s);",
             "  }",
             "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, childComponentFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             Joiner.on("\n      ")
                 .join(
-                    "java.lang.String is bound multiple times:",
+                    "[test.ChildComponent.s()] java.lang.String is bound multiple times:",
                     "@BindsInstance void test.ChildComponent.Builder.set1(String)",
                     "@BindsInstance void test.ChildComponent.Builder.set2(String)"))
-        .in(childComponentFile)
-        .onLine(8);
+        .inFile(componentFile)
+        .onLineContaining("interface ParentComponent {");
   }
 
   @Test

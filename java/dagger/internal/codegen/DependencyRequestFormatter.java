@@ -16,32 +16,27 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asExecutable;
+import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.ErrorMessages.DOUBLE_INDENT;
-import static dagger.internal.codegen.ErrorMessages.INDENT;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.producers.Produces;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementKindVisitor7;
+import javax.lang.model.util.ElementKindVisitor8;
 
 /**
  * Formats a {@link DependencyRequest} into a {@link String} suitable for an error message listing
@@ -95,109 +90,53 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
                 .reverse());
   }
 
-  // TODO(cgruber): Sweep this class for TypeMirror.toString() usage and do some preventive format.
-  // TODO(cgruber): consider returning a small structure containing strings to be indented later.
   @Override
   public String format(DependencyRequest request) {
-    if (!request.requestElement().isPresent()) {
-      return "";
-    }
     return request
         .requestElement()
-        .get()
-        .accept(
-            new ElementKindVisitor7<String, DependencyRequest>() {
-
-              /** Returns the description for component methods. */
-              @Override
-              public String visitExecutableAsMethod(
-                  ExecutableElement method, DependencyRequest request) {
-                StringBuilder builder = new StringBuilder();
-                builder
-                    .append(INDENT)
-                    .append(formatKey(request.key()))
-                    .append(" is ")
-                    .append(componentMethodRequestVerb(request))
-                    .append(" at\n")
-                    .append(DOUBLE_INDENT);
-                appendEnclosingTypeAndMemberName(method, builder);
-                builder.append('(');
-                for (VariableElement parameter : method.getParameters()) {
-                  builder.append(parameter.getSimpleName());
-                }
-                builder.append(')');
-                return builder.toString();
-              }
-
-              /**
-               * Returns the description for {@link javax.inject.Inject @Inject} constructor and
-               * method parameters and for {@link dagger.Provides @Provides} and {@link
-               * dagger.producers.Produces @Produces} method parameters.
-               */
-              @Override
-              public String visitVariableAsParameter(
-                  VariableElement variable, DependencyRequest request) {
-                StringBuilder builder = new StringBuilder();
-                appendRequestedTypeIsInjectedAt(builder, request);
-
-                ExecutableElement methodOrConstructor =
-                    asExecutable(variable.getEnclosingElement());
-                appendEnclosingTypeAndMemberName(methodOrConstructor, builder).append('(');
-                List<? extends VariableElement> parameters = methodOrConstructor.getParameters();
-                int parameterIndex = parameters.indexOf(variable);
-                builder.append(
-                    formatArgumentInList(
-                        parameterIndex, parameters.size(), variable.getSimpleName()));
-                builder.append(')');
-                return builder.toString();
-              }
-
-              /** Returns the description for {@link javax.inject.Inject @Inject} fields. */
-              @Override
-              public String visitVariableAsField(
-                  VariableElement variable, DependencyRequest request) {
-                StringBuilder builder = new StringBuilder();
-                appendRequestedTypeIsInjectedAt(builder, request);
-                appendEnclosingTypeAndMemberName(variable, builder);
-                return builder.toString();
-              }
-
-              @Override
-              public String visitType(TypeElement e, DependencyRequest request) {
-                return ""; // types by themselves provide no useful information.
-              }
-
-              @Override
-              protected String defaultAction(Element element, DependencyRequest request) {
-                throw new IllegalStateException(
-                    "Invalid request " + element.getKind() + " element " + element);
-              }
-            },
-            request);
+        .map(element -> element.accept(formatVisitor, request))
+        .orElse("");
   }
 
-  @CanIgnoreReturnValue
-  private StringBuilder appendRequestedTypeIsInjectedAt(
-      StringBuilder builder, DependencyRequest request) {
-    TypeMirror requestedType = requestType(request.kind(), request.key().type(), types);
-    return builder
-        .append(INDENT)
-        .append(formatKey(request.key().qualifier(), requestedType))
-        .append(" is injected at\n")
-        .append(DOUBLE_INDENT);
-  }
+  private final ElementVisitor<String, DependencyRequest> formatVisitor =
+      new ElementKindVisitor8<String, DependencyRequest>() {
 
-  private String formatKey(Key key) {
-    return formatKey(key.qualifier(), key.type());
-  }
+        @Override
+        public String visitExecutableAsMethod(ExecutableElement method, DependencyRequest request) {
+          return INDENT
+              + request.key()
+              + " is "
+              + componentMethodRequestVerb(request)
+              + " at\n"
+              + DOUBLE_INDENT
+              + elementToString(method);
+        }
 
-  private String formatKey(Optional<AnnotationMirror> qualifier, TypeMirror type) {
-    StringBuilder builder = new StringBuilder();
-    if (qualifier.isPresent()) {
-      builder.append(qualifier.get()).append(' ');
-    }
-    builder.append(type);
-    return builder.toString();
+        @Override
+        public String visitVariable(VariableElement variable, DependencyRequest request) {
+          TypeMirror requestedType = requestType(request.kind(), request.key().type(), types);
+          return INDENT
+              + formatQualifier(request.key().qualifier())
+              + requestedType
+              + " is injected at\n"
+              + DOUBLE_INDENT
+              + elementToString(variable);
+        }
+
+        @Override
+        public String visitType(TypeElement e, DependencyRequest request) {
+          return ""; // types by themselves provide no useful information.
+        }
+
+        @Override
+        protected String defaultAction(Element element, DependencyRequest request) {
+          throw new IllegalStateException(
+              "Invalid request " + element.getKind() + " element " + element);
+        }
+      };
+
+  private String formatQualifier(Optional<AnnotationMirror> maybeQualifier) {
+    return maybeQualifier.map(qualifier -> qualifier + " ").orElse("");
   }
 
   /**
@@ -225,15 +164,6 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
     }
   }
 
-  @CanIgnoreReturnValue
-  private StringBuilder appendEnclosingTypeAndMemberName(Element member, StringBuilder builder) {
-    TypeElement type = MoreElements.asType(member.getEnclosingElement());
-    return builder
-        .append(type.getQualifiedName())
-        .append('.')
-        .append(member.getSimpleName());
-  }
-
   /**
    * Returns a string of the form "{@code @BindsOptionalOf SomeKey is declared at Module.method()}",
    * where {@code Module.method()} is the declaration. If there is more than one such declaration,
@@ -247,12 +177,11 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
     builder
         .append(INDENT)
         .append("@BindsOptionalOf ")
-        .append(formatKey(optionalBindingDeclaration.key()))
+        .append(optionalBindingDeclaration.key())
         .append(" is declared at\n")
-        .append(DOUBLE_INDENT);
+        .append(DOUBLE_INDENT)
+        .append(elementToString(optionalBindingDeclaration.bindingElement().get()));
 
-    appendEnclosingTypeAndMemberName(optionalBindingDeclaration.bindingElement().get(), builder);
-    builder.append("()");
     if (optionalBindingDeclarations.size() > 1) {
       builder.append(", among others");
     }

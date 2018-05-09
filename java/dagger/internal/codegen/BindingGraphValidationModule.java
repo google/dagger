@@ -28,6 +28,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin duplicateBindings(DuplicateBindingsValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin injectBinding(InjectBindingValidation validation);
 
   @Binds
@@ -39,6 +44,11 @@ interface BindingGraphValidationModule {
   @IntoSet
   @Validation
   BindingGraphPlugin membersInjection(MembersInjectionBindingValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
+  BindingGraphPlugin missingBinding(MissingBindingValidation validation);
 
   @Binds
   @IntoSet

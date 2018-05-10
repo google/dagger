@@ -202,10 +202,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addExceptions(getThrownTypeNames(binding.thrownTypes()))
             .addCode(
                 getInvocationCodeBlock(
-                    generatedTypeName,
-                    binding,
-                    providedTypeName,
-                    futureTransform.parameterCodeBlocks()));
+                    binding, providedTypeName, futureTransform.parameterCodeBlocks()));
     if (futureTransform.hasUncheckedCast()) {
       applyMethodBuilder.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
     }
@@ -378,7 +375,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     String applyArgName() {
-      return asyncDependency.requestElement().get().getSimpleName().toString();
+      String argName = asyncDependency.requestElement().get().getSimpleName().toString();
+      if (argName.equals("module")) {
+        return "moduleArg";
+      }
+      return argName;
     }
 
     @Override
@@ -494,7 +495,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
    * @param parameterCodeBlocks The code blocks for all the parameters to the producer method.
    */
   private CodeBlock getInvocationCodeBlock(
-      ClassName generatedTypeName,
       ProductionBinding binding,
       TypeName providedTypeName,
       ImmutableList<CodeBlock> parameterCodeBlocks) {
@@ -502,7 +502,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
         CodeBlock.of(
             "$L.$L($L)",
             binding.requiresModuleInstance()
-                ? CodeBlock.of("$T.this.module", generatedTypeName)
+                ? "module"
                 : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
             binding.bindingElement().get().getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));

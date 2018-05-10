@@ -412,28 +412,57 @@ final class ComponentBindingExpressions {
   private BindingExpression provisionBindingExpression(
       ResolvedBindings resolvedBindings, RequestKind requestKind) {
     switch (requestKind) {
-      case PRODUCER:
-        return producerFromProviderBindingExpression(resolvedBindings, requestKind);
-
       case INSTANCE:
         return instanceBindingExpression(resolvedBindings);
 
-      case FUTURE:
-        return new ImmediateFutureBindingExpression(resolvedBindings, this, types);
+      case PROVIDER:
+        return providerBindingExpression(resolvedBindings);
 
       case LAZY:
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromProviderBindingExpression(resolvedBindings, requestKind, this, types);
 
-      case PROVIDER:
-        return providerBindingExpression(resolvedBindings);
+      case PRODUCER:
+        return producerFromProviderBindingExpression(resolvedBindings, requestKind);
+
+      case FUTURE:
+        return new ImmediateFutureBindingExpression(resolvedBindings, this, types);
 
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
     }
 
     throw new AssertionError();
+  }
+
+  /**
+   * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
+   *
+   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ResolvedBindings) need to be
+   * cached} can use a {@link DelegateBindingExpression}.
+   *
+   * <p>In Android mode, use an {@link InnerSwitchingProviders inner switching provider} unless that
+   * provider's case statement will simply call {@code get()} on another {@link Provider} (in which
+   * case, just use that Provider directly).
+   *
+   * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
+   */
+  private BindingExpression providerBindingExpression(ResolvedBindings resolvedBindings) {
+    if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
+        && !needsCaching(resolvedBindings)) {
+      return new DelegateBindingExpression(
+          resolvedBindings, RequestKind.PROVIDER, this, types, elements);
+    } else if (compilerOptions.experimentalAndroidMode()
+        && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
+        && !(instanceBindingExpression(resolvedBindings)
+        instanceof DerivedFromProviderBindingExpression)) {
+      return wrapInMethod(
+          resolvedBindings,
+          RequestKind.PROVIDER,
+          innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
+    }
+    return frameworkInstanceBindingExpression(resolvedBindings, RequestKind.PROVIDER);
   }
 
   /**
@@ -590,35 +619,6 @@ final class ComponentBindingExpressions {
     return !needsCaching(resolvedBindings)
         || (compilerOptions.experimentalAndroidMode()
             && !requiresReleasableReferences(resolvedBindings));
-  }
-
-  /**
-   * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
-   *
-   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ResolvedBindings) need to be
-   * cached} can use a {@link DelegateBindingExpression}.
-   *
-   * <p>In Android mode, use an {@link InnerSwitchingProviders inner switching provider} unless that
-   * provider's case statement will simply call {@code get()} on another {@link Provider} (in which
-   * case, just use that Provider directly).
-   *
-   * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
-   */
-  private BindingExpression providerBindingExpression(ResolvedBindings resolvedBindings) {
-    if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
-        && !needsCaching(resolvedBindings)) {
-      return new DelegateBindingExpression(
-          resolvedBindings, RequestKind.PROVIDER, this, types, elements);
-    } else if (compilerOptions.experimentalAndroidMode()
-        && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
-        && !(instanceBindingExpression(resolvedBindings)
-            instanceof DerivedFromProviderBindingExpression)) {
-      return wrapInMethod(
-          resolvedBindings,
-          RequestKind.PROVIDER,
-          innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
-    }
-    return frameworkInstanceBindingExpression(resolvedBindings, RequestKind.PROVIDER);
   }
 
   /**

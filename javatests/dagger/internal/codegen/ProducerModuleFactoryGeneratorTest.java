@@ -23,25 +23,14 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatProductionModuleMethod;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MULTIPLE_QUALIFIERS;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import java.lang.annotation.Retention;
 import javax.inject.Qualifier;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -61,88 +50,95 @@ public class ProducerModuleFactoryGeneratorTest {
 
   @Test public void producesMethodNotInModule() {
     assertThatMethodInUnannotatedClass("@Produces String produceString() { return null; }")
-        .hasError(formatModuleErrorMessage(BINDING_METHOD_NOT_IN_MODULE));
+        .hasError(formatModuleErrorMessage("@%s methods can only be present within a @%s"));
   }
 
   @Test public void producesMethodAbstract() {
     assertThatProductionModuleMethod("@Produces abstract String produceString();")
-        .hasError(formatErrorMessage(BINDING_METHOD_ABSTRACT));
+        .hasError(formatErrorMessage("@%s methods cannot be abstract"));
   }
 
   @Test public void producesMethodPrivate() {
     assertThatProductionModuleMethod("@Produces private String produceString() { return null; }")
-        .hasError(formatErrorMessage(BINDING_METHOD_PRIVATE));
+        .hasError(formatErrorMessage("@%s methods cannot be private"));
   }
 
   @Test public void producesMethodReturnVoid() {
     assertThatProductionModuleMethod("@Produces void produceNothing() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE));
+        .hasError(formatErrorMessage("@%s methods must return a value (not void)"));
   }
 
   @Test
   public void producesProvider() {
     assertThatProductionModuleMethod("@Produces Provider<String> produceProvider() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+        .hasError(formatErrorMessage("@%s methods must not return framework types"));
   }
 
   @Test
   public void producesLazy() {
     assertThatProductionModuleMethod("@Produces Lazy<String> produceLazy() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+        .hasError(formatErrorMessage("@%s methods must not return framework types"));
   }
 
   @Test
   public void producesMembersInjector() {
     assertThatProductionModuleMethod(
             "@Produces MembersInjector<String> produceMembersInjector() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+        .hasError(formatErrorMessage("@%s methods must not return framework types"));
   }
 
   @Test
   public void producesProducer() {
     assertThatProductionModuleMethod("@Produces Producer<String> produceProducer() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+        .hasError(formatErrorMessage("@%s methods must not return framework types"));
   }
 
   @Test
   public void producesProduced() {
     assertThatProductionModuleMethod("@Produces Produced<String> produceProduced() {}")
-        .hasError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+        .hasError(formatErrorMessage("@%s methods must not return framework types"));
   }
 
   @Test public void producesMethodReturnRawFuture() {
     assertThatProductionModuleMethod("@Produces ListenableFuture produceRaw() {}")
         .importing(ListenableFuture.class)
-        .hasError(PRODUCES_METHOD_RAW_FUTURE);
+        .hasError("@Produces methods cannot return a raw ListenableFuture");
   }
 
   @Test public void producesMethodReturnWildcardFuture() {
     assertThatProductionModuleMethod("@Produces ListenableFuture<?> produceRaw() {}")
         .importing(ListenableFuture.class)
-        .hasError(PRODUCES_METHOD_RETURN_TYPE);
+        .hasError(
+            "@Produces methods can return only a primitive, an array, a type variable, "
+                + "a declared type, or a ListenableFuture of one of those types");
   }
 
   @Test public void producesMethodWithTypeParameter() {
     assertThatProductionModuleMethod("@Produces <T> String produceString() { return null; }")
-        .hasError(formatErrorMessage(BINDING_METHOD_TYPE_PARAMETER));
+        .hasError(formatErrorMessage("@%s methods may not have type parameters"));
   }
 
   @Test public void producesMethodSetValuesWildcard() {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet Set<?> produceWildcard() { return null; }")
-        .hasError(PRODUCES_METHOD_RETURN_TYPE);
+        .hasError(
+            "@Produces methods can return only a primitive, an array, a type variable, "
+                + "a declared type, or a ListenableFuture of one of those types");
   }
 
   @Test public void producesMethodSetValuesRawSet() {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet Set produceSomething() { return null; }")
-        .hasError(formatErrorMessage(BINDING_METHOD_SET_VALUES_RAW_SET));
+        .hasError(
+            formatErrorMessage(
+                "@%s methods annotated with @ElementsIntoSet cannot return a raw Set"));
   }
 
   @Test public void producesMethodSetValuesNotASet() {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet List<String> produceStrings() { return null; }")
-        .hasError(PRODUCES_METHOD_SET_VALUES_RETURN_SET);
+        .hasError(
+            "@Produces methods of type set values must return a Set or ListenableFuture of Set");
   }
 
   @Test public void producesMethodSetValuesWildcardInFuture() {
@@ -150,14 +146,18 @@ public class ProducerModuleFactoryGeneratorTest {
             "@Produces @ElementsIntoSet "
                 + "ListenableFuture<Set<?>> produceWildcard() { return null; }")
         .importing(ListenableFuture.class)
-        .hasError(PRODUCES_METHOD_RETURN_TYPE);
+        .hasError(
+            "@Produces methods can return only a primitive, an array, a type variable, "
+                + "a declared type, or a ListenableFuture of one of those types");
   }
 
   @Test public void producesMethodSetValuesFutureRawSet() {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet ListenableFuture<Set> produceSomething() { return null; }")
         .importing(ListenableFuture.class)
-        .hasError(formatErrorMessage(BINDING_METHOD_SET_VALUES_RAW_SET));
+        .hasError(
+            formatErrorMessage(
+                "@%s methods annotated with @ElementsIntoSet cannot return a raw Set"));
   }
 
   @Test public void producesMethodSetValuesFutureNotASet() {
@@ -165,7 +165,8 @@ public class ProducerModuleFactoryGeneratorTest {
             "@Produces @ElementsIntoSet "
                 + "ListenableFuture<List<String>> produceStrings() { return null; }")
         .importing(ListenableFuture.class)
-        .hasError(PRODUCES_METHOD_SET_VALUES_RETURN_SET);
+        .hasError(
+            "@Produces methods of type set values must return a Set or ListenableFuture of Set");
   }
 
   @Test public void multipleProducesMethodsWithSameName() {
@@ -185,7 +186,8 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    String errorMessage = String.format(BINDING_METHOD_WITH_SAME_NAME, "Produces");
+    String errorMessage =
+        "Cannot have more than one @Produces method with the same name in a single module";
     Compilation compilation = daggerCompiler().compile(moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(errorMessage).inFile(moduleFile).onLine(8);
@@ -202,7 +204,7 @@ public class ProducerModuleFactoryGeneratorTest {
 
   @Test public void producesMethodWithScope() {
     assertThatProductionModuleMethod("@Produces @Singleton String str() { return \"\"; }")
-        .hasError(PRODUCES_METHOD_SCOPE);
+        .hasError("@Produces methods may not have scope annotations");
   }
 
   @Test
@@ -219,7 +221,7 @@ public class ProducerModuleFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("Modules cannot be private.")
+        .hadErrorContaining("Modules cannot be private")
         .inFile(moduleFile)
         .onLine(6);
   }
@@ -240,7 +242,7 @@ public class ProducerModuleFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("Modules cannot be enclosed in private types.")
+        .hadErrorContaining("Modules cannot be enclosed in private types")
         .inFile(moduleFile)
         .onLine(7);
   }
@@ -263,10 +265,7 @@ public class ProducerModuleFactoryGeneratorTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            String.format(
-                ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED,
-                "X",
-                "one of @Module, @ProducerModule"));
+            "X is listed as a module, but is not annotated with one of @Module, @ProducerModule");
   }
 
   @Test
@@ -503,12 +502,14 @@ public class ProducerModuleFactoryGeneratorTest {
     assertThatProductionModuleMethod(
             "@Produces @QualifierA @QualifierB abstract String produceString() { return null; }")
         .importing(ListenableFuture.class, QualifierA.class, QualifierB.class)
-        .hasError(BINDING_METHOD_MULTIPLE_QUALIFIERS);
+        .hasError("Cannot use more than one @Qualifier");
   }
-  
+
   @Qualifier
+  @Retention(RUNTIME)
   public @interface QualifierA {}
 
   @Qualifier
+  @Retention(RUNTIME)
   public @interface QualifierB {}
 }

@@ -26,20 +26,12 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotati
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
+import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
-import static dagger.internal.codegen.ErrorMessages.INCOMPATIBLE_MODULE_METHODS;
-import static dagger.internal.codegen.ErrorMessages.METHOD_OVERRIDES_PROVIDES_METHOD;
-import static dagger.internal.codegen.ErrorMessages.MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.ModuleMessages.moduleSubcomponentsDoesntHaveBuilder;
-import static dagger.internal.codegen.ErrorMessages.ModuleMessages.moduleSubcomponentsIncludesBuilder;
-import static dagger.internal.codegen.ErrorMessages.ModuleMessages.moduleSubcomponentsIncludesNonSubcomponent;
-import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_OVERRIDES_ANOTHER;
-import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS;
-import static dagger.internal.codegen.ErrorMessages.REFERENCED_MODULE_NOT_ANNOTATED;
+import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.EnumSet.noneOf;
@@ -208,7 +200,8 @@ final class ModuleValidator {
         EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
       builder.addError(
           String.format(
-              INCOMPATIBLE_MODULE_METHODS,
+              "A @%s may not contain both non-static @%s methods and "
+                  + "abstract @Binds or @Multibinds declarations",
               moduleKind.moduleAnnotation().getSimpleName(),
               moduleKind.methodAnnotation().getSimpleName()));
     }
@@ -264,6 +257,22 @@ final class ModuleValidator {
     }
   }
 
+  private static String moduleSubcomponentsIncludesNonSubcomponent(TypeElement notSubcomponent) {
+    return notSubcomponent.getQualifiedName()
+        + " is not a @Subcomponent or @ProductionSubcomponent";
+  }
+
+  private static String moduleSubcomponentsIncludesBuilder(
+      TypeElement moduleSubcomponentsAttribute) {
+    TypeElement subcomponentType =
+        MoreElements.asType(moduleSubcomponentsAttribute.getEnclosingElement());
+    return String.format(
+        "%s is a @%s.Builder. Did you mean to use %s?",
+        moduleSubcomponentsAttribute.getQualifiedName(),
+        simpleName(getSubcomponentAnnotation(subcomponentType).get()),
+        subcomponentType.getQualifiedName());
+  }
+
   private static void validateSubcomponentHasBuilder(
       TypeElement subcomponentAttribute,
       AnnotationMirror moduleAnnotation,
@@ -275,6 +284,15 @@ final class ModuleValidator {
         moduleSubcomponentsDoesntHaveBuilder(subcomponentAttribute, moduleAnnotation),
         builder.getSubject(),
         moduleAnnotation);
+  }
+
+  private static String moduleSubcomponentsDoesntHaveBuilder(
+      TypeElement subcomponent, AnnotationMirror moduleAnnotation) {
+    return String.format(
+        "%s doesn't have a @%s.Builder, which is required when used with @%s.subcomponents",
+        subcomponent.getQualifiedName(),
+        simpleName(getSubcomponentAnnotation(subcomponent).get()),
+        simpleName(moduleAnnotation));
   }
 
   enum ModuleMethodKind {
@@ -299,7 +317,7 @@ final class ModuleValidator {
     // This coupled with the check for abstract modules in ComponentValidator guarantees that
     // only modules without type parameters are referenced from @Component(modules={...}).
     if (!subject.getTypeParameters().isEmpty() && !subject.getModifiers().contains(ABSTRACT)) {
-      builder.addError(MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT, subject);
+      builder.addError("Modules with type parameters must be abstract", subject);
     }
   }
 
@@ -313,7 +331,8 @@ final class ModuleValidator {
         for (ExecutableElement offendingMethod : entry.getValue()) {
           builder.addError(
               String.format(
-                  BINDING_METHOD_WITH_SAME_NAME, moduleKind.methodAnnotation().getSimpleName()),
+                  "Cannot have more than one @%s method with the same name in a single module",
+                  moduleKind.methodAnnotation().getSimpleName()),
               offendingMethod);
         }
       }
@@ -373,11 +392,12 @@ final class ModuleValidator {
                   TypeElement module = MoreElements.asType(t.asElement());
                   if (!t.getTypeArguments().isEmpty()) {
                     reportError(
-                        REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS, module.getQualifiedName());
+                        "%s is listed as a module, but has type parameters",
+                        module.getQualifiedName());
                   }
                   if (!isAnyAnnotationPresent(module, validModuleAnnotations)) {
                     reportError(
-                        REFERENCED_MODULE_NOT_ANNOTATED,
+                        "%s is listed as a module, but is not annotated with %s",
                         module.getQualifiedName(),
                         (validModuleAnnotations.size() > 1 ? "one of " : "")
                             + validModuleAnnotations
@@ -439,7 +459,7 @@ final class ModuleValidator {
             failedMethods.add(providesMethod);
             builder.addError(
                 String.format(
-                    PROVIDES_METHOD_OVERRIDES_ANOTHER,
+                    "@%s methods may not override another method. Overrides: %s",
                     moduleKind.methodAnnotation().getSimpleName(),
                     methodSignatureFormatter.format(superclassMethod)),
                 providesMethod);
@@ -453,7 +473,7 @@ final class ModuleValidator {
               failedMethods.add(method);
               builder.addError(
                   String.format(
-                      METHOD_OVERRIDES_PROVIDES_METHOD,
+                      "@%s methods may not be overridden in modules. Overrides: %s",
                       moduleKind.methodAnnotation().getSimpleName(),
                       methodSignatureFormatter.format(superclassMethod)),
                   method);

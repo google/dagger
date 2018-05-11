@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueCannotReleaseReferences;
-import static dagger.internal.codegen.ErrorMessages.forReleasableReferencesValueNotAScope;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeValue;
 import static dagger.internal.codegen.Scopes.scope;
 import static dagger.model.Scope.isScope;
@@ -29,6 +27,7 @@ import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
+import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ForReleasableReferences;
 import java.lang.annotation.Annotation;
 import java.util.Set;
@@ -80,5 +79,27 @@ final class ForReleasableReferencesValidator implements ProcessingStep {
         .map(this::validateAnnotatedElement)
         .forEach(report -> report.printMessagesTo(messager));
     return ImmutableSet.of();
+  }
+
+  private static String forReleasableReferencesValueNotAScope(TypeElement scopeType) {
+    return forReleasableReferencesValueNeedsAnnotation(
+        scopeType,
+        String.format(
+            "@%s and @%s",
+            javax.inject.Scope.class.getCanonicalName(),
+            CanReleaseReferences.class.getCanonicalName()));
+  }
+
+  private static String forReleasableReferencesValueCannotReleaseReferences(TypeElement scopeType) {
+    return forReleasableReferencesValueNeedsAnnotation(
+        scopeType, "@" + CanReleaseReferences.class.getCanonicalName());
+  }
+
+  private static String forReleasableReferencesValueNeedsAnnotation(
+      TypeElement scopeType, String annotations) {
+    return String.format(
+        "The value of @%s must be a reference-releasing scope. "
+            + "Did you mean to annotate %s with %s? Or did you mean to use a different class here?",
+        ForReleasableReferences.class.getSimpleName(), scopeType.getQualifiedName(), annotations);
   }
 }

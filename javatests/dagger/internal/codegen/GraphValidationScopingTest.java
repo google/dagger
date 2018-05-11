@@ -374,7 +374,7 @@ public class GraphValidationScopingTest {
     Compilation compilation = daggerCompiler().compile(someComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents.")
+        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents")
         .inFile(someComponent)
         .onLine(6);
   }
@@ -395,7 +395,7 @@ public class GraphValidationScopingTest {
     Compilation compilation = daggerCompiler().compile(someSubcomponent);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents.")
+        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents")
         .inFile(someSubcomponent)
         .onLine(6);
   }

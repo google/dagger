@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -68,7 +67,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
             "$T.checkNotNull($L, $S)",
             Preconditions.class,
             invocation,
-            CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD)
+            "Cannot return null from a non-@Nullable component method")
         : invocation;
   }
 }

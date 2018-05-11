@@ -23,7 +23,6 @@ import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
@@ -972,7 +971,10 @@ public class MembersInjectionTest {
         "}");
     Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(INJECT_INTO_PRIVATE_CLASS).inFile(file).onLine(6);
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateNestedClassWarning() {
@@ -992,7 +994,10 @@ public class MembersInjectionTest {
                 compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
             .compile(file);
     assertThat(compilation).succeeded();
-    assertThat(compilation).hadWarningContaining(INJECT_INTO_PRIVATE_CLASS).inFile(file).onLine(6);
+    assertThat(compilation)
+        .hadWarningContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateSuperclassIsOkIfNotInjectedInto() {

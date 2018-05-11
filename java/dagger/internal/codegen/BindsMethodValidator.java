@@ -20,8 +20,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
-import static dagger.internal.codegen.ErrorMessages.BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -71,14 +69,20 @@ final class BindsMethodValidator extends BindingMethodValidator {
       TypeMirror rightHandSide = parameter.asType();
       ContributionType contributionType = ContributionType.fromBindingMethod(method);
       if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
-        builder.addError(BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET);
+        builder.addError(
+            "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter");
       }
 
       if (!bindsTypeChecker.isAssignable(rightHandSide, leftHandSide, contributionType)) {
-        builder.addError(BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER);
+        // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
+        // right-hand-side might not be assignable to the left-hand-side, but still compatible with
+        // Set.addAll(Collection<? extends E>)
+        builder.addError("@Binds methods' parameter type must be assignable to the return type");
       }
     } else {
-      builder.addError(BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER);
+      builder.addError(
+          "@Binds methods must have exactly one parameter, "
+              + "whose type is assignable to the return type");
     }
   }
 

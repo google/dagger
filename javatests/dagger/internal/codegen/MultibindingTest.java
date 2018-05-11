@@ -51,8 +51,7 @@ public class MultibindingTest {
     Compilation compilation = daggerCompiler().compile(module);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(
-            "Multiple multibinding annotations cannot be placed on the same Provides method")
+        .hadErrorContaining("@Provides methods cannot have more than one multibinding annotation")
         .inFile(module)
         .onLine(10);
   }

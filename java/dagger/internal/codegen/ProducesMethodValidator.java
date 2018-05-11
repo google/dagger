@@ -20,11 +20,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_NULLABLE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SCOPE;
-import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 import static dagger.internal.codegen.Scopes.scopesOf;
 
 import com.google.auto.common.MoreTypes;
@@ -68,20 +63,21 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   // TODO(beder): Properly handle nullable with producer methods.
   private void checkNullable(ValidationReport.Builder<ExecutableElement> builder) {
     if (ConfigurationAnnotations.getNullableType(builder.getSubject()).isPresent()) {
-      builder.addWarning(PRODUCES_METHOD_NULLABLE);
+      builder.addWarning("@Nullable on @Produces methods does not do anything");
     }
   }
 
   /** Adds an error if a {@link Produces @Produces} method has a scope annotation. */
   private void checkScope(ValidationReport.Builder<ExecutableElement> builder) {
     if (!scopesOf(builder.getSubject()).isEmpty()) {
-      builder.addError(PRODUCES_METHOD_SCOPE);
+      builder.addError("@Produces methods may not have scope annotations");
     }
   }
 
   @Override
   protected String badReturnTypeMessage() {
-    return formatErrorMessage(PRODUCES_METHOD_RETURN_TYPE);
+    return "@Produces methods can return only a primitive, an array, a type variable, "
+        + "a declared type, or a ListenableFuture of one of those types";
   }
 
   /**
@@ -115,7 +111,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
 
   @Override
   protected String badSetValuesTypeMessage() {
-    return PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+    return "@Produces methods of type set values must return a Set or ListenableFuture of Set";
   }
 
   private static Optional<TypeMirror> unwrapListenableFuture(
@@ -123,7 +119,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
     if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
       DeclaredType declaredType = MoreTypes.asDeclared(type);
       if (declaredType.getTypeArguments().isEmpty()) {
-        reportBuilder.addError(PRODUCES_METHOD_RAW_FUTURE);
+        reportBuilder.addError("@Produces methods cannot return a raw ListenableFuture");
         return Optional.empty();
       } else {
         return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));

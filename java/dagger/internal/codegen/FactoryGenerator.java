@@ -27,7 +27,6 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.DELEGATE;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
-import static dagger.internal.codegen.ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkFieldUsages;
@@ -303,6 +302,6 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
         "$T.checkNotNull($L, $S)",
         Preconditions.class,
         providesMethodInvocation,
-        CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+        "Cannot return null from a non-@Nullable @Provides method");
   }
 }

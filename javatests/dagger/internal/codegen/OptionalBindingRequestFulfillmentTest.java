@@ -24,7 +24,6 @@ import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
-import com.squareup.javapoet.CodeBlock;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -44,9 +43,6 @@ public class OptionalBindingRequestFulfillmentTest {
   public OptionalBindingRequestFulfillmentTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
   }
-
-  public static final CodeBlock NPE_FROM_PROVIDES =
-      CodeBlocks.stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
 
   @Test
   public void inlinedOptionalBindings() {

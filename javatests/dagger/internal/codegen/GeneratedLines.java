@@ -44,9 +44,8 @@ public final class GeneratedLines {
   }
 
   public static final CodeBlock NPE_FROM_PROVIDES_METHOD =
-      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD);
+      stringLiteral("Cannot return null from a non-@Nullable @Provides method");
 
   public static final CodeBlock NPE_FROM_COMPONENT_METHOD =
-      stringLiteral(ErrorMessages.CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD);
-
+      stringLiteral("Cannot return null from a non-@Nullable component method");
 }

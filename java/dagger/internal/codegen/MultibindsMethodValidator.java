@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.NO_MULTIBINDINGS;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
-import static dagger.internal.codegen.ErrorMessages.MultibindsMessages.METHOD_MUST_RETURN_MAP_OR_SET;
-import static dagger.internal.codegen.ErrorMessages.MultibindsMessages.PARAMETERS;
 import static dagger.internal.codegen.FrameworkTypes.isFrameworkType;
 
 import com.google.auto.common.MoreTypes;
@@ -58,7 +56,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
 
   private void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
     if (!builder.getSubject().getParameters().isEmpty()) {
-      builder.addError(formatErrorMessage(PARAMETERS));
+      builder.addError(bindingMethods("cannot have parameters"));
     }
   }
 
@@ -67,7 +65,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   protected void checkReturnType(ValidationReport.Builder<ExecutableElement> builder) {
     if (!isPlainMap(builder.getSubject().getReturnType())
         && !isPlainSet(builder.getSubject().getReturnType())) {
-      builder.addError(formatErrorMessage(METHOD_MUST_RETURN_MAP_OR_SET));
+      builder.addError(bindingMethods("must return Map<K, V> or Set<T>"));
     }
   }
 

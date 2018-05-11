@@ -71,7 +71,7 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
         if (i > 0) {
           builder.append(' ');
         }
-        builder.append(ErrorMessages.format(annotationIterator.next()));
+        builder.append(formatAnnotation(annotationIterator.next()));
       }
       builder.append(' ');
     }
@@ -99,12 +99,16 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
     getQualifier(parameter)
         .ifPresent(
             qualifier -> {
-              builder.append(ErrorMessages.format(qualifier)).append(' ');
+              builder.append(formatAnnotation(qualifier)).append(' ');
             });
     builder.append(nameOfType(type));
   }
 
   private static String nameOfType(TypeMirror type) {
     return stripCommonTypePrefixes(type.toString());
+  }
+
+  private static String formatAnnotation(AnnotationMirror annotation) {
+    return stripCommonTypePrefixes(annotation.toString());
   }
 }

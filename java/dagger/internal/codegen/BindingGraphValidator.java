@@ -27,9 +27,6 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDepen
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
-import static dagger.internal.codegen.ErrorMessages.CONTAINS_DEPENDENCY_CYCLE_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT;
-import static dagger.internal.codegen.ErrorMessages.abstractModuleHasInstanceBindingMethods;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
@@ -305,12 +302,30 @@ final class BindingGraphValidator {
         if (module.moduleElement().getModifiers().contains(Modifier.ABSTRACT)) {
           for (ContributionBinding binding : module.bindings()) {
             if (binding.requiresModuleInstance()) {
-              report(graph).addError(abstractModuleHasInstanceBindingMethods(module));
+              report(graph).addError(abstractModuleHasInstanceBindingMethodsError(module));
               break;
             }
           }
         }
       }
+    }
+
+    private String abstractModuleHasInstanceBindingMethodsError(ModuleDescriptor module) {
+      String methodAnnotations;
+      switch (module.kind()) {
+        case MODULE:
+          methodAnnotations = "@Provides";
+          break;
+        case PRODUCER_MODULE:
+          methodAnnotations = "@Provides or @Produces";
+          break;
+        default:
+          throw new AssertionError(module.kind());
+      }
+      return String.format(
+          "%s is abstract and has instance %s methods. Consider making the methods static or "
+              + "including a non-abstract subclass of the module instead.",
+          module.moduleElement(), methodAnnotations);
     }
 
     private void validateBuilders(BindingGraph graph) {
@@ -576,7 +591,7 @@ final class BindingGraphValidator {
       @SuppressWarnings("resource") // Appendable is a StringBuilder.
       private void reportDependsOnProductionExecutor() {
         reportErrorAtEntryPoint(
-            DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT, formatCurrentDependencyRequestKey());
+            "%s may not depend on the production executor", formatCurrentDependencyRequestKey());
       }
 
       // TODO(cgruber): Provide a hint for the start and end of the cycle.
@@ -591,7 +606,7 @@ final class BindingGraphValidator {
                     cycleBindings.addAll(resolvedBindings.contributionBindings()));
         reportErrorAtEntryPoint(
             owningGraph(cycleBindings.build()),
-            CONTAINS_DEPENDENCY_CYCLE_FORMAT,
+            "Found a dependency cycle:\n%s",
             formatDependencyTrace());
       }
 

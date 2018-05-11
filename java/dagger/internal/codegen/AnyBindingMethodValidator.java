@@ -20,8 +20,8 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.ErrorMessages.tooManyBindingMethodAnnotations;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -100,7 +100,12 @@ final class AnyBindingMethodValidator {
         break;
 
       default:
-        report.addError(tooManyBindingMethodAnnotations(method, methodAnnotations()), method);
+        report.addError(
+            String.format(
+                "%s is annotated with more than one of (%s)",
+                method.getSimpleName(),
+                methodAnnotations().stream().map(Class::getCanonicalName).collect(joining(", "))),
+            method);
         break;
     }
     return report.build();

@@ -18,25 +18,6 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MULTIPLE_QUALIFIERS;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A_VALUE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_ABSTRACT;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_MAP_HAS_MAP_KEY;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_RETURN_TYPE;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RETURN_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_THROWS;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_THROWS_ANY;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_THROWS_CHECKED;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE_MAP_KEYS;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
-import static dagger.internal.codegen.ErrorMessages.MULTIBINDING_ANNOTATION_CONFLICTS_WITH_BINDING_ANNOTATION_ENUM;
-import static dagger.internal.codegen.ErrorMessages.MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
@@ -49,7 +30,7 @@ import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import dagger.MapKey;
 import dagger.Provides;
@@ -57,6 +38,7 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Qualifier;
@@ -126,10 +108,23 @@ abstract class BindingMethodValidator {
     this.exceptionSuperclass = exceptionSuperclass;
     this.allowsMultibindings = allowsMultibindings;
   }
-  
-  /** The annotation that identifies methods validated by this object. */
-  Class<? extends Annotation> methodAnnotation() {
+
+  /** The annotation that identifies binding methods validated by this object. */
+  final Class<? extends Annotation> methodAnnotation() {
     return methodAnnotation;
+  }
+
+  /**
+   * Returns an error message of the form "@<i>annotation</i> methods <i>rule</i>", where
+   * <i>rule</i> comes from calling {@link String#format(String, Object...)} on {@code ruleFormat}
+   * and the other arguments.
+   */
+  @FormatMethod
+  protected final String bindingMethods(String ruleFormat, Object... args) {
+    return new Formatter()
+        .format("@%s methods ", methodAnnotation.getSimpleName())
+        .format(ruleFormat, args)
+        .toString();
   }
 
   /** Returns a {@link ValidationReport} for {@code method}. */
@@ -165,8 +160,8 @@ abstract class BindingMethodValidator {
     if (!isAnyAnnotationPresent(
         builder.getSubject().getEnclosingElement(), enclosingElementAnnotations)) {
       builder.addError(
-          formatErrorMessage(
-              BINDING_METHOD_NOT_IN_MODULE,
+          bindingMethods(
+              "can only be present within a @%s",
               enclosingElementAnnotations
                   .stream()
                   .map(Class::getSimpleName)
@@ -177,14 +172,14 @@ abstract class BindingMethodValidator {
   /** Adds an error if the method is generic. */
   private void checkTypeParameters(ValidationReport.Builder<ExecutableElement> builder) {
     if (!builder.getSubject().getTypeParameters().isEmpty()) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_TYPE_PARAMETER));
+      builder.addError(bindingMethods("may not have type parameters"));
     }
   }
 
   /** Adds an error if the method is private. */
   private void checkNotPrivate(ValidationReport.Builder<ExecutableElement> builder) {
     if (builder.getSubject().getModifiers().contains(PRIVATE)) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_PRIVATE));
+      builder.addError(bindingMethods("cannot be private"));
     }
   }
 
@@ -194,13 +189,13 @@ abstract class BindingMethodValidator {
     switch (abstractness) {
       case MUST_BE_ABSTRACT:
         if (!isAbstract) {
-          builder.addError(formatErrorMessage(BINDING_METHOD_NOT_ABSTRACT));
+          builder.addError(bindingMethods("must be abstract"));
         }
         break;
 
       case MUST_BE_CONCRETE:
         if (isAbstract) {
-          builder.addError(formatErrorMessage(BINDING_METHOD_ABSTRACT));
+          builder.addError(bindingMethods("cannot be abstract"));
         }
         break;
 
@@ -251,7 +246,7 @@ abstract class BindingMethodValidator {
       ValidationReport.Builder<ExecutableElement> builder, TypeMirror keyType) {
     TypeKind kind = keyType.getKind();
     if (kind.equals(VOID)) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_MUST_RETURN_A_VALUE));
+      builder.addError(bindingMethods("must return a value (not void)"));
     } else if (!(kind.isPrimitive()
         || kind.equals(DECLARED)
         || kind.equals(ARRAY)
@@ -262,7 +257,7 @@ abstract class BindingMethodValidator {
 
   /** The error message when a non-{@code void} binding method returns a bad type. */
   protected String badReturnTypeMessage() {
-    return formatErrorMessage(BINDING_METHOD_RETURN_TYPE);
+    return bindingMethods("must return a primitive, an array, a type variable, or a declared type");
   }
 
   /**
@@ -282,7 +277,7 @@ abstract class BindingMethodValidator {
     } else {
       SetType setType = SetType.from(type);
       if (setType.isRawType()) {
-        builder.addError(formatErrorMessage(BINDING_METHOD_SET_VALUES_RAW_SET));
+        builder.addError(bindingMethods("annotated with @ElementsIntoSet cannot return a raw Set"));
       } else {
         checkKeyType(builder, setType.elementType());
       }
@@ -302,7 +297,7 @@ abstract class BindingMethodValidator {
     ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(builder.getSubject());
     if (qualifiers.size() > 1) {
       for (AnnotationMirror qualifier : qualifiers) {
-        builder.addError(BINDING_METHOD_MULTIPLE_QUALIFIERS, builder.getSubject(), qualifier);
+        builder.addError("Cannot use more than one @Qualifier", builder.getSubject(), qualifier);
       }
     }
   }
@@ -320,16 +315,16 @@ abstract class BindingMethodValidator {
     if (ContributionType.fromBindingMethod(builder.getSubject()).equals(ContributionType.MAP)) {
       switch (mapKeys.size()) {
         case 0:
-          builder.addError(formatErrorMessage(BINDING_METHOD_WITH_NO_MAP_KEY));
+          builder.addError(bindingMethods("of type map must declare a map key"));
           break;
         case 1:
           break;
         default:
-          builder.addError(formatErrorMessage(BINDING_METHOD_WITH_MULTIPLE_MAP_KEYS));
+          builder.addError(bindingMethods("may not have more than one map key"));
           break;
       }
     } else if (!mapKeys.isEmpty()) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY));
+      builder.addError(bindingMethods("of non map type cannot declare a map key"));
     }
   }
 
@@ -347,7 +342,7 @@ abstract class BindingMethodValidator {
     if (multibindingAnnotations.size() > 1) {
       for (AnnotationMirror annotation : multibindingAnnotations) {
         builder.addError(
-            formatErrorMessage(MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD),
+            bindingMethods("cannot have more than one multibinding annotation"),
             builder.getSubject(),
             annotation);
       }
@@ -361,27 +356,15 @@ abstract class BindingMethodValidator {
     }
     if (usesProvidesType && !multibindingAnnotations.isEmpty()) {
       builder.addError(
-          formatErrorMessage(MULTIBINDING_ANNOTATION_CONFLICTS_WITH_BINDING_ANNOTATION_ENUM),
-          builder.getSubject());
+          "@Provides.type cannot be used with multibinding annotations", builder.getSubject());
     }
   }
 
   /** Adds an error if the method returns a {@linkplain FrameworkTypes framework type}. */
   protected void checkFrameworkType(ValidationReport.Builder<ExecutableElement> builder) {
     if (FrameworkTypes.isFrameworkType(builder.getSubject().getReturnType())) {
-      builder.addError(formatErrorMessage(BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES));
+      builder.addError(bindingMethods("must not return framework types"));
     }
-  }
-
-  /**
-   * Formats an error message whose first {@code %s} parameter should be replaced with the simple
-   * name of the method annotation.
-   */
-  protected String formatErrorMessage(String format, Object... otherParameters) {
-    return otherParameters.length == 0
-        ? String.format(format, methodAnnotation.getSimpleName())
-        : String.format(
-            format, Lists.asList(methodAnnotation.getSimpleName(), otherParameters).toArray());
   }
 
   /**
@@ -389,7 +372,7 @@ abstract class BindingMethodValidator {
    * returns a bad type.
    */
   protected String badSetValuesTypeMessage() {
-    return formatErrorMessage(BINDING_METHOD_SET_VALUES_RETURN_SET);
+    return bindingMethods("annotated with @ElementsIntoSet must return a Set");
   }
 
   /** An abstract/concrete restriction on methods. */
@@ -399,39 +382,53 @@ abstract class BindingMethodValidator {
   }
 
   /**
-   * The exception class that all {@code throws}-declared throwables must extend, other than
-   * {@link Error}.
+   * The exception class that all {@code throws}-declared throwables must extend, other than {@link
+   * Error}.
    */
   protected enum ExceptionSuperclass {
     /** Methods may not declare any throwable types. */
     NO_EXCEPTIONS {
       @Override
+      protected String errorMessage(BindingMethodValidator validator) {
+        return validator.bindingMethods("may not throw");
+      }
+
+      @Override
       protected void checkThrows(
           BindingMethodValidator validator, ValidationReport.Builder<ExecutableElement> builder) {
         if (!builder.getSubject().getThrownTypes().isEmpty()) {
-          builder.addError(validator.formatErrorMessage(BINDING_METHOD_THROWS_ANY));
+          builder.addError(validator.bindingMethods("may not throw"));
           return;
         }
       }
     },
 
     /** Methods may throw checked or unchecked exceptions or errors. */
-    EXCEPTION(Exception.class, BINDING_METHOD_THROWS),
+    EXCEPTION(Exception.class) {
+      @Override
+      protected String errorMessage(BindingMethodValidator validator) {
+        return validator.bindingMethods(
+            "may only throw unchecked exceptions or exceptions subclassing Exception");
+      }
+    },
 
     /** Methods may throw unchecked exceptions or errors. */
-    RUNTIME_EXCEPTION(RuntimeException.class, BINDING_METHOD_THROWS_CHECKED),
+    RUNTIME_EXCEPTION(RuntimeException.class) {
+      @Override
+      protected String errorMessage(BindingMethodValidator validator) {
+        return validator.bindingMethods("may only throw unchecked exceptions");
+      }
+    },
     ;
 
     private final Class<? extends Exception> superclass;
-    private final String errorMessage;
 
-    private ExceptionSuperclass() {
-      this(null, null);
+    ExceptionSuperclass() {
+      this(null);
     }
 
-    private ExceptionSuperclass(Class<? extends Exception> superclass, String errorMessage) {
+    ExceptionSuperclass(Class<? extends Exception> superclass) {
       this.superclass = superclass;
-      this.errorMessage = errorMessage;
     }
 
     /**
@@ -448,11 +445,13 @@ abstract class BindingMethodValidator {
       for (TypeMirror thrownType : builder.getSubject().getThrownTypes()) {
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)
             && !validator.types.isSubtype(thrownType, errorType)) {
-          builder.addError(validator.formatErrorMessage(errorMessage));
+          builder.addError(errorMessage(validator));
           break;
         }
       }
     }
+
+    protected abstract String errorMessage(BindingMethodValidator validator);
   }
 
   /** Whether to check multibinding annotations. */

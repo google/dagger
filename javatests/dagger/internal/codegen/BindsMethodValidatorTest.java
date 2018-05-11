@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.common.collect.ImmutableList;
 import dagger.Module;
@@ -26,6 +27,7 @@ import dagger.multibindings.LongKey;
 import dagger.producers.ProducerModule;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
 import java.util.Collection;
 import javax.inject.Qualifier;
 import org.junit.Ignore;
@@ -132,7 +134,7 @@ public class BindsMethodValidatorTest {
     assertThatMethod(
             "@Binds @IntoMap @IntKey(1) @LongKey(2L) abstract Object manyMapKeys(String string);")
         .importing(IntKey.class, LongKey.class)
-        .hasError("may not have more than one @MapKey-marked annotation");
+        .hasError("may not have more than one map key");
   }
 
   private DaggerModuleMethodSubject assertThatMethod(String method) {
@@ -140,8 +142,10 @@ public class BindsMethodValidatorTest {
   }
 
   @Qualifier
+  @Retention(RUNTIME)
   public @interface Qualifier1 {}
 
   @Qualifier
+  @Retention(RUNTIME)
   public @interface Qualifier2 {}
 }

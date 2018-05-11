@@ -51,4 +51,4 @@ for generated_pom_file in dagger*pom.xml; do
 done
 
 git tag -a -m "Dagger ${version_name}" dagger-"${version_name}"
-git push origin tag "${version_name}"
+git push origin tag dagger-"${version_name}"

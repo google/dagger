@@ -142,10 +142,11 @@ dependencies {
 ```groovy
 // Add Dagger dependencies
 dependencies {
-  implementation 'com.google.dagger:dagger:2.x'
+  api 'com.google.dagger:dagger:2.x'
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```
+For more information on api vs implementation please see https://developer.android.com/studio/build/gradle-plugin-3-0-0-migration?utm_source=android-studio#new_configurations
 
 If you're using classes in `dagger.android` you'll also want to include:
 

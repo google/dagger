@@ -41,13 +41,10 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.BindsOptionalOf;
 import dagger.Component;
@@ -111,10 +108,6 @@ final class BindingGraphValidator {
     final Map<ComponentDescriptor, ValidationReport.Builder<TypeElement>> reports =
         new LinkedHashMap<>();
 
-    /** Bindings whose scopes are not compatible with the component that owns them. */
-    private final SetMultimap<ComponentDescriptor, ContributionBinding> incompatiblyScopedBindings =
-        LinkedHashMultimap.create();
-
     ComponentValidation(BindingGraph rootGraph) {
       super(rootGraph);
       this.rootGraph = rootGraph;
@@ -149,7 +142,6 @@ final class BindingGraphValidator {
       validateModules(graph);
       validateBuilders(graph);
       super.visitComponent(graph);
-      checkScopedBindings(graph);
     }
 
     @Override
@@ -470,71 +462,6 @@ final class BindingGraphValidator {
       return false;
     }
 
-    /**
-     * Collects scoped bindings that are not compatible with their owning component for later
-     * reporting by {@link #checkScopedBindings(BindingGraph)}.
-     */
-    private void checkBindingScope(
-        ContributionBinding binding, ComponentDescriptor owningComponent) {
-      if (binding.scope().isPresent()
-          && !binding.scope().get().isReusable()
-          && !owningComponent.scopes().contains(binding.scope().get())) {
-        incompatiblyScopedBindings.put(owningComponent, binding);
-      }
-    }
-
-    /**
-     * Reports an error if any of the scoped bindings owned by a given component are incompatible
-     * with the component. Must be called after all bindings owned by the given component have been
-     * {@linkplain #checkBindingScope(ContributionBinding, ComponentDescriptor) visited}.
-     */
-    private void checkScopedBindings(BindingGraph graph) {
-      if (!incompatiblyScopedBindings.containsKey(graph.componentDescriptor())) {
-        return;
-      }
-
-      StringBuilder message = new StringBuilder(graph.componentType().getQualifiedName());
-      if (!graph.componentDescriptor().scopes().isEmpty()) {
-        message.append(" scoped with ");
-        for (Scope scope : graph.componentDescriptor().scopes()) {
-          message.append(getReadableSource(scope)).append(' ');
-        }
-        message.append("may not reference bindings with different scopes:\n");
-      } else {
-        message.append(" (unscoped) may not reference scoped bindings:\n");
-      }
-      for (ContributionBinding binding :
-          incompatiblyScopedBindings.get(graph.componentDescriptor())) {
-        message.append(INDENT);
-
-        switch (binding.kind()) {
-          case DELEGATE:
-          case PROVISION:
-            message.append(
-                methodSignatureFormatter.format(
-                    MoreElements.asExecutable(binding.bindingElement().get())));
-            break;
-
-          case INJECTION:
-            message
-                .append(getReadableSource(binding.scope().get()))
-                .append(" class ")
-                .append(binding.bindingTypeElement().get().getQualifiedName());
-            break;
-
-          default:
-            throw new AssertionError(binding);
-        }
-
-        message.append("\n");
-      }
-      report(graph)
-          .addError(
-              message.toString(),
-              graph.componentType(),
-              graph.componentDescriptor().componentAnnotation());
-    }
-
     final class BindingGraphValidation extends BindingGraphTraverser {
 
       BindingGraphValidation(
@@ -569,7 +496,6 @@ final class BindingGraphValidator {
       @Override
       protected void visitContributionBinding(
           ContributionBinding binding, ComponentDescriptor owningComponent) {
-        checkBindingScope(binding, owningComponent);
         if (compilerOptions.usesProducers()) {
           // TODO(dpb,beder): Validate this during @Inject/@Provides/@Produces validation.
           // Only the Dagger-specific binding may depend on the production executor.

@@ -16,8 +16,10 @@
 
 package dagger.android;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.os.Build;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
@@ -35,6 +37,13 @@ public abstract class DaggerFragment extends Fragment implements HasFragmentInje
   public void onAttach(Context context) {
     AndroidInjection.inject(this);
     super.onAttach(context);
+  }
+
+  public void onAttach(Activity activity) {
+    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      AndroidInjection.inject(this);
+    }
+    super.onAttach(activity);
   }
 
   @Override

@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.NO_MULTIBINDINGS;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
-import static dagger.internal.codegen.ErrorMessages.BINDS_OPTIONAL_OF_METHOD_HAS_PARAMETER;
-import static dagger.internal.codegen.ErrorMessages.BINDS_OPTIONAL_OF_METHOD_RETURNS_IMPLICITLY_PROVIDED_TYPE;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
@@ -68,13 +66,15 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
             getQualifiers(builder.getSubject()).stream().findFirst(), keyType, types)
         && !injectedConstructors(MoreElements.asType(MoreTypes.asDeclared(keyType).asElement()))
             .isEmpty()) {
-      builder.addError(BINDS_OPTIONAL_OF_METHOD_RETURNS_IMPLICITLY_PROVIDED_TYPE);
+      builder.addError(
+          "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"
+              + "annotated constructor because those are always present");
     }
   }
 
   private void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
     if (!builder.getSubject().getParameters().isEmpty()) {
-      builder.addError(BINDS_OPTIONAL_OF_METHOD_HAS_PARAMETER);
+      builder.addError("@BindsOptionalOf methods cannot have parameters");
     }
   }
 }

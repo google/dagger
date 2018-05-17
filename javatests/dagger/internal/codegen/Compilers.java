@@ -25,6 +25,7 @@ import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
+import javax.annotation.processing.Processor;
 
 /** {@link Compiler} instances for testing Dagger. */
 final class Compilers {
@@ -39,8 +40,14 @@ final class Compilers {
               .filter(jar -> !jar.contains(GUAVA))
               .collect(joining(PATH_SEPARATOR.value())));
 
-  /** Returns a compiler that runs the Dagger processor. */
-  static Compiler daggerCompiler() {
-    return javac().withProcessors(new ComponentProcessor(), new AutoAnnotationProcessor());
+  /**
+   * Returns a compiler that runs the Dagger and {@code @AutoAnnotation} processors, along with
+   * extras.
+   */
+  static Compiler daggerCompiler(Processor... extraProcessors) {
+    ImmutableList.Builder<Processor> processors = ImmutableList.builder();
+    processors.add(new ComponentProcessor(), new AutoAnnotationProcessor());
+    processors.add(extraProcessors);
+    return javac().withProcessors(processors.build());
   }
 }

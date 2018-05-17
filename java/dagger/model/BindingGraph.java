@@ -22,12 +22,13 @@ import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
 import static com.google.common.graph.Graphs.transpose;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Network;
 import dagger.Module;
@@ -122,10 +123,17 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     return dependencyEdgeStream().collect(toImmutableSet());
   }
 
-  /** Returns the dependency edges for the dependencies of a binding. */
-  public ImmutableMap<DependencyRequest, DependencyEdge> dependencyEdges(BindingNode bindingNode) {
+  /**
+   * Returns the dependency edges for the dependencies of a binding. For valid graphs, each {@link
+   * DependencyRequest} will map to a single {@link DependencyEdge}. When conflicting bindings exist
+   * for a key, the multimap will have several edges for that {@link DependencyRequest}. Graphs that
+   * have no binding for a key will have an edge whose {@linkplain EndpointPair#target() target
+   * node} is a {@link MissingBindingNode}.
+   */
+  public ImmutableSetMultimap<DependencyRequest, DependencyEdge> dependencyEdges(
+      BindingNode bindingNode) {
     return dependencyEdgeStream(bindingNode)
-        .collect(toImmutableMap(DependencyEdge::dependencyRequest, edge -> edge));
+        .collect(toImmutableSetMultimap(DependencyEdge::dependencyRequest, edge -> edge));
   }
 
   /** Returns the dependency edges for a dependency request. */

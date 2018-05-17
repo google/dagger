@@ -16,17 +16,13 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourcesSubject.assertThat;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
-import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
@@ -86,16 +82,17 @@ public class SubcomponentValidationTest {
         "    return object;",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, childComponentFile, moduleFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(componentFile, childComponentFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.ChildComponent requires modules which have no visible default constructors. "
                 + "Add the following modules as parameters to this method: "
                 + "test.ModuleWithParameters")
-        .in(componentFile)
+        .inFile(componentFile)
         .onLine(7);
   }
 
@@ -116,14 +113,15 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, childComponentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "Subcomponent factory methods may only accept modules, but java.lang.String is not.")
-        .in(componentFile)
+        .inFile(componentFile)
         .onLine(7)
         .atColumn(43);
   }
@@ -152,15 +150,16 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent(modules = TestModule.class)",
         "interface ChildComponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(moduleFile, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "A module may only occur once an an argument in a Subcomponent factory method, "
                 + "but test.TestModule was already passed.")
-        .in(componentFile)
+        .inFile(componentFile)
         .onLine(7)
         .atColumn(71);
   }
@@ -189,15 +188,16 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(moduleFile, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "test.TestModule is present as an argument to the test.ChildComponent factory method, "
                 + "but is not one of the modules used to implement the subcomponent.")
-        .in(componentFile)
+        .inFile(componentFile)
         .onLine(7);
   }
 
@@ -232,16 +232,17 @@ public class SubcomponentValidationTest {
         "interface ChildComponent {",
         "  String getString();",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(moduleFile, componentFile, childComponentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(moduleFile, componentFile, childComponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
             "[test.ChildComponent.getString()] "
                 + "java.lang.Integer cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method")
-        .in(componentFile)
+        .inFile(componentFile)
         .onLine(6);
   }
 
@@ -253,12 +254,10 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent",
         "final class NotASubcomponent {}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(subcomponentFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("interface");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(subcomponentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("interface");
   }
 
   @Test public void scopeMismatch() {
@@ -293,12 +292,12 @@ public class SubcomponentValidationTest {
         "final class ChildModule {",
         "  @Provides @Singleton Object provideObject() { return null; }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(componentFile, subcomponentFile, moduleFile))
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Singleton");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(componentFile, subcomponentFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("@Singleton");
   }
 
   @Test
@@ -1033,15 +1032,17 @@ public class SubcomponentValidationTest {
             "  Object dependsOnBuilder();",
             "}");
 
-    assertThat(module, component, subcomponent)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("test.Sub.Builder is bound multiple times:")
-        .and()
-        .withErrorContaining(
-            "@Provides test.Sub.Builder test.TestModule.providesConflictsWithModuleSubcomponents()")
-        .and()
-        .withErrorContaining("@Module(subcomponents = test.Sub.class) for test.TestModule");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(module, component, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("test.Sub.Builder is bound multiple times:");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@Provides test.Sub.Builder "
+                + "test.TestModule.providesConflictsWithModuleSubcomponents()");
+    assertThat(compilation)
+        .hadErrorContaining("@Module(subcomponents = test.Sub.class) for test.TestModule");
   }
 }

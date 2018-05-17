@@ -16,11 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-import static java.util.Arrays.asList;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -67,11 +66,9 @@ public class GraphValidationScopingTest {
         "test.MyComponent (unscoped) may not reference scoped bindings:\n"
             + "      @Singleton class test.ScopedType\n"
             + "      @Provides @Singleton String test.ScopedModule.string()";
-    assertAbout(javaSources())
-        .that(asList(componentFile, typeFile, moduleFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+    Compilation compilation = daggerCompiler().compile(componentFile, typeFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test public void componentWithScopeIncludesIncompatiblyScopedBindings_Fail() {
@@ -93,6 +90,17 @@ public class GraphValidationScopingTest {
         "",
         "@Scope",
         "@interface PerTest {}");
+    JavaFileObject scopeWithAttribute =
+        JavaFileObjects.forSourceLines(
+            "test.Per",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface Per {",
+            "  Class<?> value();",
+            "}");
     JavaFileObject typeFile = JavaFileObjects.forSourceLines("test.ScopedType",
         "package test;",
         "",
@@ -100,7 +108,7 @@ public class GraphValidationScopingTest {
         "",
         "@PerTest", // incompatible scope
         "class ScopedType {",
-        "  @Inject ScopedType(String s, long l, float f) {}",
+        "  @Inject ScopedType(String s, long l, float f, boolean b) {}",
         "}");
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.ScopedModule",
         "package test;",
@@ -114,17 +122,19 @@ public class GraphValidationScopingTest {
         "  @Provides @PerTest String string() { return \"a string\"; }", // incompatible scope
         "  @Provides long integer() { return 0L; }", // unscoped - valid
         "  @Provides @Singleton float floatingPoint() { return 0.0f; }", // same scope - valid
+        "  @Provides @Per(MyComponent.class) boolean bool() { return false; }", // incompatible
         "}");
     String errorMessage =
         "test.MyComponent scoped with @Singleton "
             + "may not reference bindings with different scopes:\n"
             + "      @test.PerTest class test.ScopedType\n"
-            + "      @Provides @test.PerTest String test.ScopedModule.string()";
-    assertAbout(javaSources())
-        .that(asList(componentFile, scopeFile, typeFile, moduleFile))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+            + "      @Provides @test.PerTest String test.ScopedModule.string()\n"
+            + "      @Provides @test.Per(test.MyComponent.class) boolean test.ScopedModule.bool()";
+    Compilation compilation =
+        daggerCompiler()
+            .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test public void componentWithScopeMayDependOnOnlyOneScopedComponent() {
@@ -191,12 +201,12 @@ public class GraphValidationScopingTest {
         "@test.SimpleScope test.SimpleScopedComponent depends on more than one scoped component:\n"
         + "      @Singleton test.SingletonComponentA\n"
         + "      @Singleton test.SingletonComponentB";
-    assertAbout(javaSources())
-        .that(
-            asList(type, simpleScope, simpleScoped, singletonScopedA, singletonScopedB, scopeless))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                type, simpleScope, simpleScoped, singletonScopedA, singletonScopedB, scopeless);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test public void componentWithoutScopeCannotDependOnScopedComponent() {
@@ -232,11 +242,9 @@ public class GraphValidationScopingTest {
     String errorMessage =
         "test.UnscopedComponent (unscoped) cannot depend on scoped components:\n"
         + "      @Singleton test.ScopedComponent";
-    assertAbout(javaSources())
-        .that(asList(type, scopedComponent, unscopedComponent))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+    Compilation compilation = daggerCompiler().compile(type, scopedComponent, unscopedComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test public void componentWithSingletonScopeMayNotDependOnOtherScope() {
@@ -279,11 +287,10 @@ public class GraphValidationScopingTest {
     String errorMessage =
         "This @Singleton component cannot depend on scoped components:\n"
         + "      @test.SimpleScope test.SimpleScopedComponent";
-    assertAbout(javaSources())
-        .that(asList(type, simpleScope, simpleScoped, singletonScoped))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+    Compilation compilation =
+        daggerCompiler().compile(type, simpleScope, simpleScoped, singletonScoped);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test public void componentScopeAncestryMustNotCycle() {
@@ -345,11 +352,10 @@ public class GraphValidationScopingTest {
         + "      @test.ScopeA test.ComponentLong\n"
         + "      @test.ScopeB test.ComponentMedium\n"
         + "      @test.ScopeA test.ComponentShort";
-    assertAbout(javaSources())
-        .that(asList(type, scopeA, scopeB, longLifetime, mediumLifetime, shortLifetime))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorMessage);
+    Compilation compilation =
+        daggerCompiler().compile(type, scopeA, scopeB, longLifetime, mediumLifetime, shortLifetime);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
   @Test
@@ -365,12 +371,11 @@ public class GraphValidationScopingTest {
             "@Reusable",
             "@Component",
             "interface SomeComponent {}");
-    assertAbout(javaSource())
-        .that(someComponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Reusable cannot be applied to components or subcomponents.")
-        .in(someComponent)
+    Compilation compilation = daggerCompiler().compile(someComponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents")
+        .inFile(someComponent)
         .onLine(6);
   }
 
@@ -387,12 +392,11 @@ public class GraphValidationScopingTest {
             "@Reusable",
             "@Subcomponent",
             "interface SomeSubcomponent {}");
-    assertAbout(javaSource())
-        .that(someSubcomponent)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("@Reusable cannot be applied to components or subcomponents.")
-        .in(someSubcomponent)
+    Compilation compilation = daggerCompiler().compile(someSubcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Reusable cannot be applied to components or subcomponents")
+        .inFile(someSubcomponent)
         .onLine(6);
   }
 }

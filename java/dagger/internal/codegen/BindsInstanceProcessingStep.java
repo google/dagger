@@ -21,9 +21,6 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getComponentOrSub
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_IN_INVALID_COMPONENT;
-import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_IN_MODULE;
-import static dagger.internal.codegen.ErrorMessages.BINDS_INSTANCE_ONE_PARAMETER;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
@@ -80,7 +77,8 @@ final class BindsInstanceProcessingStep implements ProcessingStep {
         report.addError("@BindsInstance methods must be abstract");
       }
       if (method.getParameters().size() != 1) {
-        report.addError(BINDS_INSTANCE_ONE_PARAMETER);
+        report.addError(
+            "@BindsInstance methods should have exactly one parameter for the bound type");
       } else {
         VariableElement parameter = getOnlyElement(method.getParameters());
         if (FrameworkTypes.isFrameworkType(parameter.asType())) {
@@ -91,13 +89,17 @@ final class BindsInstanceProcessingStep implements ProcessingStep {
       if (isAnyAnnotationPresent(enclosingType, MODULE_ANNOTATIONS)) {
         report.addError(
             String.format(
-                BINDS_INSTANCE_IN_MODULE, simpleName(getModuleAnnotation(enclosingType).get())));
+                "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?",
+                simpleName(getModuleAnnotation(enclosingType).get())));
       }
       if (isAnyAnnotationPresent(enclosingType, COMPONENT_ANNOTATIONS)) {
         AnnotationMirror componentAnnotation =
             getComponentOrSubcomponentAnnotation(enclosingType).get();
         report.addError(
-            String.format(BINDS_INSTANCE_IN_INVALID_COMPONENT, simpleName(componentAnnotation)));
+            String.format(
+                "@BindsInstance methods should not be included in @%1$ss. "
+                    + "Did you mean to put it in a @%1$s.Builder?",
+                simpleName(componentAnnotation)));
       }
       report.build().printMessagesTo(messager);
     }

@@ -21,11 +21,13 @@ import static java.lang.annotation.ElementType.METHOD;
 import android.app.Activity;
 import dagger.MapKey;
 import dagger.internal.Beta;
+import java.lang.annotation.Documented;
 import java.lang.annotation.Target;
 
 /** {@link MapKey} annotation to key bindings by a type of an {@link Activity}. */
 @Beta
 @MapKey
+@Documented
 @Target(METHOD)
 public @interface ActivityKey {
   Class<? extends Activity> value();

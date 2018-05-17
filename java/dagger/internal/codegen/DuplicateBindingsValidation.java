@@ -22,7 +22,6 @@ import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.DuplicateBindingsValidation.SourceAndRequest.indexEdgesBySourceAndRequest;
-import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Optionals.emptiesLast;
 import static java.util.Comparator.comparing;
@@ -160,7 +159,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
       int indentLevel,
       Iterable<? extends BindingDeclaration> bindingDeclarations) {
     bindingDeclarationFormatter.formatIndentedList(
-        builder, ImmutableList.copyOf(bindingDeclarations), indentLevel, DUPLICATE_SIZE_LIMIT);
+        builder, ImmutableList.copyOf(bindingDeclarations), indentLevel);
     builder.append('\n');
   }
 

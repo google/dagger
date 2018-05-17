@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -38,9 +38,9 @@ public class MultipleRequestTest {
       "}");
 
   @Test public void multipleRequests_constructor() {
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
                 DEP_FILE,
                 JavaFileObjects.forSourceLines(
                     "test.ConstructorInjectsMultiple",
@@ -60,15 +60,14 @@ public class MultipleRequestTest {
                     "@Component",
                     "interface SimpleComponent {",
                     "  ConstructorInjectsMultiple get();",
-                    "}")))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+                    "}"));
+    assertThat(compilation).succeeded();
   }
 
   @Test public void multipleRequests_field() {
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
                 DEP_FILE,
                 JavaFileObjects.forSourceLines(
                     "test.FieldInjectsMultiple",
@@ -90,15 +89,14 @@ public class MultipleRequestTest {
                     "@Component",
                     "interface SimpleComponent {",
                     "  FieldInjectsMultiple get();",
-                    "}")))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+                    "}"));
+    assertThat(compilation).succeeded();
   }
 
   @Test public void multipleRequests_providesMethod() {
-    assertAbout(javaSources())
-        .that(
-            ImmutableList.of(
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
                 DEP_FILE,
                 JavaFileObjects.forSourceLines(
                     "test.FieldInjectsMultiple",
@@ -122,8 +120,7 @@ public class MultipleRequestTest {
                     "@Component(modules = SimpleModule.class)",
                     "interface SimpleComponent {",
                     "  Object get();",
-                    "}")))
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError();
+                    "}"));
+    assertThat(compilation).succeeded();
   }
 }

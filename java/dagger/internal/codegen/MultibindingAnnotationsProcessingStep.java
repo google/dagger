@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
-import static dagger.internal.codegen.ErrorMessages.MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.collect.ImmutableSet;
@@ -67,7 +66,10 @@ final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
       if (!isAnyAnnotationPresent(element, VALID_BINDING_ANNOTATIONS)) {
         AnnotationMirror annotation = getAnnotationMirror(entry.getValue(), entry.getKey()).get();
         messager.printMessage(
-            Kind.ERROR, MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD, element, annotation);
+            Kind.ERROR,
+            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods",
+            element,
+            annotation);
       }
     }
     return ImmutableSet.of();

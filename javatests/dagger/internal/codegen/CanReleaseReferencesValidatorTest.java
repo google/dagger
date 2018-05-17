@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.auto.value.processor.AutoAnnotationProcessor;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -43,12 +43,8 @@ public final class CanReleaseReferencesValidatorTest {
             "@CanReleaseReferences",
             "@Retention(RetentionPolicy.SOURCE)",
             "@interface Metadata {}");
-    assertAbout(javaSource())
-        .that(annotation)
-        .processedWith(new ComponentProcessor(), new AutoAnnotationProcessor())
-        .failsToCompile()
-        .withErrorContaining("SOURCE")
-        .in(annotation)
-        .onLine(8);
+    Compilation compilation = daggerCompiler().compile(annotation);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("SOURCE").inFile(annotation).onLine(8);
   }
 }

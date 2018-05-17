@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.ErrorMessages.DUPLICATE_SIZE_LIMIT;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -135,8 +134,7 @@ final class MapMultibindingValidation implements BindingGraphPlugin {
         .forEach(
             (annotationType, contributions) -> {
               message.append('\n').append(INDENT).append(annotationType.get()).append(':');
-              bindingDeclarationFormatter.formatIndentedList(
-                  message, contributions, 2, DUPLICATE_SIZE_LIMIT);
+              bindingDeclarationFormatter.formatIndentedList(message, contributions, 2);
             });
     return message.toString();
   }
@@ -145,8 +143,7 @@ final class MapMultibindingValidation implements BindingGraphPlugin {
       Set<ContributionBinding> contributionsForOneMapKey, Key mapBindingKey) {
     StringBuilder message =
         new StringBuilder("The same map key is bound more than once for ").append(mapBindingKey);
-    bindingDeclarationFormatter.formatIndentedList(
-        message, contributionsForOneMapKey, 1, DUPLICATE_SIZE_LIMIT);
+    bindingDeclarationFormatter.formatIndentedList(message, contributionsForOneMapKey, 1);
     return message.toString();
   }
 }

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.ErrorMessages.CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import dagger.releasablereferences.CanReleaseReferences;
@@ -52,7 +51,7 @@ final class CanReleaseReferencesValidator {
             retention -> {
               if (getRetentionPolicy(retention).equals(SOURCE)) {
                 report.addError(
-                    CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION,
+                    "@CanReleaseReferences annotations must not have SOURCE retention",
                     report.getSubject(),
                     retention);
               }

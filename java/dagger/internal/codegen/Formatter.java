@@ -31,6 +31,7 @@ abstract class Formatter<T> implements Function<T, String> {
 
   static final String INDENT = "    ";
   static final String DOUBLE_INDENT = INDENT + INDENT;
+  private static final int LIST_LIMIT = 10;
 
   /**
    * Performs the transformation of an object into a string representation.
@@ -51,26 +52,15 @@ abstract class Formatter<T> implements Function<T, String> {
     return format(object);
   }
 
-  /**
-   * Formats {@code items}, one per line. Stops after {@code limit} items.
-   */
+  /** Formats {@code items}, one per line. Stops after {@value #LIST_LIMIT} items. */
   public void formatIndentedList(
-      StringBuilder builder, Iterable<? extends T> items, int indentLevel, int limit) {
-    formatIndentedList(
-        builder, indentLevel, Iterables.limit(items, limit), Iterables.skip(items, limit));
-  }
-
-  private void formatIndentedList(
-      StringBuilder builder,
-      int indentLevel,
-      Iterable<? extends T> firstItems,
-      Iterable<? extends T> restOfItems) {
-    for (T item : firstItems) {
+      StringBuilder builder, Iterable<? extends T> items, int indentLevel) {
+    for (T item : Iterables.limit(items, LIST_LIMIT)) {
       builder.append('\n');
       appendIndent(builder, indentLevel);
       builder.append(format(item));
     }
-    int numberOfOtherItems = Iterables.size(restOfItems);
+    int numberOfOtherItems = Iterables.size(items) - LIST_LIMIT;
     if (numberOfOtherItems > 0) {
       builder.append('\n');
       appendIndent(builder, indentLevel);

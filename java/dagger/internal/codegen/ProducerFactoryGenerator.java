@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Verify.verifyNotNull;
 import static com.squareup.javapoet.ClassName.OBJECT;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -76,15 +77,18 @@ import javax.lang.model.util.Elements;
  */
 final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
   private final CompilerOptions compilerOptions;
+  private final KeyFactory keyFactory;
 
   @Inject
   ProducerFactoryGenerator(
       Filer filer,
       Elements elements,
       SourceVersion sourceVersion,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      KeyFactory keyFactory) {
     super(filer, elements, sourceVersion);
     this.compilerOptions = compilerOptions;
+    this.keyFactory = keyFactory;
   }
 
   @Override
@@ -133,15 +137,23 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                     TypeName.get(binding.bindingTypeElement().get().asType())))
             : Optional.empty();
 
+    String monitorParameterName = null;
     for (Map.Entry<Key, FrameworkField> entry :
         generateBindingFieldsForDependencies(binding).entrySet()) {
       Key key = entry.getKey();
       FrameworkField bindingField = entry.getValue();
+      String fieldName = uniqueFieldNames.getUniqueName(bindingField.name());
+      if (key.equals(keyFactory.forProductionComponentMonitor())) {
+        monitorParameterName = fieldName;
+        constructorBuilder.addParameter(bindingField.type(), monitorParameterName);
+        continue;
+      }
+
       FieldSpec field =
           addFieldAndConstructorParameter(
               factoryBuilder,
               constructorBuilder,
-              uniqueFieldNames.getUniqueName(bindingField.name()),
+              fieldName,
               bindingField.type());
       fieldsBuilder.put(key, field);
     }
@@ -149,7 +161,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     constructorBuilder.addStatement(
         "super($N, $L)",
-        fields.get(binding.monitorRequest().get().key()),
+        verifyNotNull(monitorParameterName),
         producerTokenConstruction(generatedTypeName, binding));
 
     if (binding.requiresModuleInstance()) {
@@ -202,10 +214,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             .addExceptions(getThrownTypeNames(binding.thrownTypes()))
             .addCode(
                 getInvocationCodeBlock(
-                    generatedTypeName,
-                    binding,
-                    providedTypeName,
-                    futureTransform.parameterCodeBlocks()));
+                    binding, providedTypeName, futureTransform.parameterCodeBlocks()));
     if (futureTransform.hasUncheckedCast()) {
       applyMethodBuilder.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
     }
@@ -378,7 +387,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     String applyArgName() {
-      return asyncDependency.requestElement().get().getSimpleName().toString();
+      String argName = asyncDependency.requestElement().get().getSimpleName().toString();
+      if (argName.equals("module")) {
+        return "moduleArg";
+      }
+      return argName;
     }
 
     @Override
@@ -494,7 +507,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
    * @param parameterCodeBlocks The code blocks for all the parameters to the producer method.
    */
   private CodeBlock getInvocationCodeBlock(
-      ClassName generatedTypeName,
       ProductionBinding binding,
       TypeName providedTypeName,
       ImmutableList<CodeBlock> parameterCodeBlocks) {
@@ -502,7 +514,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
         CodeBlock.of(
             "$L.$L($L)",
             binding.requiresModuleInstance()
-                ? CodeBlock.of("$T.this.module", generatedTypeName)
+                ? "module"
                 : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
             binding.bindingElement().get().getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));

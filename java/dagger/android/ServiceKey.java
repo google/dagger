@@ -21,11 +21,13 @@ import static java.lang.annotation.ElementType.METHOD;
 import android.app.Service;
 import dagger.MapKey;
 import dagger.internal.Beta;
+import java.lang.annotation.Documented;
 import java.lang.annotation.Target;
 
 /** {@link MapKey} annotation to key bindings by a type of a {@link Service}. */
 @Beta
 @MapKey
+@Documented
 @Target(METHOD)
 public @interface ServiceKey {
   Class<? extends Service> value();

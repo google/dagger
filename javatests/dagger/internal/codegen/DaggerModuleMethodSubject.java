@@ -17,13 +17,15 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import com.google.common.truth.Truth;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.producers.ProducerModule;
@@ -143,12 +145,12 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
   void hasError(String errorSubstring) {
     String source = moduleSource();
     JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule", source);
-    assertAbout(javaSources())
-        .that(FluentIterable.from(additionalSources).append(module))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(errorSubstring)
-        .in(module)
+    Compilation compilation =
+        daggerCompiler().compile(FluentIterable.from(additionalSources).append(module));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(errorSubstring)
+        .inFile(module)
         .onLine(methodLine(source));
   }
 

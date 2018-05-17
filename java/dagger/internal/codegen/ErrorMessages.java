@@ -16,20 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
-import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
-import static java.util.stream.Collectors.joining;
-
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
-import dagger.multibindings.Multibinds;
-import dagger.releasablereferences.CanReleaseReferences;
-import dagger.releasablereferences.ForReleasableReferences;
-import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.Set;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -38,230 +27,12 @@ import javax.lang.model.type.TypeMirror;
  * The collection of error messages to be reported back to users.
  */
 final class ErrorMessages {
-  static final int DUPLICATE_SIZE_LIMIT = 10;
-
-  /*
-   * JSR-330 errors
-   *
-   * These are errors that are explicitly outlined in the JSR-330 APIs
-   */
-
-  /* constructors */
-  static final String MULTIPLE_INJECT_CONSTRUCTORS =
-      "Types may only contain one @Inject constructor.";
-
-  /* fields */
-  static final String FINAL_INJECT_FIELD = "@Inject fields may not be final";
-
-  /* methods */
-  static final String ABSTRACT_INJECT_METHOD = "Methods with @Inject may not be abstract.";
-  static final String GENERIC_INJECT_METHOD =
-      "Methods with @Inject may not declare type parameters.";
-
-  /* qualifiers */
-  static final String MULTIPLE_QUALIFIERS =
-      "A single injection site may not use more than one @Qualifier.";
-
-  /* scope */
-  static final String MULTIPLE_SCOPES = "A single binding may not declare more than one @Scope.";
-
-  /*
-   * Dagger errors
-   *
-   * These are errors that arise due to restrictions imposed by the dagger implementation.
-   */
-
-  /* constructors */
-  static final String INJECT_ON_PRIVATE_CONSTRUCTOR =
-      "Dagger does not support injection into private constructors";
-  static final String INJECT_CONSTRUCTOR_ON_INNER_CLASS =
-      "@Inject constructors are invalid on inner classes. Did you mean to make the class static?";
-  static final String INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS =
-      "@Inject is nonsense on the constructor of an abstract class";
-  static final String QUALIFIER_ON_INJECT_CONSTRUCTOR =
-      "@Qualifier annotations are not allowed on @Inject constructors.";
-  static final String SCOPE_ON_INJECT_CONSTRUCTOR =
-      "@Scope annotations are not allowed on @Inject constructors. Annotate the class instead.";
-  static final String CHECKED_EXCEPTIONS_ON_CONSTRUCTORS =
-      "Dagger does not support checked exceptions on @Inject constructors.";
-
-  /* fields */
-  static final String PRIVATE_INJECT_FIELD =
-      "Dagger does not support injection into private fields";
-
-  static final String STATIC_INJECT_FIELD =
-      "Dagger does not support injection into static fields";
-
-  /* methods */
-  static final String PRIVATE_INJECT_METHOD =
-      "Dagger does not support injection into private methods";
-
-  static final String STATIC_INJECT_METHOD =
-      "Dagger does not support injection into static methods";
-
-  /* all */
-  static final String INJECT_INTO_PRIVATE_CLASS =
-      "Dagger does not support injection into private classes";
-
-  /*
-   * Configuration errors
-   *
-   * These are errors that relate specifically to the Dagger configuration API (@Module, @Provides,
-   * etc.)
-   */
-  static final String COMPONENT_ANNOTATED_REUSABLE =
-      "@Reusable cannot be applied to components or subcomponents.";
-
-  static final String BINDING_METHOD_RETURN_TYPE =
-      "@%s methods must return a primitive, an array, a type variable, or a declared type.";
-
-  static final String BINDING_METHOD_THROWS_CHECKED =
-      "@%s methods may only throw unchecked exceptions";
-
-  static final String PRODUCES_METHOD_NULLABLE =
-      "@Nullable on @Produces methods does not do anything.";
-
-  static final String PRODUCES_METHOD_RETURN_TYPE =
-      "@Produces methods must return a primitive, an array, a type variable, or a declared type, "
-          + "or a ListenableFuture of one of those types.";
-
-  static final String PRODUCES_METHOD_RAW_FUTURE =
-      "@Produces methods cannot return a raw ListenableFuture.";
-
-  static final String BINDING_METHOD_SET_VALUES_RAW_SET =
-      "@%s methods of type set values cannot return a raw Set";
-
-  static final String BINDING_METHOD_SET_VALUES_RETURN_SET =
-      "@%s methods of type set values must return a Set";
-
-  static final String PRODUCES_METHOD_SET_VALUES_RETURN_SET =
-      "@Produces methods of type set values must return a Set or ListenableFuture of Set";
-
-  static final String PRODUCES_METHOD_SCOPE = "@Produces methods may not have scope annotations.";
-
-  static final String BINDING_METHOD_THROWS =
-      "@%s methods may only throw unchecked exceptions or exceptions subclassing Exception";
-
-  static final String BINDING_METHOD_THROWS_ANY = "@%s methods may not throw";
-
-  static final String BINDING_METHOD_MUST_RETURN_A_VALUE =
-      "@%s methods must return a value (not void).";
-
-  static final String BINDING_METHOD_MUST_NOT_BIND_FRAMEWORK_TYPES =
-      "@%s methods must not return framework types.";
-
-  static final String BINDING_METHOD_ABSTRACT = "@%s methods cannot be abstract";
-
-  static final String BINDING_METHOD_NOT_ABSTRACT = "@%s methods must be abstract";
-
-  static final String BINDING_METHOD_PRIVATE = "@%s methods cannot be private";
-
-  static final String BINDING_METHOD_TYPE_PARAMETER =
-      "@%s methods may not have type parameters.";
-
-  // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
-  // right-hand-side might not be assignable to the left-hand-side, but still compatible with
-  // Set.addAll(Collection<? extends E>)
-  static final String BINDS_METHOD_ONE_ASSIGNABLE_PARAMETER =
-      "@Binds methods must have only one parameter whose type is assignable to the return type";
-
-  static final String BINDS_OPTIONAL_OF_METHOD_HAS_PARAMETER =
-      "@BindsOptionalOf methods must not have parameters";
-
-  static final String BINDS_OPTIONAL_OF_METHOD_RETURNS_IMPLICITLY_PROVIDED_TYPE =
-      "@BindsOptionalOf methods cannot "
-          + "return unqualified types that have an @Inject-annotated constructor because those are "
-          + "always present";
-
-  static final String BINDING_METHOD_NOT_IN_MODULE = "@%s methods can only be present within a @%s";
-
-  static final String BINDS_ELEMENTS_INTO_SET_METHOD_RETURN_SET =
-      "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter";
-
-  static final String BINDING_METHOD_NOT_MAP_HAS_MAP_KEY =
-      "@%s methods of non map type cannot declare a map key";
-
-  static final String BINDING_METHOD_WITH_NO_MAP_KEY =
-      "@%s methods of type map must declare a map key";
-
-  static final String BINDING_METHOD_WITH_MULTIPLE_MAP_KEYS =
-      "@%s methods may not have more than one @MapKey-marked annotation";
-
-  static final String BINDING_METHOD_WITH_SAME_NAME =
-      "Cannot have more than one @%s method with the same name in a single module";
-
-  static final String INCOMPATIBLE_MODULE_METHODS =
-      "A @%1$s may not contain both non-static @%2$s methods and abstract @Binds or @Multibinds "
-          + "declarations";
-
-  static final String MODULES_WITH_TYPE_PARAMS_MUST_BE_ABSTRACT =
-      "Modules with type parameters must be abstract";
-
-  static final String REFERENCED_MODULE_NOT_ANNOTATED =
-      "%s is listed as a module, but is not annotated with %s";
-
-  static final String REFERENCED_MODULE_MUST_NOT_HAVE_TYPE_PARAMS =
-      "%s is listed as a module, but has type parameters";
-
-  static final String PROVIDES_METHOD_OVERRIDES_ANOTHER =
-      "@%s methods may not override another method. Overrides: %s";
-
-  static final String METHOD_OVERRIDES_PROVIDES_METHOD =
-      "@%s methods may not be overridden in modules. Overrides: %s";
-
-  static final String BINDING_METHOD_MULTIPLE_QUALIFIERS =
-      "Cannot use more than one @Qualifier";
-
-  /* mapKey errors */
-  static final String MAPKEY_WITHOUT_MEMBERS = "Map key annotations must have members";
-
-  static final String UNWRAPPED_MAP_KEY_WITH_TOO_MANY_MEMBERS=
-      "Map key annotations with unwrapped values must have exactly one member";
-
-  static final String UNWRAPPED_MAP_KEY_WITH_ARRAY_MEMBER =
-      "Map key annotations with unwrapped values cannot use arrays";
-
-  /* producer errors */
-  static final String DEPENDS_ON_PRODUCTION_EXECUTOR_FORMAT =
-      "%s may not depend on the production executor.";
-
-  private static final String PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT =
-      "%s may only be injected in @Produces methods.";
 
   static String provisionMayNotDependOnProducerType(TypeMirror type) {
     return String.format(
-        PROVISION_MAY_NOT_DEPEND_ON_PRODUCER_TYPE_FORMAT,
+        "%s may only be injected in @Produces methods",
         MoreTypes.asTypeElement(type).getSimpleName());
   }
-
-  static final String CONTAINS_DEPENDENCY_CYCLE_FORMAT = "Found a dependency cycle:\n%s";
-
-  static final String CANNOT_RETURN_NULL_FROM_NON_NULLABLE_COMPONENT_METHOD =
-      "Cannot return null from a non-@Nullable component method";
-
-  static final String CANNOT_RETURN_NULL_FROM_NON_NULLABLE_PROVIDES_METHOD =
-      "Cannot return null from a non-@Nullable @Provides method";
-
-  /* Multibinding messages */
-  static final String MULTIBINDING_ANNOTATION_NOT_ON_BINDING_METHOD =
-      "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods";
-
-  static final String MULTIPLE_MULTIBINDING_ANNOTATIONS_ON_METHOD =
-      "Multiple multibinding annotations cannot be placed on the same %s method";
-
-  static final String MULTIBINDING_ANNOTATION_CONFLICTS_WITH_BINDING_ANNOTATION_ENUM =
-      "@%s.type cannot be used with multibinding annotations";
-
-  /* BindsInstance messages. */
-  static final String BINDS_INSTANCE_IN_MODULE =
-      "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?";
-
-  static final String BINDS_INSTANCE_IN_INVALID_COMPONENT =
-      "@BindsInstance methods should not be included in @%1$ss. "
-          + "Did you mean to put it in a @%1$s.Builder?";
-
-  static final String BINDS_INSTANCE_ONE_PARAMETER =
-      "@BindsInstance methods should have exactly one parameter for the bound type";
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {
@@ -276,63 +47,6 @@ final class ErrorMessages {
       default:
         throw new IllegalStateException(kind.toString());
     }
-  }
-
-  static final String CAN_RELEASE_REFERENCES_ANNOTATIONS_MUST_NOT_HAVE_SOURCE_RETENTION =
-      "@CanReleaseReferences annotations must not have SOURCE retention";
-
-  static String forReleasableReferencesValueNotAScope(TypeElement scopeType) {
-    return forReleasableReferencesValueNeedsAnnotation(
-        scopeType,
-        String.format(
-            "@%s and @%s",
-            javax.inject.Scope.class.getCanonicalName(),
-            CanReleaseReferences.class.getCanonicalName()));
-  }
-
-  static String forReleasableReferencesValueCannotReleaseReferences(TypeElement scopeType) {
-    return forReleasableReferencesValueNeedsAnnotation(
-        scopeType, "@" + CanReleaseReferences.class.getCanonicalName());
-  }
-
-  private static String forReleasableReferencesValueNeedsAnnotation(
-      TypeElement scopeType, String annotations) {
-    return String.format(
-        "The value of @%s must be a reference-releasing scope. "
-            + "Did you mean to annotate %s with %s? Or did you mean to use a different class here?",
-        ForReleasableReferences.class.getSimpleName(), scopeType.getQualifiedName(), annotations);
-  }
-
-  /**
-   * Returns an error message for a method that has more than one binding method annotation.
-   *
-   * @param methodAnnotations the valid method annotations, only one of which may annotate the
-   *     method
-   */
-  static String tooManyBindingMethodAnnotations(
-      ExecutableElement method, Collection<Class<? extends Annotation>> methodAnnotations) {
-    return String.format(
-        "%s is annotated with more than one of (%s)",
-        method.getSimpleName(),
-        methodAnnotations.stream().map(Class::getCanonicalName).collect(joining(", ")));
-  }
-
-  static String abstractModuleHasInstanceBindingMethods(ModuleDescriptor module) {
-    String methodAnnotations;
-    switch (module.kind()) {
-      case MODULE:
-        methodAnnotations = "@Provides";
-        break;
-      case PRODUCER_MODULE:
-        methodAnnotations = "@Provides or @Produces";
-        break;
-      default:
-        throw new AssertionError(module.kind());
-    }
-    return String.format(
-        "%s is abstract and has instance %s methods. Consider making the methods static or "
-            + "including a non-abstract subclass of the module instead.",
-        module.moduleElement(), methodAnnotations);
   }
 
   static class ComponentBuilderMessages {
@@ -499,48 +213,6 @@ final class ErrorMessages {
       return s.replaceAll("component", "production subcomponent")
           .replaceAll("Component", "ProductionSubcomponent");
     }
-  }
-
-  /** Error messages related to {@link Multibinds @Multibinds} methods. */
-  static final class MultibindsMessages {
-    static final String METHOD_MUST_RETURN_MAP_OR_SET =
-        "@%s methods must return Map<K, V> or Set<T>";
-
-    static final String PARAMETERS = "@%s methods cannot have parameters";
-
-    private MultibindsMessages() {}
-  }
-
-  static class ModuleMessages {
-    static String moduleSubcomponentsIncludesBuilder(TypeElement moduleSubcomponentsAttribute) {
-      TypeElement subcomponentType =
-          MoreElements.asType(moduleSubcomponentsAttribute.getEnclosingElement());
-      return String.format(
-          "%s is a @%s.Builder. Did you mean to use %s?",
-          moduleSubcomponentsAttribute.getQualifiedName(),
-          simpleName(getSubcomponentAnnotation(subcomponentType).get()),
-          subcomponentType.getQualifiedName());
-    }
-
-    static String moduleSubcomponentsIncludesNonSubcomponent(
-        TypeElement moduleSubcomponentsAttribute) {
-      return moduleSubcomponentsAttribute.getQualifiedName()
-          + " is not a @Subcomponent or @ProductionSubcomponent";
-    }
-
-    static String moduleSubcomponentsDoesntHaveBuilder(
-        TypeElement subcomponent, AnnotationMirror moduleAnnotation) {
-      return String.format(
-          "%s doesn't have a @%s.Builder, which is required when used with @%s.subcomponents",
-          subcomponent.getQualifiedName(),
-          simpleName(getSubcomponentAnnotation(subcomponent).get()),
-          simpleName(moduleAnnotation));
-    }
-  }
-
-  //TODO(cgruber): Extract Formatter and do something less stringy.
-  static String format(AnnotationMirror annotation) {
-    return DiagnosticFormatting.stripCommonTypePrefixes(annotation.toString());
   }
 
   private ErrorMessages() {}

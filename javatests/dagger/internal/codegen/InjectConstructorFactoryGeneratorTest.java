@@ -17,28 +17,15 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
+import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-import static dagger.internal.codegen.ErrorMessages.ABSTRACT_INJECT_METHOD;
-import static dagger.internal.codegen.ErrorMessages.CHECKED_EXCEPTIONS_ON_CONSTRUCTORS;
-import static dagger.internal.codegen.ErrorMessages.FINAL_INJECT_FIELD;
-import static dagger.internal.codegen.ErrorMessages.GENERIC_INJECT_METHOD;
-import static dagger.internal.codegen.ErrorMessages.INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS;
-import static dagger.internal.codegen.ErrorMessages.INJECT_CONSTRUCTOR_ON_INNER_CLASS;
-import static dagger.internal.codegen.ErrorMessages.INJECT_INTO_PRIVATE_CLASS;
-import static dagger.internal.codegen.ErrorMessages.INJECT_ON_PRIVATE_CONSTRUCTOR;
-import static dagger.internal.codegen.ErrorMessages.MULTIPLE_INJECT_CONSTRUCTORS;
-import static dagger.internal.codegen.ErrorMessages.MULTIPLE_QUALIFIERS;
-import static dagger.internal.codegen.ErrorMessages.MULTIPLE_SCOPES;
-import static dagger.internal.codegen.ErrorMessages.PRIVATE_INJECT_FIELD;
-import static dagger.internal.codegen.ErrorMessages.PRIVATE_INJECT_METHOD;
-import static dagger.internal.codegen.ErrorMessages.QUALIFIER_ON_INJECT_CONSTRUCTOR;
-import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_FIELD;
-import static dagger.internal.codegen.ErrorMessages.STATIC_INJECT_METHOD;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -86,10 +73,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class PrivateConstructor {",
         "  @Inject private PrivateConstructor() {}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_ON_PRIVATE_CONSTRUCTOR).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private constructors")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void injectConstructorOnInnerClass() {
@@ -103,10 +92,14 @@ public final class InjectConstructorFactoryGeneratorTest {
         "    @Inject InnerClass() {}",
         "  }",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_CONSTRUCTOR_ON_INNER_CLASS).in(file).onLine(7);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@Inject constructors are invalid on inner classes. "
+                + "Did you mean to make the class static?")
+        .inFile(file)
+        .onLine(7);
   }
 
   @Test public void injectConstructorOnAbstractClass() {
@@ -118,10 +111,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "abstract class AbstractClass {",
         "  @Inject AbstractClass() {}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_CONSTRUCTOR_ON_ABSTRACT_CLASS).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Inject is nonsense on the constructor of an abstract class")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void injectConstructorOnGenericClass() {
@@ -544,11 +539,16 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  TooManyInjectConstructors(int i) {}",
         "  @Inject TooManyInjectConstructors(String s) {}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(MULTIPLE_INJECT_CONSTRUCTORS).in(file).onLine(6)
-        .and().withErrorContaining(MULTIPLE_INJECT_CONSTRUCTORS).in(file).onLine(8);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Types may only contain one @Inject constructor")
+        .inFile(file)
+        .onLine(6);
+    assertThat(compilation)
+        .hadErrorContaining("Types may only contain one @Inject constructor")
+        .inFile(file)
+        .onLine(8);
   }
 
   @Test public void multipleQualifiersOnInjectConstructorParameter() {
@@ -560,10 +560,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class MultipleQualifierConstructorParam {",
         "  @Inject MultipleQualifierConstructorParam(@QualifierA @QualifierB String s) {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file, QUALIFIER_A, QUALIFIER_B))
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        // for whatever reason, javac only reports the error once on the constructor
-        .withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    // for whatever reason, javac only reports the error once on the constructor
+    assertThat(compilation)
+        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void injectConstructorOnClassWithMultipleScopes() {
@@ -575,10 +578,18 @@ public final class InjectConstructorFactoryGeneratorTest {
         "@ScopeA @ScopeB class MultipleScopeClass {",
         "  @Inject MultipleScopeClass() {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file, SCOPE_A, SCOPE_B))
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(MULTIPLE_SCOPES).in(file).onLine(5).atColumn(1)
-        .and().withErrorContaining(MULTIPLE_SCOPES).in(file).onLine(5).atColumn(9);
+    Compilation compilation = daggerCompiler().compile(file, SCOPE_A, SCOPE_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("A single binding may not declare more than one @Scope")
+        .inFile(file)
+        .onLine(5)
+        .atColumn(1);
+    assertThat(compilation)
+        .hadErrorContaining("A single binding may not declare more than one @Scope")
+        .inFile(file)
+        .onLine(5)
+        .atColumn(9);
   }
 
   @Test public void injectConstructorWithQualifier() {
@@ -593,10 +604,16 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @QualifierB",
         "  MultipleScopeClass() {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file, QUALIFIER_A, QUALIFIER_B))
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(QUALIFIER_ON_INJECT_CONSTRUCTOR).in(file).onLine(7)
-        .and().withErrorContaining(QUALIFIER_ON_INJECT_CONSTRUCTOR).in(file).onLine(8);
+    Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Qualifier annotations are not allowed on @Inject constructors")
+        .inFile(file)
+        .onLine(7);
+    assertThat(compilation)
+        .hadErrorContaining("@Qualifier annotations are not allowed on @Inject constructors")
+        .inFile(file)
+        .onLine(8);
   }
 
   @Test public void injectConstructorWithCheckedExceptionsError() {
@@ -608,9 +625,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class CheckedExceptionClass {",
         "  @Inject CheckedExceptionClass() throws Exception {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file))
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(CHECKED_EXCEPTIONS_ON_CONSTRUCTORS).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support checked exceptions on @Inject constructors")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void injectConstructorWithCheckedExceptionsWarning() {
@@ -622,11 +642,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class CheckedExceptionClass {",
         "  @Inject CheckedExceptionClass() throws Exception {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file))
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .withWarningContaining(CHECKED_EXCEPTIONS_ON_CONSTRUCTORS).in(file).onLine(6);
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining("Dagger does not support checked exceptions on @Inject constructors")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateInjectClassError() {
@@ -640,11 +662,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "    @Inject InnerClass() {}",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(file))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(7);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(7);
   }
 
   @Test public void privateInjectClassWarning() {
@@ -658,12 +681,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         "    @Inject InnerClass() {}",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(file))
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(7);
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(7);
   }
 
   @Test public void nestedInPrivateInjectClassError() {
@@ -679,11 +703,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "    }",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(file))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(8);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(8);
   }
 
   @Test public void nestedInPrivateInjectClassWarning() {
@@ -699,12 +724,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         "    }",
         "  }",
         "}");
-    assertAbout(javaSources())
-        .that(ImmutableList.of(file))
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError()
-        .withWarningContaining(INJECT_INTO_PRIVATE_CLASS).in(file).onLine(8);
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .hadWarningContaining("Dagger does not support injection into private classes")
+        .inFile(file)
+        .onLine(8);
   }
 
   @Test public void finalInjectField() {
@@ -716,10 +742,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class FinalInjectField {",
         "  @Inject final String s;",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(FINAL_INJECT_FIELD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@Inject fields may not be final")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateInjectFieldError() {
@@ -731,10 +759,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class PrivateInjectField {",
         "  @Inject private String s;",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(PRIVATE_INJECT_FIELD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private fields")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateInjectFieldWarning() {
@@ -746,10 +776,9 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class PrivateInjectField {",
         "  @Inject private String s;",
         "}");
-    assertAbout(javaSource()).that(file)
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError(); // TODO: Verify warning message when supported
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
   @Test public void staticInjectFieldError() {
@@ -761,10 +790,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class StaticInjectField {",
         "  @Inject static String s;",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(STATIC_INJECT_FIELD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into static fields")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void staticInjectFieldWarning() {
@@ -776,10 +807,9 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class StaticInjectField {",
         "  @Inject static String s;",
         "}");
-    assertAbout(javaSource()).that(file)
-        .withCompilerOptions("-Adagger.staticMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError(); // TODO: Verify warning message when supported
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
   @Test public void multipleQualifiersOnField() {
@@ -791,10 +821,18 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class MultipleQualifierInjectField {",
         "  @Inject @QualifierA @QualifierB String s;",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file, QUALIFIER_A, QUALIFIER_B))
-        .processedWith(new ComponentProcessor()).failsToCompile()
-        .withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6).atColumn(11)
-        .and().withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6).atColumn(23);
+    Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .inFile(file)
+        .onLine(6)
+        .atColumn(11);
+    assertThat(compilation)
+        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .inFile(file)
+        .onLine(6)
+        .atColumn(23);
   }
 
   @Test public void abstractInjectMethod() {
@@ -806,10 +844,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "abstract class AbstractInjectMethod {",
         "  @Inject abstract void method();",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(ABSTRACT_INJECT_METHOD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Methods with @Inject may not be abstract")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateInjectMethodError() {
@@ -821,10 +861,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class PrivateInjectMethod {",
         "  @Inject private void method(){}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(PRIVATE_INJECT_METHOD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into private methods")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void privateInjectMethodWarning() {
@@ -836,10 +878,9 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class PrivateInjectMethod {",
         "  @Inject private void method(){}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .withCompilerOptions("-Adagger.privateMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError(); // TODO: Verify warning message when supported
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
   @Test public void staticInjectMethodError() {
@@ -851,10 +892,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class StaticInjectMethod {",
         "  @Inject static void method(){}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(STATIC_INJECT_METHOD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Dagger does not support injection into static methods")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void staticInjectMethodWarning() {
@@ -866,10 +909,9 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class StaticInjectMethod {",
         "  @Inject static void method(){}",
         "}");
-    assertAbout(javaSource()).that(file)
-        .withCompilerOptions("-Adagger.staticMemberValidation=WARNING")
-        .processedWith(new ComponentProcessor())
-        .compilesWithoutError(); // TODO: Verify warning message when supported
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
+    assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
   @Test public void genericInjectMethod() {
@@ -881,10 +923,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class AbstractInjectMethod {",
         "  @Inject <T> void method();",
         "}");
-    assertAbout(javaSource()).that(file)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(GENERIC_INJECT_METHOD).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Methods with @Inject may not declare type parameters")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void multipleQualifiersOnInjectMethodParameter() {
@@ -896,11 +940,12 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class MultipleQualifierMethodParam {",
         "  @Inject void method(@QualifierA @QualifierB String s) {}",
         "}");
-    assertAbout(javaSources()).that(ImmutableList.of(file, QUALIFIER_A, QUALIFIER_B))
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        // for whatever reason, javac only reports the error once on the method
-        .withErrorContaining(MULTIPLE_QUALIFIERS).in(file).onLine(6);
+    Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .inFile(file)
+        .onLine(6);
   }
 
   @Test public void injectConstructorDependsOnProduced() {
@@ -913,10 +958,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject A(Produced<String> str) {}",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Produced may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Produced may only be injected in @Produces methods");
   }
 
   @Test public void injectConstructorDependsOnProducer() {
@@ -929,10 +974,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject A(Producer<String> str) {}",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Producer may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Producer may only be injected in @Produces methods");
   }
 
   @Test public void injectFieldDependsOnProduced() {
@@ -945,10 +990,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject Produced<String> str;",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Produced may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Produced may only be injected in @Produces methods");
   }
 
   @Test public void injectFieldDependsOnProducer() {
@@ -961,10 +1006,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject Producer<String> str;",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Producer may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Producer may only be injected in @Produces methods");
   }
 
   @Test public void injectMethodDependsOnProduced() {
@@ -977,10 +1022,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject void inject(Produced<String> str) {}",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Produced may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Produced may only be injected in @Produces methods");
   }
 
   @Test public void injectMethodDependsOnProducer() {
@@ -993,10 +1038,10 @@ public final class InjectConstructorFactoryGeneratorTest {
         "final class A {",
         "  @Inject void inject(Producer<String> str) {}",
         "}");
-    assertAbout(javaSource()).that(aFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining("Producer may only be injected in @Produces methods");
+    Compilation compilation = daggerCompiler().compile(aFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Producer may only be injected in @Produces methods");
   }
 
   @Test public void injectConstructor() {

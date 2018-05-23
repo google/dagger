@@ -56,8 +56,8 @@ public class BasicTest {
     assertThat(basicComponent.getInt()).isEqualTo(BOUND_INT);
     assertThat(basicComponent.getLong()).isEqualTo(BOUND_LONG);
     assertThat(basicComponent.getBoolean()).isEqualTo(BOUND_BOOLEAN);
-    assertThat(basicComponent.getFloat()).isWithin(0).of(BOUND_FLOAT);
-    assertThat(basicComponent.getDouble()).isWithin(0).of(BOUND_DOUBLE);
+    assertThat(basicComponent.getFloat()).isEqualTo(BOUND_FLOAT);
+    assertThat(basicComponent.getDouble()).isEqualTo(BOUND_DOUBLE);
   }
 
   @Theory public void boxedPrimitives(BasicComponent basicComponent) {
@@ -67,8 +67,8 @@ public class BasicTest {
     assertThat(basicComponent.getBoxedInt()).isEqualTo(new Integer(BOUND_INT));
     assertThat(basicComponent.getBoxedLong()).isEqualTo(new Long(BOUND_LONG));
     assertThat(basicComponent.getBoxedBoolean()).isEqualTo(new Boolean(BOUND_BOOLEAN));
-    assertThat(basicComponent.getBoxedFloat()).isWithin(0).of(BOUND_FLOAT);
-    assertThat(basicComponent.getBoxedDouble()).isWithin(0).of(BOUND_DOUBLE);
+    assertThat(basicComponent.getBoxedFloat()).isEqualTo(BOUND_FLOAT);
+    assertThat(basicComponent.getBoxedDouble()).isEqualTo(BOUND_DOUBLE);
   }
 
   @Theory public void boxedPrimitiveProviders(BasicComponent basicComponent) {
@@ -78,8 +78,8 @@ public class BasicTest {
     assertThat(basicComponent.getIntProvider().get()).isEqualTo(new Integer(BOUND_INT));
     assertThat(basicComponent.getLongProvider().get()).isEqualTo(new Long(BOUND_LONG));
     assertThat(basicComponent.getBooleanProvider().get()).isEqualTo(new Boolean(BOUND_BOOLEAN));
-    assertThat(basicComponent.getFloatProvider().get()).isWithin(0).of(BOUND_FLOAT);
-    assertThat(basicComponent.getDoubleProvider().get()).isWithin(0).of(BOUND_DOUBLE);
+    assertThat(basicComponent.getFloatProvider().get()).isEqualTo(BOUND_FLOAT);
+    assertThat(basicComponent.getDoubleProvider().get()).isEqualTo(BOUND_DOUBLE);
   }
 
   @Theory public void primitiveArrays(BasicComponent basicComponent) {

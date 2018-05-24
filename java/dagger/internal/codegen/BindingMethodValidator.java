@@ -20,6 +20,7 @@ import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
+import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -34,6 +35,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import dagger.MapKey;
 import dagger.Provides;
+import dagger.model.Scope;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.producers.Produces;
@@ -150,6 +152,7 @@ abstract class BindingMethodValidator {
     checkQualifiers(builder);
     checkMapKeys(builder);
     checkMultibindings(builder);
+    checkScopes(builder);
   }
 
   /**
@@ -357,6 +360,17 @@ abstract class BindingMethodValidator {
     if (usesProvidesType && !multibindingAnnotations.isEmpty()) {
       builder.addError(
           "@Provides.type cannot be used with multibinding annotations", builder.getSubject());
+    }
+  }
+
+  /** Adds an error if the method has more than one {@linkplain Scope scope} annotation. */
+  protected void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
+    ImmutableSet<Scope> scopes = scopesOf(builder.getSubject());
+    if (scopes.size() > 1) {
+      for (Scope scope : scopes) {
+        builder.addError(
+            "Cannot use more than one @Scope", builder.getSubject(), scope.scopeAnnotation());
+      }
     }
   }
 

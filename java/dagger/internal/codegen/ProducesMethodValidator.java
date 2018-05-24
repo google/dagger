@@ -56,7 +56,6 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
     super.checkMethod(builder);
     checkNullable(builder);
-    checkScope(builder);
   }
 
   /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
@@ -68,7 +67,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   /** Adds an error if a {@link Produces @Produces} method has a scope annotation. */
-  private void checkScope(ValidationReport.Builder<ExecutableElement> builder) {
+  @Override
+  protected void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
     if (!scopesOf(builder.getSubject()).isEmpty()) {
       builder.addError("@Produces methods may not have scope annotations");
     }

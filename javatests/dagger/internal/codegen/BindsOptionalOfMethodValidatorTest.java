@@ -26,6 +26,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
+import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -122,6 +123,13 @@ public class BindsOptionalOfMethodValidatorTest {
     assertThatMethod("@BindsOptionalOf abstract Thing thing();")
         .importing(Thing.class)
         .hasError("return unqualified types that have an @Inject-annotated constructor");
+  }
+
+  @Test
+  public void hasScope() {
+    assertThatMethod("@BindsOptionalOf @Singleton abstract String scoped();")
+        .importing(Singleton.class)
+        .hasError("cannot be scoped");
   }
 
   private DaggerModuleMethodSubject assertThatMethod(String method) {

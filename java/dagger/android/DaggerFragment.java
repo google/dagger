@@ -25,8 +25,13 @@ import javax.inject.Inject;
  * A {@link Fragment} that injects its members in {@link #onAttach(Context)} and can be used to
  * inject child {@link Fragment}s attached to it. Note that when this fragment gets reattached, its
  * members will be injected again.
+ *
+ * @deprecated Framework fragments are deprecated in Android P; prefer {@code
+ *     dagger.android.support.DaggerFragment} to use a support-library-friendly {@code
+ *     dagger.android} fragment implementation.
  */
 @Beta
+@Deprecated
 public abstract class DaggerFragment extends Fragment implements HasFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;

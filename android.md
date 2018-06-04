@@ -336,7 +336,7 @@ method.
 [`DaggerApplication`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerApplication.html
 [`DaggerBroadcastReceiver`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerBroadcastReceiver.html
 [`DaggerContentProvider`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerContentProvider.html
-[`DaggerFragment`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerFragment.html
+[`DaggerFragment`]: https://google.github.io/dagger/api/latest/dagger/android/support/DaggerFragment.html
 [`DaggerIntentService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerIntentService.html
 [`DaggerService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerService.html
 [DispatchingAndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/DispatchingAndroidInjector.html

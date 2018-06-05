@@ -31,10 +31,10 @@ GenJavaTests(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger/producers",
-        "//third_party:guava",
-        "//third_party:guava_testlib",
-        "//third_party:junit",
-        "//third_party:mockito",
-        "//third_party:truth",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava:testlib",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/mockito",
+        "@google_bazel_common//third_party/java/truth",
     ],
 )

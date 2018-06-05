@@ -15,7 +15,7 @@ java_library(
     srcs = ANNOTATIONS_SRCS,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//third_party:jsr330_inject",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 
@@ -31,14 +31,14 @@ java_library(
     exports = [":annotations"],
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:auto_value",
-        "//third_party:grpc_context",
-        "//third_party:grpc_core",
-        "//third_party:grpc_netty",
-        "//third_party:grpc_protobuf",
-        "//third_party:guava",
-        "//third_party:jsr330_inject",
-        "//third_party:protobuf",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party:protobuf",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/grpc:context",
+        "@google_bazel_common//third_party/java/grpc:core",
+        "@google_bazel_common//third_party/java/grpc:netty",
+        "@google_bazel_common//third_party/java/grpc:protobuf",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 

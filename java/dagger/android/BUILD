@@ -41,9 +41,9 @@ android_library(
     proguard_specs = ["proguard.cfg"],
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:auto_value",
-        "//third_party:error_prone_annotations",
         "@androidsdk//com.android.support:support-annotations-25.0.0",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
     ],
 )
 

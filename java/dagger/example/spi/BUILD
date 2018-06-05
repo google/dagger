@@ -23,9 +23,9 @@ java_plugin(
     deps = [
         "//java/dagger/model",
         "//java/dagger/spi",
-        "//third_party:auto_service",
-        "//third_party:error_prone_annotations",
-        "//third_party:guava",
-        "//third_party:javapoet",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@google_bazel_common//third_party/java/javapoet",
     ],
 )

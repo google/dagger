@@ -33,12 +33,12 @@ java_library(
     srcs = [":srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//third_party:guava",
-        "//third_party:auto_service",
-        "//third_party:auto_value",
-        "//third_party:auto_common",
-        "//third_party:javapoet",
-        "//third_party:google_java_format",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party:google_java_format",
         "//java/dagger:core",
         # https://github.com/bazelbuild/bazel/issues/2517
         "//java/dagger/android:libandroid.jar",

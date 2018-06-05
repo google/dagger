@@ -41,11 +41,11 @@ java_library(
         "//java/dagger:core",
         "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/producers",
-        "//third_party:auto_common",
-        "//third_party:auto_value",
-        "//third_party:error_prone_annotations",
-        "//third_party:guava",
-        "//third_party:jsr330_inject",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 
@@ -55,6 +55,6 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         ":model",
-        "//third_party:guava",
+        "@google_bazel_common//third_party:guava",
     ],
 )

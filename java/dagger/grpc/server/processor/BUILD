@@ -9,12 +9,12 @@ java_library(
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/grpc/server:annotations",
-        "//third_party:auto_common",
-        "//third_party:auto_service",
-        "//third_party:google_java_format",
-        "//third_party:guava",
-        "//third_party:javapoet",
-        "//third_party:jsr250_annotations",
+        "@google_bazel_common//third_party:google_java_format",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )
 

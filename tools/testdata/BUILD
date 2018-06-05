@@ -20,25 +20,25 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "foo",
     srcs = ["Foo.java"],
-    deps = ["//third_party:auto_service"],
+    deps = ["@google_bazel_common//third_party/java/auto:service"],
 )
 
 java_library(
     name = "foo_with_dupe_file",
     srcs = ["Foo.java"],
     resources = ["dupe"],
-    deps = ["//third_party:auto_service"],
+    deps = ["@google_bazel_common//third_party/java/auto:service"],
 )
 
 java_library(
     name = "bar",
     srcs = ["Bar.java"],
-    deps = ["//third_party:auto_service"],
+    deps = ["@google_bazel_common//third_party/java/auto:service"],
 )
 
 java_library(
     name = "bar_with_dupe_file",
     srcs = ["Bar.java"],
     resources = ["dupe"],
-    deps = ["//third_party:auto_service"],
+    deps = ["@google_bazel_common//third_party/java/auto:service"],
 )

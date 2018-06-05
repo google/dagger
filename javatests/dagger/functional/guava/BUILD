@@ -26,11 +26,11 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:auto_value",
-        "//third_party:guava",
-        "//third_party:jsr305_annotations",
-        "//third_party:jsr330_inject",
-        "//third_party:junit",
-        "//third_party:truth",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/jsr305_annotations",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
     ],
 )

@@ -125,7 +125,7 @@ final class ErrorMessages {
     }
 
     final String inheritedBuildMustReturnComponentType() {
-      return process(buildMustReturnComponentType() + ". Inherited method: %s");
+      return buildMustReturnComponentType() + ". Inherited method: %s";
     }
 
     final String methodsMustTakeOneArg() {

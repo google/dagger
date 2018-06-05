@@ -25,9 +25,9 @@ java_plugin(
     deps = [
         "//java/dagger/model",
         "//java/dagger/spi",
-        "//third_party:auto_service",
-        "//third_party:guava",
-        "//third_party:javapoet",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/javapoet",
     ],
 )
 
@@ -43,12 +43,12 @@ GenJavaTests(
         exclude = ["TestPlugin.java"],
     ),
     test_only_deps = [
-        "//third_party:truth",
-        "//third_party:junit",
+        "@google_bazel_common//third_party/java/truth",
+        "@google_bazel_common//third_party/java/junit",
     ],
     deps = [
         ":test_lib",
         "//:dagger_with_compiler",
-        "//third_party:guava",
+        "@google_bazel_common//third_party:guava",
     ],
 )

@@ -39,15 +39,15 @@ java_library(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     exports = [
         # TODO(dpb): Don't export any of Guava.
-        "//third_party:guava",
-        "//third_party:jsr330_inject",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
     deps = [
         "//java/dagger:core",
-        "//third_party:checker_framework_annotations",
-        "//third_party:error_prone_annotations",
-        "//third_party:guava",
-        "//third_party:jsr330_inject",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/checker_framework:annotations",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 

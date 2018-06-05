@@ -39,7 +39,7 @@ def pom_deps(label):
   accumulated_deps = set()
   for dep in deps_of(label):
     if dep.startswith("@local_jdk//:"): continue
-    if dep.startswith(('//:', '//third_party:')):
+    if dep.startswith(('//:', '@google_bazel_common//third_party:')):
       for export in exports_for(dep):
         accumulated_deps.add(export)
         accumulated_deps.update(pom_deps(export))

@@ -37,15 +37,15 @@ GenJavaTests(
     # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
     # used without Guava and jsr305 deps.
     test_only_deps = [
-        "//third_party:guava_testlib",
-        "//third_party:guava",
-        "//third_party:truth",
-        "//third_party:junit",
+        "@google_bazel_common//third_party/java/guava:testlib",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/truth",
+        "@google_bazel_common//third_party/java/junit",
     ],
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:auto_factory",
-        "//third_party:auto_value",
-        "//third_party:jsr330_inject",
+        "@google_bazel_common//third_party/java/auto:factory",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

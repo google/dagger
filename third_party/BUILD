@@ -88,8 +88,8 @@ java_plugin(
     deps = [
         ":auto_common",
         ":auto_service",
-        "//third_party:guava",
         "@com_google_auto_value_auto_value//jar",
+        "@google_bazel_common//third_party:guava",
     ],
 )
 
@@ -100,8 +100,8 @@ java_plugin(
     deps = [
         ":auto_common",
         ":auto_service",
-        "//third_party:guava",
         "@com_google_auto_value_auto_value//jar",
+        "@google_bazel_common//third_party:guava",
     ],
 )
 
@@ -127,8 +127,8 @@ java_plugin(
         ":auto_common",
         ":auto_service",
         ":javapoet",
-        "//third_party:guava",
         "@com_google_auto_factory_auto_factory//jar",
+        "@google_bazel_common//third_party:guava",
     ],
 )
 
@@ -144,8 +144,8 @@ java_plugin(
     visibility = ["//visibility:private"],
     deps = [
         ":auto_common",
-        "//third_party:guava",
         "@com_google_auto_service_auto_service//jar",
+        "@google_bazel_common//third_party:guava",
     ],
 )
 
@@ -226,10 +226,10 @@ java_library(
     runtime_deps = [
         ":auto_value",
         ":jsr305_annotations",
-        "//third_party:error_prone_annotations",
-        "//third_party:guava",
-        "//third_party:junit",
-        "//third_party:truth",
+        "@google_bazel_common//third_party:error_prone_annotations",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party:junit",
+        "@google_bazel_common//third_party:truth",
         "@local_jdk//:lib/tools.jar",
     ],
 )

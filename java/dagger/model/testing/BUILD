@@ -31,9 +31,9 @@ java_library(
     deps = [
         "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/model",
-        "//third_party:auto_value",
-        "//third_party:checker_framework_annotations",
-        "//third_party:guava",
-        "//third_party:truth",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/checker_framework:annotations",
+        "@google_bazel_common//third_party/java/truth",
     ],
 )

@@ -34,15 +34,15 @@ CODEGEN_SRCS = glob(
 CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
 
 CODEGEN_SHARED_DEPS = [
-    "//third_party:auto_service",
-    "//third_party:auto_value",
-    "//third_party:auto_common",
-    "//third_party:error_prone_annotations",
-    "//third_party:google_java_format",
-    "//third_party:javapoet",
+    "@google_bazel_common//third_party/java/auto:service",
+    "@google_bazel_common//third_party/java/auto:value",
+    "@google_bazel_common//third_party/java/auto:common",
+    "@google_bazel_common//third_party/java/error_prone:annotations",
+    "@google_bazel_common//third_party:google_java_format",
+    "@google_bazel_common//third_party/java/javapoet",
     "@local_jdk//:lib/tools.jar",
-    "//third_party:jsr250_annotations",
-    "//third_party:jsr330_inject",
+    "@google_bazel_common//third_party/java/jsr250_annotations",
+    "@google_bazel_common//third_party/java/jsr330_inject",
     "//java/dagger:core",
     "//java/dagger/producers",
     "//java/dagger/model",
@@ -51,7 +51,7 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    "//third_party:guava",
+    "@google_bazel_common//third_party:guava",
     ":shared-with-spi",
 ]
 
@@ -63,7 +63,7 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = [
-        "//third_party:guava",
+        "@google_bazel_common//third_party:guava",
     ],
 )
 
@@ -335,11 +335,11 @@ java_library(
         "//java/dagger:core",
         "//java/dagger/model",
         "//java/dagger/producers",
-        "//third_party:auto_common",
-        "//third_party:auto_service",
-        "//third_party:guava",
-        "//third_party:kythe_plugin",
         "@bazel_tools//third_party/java/jdk/langtools:javac",
+        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party:kythe_plugin",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:service",
     ],
 )
 

@@ -27,8 +27,8 @@ java_library(
     name = "core",
     srcs = glob(["**/*.java"]),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
-    exports = ["//third_party:jsr330_inject"],
-    deps = ["//third_party:jsr330_inject"],
+    exports = ["@google_bazel_common//third_party/java/jsr330_inject"],
+    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )
 
 filegroup(
@@ -43,5 +43,5 @@ javadoc_library(
     srcs = [":javadoc-srcs"],
     exclude_packages = ["dagger.internal"],
     root_packages = ["dagger"],
-    deps = ["//third_party:jsr330_inject"],
+    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )

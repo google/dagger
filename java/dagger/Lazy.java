@@ -16,6 +16,8 @@
 
 package dagger;
 
+import com.google.errorprone.annotations.DoNotMock;
+
 /**
  * A handle to a lazily-computed value. Each {@code Lazy} computes its value on
  * the first call to {@link #get()} and remembers that same value for all
@@ -142,6 +144,7 @@ package dagger;
  * Use {@link javax.inject.Singleton @Singleton} to share one instance among all
  * clients, and {@code Lazy} for lazy computation in a single client.
  */
+@DoNotMock
 public interface Lazy<T> {
   /**
    * Return the underlying value, computing the value if necessary. All calls to

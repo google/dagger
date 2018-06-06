@@ -28,7 +28,10 @@ java_library(
     srcs = glob(["**/*.java"]),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
     exports = ["//third_party:jsr330_inject"],
-    deps = ["//third_party:jsr330_inject"],
+    deps = [
+        "//third_party:jsr330_inject",
+        "//third_party:error_prone_annotations"
+    ],
 )
 
 filegroup(

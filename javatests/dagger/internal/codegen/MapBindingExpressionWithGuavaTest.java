@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -130,7 +130,7 @@ public class MapBindingExpressionWithGuavaTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Provider<Integer> provideIntProvider;",
                 "  private volatile Provider<Long> provideLong0Provider;",
                 "  private volatile Provider<Long> provideLong1Provider;",
@@ -194,7 +194,7 @@ public class MapBindingExpressionWithGuavaTest {
                 DEFAULT_MODE, //
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        0, getMapOfIntegerAndProviderOfIntegerProvider());")
             .addLines(
                 "  }",
@@ -216,7 +216,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "      1L, MapModule_ProvideLong1Factory.create(),",
                 "      2L, MapModule_ProvideLong2Factory.create());")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "      0L, getMapOfLongAndProviderOfLongProvider(),",
                 "      1L, getMapOfLongAndProviderOfLongProvider2(),",
                 "      2L, getMapOfLongAndProviderOfLongProvider3());")
@@ -230,7 +230,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "",
                 "  private final class SubImpl implements Sub {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    private volatile Provider<Long> provideLong3Provider;",
                 "    private volatile Provider<Long> provideLong4Provider;",
                 "    private volatile Provider<Long> provideLong5Provider;",
@@ -287,7 +287,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "          .put(4L, SubcomponentMapModule_ProvideLong4Factory.create())",
                 "          .put(5L, SubcomponentMapModule_ProvideLong5Factory.create())")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "          .put(0L, DaggerTestComponent.this",
                 "              .getMapOfLongAndProviderOfLongProvider())",
                 "          .put(1L, DaggerTestComponent.this",
@@ -300,7 +300,7 @@ public class MapBindingExpressionWithGuavaTest {
             .addLines( //
                 "          .build();", "    }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    private final class SwitchingProvider<T> implements Provider<T> {",
                 "      private final int id;",
                 "",

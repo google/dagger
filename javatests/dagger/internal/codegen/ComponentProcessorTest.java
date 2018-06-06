@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -193,7 +193,7 @@ public class ComponentProcessorTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerSimpleComponent implements SimpleComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
             .addLines(
                 "  private DaggerSimpleComponent(Builder builder) {}",
@@ -217,7 +217,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE, //
                 "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    return DoubleCheck.lazy(someInjectableTypeProvider());")
             .addLines(
                 "  }",
@@ -228,7 +228,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE, //
                 "    return SomeInjectableType_Factory.create();")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE, //
+                FAST_INIT_MODE, //
                 "    Object local = someInjectableTypeProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -246,7 +246,7 @@ public class ComponentProcessorTest {
                 "    }",
                 "  }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final int id;",
                 "",
@@ -310,7 +310,7 @@ public class ComponentProcessorTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerSimpleComponent implements SimpleComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Object someInjectableType = new MemoizedSentinel();",
                 "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
             .addLinesIn(
@@ -327,7 +327,7 @@ public class ComponentProcessorTest {
                 "  @Override", //
                 "  public SomeInjectableType someInjectableType() {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    Object local = someInjectableType;",
                 "    if (local instanceof MemoizedSentinel) {",
                 "      synchronized (local) {",
@@ -352,7 +352,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE, //
                 "    return DoubleCheck.lazy(someInjectableTypeProvider);")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    return DoubleCheck.lazy(someInjectableTypeProvider());")
             .addLines(
                 "  }",
@@ -360,7 +360,7 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE, //
+                FAST_INIT_MODE, //
                 "    Object local = someInjectableTypeProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -373,7 +373,7 @@ public class ComponentProcessorTest {
             .addLines( //
                 "  }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final int id;",
                 "",
@@ -1209,7 +1209,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE,
                 "  private test_AComponent_a aProvider;")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Provider<A> aProvider;",
                 "  private AComponent aComponent;",
                 "",
@@ -1228,7 +1228,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE,
                 "    this.aProvider = new test_AComponent_a(builder.aComponent);")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    this.aComponent = builder.aComponent;")
             .addLines(
                 "  }",
@@ -1239,7 +1239,7 @@ public class ComponentProcessorTest {
                 DEFAULT_MODE,
                 "    return new B(aProvider);")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    return new B(getAProvider());")
             .addLines(
                 "  }",
@@ -1277,7 +1277,7 @@ public class ComponentProcessorTest {
                 "  }",
                 "}")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",

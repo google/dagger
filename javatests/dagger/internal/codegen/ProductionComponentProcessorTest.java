@@ -215,7 +215,7 @@ public class ProductionComponentProcessorTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID_MODE:
+      case FAST_INIT_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerTestClass_SimpleComponent",

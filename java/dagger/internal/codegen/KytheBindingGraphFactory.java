@@ -104,7 +104,7 @@ final class KytheBindingGraphFactory {
             .ignorePrivateAndStaticInjectionForComponent(false)
             .scopeCycleValidationType(ValidationType.NONE)
             .warnIfInjectionFactoryNotGeneratedUpstream(false)
-            .experimentalAndroidMode(false)
+            .fastInit(false)
             .experimentalAndroidMode2(false)
             .aheadOfTimeComponents(false)
             .build();

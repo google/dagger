@@ -43,7 +43,7 @@ interface ComponentWithReusableBindings {
   // b/77150738
   int primitive();
 
-  // b/77150738: This is used as a regression test for Android mode with SwitchingProvider. In
+  // b/77150738: This is used as a regression test for fastInit mode's switching providers. In
   // particular, it occurs when a @Provides method returns the boxed type but the component method
   // returns the unboxed type, and the instance is requested from a SwitchingProvider.
   boolean unboxedPrimitive();

@@ -22,14 +22,12 @@ import com.google.common.collect.ImmutableList;
 /** The configuration options for compiler modes. */
 enum CompilerMode {
   DEFAULT_MODE,
-  EXPERIMENTAL_ANDROID_MODE("-Adagger.experimentalAndroidMode=enabled");
+  FAST_INIT_MODE("-Adagger.fastInit=enabled");
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   static final ImmutableList<Object[]> TEST_PARAMETERS =
       ImmutableList.copyOf(
-          new Object[][] {
-            {CompilerMode.DEFAULT_MODE}, {CompilerMode.EXPERIMENTAL_ANDROID_MODE},
-          });
+          new Object[][] {{CompilerMode.DEFAULT_MODE}, {CompilerMode.FAST_INIT_MODE}});
 
   private final ImmutableList<String> javacopts;
 

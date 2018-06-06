@@ -15,11 +15,11 @@
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
 BUILD_VARIANTS = {
-    "ExperimentalAndroidMode": ["-Adagger.experimentalAndroidMode=enabled"],
+    "FastInit": ["-Adagger.fastInit=enabled"],
     "ExperimentalAndroidMode2": ["-Adagger.experimentalAndroidMode2=enabled"],
     "ExperimentalAheadOfTimeComponents": ["-Adagger.experimentalAheadOfTimeComponents=enabled"],
-    "ExperimentalAndroidModeAndAheadOfTimeComponents": ["-Adagger.experimentalAndroidMode=enabled",
-                                                        "-Adagger.experimentalAheadOfTimeComponents=enabled"],
+    "FastInitAndAheadOfTimeComponents": ["-Adagger.fastInit=enabled",
+                                         "-Adagger.experimentalAheadOfTimeComponents=enabled"],
 }
 
 # TODO(user): split into two functions for functional vs non-functional tests?

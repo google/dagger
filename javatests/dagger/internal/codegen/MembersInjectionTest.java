@@ -21,7 +21,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -1362,7 +1362,7 @@ public class MembersInjectionTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Object listOfInaccessible = new MemoizedSentinel();",
                 "",
                 "  private List getListOfInaccessible() {",
@@ -1402,7 +1402,7 @@ public class MembersInjectionTest {
                 "        UsesInaccessibles instance) {",
                 "    UsesInaccessibles_MembersInjector.injectInaccessibles(")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        instance, (List) getListOfInaccessible());")
             .addLinesIn(
                 DEFAULT_MODE,

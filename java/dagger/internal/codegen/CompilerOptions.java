@@ -35,20 +35,14 @@ abstract class CompilerOptions {
   abstract boolean usesProducers();
 
   /**
-   * Returns true if the experimental Android mode is enabled.
+   * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
    *
-   * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
-   *
-   * <p>Issues related to this flag will not be supported. This flag could break your build, cause
-   * memory leaks in your app, or cause other unknown issues at runtime.
-   *
-   * <p>If enabled, the generated code will attempt to more aggressively inline creation logic for
-   * bindings inside of the component rather than in a separate factory class. Enabling this flag
-   * should reduced the class loading and the number of eagerly initialized fields, at the cost of
-   * potential memory leaks and higher per-provision instantiation time. Due to very slow
-   * classloading on Android, these trade-offs are potentially advantageous.
+   * <p>If enabled, the generated code will attempt to optimize for fast component initialization.
+   * This is done by reducing the number of factory classes loaded during initialization and the
+   * number of eagerly initialized fields at the cost of potential memory leaks and higher
+   * per-provision instantiation time.
    */
-  abstract boolean experimentalAndroidMode();
+  abstract boolean fastInit();
 
   /**
    * Returns true if the experimental Android mode 2 is enabled.
@@ -91,15 +85,14 @@ abstract class CompilerOptions {
 
   static CompilerOptions create(ProcessingEnvironment processingEnv, DaggerElements elements) {
     checkState(
-        !(experimentalAndroidModeFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED)
+        !(fastInitEnabled(processingEnv)
             && experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED)),
-        "experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
+        "fastInit/experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
 
     return builder()
         .usesProducers(elements.getTypeElement(Produces.class) != null)
         .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
-        .experimentalAndroidMode(
-            experimentalAndroidModeFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
+        .fastInit(fastInitEnabled(processingEnv))
         .experimentalAndroidMode2(
             experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
@@ -127,7 +120,7 @@ abstract class CompilerOptions {
 
     Builder headerCompilation(boolean headerCompilation);
 
-    Builder experimentalAndroidMode(boolean experimentalAndroidMode);
+    Builder fastInit(boolean fastInit);
 
     Builder experimentalAndroidMode2(boolean experimentalAndroidMode2);
 
@@ -154,6 +147,9 @@ abstract class CompilerOptions {
 
   private static final String HEADER_COMPILATION = "experimental_turbine_hjar";
 
+  static final String FAST_INIT = "dagger.fastInit";
+
+  // TODO(user): Remove once all usages are migrated to FAST_INIT.
   static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
 
   static final String EXPERIMENTAL_ANDROID_MODE2 = "dagger.experimentalAndroidMode2";
@@ -186,6 +182,7 @@ abstract class CompilerOptions {
 
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
+          FAST_INIT,
           EXPERIMENTAL_ANDROID_MODE,
           HEADER_COMPILATION,
           WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
@@ -197,13 +194,19 @@ abstract class CompilerOptions {
           IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
           AHEAD_OF_TIME_COMPONENTS_KEY);
 
-  private static FeatureStatus experimentalAndroidModeFeatureStatus(
-      ProcessingEnvironment processingEnv) {
+  private static boolean fastInitEnabled(ProcessingEnvironment processingEnv) {
     return valueOf(
-        processingEnv,
-        EXPERIMENTAL_ANDROID_MODE,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
+            processingEnv,
+            FAST_INIT,
+            FeatureStatus.DISABLED,
+            EnumSet.allOf(FeatureStatus.class))
+        .equals(FeatureStatus.ENABLED)
+      || valueOf(
+            processingEnv,
+            EXPERIMENTAL_ANDROID_MODE,
+            FeatureStatus.DISABLED,
+            EnumSet.allOf(FeatureStatus.class))
+        .equals(FeatureStatus.ENABLED);
   }
 
   private static FeatureStatus experimentalAndroidMode2FeatureStatus(

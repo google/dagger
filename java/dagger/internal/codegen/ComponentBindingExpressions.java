@@ -442,9 +442,9 @@ final class ComponentBindingExpressions {
    * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ResolvedBindings) need to be
    * cached} can use a {@link DelegateBindingExpression}.
    *
-   * <p>In Android mode, use an {@link InnerSwitchingProviders inner switching provider} unless that
-   * provider's case statement will simply call {@code get()} on another {@link Provider} (in which
-   * case, just use that Provider directly).
+   * <p>In fastInit mode, use an {@link InnerSwitchingProviders inner switching provider} unless
+   * that provider's case statement will simply call {@code get()} on another {@link Provider} (in
+   * which case, just use that Provider directly).
    *
    * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
    */
@@ -453,7 +453,7 @@ final class ComponentBindingExpressions {
         && !needsCaching(resolvedBindings)) {
       return new DelegateBindingExpression(
           resolvedBindings, RequestKind.PROVIDER, this, types, elements);
-    } else if (compilerOptions.experimentalAndroidMode()
+    } else if (compilerOptions.fastInit()
         && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
         && !(instanceBindingExpression(resolvedBindings)
         instanceof DerivedFromProviderBindingExpression)) {
@@ -496,7 +496,7 @@ final class ComponentBindingExpressions {
    * <p>In default mode, we can use direct expressions for bindings that don't need to be cached in
    * a reference-releasing scope.
    *
-   * <p>In Android mode, we can use direct expressions unless the binding needs to be cached.
+   * <p>In fastInit mode, we can use direct expressions unless the binding needs to be cached.
    */
   private BindingExpression instanceBindingExpression(ResolvedBindings resolvedBindings) {
     Optional<BindingExpression> maybeDirectInstanceExpression =
@@ -594,14 +594,13 @@ final class ComponentBindingExpressions {
   /**
    * Returns {@code true} if the binding should use the static factory creation strategy.
    *
-   * In default mode, we always use the static factory creation strategy. In Android mode, we
-   * prefer to use the SwitchingProvider than the static factories to reduce class loading; however,
-   * we allow static factories that can reused across multiple bindings, e.g. {@code MapFactory} or
-   * {@code SetFactory}.
+   * In default mode, we always use the static factory creation strategy. In fastInit mode, we
+   * prefer to use a SwitchingProvider instead of static factories in order to reduce class loading;
+   * however, we allow static factories that can reused across multiple bindings, e.g.
+   * {@code MapFactory} or {@code SetFactory}.
    */
   private boolean useStaticFactoryCreation(ContributionBinding binding) {
-    return !(compilerOptions.experimentalAndroidMode2()
-            || compilerOptions.experimentalAndroidMode())
+    return !(compilerOptions.experimentalAndroidMode2() || compilerOptions.fastInit())
         || binding.kind().equals(MULTIBOUND_MAP)
         || binding.kind().equals(MULTIBOUND_SET);
   }
@@ -611,14 +610,13 @@ final class ComponentBindingExpressions {
    * binding. If the binding doesn't {@linkplain #needsCaching(ResolvedBindings) need to be cached},
    * we can.
    *
-   * <p>In Android mode, we can use a direct expression even if the binding {@linkplain
+   * <p>In fastInit mode, we can use a direct expression even if the binding {@linkplain
    * #needsCaching(ResolvedBindings) needs to be cached} as long as it's not in a
    * reference-releasing scope.
    */
   private boolean canUseDirectInstanceExpression(ResolvedBindings resolvedBindings) {
     return !needsCaching(resolvedBindings)
-        || (compilerOptions.experimentalAndroidMode()
-            && !requiresReleasableReferences(resolvedBindings));
+        || (compilerOptions.fastInit() && !requiresReleasableReferences(resolvedBindings));
   }
 
   /**
@@ -669,7 +667,7 @@ final class ComponentBindingExpressions {
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       BindingExpression bindingExpression) {
-    if (compilerOptions.experimentalAndroidMode()) {
+    if (compilerOptions.fastInit()) {
       if (requestKind.equals(RequestKind.PROVIDER)) {
         return new SingleCheckedMethodImplementation(
             resolvedBindings, requestKind, bindingExpression, types, generatedComponentModel);
@@ -702,7 +700,7 @@ final class ComponentBindingExpressions {
     return true;
   }
 
-  // TODO(user): Enable releasable references in experimentalAndroidMode
+  // TODO(user): Enable releasable references in fastInit
   private boolean requiresReleasableReferences(ResolvedBindings resolvedBindings) {
     return resolvedBindings.scope().isPresent()
         && referenceReleasingManagerFields.requiresReleasableReferences(

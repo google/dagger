@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -113,7 +113,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Provider<Maybe> provideMaybeProvider;",
                 "",
                 "  private Provider<Maybe> getMaybeProvider() {",
@@ -138,7 +138,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 DEFAULT_MODE,
                 "        Maybe_MaybeModule_ProvideMaybeFactory.create()));")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        getMaybeProvider()));")
             .addLines(
                 "  }",
@@ -154,7 +154,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 "    return Optional.<Provider<Lazy<DefinitelyNot>>>absent();",
                 "  }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final int id;",
                 "",

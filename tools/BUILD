@@ -44,7 +44,6 @@ java_binary(
     name = "jarjar",
     main_class = "org.pantsbuild.jarjar.Main",
     runtime_deps = [
-        "@javax_annotation_jsr250_api//jar",
         "@javax_enterprise_cdi_api//jar",
         "@javax_inject_javax_inject//jar",
         "@org_apache_ant_ant//jar",

@@ -14,7 +14,6 @@ java_library(
         "//third_party:google_java_format",
         "//third_party:guava",
         "//third_party:javapoet",
-        "//third_party:jsr250_annotations",
     ],
 )
 

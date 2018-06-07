@@ -24,12 +24,6 @@ bind(
 )
 
 maven_jar(
-    name = "javax_annotation_jsr250_api",
-    artifact = "javax.annotation:jsr250-api:1.0",
-    sha1 = "5025422767732a1ab45d93abfea846513d742dcf",
-)
-
-maven_jar(
     name = "com_google_code_findbugs_jsr305",
     artifact = "com.google.code.findbugs:jsr305:3.0.1",
     sha1 = "f7be08ec23c21485b9b5a1cf1654c2ec8c58168d",

@@ -29,14 +29,10 @@ import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariable
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
-import static dagger.internal.codegen.TypeNames.ASYNC_FUNCTION;
-import static dagger.internal.codegen.TypeNames.EXECUTOR;
 import static dagger.internal.codegen.TypeNames.FUTURES;
 import static dagger.internal.codegen.TypeNames.PRODUCERS;
 import static dagger.internal.codegen.TypeNames.PRODUCER_TOKEN;
-import static dagger.internal.codegen.TypeNames.RUNNABLE;
 import static dagger.internal.codegen.TypeNames.VOID_CLASS;
-import static dagger.internal.codegen.TypeNames.abstractProducerOf;
 import static dagger.internal.codegen.TypeNames.listOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.producedOf;
@@ -46,7 +42,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -63,6 +58,7 @@ import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducesMethodProducer;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -119,7 +115,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                     .addMember("value", "$S", "FutureReturnValueIgnored")
                     .build())
             .addModifiers(PUBLIC, FINAL)
-            .superclass(abstractProducerOf(providedTypeName))
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
@@ -137,32 +132,34 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                     TypeName.get(binding.bindingTypeElement().get().asType())))
             : Optional.empty();
 
+    String executorParameterName = null;
     String monitorParameterName = null;
     for (Map.Entry<Key, FrameworkField> entry :
         generateBindingFieldsForDependencies(binding).entrySet()) {
       Key key = entry.getKey();
       FrameworkField bindingField = entry.getValue();
       String fieldName = uniqueFieldNames.getUniqueName(bindingField.name());
-      if (key.equals(keyFactory.forProductionComponentMonitor())) {
+      if (key.equals(keyFactory.forProductionImplementationExecutor())) {
+        executorParameterName = fieldName;
+        constructorBuilder.addParameter(bindingField.type(), executorParameterName);
+        continue;
+      } else if (key.equals(keyFactory.forProductionComponentMonitor())) {
         monitorParameterName = fieldName;
         constructorBuilder.addParameter(bindingField.type(), monitorParameterName);
         continue;
       }
-
       FieldSpec field =
           addFieldAndConstructorParameter(
-              factoryBuilder,
-              constructorBuilder,
-              fieldName,
-              bindingField.type());
+              factoryBuilder, constructorBuilder, fieldName, bindingField.type());
       fieldsBuilder.put(key, field);
     }
     ImmutableMap<Key, FieldSpec> fields = fieldsBuilder.build();
 
     constructorBuilder.addStatement(
-        "super($N, $L)",
+        "super($N, $L, $N)",
         verifyNotNull(monitorParameterName),
-        producerTokenConstruction(generatedTypeName, binding));
+        producerTokenConstruction(generatedTypeName, binding),
+        verifyNotNull(executorParameterName));
 
     if (binding.requiresModuleInstance()) {
       assignField(constructorBuilder, moduleField.get());
@@ -172,9 +169,8 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       assignField(constructorBuilder, field);
     }
 
-    MethodSpec.Builder computeMethodBuilder =
-        methodBuilder("compute")
-            .returns(futureTypeName)
+    MethodSpec.Builder collectDependenciesBuilder =
+        methodBuilder("collectDependencies")
             .addAnnotation(Override.class)
             .addModifiers(PROTECTED);
 
@@ -182,7 +178,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     for (DependencyRequest dependency : asyncDependencies) {
       TypeName futureType = listenableFutureOf(asyncDependencyType(dependency));
       CodeBlock futureAccess = CodeBlock.of("$N.get()", fields.get(dependency.key()));
-      computeMethodBuilder.addStatement(
+      collectDependenciesBuilder.addStatement(
           "$T $L = $L",
           futureType,
           dependencyFutureName(dependency),
@@ -192,22 +188,13 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     }
     FutureTransform futureTransform = FutureTransform.create(fields, binding, asyncDependencies);
 
-    computeMethodBuilder.addStatement(
-        "return $T.transformAsync($L, this, this)",
-        FUTURES,
-        futureTransform.futureCodeBlock());
+    collectDependenciesBuilder
+        .returns(listenableFutureOf(futureTransform.applyArgType()))
+        .addStatement("return $L", futureTransform.futureCodeBlock());
 
-    factoryBuilder
-        .addSuperinterface(
-            ParameterizedTypeName.get(
-                ASYNC_FUNCTION, futureTransform.applyArgType(), providedTypeName))
-        .addSuperinterface(EXECUTOR);
-
-    MethodSpec.Builder applyMethodBuilder =
-        methodBuilder("apply")
+    MethodSpec.Builder callProducesMethod =
+        methodBuilder("callProducesMethod")
             .returns(futureTypeName)
-            .addJavadoc("@deprecated this may only be called from the internal {@link #compute()}")
-            .addAnnotation(Deprecated.class)
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .addParameter(futureTransform.applyArgType(), futureTransform.applyArgName())
@@ -216,23 +203,18 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
                 getInvocationCodeBlock(
                     binding, providedTypeName, futureTransform.parameterCodeBlocks()));
     if (futureTransform.hasUncheckedCast()) {
-      applyMethodBuilder.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
+      callProducesMethod.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
     }
 
-    MethodSpec.Builder executeMethodBuilder =
-        methodBuilder("execute")
-            .addModifiers(PUBLIC)
-            .addJavadoc("@deprecated this may only be called from the internal {@link #compute()}")
-            .addAnnotation(Deprecated.class)
-            .addAnnotation(Override.class)
-            .addParameter(RUNNABLE, "runnable")
-            .addStatement("monitor.ready()")
-            .addStatement("executorProvider.get().execute(runnable)");
-
-    factoryBuilder.addMethod(constructorBuilder.build());
-    factoryBuilder.addMethod(computeMethodBuilder.build());
-    factoryBuilder.addMethod(applyMethodBuilder.build());
-    factoryBuilder.addMethod(executeMethodBuilder.build());
+    factoryBuilder
+        .superclass(
+            ParameterizedTypeName.get(
+                ClassName.get(AbstractProducesMethodProducer.class),
+                futureTransform.applyArgType(),
+                providedTypeName))
+        .addMethod(constructorBuilder.build())
+        .addMethod(collectDependenciesBuilder.build())
+        .addMethod(callProducesMethod.build());
 
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
@@ -519,12 +501,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
             binding.bindingElement().get().getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));
 
-    // NOTE(beder): We don't worry about catching exceptions from the monitor methods themselves
-    // because we'll wrap all monitoring in non-throwing monitors before we pass them to the
-    // factories.
-    ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
-    codeBlocks.add(CodeBlock.of("monitor.methodStarting();"));
-
     final CodeBlock returnCodeBlock;
     switch (binding.productionKind().get()) {
       case IMMEDIATE:
@@ -540,16 +516,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       default:
         throw new AssertionError();
     }
-    return CodeBlock.of(
-        Joiner.on('\n')
-            .join(
-                "monitor.methodStarting();",
-                "try {",
-                "  return $L;",
-                "} finally {",
-                "  monitor.methodFinished();",
-                "}"),
-        returnCodeBlock);
+    return CodeBlock.of("return $L;", returnCodeBlock);
   }
 
   /**

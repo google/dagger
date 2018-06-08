@@ -38,7 +38,7 @@ GenJavaTests(
     # used without Guava and jsr305 deps.
     test_only_deps = [
         "@google_bazel_common//third_party/java/guava:testlib",
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/truth",
         "@google_bazel_common//third_party/java/junit",
     ],

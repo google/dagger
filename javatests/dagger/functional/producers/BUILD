@@ -31,8 +31,8 @@ GenJavaTests(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:producers_with_compiler",
-        "@google_bazel_common//third_party:guava",
         "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@google_bazel_common//third_party/java/junit",

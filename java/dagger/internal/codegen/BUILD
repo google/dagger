@@ -18,6 +18,7 @@
 package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
@@ -38,7 +39,7 @@ CODEGEN_SHARED_DEPS = [
     "@google_bazel_common//third_party/java/auto:value",
     "@google_bazel_common//third_party/java/auto:common",
     "@google_bazel_common//third_party/java/error_prone:annotations",
-    "@google_bazel_common//third_party:google_java_format",
+    "@google_bazel_common//third_party/java/google_java_format",
     "@google_bazel_common//third_party/java/javapoet",
     "@local_jdk//:lib/tools.jar",
     "@google_bazel_common//third_party/java/jsr250_annotations",
@@ -51,7 +52,7 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    "@google_bazel_common//third_party:guava",
+    "@google_bazel_common//third_party/java/guava",
     ":shared-with-spi",
 ]
 
@@ -63,7 +64,7 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = [
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
     ],
 )
 
@@ -314,7 +315,22 @@ java_library(
         "ProductionExecutorModuleProcessingStep.java",
     ],
     plugins = CODEGEN_PLUGINS,
+    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
+        ":base",
+        ":binding",
+        ":internal_validation",
+        ":writing",
+        ":validation",
+    ],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-compiler",
+    artifact_name = "Dagger Compiler",
+    targets = [
+        ":processor",
         ":base",
         ":binding",
         ":internal_validation",
@@ -330,17 +346,27 @@ java_library(
     deps = [
         ":base",
         ":binding",
+        ":kythe_plugin",
         ":processor",
         ":validation",
         "//java/dagger:core",
         "//java/dagger/model",
         "//java/dagger/producers",
         "@bazel_tools//third_party/java/jdk/langtools:javac",
-        "@google_bazel_common//third_party:guava",
-        "@google_bazel_common//third_party:kythe_plugin",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/guava",
     ],
+)
+
+# A _deploy.jar consisting of the java_librarys in https://github.com/google/kythe needed to build a
+# Kythe plugin
+# TODO(ronshapiro): replace this with a http_archive of the next release in
+# https://github.com/google/kythe/releases
+java_import(
+    name = "kythe_plugin",
+    jars = ["kythe_plugin_deploy.jar"],
+    neverlink = 1,
 )
 
 java_import(
@@ -357,7 +383,7 @@ java_plugin(
     deps = [":bootstrap_compiler"],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "codegen-javadoc",

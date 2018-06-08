@@ -28,16 +28,29 @@ filegroup(
     srcs = glob(["*.java"]),
 )
 
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+
 java_library(
     name = "spi",
     srcs = [":spi-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     deps = [
         "//java/dagger:core",
         "//java/dagger/model",
-        "@google_bazel_common//third_party:guava",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
+    ],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-spi",
+    artifact_name = "Dagger SPI",
+    targets = [
+        "//java/dagger/model",
+        ":spi",
     ],
 )

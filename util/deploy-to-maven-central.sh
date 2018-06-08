@@ -50,5 +50,13 @@ for generated_pom_file in dagger*pom.xml; do
   rm "${generated_pom_file}.asc"
 done
 
+release_branch="release_${version_name}"
+git checkout -b "${release_branch}"
+# Set the version string that is used as a tag in all of our libraries. If another repo depends on
+# a versioned tag of Dagger, their java_library.tags should match the versioned release.
+sed -i s/'${project.version}'/"${version_name}"/g tools/maven.bzl
+git commit -m "${version_name}"
+git push origin "${release_branch}"
+
 git tag -a -m "Dagger ${version_name}" dagger-"${version_name}"
 git push origin tag dagger-"${version_name}"

@@ -23,6 +23,7 @@ load(
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
 )
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
@@ -39,15 +40,43 @@ android_library(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     proguard_specs = ["proguard.cfg"],
+    tags = ["maven_coordinates=com.google.dagger:dagger-android:" + POM_VERSION],
     deps = [
+        ":manual-maven-deps",
         "//:dagger_with_compiler",
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
     ],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+# Our pom.xml generator does not have a way to add manual maven deps. This target exports the
+# targets that don't have the necessary maven_coordinates tags.
+android_library(
+    name = "manual-maven-deps",
+    tags = ["maven_coordinates=com.android.support:support-annotations:25.0.0"],
+    visibility = ["//visibility:private"],
+    exports = [
+        "@androidsdk//com.android.support:support-annotations-25.0.0",
+    ],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-android",
+    artifact_name = "Dagger Android",
+    packaging = "aar",
+    targets = [":android"],
+)
+
+# b/37741866 and https://github.com/google/dagger/issues/715
+pom_file(
+    name = "jarimpl-pom",
+    artifact_id = "dagger-android-jarimpl",
+    artifact_name = "Dagger Android",
+    targets = [":android"],
+)
+
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "android-javadoc",

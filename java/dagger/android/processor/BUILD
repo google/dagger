@@ -22,6 +22,7 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
 
 filegroup(
     name = "srcs",
@@ -32,18 +33,45 @@ java_library(
     name = "processor",
     srcs = [":srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-android-processor:" + POM_VERSION],
     deps = [
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party:google_java_format",
+        "@google_bazel_common//third_party/java/google_java_format",
         "//java/dagger:core",
         # https://github.com/bazelbuild/bazel/issues/2517
+        ":dagger-android-jars",
+    ],
+)
+
+# https://github.com/bazelbuild/bazel/issues/2517
+# This target serves two (related) purposes:
+# 1. Bazel does not allow a java_library to depend on an android_library, even if that java_library
+# will be used in a java_plugin.
+# 2. It stores the metadata for the "jarimpl" targets that we use to work-around Gradle not loading
+# aar artifacts that are declared as deps of an annotation processor. Our pom.xml generator reads
+# the tags and includes them apppropriately.
+java_import(
+    name = "dagger-android-jars",
+    jars = [
         "//java/dagger/android:libandroid.jar",
         "//java/dagger/android/support:libsupport.jar",
     ],
+    tags = [
+        "maven_coordinates=com.google.dagger:dagger-android-jarimpl:" + POM_VERSION,
+        "maven_coordinates=com.google.dagger:dagger-android-support-jarimpl:" + POM_VERSION,
+    ],
+    visibility = ["//visibility:private"],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-android-processor",
+    artifact_name = "Dagger Android Processor",
+    targets = [":processor"],
 )
 
 java_plugin(
@@ -53,7 +81,7 @@ java_plugin(
     deps = [":processor"],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "processor-javadoc",

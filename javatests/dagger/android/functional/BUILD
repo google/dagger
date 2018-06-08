@@ -45,7 +45,7 @@ GenRobolectricTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         ":code_under_test",
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/guava:testlib",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

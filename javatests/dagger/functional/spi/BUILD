@@ -25,8 +25,8 @@ java_plugin(
     deps = [
         "//java/dagger/model",
         "//java/dagger/spi",
-        "@google_bazel_common//third_party:guava",
         "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )
@@ -49,6 +49,6 @@ GenJavaTests(
     deps = [
         ":test_lib",
         "//:dagger_with_compiler",
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
     ],
 )

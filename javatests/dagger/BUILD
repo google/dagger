@@ -26,7 +26,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

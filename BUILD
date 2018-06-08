@@ -19,13 +19,7 @@ package_group(
     packages = ["//..."],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
-
-py_test(
-    name = "maven_sha1_test",
-    srcs = ["maven_sha1_test.py"],
-    data = ["WORKSPACE"],
-)
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 java_library(
     name = "dagger_with_compiler",
@@ -55,12 +49,13 @@ android_library(
     ],
 )
 
-load("//tools:jarjar.bzl", "jarjar_library")
+load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
+
+SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
 
 jarjar_library(
     name = "shaded_compiler",
-    rules_file = "shade_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
         "//java/dagger/internal/codegen:internal_validation",
@@ -71,12 +66,12 @@ jarjar_library(
         "//java/dagger/model:internal-proxies",
         "@com_google_auto_auto_common//jar",
     ],
+    rules = SHADE_RULES,
 )
 
 jarjar_library(
     name = "shaded_compiler_src",
-    rules_file = "merge_all_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/internal/codegen:libbase-src.jar",
         "//java/dagger/internal/codegen:libbinding-src.jar",
         "//java/dagger/internal/codegen:libinternal_validation-src.jar",
@@ -89,19 +84,18 @@ jarjar_library(
 
 jarjar_library(
     name = "shaded_spi",
-    rules_file = "shade_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/model",
         "//java/dagger/spi",
         "@com_google_auto_auto_common//jar",
     ],
+    rules = SHADE_RULES,
 )
 
 jarjar_library(
     name = "shaded_spi_src",
-    rules_file = "merge_all_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
         "//java/dagger/model:libmodel-src.jar",
         "//java/dagger/spi:libspi-src.jar",
@@ -126,20 +120,20 @@ javadoc_library(
 
 jarjar_library(
     name = "shaded_android_processor",
-    rules_file = "shade_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/android/processor",
         "@com_google_auto_auto_common//jar",
     ],
+    rules = SHADE_RULES,
 )
 
 jarjar_library(
     name = "shaded_grpc_server_processor",
-    rules_file = "shade_rules.txt",
-    deps = [
+    jars = [
         "//java/dagger/grpc/server/processor",
         "@com_google_auto_auto_common//jar",
     ],
+    rules = SHADE_RULES,
 )
 
 # coalesced javadocs used for the gh-pages site

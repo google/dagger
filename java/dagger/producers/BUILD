@@ -23,6 +23,7 @@ load(
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
 )
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
@@ -37,21 +38,29 @@ java_library(
     name = "producers",
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-producers:" + POM_VERSION],
     exports = [
         # TODO(dpb): Don't export any of Guava.
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
     deps = [
         "//java/dagger:core",
-        "@google_bazel_common//third_party:guava",
         "@google_bazel_common//third_party/java/checker_framework:annotations",
         "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-producers",
+    artifact_name = "Dagger Producers",
+    targets = [":producers"],
+)
+
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "producers-javadoc",

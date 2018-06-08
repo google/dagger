@@ -25,7 +25,7 @@ GenJavaTests(
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     test_only_deps = [
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth:truth8",
     ],

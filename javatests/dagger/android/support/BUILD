@@ -30,7 +30,7 @@ GenRobolectricTests(
         "//java/dagger/android/support",
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
         "@androidsdk//com.android.support:support-fragment-25.0.0",
-        "@google_bazel_common//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
     ],

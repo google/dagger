@@ -37,10 +37,11 @@ GenJavaTests(
         "//java/dagger/model/testing",
         "//java/dagger/producers",
         "//java/dagger/spi",
-        "@google_bazel_common//third_party:guava",
+        "@com_google_auto_value_auto_value//jar",  # For AutoAnnotationProcessor
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/compile_testing",
+        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",

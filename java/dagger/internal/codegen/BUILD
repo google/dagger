@@ -197,6 +197,7 @@ java_library(
 java_library(
     name = "internal_validation",
     srcs = [
+        "BindingCycleValidation.java",
         "BindingGraphValidationModule.java",
         "DuplicateBindingsValidation.java",
         "IncompatiblyScopedBindingsValidation.java",

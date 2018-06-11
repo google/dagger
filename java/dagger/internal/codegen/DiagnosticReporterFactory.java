@@ -128,10 +128,9 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportDependency(
         Diagnostic.Kind diagnosticKind, DependencyEdge dependencyEdge, String message) {
-      StringBuilder messageBuilder =
-          new StringBuilder(message)
-              .append('\n')
-              .append(dependencyRequestFormatter.format(dependencyEdge.dependencyRequest()));
+      StringBuilder messageBuilder = new StringBuilder(message);
+      dependencyRequestFormatter.appendFormatLine(
+          messageBuilder, dependencyEdge.dependencyRequest());
 
       if (dependencyEdge.isEntryPoint()) {
         printAtEntryPoint(diagnosticKind, messageBuilder, dependencyEdge);
@@ -190,9 +189,9 @@ final class DiagnosticReporterFactory {
             // If a binding requests a key more than once, any of them should be fine to get to
             // the shortest path
             ((DependencyEdge) Iterables.get(dependenciesBetween, 0)).dependencyRequest();
-        trace.append('\n').append(dependencyRequestFormatter.format(dependencyRequest));
+        dependencyRequestFormatter.appendFormatLine(trace, dependencyRequest);
       }
-      trace.append('\n').append(dependencyRequestFormatter.format(entryPoint.dependencyRequest()));
+      dependencyRequestFormatter.appendFormatLine(trace, entryPoint.dependencyRequest());
       return trace;
     }
 

@@ -467,24 +467,24 @@ public class GraphValidationTest {
             "  }",
             "}");
 
-    String expectedError =
-        Joiner.on('\n')
-            .join(
-                "Found a dependency cycle:",
-                "      test.Outer.C is injected at",
-                "          test.Outer.CModule.c(c)",
-                "      java.util.Map<java.lang.String,test.Outer.C> is injected at",
-                "          test.Outer.A.<init>(cMap)",
-                "      test.Outer.A is injected at",
-                "          test.Outer.B.<init>(aParam)",
-                "      test.Outer.B is injected at",
-                "          test.Outer.C.<init>(bParam)",
-                "      test.Outer.C is provided at",
-                "          test.Outer.CComponent.getC()");
-
     Compilation compilation = daggerCompiler().compile(component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(26);
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "Found a dependency cycle:",
+                "test.Outer.C is injected at",
+                "    test.Outer.CModule.c(c)",
+                "java.util.Map<java.lang.String,test.Outer.C> is injected at",
+                "    test.Outer.A.<init>(cMap)",
+                "test.Outer.A is injected at",
+                "    test.Outer.B.<init>(aParam)",
+                "test.Outer.B is injected at",
+                "    test.Outer.C.<init>(bParam)",
+                "test.Outer.C is provided at",
+                "    test.Outer.CComponent.getC()"))
+        .inFile(component)
+        .onLineContaining("C getC();");
   }
 
   @Test
@@ -635,7 +635,7 @@ public class GraphValidationTest {
             "",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent(modules = GrandchildModule.class)",
+            "@Subcomponent",
             "interface Grandchild {",
             "  String entry();",
             "}");
@@ -652,37 +652,26 @@ public class GraphValidationTest {
             "  @Provides static Object object(String string) {",
             "    return string;",
             "  }",
-            "}");
-    JavaFileObject grandchildModule =
-        JavaFileObjects.forSourceLines(
-            "test.GrandchildModule",
-            "package test;",
             "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "",
-            "@Module",
-            "abstract class GrandchildModule {",
             "  @Provides static String string(Object object) {",
             "    return object.toString();",
             "  }",
             "}");
 
-    String expectedError =
-        Joiner.on('\n')
-            .join(
-                "[test.Grandchild.entry()] Found a dependency cycle:",
-                "      java.lang.String is injected at",
-                "          test.ChildModule.object(string)",
-                "      java.lang.Object is injected at",
-                "          test.GrandchildModule.string(object)",
-                "      java.lang.String is provided at",
-                "          test.Grandchild.entry()");
-
-    Compilation compilation =
-        daggerCompiler().compile(parent, child, grandchild, childModule, grandchildModule);
+    Compilation compilation = daggerCompiler().compile(parent, child, grandchild, childModule);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(child).onLine(6);
+    assertThat(compilation)
+        .hadErrorContaining(
+            error(
+                "[test.Grandchild.entry()] Found a dependency cycle:",
+                "java.lang.String is injected at",
+                "    test.ChildModule.object(string)",
+                "java.lang.Object is injected at",
+                "    test.ChildModule.string(object)",
+                "java.lang.String is provided at",
+                "    test.Grandchild.entry()"))
+        .inFile(parent)
+        .onLineContaining("interface Parent {");
   }
 
   @Test
@@ -718,35 +707,22 @@ public class GraphValidationTest {
             "@Component(modules = TestModule.class)",
             "interface TestComponent {",
             "  Object unqualified();",
-            "  @SomeQualifier Object qualified();",
             "}");
 
     Compilation compilation = daggerCompiler().compile(qualifier, module, component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "Found a dependency cycle:\n"
-                + "      java.lang.Object is injected at\n"
-                + "          test.TestModule.bindQualified(unqualified)\n"
-                + "      @test.SomeQualifier java.lang.Object is injected at\n"
-                + "          test.TestModule.bindUnqualified(qualified)\n"
-                + "      java.lang.Object is provided at\n"
-                + "          test.TestComponent.unqualified()")
+            error(
+                "Found a dependency cycle:",
+                "java.lang.Object is injected at",
+                "    test.TestModule.bindQualified(unqualified)",
+                "@test.SomeQualifier java.lang.Object is injected at",
+                "    test.TestModule.bindUnqualified(qualified)",
+                "java.lang.Object is provided at",
+                "    test.TestComponent.unqualified()"))
         .inFile(component)
-        .onLine(7);
-    assertThat(compilation)
-        .hadErrorContaining(
-            // TODO(gak): cl/126230644 produces a better error message in this case. Here it isn't
-            // unclear what is going wrong.
-            "Found a dependency cycle:\n"
-                + "      @test.SomeQualifier java.lang.Object is injected at\n"
-                + "          test.TestModule.bindUnqualified(qualified)\n"
-                + "      java.lang.Object is injected at\n"
-                + "          test.TestModule.bindQualified(unqualified)\n"
-                + "      @test.SomeQualifier java.lang.Object is provided at\n"
-                + "          test.TestComponent.qualified()")
-        .inFile(component)
-        .onLine(8);
+        .onLineContaining("unqualified();");
   }
 
   @Test
@@ -841,6 +817,39 @@ public class GraphValidationTest {
                     "          test.CycleComponent.inject(test.A)"))
         .inFile(component)
         .onLineContaining("void inject(A a);");
+  }
+
+  @Test
+  public void longCycleMaskedByShortBrokenCycles() {
+    JavaFileObject cycles =
+        JavaFileObjects.forSourceLines(
+            "test.Cycles",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "import dagger.Component;",
+            "",
+            "final class Cycles {",
+            "  static class A {",
+            "    @Inject A(Provider<A> aProvider, B b) {}",
+            "  }",
+            "",
+            "  static class B {",
+            "    @Inject B(Provider<B> bProvider, A a) {}",
+            "  }",
+            "",
+            "  @Component",
+            "  interface C {",
+            "    A a();",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(cycles);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Found a dependency cycle:")
+        .inFile(cycles)
+        .onLineContaining("A a();");
   }
 
   @Test

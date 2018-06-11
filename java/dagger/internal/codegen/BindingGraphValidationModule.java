@@ -28,6 +28,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin bindingCycle(BindingCycleValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin duplicateBindings(DuplicateBindingsValidation validation);
 
   @Binds

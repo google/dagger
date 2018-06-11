@@ -56,9 +56,13 @@ abstract class Formatter<T> implements Function<T, String> {
   public void formatIndentedList(
       StringBuilder builder, Iterable<? extends T> items, int indentLevel) {
     for (T item : Iterables.limit(items, LIST_LIMIT)) {
+      String formatted = format(item);
+      if (formatted.isEmpty()) {
+        continue;
+      }
       builder.append('\n');
       appendIndent(builder, indentLevel);
-      builder.append(format(item));
+      builder.append(formatted);
     }
     int numberOfOtherItems = Iterables.size(items) - LIST_LIMIT;
     if (numberOfOtherItems > 0) {

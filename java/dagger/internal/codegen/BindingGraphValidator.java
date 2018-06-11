@@ -28,8 +28,6 @@ import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.Formatter.INDENT;
-import static dagger.internal.codegen.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Scopes.getReadableSource;
 import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
@@ -43,12 +41,9 @@ import static java.util.stream.Collectors.toSet;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import dagger.BindsOptionalOf;
 import dagger.Component;
-import dagger.Lazy;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -56,7 +51,6 @@ import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
-import dagger.model.RequestKind;
 import dagger.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -65,9 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -84,7 +76,6 @@ final class BindingGraphValidator {
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final DependencyRequestFormatter dependencyRequestFormatter;
   private final KeyFactory keyFactory;
 
   @Inject
@@ -93,13 +84,11 @@ final class BindingGraphValidator {
       DaggerTypes types,
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
-      DependencyRequestFormatter dependencyRequestFormatter,
       KeyFactory keyFactory) {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.dependencyRequestFormatter = dependencyRequestFormatter;
     this.keyFactory = keyFactory;
   }
 
@@ -480,15 +469,9 @@ final class BindingGraphValidator {
         report(graph).addError(message, entryPointElement());
       }
 
-      private String formatDependencyTrace() {
-        return dependencyRequestFormatter.format(dependencyTrace());
-      }
-
       @Override
       protected void visitDependencyRequest(DependencyRequest dependencyRequest) {
-        if (atDependencyCycle()) {
-          reportDependencyCycle();
-        } else {
+        if (!atDependencyCycle()) {
           super.visitDependencyRequest(dependencyRequest);
         }
       }
@@ -518,79 +501,6 @@ final class BindingGraphValidator {
       private void reportDependsOnProductionExecutor() {
         reportErrorAtEntryPoint(
             "%s may not depend on the production executor", formatCurrentDependencyRequestKey());
-      }
-
-      // TODO(cgruber): Provide a hint for the start and end of the cycle.
-      private void reportDependencyCycle() {
-        if (!providersBreakingCycle().isEmpty()) {
-          return;
-        }
-        ImmutableList.Builder<ContributionBinding> cycleBindings = ImmutableList.builder();
-        cycleDependencyTrace()
-            .forEach(
-                (dependencyRequest, resolvedBindings) ->
-                    cycleBindings.addAll(resolvedBindings.contributionBindings()));
-        reportErrorAtEntryPoint(
-            owningGraph(cycleBindings.build()),
-            "Found a dependency cycle:\n%s",
-            formatDependencyTrace());
-      }
-
-      /**
-       * Returns any steps in a dependency cycle that "break" the cycle. These are any nonsynthetic
-       * {@link Provider}, {@link Lazy}, or {@code Map<K, Provider<V>>} requests after the first
-       * request in the cycle.
-       *
-       * <p>The synthetic request for a {@code Map<K, Provider<V>>} as a dependency of a multibound
-       * {@code Map<K, V>} does not break cycles because the map's {@link Provider}s' {@link
-       * Provider#get() get()} methods are called during provision.
-       *
-       * <p>A request for an instance of {@code Optional} breaks the cycle if it is resolved to a
-       * {@link BindsOptionalOf} binding and a request for the {@code Optional}'s type parameter
-       * would.
-       */
-      private ImmutableSet<DependencyRequest> providersBreakingCycle() {
-        ImmutableSet.Builder<DependencyRequest> providers = ImmutableSet.builder();
-        AtomicBoolean first = new AtomicBoolean(true);
-        cycleDependencyTrace()
-            .forEach(
-                (dependencyRequest, resolvedBindings) -> {
-                  // Skip the first request in the cycle and any synthetic requests.
-                  if (first.getAndSet(false) || !dependencyRequest.requestElement().isPresent()) {
-                    return;
-                  }
-
-                  if (breaksCycle(dependencyRequest.key().type(), dependencyRequest.kind())) {
-                    providers.add(dependencyRequest);
-                  } else if (!resolvedBindings.optionalBindingDeclarations().isEmpty()) {
-                    /* Request resolved to a @BindsOptionalOf binding, so test the type inside the
-                     * Optional. Optional<Provider or Lazy or Provider of Lazy or Map of Provider>
-                     * breaks the cycle. */
-                    TypeMirror optionalValueType =
-                        OptionalType.from(dependencyRequest.key()).valueType();
-                    RequestKind requestKind = getRequestKind(optionalValueType);
-                    if (breaksCycle(extractKeyType(requestKind, optionalValueType), requestKind)) {
-                      providers.add(dependencyRequest);
-                    }
-                  }
-                });
-        return providers.build();
-      }
-
-      private boolean breaksCycle(TypeMirror requestedType, RequestKind requestKind) {
-        switch (requestKind) {
-          case PROVIDER:
-          case LAZY:
-          case PROVIDER_OF_LAZY:
-            return true;
-
-          case INSTANCE:
-            return MapType.isMap(requestedType)
-                && MapType.from(requestedType).valuesAreTypeOf(Provider.class);
-
-          default:
-            return false;
-        }
       }
 
       private String formatCurrentDependencyRequestKey() {

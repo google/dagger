@@ -79,9 +79,6 @@ abstract class CompilerOptions {
 
   abstract boolean aheadOfTimeComponents();
 
-  /** See b/79859714 */
-  abstract boolean floatingBindsMethods();
-
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
   }
@@ -114,8 +111,6 @@ abstract class CompilerOptions {
                 .equals(FeatureStatus.ENABLED))
         .aheadOfTimeComponents(
             aheadOfTimeComponentsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .floatingBindsMethods(
-            floatingBindsMethodsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .build();
   }
 
@@ -146,8 +141,6 @@ abstract class CompilerOptions {
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
 
     Builder aheadOfTimeComponents(boolean aheadOfTimeComponents);
-
-    Builder floatingBindsMethods(boolean enabled);
 
     CompilerOptions build();
   }
@@ -187,8 +180,6 @@ abstract class CompilerOptions {
 
   static final String AHEAD_OF_TIME_COMPONENTS_KEY = "dagger.experimentalAheadOfTimeComponents";
 
-  static final String FLOATING_BINDS_METHODS_KEY = "dagger.floatingBindsMethods";
-
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
           FAST_INIT,
@@ -201,8 +192,7 @@ abstract class CompilerOptions {
           STATIC_MEMBER_VALIDATION_TYPE_KEY,
           WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
           IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
-          AHEAD_OF_TIME_COMPONENTS_KEY,
-          FLOATING_BINDS_METHODS_KEY);
+          AHEAD_OF_TIME_COMPONENTS_KEY);
 
   private static boolean fastInitEnabled(ProcessingEnvironment processingEnv) {
     return valueOf(
@@ -292,15 +282,6 @@ abstract class CompilerOptions {
     return valueOf(
         processingEnv,
         AHEAD_OF_TIME_COMPONENTS_KEY,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus floatingBindsMethodsFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        FLOATING_BINDS_METHODS_KEY,
         FeatureStatus.DISABLED,
         EnumSet.allOf(FeatureStatus.class));
   }

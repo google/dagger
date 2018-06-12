@@ -201,7 +201,6 @@ java_library(
         "BindingGraphValidationModule.java",
         "DuplicateBindingsValidation.java",
         "IncompatiblyScopedBindingsValidation.java",
-        "IncorrectlyInstalledBindsMethodsValidator.java",
         "InjectBindingValidation.java",
         "MapMultibindingValidation.java",
         "MembersInjectionBindingValidation.java",
@@ -210,7 +209,6 @@ java_library(
         "ProvisionDependencyOnProducerBindingValidation.java",
         "Validation.java",
     ],
-    plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
         ":base",
@@ -349,7 +347,6 @@ java_library(
     deps = [
         ":base",
         ":binding",
-        ":internal_validation",
         ":kythe_plugin",
         ":processor",
         ":validation",

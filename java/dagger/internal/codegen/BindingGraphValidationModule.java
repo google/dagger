@@ -33,6 +33,11 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
+  BindingGraphPlugin dependsOnProductionExecutor(DependsOnProductionExecutorValidator validation);
+
+  @Binds
+  @IntoSet
+  @Validation
   BindingGraphPlugin duplicateBindings(DuplicateBindingsValidation validation);
 
   @Binds

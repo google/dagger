@@ -46,11 +46,8 @@ import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -76,20 +73,17 @@ final class BindingGraphValidator {
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final KeyFactory keyFactory;
 
   @Inject
   BindingGraphValidator(
       Elements elements,
       DaggerTypes types,
       CompilerOptions compilerOptions,
-      MethodSignatureFormatter methodSignatureFormatter,
-      KeyFactory keyFactory) {
+      MethodSignatureFormatter methodSignatureFormatter) {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.keyFactory = keyFactory;
   }
 
   private final class ComponentValidation extends ComponentTreeTraverser {
@@ -100,12 +94,6 @@ final class BindingGraphValidator {
     ComponentValidation(BindingGraph rootGraph) {
       super(rootGraph);
       this.rootGraph = rootGraph;
-    }
-
-    @Override
-    protected BindingGraphTraverser bindingGraphTraverser(
-        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-      return new BindingGraphValidation(componentPath, entryPointMethod);
     }
 
     /** Returns a report that contains all validation messages found during traversal. */
@@ -449,63 +437,6 @@ final class BindingGraphValidator {
         }
       }
       return false;
-    }
-
-    final class BindingGraphValidation extends BindingGraphTraverser {
-
-      BindingGraphValidation(
-          ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-        super(componentPath, entryPointMethod);
-      }
-
-      /** Reports an error for the current component at the entry point. */
-      private void reportErrorAtEntryPoint(String format, Object... args) {
-        reportErrorAtEntryPoint(currentGraph(), format, args);
-      }
-
-      /** Reports an error for the given component at the entry point. */
-      private void reportErrorAtEntryPoint(BindingGraph graph, String format, Object... args) {
-        String message = args.length == 0 ? format : String.format(format, args);
-        report(graph).addError(message, entryPointElement());
-      }
-
-      @Override
-      protected void visitDependencyRequest(DependencyRequest dependencyRequest) {
-        if (!atDependencyCycle()) {
-          super.visitDependencyRequest(dependencyRequest);
-        }
-      }
-
-      @Override
-      protected void visitContributionBinding(
-          ContributionBinding binding, ComponentDescriptor owningComponent) {
-        if (compilerOptions.usesProducers()) {
-          // TODO(dpb,beder): Validate this during @Inject/@Provides/@Produces validation.
-          // Only the Dagger-specific binding may depend on the production executor.
-          Key productionImplementationExecutorKey =
-              keyFactory.forProductionImplementationExecutor();
-          if (!binding.key().equals(productionImplementationExecutorKey)) {
-            Key productionExecutorKey = keyFactory.forProductionExecutor();
-            for (DependencyRequest request : binding.explicitDependencies()) {
-              if (request.key().equals(productionExecutorKey)
-                  || request.key().equals(productionImplementationExecutorKey)) {
-                reportDependsOnProductionExecutor();
-              }
-            }
-          }
-        }
-        super.visitContributionBinding(binding, owningComponent);
-      }
-
-      @SuppressWarnings("resource") // Appendable is a StringBuilder.
-      private void reportDependsOnProductionExecutor() {
-        reportErrorAtEntryPoint(
-            "%s may not depend on the production executor", formatCurrentDependencyRequestKey());
-      }
-
-      private String formatCurrentDependencyRequestKey() {
-        return dependencyRequest().key().toString();
-      }
     }
   }
 

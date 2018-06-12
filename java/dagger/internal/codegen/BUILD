@@ -199,6 +199,7 @@ java_library(
     srcs = [
         "BindingCycleValidation.java",
         "BindingGraphValidationModule.java",
+        "DependsOnProductionExecutorValidator.java",
         "DuplicateBindingsValidation.java",
         "IncompatiblyScopedBindingsValidation.java",
         "InjectBindingValidation.java",

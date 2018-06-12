@@ -20,6 +20,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.NonNullableRequestForNullableBindingValidation.nullableToNonNullable;
+import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.common.base.Joiner;
 import com.google.testing.compile.Compilation;
@@ -471,7 +472,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "Found a dependency cycle:",
                 "test.Outer.C is injected at",
                 "    test.Outer.CModule.c(c)",
@@ -662,7 +663,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "[test.Grandchild.entry()] Found a dependency cycle:",
                 "java.lang.String is injected at",
                 "    test.ChildModule.object(string)",
@@ -713,7 +714,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "Found a dependency cycle:",
                 "java.lang.Object is injected at",
                 "    test.TestModule.bindQualified(unqualified)",
@@ -921,7 +922,7 @@ public class GraphValidationTest {
         "}");
 
     String expectedError =
-        error(
+        message(
             "test.Outer.A is bound multiple times:",
             "@Provides test.Outer.A test.Outer.AModule.provideA(String)",
             "test.Outer.A test.Outer.Parent.getA()");
@@ -1077,7 +1078,7 @@ public class GraphValidationTest {
         "}");
 
     String expectedSetError =
-        error(
+        message(
             "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
             "Set bindings and declarations:",
             "    @Binds @dagger.multibindings.IntoSet String "
@@ -1088,7 +1089,7 @@ public class GraphValidationTest {
             "    @Provides Set<String> test.Outer.TestModule2.stringSet()");
 
     String expectedMapError =
-        error(
+        message(
             "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
                 + "or declarations:",
             "Map bindings and declarations:",
@@ -1268,7 +1269,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "test.Outer.A is bound multiple times:",
                 "@Provides test.Outer.A test.Outer.Module01.provideA()",
                 "@Provides test.Outer.A test.Outer.Module02.provideA()",
@@ -1337,7 +1338,7 @@ public class GraphValidationTest {
             "}");
     String errorText = "test.TestClass.A cannot be provided without an @Provides-annotated method.";
     String firstError =
-        error(
+        message(
             errorText,
             "test.TestClass.A is injected at",
             "    test.TestClass.B.<init>(a)",
@@ -1348,7 +1349,7 @@ public class GraphValidationTest {
             "@javax.inject.Named(\"slim shady\") test.TestClass.D is provided at",
             "    test.TestClass.AComponent.getFoo()");
     String otherErrorFormat =
-        error(
+        message(
             errorText,
             "test.TestClass.A is injected at",
             "    test.TestClass.B.<init>(a)",
@@ -1504,7 +1505,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContainingMatch(
             "\\Qtest.Duplicates.NotBound cannot be provided\\E|"
-                + error(
+                + message(
                     "\\Qtest.Duplicates.BoundTwice is bound multiple times:",
                     "@Binds test.Duplicates.BoundTwice "
                         + "test.Duplicates.DuplicatesModule"
@@ -2106,7 +2107,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "[test.B.conflict()] java.lang.Object is bound multiple times:",
                 "@Provides Object test.A.AModule.abConflict()",
                 "@Provides Object test.B.BModule.abConflict()"))
@@ -2173,7 +2174,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "[test.C.conflict()] java.lang.Object is bound multiple times:",
                 "@Provides Object test.A.AModule.acConflict()",
                 "@Provides Object test.C.CModule.acConflict()"))
@@ -2240,7 +2241,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "[test.C.conflict()] java.lang.Object is bound multiple times:",
                 "@Provides Object test.B.BModule.bcConflict()",
                 "@Provides Object test.C.CModule.bcConflict()"))
@@ -2299,7 +2300,7 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "[test.Child.parentChildConflictThatViolatesNullability()] "
                     + "java.lang.Object is bound multiple times:",
                 "@Provides Object test.Child.ChildModule.nonNullableParentChildConflict()",
@@ -2648,7 +2649,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                error(
+                message(
                     "@%1$s.ForReleasableReferences(test.TestScope.class) "
                         + "%1$s.ReleasableReferenceManager is bound multiple times:",
                     "@Provides @%1$s.ForReleasableReferences(test.TestScope.class) "
@@ -2662,7 +2663,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                error(
+                message(
                     "@%1$s.ForReleasableReferences(test.TestScope.class) "
                         + "%1$s.TypedReleasableReferenceManager<test.TestMetadata> "
                         + "is bound multiple times:",
@@ -2678,7 +2679,7 @@ public class GraphValidationTest {
         .onLine(16);
     assertThat(compilation)
         .hadErrorContaining(
-            error(
+            message(
                 "java.util.Set<dagger.releasablereferences.ReleasableReferenceManager> "
                     + "is bound multiple times:",
                 "@Provides "
@@ -2691,7 +2692,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                error(
+                message(
                     "java.util.Set<%1$s.TypedReleasableReferenceManager<test.TestMetadata>> "
                         + "is bound multiple times:",
                     "@Provides "
@@ -2775,7 +2776,4 @@ public class GraphValidationTest {
     assertThat(compilation).succeeded();
   }
 
-  private String error(String... lines) {
-    return Joiner.on("\n      ").join(lines);
-  }
 }

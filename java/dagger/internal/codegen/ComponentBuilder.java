@@ -251,7 +251,8 @@ final class ComponentBuilder {
           methods.add(builderMethod.build());
         }
       } else {
-        for (ComponentRequirement componentRequirement : graph.availableDependencies()) {
+        for (ComponentRequirement componentRequirement :
+            graph.componentDescriptor().availableDependencies()) {
           String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)

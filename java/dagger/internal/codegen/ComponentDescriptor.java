@@ -31,6 +31,7 @@ import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -63,6 +64,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -205,6 +207,17 @@ abstract class ComponentDescriptor {
    * ProductionComponent#dependencies()}.
    */
   abstract ImmutableSet<ComponentRequirement> dependencies();
+
+  /** The non-abstract {@link #transitiveModules()} and the {@link #dependencies()}. */
+  ImmutableSet<ComponentRequirement> availableDependencies() {
+    return Stream.concat(
+            transitiveModuleTypes()
+                .stream()
+                .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
+                .map(module -> ComponentRequirement.forModule(module.asType())),
+            dependencies().stream())
+        .collect(toImmutableSet());
+  }
 
   /**
    * The set of {@link ModuleDescriptor modules} declared directly in {@link Component#modules}.

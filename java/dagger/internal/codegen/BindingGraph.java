@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -36,7 +35,6 @@ import dagger.model.Scope;
 import dagger.releasablereferences.CanReleaseReferences;
 import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.Optional;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -220,17 +218,6 @@ abstract class BindingGraph {
     return FluentIterable.from(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this))
         .transform(BindingGraph::componentDescriptor)
         .toSet();
-  }
-
-  ImmutableSet<ComponentRequirement> availableDependencies() {
-    return Stream.concat(
-            componentDescriptor()
-                .transitiveModuleTypes()
-                .stream()
-                .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
-                .map(module -> ComponentRequirement.forModule(module.asType())),
-            componentDescriptor().dependencies().stream())
-        .collect(toImmutableSet());
   }
 
   @Memoized

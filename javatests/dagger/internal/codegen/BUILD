@@ -29,7 +29,7 @@ GenJavaTests(
         "//java/dagger:core",
         "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
-        "//java/dagger/internal/codegen:internal_validation",
+        "//java/dagger/internal/codegen:binding_graph_validation",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",

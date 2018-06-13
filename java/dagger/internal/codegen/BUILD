@@ -172,6 +172,7 @@ java_library(
         "BindsOptionalOfMethodValidator.java",
         "BuilderValidator.java",
         "CanReleaseReferencesValidator.java",
+        "ComponentDescriptorValidator.java",
         "ComponentHierarchyValidator.java",
         "ComponentValidator.java",
         "DependencyRequestFormatter.java",
@@ -195,7 +196,7 @@ java_library(
 )
 
 java_library(
-    name = "internal_validation",
+    name = "binding_graph_validation",
     srcs = [
         "BindingCycleValidation.java",
         "BindingGraphValidationModule.java",
@@ -321,7 +322,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
-        ":internal_validation",
+        ":binding_graph_validation",
         ":writing",
         ":validation",
     ],
@@ -335,7 +336,7 @@ pom_file(
         ":processor",
         ":base",
         ":binding",
-        ":internal_validation",
+        ":binding_graph_validation",
         ":writing",
         ":validation",
     ],

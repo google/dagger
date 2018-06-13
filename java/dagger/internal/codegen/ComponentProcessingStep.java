@@ -47,7 +47,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ComponentValidator componentValidator;
   private final BuilderValidator builderValidator;
-  private final ComponentHierarchyValidator componentHierarchyValidator;
+  private final ComponentDescriptorValidator componentDescriptorValidator;
   private final BindingGraphValidator bindingGraphValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
@@ -61,7 +61,7 @@ final class ComponentProcessingStep implements ProcessingStep {
       Messager messager,
       ComponentValidator componentValidator,
       BuilderValidator builderValidator,
-      ComponentHierarchyValidator componentHierarchyValidator,
+      ComponentDescriptorValidator componentDescriptorValidator,
       BindingGraphValidator bindingGraphValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
@@ -72,7 +72,7 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
-    this.componentHierarchyValidator = componentHierarchyValidator;
+    this.componentDescriptorValidator = componentDescriptorValidator;
     this.bindingGraphValidator = bindingGraphValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
@@ -136,10 +136,10 @@ final class ComponentProcessingStep implements ProcessingStep {
         }
         ComponentDescriptor componentDescriptor =
             componentDescriptorFactory.forComponent(componentTypeElement);
-        ValidationReport<TypeElement> hierarchyReport =
-            componentHierarchyValidator.validate(componentDescriptor);
-        hierarchyReport.printMessagesTo(messager);
-        if (!hierarchyReport.isClean()) {
+        ValidationReport<TypeElement> componentDescriptorReport =
+            componentDescriptorValidator.validate(componentDescriptor);
+        componentDescriptorReport.printMessagesTo(messager);
+        if (!componentDescriptorReport.isClean()) {
           continue;
         }
         BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);

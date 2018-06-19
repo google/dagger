@@ -23,7 +23,7 @@ where Dagger initialization is often on the user’s critical path and where cla
 loading is expensive, consider using fastInit mode.
 
 To enable fastInit mode, pass the following option to javac when building your
-[`@Component`]: `-Adagger.fastInit=enabled`
+Dagger [`@Component`]: `-Adagger.fastInit=enabled`
 
 <!-- References -->
 

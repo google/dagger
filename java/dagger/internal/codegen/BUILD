@@ -128,6 +128,7 @@ java_library(
         "BindingVariableNamer.java",  # needed by FrameworkField
         "BindsTypeChecker.java",
         "ComponentDescriptor.java",
+        "ComponentNodeImpl.java",
         "ComponentRequirement.java",
         "ComponentTreeTraverser.java",
         "ConfigurationAnnotations.java",  # Uses ModuleDescriptors
@@ -164,7 +165,6 @@ java_library(
     srcs = [
         "AnyBindingMethodValidator.java",
         "BindingDeclarationFormatter.java",
-        "BindingGraphValidator.java",
         "BindingMethodProcessingStep.java",
         "BindingMethodValidator.java",
         "BindsInstanceProcessingStep.java",
@@ -209,6 +209,7 @@ java_library(
         "MissingBindingValidation.java",
         "NonNullableRequestForNullableBindingValidation.java",
         "ProvisionDependencyOnProducerBindingValidation.java",
+        "SubcomponentFactoryMethodValidation.java",
         "Validation.java",
     ],
     tags = ["maven:merged"],

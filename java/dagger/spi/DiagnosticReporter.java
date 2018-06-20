@@ -19,6 +19,7 @@ package dagger.spi;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
+import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import javax.tools.Diagnostic;
@@ -79,6 +80,21 @@ public interface DiagnosticReporter {
   void reportDependency(
       Diagnostic.Kind diagnosticKind,
       DependencyEdge dependencyEdge,
+      String messageFormat,
+      Object firstArg,
+      Object... moreArgs);
+
+  /** Reports a diagnostic for a subcomponent factory method. */
+  void reportSubcomponentFactoryMethod(
+      Diagnostic.Kind diagnosticKind,
+      ChildFactoryMethodEdge childFactoryMethodEdge,
+      String message);
+
+  /** Reports a diagnostic for a subcomponent factory method. */
+  @FormatMethod
+  void reportSubcomponentFactoryMethod(
+      Diagnostic.Kind diagnosticKind,
+      ChildFactoryMethodEdge childFactoryMethodEdge,
       String messageFormat,
       Object firstArg,
       Object... moreArgs);

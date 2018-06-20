@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static javax.lang.model.util.ElementFilter.typesIn;
-import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
@@ -48,7 +47,6 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentValidator componentValidator;
   private final BuilderValidator builderValidator;
   private final ComponentDescriptorValidator componentDescriptorValidator;
-  private final BindingGraphValidator bindingGraphValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
@@ -62,7 +60,6 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentValidator componentValidator,
       BuilderValidator builderValidator,
       ComponentDescriptorValidator componentDescriptorValidator,
-      BindingGraphValidator bindingGraphValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
@@ -73,7 +70,6 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
     this.componentDescriptorValidator = componentDescriptorValidator;
-    this.bindingGraphValidator = bindingGraphValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
@@ -154,14 +150,9 @@ final class ComponentProcessingStep implements ProcessingStep {
   }
 
   private boolean isValid(BindingGraph bindingGraph) {
-    ValidationReport<TypeElement> graphReport = bindingGraphValidator.validate(bindingGraph);
-    graphReport.printMessagesTo(messager);
-
     dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
-    if (validationPlugins.visitGraph(modelGraph).contains(ERROR) || !graphReport.isClean()) {
-      return false;
-    }
-    return !spiPlugins.visitGraph(modelGraph).contains(ERROR);
+    return !validationPlugins.pluginsReportErrors(modelGraph)
+        && !spiPlugins.pluginsReportErrors(modelGraph);
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

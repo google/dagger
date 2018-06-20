@@ -32,6 +32,8 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.graph.Traverser;
 import dagger.Reusable;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
@@ -73,6 +75,17 @@ final class DaggerElements implements Elements {
   DaggerElements(ProcessingEnvironment processingEnv) {
     this(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
   }
+
+  /**
+   * Returns {@code true} if {@code encloser} is equal to {@code enclosed} or recursively encloses
+   * it.
+   */
+  static boolean elementEncloses(TypeElement encloser, Element enclosed) {
+    return Iterables.contains(GET_ENCLOSED_ELEMENTS.breadthFirst(encloser), enclosed);
+  }
+
+  private static final Traverser<Element> GET_ENCLOSED_ELEMENTS =
+      Traverser.forTree(Element::getEnclosedElements);
 
   ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
     return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))

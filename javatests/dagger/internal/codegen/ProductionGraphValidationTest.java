@@ -26,9 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Unit tests for {@link BindingGraphValidator} that exercise producer-specific logic.
- */
+/** Producer-specific validation tests. */
 @RunWith(JUnit4.class)
 public class ProductionGraphValidationTest {
   private static final JavaFileObject EXECUTOR_MODULE =

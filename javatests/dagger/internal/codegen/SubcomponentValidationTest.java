@@ -93,7 +93,77 @@ public class SubcomponentValidationTest {
                 + "Add the following modules as parameters to this method: "
                 + "test.ModuleWithParameters")
         .inFile(componentFile)
-        .onLine(7);
+        .onLineContaining("ChildComponent newChildComponent();");
+  }
+
+  @Test
+  public void factoryMethod_grandchild() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  ChildComponent newChildComponent();",
+            "}");
+    JavaFileObject childComponent =
+        JavaFileObjects.forSourceLines(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface ChildComponent {",
+            "  GrandchildComponent newGrandchildComponent();",
+            "}");
+    JavaFileObject grandchildComponent =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface GrandchildComponent {",
+            "  Object object();",
+            "}");
+    JavaFileObject grandchildModule =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class GrandchildModule {",
+            "  private final Object object;",
+            "",
+            "  GrandchildModule(Object object) {",
+            "    this.object = object;",
+            "  }",
+            "",
+            "  @Provides Object object() {",
+            "    return object;",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(component, childComponent, grandchildComponent, grandchildModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.ChildComponent.newGrandchildComponent()] "
+                + "test.GrandchildComponent requires modules which have no visible default "
+                + "constructors. Add the following modules as parameters to this method: "
+                + "test.GrandchildModule")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void factoryMethod_nonModuleParameter() {

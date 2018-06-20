@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.model.BindingGraphProxies.childFactoryMethodEdge;
-import static dagger.model.BindingGraphProxies.componentNode;
 import static dagger.model.BindingGraphProxies.dependencyEdge;
 
 import com.google.common.collect.ImmutableSet;
@@ -74,10 +73,8 @@ final class BindingGraphConverter {
       ComponentNode grandparentComponent = parentComponent;
       parentComponent = currentComponent;
       currentComponent =
-          componentNode(
-              componentTreePath().toComponentPath(),
-              graph.componentDescriptor().entryPoints(),
-              graph.componentDescriptor().scopes());
+          ComponentNodeImpl.create(
+              componentTreePath().toComponentPath(), graph.componentDescriptor());
 
       network.addNode(currentComponent);
 

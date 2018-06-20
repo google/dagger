@@ -62,6 +62,16 @@ public abstract class ComponentPath {
   }
 
   /**
+   * Returns this path's parent path.
+   *
+   * @throws IllegalStateException if the current graph is the {@linkplain #atRoot() root component}
+   */
+  public final ComponentPath parent() {
+    checkState(!atRoot());
+    return create(components().subList(0, components().size() - 1));
+  }
+
+  /**
    * Returns {@code true} if the {@linkplain #currentComponent()} current component} is the
    * {@linkplain #rootComponent()} root component}.
    */

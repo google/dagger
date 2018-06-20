@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Lists.asList;
+import static dagger.internal.codegen.DaggerElements.elementEncloses;
 import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerGraphs.shortestPath;
 
@@ -29,6 +30,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
+import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
@@ -151,6 +153,26 @@ final class DiagnosticReporterFactory {
           diagnosticKind, dependencyEdge, formatMessage(messageFormat, firstArg, moreArgs));
     }
 
+    @Override
+    public void reportSubcomponentFactoryMethod(
+        Diagnostic.Kind diagnosticKind,
+        ChildFactoryMethodEdge childFactoryMethodEdge,
+        String message) {
+      printMessage(
+          diagnosticKind, new StringBuilder(message), childFactoryMethodEdge.factoryMethod());
+    }
+
+    @Override
+    public void reportSubcomponentFactoryMethod(
+        Diagnostic.Kind diagnosticKind,
+        ChildFactoryMethodEdge childFactoryMethodEdge,
+        String messageFormat,
+        Object firstArg,
+        Object... moreArgs) {
+      reportSubcomponentFactoryMethod(
+          diagnosticKind, childFactoryMethodEdge, formatMessage(messageFormat, firstArg, moreArgs));
+    }
+
     private String formatMessage(String messageFormat, Object firstArg, Object[] moreArgs) {
       return String.format(messageFormat, asList(firstArg, moreArgs).toArray());
     }
@@ -209,22 +231,18 @@ final class DiagnosticReporterFactory {
       if (!component.equals(graph.rootComponentNode())) {
         appendComponentPath(messageBuilder, component);
       }
-
-      // TODO(ronshapiro): should we create a HashSet out of getEnclosedElements() so we don't
-      // need to do an O(n) contains() each time?
-      if (rootComponent.getEnclosedElements().contains(entryPointElement)) {
-        printMessage(diagnosticKind, messageBuilder, entryPointElement);
-      } else {
-        printMessage(
-            diagnosticKind,
-            insertBracketPrefix(messageBuilder, elementToString(entryPointElement)),
-            rootComponent);
-      }
+      printMessage(diagnosticKind, messageBuilder, entryPointElement);
     }
 
     private void printMessage(
         Diagnostic.Kind diagnosticKind, StringBuilder message, Element elementToReport) {
       reportedDiagnosticKinds.add(diagnosticKind);
+      // TODO(ronshapiro): should we create a HashSet out of elementEncloses() so we don't
+      // need to do an O(n) contains() each time?
+      if (!elementEncloses(rootComponent, elementToReport)) {
+        insertBracketPrefix(message, elementToString(elementToReport));
+        elementToReport = rootComponent;
+      }
       messager.printMessage(diagnosticKind, insertBracketPrefix(message, plugin), elementToReport);
     }
 

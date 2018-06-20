@@ -340,28 +340,16 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * A <b>component node</b> in the graph. Every entry point {@linkplain DependencyEdge dependency
    * edge}'s source node is a component node for the component containing the entry point.
    */
-  @AutoValue
-  public abstract static class ComponentNode implements Node {
-    static ComponentNode create(
-        ComponentPath componentPath,
-        ImmutableSet<DependencyRequest> entryPoints,
-        ImmutableSet<Scope> scopes) {
-      return new AutoValue_BindingGraph_ComponentNode(componentPath, entryPoints, scopes);
-    }
+  public interface ComponentNode extends Node {
 
     /** The component represented by this node. */
     @Override
-    public abstract ComponentPath componentPath();
+    ComponentPath componentPath();
 
     /** The entry points on this component. */
-    public abstract ImmutableSet<DependencyRequest> entryPoints();
+    ImmutableSet<DependencyRequest> entryPoints();
 
     /** The scopes declared on this component. */
-    public abstract ImmutableSet<Scope> scopes();
-
-    @Override
-    public final String toString() {
-      return componentPath().toString();
-    }
+    ImmutableSet<Scope> scopes();
   }
 }

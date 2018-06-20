@@ -162,7 +162,7 @@ class BuilderValidator {
       builder.addError(msgs.missingBuildMethod(), subject);
     }
 
-    // Note: there's more validation in BindingGraphValidator:
+    // Note: there's more validation in ComponentDescriptorValidator:
     // - to make sure the setter methods mirror the deps
     // - to make sure each type or key is set by only one method
 

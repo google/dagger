@@ -75,4 +75,9 @@ interface BindingGraphValidationModule {
   @Validation
   BindingGraphPlugin providerDependsOnProducer(
       ProvisionDependencyOnProducerBindingValidation validation);
+
+  @Binds
+  @IntoSet
+  @Validation
+  BindingGraphPlugin subcomponentFactoryMethod(SubcomponentFactoryMethodValidation validation);
 }

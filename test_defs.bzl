@@ -17,10 +17,10 @@
 BUILD_VARIANTS = {
     "FastInit": ["-Adagger.fastInit=enabled"],
     "ExperimentalAndroidMode2": ["-Adagger.experimentalAndroidMode2=enabled"],
-    "ExperimentalAheadOfTimeComponents": ["-Adagger.experimentalAheadOfTimeComponents=enabled"],
-    "FastInitAndAheadOfTimeComponents": [
+    "ExperimentalAheadOfTimeSubcomponents": ["-Adagger.experimentalAheadOfTimeSubcomponents=enabled"],
+    "FastInitAndAheadOfTimeSubcomponents": [
         "-Adagger.fastInit=enabled",
-        "-Adagger.experimentalAheadOfTimeComponents=enabled",
+        "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
     ],
 }
 

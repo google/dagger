@@ -106,7 +106,7 @@ final class KytheBindingGraphFactory {
             .warnIfInjectionFactoryNotGeneratedUpstream(false)
             .fastInit(false)
             .experimentalAndroidMode2(false)
-            .aheadOfTimeComponents(false)
+            .aheadOfTimeSubcomponents(false)
             .build();
 
     BindingFactory bindingFactory =

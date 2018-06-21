@@ -89,7 +89,7 @@ public class SubcomponentTest {
     assume().that(System.getProperty("dagger.mode")).isNotEqualTo("FastInit");
     assume()
         .that(System.getProperty("dagger.mode"))
-        .isNotEqualTo("FastInitAndAheadOfTimeComponents");
+        .isNotEqualTo("FastInitAndAheadOfTimeSubcomponents");
     assertThat(parentGetters.getUnscopedTypeProvider())
         .isSameAs(childComponent.getUnscopedTypeProvider());
     assertThat(parentGetters.getUnscopedTypeProvider())

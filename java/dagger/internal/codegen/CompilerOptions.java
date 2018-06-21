@@ -77,7 +77,7 @@ abstract class CompilerOptions {
 
   abstract boolean headerCompilation();
 
-  abstract boolean aheadOfTimeComponents();
+  abstract boolean aheadOfTimeSubcomponents();
 
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
@@ -109,8 +109,8 @@ abstract class CompilerOptions {
         .warnIfInjectionFactoryNotGeneratedUpstream(
             warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(processingEnv)
                 .equals(FeatureStatus.ENABLED))
-        .aheadOfTimeComponents(
-            aheadOfTimeComponentsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
+        .aheadOfTimeSubcomponents(
+            aheadOfTimeSubcomponentsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .build();
   }
 
@@ -140,7 +140,7 @@ abstract class CompilerOptions {
     Builder warnIfInjectionFactoryNotGeneratedUpstream(
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
 
-    Builder aheadOfTimeComponents(boolean aheadOfTimeComponents);
+    Builder aheadOfTimeSubcomponents(boolean aheadOfTimeSubcomponents);
 
     CompilerOptions build();
   }
@@ -178,7 +178,7 @@ abstract class CompilerOptions {
   static final String IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT =
       "dagger.ignorePrivateAndStaticInjectionForComponent";
 
-  static final String AHEAD_OF_TIME_COMPONENTS_KEY = "dagger.experimentalAheadOfTimeComponents";
+  static final String AHEAD_OF_TIME_COMPONENTS_KEY = "dagger.experimentalAheadOfTimeSubcomponents";
 
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
@@ -277,7 +277,7 @@ abstract class CompilerOptions {
         EnumSet.allOf(FeatureStatus.class));
   }
 
-  private static FeatureStatus aheadOfTimeComponentsFeatureStatus(
+  private static FeatureStatus aheadOfTimeSubcomponentsFeatureStatus(
       ProcessingEnvironment processingEnv) {
     return valueOf(
         processingEnv,

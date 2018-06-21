@@ -46,7 +46,7 @@ public class LongCycleTest {
     assume().that(System.getProperty("dagger.mode")).isNotEqualTo("FastInit");
     assume()
         .that(System.getProperty("dagger.mode"))
-        .isNotEqualTo("FastInitAndAheadOfTimeComponents");
+        .isNotEqualTo("FastInitAndAheadOfTimeSubcomponents");
     DaggerLongCycle_LongCycleComponent.class
         .getDeclaredMethod("initialize2", DaggerLongCycle_LongCycleComponent.Builder.class);
   }

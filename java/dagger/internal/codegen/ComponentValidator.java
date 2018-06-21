@@ -16,8 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
+import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Multimaps.asMap;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
@@ -25,15 +29,19 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotati
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static java.util.Comparator.comparing;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -44,8 +52,11 @@ import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.Kind;
+import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -71,17 +82,23 @@ final class ComponentValidator {
   private final Types types;
   private final ModuleValidator moduleValidator;
   private final BuilderValidator builderValidator;
+  private final MethodSignatureFormatter methodSignatureFormatter;
+  private final DependencyRequestFactory dependencyRequestFactory;
 
   @Inject
   ComponentValidator(
       DaggerElements elements,
       Types types,
       ModuleValidator moduleValidator,
-      BuilderValidator builderValidator) {
+      BuilderValidator builderValidator,
+      MethodSignatureFormatter methodSignatureFormatter,
+      DependencyRequestFactory dependencyRequestFactory) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
     this.builderValidator = builderValidator;
+    this.methodSignatureFormatter = methodSignatureFormatter;
+    this.dependencyRequestFactory = dependencyRequestFactory;
   }
 
   @AutoValue
@@ -99,14 +116,14 @@ final class ComponentValidator {
       final TypeElement subject,
       Set<? extends Element> validatedSubcomponents,
       Set<? extends Element> validatedSubcomponentBuilders) {
-    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(subject);
+    ValidationReport.Builder<TypeElement> report = ValidationReport.about(subject);
 
     ComponentDescriptor.Kind componentKind =
         ComponentDescriptor.Kind.forAnnotatedElement(subject).get();
 
     if (!subject.getKind().equals(INTERFACE)
         && !(subject.getKind().equals(CLASS) && subject.getModifiers().contains(ABSTRACT))) {
-      builder.addError(
+      report.addError(
           String.format(
               "@%s may only be applied to an interface or abstract class",
               componentKind.annotationType().getSimpleName()),
@@ -116,14 +133,14 @@ final class ComponentValidator {
     ImmutableList<DeclaredType> builders =
         enclosedBuilders(subject, componentKind.builderAnnotationType());
     if (builders.size() > 1) {
-      builder.addError(
+      report.addError(
           String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
           subject);
     }
 
     Optional<AnnotationMirror> reusableAnnotation = getAnnotationMirror(subject, Reusable.class);
     if (reusableAnnotation.isPresent()) {
-      builder.addError(
+      report.addError(
           "@Reusable cannot be applied to components or subcomponents",
           subject,
           reusableAnnotation.get());
@@ -143,7 +160,7 @@ final class ComponentValidator {
               TypeMirror returnType = resolvedMethod.getReturnType();
 
               if (!resolvedMethod.getTypeVariables().isEmpty()) {
-                builder.addError("Component methods cannot have type variables", method);
+                report.addError("Component methods cannot have type variables", method);
               }
 
               // abstract methods are ones we have to implement, so they each need to be validated
@@ -163,7 +180,7 @@ final class ComponentValidator {
               if (subcomponentAnnotation.isPresent()) {
                 referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
                 validateSubcomponentMethod(
-                    builder,
+                    report,
                     ComponentDescriptor.Kind.forAnnotatedElement(
                             MoreTypes.asTypeElement(returnType))
                         .get(),
@@ -176,7 +193,7 @@ final class ComponentValidator {
                 referencedSubcomponents.put(
                     MoreTypes.asElement(returnType).getEnclosingElement(), method);
                 validateSubcomponentBuilderMethod(
-                    builder, method, parameters, returnType, validatedSubcomponentBuilders);
+                    report, method, parameters, returnType, validatedSubcomponentBuilders);
               } else {
                 // if it's not a subcomponent...
                 switch (parameters.size()) {
@@ -189,14 +206,14 @@ final class ComponentValidator {
                     TypeMirror onlyParameter = Iterables.getOnlyElement(parameterTypes);
                     if (!(returnType.getKind().equals(VOID)
                         || types.isSameType(returnType, onlyParameter))) {
-                      builder.addError(
+                      report.addError(
                           "Members injection methods may only return the injected type or void.",
                           method);
                     }
                     break;
                   default:
                     // this isn't any method that we know how to implement...
-                    builder.addError(
+                    report.addError(
                         "This method isn't a valid provision method, members injection method or "
                             + "subcomponent factory method. Dagger cannot implement this method",
                         method);
@@ -205,10 +222,12 @@ final class ComponentValidator {
               }
             });
 
+    checkConflictingEntryPoints(report);
+
     Maps.filterValues(referencedSubcomponents.asMap(), methods -> methods.size() > 1)
         .forEach(
             (subcomponent, methods) ->
-                builder.addError(
+                report.addError(
                     String.format(
                         ErrorMessages.SubcomponentBuilderMessages.INSTANCE
                             .moreThanOneRefToSubcomponent(),
@@ -219,9 +238,9 @@ final class ComponentValidator {
     AnnotationMirror componentMirror =
         getAnnotationMirror(subject, componentKind.annotationType()).get();
     if (componentKind.isTopLevel()) {
-      validateComponentDependencies(builder, getComponentDependencies(componentMirror));
+      validateComponentDependencies(report, getComponentDependencies(componentMirror));
     }
-    builder.addSubreport(
+    report.addSubreport(
         moduleValidator.validateReferencedModules(
             subject, componentMirror, componentKind.moduleKinds(), new HashSet<>()));
 
@@ -235,20 +254,99 @@ final class ComponentValidator {
     for (Element subcomponent :
         Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
       ComponentValidationReport subreport =
-          validate(
-              MoreElements.asType(subcomponent),
-              validatedSubcomponents,
-              validatedSubcomponentBuilders);
-      builder.addItems(subreport.report().items());
+          validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentBuilders);
+      report.addItems(subreport.report().items());
       allSubcomponents.addAll(subreport.referencedSubcomponents());
     }
 
     return new AutoValue_ComponentValidator_ComponentValidationReport(
-        allSubcomponents.build(), builder.build());
+        allSubcomponents.build(), report.build());
+  }
+
+  private void checkConflictingEntryPoints(ValidationReport.Builder<TypeElement> report) {
+    DeclaredType componentType = asDeclared(report.getSubject().asType());
+
+    // Collect entry point methods that are not overridden by others. If the "same" method is
+    // inherited from more than one supertype, each will be in the multimap.
+    SetMultimap<String, ExecutableElement> entryPointMethods = HashMultimap.create();
+
+    methodsIn(elements.getAllMembers(report.getSubject()))
+        .stream()
+        .filter(
+            method -> isEntryPoint(method, asExecutable(types.asMemberOf(componentType, method))))
+        .forEach(
+            method ->
+                addMethodUnlessOverridden(
+                    method, entryPointMethods.get(method.getSimpleName().toString())));
+
+    for (Set<ExecutableElement> methods : asMap(entryPointMethods).values()) {
+      if (distinctKeys(methods, report.getSubject()).size() > 1) {
+        reportConflictingEntryPoints(methods, report);
+      }
+    }
+  }
+
+  private boolean isEntryPoint(ExecutableElement method, ExecutableType methodType) {
+    return method.getModifiers().contains(ABSTRACT)
+        && method.getParameters().isEmpty()
+        && !methodType.getReturnType().getKind().equals(VOID)
+        && methodType.getTypeVariables().isEmpty();
+  }
+
+  private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods, TypeElement component) {
+    return methods
+        .stream()
+        .map(method -> dependencyRequest(method, component))
+        .map(DependencyRequest::key)
+        .collect(toImmutableSet());
+  }
+
+  private DependencyRequest dependencyRequest(ExecutableElement method, TypeElement component) {
+    ExecutableType methodType =
+        asExecutable(types.asMemberOf(asDeclared(component.asType()), method));
+    return ComponentDescriptor.Kind.forAnnotatedElement(component).get().isProducer()
+        ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
+        : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
+  }
+
+  private void addMethodUnlessOverridden(ExecutableElement method, Set<ExecutableElement> methods) {
+    if (methods.stream().noneMatch(existingMethod -> overridesAsDeclared(existingMethod, method))) {
+      methods.removeIf(existingMethod -> overridesAsDeclared(method, existingMethod));
+      methods.add(method);
+    }
+  }
+
+  /**
+   * Returns {@code true} if {@code overrider} overrides {@code overridden} considered from within
+   * the type that declares {@code overrider}.
+   */
+  // TODO(dpb): Does this break for ECJ?
+  private boolean overridesAsDeclared(ExecutableElement overridder, ExecutableElement overridden) {
+    return elements.overrides(overridder, overridden, asType(overridder.getEnclosingElement()));
+  }
+
+  private void reportConflictingEntryPoints(
+      Collection<ExecutableElement> methods, ValidationReport.Builder<TypeElement> report) {
+    verify(
+        methods.stream().map(ExecutableElement::getEnclosingElement).distinct().count()
+            == methods.size(),
+        "expected each method to be declared on a different type: %s",
+        methods);
+    StringBuilder message = new StringBuilder("conflicting entry point declarations:");
+    methodSignatureFormatter
+        .typedFormatter(asDeclared(report.getSubject().asType()))
+        .formatIndentedList(
+            message,
+            ImmutableList.sortedCopyOf(
+                comparing(
+                    method -> asType(method.getEnclosingElement()).getQualifiedName().toString()),
+                methods),
+            1);
+    report.addError(message.toString());
   }
 
   private void validateSubcomponentMethod(
-      final ValidationReport.Builder<TypeElement> builder,
+      final ValidationReport.Builder<TypeElement> report,
       final ComponentDescriptor.Kind subcomponentKind,
       ExecutableElement method,
       List<? extends VariableElement> parameters,
@@ -292,7 +390,7 @@ final class ComponentValidator {
               null);
       if (moduleType.isPresent()) {
         if (variableTypes.contains(moduleType.get())) {
-          builder.addError(
+          report.addError(
               String.format(
                   "A module may only occur once an an argument in a Subcomponent factory "
                       + "method, but %s was already passed.",
@@ -300,7 +398,7 @@ final class ComponentValidator {
               parameter);
         }
         if (!transitiveModules.contains(moduleType.get())) {
-          builder.addError(
+          report.addError(
               String.format(
                   "%s is present as an argument to the %s factory method, but is not one of the"
                       + " modules used to implement the subcomponent.",
@@ -310,7 +408,7 @@ final class ComponentValidator {
         }
         variableTypes.add(moduleType.get());
       } else {
-        builder.addError(
+        report.addError(
             String.format(
                 "Subcomponent factory methods may only accept modules, but %s is not.",
                 parameterType),
@@ -320,14 +418,14 @@ final class ComponentValidator {
   }
 
   private void validateSubcomponentBuilderMethod(
-      ValidationReport.Builder<TypeElement> builder,
+      ValidationReport.Builder<TypeElement> report,
       ExecutableElement method,
       List<? extends VariableElement> parameters,
       TypeMirror returnType,
       Set<? extends Element> validatedSubcomponentBuilders) {
 
     if (!parameters.isEmpty()) {
-      builder.addError(
+      report.addError(
           ErrorMessages.SubcomponentBuilderMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
     }
 
@@ -337,7 +435,7 @@ final class ComponentValidator {
       // TODO(sameb): The builder validator right now assumes the element is being compiled
       // in this pass, which isn't true here.  We should change error messages to spit out
       // this method as the subject and add the original subject to the message output.
-      builder.addItems(builderValidator.validate(builderElement).items());
+      report.addItems(builderValidator.validate(builderElement).items());
     }
   }
 

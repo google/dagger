@@ -49,12 +49,11 @@ final class DaggerGraphs {
     }
 
     Map<N, N> visitedNodeToPathPredecessor = new HashMap<>(); // encodes shortest path tree
-    Queue<N> currentNodes = new ArrayDeque<N>();
-    Queue<N> nextNodes = new ArrayDeque<N>();
     for (N node : successors) {
       visitedNodeToPathPredecessor.put(node, nodeU);
     }
-    currentNodes.addAll(successors);
+    Queue<N> currentNodes = new ArrayDeque<N>(successors);
+    Queue<N> nextNodes = new ArrayDeque<N>();
 
     // Perform a breadth-first traversal starting with the successors of nodeU.
     while (!currentNodes.isEmpty()) {

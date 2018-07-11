@@ -43,8 +43,8 @@ import javax.lang.model.type.TypeMirror;
 final class GeneratedComponentModel {
   /** A type of field that this component model can generate. */
   // TODO(user, dpb): Move component requirements and reference managers to top? The order should
-  // be component requirements, referencemanagers, framework fields, private method fields, ... etc
-  static enum FieldSpecKind {
+  // be component requirements, reference managers, framework fields, private method fields, ... etc
+  enum FieldSpecKind {
 
     /**
      * A field for the lock and cached value for {@linkplain PrivateMethodBindingExpression
@@ -68,14 +68,14 @@ final class GeneratedComponentModel {
   /** A type of method that this component model can generate. */
   // TODO(user, dpb): Change the oder to constructor, initialize, component, then private
   // (including MIM and AOM—why treat those separately?).
-  static enum MethodSpecKind {
+  enum MethodSpecKind {
     /** The component constructor. */
     CONSTRUCTOR,
 
     /** A builder method for the component. (Only used by the root component.) */
     BUILDER_METHOD,
 
-    /** A private method that wraps depenency expressions. */
+    /** A private method that wraps dependency expressions. */
     PRIVATE_METHOD,
 
     /** An initialization method that initializes component requirements and framework types. */
@@ -92,7 +92,7 @@ final class GeneratedComponentModel {
   }
 
   /** A type of nested class that this component model can generate. */
-  static enum TypeSpecKind {
+  enum TypeSpecKind {
     /** A factory class for a present optional binding. */
     PRESENT_FACTORY,
 

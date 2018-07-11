@@ -89,7 +89,7 @@ abstract class BindingGraph {
    * <ul>
    *   <li>{@code @ForReleasableReferences(scope)} {@link ReleasableReferenceManager}
    *   <li>{@code @ForReleasableReferences(scope)} {@code TypedReleasableReferenceManager<M>}, where
-   *       {@code M} is the releasable-references metatadata type for {@code scope}
+   *       {@code M} is the releasable-references metadata type for {@code scope}
    *   <li>{@code Set<ReleasableReferenceManager>}
    *   <li>{@code Set<TypedReleasableReferenceManager<M>>}, where {@code M} is the metadata type for
    *       the scope
@@ -196,10 +196,7 @@ abstract class BindingGraph {
     if (factoryMethod().isPresent()) {
       factoryMethodParameters().keySet().forEach(requirements::add);
     }
-    componentDescriptor()
-        .dependencies()
-        .stream()
-        .forEach(requirements::add);
+    requirements.addAll(componentDescriptor().dependencies());
     if (componentDescriptor().builderSpec().isPresent()) {
       componentDescriptor()
           .builderSpec()

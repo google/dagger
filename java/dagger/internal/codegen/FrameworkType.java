@@ -90,7 +90,7 @@ enum FrameworkType {
 
         default:
           return Expression.create(
-              types.rewrapType(from.type(), frameworkClass(requestKind).get()), codeBlock);
+              types.rewrapType(from.type(), frameworkClass(requestKind)), codeBlock);
       }
     }
   },

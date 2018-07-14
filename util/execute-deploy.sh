@@ -52,7 +52,7 @@ deploy_library \
   shaded_compiler.jar \
   shaded_compiler_src.jar \
   java/dagger/internal/codegen/codegen-javadoc.jar \
-  java/dagger/internal/pom.xml
+  java/dagger/internal/codegen/pom.xml
 
 deploy_library \
   java/dagger/producers/libproducers.jar \

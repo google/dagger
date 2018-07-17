@@ -179,6 +179,11 @@ final class GeneratedComponentModel {
     typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
+  void addSubcomponent(GeneratedComponentModel subcomponentModel) {
+    // TODO(user): Hold a reference to each subcomponent model.
+    addType(TypeSpecKind.SUBCOMPONENT, subcomponentModel.generate().build());
+  }
+
   /** Adds a {@link Supplier} for the SwitchingProvider for the component. */
   void addSwitchingProvider(Supplier<TypeSpec> typeSpecSupplier) {
     switchingProviderSupplier.add(typeSpecSupplier);

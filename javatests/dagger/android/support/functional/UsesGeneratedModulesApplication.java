@@ -55,6 +55,9 @@ public final class UsesGeneratedModulesApplication extends DaggerApplication {
     @ContributesAndroidInjector(modules = DummyActivitySubcomponent.AddToHierarchy.class)
     abstract TestActivity contributeTestActivityInjector();
 
+    @ContributesAndroidInjector(modules = DummyInnerActivitySubcomponent.AddToHierarchy.class)
+    abstract OuterClass.TestInnerClassActivity contributeInnerActivityInjector();
+
     @ContributesAndroidInjector(modules = DummyParentFragmentSubcomponent.AddToHierarchy.class)
     abstract TestParentFragment contributeTestParentFragmentInjector();
 
@@ -97,6 +100,17 @@ public final class UsesGeneratedModulesApplication extends DaggerApplication {
       @IntoSet
       static Class<?> addDummyValueToComponentHierarchy() {
         return DummyActivitySubcomponent.class;
+      }
+    }
+  }
+
+  interface DummyInnerActivitySubcomponent {
+    @Module
+    abstract class AddToHierarchy {
+      @Provides
+      @IntoSet
+      static Class<?> addDummyValueToComponentHierarchy() {
+        return DummyInnerActivitySubcomponent.class;
       }
     }
   }

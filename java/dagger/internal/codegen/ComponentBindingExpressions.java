@@ -373,7 +373,8 @@ final class ComponentBindingExpressions {
         return new SetFactoryCreationExpression(binding, generatedComponentModel, this, graph);
 
       case MULTIBOUND_MAP:
-        return new MapFactoryCreationExpression(binding, generatedComponentModel, this, graph);
+        return new MapFactoryCreationExpression(
+            binding, generatedComponentModel, this, graph, elements);
 
       case RELEASABLE_REFERENCE_MANAGER:
         return new ReleasableReferenceManagerProviderCreationExpression(

@@ -16,9 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.model.BindingGraphProxies.childFactoryMethodEdge;
 import static dagger.model.BindingGraphProxies.dependencyEdge;
+import static dagger.model.BindingGraphProxies.subcomponentBuilderBindingEdge;
+import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -35,6 +40,8 @@ import dagger.model.BindingGraphProxies;
 import dagger.model.DependencyRequest;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link dagger.internal.codegen.BindingGraph}s to {@link dagger.model.BindingGraph}s. */
 final class BindingGraphConverter {
@@ -83,7 +90,16 @@ final class BindingGraphConverter {
       }
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
-        bindingNodes(resolvedBindings).forEach(node -> addBindingNode(node));
+        for (BindingNode node : bindingNodes(resolvedBindings)) {
+          addBindingNode(node);
+          if (node.binding().kind().equals(SUBCOMPONENT_BUILDER)
+              && node.componentPath().equals(currentComponent.componentPath())) {
+            network.addEdge(
+                node,
+                subcomponentNode(node.binding().key().type(), graph),
+                subcomponentBuilderBindingEdge(subcomponentDeclaringModules(resolvedBindings)));
+          }
+        }
       }
 
       super.visitComponent(graph);
@@ -187,6 +203,25 @@ final class BindingGraphConverter {
               .pathFromRootToAncestor(dependencies.owningComponent().componentDefinitionType())
               .toComponentPath(),
           dependencies.key());
+    }
+
+    private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {
+      TypeElement subcomponentBuilderElement = asTypeElement(subcomponentBuilderType);
+      ComponentDescriptor subcomponent =
+          graph.componentDescriptor().subcomponentsByBuilderType().get(subcomponentBuilderElement);
+      return ComponentNodeImpl.create(
+          componentTreePath().childPath(subcomponent.componentDefinitionType()).toComponentPath(),
+          subcomponent);
+    }
+
+    private ImmutableSet<TypeElement> subcomponentDeclaringModules(
+        ResolvedBindings resolvedBindings) {
+      return resolvedBindings
+          .subcomponentDeclarations()
+          .stream()
+          .map(SubcomponentDeclaration::contributingModule)
+          .flatMap(presentValues())
+          .collect(toImmutableSet());
     }
   }
 }

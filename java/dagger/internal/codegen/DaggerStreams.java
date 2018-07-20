@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -96,6 +97,20 @@ public final class DaggerStreams {
    */
   public static <T> Function<Object, Stream<T>> instancesOf(Class<T> to) {
     return f -> to.isInstance(f) ? Stream.of(to.cast(f)) : Stream.empty();
+  }
+
+  /**
+   * A function that you can use to extract the present values from a stream of {@link Optional}s.
+   *
+   * <pre>{@code
+   * Set<Foo> foos =
+   *     optionalFoos()
+   *         .flatMap(DaggerStreams.presentValues())
+   *         .collect(toSet());
+   * }</pre>
+   */
+  public static <T> Function<Optional<T>, Stream<T>> presentValues() {
+    return optional -> optional.map(Stream::of).orElse(Stream.empty());
   }
 
   private DaggerStreams() {}

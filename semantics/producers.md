@@ -94,8 +94,8 @@ The **production executor** of a production component is a Java
 [executor][Executor] that is bound to the key `@Production Executor`. A
 production component must have a production executor bound via provision binding
 (not a production binding); because bindings are inherited in subcomponents,
-this binding must reside in the top-level production component, or even an
-provision component that is an ancestor of that. See [scope][#scope] for
+this binding must reside in the top-level production component, or even a
+provision component that is an ancestor of that. See [scope](#scope) for
 discussion of this binding's scope.
 
 The **signature** of a `@Produces` method is defined as follows:

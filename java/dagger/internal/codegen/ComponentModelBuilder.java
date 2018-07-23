@@ -79,7 +79,24 @@ abstract class ComponentModelBuilder {
             types,
             elements,
             compilerOptions);
-    return new RootComponentModelBuilder(
+    if (graph.componentDescriptor().kind().isTopLevel()) {
+      return new RootComponentModelBuilder(
+              types,
+              elements,
+              graph,
+              generatedComponentModel,
+              subcomponentNames,
+              optionalFactories,
+              bindingExpressions,
+              componentRequirementFields,
+              builder)
+          .build();
+    }
+    checkState(
+        compilerOptions.aheadOfTimeSubcomponents(),
+        "Calling 'buildComponentModel()' on %s when not generating ahead-of-time subcomponents.",
+        graph.componentDescriptor().componentDefinitionType());
+    return new BaseSubcomponentModelBuilder(
             types,
             elements,
             graph,
@@ -153,7 +170,7 @@ abstract class ComponentModelBuilder {
    * called once (and will throw on successive invocations). If the component must be regenerated,
    * use a new instance.
    */
-  protected final GeneratedComponentModel build() {
+  protected GeneratedComponentModel build() {
     checkState(
         !done,
         "ComponentModelBuilder has already built the GeneratedComponentModel for [%s].",
@@ -385,6 +402,46 @@ abstract class ComponentModelBuilder {
     private DeclaredType parentType() {
       return asDeclared(parent.graph.componentType().asType());
     }
+  }
+
+  /** Builds the model for a top-level abstract base implementation of a subcomponent. */
+  // TODO(b/72748365): Implement.
+  private static final class BaseSubcomponentModelBuilder extends ComponentModelBuilder {
+    private final GeneratedComponentModel generatedComponentModel;
+
+    BaseSubcomponentModelBuilder(
+        DaggerTypes types,
+        Elements elements,
+        BindingGraph graph,
+        GeneratedComponentModel generatedComponentModel,
+        SubcomponentNames subcomponentNames,
+        OptionalFactories optionalFactories,
+        ComponentBindingExpressions bindingExpressions,
+        ComponentRequirementFields componentRequirementFields,
+        Optional<ComponentBuilder> builder) {
+      super(
+          types,
+          elements,
+          graph,
+          generatedComponentModel,
+          subcomponentNames,
+          optionalFactories,
+          bindingExpressions,
+          componentRequirementFields,
+          builder);
+      this.generatedComponentModel = generatedComponentModel;
+    }
+
+    @Override
+    protected GeneratedComponentModel build() {
+      return generatedComponentModel;
+    }
+
+    @Override
+    protected void addBuilderClass(TypeSpec builder) {}
+
+    @Override
+    protected void addFactoryMethods() {}
   }
 
   /** Returns the list of {@link ParameterSpec}s for the corresponding graph's factory method. */

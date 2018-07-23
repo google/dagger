@@ -53,6 +53,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphPlugins validationPlugins;
   private final BindingGraphPlugins spiPlugins;
+  private final CompilerOptions compilerOptions;
 
   @Inject
   ComponentProcessingStep(
@@ -65,7 +66,8 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentGenerator componentGenerator,
       BindingGraphConverter bindingGraphConverter,
       @Validation BindingGraphPlugins validationPlugins,
-      BindingGraphPlugins spiPlugins) {
+      BindingGraphPlugins spiPlugins,
+      CompilerOptions compilerOptions) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
@@ -76,6 +78,7 @@ final class ComponentProcessingStep implements ProcessingStep {
     this.bindingGraphConverter = bindingGraphConverter;
     this.validationPlugins = validationPlugins;
     this.spiPlugins = spiPlugins;
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -146,6 +149,25 @@ final class ComponentProcessingStep implements ProcessingStep {
         rejectedElements.add(componentTypeElement);
       }
     }
+
+    if (compilerOptions.aheadOfTimeSubcomponents()) {
+      for (TypeElement subcomponentTypeElement : typesIn(subcomponentElements)) {
+        if (!subcomponentIsClean(
+            subcomponentTypeElement, reportsBySubcomponent, builderReportsBySubcomponent)) {
+          continue;
+        }
+        try {
+          ComponentDescriptor componentDescriptor =
+              componentDescriptorFactory.forComponent(subcomponentTypeElement);
+          BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
+          // TODO(b/72748365): Do subgraph validation.
+          generateComponent(bindingGraph);
+        } catch (TypeNotPresentException e) {
+          rejectedElements.add(subcomponentTypeElement);
+        }
+      }
+    }
+
     return rejectedElements.build();
   }
 
@@ -212,14 +234,26 @@ final class ComponentProcessingStep implements ProcessingStep {
       return false;
     }
     for (Element element : report.referencedSubcomponents()) {
-      ValidationReport<?> subcomponentBuilderReport = builderReportsBySubcomponent.get(element);
-      if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
+      if (!subcomponentIsClean(element, reportsBySubcomponent, builderReportsBySubcomponent)) {
         return false;
       }
-      ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(element);
-      if (subcomponentReport != null && !subcomponentReport.isClean()) {
-        return false;
-      }
+    }
+    return true;
+  }
+
+  /** Returns true if the reports associated with the subcomponent are clean. */
+  private boolean subcomponentIsClean(
+      Element subcomponentElement,
+      Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent,
+      Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent) {
+    ValidationReport<?> subcomponentBuilderReport =
+        builderReportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
+      return false;
+    }
+    ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentReport != null && !subcomponentReport.isClean()) {
+      return false;
     }
     return true;
   }

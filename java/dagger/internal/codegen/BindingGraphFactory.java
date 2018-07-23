@@ -79,22 +79,26 @@ final class BindingGraphFactory {
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
+  private final CompilerOptions compilerOptions;
 
   @Inject
   BindingGraphFactory(
       DaggerElements elements,
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
-      BindingFactory bindingFactory) {
+      BindingFactory bindingFactory,
+      CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
+    this.compilerOptions = compilerOptions;
   }
 
   /** Creates a binding graph for a root component. */
   BindingGraph create(ComponentDescriptor componentDescriptor) {
-    checkArgument(componentDescriptor.kind().isTopLevel());
+    checkArgument(
+        componentDescriptor.kind().isTopLevel() || compilerOptions.aheadOfTimeSubcomponents());
     return create(Optional.empty(), componentDescriptor);
   }
 

@@ -47,10 +47,13 @@ import javax.lang.model.type.TypeMirror;
 final class BindingGraphConverter {
 
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
+  private final CompilerOptions compilerOptions;
 
   @Inject
-  BindingGraphConverter(BindingDeclarationFormatter bindingDeclarationFormatter) {
+  BindingGraphConverter(
+      BindingDeclarationFormatter bindingDeclarationFormatter, CompilerOptions compilerOptions) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -72,7 +75,7 @@ final class BindingGraphConverter {
     private ComponentNode currentComponent;
 
     Traverser(BindingGraph graph) {
-      super(graph);
+      super(graph, compilerOptions);
     }
 
     @Override

@@ -84,7 +84,7 @@ final class ComponentBindingExpressions {
         generatedComponentModel,
         subcomponentNames,
         componentRequirementFields,
-        new ReferenceReleasingManagerFields(graph, generatedComponentModel),
+        new ReferenceReleasingManagerFields(graph, generatedComponentModel, compilerOptions),
         new StaticSwitchingProviders(generatedComponentModel, types),
         optionalFactories,
         types,

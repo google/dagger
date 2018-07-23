@@ -616,7 +616,7 @@ public class GraphValidationTest {
             "",
             "@Component",
             "interface Parent {",
-            "  Child child();",
+            "  Child.Builder child();",
             "}");
     JavaFileObject child =
         JavaFileObjects.forSourceLines(
@@ -625,9 +625,14 @@ public class GraphValidationTest {
             "",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent(modules = ChildModule.class)",
+            "@Subcomponent(modules = CycleModule.class)",
             "interface Child {",
-            "  Grandchild grandchild();",
+            "  Grandchild.Builder grandchild();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Child build();",
+            "  }",
             "}");
     JavaFileObject grandchild =
         JavaFileObjects.forSourceLines(
@@ -639,17 +644,22 @@ public class GraphValidationTest {
             "@Subcomponent",
             "interface Grandchild {",
             "  String entry();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Grandchild build();",
+            "  }",
             "}");
-    JavaFileObject childModule =
+    JavaFileObject cycleModule =
         JavaFileObjects.forSourceLines(
-            "test.ChildModule",
+            "test.CycleModule",
             "package test;",
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
             "",
             "@Module",
-            "abstract class ChildModule {",
+            "abstract class CycleModule {",
             "  @Provides static Object object(String string) {",
             "    return string;",
             "  }",
@@ -659,20 +669,102 @@ public class GraphValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(parent, child, grandchild, childModule);
+    Compilation compilation = daggerCompiler().compile(parent, child, grandchild, cycleModule);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             message(
                 "[test.Grandchild.entry()] Found a dependency cycle:",
                 "java.lang.String is injected at",
-                "    test.ChildModule.object(string)",
+                "    test.CycleModule.object(string)",
                 "java.lang.Object is injected at",
-                "    test.ChildModule.string(object)",
+                "    test.CycleModule.string(object)",
                 "java.lang.String is provided at",
                 "    test.Grandchild.entry()"))
         .inFile(parent)
-        .onLineContaining("interface Parent {");
+        .onLineContaining("interface Parent");
+  }
+
+  @Test
+  public void cyclicDependencyInSubcomponentsWithChildren() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Parent {",
+            "  Child.Builder child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = CycleModule.class)",
+            "interface Child {",
+            "  String entry();",
+            "",
+            "  Grandchild grandchild();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Child build();",
+            "  }",
+            "}");
+    // Grandchild has no entry point that depends on the cycle. http://b/111317986
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Grandchild {",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Grandchild build();",
+            "  }",
+            "}");
+    JavaFileObject cycleModule =
+        JavaFileObjects.forSourceLines(
+            "test.CycleModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class CycleModule {",
+            "  @Provides static Object object(String string) {",
+            "    return string;",
+            "  }",
+            "",
+            "  @Provides static String string(Object object) {",
+            "    return object.toString();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(parent, child, grandchild, cycleModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "[test.Child.entry()] Found a dependency cycle:",
+                "java.lang.String is injected at",
+                "    test.CycleModule.object(string)",
+                "java.lang.Object is injected at",
+                "    test.CycleModule.string(object)",
+                "java.lang.String is provided at",
+                "    test.Child.entry()"))
+        .inFile(parent)
+        .onLineContaining("interface Parent");
   }
 
   @Test

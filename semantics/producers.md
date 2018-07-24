@@ -129,7 +129,7 @@ Here are some examples of signatures of `@Produces` methods:
 
 ```java
 // signature = (@Production Executor, @Blue int, double) -> Foo
-@Produces Bar foo(@Blue Producer<Integer> i, double d) { ... }
+@Produces Foo foo(@Blue Producer<Integer> i, double d) { ... }
 
 // signature = (@Production Executor, int, String) -> @Green Foo
 @Produces @Green Future<Foo> futureFoo(Produced<Integer> i, Lazy<String> s) { ... }

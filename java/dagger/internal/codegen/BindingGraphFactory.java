@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.OPTIONAL;
 import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import static java.util.function.Predicate.isEqual;
@@ -47,6 +48,7 @@ import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
+import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.Scope;
@@ -79,6 +81,7 @@ final class BindingGraphFactory {
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
+  private final IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator;
   private final CompilerOptions compilerOptions;
 
   @Inject
@@ -87,11 +90,13 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
+      IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
+    this.incorrectlyInstalledBindsMethodsValidator = incorrectlyInstalledBindsMethodsValidator;
     this.compilerOptions = compilerOptions;
   }
 
@@ -597,7 +602,9 @@ final class BindingGraphFactory {
       if (binding.scope().isPresent() && binding.scope().get().isReusable()) {
         for (Resolver requestResolver : getResolverLineage().reverse()) {
           // If a @Reusable binding was resolved in an ancestor, use that component.
-          if (requestResolver.resolvedContributionBindings.containsKey(binding.key())) {
+          ResolvedBindings resolvedBindings =
+              requestResolver.resolvedContributionBindings.get(binding.key());
+          if (resolvedBindings != null && resolvedBindings.bindings().contains(binding)) {
             return Optional.of(requestResolver);
           }
         }
@@ -607,6 +614,7 @@ final class BindingGraphFactory {
 
       for (Resolver requestResolver : getResolverLineage().reverse()) {
         if (requestResolver.explicitBindingsSet.contains(binding)
+            || resolverContainsDelegateDeclarationForBinding(requestResolver, binding)
             || requestResolver.subcomponentDeclarations.containsKey(binding.key())) {
           return Optional.of(requestResolver);
         }
@@ -623,6 +631,71 @@ final class BindingGraphFactory {
         }
       }
       return Optional.empty();
+    }
+
+    /**
+     * Returns true if {@code binding} was installed in a module in this resolver's component. If
+     * {@link CompilerOptions#floatingBindsMethods()} is enabled, calls {@link
+     * #recordFloatingBindsMethod(Resolver, ContributionBinding)} and returns false.
+     */
+    private boolean resolverContainsDelegateDeclarationForBinding(
+        Resolver resolver, ContributionBinding binding) {
+      // TODO(ronshapiro): remove the flag once we feel enough time has passed, and return this
+      // value directly. At that point, this can be remove the resolver parameter and become a
+      // method invoked on a particular resolver
+      boolean resolverContainsDeclaration =
+          binding.kind().equals(DELEGATE)
+              && resolver
+                  .delegateDeclarations
+                  .get(binding.key())
+                  .stream()
+                  .anyMatch(
+                      declaration ->
+                          declaration.contributingModule().equals(binding.contributingModule())
+                              && declaration.bindingElement().equals(binding.bindingElement()));
+      if (resolverContainsDeclaration && compilerOptions.floatingBindsMethods()) {
+        recordFloatingBindsMethod(resolver, binding);
+        return false;
+      }
+      return resolverContainsDeclaration;
+    }
+
+    /**
+     * Records binds methods that are resolved in the wrong component due to b/79859714. These will
+     * be reported later on in {@link IncorrectlyInstalledBindsMethodsValidator}.
+     */
+    private void recordFloatingBindsMethod(Resolver idealResolver, ContributionBinding binding) {
+      Resolver actualResolver = this;
+      if (binding.scope().isPresent()) {
+        for (Resolver requestResolver : getResolverLineage().reverse()) {
+          if (requestResolver.componentDescriptor.scopes().contains(binding.scope().get())) {
+            actualResolver = requestResolver;
+            break;
+          }
+        }
+      }
+      if (actualResolver != idealResolver) {
+        incorrectlyInstalledBindsMethodsValidator.recordBinding(
+            componentPath(idealResolver), binding);
+      }
+    }
+
+    /**
+     * Constructs a {@link ComponentPath} from the root component of this resolver to a {@code
+     * destination}.
+     */
+    private ComponentPath componentPath(Resolver destination) {
+      ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
+      for (Resolver resolver : getResolverLineage()) {
+        path.add(resolver.componentDescriptor.componentDefinitionType());
+        if (resolver == destination) {
+          return ComponentPath.create(path.build());
+        }
+      }
+      throw new AssertionError(
+          String.format(
+              "%s not found in %s",
+              destination.componentDescriptor.componentDefinitionType(), path.build()));
     }
 
     /** Returns the resolver lineage from parent to child. */
@@ -810,8 +883,8 @@ final class BindingGraphFactory {
       cycleStack.push(key);
       try {
         ResolvedBindings bindings = lookUpBindings(key);
-        resolveDependencies(bindings);
         resolvedContributionBindings.put(key, bindings);
+        resolveDependencies(bindings);
       } finally {
         cycleStack.pop();
       }

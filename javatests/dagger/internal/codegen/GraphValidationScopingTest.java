@@ -71,6 +71,85 @@ public class GraphValidationScopingTest {
     assertThat(compilation).hadErrorContaining(errorMessage);
   }
 
+  @Test // b/79859714
+  public void bindsWithChildScope_inParentModule_notAllowed() {
+    JavaFileObject childScope =
+        JavaFileObjects.forSourceLines(
+            "test.ChildScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface ChildScope {}");
+
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "", //
+            "interface Foo {}");
+
+    JavaFileObject fooImpl =
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class FooImpl implements Foo {",
+            "  @Inject FooImpl() {}",
+            "}");
+
+    JavaFileObject parentModule =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface ParentModule {",
+            "  @Binds @ChildScope Foo bind(FooImpl fooImpl);",
+            "}");
+
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@ChildScope",
+            "@Subcomponent",
+            "interface Child {",
+            "  Foo foo();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(childScope, foo, fooImpl, parentModule, parent, child);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.Parent scoped with @Singleton may not reference bindings with different scopes:\n"
+                + "      @Binds @test.ChildScope test.Foo test.ParentModule.bind(test.FooImpl)");
+  }
+
   @Test public void componentWithScopeIncludesIncompatiblyScopedBindings_Fail() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.MyComponent",
         "package test;",

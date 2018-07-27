@@ -76,6 +76,7 @@ final class KytheBindingGraphFactory {
         .fastInit(false)
         .experimentalAndroidMode2(false)
         .aheadOfTimeSubcomponents(false)
+        .floatingBindsMethods(false)
         .build();
   }
 
@@ -128,9 +129,13 @@ final class KytheBindingGraphFactory {
             keyFactory,
             bindingFactory,
             compilerOptions);
-
     return new BindingGraphFactory(
-        elements, injectBindingRegistry, keyFactory, bindingFactory, compilerOptions);
+        elements,
+        injectBindingRegistry,
+        keyFactory,
+        bindingFactory,
+        new IncorrectlyInstalledBindsMethodsValidator(compilerOptions),
+        compilerOptions);
   }
 
   private static class NullMessager implements Messager {

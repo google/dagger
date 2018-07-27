@@ -29,7 +29,7 @@ a visual aid that it's an "advanced" section. -->
 
 ## Advanced
 
-Although keys are built on Java's type system, they cannot be used 
+Although keys are built on Java's type system, they cannot be used
 interchangeably with keys that have assignable Java types. For example, in Java,
 the following code is valid, even though the type on the left-hand side is
 different from the type on the right-hand side.

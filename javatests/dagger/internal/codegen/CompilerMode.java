@@ -22,7 +22,8 @@ import com.google.common.collect.ImmutableList;
 /** The configuration options for compiler modes. */
 enum CompilerMode {
   DEFAULT_MODE,
-  FAST_INIT_MODE("-Adagger.fastInit=enabled");
+  FAST_INIT_MODE("-Adagger.fastInit=enabled"),
+  AHEAD_OF_TIME_SUBCOMPONENTS_MODE("-Adagger.experimentalAheadOfTimeSubcomponents=enabled");
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   static final ImmutableList<Object[]> TEST_PARAMETERS =

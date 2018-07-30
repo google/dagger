@@ -40,10 +40,24 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent",
+            "@Subcomponent(modules = TestModule.class)",
             "interface Child {",
             "  String string();",
             "}");
+
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class TestModule {",
+            "  @Provides String provideString() { return \"florp\"; }",
+            "}");
+
     JavaFileObject generatedSubcomponent =
         JavaFileObjects.forSourceLines(
             "test.DaggerChild",
@@ -51,7 +65,62 @@ public final class AheadOfTimeSubcomponentsTest {
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public final class DaggerChild {}");
+            "public abstract class DaggerChild implements Child {",
+            "  private TestModule testModule;",
+            "",
+            "  protected DaggerChild() {",
+            "    initialize();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.testModule = new TestModule();",
+            "  }",
+            "",
+            "  @Override",
+            "  public String string() {",
+            "    return TestModule_ProvideStringFactory.proxyProvideString(testModule);",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(subcomponent, module);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedSubcomponent);
+  }
+
+  @Test
+  public void subcomponent_MissingBinding() {
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child {",
+            "  String string();",
+            "}");
+
+    JavaFileObject generatedSubcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  @Override",
+            "  public String string() {",
+            "    return null;",
+            "  }",
+            "}");
     Compilation compilation =
         daggerCompiler()
             .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
@@ -60,5 +129,104 @@ public final class AheadOfTimeSubcomponentsTest {
     assertThat(compilation)
         .generatedSourceFile("test.DaggerChild")
         .hasSourceEquivalentTo(generatedSubcomponent);
+  }
+
+  @Test
+  public void subcomponent_BuilderAndGeneratedInstanceBinding() {
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  Integer i();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Builder module(GrandchildModule module);",
+            "",
+            "    Grandchild build();",
+            "  }",
+            "}");
+
+    JavaFileObject grandchildModule =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "  @Provides static Integer provideInteger() { return 0; }",
+            "}");
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Integer i() {",
+            "    return GrandchildModule_ProvideIntegerFactory.proxyProvideInteger();",
+            "  }",
+            "",
+            "  protected abstract static class Builder implements Grandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child {",
+            "  Grandchild.Builder grandchild();",
+            "}");
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  @Override",
+            "  public Grandchild.Builder grandchild() {",
+            "    return null;",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(child, grandchild, grandchildModule);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
   }
 }

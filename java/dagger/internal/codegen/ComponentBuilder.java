@@ -24,6 +24,7 @@ import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -76,14 +77,15 @@ final class ComponentBuilder {
   }
 
   static Optional<ComponentBuilder> create(
-      ClassName componentName,
+      GeneratedComponentModel generatedComponentModel,
       BindingGraph graph,
       SubcomponentNames subcomponentNames,
       Elements elements,
       Types types) {
     return hasBuilder(graph.componentDescriptor())
         ? Optional.of(
-            new Creator(componentName, graph, subcomponentNames, elements, types).create())
+            new Creator(generatedComponentModel, graph, subcomponentNames, elements, types)
+                .create())
         : Optional.empty();
   }
 
@@ -97,20 +99,20 @@ final class ComponentBuilder {
             + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
     private final BindingGraph graph;
     private final TypeSpec.Builder builder;
-    private final ClassName componentName;
+    private final GeneratedComponentModel generatedComponentModel;
     private final ClassName builderName;
     private final Elements elements;
     private final Types types;
-    private ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
     Creator(
-        ClassName componentName,
+        GeneratedComponentModel generatedComponentModel,
         BindingGraph graph,
         SubcomponentNames subcomponentNames,
         Elements elements,
         Types types) {
-      this.componentName = componentName;
-      if (graph.componentDescriptor().kind().isTopLevel()) {
+      this.generatedComponentModel = generatedComponentModel;
+      ClassName componentName = generatedComponentModel.name();
+      if (!generatedComponentModel.isNested()) {
         builderName = componentName.nestedClass("Builder");
         builder = classBuilder(builderName).addModifiers(STATIC);
       } else {
@@ -125,21 +127,30 @@ final class ComponentBuilder {
 
     ComponentBuilder create() {
       if (builderSpec().isPresent()) {
-        builder.addModifiers(PRIVATE);
+        if (generatedComponentModel.isAbstract()) {
+          builder.addModifiers(PROTECTED);
+        } else {
+          builder.addModifiers(PRIVATE);
+        }
         addSupertype(builder, builderSpec().get().builderDefinitionType());
       } else {
         builder.addModifiers(PUBLIC).addMethod(constructorBuilder().addModifiers(PRIVATE).build());
       }
 
-      builderFields = builderFields(graph);
+      ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields(graph);
+
+      if (generatedComponentModel.isAbstract()) {
+        builder.addModifiers(ABSTRACT);
+      } else {
+        builder.addModifiers(FINAL);
+        builder.addMethod(buildMethod(builderFields)); // Can only instantiate concrete classes.
+      }
 
       builder
-          .addModifiers(FINAL)
           .addFields(builderFields.values())
-          .addMethod(buildMethod())
           // TODO(ronshapiro): this should be switched with buildMethod(), but that currently breaks
           // compile-testing tests that rely on the order of the methods
-          .addMethods(builderMethods());
+          .addMethods(builderMethods(builderFields));
 
       return new ComponentBuilder(builder.build(), builderName, builderFields);
     }
@@ -160,7 +171,7 @@ final class ComponentBuilder {
       return builderFields.build();
     }
 
-    private MethodSpec buildMethod() {
+    private MethodSpec buildMethod(ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       MethodSpec.Builder buildMethod;
       if (builderSpec().isPresent()) {
         ExecutableElement specBuildMethod = builderSpec().get().buildMethod();
@@ -195,7 +206,7 @@ final class ComponentBuilder {
                 throw new AssertionError(requirement);
             }
           });
-      buildMethod.addStatement("return new $T(this)", componentName);
+      buildMethod.addStatement("return new $T(this)", generatedComponentModel.name());
       return buildMethod.build();
     }
 
@@ -203,7 +214,8 @@ final class ComponentBuilder {
      * Computes the methods that set each of parameters on the builder. If the {@link BuilderSpec}
      * is present, it will tailor the methods to match the spec.
      */
-    private ImmutableSet<MethodSpec> builderMethods() {
+    private ImmutableSet<MethodSpec> builderMethods(
+        ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       ImmutableSet<ComponentRequirement> componentRequirements = graph.componentRequirements();
       ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
       if (builderSpec().isPresent()) {

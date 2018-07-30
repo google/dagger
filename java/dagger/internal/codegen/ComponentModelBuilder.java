@@ -32,6 +32,7 @@ import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPO
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -62,11 +63,16 @@ abstract class ComponentModelBuilder {
       CompilerOptions compilerOptions,
       ClassName name,
       BindingGraph graph) {
-    GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.forComponent(name);
+    GeneratedComponentModel generatedComponentModel;
+    if (graph.componentDescriptor().kind().isTopLevel()) {
+      generatedComponentModel = GeneratedComponentModel.forComponent(name);
+    } else {
+      generatedComponentModel = GeneratedComponentModel.forBaseSubcomponent(name);
+    }
     SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
     OptionalFactories optionalFactories = new OptionalFactories(generatedComponentModel);
     Optional<ComponentBuilder> builder =
-        ComponentBuilder.create(name, graph, subcomponentNames, elements, types);
+        ComponentBuilder.create(generatedComponentModel, graph, subcomponentNames, elements, types);
     ComponentRequirementFields componentRequirementFields =
         new ComponentRequirementFields(graph, generatedComponentModel, builder);
     ComponentBindingExpressions bindingExpressions =
@@ -79,7 +85,23 @@ abstract class ComponentModelBuilder {
             types,
             elements,
             compilerOptions);
-    if (graph.componentDescriptor().kind().isTopLevel()) {
+    if (generatedComponentModel.isAbstract()) {
+      checkState(
+          compilerOptions.aheadOfTimeSubcomponents(),
+          "Calling 'buildComponentModel()' on %s when not generating ahead-of-time subcomponents.",
+          graph.componentDescriptor().componentDefinitionType());
+      return new BaseSubcomponentModelBuilder(
+              types,
+              elements,
+              graph,
+              generatedComponentModel,
+              subcomponentNames,
+              optionalFactories,
+              bindingExpressions,
+              componentRequirementFields,
+              builder)
+          .build();
+    } else {
       return new RootComponentModelBuilder(
               types,
               elements,
@@ -92,41 +114,24 @@ abstract class ComponentModelBuilder {
               builder)
           .build();
     }
-    checkState(
-        compilerOptions.aheadOfTimeSubcomponents(),
-        "Calling 'buildComponentModel()' on %s when not generating ahead-of-time subcomponents.",
-        graph.componentDescriptor().componentDefinitionType());
-    return new BaseSubcomponentModelBuilder(
-            types,
-            elements,
-            graph,
-            generatedComponentModel,
-            subcomponentNames,
-            optionalFactories,
-            bindingExpressions,
-            componentRequirementFields,
-            builder)
-        .build();
   }
 
   private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
     ClassName parentName = generatedComponentModel.name();
     ClassName childName =
         parentName.nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
-    GeneratedComponentModel childGeneratedComponentModel =
-        GeneratedComponentModel.forSubcomponent(childName);
+    GeneratedComponentModel childModel = GeneratedComponentModel.forSubcomponent(childName);
     Optional<ComponentBuilder> childBuilder =
-        ComponentBuilder.create(childName, childGraph, subcomponentNames, elements, types);
+        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(
-            childGraph, childGeneratedComponentModel, childBuilder);
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
     ComponentBindingExpressions childBindingExpressions =
         bindingExpressions.forChildComponent(
-            childGraph, childGeneratedComponentModel, childComponentRequirementFields);
+            childGraph, childModel, childComponentRequirementFields);
     return new SubComponentModelBuilder(
             this,
             childGraph,
-            childGeneratedComponentModel,
+            childModel,
             childBindingExpressions,
             childComponentRequirementFields,
             childBuilder)
@@ -170,7 +175,7 @@ abstract class ComponentModelBuilder {
    * called once (and will throw on successive invocations). If the component must be regenerated,
    * use a new instance.
    */
-  protected GeneratedComponentModel build() {
+  protected final GeneratedComponentModel build() {
     checkState(
         !done,
         "ComponentModelBuilder has already built the GeneratedComponentModel for [%s].",
@@ -218,7 +223,7 @@ abstract class ComponentModelBuilder {
         method, MoreTypes.asDeclared(graph.componentType().asType()), types);
   }
 
-  private void addSubcomponents() {
+  protected void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
       generatedComponentModel.addSubcomponent(buildSubcomponentModel(subgraph));
     }
@@ -233,7 +238,9 @@ abstract class ComponentModelBuilder {
 
     ImmutableList<ParameterSpec> constructorParameters = constructorParameters();
     MethodSpec.Builder constructor =
-        constructorBuilder().addModifiers(PRIVATE).addParameters(constructorParameters);
+        constructorBuilder()
+            .addModifiers(generatedComponentModel.isAbstract() ? PROTECTED : PRIVATE)
+            .addParameters(constructorParameters);
 
     ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
     CodeBlock initializeParametersCodeBlock =
@@ -275,6 +282,8 @@ abstract class ComponentModelBuilder {
       return ImmutableList.of(ParameterSpec.builder(builder.get().name(), "builder").build());
     } else if (graph.factoryMethod().isPresent()) {
       return getFactoryMethodParameterSpecs(graph);
+    } else if (generatedComponentModel.isAbstract() && !generatedComponentModel.isNested()) {
+      return ImmutableList.of();
     } else {
       throw new AssertionError(
           "Expected either a component builder or factory method but found neither.");
@@ -405,7 +414,6 @@ abstract class ComponentModelBuilder {
   }
 
   /** Builds the model for a top-level abstract base implementation of a subcomponent. */
-  // TODO(b/72748365): Implement.
   private static final class BaseSubcomponentModelBuilder extends ComponentModelBuilder {
     private final GeneratedComponentModel generatedComponentModel;
 
@@ -433,15 +441,19 @@ abstract class ComponentModelBuilder {
     }
 
     @Override
-    protected GeneratedComponentModel build() {
-      return generatedComponentModel;
+    protected void addBuilderClass(TypeSpec builder) {
+      generatedComponentModel.addType(SUBCOMPONENT, builder);
     }
 
     @Override
-    protected void addBuilderClass(TypeSpec builder) {}
+    protected void addFactoryMethods() {
+      // Only construct instances of subcomponents that have concrete implementations.
+    }
 
     @Override
-    protected void addFactoryMethods() {}
+    protected void addSubcomponents() {
+      // TODO(b/72748365): Implement abstract inner subcomponents.
+    }
   }
 
   /** Returns the list of {@link ParameterSpec}s for the corresponding graph's factory method. */

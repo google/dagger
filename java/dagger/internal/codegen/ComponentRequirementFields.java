@@ -113,7 +113,8 @@ final class ComponentRequirementFields {
     if (componentBuilder.isPresent()) {
       FieldSpec builderField = componentBuilder.get().builderFields().get(requirement);
       return new BuilderField(requirement, generatedComponentModel, builderField);
-    } else if (graph.factoryMethodParameters().containsKey(requirement)) {
+    } else if (graph.factoryMethod().isPresent()
+        && graph.factoryMethodParameters().containsKey(requirement)) {
       ParameterSpec factoryParameter =
           ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
       return new ComponentParameterField(requirement, generatedComponentModel, factoryParameter);

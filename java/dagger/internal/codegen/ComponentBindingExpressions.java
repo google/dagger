@@ -249,12 +249,19 @@ final class ComponentBindingExpressions {
   }
 
   private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
-    if (resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty()) {
-      if (!expressions.contains(key, requestKind)) {
-        expressions.put(key, requestKind, createBindingExpression(resolvedBindings, requestKind));
-      }
+    if (expressions.contains(key, requestKind)) {
       return expressions.get(key, requestKind);
+    }
+    Optional<BindingExpression> expression = Optional.empty();
+    if (resolvedInThisComponent(key, requestKind)) {
+      ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+      expression = Optional.of(createBindingExpression(resolvedBindings, requestKind));
+    } else if (!resolvableBinding(key, requestKind) && generatedComponentModel.isAbstract()) {
+      expression = Optional.of(new MissingBindingExpression(key));
+    }
+    if (expression.isPresent()) {
+      expressions.put(key, requestKind, expression.get());
+      return expression.get();
     }
     checkArgument(parent.isPresent(), "no expression found for %s-%s", key, requestKind);
     return parent.get().getBindingExpression(key, requestKind);
@@ -263,6 +270,9 @@ final class ComponentBindingExpressions {
   /** Creates a binding expression. */
   private BindingExpression createBindingExpression(
       ResolvedBindings resolvedBindings, RequestKind requestKind) {
+    if (generatedInstanceForAbstractSubcomponent(resolvedBindings)) {
+      return new GeneratedInstanceBindingExpression(resolvedBindings);
+    }
     switch (resolvedBindings.bindingType()) {
       case MEMBERS_INJECTION:
         checkArgument(requestKind.equals(RequestKind.MEMBERS_INJECTION));
@@ -277,6 +287,37 @@ final class ComponentBindingExpressions {
       default:
         throw new AssertionError(resolvedBindings);
     }
+  }
+
+  /**
+   * Returns true if the binding exposes an instance of a generated type, but no concrete
+   * implementation of that type is available.
+   */
+  private boolean generatedInstanceForAbstractSubcomponent(ResolvedBindings resolvedBindings) {
+    return !resolvedBindings.contributionBindings().isEmpty()
+        && resolvedBindings.contributionBinding().requiresGeneratedInstance()
+        && generatedComponentModel.isAbstract();
+  }
+
+  /**
+   * Returns true if the binding can be resolved by the graph for this component or any parent
+   * component.
+   */
+  private boolean resolvableBinding(Key key, RequestKind requestKind) {
+    for (ComponentBindingExpressions expressions = this;
+        expressions != null;
+        expressions = expressions.parent.orElse(null)) {
+      if (expressions.resolvedInThisComponent(key, requestKind)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Returns true if the binding can be resolved by the graph for this component. */
+  private boolean resolvedInThisComponent(Key key, RequestKind requestKind) {
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+    return resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty();
   }
 
   /**

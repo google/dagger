@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -33,9 +34,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -107,6 +110,8 @@ final class GeneratedComponentModel {
   }
 
   private final ClassName name;
+  private final NestingKind nestingKind;
+  private final boolean isAbstract;
   private final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
@@ -119,22 +124,38 @@ final class GeneratedComponentModel {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
 
-  private GeneratedComponentModel(ClassName name, Modifier... modifiers) {
+  private GeneratedComponentModel(ClassName name, NestingKind nestingKind, Modifier... modifiers) {
     this.name = name;
+    this.nestingKind = nestingKind;
+    this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
     this.component = classBuilder(name).addModifiers(modifiers);
   }
 
   static GeneratedComponentModel forComponent(ClassName name) {
-    return new GeneratedComponentModel(name, PUBLIC, FINAL);
+    return new GeneratedComponentModel(name, NestingKind.TOP_LEVEL, PUBLIC, FINAL);
   }
 
   static GeneratedComponentModel forSubcomponent(ClassName name) {
-    return new GeneratedComponentModel(name, PRIVATE, FINAL);
+    return new GeneratedComponentModel(name, NestingKind.MEMBER, PRIVATE, FINAL);
+  }
+
+  static GeneratedComponentModel forBaseSubcomponent(ClassName name) {
+    return new GeneratedComponentModel(name, NestingKind.TOP_LEVEL, PUBLIC, ABSTRACT);
   }
 
   /** Returns the name of the component. */
   ClassName name() {
     return name;
+  }
+
+  /** Returns whether or not the implementation is nested within another class. */
+  boolean isNested() {
+    return nestingKind.isNested();
+  }
+
+  /** Returns whether or not the implementation is abstract. */
+  boolean isAbstract() {
+    return isAbstract;
   }
 
   /** Returns {@code true} if {@code type} is accessible from the generated component. */

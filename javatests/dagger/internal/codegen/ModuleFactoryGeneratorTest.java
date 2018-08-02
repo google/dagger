@@ -213,13 +213,12 @@ public class ModuleFactoryGeneratorTest {
         "",
         "@Module(includes = Void.class)",
         "class TestModule {}");
+
     Compilation compilation = daggerCompiler().compile(module);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            String.format(
-                "%s is listed as a module, but is not annotated with %s",
-                "java.lang.Void", "@Module"));
+            "java.lang.Void is listed as a module, but is not annotated with @Module");
   }
 
   @Test public void singleProvidesMethodNoArgs() {

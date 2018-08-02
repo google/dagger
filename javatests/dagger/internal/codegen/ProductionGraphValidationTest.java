@@ -98,11 +98,15 @@ public class ProductionGraphValidationTest {
         "    ListenableFuture<A> getA();",
         "  }",
         "}");
-    String expectedError =
-        "test.TestClass.A cannot be provided without an @Provides- or @Produces-annotated method.";
+
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(11);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.TestClass.A cannot be provided without an @Provides- or @Produces-annotated "
+                + "method.")
+        .inFile(component)
+        .onLine(11);
   }
 
   @Test public void provisionDependsOnProduction() {
@@ -139,11 +143,13 @@ public class ProductionGraphValidationTest {
         "    ListenableFuture<A> getA();",
         "  }",
         "}");
-    String expectedError =
-        "test.TestClass.A is a provision, which cannot depend on a production.";
+
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(30);
+    assertThat(compilation)
+        .hadErrorContaining("test.TestClass.A is a provision, which cannot depend on a production.")
+        .inFile(component)
+        .onLine(30);
   }
 
   @Test public void provisionEntryPointDependsOnProduction() {
@@ -172,11 +178,14 @@ public class ProductionGraphValidationTest {
             "    A getA();",
             "  }",
             "}");
-    String expectedError =
-        "test.TestClass.A is a provision entry-point, which cannot depend on a production.";
+
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(20);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.TestClass.A is a provision entry-point, which cannot depend on a production.")
+        .inFile(component)
+        .onLine(20);
   }
 
   @Test
@@ -278,11 +287,14 @@ public class ProductionGraphValidationTest {
             "    ListenableFuture<String> getString();",
             "  }",
             "}");
-    String expectedError =
-        "test.TestClass.A cannot be provided without an @Provides-annotated method.";
+
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(34);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.TestClass.A cannot be provided without an @Provides-annotated method.")
+        .inFile(component)
+        .onLine(34);
   }
 
   @Test
@@ -329,13 +341,16 @@ public class ProductionGraphValidationTest {
             "    ListenableFuture<String> getString();",
             "  }",
             "}");
-    String expectedError =
-        "java.util.Set<dagger.producers.monitoring.ProductionComponentMonitor.Factory>"
-            + " test.TestClass.MonitoringModule#monitorFactory is a provision,"
-            + " which cannot depend on a production.";
+
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(expectedError).inFile(component).onLine(37);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Set<dagger.producers.monitoring.ProductionComponentMonitor.Factory>"
+                + " test.TestClass.MonitoringModule#monitorFactory is a provision,"
+                + " which cannot depend on a production.")
+        .inFile(component)
+        .onLine(37);
   }
 
   @Test

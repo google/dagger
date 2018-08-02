@@ -72,8 +72,8 @@ public final class ConflictingEntryPointsTest {
         .hadErrorContaining(
             message(
                 "conflicting entry point declarations:",
-                "Long test.Base1.foo()",
-                "Number test.Base2.foo()"))
+                "    Long test.Base1.foo()",
+                "    Number test.Base2.foo()"))
         .inFile(component)
         .onLineContaining("interface TestComponent ");
   }
@@ -120,8 +120,8 @@ public final class ConflictingEntryPointsTest {
         .hadErrorContaining(
             message(
                 "conflicting entry point declarations:",
-                "Long test.Base1.foo()",
-                "Number test.Base2.foo()"))
+                "    Long test.Base1.foo()",
+                "    Number test.Base2.foo()"))
         .inFile(component)
         .onLineContaining("interface TestComponent ");
   }
@@ -171,8 +171,8 @@ public final class ConflictingEntryPointsTest {
         .hadErrorContaining(
             message(
                 "conflicting entry point declarations:",
-                "Object test.Base1.foo()",
-                "@Named(\"foo\") Object test.Base2.foo()"))
+                "    Object test.Base1.foo()",
+                "    @Named(\"foo\") Object test.Base2.foo()"))
         .inFile(component)
         .onLineContaining("interface TestComponent ");
   }

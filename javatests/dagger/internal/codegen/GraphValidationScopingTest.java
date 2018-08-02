@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -62,13 +63,15 @@ public class GraphValidationScopingTest {
         "  @Provides long integer() { return 0L; }",
         "  @Provides float floatingPoint() { return 0.0f; }",
         "}");
-    String errorMessage =
-        "test.MyComponent (unscoped) may not reference scoped bindings:\n"
-            + "      @Singleton class test.ScopedType\n"
-            + "      @Provides @Singleton String test.ScopedModule.string()";
+
     Compilation compilation = daggerCompiler().compile(componentFile, typeFile, moduleFile);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.MyComponent (unscoped) may not reference scoped bindings:",
+                "    @Singleton class test.ScopedType",
+                "    @Provides @Singleton String test.ScopedModule.string()"));
   }
 
   @Test // b/79859714
@@ -146,8 +149,10 @@ public class GraphValidationScopingTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "test.Parent scoped with @Singleton may not reference bindings with different scopes:\n"
-                + "      @Binds @test.ChildScope test.Foo test.ParentModule.bind(test.FooImpl)");
+            message(
+                "test.Parent scoped with @Singleton may not reference bindings with different "
+                    + "scopes:",
+                "    @Binds @test.ChildScope test.Foo test.ParentModule.bind(test.FooImpl)"));
   }
 
   @Test public void componentWithScopeIncludesIncompatiblyScopedBindings_Fail() {
@@ -203,17 +208,20 @@ public class GraphValidationScopingTest {
         "  @Provides @Singleton float floatingPoint() { return 0.0f; }", // same scope - valid
         "  @Provides @Per(MyComponent.class) boolean bool() { return false; }", // incompatible
         "}");
-    String errorMessage =
-        "test.MyComponent scoped with @Singleton "
-            + "may not reference bindings with different scopes:\n"
-            + "      @test.PerTest class test.ScopedType\n"
-            + "      @Provides @test.PerTest String test.ScopedModule.string()\n"
-            + "      @Provides @test.Per(test.MyComponent.class) boolean test.ScopedModule.bool()";
+
     Compilation compilation =
         daggerCompiler()
             .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.MyComponent scoped with @Singleton "
+                    + "may not reference bindings with different scopes:",
+                "    @test.PerTest class test.ScopedType",
+                "    @Provides @test.PerTest String test.ScopedModule.string()",
+                "    @Provides @test.Per(test.MyComponent.class) boolean "
+                    + "test.ScopedModule.bool()"));
   }
 
   @Test public void componentWithScopeMayDependOnOnlyOneScopedComponent() {
@@ -276,16 +284,19 @@ public class GraphValidationScopingTest {
         "interface SimpleScopedComponent {",
         "  SimpleType.A type();",
         "}");
-    String errorMessage =
-        "@test.SimpleScope test.SimpleScopedComponent depends on more than one scoped component:\n"
-        + "      @Singleton test.SingletonComponentA\n"
-        + "      @Singleton test.SingletonComponentB";
+
     Compilation compilation =
         daggerCompiler()
             .compile(
                 type, simpleScope, simpleScoped, singletonScopedA, singletonScopedB, scopeless);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "@test.SimpleScope test.SimpleScopedComponent depends on more than one scoped "
+                    + "component:",
+                "    @Singleton test.SingletonComponentA",
+                "    @Singleton test.SingletonComponentB"));
   }
 
   @Test public void componentWithoutScopeCannotDependOnScopedComponent() {
@@ -318,12 +329,14 @@ public class GraphValidationScopingTest {
         "interface UnscopedComponent {",
         "  SimpleType type();",
         "}");
-    String errorMessage =
-        "test.UnscopedComponent (unscoped) cannot depend on scoped components:\n"
-        + "      @Singleton test.ScopedComponent";
+
     Compilation compilation = daggerCompiler().compile(type, scopedComponent, unscopedComponent);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.UnscopedComponent (unscoped) cannot depend on scoped components:",
+                "    @Singleton test.ScopedComponent"));
   }
 
   @Test public void componentWithSingletonScopeMayNotDependOnOtherScope() {
@@ -363,13 +376,15 @@ public class GraphValidationScopingTest {
         "interface SingletonComponent {",
         "  SimpleType type();",
         "}");
-    String errorMessage =
-        "This @Singleton component cannot depend on scoped components:\n"
-        + "      @test.SimpleScope test.SimpleScopedComponent";
+
     Compilation compilation =
         daggerCompiler().compile(type, simpleScope, simpleScoped, singletonScoped);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "This @Singleton component cannot depend on scoped components:",
+                "    @test.SimpleScope test.SimpleScopedComponent"));
   }
 
   @Test public void componentScopeAncestryMustNotCycle() {
@@ -426,15 +441,18 @@ public class GraphValidationScopingTest {
         "interface ComponentShort {",
         "  SimpleType type();",
         "}");
-    String errorMessage =
-        "test.ComponentShort depends on scoped components in a non-hierarchical scope ordering:\n"
-        + "      @test.ScopeA test.ComponentLong\n"
-        + "      @test.ScopeB test.ComponentMedium\n"
-        + "      @test.ScopeA test.ComponentShort";
+
     Compilation compilation =
         daggerCompiler().compile(type, scopeA, scopeB, longLifetime, mediumLifetime, shortLifetime);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(errorMessage);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentShort depends on scoped components in a non-hierarchical scope "
+                    + "ordering:",
+                "    @test.ScopeA test.ComponentLong",
+                "    @test.ScopeB test.ComponentMedium",
+                "    @test.ScopeA test.ComponentShort"));
   }
 
   @Test

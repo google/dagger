@@ -21,10 +21,10 @@ import com.google.common.base.Joiner;
 /** Utility methods useful for codegen tests. */
 final class TestUtils {
 
-  private static final Joiner MESSAGE_JOINER = Joiner.on("\n      ");
+  private static final Joiner MESSAGE_JOINER = Joiner.on("\n  ");
 
   /**
-   * Returns the lines joined by newline plus the standard indent. Useful for passing to {@link
+   * Returns the lines joined by newline plus two spaces. Useful for passing to {@link
    * com.google.testing.compile.CompilationSubject#hadErrorContaining(String)}, etc.
    */
   static String message(String... lines) {

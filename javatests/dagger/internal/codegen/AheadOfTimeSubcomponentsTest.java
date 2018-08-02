@@ -216,12 +216,184 @@ public final class AheadOfTimeSubcomponentsTest {
             "  public Grandchild.Builder grandchild() {",
             "    return null;",
             "  }",
+            "",
+            "  protected abstract class GrandchildBuilder extends DaggerGrandchild.Builder {",
+            "    @Override",
+            "    public GrandchildBuilder module(GrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl(GrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "  }",
             "}");
     Compilation compilation =
         daggerCompiler()
             .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
             .compile(child, grandchild, grandchildModule);
     assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void simpleDeepComponentHierarchy() {
+    JavaFileObject greatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GreatGrandchildModule.class)",
+            "interface GreatGrandchild {",
+            "  Integer i();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Builder module(GreatGrandchildModule module);",
+            "",
+            "    GreatGrandchild build();",
+            "  }",
+            "}");
+
+    JavaFileObject greatGrandchildModule =
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class GreatGrandchildModule {",
+            "  @Provides static Integer provideInteger() { return 0; }",
+            "}");
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Integer i() {",
+            "    return GreatGrandchildModule_ProvideIntegerFactory.proxyProvideInteger();",
+            "  }",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+
+    JavaFileObject grandchild =
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Grandchild {",
+            "  GreatGrandchild.Builder greatGrandchild();",
+            "}");
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  @Override",
+            "  public GreatGrandchild.Builder greatGrandchild() {",
+            "    return null;",
+            "  }",
+            "",
+            "  protected abstract class GreatGrandchildBuilder extends",
+            "      DaggerGreatGrandchild.Builder {",
+            "    @Override",
+            "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "  }",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}");
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder {",
+            "      @Override",
+            "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "        return this;",
+            "      }",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(child, grandchild, greatGrandchild, greatGrandchildModule);
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
     assertThat(compilation)
         .generatedSourceFile("test.DaggerGrandchild")
         .hasSourceEquivalentTo(generatedGrandchild);

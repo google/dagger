@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -35,7 +36,10 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
@@ -112,6 +116,8 @@ final class GeneratedComponentModel {
   private final ClassName name;
   private final NestingKind nestingKind;
   private final boolean isAbstract;
+  private final Optional<GeneratedComponentModel> supermodel;
+  private final Map<TypeElement, GeneratedComponentModel> subcomponentModels = new HashMap<>();
   private final TypeSpec.Builder component;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
@@ -124,23 +130,50 @@ final class GeneratedComponentModel {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
 
-  private GeneratedComponentModel(ClassName name, NestingKind nestingKind, Modifier... modifiers) {
+  private GeneratedComponentModel(
+      ClassName name,
+      NestingKind nestingKind,
+      Optional<GeneratedComponentModel> supermodel,
+      Modifier... modifiers) {
     this.name = name;
     this.nestingKind = nestingKind;
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
+    this.supermodel = supermodel;
     this.component = classBuilder(name).addModifiers(modifiers);
   }
 
+  /** Create a model for a root component. */
   static GeneratedComponentModel forComponent(ClassName name) {
-    return new GeneratedComponentModel(name, NestingKind.TOP_LEVEL, PUBLIC, FINAL);
+    return new GeneratedComponentModel(
+        name, NestingKind.TOP_LEVEL, Optional.empty(), /* supermodel */ PUBLIC, FINAL);
   }
 
+  /**
+   * Create a model for a subcomponent. This is for concrete subcomponents implementations when not
+   * generating ahead-of-time subcomponents.
+   */
   static GeneratedComponentModel forSubcomponent(ClassName name) {
-    return new GeneratedComponentModel(name, NestingKind.MEMBER, PRIVATE, FINAL);
+    return new GeneratedComponentModel(
+        name, NestingKind.MEMBER, Optional.empty(), /* supermodel */ PRIVATE, FINAL);
   }
 
+  /**
+   * Create a model for the top-level abstract subcomponent implementation when generating
+   * ahead-of-time subcomponents.
+   */
   static GeneratedComponentModel forBaseSubcomponent(ClassName name) {
-    return new GeneratedComponentModel(name, NestingKind.TOP_LEVEL, PUBLIC, ABSTRACT);
+    return new GeneratedComponentModel(
+        name, NestingKind.TOP_LEVEL, Optional.empty(), /* supermodel */ PUBLIC, ABSTRACT);
+  }
+
+  /**
+   * Create a model for an inner abstract implementation of a subcomponent. This is applicable when
+   * generating ahead-of-time subcomponents.
+   */
+  static GeneratedComponentModel forAbstractSubcomponent(
+      ClassName name, GeneratedComponentModel supermodel) {
+    return new GeneratedComponentModel(
+        name, NestingKind.MEMBER, Optional.of(supermodel), PUBLIC, ABSTRACT);
   }
 
   /** Returns the name of the component. */
@@ -158,6 +191,16 @@ final class GeneratedComponentModel {
     return isAbstract;
   }
 
+  /** Returns the model of this model's superclass. */
+  Optional<GeneratedComponentModel> supermodel() {
+    return supermodel;
+  }
+
+  /** Returns the model of the child subcomponent. */
+  Optional<GeneratedComponentModel> subcomponentModel(ComponentDescriptor subcomponent) {
+    return Optional.ofNullable(subcomponentModels.get(subcomponent.componentDefinitionType()));
+  }
+
   /** Returns {@code true} if {@code type} is accessible from the generated component. */
   boolean isTypeAccessible(TypeMirror type) {
     return isTypeAccessibleFrom(type, name.packageName());
@@ -166,6 +209,15 @@ final class GeneratedComponentModel {
   /** Adds the given super type to the component. */
   void addSupertype(TypeElement supertype) {
     TypeSpecs.addSupertype(component, supertype);
+  }
+
+  /** Adds the given super class to the subcomponent. */
+  void addSuperclass(ClassName className) {
+    checkState(
+        supermodel.isPresent(),
+        "Setting the supertype for model [%s] as a class when model has no supermodel.",
+        name);
+    component.superclass(className);
   }
 
   // TODO(dpb): Consider taking FieldSpec, and returning identical FieldSpec with unique name?
@@ -200,8 +252,10 @@ final class GeneratedComponentModel {
     typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
-  void addSubcomponent(GeneratedComponentModel subcomponentModel) {
-    // TODO(user): Hold a reference to each subcomponent model.
+  /** Adds the type generated from the given subcomponent model. */
+  void addSubcomponent(
+      ComponentDescriptor subcomponent, GeneratedComponentModel subcomponentModel) {
+    subcomponentModels.put(subcomponent.componentDefinitionType(), subcomponentModel);
     addType(TypeSpecKind.SUBCOMPONENT, subcomponentModel.generate().build());
   }
 

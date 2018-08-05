@@ -46,6 +46,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.Subcomponent.Builder;
+import dagger.android.AndroidInjectionKey;
 import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
 import dagger.android.processor.AndroidInjectorDescriptor.Validator;
@@ -65,12 +66,18 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
   private final AndroidInjectorDescriptor.Validator validator;
   private final Filer filer;
   private final Elements elements;
+  private final boolean useStringKeys;
   private final SourceVersion sourceVersion;
 
   ContributesAndroidInjectorGenerator(
-      Validator validator, Filer filer, Elements elements, SourceVersion sourceVersion) {
-    this.filer = filer;
+      Validator validator,
+      boolean useStringKeys,
+      Filer filer,
+      Elements elements,
+      SourceVersion sourceVersion) {
     this.validator = validator;
+    this.useStringKeys = useStringKeys;
+    this.filer = filer;
     this.elements = elements;
     this.sourceVersion = sourceVersion;
   }
@@ -131,16 +138,24 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
     return methodBuilder("bindAndroidInjectorFactory")
         .addAnnotation(Binds.class)
         .addAnnotation(IntoMap.class)
-        .addAnnotation(
-            AnnotationSpec.builder(descriptor.mapKeyType())
-                .addMember("value", "$T.class", descriptor.injectedType())
-                .build())
+        .addAnnotation(androidInjectorMapKey(descriptor))
         .addModifiers(ABSTRACT)
         .returns(
             parameterizedTypeName(
                 AndroidInjector.Factory.class,
                 WildcardTypeName.subtypeOf(descriptor.frameworkType())))
         .addParameter(subcomponentBuilderName, "builder")
+        .build();
+  }
+
+  private AnnotationSpec androidInjectorMapKey(AndroidInjectorDescriptor descriptor) {
+    if (useStringKeys) {
+      return AnnotationSpec.builder(AndroidInjectionKey.class)
+          .addMember("value", "$S", descriptor.injectedType().toString())
+          .build();
+    }
+    return AnnotationSpec.builder(descriptor.mapKeyType())
+        .addMember("value", "$T.class", descriptor.injectedType())
         .build();
   }
 

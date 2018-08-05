@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Formatter.formatArgumentInList;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -38,6 +39,7 @@ import dagger.Reusable;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -183,6 +185,13 @@ final class DaggerElements implements Elements {
           return type;
         }
       };
+
+  /**
+   * Compares elements according to their declaration order among siblings. Only valid to compare
+   * elements enclosed by the same parent.
+   */
+  static final Comparator<Element> DECLARATION_ORDER =
+      comparing(element -> element.getEnclosingElement().getEnclosedElements().indexOf(element));
 
   /**
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose

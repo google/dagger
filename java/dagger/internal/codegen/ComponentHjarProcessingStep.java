@@ -72,7 +72,7 @@ import javax.lang.model.util.Types;
  * compilation succeeded.
  *
  * <p>The components emitted by this processing step include all of the API elements exposed by the
- * normal {@link ComponentWriter}. Method bodies are omitted as Turbine ignores them entirely.
+ * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarProcessingStep implements ProcessingStep {
   private final Elements elements;
@@ -188,7 +188,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
       }
 
       DeclaredType componentType = MoreTypes.asDeclared(componentElement.asType());
-      // TODO(ronshapiro): unify with AbstractComponentWriter
+      // TODO(ronshapiro): unify with ComponentModelBuilder
       Set<MethodSignature> methodSignatures =
           Sets.newHashSetWithExpectedSize(componentDescriptor.componentMethods().size());
       componentDescriptor

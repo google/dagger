@@ -30,7 +30,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableNetwork;
+import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
+import com.google.common.graph.NetworkBuilder;
 import dagger.Module;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
@@ -173,10 +175,28 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   /** Returns the edges for entry points that transitively depend on a binding. */
   public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
       BindingNode bindingNode) {
-    Network<Node, Edge> subgraphDependingOnBindingNode =
-        inducedSubgraph(this, reachableNodes(transpose(this).asGraph(), bindingNode));
+    ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
+    Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
+        inducedSubgraph(
+            dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), bindingNode));
     return ImmutableSet.copyOf(
         intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()));
+  }
+
+  // TODO(dpb): Make public. Cache.
+  private ImmutableNetwork<Node, DependencyEdge> dependencyGraph() {
+    MutableNetwork<Node, DependencyEdge> dependencyGraph =
+        NetworkBuilder.from(this)
+            .expectedNodeCount(nodes().size())
+            .expectedEdgeCount((int) dependencyEdgeStream().count())
+            .build();
+    dependencyEdgeStream()
+        .forEach(
+            edge -> {
+              EndpointPair<Node> endpoints = incidentNodes(edge);
+              dependencyGraph.addEdge(endpoints.source(), endpoints.target(), edge);
+            });
+    return ImmutableNetwork.copyOf(dependencyGraph);
   }
 
   private <N extends Node> ImmutableSet<N> nodes(Class<N> clazz) {

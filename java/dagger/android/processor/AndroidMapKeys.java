@@ -16,6 +16,7 @@
 
 package dagger.android.processor;
 
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.util.stream.Collectors.toMap;
@@ -25,9 +26,12 @@ import static javax.lang.model.util.ElementFilter.typesIn;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import dagger.MapKey;
+import dagger.android.AndroidInjectionKey;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -50,10 +54,15 @@ final class AndroidMapKeys {
                 elements.getPackageElement("dagger.android.support"))
             .filter(packageElement -> packageElement != null)
             .flatMap(packageElement -> typesIn(packageElement.getEnclosedElements()).stream())
+            .filter(AndroidMapKeys::isNotAndroidInjectionKey)
             .filter(type -> isAnnotationPresent(type, MapKey.class))
             .filter(mapKey -> mapKey.getAnnotation(MapKey.class).unwrapValue())
             .flatMap(AndroidMapKeys::classForAnnotationElement)
             .collect(toMap(key -> key, key -> mapKeyValue(key, elements))));
+  }
+
+  private static boolean isNotAndroidInjectionKey(TypeElement type) {
+    return !type.getQualifiedName().contentEquals(AndroidInjectionKey.class.getCanonicalName());
   }
 
   private static Stream<Class<? extends Annotation>> classForAnnotationElement(TypeElement type) {
@@ -74,5 +83,22 @@ final class AndroidMapKeys {
     // TODO(ronshapiro): replace with MoreTypes.asWildcard() when auto-common 0.9 is released
     return ((WildcardType) getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments()))
         .getExtendsBound();
+  }
+
+  /**
+   * If {@code mapKey} is {@link AndroidInjectionKey}, returns the string value for the map key. If
+   * it's {@link dagger.android.ActivityKey} or one of the other class-based keys, returns the
+   * fully-qualified class name of the annotation value. Otherwise returns {@link Optional#empty()}.
+   */
+  static Optional<String> injectedTypeFromMapKey(AnnotationMirror mapKey) {
+    Object mapKeyClass = getAnnotationValue(mapKey, "value").getValue();
+    if (mapKeyClass instanceof String) {
+      return Optional.of((String) mapKeyClass);
+    } else if (mapKeyClass instanceof TypeMirror) {
+      TypeElement type = MoreTypes.asTypeElement((TypeMirror) mapKeyClass);
+      return Optional.of(type.getQualifiedName().toString());
+    } else {
+      return Optional.empty();
+    }
   }
 }

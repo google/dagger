@@ -32,7 +32,14 @@ final class BindingGraphCapturer implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    bindingGraphs.put(bindingGraph.rootComponentNode().toString(), bindingGraph);
+    bindingGraphs.put(
+        bindingGraph
+            .rootComponentNode()
+            .componentPath()
+            .currentComponent()
+            .getQualifiedName()
+            .toString(),
+        bindingGraph);
   }
 
   /** Returns a map of binding graphs, indexed by the canonical name of the root component type. */

@@ -127,6 +127,14 @@ public class InjectorsTest {
                 .ContentProviderSubcomponent.class);
 
     changeConfiguration();
+
+    OuterClass.TestInnerClassActivity innerClassActivity =
+        Robolectric.setupActivity(OuterClass.TestInnerClassActivity.class);
+    assertThat(innerClassActivity.componentHierarchy)
+        .containsExactly(
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.class,
+            ComponentStructureFollowsControllerStructureApplication.ApplicationComponent
+                .InnerActivitySubcomponent.class);
   }
 
   @Test
@@ -177,6 +185,14 @@ public class InjectorsTest {
                 .ContentProviderSubcomponent.class);
 
     changeConfiguration();
+
+    OuterClass.TestInnerClassActivity innerClassActivity =
+        Robolectric.setupActivity(OuterClass.TestInnerClassActivity.class);
+    assertThat(innerClassActivity.componentHierarchy)
+        .containsExactly(
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent.class,
+            AllControllersAreDirectChildrenOfApplication.ApplicationComponent
+                .InnerActivitySubcomponent.class);
   }
 
   @Test
@@ -224,6 +240,13 @@ public class InjectorsTest {
         Robolectric.setupActivity(TestActivityWithScope.class);
     assertThat(activityWithScope.scopedStringProvider.get())
         .isSameAs(activityWithScope.scopedStringProvider.get());
+
+    OuterClass.TestInnerClassActivity innerClassActivity =
+        Robolectric.setupActivity(OuterClass.TestInnerClassActivity.class);
+    assertThat(innerClassActivity.componentHierarchy)
+        .containsExactly(
+            UsesGeneratedModulesApplication.ApplicationComponent.class,
+            UsesGeneratedModulesApplication.DummyInnerActivitySubcomponent.class);
   }
 
   // https://github.com/google/dagger/issues/598

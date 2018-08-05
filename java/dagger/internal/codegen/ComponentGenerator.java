@@ -70,7 +70,8 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   @Override
   Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph input) {
     return Optional.of(
-        ComponentWriter.writeComponent(
-            types, elements, keyFactory, compilerOptions, componentName, input));
+        ComponentModelBuilder.buildComponentModel(
+                types, elements, keyFactory, compilerOptions, componentName, input)
+            .generate());
   }
 }

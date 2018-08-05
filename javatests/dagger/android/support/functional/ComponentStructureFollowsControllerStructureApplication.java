@@ -36,6 +36,7 @@ import dagger.android.support.DaggerApplication;
 import dagger.android.support.FragmentKey;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.BroadcastReceiverSubcomponent.BroadcastReceiverModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.ContentProviderSubcomponent.ContentProviderModule;
+import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.InnerActivitySubcomponent.InnerActivityModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.IntentServiceSubcomponent.IntentServiceModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.ServiceSubcomponent.ServiceModule;
 import dagger.multibindings.IntoMap;
@@ -58,6 +59,7 @@ public final class ComponentStructureFollowsControllerStructureApplication
     @Module(
       subcomponents = {
         ActivitySubcomponent.class,
+        InnerActivitySubcomponent.class,
         ServiceSubcomponent.class,
         IntentServiceSubcomponent.class,
         BroadcastReceiverSubcomponent.class,
@@ -76,6 +78,12 @@ public final class ComponentStructureFollowsControllerStructureApplication
       @ActivityKey(TestActivity.class)
       abstract AndroidInjector.Factory<? extends Activity> bindFactoryForTestActivity(
           ActivitySubcomponent.Builder builder);
+
+      @Binds
+      @IntoMap
+      @ActivityKey(OuterClass.TestInnerClassActivity.class)
+      abstract AndroidInjector.Factory<? extends Activity> bindFactoryForInnerActivity(
+          InnerActivitySubcomponent.Builder builder);
 
       @Binds
       @IntoMap
@@ -177,6 +185,21 @@ public final class ComponentStructureFollowsControllerStructureApplication
 
         @Subcomponent.Builder
         abstract class Builder extends AndroidInjector.Builder<TestDialogFragment> {}
+      }
+    }
+
+    @Subcomponent(modules = InnerActivityModule.class)
+    interface InnerActivitySubcomponent extends AndroidInjector<OuterClass.TestInnerClassActivity> {
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<OuterClass.TestInnerClassActivity> {}
+
+      @Module
+      abstract class InnerActivityModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return InnerActivitySubcomponent.class;
+        }
       }
     }
 

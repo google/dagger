@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerElements.elementEncloses;
 import static dagger.internal.codegen.DaggerElements.elementToString;
@@ -197,16 +198,23 @@ final class DiagnosticReporterFactory {
     private CharSequence dependencyTrace(DependencyEdge entryPoint, BindingNode bindingNode) {
       checkArgument(entryPoint.isEntryPoint());
       Node entryPointBinding = graph.incidentNodes(entryPoint).target();
-      ImmutableList<Node> shortestPath =
+      ImmutableList<Node> shortestBindingPath =
           shortestPath(
               node -> Sets.filter(graph.successors(node), BindingNode.class::isInstance),
               entryPointBinding,
               bindingNode);
+      verify(
+          !shortestBindingPath.isEmpty(),
+          "no dependency path from %s to %s in %s",
+          entryPoint,
+          bindingNode,
+          graph);
 
-      StringBuilder trace = new StringBuilder(shortestPath.size() * 100 /* a guess heuristic */);
-      for (int i = shortestPath.size() - 1; i > 0; i--) {
+      StringBuilder trace =
+          new StringBuilder(shortestBindingPath.size() * 100 /* a guess heuristic */);
+      for (int i = shortestBindingPath.size() - 1; i > 0; i--) {
         Set<Edge> dependenciesBetween =
-            graph.edgesConnecting(shortestPath.get(i - 1), shortestPath.get(i));
+            graph.edgesConnecting(shortestBindingPath.get(i - 1), shortestBindingPath.get(i));
         DependencyRequest dependencyRequest =
             // If a binding requests a key more than once, any of them should be fine to get to
             // the shortest path

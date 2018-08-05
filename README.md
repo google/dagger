@@ -14,7 +14,7 @@ removing the traditional ObjectGraph/Injector in favor of user-specified
 
 This github project represents the Dagger 2 development stream.  The earlier
 [project page][square] (Square, Inc's repository) represents the earlier 1.0
-development stream. Both versions have benefitted from strong involvement from
+development stream. Both versions have benefited from strong involvement from
 Square, Google, and other contributors.
 
 Dagger is currently in active development, primarily internally at Google,

@@ -36,12 +36,14 @@ import javax.lang.model.element.Element;
  */
 final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<ContributionBinding> {
   private final DaggerTypes types;
+  private final DaggerElements elements;
 
   @Inject
   InaccessibleMapKeyProxyGenerator(
       Filer filer, DaggerTypes types, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
     this.types = types;
+    this.elements = elements;
   }
 
   @Override
@@ -56,7 +58,7 @@ final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<Contrib
 
   @Override
   Optional<TypeSpec.Builder> write(ClassName generatedName, ContributionBinding binding) {
-    return MapKeys.mapKeyFactoryMethod(binding, types)
+    return MapKeys.mapKeyFactoryMethod(binding, types, elements)
         .map(
             method ->
                 classBuilder(generatedName)

@@ -194,7 +194,7 @@ final class MissingBindingValidation implements BindingGraphPlugin {
               "There is no binding for %s because no component in %s's component hierarchy is "
                   + "annotated with %s. The available reference-releasing scopes are %s.",
               key,
-              graph.rootComponentNode().toString(),
+              graph.rootComponentNode().componentPath().currentComponent().getQualifiedName(),
               getReadableSource(scope),
               releasableReferencesScopes(graph).map(Scopes::getReadableSource).collect(toList())));
     }

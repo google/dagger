@@ -442,30 +442,38 @@ abstract class ComponentDescriptor {
     private final Types types;
     private final DependencyRequestFactory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
+    private final CompilerOptions compilerOptions;
 
     @Inject
     Factory(
         DaggerElements elements,
         Types types,
         DependencyRequestFactory dependencyRequestFactory,
-        ModuleDescriptor.Factory moduleDescriptorFactory) {
+        ModuleDescriptor.Factory moduleDescriptorFactory,
+        CompilerOptions compilerOptions) {
       this.elements = elements;
       this.types = types;
       this.dependencyRequestFactory = dependencyRequestFactory;
       this.moduleDescriptorFactory = moduleDescriptorFactory;
+      this.compilerOptions = compilerOptions;
     }
 
     /**
      * Returns a component descriptor for a type annotated with either {@link Component @Component}
-     * or {@link ProductionComponent @ProductionComponent}.
+     * or {@link ProductionComponent @ProductionComponent}. This is also compatible with {@link
+     * Subcomponent @Subcomponent} or {@link ProductionSubcomponent @ProductionSubcomponent} when
+     * generating ahead-of-time subcomponents.
      */
-    ComponentDescriptor forComponent(TypeElement componentDefinitionType) {
-      Optional<Kind> kind = Kind.forAnnotatedElement(componentDefinitionType);
+    ComponentDescriptor forComponent(TypeElement componentType) {
+      Optional<Kind> kind = Kind.forAnnotatedElement(componentType);
       checkArgument(
-          kind.isPresent() && kind.get().isTopLevel(),
-          "%s must be annotated with @Component or @ProductionComponent",
-          componentDefinitionType);
-      return create(componentDefinitionType, kind.get(), Optional.empty());
+          kind.isPresent(), "%s must have a component or subcomponent annotation", componentType);
+      if (!compilerOptions.aheadOfTimeSubcomponents()) {
+        checkArgument(kind.get().isTopLevel(),
+            "%s must be annotated with @Component or @ProductionComponent.",
+            componentType);
+      }
+      return create(componentType, kind.get(), Optional.empty());
     }
 
     private ComponentDescriptor create(

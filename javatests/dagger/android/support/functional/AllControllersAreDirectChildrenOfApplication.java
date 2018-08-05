@@ -36,6 +36,7 @@ import dagger.android.support.DaggerApplication;
 import dagger.android.support.FragmentKey;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.BroadcastReceiverSubcomponent.BroadcastReceiverModule;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.ContentProviderSubcomponent.ContentProviderModule;
+import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.InnerActivitySubcomponent.InnerActivityModule;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.IntentServiceSubcomponent.IntentServiceModule;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.ServiceSubcomponent.ServiceModule;
 import dagger.multibindings.IntoMap;
@@ -56,6 +57,7 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
     @Module(
       subcomponents = {
         ActivitySubcomponent.class,
+        InnerActivitySubcomponent.class,
         ParentFragmentSubcomponent.class,
         ChildFragmentSubcomponent.class,
         DialogFragmentSubcomponent.class,
@@ -77,6 +79,12 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
       @ActivityKey(TestActivity.class)
       abstract AndroidInjector.Factory<? extends Activity> bindFactoryForTestActivity(
           ActivitySubcomponent.Builder builder);
+
+      @Binds
+      @IntoMap
+      @ActivityKey(OuterClass.TestInnerClassActivity.class)
+      abstract AndroidInjector.Factory<? extends Activity> bindFactoryForInnerActivity(
+          InnerActivitySubcomponent.Builder builder);
 
       @Binds
       @IntoMap
@@ -134,6 +142,21 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
 
       @Subcomponent.Builder
       abstract class Builder extends AndroidInjector.Builder<TestActivity> {}
+    }
+
+    @Subcomponent(modules = InnerActivityModule.class)
+    interface InnerActivitySubcomponent extends AndroidInjector<OuterClass.TestInnerClassActivity> {
+      @Subcomponent.Builder
+      abstract class Builder extends AndroidInjector.Builder<OuterClass.TestInnerClassActivity> {}
+
+      @Module
+      abstract class InnerActivityModule {
+        @Provides
+        @IntoSet
+        static Class<?> addToComponentHierarchy() {
+          return InnerActivitySubcomponent.class;
+        }
+      }
     }
 
     @Subcomponent(modules = ParentFragmentSubcomponent.ParentFragmentModule.class)

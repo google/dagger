@@ -124,7 +124,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
     return CodeBlock.of(
         "$L, $L",
-        getMapKeyExpression(dependencies.get(dependency), requestingClass),
+        getMapKeyExpression(dependencies.get(dependency), requestingClass, elements),
         componentBindingExpressions
             .getDependencyExpression(dependency, requestingClass)
             .codeBlock());

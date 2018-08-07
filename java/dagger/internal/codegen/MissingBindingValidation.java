@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
@@ -97,25 +98,19 @@ final class MissingBindingValidation implements BindingGraphPlugin {
   private String missingBindingErrorMessage(DependencyEdge edge, BindingGraph graph) {
     Key key = edge.dependencyRequest().key();
     StringBuilder errorMessage = new StringBuilder();
-    // TODO(dpb): Check for wildcard injection somewhere else first?
-    if (key.type().getKind().equals(TypeKind.WILDCARD)) {
-      // TODO(ronshapiro): Explore creating this message using RequestKinds.
-      errorMessage
-          .append("Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, ")
-          .append("or Produced<T> when T is a wildcard type such as ")
-          .append(key);
-    } else {
-      // TODO(ronshapiro): replace "provided" with "satisfied"?
-      errorMessage.append(key).append(" cannot be provided without ");
-      if (isValidImplicitProvisionKey(key, types)) {
-        errorMessage.append("an @Inject constructor or ");
-      }
-      errorMessage.append("an @Provides-"); // TODO(dpb): s/an/a
-      if (dependencyCanBeProduction(edge, graph)) {
-        errorMessage.append(" or @Produces-");
-      }
-      errorMessage.append("annotated method.");
+    // Wildcards should have already been checked by DependencyRequestValidator.
+    verify(
+        !key.type().getKind().equals(TypeKind.WILDCARD), "unexpected wildcard request: %s", edge);
+    // TODO(ronshapiro): replace "provided" with "satisfied"?
+    errorMessage.append(key).append(" cannot be provided without ");
+    if (isValidImplicitProvisionKey(key, types)) {
+      errorMessage.append("an @Inject constructor or ");
     }
+    errorMessage.append("an @Provides-"); // TODO(dpb): s/an/a
+    if (dependencyCanBeProduction(edge, graph)) {
+      errorMessage.append(" or @Produces-");
+    }
+    errorMessage.append("annotated method.");
     if (isValidMembersInjectionKey(key) && typeHasInjectionSites(key)) {
       errorMessage.append(
           " This type supports members injection but cannot be implicitly provided.");

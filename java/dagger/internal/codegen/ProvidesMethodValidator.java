@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
-import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
@@ -35,30 +34,33 @@ import javax.lang.model.util.Types;
  */
 final class ProvidesMethodValidator extends BindingMethodValidator {
 
+  private final DependencyRequestValidator dependencyRequestValidator;
+
   @Inject
-  ProvidesMethodValidator(DaggerElements elements, Types types) {
+  ProvidesMethodValidator(
+      DaggerElements elements, Types types, DependencyRequestValidator dependencyRequestValidator) {
     super(
         elements,
         types,
         Provides.class,
         ImmutableSet.of(Module.class, ProducerModule.class),
+        dependencyRequestValidator,
         MUST_BE_CONCRETE,
         RUNTIME_EXCEPTION,
         ALLOWS_MULTIBINDINGS);
+    this.dependencyRequestValidator = dependencyRequestValidator;
   }
 
   @Override
   protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
     super.checkMethod(builder);
-    checkDependsOnProducers(builder);
   }
 
   /** Adds an error if a {@link Provides @Provides} method depends on a producer type. */
-  private void checkDependsOnProducers(ValidationReport.Builder<ExecutableElement> builder) {
-    for (VariableElement parameter : builder.getSubject().getParameters()) {
-      if (FrameworkTypes.isProducerType(parameter.asType())) {
-        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
-      }
-    }
+  @Override
+  protected void checkParameter(
+      ValidationReport.Builder<ExecutableElement> builder, VariableElement parameter) {
+    super.checkParameter(builder, parameter);
+    dependencyRequestValidator.checkNotProducer(builder, parameter);
   }
 }

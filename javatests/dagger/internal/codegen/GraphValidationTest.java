@@ -983,6 +983,37 @@ public class GraphValidationTest {
         .onLineContaining("void inject(Self target);");
   }
 
+  @Test
+  public void genericInjectClassWithWildcardDependencies() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Foo<? extends Number> foo();",
+            "}");
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Foo<T> {",
+            "  @Inject Foo(T t) {}",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component, foo);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.Foo<? extends java.lang.Number> cannot be provided "
+                + "without an @Provides-annotated method");
+  }
+
   @Test public void duplicateExplicitBindings_ProvidesAndComponentProvision() {
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",

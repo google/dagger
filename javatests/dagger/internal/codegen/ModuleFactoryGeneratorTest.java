@@ -1300,14 +1300,13 @@ public class ModuleFactoryGeneratorTest {
           "",
           "@Qualifier @interface QualifierB {}");
 
-  @Test public void providesMethodMultipleQualifiers() {
+  @Test
+  public void providesMethodMultipleQualifiersOnMethod() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "import dagger.Provides;",
-        "import javax.annotation.Nullable;",
-        "import javax.inject.Singleton;",
         "",
         "@Module",
         "final class TestModule {",
@@ -1317,7 +1316,53 @@ public class ModuleFactoryGeneratorTest {
         "}");
     Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("Cannot use more than one @Qualifier");
+    assertThat(compilation).hadErrorContaining("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void providesMethodMultipleQualifiersOnParameter() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides static String provideString(@QualifierA @QualifierB Object object) {",
+            "    return \"foo\";",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void providesMethodWildcardDependency() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides static String provideString(Provider<? extends Number> numberProvider) {",
+            "    return \"foo\";",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, or Produced<T> "
+                + "when T is a wildcard type such as ? extends java.lang.Number");
   }
 
   private static final JavaFileObject SCOPE_A =

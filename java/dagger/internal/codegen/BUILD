@@ -176,6 +176,7 @@ java_library(
         "ComponentHierarchyValidator.java",
         "ComponentValidator.java",
         "DependencyRequestFormatter.java",
+        "DependencyRequestValidator.java",
         "ForReleasableReferencesValidator.java",
         "InjectValidator.java",
         "MapKeyValidator.java",

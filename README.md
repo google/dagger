@@ -46,7 +46,7 @@ Given the following `WORKSPACE` definition, you can reference dagger via
 
 ```python
 http_archive(
-    name = "com_google_dagger"
+    name = "com_google_dagger",
     urls = ["https://github.com/google/dagger/archive/dagger-<version>.zip"],
 )
 ```

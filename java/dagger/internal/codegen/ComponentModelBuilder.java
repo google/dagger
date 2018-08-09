@@ -48,6 +48,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.MissingBindingMethods.MissingBindingMethod;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -533,6 +534,7 @@ abstract class ComponentModelBuilder {
   private static final class AbstractSubcomponentModelBuilder extends ComponentModelBuilder {
     private final Optional<ComponentModelBuilder> parent;
     private final GeneratedComponentModel generatedComponentModel;
+    private final ComponentBindingExpressions bindingExpressions;
 
     AbstractSubcomponentModelBuilder(
         Optional<ComponentModelBuilder> parent,
@@ -563,6 +565,7 @@ abstract class ComponentModelBuilder {
           compilerOptions);
       this.parent = parent;
       this.generatedComponentModel = generatedComponentModel;
+      this.bindingExpressions = bindingExpressions;
     }
 
     @Override
@@ -582,11 +585,23 @@ abstract class ComponentModelBuilder {
 
     @Override
     protected void addInterfaceMethods() {
-      if (!generatedComponentModel.supermodel().isPresent()) {
+      if (generatedComponentModel.supermodel().isPresent()) {
+        // Since we're overriding a subcomponent implementation we add to its implementation given
+        // an expanded binding graph.
+
+        // Implement missing binding methods.
+        for (MissingBindingMethod missingBindingMethod :
+            generatedComponentModel.getMissingBindingMethods()) {
+          bindingExpressions
+              .getMissingBindingMethodImplementation(missingBindingMethod)
+              .ifPresent(
+                  method ->
+                      generatedComponentModel.addImplementedMissingBindingMethod(
+                          missingBindingMethod, method));
+        }
+      } else {
         super.addInterfaceMethods();
       }
-      // TODO(b/72748365): Contribute to modifiable portions of subcomponent implementation for
-      // inner abstract subcomponents.
     }
   }
 

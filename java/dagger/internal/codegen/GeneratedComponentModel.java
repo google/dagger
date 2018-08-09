@@ -34,6 +34,9 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
+import dagger.internal.codegen.MissingBindingMethods.MissingBindingMethod;
+import dagger.model.Key;
+import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -95,7 +98,13 @@ final class GeneratedComponentModel {
     MEMBERS_INJECTION_METHOD,
 
     /** A static method that always returns an absent {@code Optional} value for the binding. */
-    ABSENT_OPTIONAL_METHOD
+    ABSENT_OPTIONAL_METHOD,
+
+    /**
+     * A method encapsulating a missing binding to be overridden by a subclass when generating a
+     * component ancestor. Only relevant for ahead-of-time subcomponents.
+     */
+    MISSING_BINDING_METHOD
   }
 
   /** A type of nested class that this component model can generate. */
@@ -129,6 +138,7 @@ final class GeneratedComponentModel {
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
+  private final MissingBindingMethods missingBindingMethods = new MissingBindingMethods();
 
   private GeneratedComponentModel(
       ClassName name,
@@ -242,6 +252,18 @@ final class GeneratedComponentModel {
     methodSpecsMap.putAll(methodKind, methodSpecs);
   }
 
+  /** Adds the given (abstract) method representing an encapsulated missing binding. */
+  void addUnimplementedMissingBindingMethod(Key key, RequestKind kind, MethodSpec methodSpec) {
+    missingBindingMethods.addUnimplementedMethod(key, kind, methodSpec);
+    methodSpecsMap.put(MethodSpecKind.MISSING_BINDING_METHOD, methodSpec);
+  }
+
+  /** Adds the implementation for the given {@link MissingBindingMethod}. */
+  void addImplementedMissingBindingMethod(MissingBindingMethod method, MethodSpec methodSpec) {
+    missingBindingMethods.methodImplemented(method);
+    methodSpecsMap.put(MethodSpecKind.MISSING_BINDING_METHOD, methodSpec);
+  }
+
   /** Adds the given type to the component. */
   void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
     typeSpecsMap.put(typeKind, typeSpec);
@@ -287,6 +309,25 @@ final class GeneratedComponentModel {
   /** Returns the list of {@link CodeBlock}s that need to go in the initialize method. */
   ImmutableList<CodeBlock> getInitializations() {
     return ImmutableList.copyOf(initializations);
+  }
+
+  /**
+   * Returns the unimplemented {@link MissingBindingMethod}s for this subcomponent implementation
+   * and its superclasses.
+   */
+  ImmutableList<MissingBindingMethod> getMissingBindingMethods() {
+    ImmutableList.Builder<MissingBindingMethod> missingBindingMethodsBuilder =
+        ImmutableList.builder();
+    if (supermodel.isPresent()) {
+      ImmutableList<MissingBindingMethod> bindingsUnsatisfiedBySuperclasses =
+          supermodel.get().getMissingBindingMethods();
+      bindingsUnsatisfiedBySuperclasses
+          .stream()
+          .filter(method -> !missingBindingMethods.isMethodImplemented(method))
+          .forEach(missingBindingMethodsBuilder::add);
+    }
+    missingBindingMethodsBuilder.addAll(missingBindingMethods.getUnimplementedMethods());
+    return missingBindingMethodsBuilder.build();
   }
 
   /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */

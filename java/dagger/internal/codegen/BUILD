@@ -266,6 +266,7 @@ java_library(
         "MembersInjectorProviderCreationExpression.java",
         "MethodBindingExpression.java",
         "MissingBindingExpression.java",
+        "MissingBindingMethods.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
         "OptionalBindingExpression.java",

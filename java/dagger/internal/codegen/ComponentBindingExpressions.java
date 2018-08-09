@@ -30,6 +30,7 @@ import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashBasedTable;
@@ -40,6 +41,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.MissingBindingMethods.MissingBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -248,6 +250,33 @@ final class ComponentBindingExpressions {
         .build();
   }
 
+  /**
+   * Returns the implementation of a method encapsulating a missing binding in a supertype
+   * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
+   * be satisfied by the current binding graph. This is only relevant for ahead-of-time
+   * subcomponents.
+   */
+  Optional<MethodSpec> getMissingBindingMethodImplementation(MissingBindingMethod missingBinding) {
+    // TODO(b/72748365): investigate beder@'s comment about having intermediate component ancestors
+    // satisfy missing bindings of their children with their own missing binding methods so that
+    // we can minimize the cases where we need to reach into doubly-nested descendant component
+    // implementations
+    if (resolvableBinding(missingBinding.key(), missingBinding.kind())) {
+      Expression bindingExpression =
+          getDependencyExpression(
+              missingBinding.key(), missingBinding.kind(), generatedComponentModel.name());
+      MethodSpec unimplementedMethod = missingBinding.unimplementedMethod();
+      return Optional.of(
+          MethodSpec.methodBuilder(unimplementedMethod.name)
+              .addModifiers(PUBLIC)
+              .returns(unimplementedMethod.returnType)
+              .addAnnotation(Override.class)
+              .addStatement("return $L", bindingExpression.codeBlock())
+              .build());
+    }
+    return Optional.empty();
+  }
+
   private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
     if (expressions.contains(key, requestKind)) {
       return expressions.get(key, requestKind);
@@ -257,7 +286,8 @@ final class ComponentBindingExpressions {
       ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
       expression = Optional.of(createBindingExpression(resolvedBindings, requestKind));
     } else if (!resolvableBinding(key, requestKind) && generatedComponentModel.isAbstract()) {
-      expression = Optional.of(new MissingBindingExpression(key));
+      expression =
+          Optional.of(new MissingBindingExpression(generatedComponentModel, key, requestKind));
     }
     if (expression.isPresent()) {
       expressions.put(key, requestKind, expression.get());

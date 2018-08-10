@@ -365,17 +365,23 @@ final class ComponentBindingExpressions {
         resolvedBindings.scope().isPresent()
             ? scope(resolvedBindings, frameworkInstanceCreationExpression(resolvedBindings))
             : frameworkInstanceCreationExpression(resolvedBindings);
-    return new FrameworkInstanceBindingExpression(
-        resolvedBindings,
-        requestKind,
-        this,
-        resolvedBindings.bindingType().frameworkType(),
+    FrameworkInstanceSupplier frameworkInstanceSupplier =
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
-                generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression),
-        types,
-        elements);
+                generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression);
+
+    FrameworkType frameworkType = resolvedBindings.bindingType().frameworkType();
+    switch (frameworkType) {
+      case PROVIDER:
+        return new ProviderInstanceBindingExpression(
+            resolvedBindings, requestKind, this, frameworkInstanceSupplier, types, elements);
+      case PRODUCER:
+        return new ProducerInstanceBindingExpression(
+            resolvedBindings, requestKind, this, frameworkInstanceSupplier, types, elements);
+      default:
+        throw new AssertionError("invalid framework type: " + frameworkType);
+    }
   }
 
   private FrameworkInstanceCreationExpression scope(
@@ -544,11 +550,10 @@ final class ComponentBindingExpressions {
   private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
       ResolvedBindings resolvedBindings, RequestKind requestKind) {
     checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
-    return new FrameworkInstanceBindingExpression(
+    return new ProducerInstanceBindingExpression(
         resolvedBindings,
         requestKind,
         this,
-        FrameworkType.PRODUCER,
         new FrameworkFieldInitializer(
             generatedComponentModel,
             resolvedBindings,

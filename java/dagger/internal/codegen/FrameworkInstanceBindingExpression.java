@@ -28,12 +28,11 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /** A binding expression that uses an instance of a {@link FrameworkType}. */
-final class FrameworkInstanceBindingExpression extends BindingExpression {
+abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ResolvedBindings resolvedBindings;
   private final RequestKind requestKind;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
-  private final FrameworkType frameworkType;
   private final DaggerTypes types;
   private final Elements elements;
 
@@ -41,14 +40,12 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
-      FrameworkType frameworkType,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       Elements elements) {
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.requestKind = checkNotNull(requestKind);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.frameworkType = checkNotNull(frameworkType);
     this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
@@ -62,7 +59,7 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
    */
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    if (requestKind.equals(frameworkRequestKind())) {
+    if (requestKind.equals(frameworkType().requestKind())) {
       MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
       TypeMirror contributedType = resolvedBindings.contributionBinding().contributedType();
       TypeMirror expressionType =
@@ -78,24 +75,16 @@ final class FrameworkInstanceBindingExpression extends BindingExpression {
     // example, the expression for RequestKind.LAZY is a composite of the expression for a
     // RequestKind.PROVIDER (the framework type):
     //    lazyExpression = DoubleCheck.lazy(providerExpression);
-    return frameworkType.to(
-        requestKind,
-        componentBindingExpressions.getDependencyExpression(
-            resolvedBindings.key(), frameworkRequestKind(), requestingClass),
-        types);
+    return frameworkType()
+        .to(
+            requestKind,
+            componentBindingExpressions.getDependencyExpression(
+                resolvedBindings.key(), frameworkType().requestKind(), requestingClass),
+            types);
   }
 
-  /** Returns the request kind that matches the framework type. */
-  private RequestKind frameworkRequestKind() {
-    switch (frameworkType) {
-      case PROVIDER:
-        return RequestKind.PROVIDER;
-      case PRODUCER:
-        return RequestKind.PRODUCER;
-      default:
-        throw new AssertionError(frameworkType);
-    }
-  }
+  /** Returns the framework type for the binding. */
+  protected abstract FrameworkType frameworkType();
 
   /**
    * Returns {@code true} if a factory is created inline each time it is requested. For example, in

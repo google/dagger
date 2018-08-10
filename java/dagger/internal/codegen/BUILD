@@ -242,7 +242,7 @@ java_library(
         "DelegatingFrameworkInstanceCreationExpression.java",
         "DependencyMethodProducerCreationExpression.java",
         "DependencyMethodProviderCreationExpression.java",
-        "DerivedFromProviderBindingExpression.java",
+        "DerivedFromFrameworkInstanceBindingExpression.java",
         "DoubleCheckedMethodImplementation.java",
         "FactoryGenerator.java",
         "FrameworkFieldInitializer.java",

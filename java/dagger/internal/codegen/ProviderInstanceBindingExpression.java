@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import dagger.model.RequestKind;
 import javax.lang.model.util.Elements;
 
 /** Binding expression for provider instances. */
@@ -24,15 +23,11 @@ final class ProviderInstanceBindingExpression extends FrameworkInstanceBindingEx
 
   ProviderInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
-      ComponentBindingExpressions componentBindingExpressions,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       Elements elements) {
     super(
         resolvedBindings,
-        requestKind,
-        componentBindingExpressions,
         frameworkInstanceSupplier,
         types,
         elements);

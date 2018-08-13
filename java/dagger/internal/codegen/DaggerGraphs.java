@@ -16,9 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Sets.difference;
+import static com.google.common.graph.Graphs.reachableNodes;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.graph.Graph;
 import com.google.common.graph.SuccessorsFunction;
+import dagger.model.BindingGraph.Node;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +88,11 @@ final class DaggerGraphs {
     }
 
     return ImmutableList.of();
+  }
+
+  /** Returns the nodes in a graph that are not reachable from a node. */
+  static ImmutableSet<Node> unreachableNodes(Graph<Node> graph, Node node) {
+    return ImmutableSet.copyOf(difference(graph.nodes(), reachableNodes(graph, node)));
   }
 
   private DaggerGraphs() {}

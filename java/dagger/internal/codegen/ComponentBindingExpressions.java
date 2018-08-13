@@ -246,7 +246,7 @@ final class ComponentBindingExpressions {
             types)
         .addCode(
             getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
-                .getComponentMethodImplementation(componentMethod, generatedComponentModel.name()))
+                .getComponentMethodImplementation(componentMethod, generatedComponentModel))
         .build();
   }
 

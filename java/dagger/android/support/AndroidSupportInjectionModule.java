@@ -36,5 +36,9 @@ public abstract class AndroidSupportInjectionModule {
   abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
       supportFragmentInjectorFactories();
 
+  @Multibinds
+  abstract Map<String, AndroidInjector.Factory<? extends Fragment>>
+      supportFragmentInjectorFactoriesWithStringKeys();
+
   private AndroidSupportInjectionModule() {}
 }

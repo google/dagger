@@ -41,10 +41,12 @@ import javax.lang.model.util.Types;
 final class ProducesMethodValidator extends BindingMethodValidator {
 
   @Inject
-  ProducesMethodValidator(DaggerElements elements, Types types) {
+  ProducesMethodValidator(
+      DaggerElements elements, Types types, DependencyRequestValidator dependencyRequestValidator) {
     super(
         elements,
         types,
+        dependencyRequestValidator,
         Produces.class,
         ProducerModule.class,
         MUST_BE_CONCRETE,

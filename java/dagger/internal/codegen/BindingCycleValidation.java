@@ -27,7 +27,6 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
-import static java.util.Comparator.comparingInt;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.value.AutoValue;
@@ -40,6 +39,7 @@ import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
+import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingKind;
@@ -106,6 +106,15 @@ final class BindingCycleValidation implements BindingGraphPlugin {
 
   /**
    * Reports a dependency cycle at the dependency into the cycle that is closest to an entry point.
+   *
+   * <p>Looks for the shortest path from the component that contains the cycle (all bindings in a
+   * cycle must be in the same component; see below) to some binding in the cycle. Then looks for
+   * the last dependency in that path that is not in the cycle; that is the dependency that will be
+   * reported, so that the dependency trace will end just before the cycle.
+   *
+   * <p>Proof (by counterexample) that all bindings in a cycle must be in the same component: Assume
+   * one binding in the cycle is in a parent component. Bindings cannot depend on bindings in child
+   * components, so that binding cannot depend on the next binding in the cycle.
    */
   private void reportCycle(
       Cycle<Node> cycle, BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
@@ -121,18 +130,11 @@ final class BindingCycleValidation implements BindingGraphPlugin {
   private ImmutableList<Node> shortestPathToCycleFromAnEntryPoint(
       Cycle<Node> cycle, BindingGraph bindingGraph) {
     Node someCycleNode = cycle.nodes().asList().get(0);
-    return bindingGraph
-        .componentNodes()
-        .stream()
-        .map(componentNode -> shortestPath(bindingGraph, componentNode, someCycleNode))
-        // Ignore paths that go through subcomponents by requiring all nodes after the first to be
-        // BindingNodes. We can't just use nonCycleBreakingDependencyGraph because that filters out
-        // edges that might break a cycle, but those edges might still be part of the shortest path
-        // TO a cycle.
-        .filter(path -> path.stream().skip(1).allMatch(node -> node instanceof BindingNode))
-        .map(path -> subpathToCycle(path, cycle))
-        .min(comparingInt(ImmutableList::size))
-        .get();
+    ComponentNode componentContainingCycle =
+        bindingGraph.componentNode(someCycleNode.componentPath()).get();
+    ImmutableList<Node> pathToCycle =
+        shortestPath(bindingGraph, componentContainingCycle, someCycleNode);
+    return subpathToCycle(pathToCycle, cycle);
   }
 
   /**
@@ -232,13 +234,8 @@ final class BindingCycleValidation implements BindingGraphPlugin {
   private ImmutableNetwork<Node, DependencyEdge> nonCycleBreakingDependencyGraph(
       BindingGraph bindingGraph) {
     MutableNetwork<Node, DependencyEdge> dependencyNetwork =
-        NetworkBuilder.directed()
-            .allowsParallelEdges(true)
-            .allowsSelfLoops(true)
-            .nodeOrder(bindingGraph.nodeOrder())
-            .edgeOrder(bindingGraph.edgeOrder())
-            .expectedNodeCount(
-                bindingGraph.bindingNodes().size() + bindingGraph.componentNodes().size())
+        NetworkBuilder.from(bindingGraph)
+            .expectedNodeCount(bindingGraph.nodes().size())
             .expectedEdgeCount(bindingGraph.dependencyEdges().size())
             .build();
     bindingGraph
@@ -298,7 +295,7 @@ final class BindingCycleValidation implements BindingGraphPlugin {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       return endpointPairs().toString();
     }
 

@@ -92,9 +92,17 @@ public class BindsMethodValidatorTest {
   }
 
   @Test
-  public void tooManyQualifiers() {
+  public void tooManyQualifiersOnMethod() {
     assertThatMethod(
             "@Binds @Qualifier1 @Qualifier2 abstract String tooManyQualifiers(String impl);")
+        .importing(Qualifier1.class, Qualifier2.class)
+        .hasError("more than one @Qualifier");
+  }
+
+  @Test
+  public void tooManyQualifiersOnParameter() {
+    assertThatMethod(
+            "@Binds abstract String tooManyQualifiers(@Qualifier1 @Qualifier2 String impl);")
         .importing(Qualifier1.class, Qualifier2.class)
         .hasError("more than one @Qualifier");
   }

@@ -466,11 +466,32 @@ public class ProducerModuleFactoryGeneratorTest {
         .generatesSources(factoryFile);
   }
 
-  @Test public void producesMethodMultipleQualifiers() {
+  @Test
+  public void producesMethodMultipleQualifiersOnMethod() {
     assertThatProductionModuleMethod(
-            "@Produces @QualifierA @QualifierB abstract String produceString() { return null; }")
+            "@Produces @QualifierA @QualifierB static String produceString() { return null; }")
         .importing(ListenableFuture.class, QualifierA.class, QualifierB.class)
-        .hasError("Cannot use more than one @Qualifier");
+        .hasError("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void producesMethodMultipleQualifiersOnParameter() {
+    assertThatProductionModuleMethod(
+            "@Produces static String produceString(@QualifierA @QualifierB Object input) "
+                + "{ return null; }")
+        .importing(ListenableFuture.class, QualifierA.class, QualifierB.class)
+        .hasError("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void producesMethodWildcardDependency() {
+    assertThatProductionModuleMethod(
+            "@Produces static String produceString(Provider<? extends Number> numberProvider) "
+                + "{ return null; }")
+        .importing(ListenableFuture.class, QualifierA.class, QualifierB.class)
+        .hasError(
+            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, or Produced<T> "
+                + "when T is a wildcard type such as ? extends java.lang.Number");
   }
 
   @Qualifier

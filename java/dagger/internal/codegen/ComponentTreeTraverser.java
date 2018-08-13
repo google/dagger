@@ -74,9 +74,10 @@ public class ComponentTreeTraverser {
   private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
 
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
-  public ComponentTreeTraverser(BindingGraph rootGraph) {
+  public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
     checkArgument(
-        rootGraph.componentDescriptor().kind().isTopLevel(),
+        rootGraph.componentDescriptor().kind().isTopLevel()
+            || compilerOptions.aheadOfTimeSubcomponents(),
         "only top-level graphs can be traversed, not %s",
         rootGraph.componentDescriptor().componentDefinitionType().getQualifiedName());
     bindingGraphPath.add(rootGraph);

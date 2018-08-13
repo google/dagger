@@ -155,6 +155,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
       DaggerDaggerKythePlugin_PluginComponent.builder()
           .types(JavacTypes.instance(javaContext))
           .elements(JavacElements.instance(javaContext))
+          .compilerOptions(KytheBindingGraphFactory.createCompilerOptions())
           .build()
           .inject(this);
     }
@@ -168,8 +169,15 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
     @Component.Builder
     interface Builder {
-      @BindsInstance Builder types(Types types);
-      @BindsInstance Builder elements(Elements elements);
+      @BindsInstance
+      Builder types(Types types);
+
+      @BindsInstance
+      Builder elements(Elements elements);
+
+      @BindsInstance
+      Builder compilerOptions(CompilerOptions compilerOptions);
+
       PluginComponent build();
     }
   }

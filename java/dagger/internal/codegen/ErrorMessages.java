@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
@@ -27,12 +26,6 @@ import javax.lang.model.type.TypeMirror;
  * The collection of error messages to be reported back to users.
  */
 final class ErrorMessages {
-
-  static String provisionMayNotDependOnProducerType(TypeMirror type) {
-    return String.format(
-        "%s may only be injected in @Produces methods",
-        MoreTypes.asTypeElement(type).getSimpleName());
-  }
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {

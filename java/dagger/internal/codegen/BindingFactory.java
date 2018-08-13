@@ -27,6 +27,7 @@ import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPON
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.ContributionBinding.bindingKindForMultibindingKey;
+import static dagger.internal.codegen.DaggerElements.DECLARATION_ORDER;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
@@ -614,7 +615,7 @@ final class BindingFactory {
             .thenComparing(injectionSite -> injectionSite.element().getKind())
             // then sort by whichever element comes first in the parent
             // this isn't necessary, but makes the processor nice and predictable
-            .thenComparing(InjectionSite::indexAmongSiblingMembers),
+            .thenComparing(InjectionSite::element, DECLARATION_ORDER),
         injectionSites);
   }
 

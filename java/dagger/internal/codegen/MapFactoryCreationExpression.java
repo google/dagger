@@ -37,16 +37,19 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
   private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingGraph graph;
   private final ContributionBinding binding;
+  private final DaggerElements elements;
 
   MapFactoryCreationExpression(
       ContributionBinding binding,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
-      BindingGraph graph) {
+      BindingGraph graph,
+      DaggerElements elements) {
     this.binding = checkNotNull(binding);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.graph = checkNotNull(graph);
+    this.elements = checkNotNull(elements);
   }
 
   @Override
@@ -84,7 +87,7 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
               .codeBlock();
       builder.add(
           ".put($L, $L)",
-          getMapKeyExpression(contributionBinding, generatedComponentModel.name()),
+          getMapKeyExpression(contributionBinding, generatedComponentModel.name(), elements),
           useRawType ? CodeBlocks.cast(value, frameworkDependency.frameworkClass()) : value);
     }
     builder.add(".build()");

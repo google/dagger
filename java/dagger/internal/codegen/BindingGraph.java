@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
+import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
@@ -187,9 +188,8 @@ abstract class BindingGraph {
         .flatMap(graph -> graph.contributionBindings().values().stream())
         .flatMap(bindings -> bindings.contributionBindings().stream())
         .filter(ContributionBinding::requiresModuleInstance)
-        .map(bindingDeclaration -> bindingDeclaration.contributingModule())
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .map(ContributionBinding::contributingModule)
+        .flatMap(presentValues())
         .filter(module -> ownedModuleTypes().contains(module))
         .map(module -> ComponentRequirement.forModule(module.asType()))
         .forEach(requirements::add);

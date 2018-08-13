@@ -116,6 +116,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingGraphPluginsModule.class,
         BindingGraphValidationModule.class,
         BindingMethodValidatorsModule.class,
+        IncorrectlyInstalledBindsMethodsValidator.Module.class,
         ProcessingStepsModule.class,
       })
   interface ProcessorComponent {

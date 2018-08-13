@@ -164,6 +164,17 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     }
   }
 
+  /** Whether the bound type has a generated implementation. */
+  final boolean requiresGeneratedInstance() {
+    switch (kind()) {
+      case COMPONENT:
+      case SUBCOMPONENT_BUILDER:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   /**
    * Returns {@link BindingKind#MULTIBOUND_SET} or {@link
    * BindingKind#MULTIBOUND_MAP} if the key is a set or map.

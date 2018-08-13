@@ -82,6 +82,7 @@ final class ComponentValidator {
   private final Types types;
   private final ModuleValidator moduleValidator;
   private final BuilderValidator builderValidator;
+  private final DependencyRequestValidator dependencyRequestValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
 
@@ -91,12 +92,14 @@ final class ComponentValidator {
       Types types,
       ModuleValidator moduleValidator,
       BuilderValidator builderValidator,
+      DependencyRequestValidator dependencyRequestValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
     this.builderValidator = builderValidator;
+    this.dependencyRequestValidator = dependencyRequestValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
   }
@@ -199,7 +202,8 @@ final class ComponentValidator {
                 switch (parameters.size()) {
                   case 0:
                     // no parameters means that it is a provision method
-                    // basically, there are no restrictions here.  \o/
+                    dependencyRequestValidator.validateDependencyRequest(
+                        report, method, returnType);
                     break;
                   case 1:
                     // one parameter means that it's a members injection method

@@ -27,7 +27,10 @@ load("//tools:maven.bzl", "pom_file", "POM_VERSION")
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
-SRCS = glob(["*.java"])
+SRCS = glob([
+    "*.java",
+    "internal/*.java",
+])
 
 filegroup(
     name = "android-srcs",
@@ -82,6 +85,7 @@ javadoc_library(
     name = "android-javadoc",
     srcs = [":android-srcs"],
     android_api_level = 26,
+    exclude_packages = ["dagger.android.internal"],
     root_packages = ["dagger.android"],
     deps = [":android"],
 )

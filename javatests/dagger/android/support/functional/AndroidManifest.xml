@@ -16,7 +16,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="dagger.android.support.functional">
 
-  <application android:theme="@style/Theme.AppCompat">
+  <application android:theme="@style/Theme.AppCompat"
+      android:name=".UsesGeneratedModulesApplication">
     <activity android:name="dagger.android.support.functional.ParentOfFragmentActivity"/>
     <activity android:name="dagger.android.support.functional.SiblingOfFragmentActivity"/>
     <activity android:name="dagger.android.support.functional.InjectedWithoutSubcomponentActivity"/>

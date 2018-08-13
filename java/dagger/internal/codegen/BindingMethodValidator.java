@@ -46,6 +46,7 @@ import java.util.Map;
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
@@ -55,6 +56,7 @@ abstract class BindingMethodValidator {
 
   private final DaggerElements elements;
   private final Types types;
+  private final DependencyRequestValidator dependencyRequestValidator;
   private final Class<? extends Annotation> methodAnnotation;
   private final ImmutableSet<? extends Class<? extends Annotation>> enclosingElementAnnotations;
   private final Abstractness abstractness;
@@ -72,6 +74,7 @@ abstract class BindingMethodValidator {
   protected BindingMethodValidator(
       DaggerElements elements,
       Types types,
+      DependencyRequestValidator dependencyRequestValidator,
       Class<? extends Annotation> methodAnnotation,
       Class<? extends Annotation> enclosingElementAnnotation,
       Abstractness abstractness,
@@ -82,6 +85,7 @@ abstract class BindingMethodValidator {
         types,
         methodAnnotation,
         ImmutableSet.of(enclosingElementAnnotation),
+        dependencyRequestValidator,
         abstractness,
         exceptionSuperclass,
         allowsMultibindings);
@@ -99,6 +103,7 @@ abstract class BindingMethodValidator {
       Types types,
       Class<? extends Annotation> methodAnnotation,
       Iterable<? extends Class<? extends Annotation>> enclosingElementAnnotations,
+      DependencyRequestValidator dependencyRequestValidator,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings) {
@@ -106,6 +111,7 @@ abstract class BindingMethodValidator {
     this.types = types;
     this.methodAnnotation = methodAnnotation;
     this.enclosingElementAnnotations = ImmutableSet.copyOf(enclosingElementAnnotations);
+    this.dependencyRequestValidator = dependencyRequestValidator;
     this.abstractness = abstractness;
     this.exceptionSuperclass = exceptionSuperclass;
     this.allowsMultibindings = allowsMultibindings;
@@ -153,6 +159,7 @@ abstract class BindingMethodValidator {
     checkMapKeys(builder);
     checkMultibindings(builder);
     checkScopes(builder);
+    checkParameters(builder);
   }
 
   /**
@@ -300,7 +307,10 @@ abstract class BindingMethodValidator {
     ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(builder.getSubject());
     if (qualifiers.size() > 1) {
       for (AnnotationMirror qualifier : qualifiers) {
-        builder.addError("Cannot use more than one @Qualifier", builder.getSubject(), qualifier);
+        builder.addError(
+            bindingMethods("may not use more than one @Qualifier"),
+            builder.getSubject(),
+            qualifier);
       }
     }
   }
@@ -372,6 +382,22 @@ abstract class BindingMethodValidator {
             "Cannot use more than one @Scope", builder.getSubject(), scope.scopeAnnotation());
       }
     }
+  }
+
+  /** Adds errors for the method parameters. */
+  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
+    for (VariableElement parameter : builder.getSubject().getParameters()) {
+      checkParameter(builder, parameter);
+    }
+  }
+
+  /**
+   * Adds errors for a method parameter. This implementation reports an error if the parameter has
+   * more than one qualifier.
+   */
+  protected void checkParameter(
+      ValidationReport.Builder<ExecutableElement> builder, VariableElement parameter) {
+    dependencyRequestValidator.validateDependencyRequest(builder, parameter, parameter.asType());
   }
 
   /** Adds an error if the method returns a {@linkplain FrameworkTypes framework type}. */

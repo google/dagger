@@ -35,6 +35,9 @@ import static javax.lang.model.element.ElementKind.METHOD;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
+
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
@@ -253,16 +256,29 @@ final class KeyFactory {
   }
 
   Key forInjectConstructorWithResolvedType(TypeMirror type) {
+    ensureTypeIsCompleted(type);
     return Key.builder(type).build();
   }
 
   // TODO(ronshapiro): Remove these conveniences which are simple wrappers around Key.Builder
   Key forType(TypeMirror type) {
+    ensureTypeIsCompleted(type);
     return Key.builder(type).build();
   }
 
   Key forMembersInjectedType(TypeMirror type) {
+    ensureTypeIsCompleted(type);
     return Key.builder(type).build();
+  }
+
+  private void ensureTypeIsCompleted(TypeMirror type) {
+    if (type instanceof Type.ClassType) {
+      Type.ClassType classType = (Type.ClassType) type;
+      Symbol.TypeSymbol typeSymbol = classType.asElement();
+      if (typeSymbol.completer != null) {
+        typeSymbol.complete();
+      }
+    }
   }
 
   Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {

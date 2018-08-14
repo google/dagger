@@ -17,11 +17,17 @@
 package dagger.functional.cycle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.junit.Assert.fail;
 
-import dagger.functional.cycle.DoubleCheckCycles.FailingReentrantModule;
-import dagger.functional.cycle.DoubleCheckCycles.NonReentrantModule;
-import dagger.functional.cycle.DoubleCheckCycles.ReentrantModule;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import java.lang.annotation.Retention;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Provider;
+import javax.inject.Qualifier;
+import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,47 +36,114 @@ import org.junit.runners.JUnit4;
 public class DoubleCheckCycleTest {
   // TODO(b/77916397): Migrate remaining tests in DoubleCheckTest to functional tests in this class.
 
+  /** A qualifier for a reentrant scoped binding. */
+  @Retention(RUNTIME)
+  @Qualifier
+  @interface Reentrant {}
+
+  /** A module to be overridden in each test. */
+  @Module
+  static class OverrideModule {
+    @Provides
+    @Singleton
+    Object provideObject() {
+      throw new IllegalStateException("This method should be overridden in tests");
+    }
+
+    @Provides
+    @Singleton
+    @Reentrant
+    Object provideReentrantObject(@Reentrant Provider<Object> provider) {
+      throw new IllegalStateException("This method should be overridden in tests");
+    }
+  }
+
+  @Singleton
+  @Component(modules = OverrideModule.class)
+  interface TestComponent {
+    Object getObject();
+    @Reentrant Object getReentrantObject();
+  }
+
   @Test
   public void testNonReentrant() {
-    NonReentrantModule module = new NonReentrantModule();
-    DoubleCheckCycles.TestComponent component =
-        DaggerDoubleCheckCycles_TestComponent.builder().nonReentrantModule(module).build();
+    AtomicInteger callCount = new AtomicInteger(0);
 
-    assertThat(module.callCount).isEqualTo(0);
-    Object first = component.getNonReentrant();
-    assertThat(module.callCount).isEqualTo(1);
-    Object second = component.getNonReentrant();
-    assertThat(module.callCount).isEqualTo(1);
+    // Provides a non-reentrant binding. The provides method should only be called once.
+    DoubleCheckCycleTest.TestComponent component =
+        DaggerDoubleCheckCycleTest_TestComponent.builder()
+            .overrideModule(
+                new OverrideModule() {
+                  @Override Object provideObject() {
+                    callCount.getAndIncrement();
+                    return new Object();
+                  }
+                })
+            .build();
+
+    assertThat(callCount.get()).isEqualTo(0);
+    Object first = component.getObject();
+    assertThat(callCount.get()).isEqualTo(1);
+    Object second = component.getObject();
+    assertThat(callCount.get()).isEqualTo(1);
     assertThat(first).isSameAs(second);
   }
 
   @Test
   public void testReentrant() {
-    ReentrantModule module = new ReentrantModule();
-    DoubleCheckCycles.TestComponent component =
-        DaggerDoubleCheckCycles_TestComponent.builder().reentrantModule(module).build();
+    AtomicInteger callCount = new AtomicInteger(0);
 
-    assertThat(module.callCount).isEqualTo(0);
-    Object first = component.getReentrant();
-    assertThat(module.callCount).isEqualTo(2);
-    Object second = component.getReentrant();
-    assertThat(module.callCount).isEqualTo(2);
+    // Provides a reentrant binding. Even though it's scoped, the provides method is called twice.
+    // In this case, we allow it since the same instance is returned on the second call.
+    DoubleCheckCycleTest.TestComponent component =
+        DaggerDoubleCheckCycleTest_TestComponent.builder()
+            .overrideModule(
+                new OverrideModule() {
+                  @Override Object provideReentrantObject(Provider<Object> provider) {
+                    if (callCount.incrementAndGet() == 1) {
+                      return provider.get();
+                    }
+                    return new Object();
+                  }
+                })
+            .build();
+
+    assertThat(callCount.get()).isEqualTo(0);
+    Object first = component.getReentrantObject();
+    assertThat(callCount.get()).isEqualTo(2);
+    Object second = component.getReentrantObject();
+    assertThat(callCount.get()).isEqualTo(2);
     assertThat(first).isSameAs(second);
   }
 
   @Test
   public void testFailingReentrant() {
-    FailingReentrantModule module = new FailingReentrantModule();
-    DoubleCheckCycles.TestComponent component =
-        DaggerDoubleCheckCycles_TestComponent.builder().failingReentrantModule(module).build();
+    AtomicInteger callCount = new AtomicInteger(0);
 
-    assertThat(module.callCount).isEqualTo(0);
+    // Provides a failing reentrant binding. Even though it's scoped, the provides method is called
+    // twice. In this case we throw an exception since a different instance is provided on the
+    // second call.
+    DoubleCheckCycleTest.TestComponent component =
+        DaggerDoubleCheckCycleTest_TestComponent.builder()
+            .overrideModule(
+                new OverrideModule() {
+                  @Override Object provideReentrantObject(Provider<Object> provider) {
+                    if (callCount.incrementAndGet() == 1) {
+                      provider.get();
+                      return new Object();
+                    }
+                    return new Object();
+                  }
+                })
+            .build();
+
+    assertThat(callCount.get()).isEqualTo(0);
     try {
-      component.getFailingReentrant();
+      component.getReentrantObject();
       fail("Expected IllegalStateException");
     } catch (IllegalStateException e) {
       assertThat(e).hasMessageThat().contains("Scoped provider was invoked recursively");
     }
-    assertThat(module.callCount).isEqualTo(2);
+    assertThat(callCount.get()).isEqualTo(2);
   }
 }

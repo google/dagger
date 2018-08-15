@@ -227,7 +227,7 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
 [latestapi]: https://google.github.io/dagger/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
-[mavenbadge]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger
+[mavenbadge]: https://search.maven.org/artifact/com.google.dagger/dagger
 [mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.google.dagger%22
 [project]: http://github.com/google/dagger/
 [proposal]: https://github.com/square/dagger/issues/366

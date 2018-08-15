@@ -17,13 +17,22 @@
 package dagger.functional.cycle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.Thread.State.BLOCKED;
+import static java.lang.Thread.State.WAITING;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.junit.Assert.fail;
 
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import java.lang.annotation.Retention;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Provider;
 import javax.inject.Qualifier;
@@ -145,5 +154,86 @@ public class DoubleCheckCycleTest {
       assertThat(e).hasMessageThat().contains("Scoped provider was invoked recursively");
     }
     assertThat(callCount.get()).isEqualTo(2);
+  }
+
+  @Test(timeout = 5000)
+  public void testGetFromMultipleThreads() throws Exception {
+    AtomicInteger callCount = new AtomicInteger(0);
+    AtomicInteger requestCount = new AtomicInteger(0);
+    SettableFuture<Object> future = SettableFuture.create();
+
+    // Provides a non-reentrant binding. In this case, we return a SettableFuture so that we can
+    // control when the provides method returns.
+    DoubleCheckCycleTest.TestComponent component =
+        DaggerDoubleCheckCycleTest_TestComponent.builder()
+            .overrideModule(
+                new OverrideModule() {
+                  @Override
+                  Object provideObject() {
+                    callCount.incrementAndGet();
+                    try {
+                      return Uninterruptibles.getUninterruptibly(future);
+                    } catch (ExecutionException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                })
+            .build();
+
+    int numThreads = 10;
+    CountDownLatch remainingTasks = new CountDownLatch(numThreads);
+    List<Thread> tasks = new ArrayList<>(numThreads);
+    List<Object> values = Collections.synchronizedList(new ArrayList<>(numThreads));
+
+    // Set up multiple threads that call component.getObject().
+    for (int i = 0; i < numThreads; i++) {
+      tasks.add(
+          new Thread(
+              () -> {
+                requestCount.incrementAndGet();
+                values.add(component.getObject());
+                remainingTasks.countDown();
+              }));
+    }
+
+    // Check initial conditions
+    assertThat(remainingTasks.getCount()).isEqualTo(10);
+    assertThat(requestCount.get()).isEqualTo(0);
+    assertThat(callCount.get()).isEqualTo(0);
+    assertThat(values).isEmpty();
+
+    // Start all threads
+    tasks.forEach(Thread::start);
+
+    // Wait for all threads to wait/block.
+    long waiting = 0;
+    while (waiting != numThreads) {
+      waiting =
+          tasks.stream()
+              .map(Thread::getState)
+              .filter(state -> state == WAITING || state == BLOCKED)
+              .count();
+    }
+
+    // Check the intermediate state conditions.
+    // * All 10 threads should have requested the binding, but none should have finished.
+    // * Only 1 thread should have reached the provides method.
+    // * None of the threads should have set a value (since they are waiting for future to be set).
+    assertThat(remainingTasks.getCount()).isEqualTo(10);
+    assertThat(requestCount.get()).isEqualTo(10);
+    assertThat(callCount.get()).isEqualTo(1);
+    assertThat(values).isEmpty();
+
+    // Set the future and wait on all remaining threads to finish.
+    Object futureValue = new Object();
+    future.set(futureValue);
+    remainingTasks.await();
+
+    // Check the final state conditions.
+    // All values should be set now, and they should all be equal to the same instance.
+    assertThat(remainingTasks.getCount()).isEqualTo(0);
+    assertThat(requestCount.get()).isEqualTo(10);
+    assertThat(callCount.get()).isEqualTo(1);
+    assertThat(values).isEqualTo(Collections.nCopies(numThreads, futureValue));
   }
 }

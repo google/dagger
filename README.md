@@ -1,6 +1,6 @@
 # Dagger 2
 
-[![Maven Central][mavenbadge-svg]][mavenbadge]
+[![Maven Central][mavenbadge-svg]][mavencentral]
 
 A fast dependency injector for Android and Java.
 
@@ -190,7 +190,7 @@ gradle.projectsEvaluated {
 
 If you do not use maven, gradle, ivy, or other build systems that consume
 maven-style binary artifacts, they can be downloaded directly via the
-[Maven Central Repository][mavensearch].
+[Maven Central Repository][mavencentral].
 
 Developer snapshots are available from Sonatype's
 [snapshot repository][dagger-snap], and are built on a clean build of
@@ -227,8 +227,7 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
 [latestapi]: https://google.github.io/dagger/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
-[mavenbadge]: https://search.maven.org/artifact/com.google.dagger/dagger
-[mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.google.dagger%22
+[mavencentral]: https://search.maven.org/artifact/com.google.dagger/dagger
 [project]: http://github.com/google/dagger/
 [proposal]: https://github.com/square/dagger/issues/366
 [square]: http://github.com/square/dagger/

@@ -69,8 +69,13 @@ final class MembersInjectionMethods {
   }
 
   private MethodSpec membersInjectionMethod(Key key) {
+    Map<Key, ResolvedBindings> bindingsMap = graph.membersInjectionBindings();
     ResolvedBindings resolvedBindings =
-        graph.membersInjectionBindings().getOrDefault(key, graph.contributionBindings().get(key));
+        bindingsMap.getOrDefault(key, graph.contributionBindings().get(key));
+    if (resolvedBindings == null) {
+      throw new IllegalStateException(
+          "Unable to resolve binding for " + key + " with " + bindingsMap.size() + " bindings");
+    }
     Binding binding = resolvedBindings.binding();
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =

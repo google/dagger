@@ -459,6 +459,7 @@ public class GraphValidationTest {
             "import dagger.Module;",
             "import dagger.Provides;",
             "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
             "import java.util.Map;",
             "import javax.inject.Inject;",
             "",
@@ -487,11 +488,6 @@ public class GraphValidationTest {
             "    static C c(C c) {",
             "      return c;",
             "    }",
-            "  }",
-            "",
-            "  @MapKey",
-            "  @interface StringKey {",
-            "    String value();",
             "  }",
             "}");
 

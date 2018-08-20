@@ -2184,7 +2184,7 @@ public class ComponentProcessorTest {
     assertThat(compilation)
         .hadErrorContaining("java.lang.String is bound multiple times")
         .inFile(component)
-        .onLineContaining("Object notDuplicated();");
+        .onLineContaining("interface TestComponent");
   }
 
   @Test

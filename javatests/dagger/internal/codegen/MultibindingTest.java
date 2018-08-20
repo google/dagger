@@ -134,7 +134,7 @@ public class MultibindingTest {
             "java.util.Map<java.lang.String,java.lang.String> "
                 + "cannot be provided without an @Provides-annotated method")
         .inFile(component)
-        .onLineContaining("mapOfStringToString()");
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -186,8 +186,7 @@ public class MultibindingTest {
             "java.util.Set<dagger.producers.Produced<java.lang.String>> "
                 + "cannot be provided without an @Provides- or @Produces-annotated method")
         .inFile(component)
-        .onLineContaining("setOfProduced()");
-
+        .onLineContaining("interface TestComponent");
   }
 
   @Test

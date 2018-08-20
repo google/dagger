@@ -725,9 +725,11 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "[test.ChildComponent.s()] java.lang.String is bound multiple times:",
+                "java.lang.String is bound multiple times:",
                 "    @BindsInstance void test.ChildComponent.Builder.set1(String)",
-                "    @BindsInstance void test.ChildComponent.Builder.set2(String)"))
+                "    @BindsInstance void test.ChildComponent.Builder.set2(String)",
+                "    java.lang.String is provided at",
+                "        test.ChildComponent.s() [test.ParentComponent → test.ChildComponent]"))
         .inFile(componentFile)
         .onLineContaining("interface ParentComponent {");
   }

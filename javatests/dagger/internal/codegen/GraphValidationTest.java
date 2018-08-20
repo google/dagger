@@ -68,10 +68,38 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining("test.Bar cannot be provided without an @Provides-annotated method.")
         .inFile(component)
-        .onLine(7);
+        .onLineContaining("interface MyComponent");
   }
 
-  @Test public void componentProvisionWithNoDependencyChain() {
+  @Test
+  public void componentProvisionWithNoDependencyChain_unqualified() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestClass",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "final class TestClass {",
+            "  interface A {}",
+            "",
+            "  @Component()",
+            "  interface AComponent {",
+            "    A getA();",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[Dagger/MissingBinding] test.TestClass.A cannot be provided "
+                + "without an @Provides-annotated method.")
+        .inFile(component)
+        .onLineContaining("interface AComponent");
+  }
+
+  @Test
+  public void componentProvisionWithNoDependencyChain_qualified() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
             "test.TestClass",
@@ -86,7 +114,6 @@ public class GraphValidationTest {
             "",
             "  @Component()",
             "  interface AComponent {",
-            "    A getA();",
             "    @Q A qualifiedA();",
             "  }",
             "}");
@@ -94,15 +121,10 @@ public class GraphValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "test.TestClass.A cannot be provided without an @Provides-annotated method.")
+            "[Dagger/MissingBinding] @test.TestClass.Q test.TestClass.A cannot be provided "
+                + "without an @Provides-annotated method.")
         .inFile(component)
-        .onLine(12);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@test.TestClass.Q test.TestClass.A "
-                + "cannot be provided without an @Provides-annotated method.")
-        .inFile(component)
-        .onLine(13);
+        .onLineContaining("interface AComponent");
   }
 
   @Test public void constructorInjectionWithoutAnnotation() {
@@ -132,7 +154,7 @@ public class GraphValidationTest {
             "test.TestClass.A cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method.")
         .inFile(component)
-        .onLine(15);
+        .onLineContaining("interface AComponent");
   }
 
   @Test public void membersInjectWithoutProvision() {
@@ -167,7 +189,7 @@ public class GraphValidationTest {
                 + "@Provides-annotated method. This type supports members injection but cannot be "
                 + "implicitly provided.")
         .inFile(component)
-        .onLine(19);
+        .onLineContaining("interface AComponent");
   }
 
   @Test
@@ -208,7 +230,7 @@ public class GraphValidationTest {
                 "    test.InjectsUnboundedType is injected at",
                 "        test.TestComponent.injectsUnboundedType(test.InjectsUnboundedType)"))
         .inFile(component)
-        .onLine(7);
+        .onLineContaining("interface TestComponent");
   }
 
   @Ignore // TODO(b/77220343)
@@ -368,7 +390,7 @@ public class GraphValidationTest {
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
-        .onLine(23);
+        .onLineContaining("interface CComponent");
   }
 
   @Test public void cyclicDependencyNotIncludingEntryPoint() {
@@ -422,7 +444,7 @@ public class GraphValidationTest {
                 "    test.Outer.D is provided at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)
-        .onLine(27);
+        .onLineContaining("interface DComponent");
   }
 
   @Test
@@ -490,7 +512,7 @@ public class GraphValidationTest {
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
-        .onLineContaining("C getC();");
+        .onLineContaining("interface CComponent");
   }
 
   @Test
@@ -551,7 +573,7 @@ public class GraphValidationTest {
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
-        .onLine(25);
+        .onLineContaining("interface CComponent");
   }
 
   @Test
@@ -607,7 +629,7 @@ public class GraphValidationTest {
                 "    test.Outer.D is provided at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)
-        .onLine(28);
+        .onLineContaining("interface DComponent");
   }
 
   @Test
@@ -761,13 +783,13 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "[test.Child.entry()] Found a dependency cycle:",
+                "Found a dependency cycle:",
                 "    java.lang.String is injected at",
                 "        test.CycleModule.object(string)",
                 "    java.lang.Object is injected at",
                 "        test.CycleModule.string(object)",
                 "    java.lang.String is provided at",
-                "        test.Child.entry()"))
+                "        test.Child.entry() [test.Parent → test.Child]"))
         .inFile(parent)
         .onLineContaining("interface Parent");
   }
@@ -820,7 +842,7 @@ public class GraphValidationTest {
                 "    java.lang.Object is provided at",
                 "        test.TestComponent.unqualified()"))
         .inFile(component)
-        .onLineContaining("unqualified();");
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -860,7 +882,7 @@ public class GraphValidationTest {
                 "    java.lang.Object is provided at",
                 "        test.TestComponent.selfReferential()"))
         .inFile(component)
-        .onLine(7);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -914,7 +936,7 @@ public class GraphValidationTest {
                 "    test.A is injected at",
                 "        test.CycleComponent.inject(test.A)"))
         .inFile(component)
-        .onLineContaining("void inject(A a);");
+        .onLineContaining("interface CycleComponent");
   }
 
   @Test
@@ -947,7 +969,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining("Found a dependency cycle:")
         .inFile(cycles)
-        .onLineContaining("A a();");
+        .onLineContaining("interface C");
   }
 
   @Test
@@ -980,7 +1002,7 @@ public class GraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining("test.Self cannot be provided without an @Inject constructor")
         .inFile(component)
-        .onLineContaining("void inject(Self target);");
+        .onLineContaining("interface SelfComponent");
   }
 
   @Test
@@ -1058,7 +1080,7 @@ public class GraphValidationTest {
                 "    @Provides test.Outer.A test.Outer.AModule.provideA(String)",
                 "    test.Outer.A test.Outer.Parent.getA()"))
         .inFile(component)
-        .onLine(30);
+        .onLineContaining("interface Child");
   }
 
   @Test public void duplicateExplicitBindings_TwoProvidesMethods() {
@@ -1099,7 +1121,7 @@ public class GraphValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
                 "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
         .inFile(component)
-        .onLine(24);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -1147,66 +1169,49 @@ public class GraphValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
                 "    @Binds test.Outer.A test.Outer.Module2.bindA2(test.Outer.B)"))
         .inFile(component)
-        .onLine(28);
+        .onLineContaining("interface TestComponent");
   }
 
-  @Test public void duplicateExplicitBindings_MultipleProvisionTypes() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
-        "package test;",
-        "",
-        "import dagger.Binds;",
-        "import dagger.Component;",
-        "import dagger.MapKey;",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import dagger.MapKey;",
-        "import dagger.multibindings.IntoMap;",
-        "import dagger.multibindings.IntoSet;",
-        "import java.util.HashMap;",
-        "import java.util.HashSet;",
-        "import java.util.Map;",
-        "import java.util.Set;",
-        "import javax.inject.Qualifier;",
-        "",
-        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "final class Outer {",
-        "  @MapKey(unwrapValue = true)",
-        "  @interface StringKey {",
-        "    String value();",
-        "  }",
-        "",
-        "  @Qualifier @interface SomeQualifier {}",
-        "",
-        "  @Module",
-        "  abstract static class TestModule1 {",
-        "    @Provides @IntoMap",
-        "    @StringKey(\"foo\")",
-        "    static String stringMapEntry() { return \"\"; }",
-        "",
-        "    @Binds @IntoMap @StringKey(\"bar\")",
-        "    abstract String bindStringMapEntry(@SomeQualifier String value);",
-        "",
-        "    @Provides @IntoSet static String stringSetElement() { return \"\"; }",
-        "    @Binds @IntoSet abstract String bindStringSetElement(@SomeQualifier String value);",
-        "",
-        "    @Provides @SomeQualifier static String provideSomeQualifiedString() { return \"\"; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class TestModule2 {",
-        "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
-        "",
-        "    @Provides Map<String, String> stringMap() {",
-        "      return new HashMap<String, String>();",
-        "    }",
-        "  }",
-        "",
-        "  @Component(modules = { TestModule1.class, TestModule2.class })",
-        "  interface TestComponent {",
-        "    Set<String> getStringSet();",
-        "    Map<String, String> getStringMap();",
-        "  }",
-        "}");
+  @Test
+  public void duplicateExplicitBindings_multibindingsAndExplicitSets() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.HashSet;",
+            "import java.util.Set;",
+            "import javax.inject.Qualifier;",
+            "",
+            "final class Outer {",
+            "  @Qualifier @interface SomeQualifier {}",
+            "",
+            "  @Module",
+            "  abstract static class TestModule1 {",
+            "    @Provides @IntoSet static String stringSetElement() { return \"\"; }",
+            "",
+            "    @Binds",
+            "    @IntoSet abstract String bindStringSetElement(@SomeQualifier String value);",
+            "",
+            "    @Provides @SomeQualifier",
+            "    static String provideSomeQualifiedString() { return \"\"; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class TestModule2 {",
+            "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
+            "  }",
+            "",
+            "  @Component(modules = { TestModule1.class, TestModule2.class })",
+            "  interface TestComponent {",
+            "    Set<String> getStringSet();",
+            "  }",
+            "}");
 
     Compilation compilation = daggerCompiler().compile(component);
     assertThat(compilation).failed();
@@ -1223,55 +1228,44 @@ public class GraphValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
-        .onLine(52);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
-                    + "or declarations:",
-                "    Map bindings and declarations:",
-                "        @Binds @dagger.multibindings.IntoMap "
-                    + "@test.Outer.StringKey(\"bar\") String"
-                    + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier "
-                    + "String)",
-                "        @Provides @dagger.multibindings.IntoMap "
-                    + "@test.Outer.StringKey(\"foo\") String"
-                    + " test.Outer.TestModule1.stringMapEntry()",
-                "    Unique bindings and declarations:",
-                "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
-        .inFile(component)
-        .onLine(53);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
-  public void duplicateExplicitBindings_UniqueBindingAndMultibindingDeclaration() {
+  public void duplicateExplicitBindings_multibindingsAndExplicitMaps() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
             "test.Outer",
             "package test;",
             "",
-            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-            "",
+            "import dagger.Binds;",
             "import dagger.Component;",
             "import dagger.Module;",
             "import dagger.Provides;",
-            "import dagger.multibindings.Multibinds;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
             "import java.util.HashMap;",
-            "import java.util.HashSet;",
             "import java.util.Map;",
-            "import java.util.Set;",
+            "import javax.inject.Qualifier;",
             "",
             "final class Outer {",
+            "  @Qualifier @interface SomeQualifier {}",
+            "",
             "  @Module",
             "  abstract static class TestModule1 {",
-            "    @Multibinds abstract Map<String, String> stringMap();",
-            "    @Multibinds abstract Set<String> stringSet();",
+            "    @Provides @IntoMap",
+            "    @StringKey(\"foo\")",
+            "    static String stringMapEntry() { return \"\"; }",
+            "",
+            "    @Binds @IntoMap @StringKey(\"bar\")",
+            "    abstract String bindStringMapEntry(@SomeQualifier String value);",
+            "",
+            "    @Provides @SomeQualifier",
+            "    static String provideSomeQualifiedString() { return \"\"; }",
             "  }",
             "",
             "  @Module",
             "  static class TestModule2 {",
-            "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
-            "",
             "    @Provides Map<String, String> stringMap() {",
             "      return new HashMap<String, String>();",
             "    }",
@@ -1279,8 +1273,59 @@ public class GraphValidationTest {
             "",
             "  @Component(modules = { TestModule1.class, TestModule2.class })",
             "  interface TestComponent {",
-            "    Set<String> getStringSet();",
             "    Map<String, String> getStringMap();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+                    + "or declarations:",
+                "    Map bindings and declarations:",
+                "        @Binds @dagger.multibindings.IntoMap "
+                    + "@dagger.multibindings.StringKey(\"bar\") String"
+                    + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier "
+                    + "String)",
+                "        @Provides @dagger.multibindings.IntoMap "
+                    + "@dagger.multibindings.StringKey(\"foo\") String"
+                    + " test.Outer.TestModule1.stringMapEntry()",
+                "    Unique bindings and declarations:",
+                "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void duplicateExplicitBindings_UniqueBindingAndMultibindingDeclaration_Set() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.HashSet;",
+            "import java.util.Set;",
+            "",
+            "final class Outer {",
+            "  @Module",
+            "  abstract static class TestModule1 {",
+            "    @Multibinds abstract Set<String> stringSet();",
+            "  }",
+            "",
+            "  @Module",
+            "  static class TestModule2 {",
+            "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
+            "  }",
+            "",
+            "  @Component(modules = { TestModule1.class, TestModule2.class })",
+            "  interface TestComponent {",
+            "    Set<String> getStringSet();",
             "  }",
             "}");
 
@@ -1296,7 +1341,44 @@ public class GraphValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
-        .onLine(32);
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void duplicateExplicitBindings_UniqueBindingAndMultibindingDeclaration_Map() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.HashMap;",
+            "import java.util.Map;",
+            "",
+            "final class Outer {",
+            "  @Module",
+            "  abstract static class TestModule1 {",
+            "    @Multibinds abstract Map<String, String> stringMap();",
+            "  }",
+            "",
+            "  @Module",
+            "  static class TestModule2 {",
+            "    @Provides Map<String, String> stringMap() {",
+            "      return new HashMap<String, String>();",
+            "    }",
+            "  }",
+            "",
+            "  @Component(modules = { TestModule1.class, TestModule2.class })",
+            "  interface TestComponent {",
+            "    Map<String, String> getStringMap();",
+            "  }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             message(
@@ -1308,7 +1390,7 @@ public class GraphValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
         .inFile(component)
-        .onLine(33);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void duplicateBindings_TruncateAfterLimit() {
@@ -1422,7 +1504,7 @@ public class GraphValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module10.provideA()",
                 "    and 2 others"))
         .inFile(component)
-        .onLineContaining("getA();");
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void longChainOfDependencies() {
@@ -1475,50 +1557,26 @@ public class GraphValidationTest {
             "    Provider<Lazy<C>> lazyCProvider();",
             "  }",
             "}");
-    String errorText = "test.TestClass.A cannot be provided without an @Provides-annotated method.";
-    String otherErrorFormat =
-        message(
-            errorText,
-            "    test.TestClass.A is injected at",
-            "        test.TestClass.B.<init>(a)",
-            "    test.TestClass.B is injected at",
-            "        test.TestClass.C.b",
-            "    test.TestClass.C is %s at",
-            "        test.TestClass.AComponent.%s");
 
     Compilation compilation = daggerCompiler().compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                errorText,
+                "test.TestClass.A cannot be provided without an @Provides-annotated method.",
                 "    test.TestClass.A is injected at",
                 "        test.TestClass.B.<init>(a)",
                 "    test.TestClass.B is injected at",
-                "        test.TestClass.DImpl.<init>(…, b)",
-                "    test.TestClass.DImpl is injected at",
-                "        test.TestClass.DModule.d(…, impl, …)",
-                "    @javax.inject.Named(\"slim shady\") test.TestClass.D is provided at",
-                "        test.TestClass.AComponent.getFoo()"))
+                "        test.TestClass.C.b",
+                "    test.TestClass.C is injected at",
+                "        test.TestClass.AComponent.injectC(test.TestClass.C)",
+                "The following other entry points also depend on it:",
+                "    test.TestClass.AComponent.getFoo()",
+                "    test.TestClass.AComponent.cProvider()",
+                "    test.TestClass.AComponent.lazyC()",
+                "    test.TestClass.AComponent.lazyCProvider()"))
         .inFile(component)
-        .onLineContaining("getFoo();");
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(otherErrorFormat, "injected", "injectC(test.TestClass.C)"))
-        .inFile(component)
-        .onLineContaining("injectC(C c);");
-    assertThat(compilation)
-        .hadErrorContaining(String.format(otherErrorFormat, "provided", "cProvider()"))
-        .inFile(component)
-        .onLineContaining("cProvider();");
-    assertThat(compilation)
-        .hadErrorContaining(String.format(otherErrorFormat, "provided", "lazyC()"))
-        .inFile(component)
-        .onLineContaining("lazyC();");
-    assertThat(compilation)
-        .hadErrorContaining(String.format(otherErrorFormat, "provided", "lazyCProvider()"))
-        .inFile(component)
-        .onLineContaining("lazyCProvider();");
+        .onLineContaining("interface AComponent");
   }
 
   @Test
@@ -1568,7 +1626,7 @@ public class GraphValidationTest {
                 "    TestInterface is provided at",
                 "        TestComponent.testInterface()"))
         .inFile(component)
-        .onLine(5);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -1651,28 +1709,10 @@ public class GraphValidationTest {
                         + ".bindWithResolvedKey(test.Duplicates.BoundImpl)",
                     "    @Binds test.Duplicates.BoundTwice "
                         + "test.Duplicates.DuplicatesModule"
-                        + ".bindWithUnresolvedKey(test.Duplicates.NotBound"))
+                        + ".bindWithUnresolvedKey(test.Duplicates.NotBound)\\E")
+                + "|\\Qsame map key is bound more than once")
         .inFile(component)
-        .onLineContaining("boundTwice();");
-    assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("object();");
-    assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("set();");
-    assertThat(compilation)
-        .hadErrorContaining("test.Duplicates.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("intMap();");
-    // Some javacs report only the first error for each source line.
-    // Assert that one of the expected errors is reported.
-    assertThat(compilation)
-        .hadErrorContainingMatch(
-            "test\\.Duplicates\\.NotBound cannot be provided|same map key is bound more than once")
-        .inFile(component)
-        .onLineContaining("longMap();");
+        .onLineContaining("interface C");
   }
 
   @Test public void resolvedParametersInDependencyTrace() {
@@ -2510,9 +2550,10 @@ public class GraphValidationTest {
     Compilation compilation = daggerCompiler().compile(parent, parentModule, child, childModule);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("[Child.needsString()] java.lang.String cannot be provided")
+        .hadErrorContainingMatch(
+            "(?s)\\Qjava.lang.String cannot be provided\\E.*\\QChild.needsString()\\E")
         .inFile(parent)
-        .onLine(4);
+        .onLineContaining("interface Parent");
   }
 
   @Test
@@ -2584,9 +2625,11 @@ public class GraphValidationTest {
         daggerCompiler().compile(parent, parentModule, child, childModule, grandchild);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("[Grandchild.object()] java.lang.Double cannot be provided")
+        .hadErrorContainingMatch(
+            "(?s)\\Qjava.lang.Double cannot be provided\\E.*"
+                + "\\QGrandchild.object() [Parent → Child → Grandchild]\\E$")
         .inFile(parent)
-        .onLine(4);
+        .onLineContaining("interface Parent");
   }
 
   @Test
@@ -2654,7 +2697,7 @@ public class GraphValidationTest {
             "@interface BadMetadata {}");
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.TestComponent",
+            "test.TestComponents",
             "package test;",
             "",
             "import dagger.Component;",
@@ -2662,18 +2705,30 @@ public class GraphValidationTest {
             "import dagger.releasablereferences.ReleasableReferenceManager;",
             "import dagger.releasablereferences.TypedReleasableReferenceManager;",
             "",
-            "@TestScope",
-            "@YetAnotherScope",
-            "@Component",
-            "interface TestComponent {",
-            "  @ForReleasableReferences(OtherScope.class)",
-            "  ReleasableReferenceManager otherManager();",
+            "interface TestComponents {",
+            "  @TestScope",
+            "  @YetAnotherScope",
+            "  @Component",
+            "  interface WrongScopeComponent {",
+            "    @ForReleasableReferences(OtherScope.class)",
+            "    ReleasableReferenceManager otherManager();",
+            "  }",
             "",
-            "  @ForReleasableReferences(TestScope.class)",
-            "  TypedReleasableReferenceManager<TestMetadata> typedManager();",
+            "  @TestScope",
+            "  @YetAnotherScope",
+            "  @Component",
+            "  interface WrongMetadataComponent {",
+            "    @ForReleasableReferences(TestScope.class)",
+            "    TypedReleasableReferenceManager<TestMetadata> wrongMetadata();",
+            "  }",
             "",
-            "  @ForReleasableReferences(TestScope.class)",
-            "  TypedReleasableReferenceManager<BadMetadata> badManager();",
+            "  @TestScope",
+            "  @YetAnotherScope",
+            "  @Component",
+            "  interface BadMetadataComponent {",
+            "    @ForReleasableReferences(TestScope.class)",
+            "    TypedReleasableReferenceManager<BadMetadata> badManager();",
+            "  }",
             "}");
     Compilation compilation =
         daggerCompiler()
@@ -2684,12 +2739,12 @@ public class GraphValidationTest {
             "There is no binding for "
                 + "@dagger.releasablereferences.ForReleasableReferences(test.OtherScope.class) "
                 + "dagger.releasablereferences.ReleasableReferenceManager "
-                + "because no component in test.TestComponent's component hierarchy is annotated "
-                + "with @test.OtherScope. "
+                + "because no component in test.TestComponents.WrongScopeComponent's "
+                + "component hierarchy is annotated with @test.OtherScope. "
                 + "The available reference-releasing scopes are "
                 + "[@test.TestScope, @test.YetAnotherScope].")
         .inFile(component)
-        .onLine(13);
+        .onLineContaining("interface WrongScopeComponent");
     assertThat(compilation)
         .hadErrorContaining(
             "There is no binding for "
@@ -2697,7 +2752,7 @@ public class GraphValidationTest {
                 + "dagger.releasablereferences.TypedReleasableReferenceManager<test.TestMetadata> "
                 + "because test.TestScope is not annotated with @test.TestMetadata")
         .inFile(component)
-        .onLine(16);
+        .onLineContaining("interface WrongMetadataComponent");
     assertThat(compilation)
         .hadErrorContaining(
             "There is no binding for "
@@ -2706,11 +2761,11 @@ public class GraphValidationTest {
                 + "because test.BadMetadata is not annotated with "
                 + "@dagger.releasablereferences.CanReleaseReferences")
         .inFile(component)
-        .onLine(19);
+        .onLineContaining("interface BadMetadataComponent");
   }
 
   @Test
-  public void releasableReferenceManagerConflict() {
+  public void releasableReferenceManagerConflict_ReleasableReferenceManager() {
     JavaFileObject testScope =
         JavaFileObjects.forSourceLines(
             "test.TestScope",
@@ -2746,28 +2801,11 @@ public class GraphValidationTest {
             "import dagger.Provides;",
             "import dagger.releasablereferences.ForReleasableReferences;",
             "import dagger.releasablereferences.ReleasableReferenceManager;",
-            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
-            "import java.util.Set;",
             "",
             "@Module",
             "abstract class TestModule {",
             "  @Provides @ForReleasableReferences(TestScope.class)",
             "  static ReleasableReferenceManager rrm() {",
-            "    return null;",
-            "  }",
-            "",
-            "  @Provides @ForReleasableReferences(TestScope.class)",
-            "  static TypedReleasableReferenceManager<TestMetadata> typedRrm() {",
-            "    return null;",
-            "  }",
-            "",
-            "  @Provides",
-            "  static Set<ReleasableReferenceManager> rrmSet() {",
-            "    return null;",
-            "  }",
-            "",
-            "  @Provides",
-            "  static Set<TypedReleasableReferenceManager<TestMetadata>> typedRrmSet() {",
             "    return null;",
             "  }",
             "}");
@@ -2780,20 +2818,12 @@ public class GraphValidationTest {
             "import dagger.Component;",
             "import dagger.releasablereferences.ForReleasableReferences;",
             "import dagger.releasablereferences.ReleasableReferenceManager;",
-            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
-            "import java.util.Set;",
             "",
             "@TestScope",
             "@Component(modules = TestModule.class)",
             "interface TestComponent {",
             "  @ForReleasableReferences(TestScope.class)",
             "  ReleasableReferenceManager testManager();",
-            "",
-            "  @ForReleasableReferences(TestScope.class)",
-            "  TypedReleasableReferenceManager<TestMetadata> typedManager();",
-            "",
-            "  Set<ReleasableReferenceManager> managers();",
-            "  Set<TypedReleasableReferenceManager<TestMetadata>> typedManagers();",
             "}");
 
     Compilation compilation =
@@ -2812,7 +2842,74 @@ public class GraphValidationTest {
                         + "%1$s.ReleasableReferenceManager from the scope declaration"),
                 "dagger.releasablereferences"))
         .inFile(component)
-        .onLine(13);
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void releasableReferenceManagerConflict_TypedReleasableReferenceManager() {
+    JavaFileObject testScope =
+        JavaFileObjects.forSourceLines(
+            "test.TestScope",
+            "package test;",
+            "",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "import java.lang.annotation.Retention;",
+            "import javax.inject.Scope;",
+            "",
+            "@TestMetadata",
+            "@CanReleaseReferences",
+            "@Scope",
+            "@Retention(RUNTIME)",
+            "@interface TestScope {}");
+    JavaFileObject testMetadata =
+        JavaFileObjects.forSourceLines(
+            "test.TestMetadata",
+            "package test;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "",
+            "@CanReleaseReferences",
+            "@interface TestMetadata {}");
+
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides @ForReleasableReferences(TestScope.class)",
+            "  static TypedReleasableReferenceManager<TestMetadata> typedRrm() {",
+            "    return null;",
+            "  }",
+            "}");
+
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
+            "",
+            "@TestScope",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  @ForReleasableReferences(TestScope.class)",
+            "  TypedReleasableReferenceManager<TestMetadata> typedManager();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(testScope, testMetadata, testModule, component);
+    assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
@@ -2829,7 +2926,75 @@ public class GraphValidationTest {
                         + "from the scope declaration"),
                 "dagger.releasablereferences"))
         .inFile(component)
-        .onLine(16);
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void releasableReferenceManagerConflict_SetOfReleasableReferenceManager() {
+    JavaFileObject testScope =
+        JavaFileObjects.forSourceLines(
+            "test.TestScope",
+            "package test;",
+            "",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "import java.lang.annotation.Retention;",
+            "import javax.inject.Scope;",
+            "",
+            "@TestMetadata",
+            "@CanReleaseReferences",
+            "@Scope",
+            "@Retention(RUNTIME)",
+            "@interface TestScope {}");
+    JavaFileObject testMetadata =
+        JavaFileObjects.forSourceLines(
+            "test.TestMetadata",
+            "package test;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "",
+            "@CanReleaseReferences",
+            "@interface TestMetadata {}");
+
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.ReleasableReferenceManager;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides",
+            "  static Set<ReleasableReferenceManager> rrmSet() {",
+            "    return null;",
+            "  }",
+            "}");
+
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.ReleasableReferenceManager;",
+            "import java.util.Set;",
+            "",
+            "@TestScope",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Set<ReleasableReferenceManager> managers();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(testScope, testMetadata, testModule, component);
+    assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             message(
@@ -2841,7 +3006,75 @@ public class GraphValidationTest {
                 "    Dagger-generated binding for "
                     + "Set<dagger.releasablereferences.ReleasableReferenceManager>"))
         .inFile(component)
-        .onLine(18);
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void releasableReferenceManagerConflict_SetOfTypedReleasableReferenceManagers() {
+    JavaFileObject testScope =
+        JavaFileObjects.forSourceLines(
+            "test.TestScope",
+            "package test;",
+            "",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "import java.lang.annotation.Retention;",
+            "import javax.inject.Scope;",
+            "",
+            "@TestMetadata",
+            "@CanReleaseReferences",
+            "@Scope",
+            "@Retention(RUNTIME)",
+            "@interface TestScope {}");
+    JavaFileObject testMetadata =
+        JavaFileObjects.forSourceLines(
+            "test.TestMetadata",
+            "package test;",
+            "",
+            "import dagger.releasablereferences.CanReleaseReferences;",
+            "",
+            "@CanReleaseReferences",
+            "@interface TestMetadata {}");
+
+    JavaFileObject testModule =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides",
+            "  static Set<TypedReleasableReferenceManager<TestMetadata>> typedRrmSet() {",
+            "    return null;",
+            "  }",
+            "}");
+
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.releasablereferences.ForReleasableReferences;",
+            "import dagger.releasablereferences.TypedReleasableReferenceManager;",
+            "import java.util.Set;",
+            "",
+            "@TestScope",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Set<TypedReleasableReferenceManager<TestMetadata>> typedManagers();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().compile(testScope, testMetadata, testModule, component);
+    assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
@@ -2855,7 +3088,7 @@ public class GraphValidationTest {
                         + "Set<%1$s.TypedReleasableReferenceManager<test.TestMetadata>>"),
                 "dagger.releasablereferences"))
         .inFile(component)
-        .onLine(19);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test

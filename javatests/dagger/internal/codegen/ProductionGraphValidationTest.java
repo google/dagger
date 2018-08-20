@@ -80,7 +80,7 @@ public class ProductionGraphValidationTest {
             "test.Bar cannot be provided without an @Inject constructor or an @Provides- or "
                 + "@Produces-annotated method.")
         .inFile(component)
-        .onLine(8);
+        .onLineContaining("interface MyComponent");
   }
 
   @Test public void componentProductionWithNoDependencyChain() {
@@ -106,7 +106,7 @@ public class ProductionGraphValidationTest {
             "test.TestClass.A cannot be provided without an @Provides- or @Produces-annotated "
                 + "method.")
         .inFile(component)
-        .onLine(11);
+        .onLineContaining("interface AComponent");
   }
 
   @Test public void provisionDependsOnProduction() {
@@ -149,7 +149,7 @@ public class ProductionGraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining("test.TestClass.A is a provision, which cannot depend on a production.")
         .inFile(component)
-        .onLine(30);
+        .onLineContaining("interface AComponent");
   }
 
   @Test public void provisionEntryPointDependsOnProduction() {
@@ -185,7 +185,7 @@ public class ProductionGraphValidationTest {
         .hadErrorContaining(
             "test.TestClass.A is a provision entry-point, which cannot depend on a production.")
         .inFile(component)
-        .onLine(20);
+        .onLineContaining("interface AComponent");
   }
 
   @Test
@@ -243,7 +243,7 @@ public class ProductionGraphValidationTest {
     assertThat(compilation)
         .hadErrorContaining("test.TestClass.A is a provision, which cannot depend on a production")
         .inFile(component)
-        .onLine(43);
+        .onLineContaining("interface AComponent");
   }
 
   @Test
@@ -294,7 +294,7 @@ public class ProductionGraphValidationTest {
         .hadErrorContaining(
             "test.TestClass.A cannot be provided without an @Provides-annotated method.")
         .inFile(component)
-        .onLine(34);
+        .onLineContaining("interface StringComponent");
   }
 
   @Test
@@ -350,7 +350,7 @@ public class ProductionGraphValidationTest {
                 + " test.TestClass.MonitoringModule#monitorFactory is a provision,"
                 + " which cannot depend on a production.")
         .inFile(component)
-        .onLine(37);
+        .onLineContaining("interface StringComponent");
   }
 
   @Test
@@ -391,7 +391,10 @@ public class ProductionGraphValidationTest {
             "}");
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component, module);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("cycle").inFile(component).onLine(8);
+    assertThat(compilation)
+        .hadErrorContaining("cycle")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
 
   @Test
@@ -433,7 +436,10 @@ public class ProductionGraphValidationTest {
             "}");
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component, module);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("cycle").inFile(component).onLine(8);
+    assertThat(compilation)
+        .hadErrorContaining("cycle")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
   
   @Test

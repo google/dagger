@@ -23,6 +23,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.graph.Traverser;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
@@ -63,6 +64,14 @@ final class DaggerTypes implements Types {
    */
   Optional<DeclaredType> nonObjectSuperclass(DeclaredType type) {
     return Optional.ofNullable(MoreTypes.nonObjectSuperclass(types, elements, type).orNull());
+  }
+
+  /**
+   * Returns the {@linkplain #directSupertypes(TypeMirror) supertype}s of a type in breadth-first
+   * order.
+   */
+  Iterable<TypeMirror> supertypes(TypeMirror type) {
+    return Traverser.<TypeMirror>forGraph(this::directSupertypes).breadthFirst(type);
   }
 
   /**

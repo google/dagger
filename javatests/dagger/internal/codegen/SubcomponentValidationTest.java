@@ -309,11 +309,10 @@ public class SubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "[test.ChildComponent.getString()] "
-                + "java.lang.Integer cannot be provided without an @Inject constructor or an "
+            "java.lang.Integer cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method")
         .inFile(componentFile)
-        .onLine(6);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void subcomponentOnConcreteType() {

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +58,7 @@ final class MissingBindingMethods {
   ImmutableList<MissingBindingMethod> getUnimplementedMethods() {
     // We will never register a binding as missing and also as implemented for the same instance of
     // MissingBindingMethods, so there's no need to filter missingBindingMethods.
-    return missingBindingMethods.values().stream().collect(toImmutableList());
+    return ImmutableList.copyOf(missingBindingMethods.values());
   }
 
   /** Mark the {@link MissingBindingMethod} as having been implemented. */

@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.NonNullableRequestForNullableBindingValidation.nullableToNonNullable;
+import static dagger.internal.codegen.NullableBindingValidation.nullableToNonNullable;
 import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.testing.compile.Compilation;

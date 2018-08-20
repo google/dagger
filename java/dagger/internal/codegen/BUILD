@@ -199,8 +199,8 @@ java_library(
 java_library(
     name = "binding_graph_validation",
     srcs = [
-        "BindingCycleValidation.java",
         "BindingGraphValidationModule.java",
+        "DependencyCycleValidation.java",
         "DependsOnProductionExecutorValidator.java",
         "DuplicateBindingsValidation.java",
         "IncompatiblyScopedBindingsValidation.java",
@@ -209,7 +209,7 @@ java_library(
         "MapMultibindingValidation.java",
         "MembersInjectionBindingValidation.java",
         "MissingBindingValidation.java",
-        "NonNullableRequestForNullableBindingValidation.java",
+        "NullableBindingValidation.java",
         "ProvisionDependencyOnProducerBindingValidation.java",
         "SubcomponentFactoryMethodValidation.java",
         "Validation.java",

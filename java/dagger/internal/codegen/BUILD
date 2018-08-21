@@ -227,6 +227,7 @@ java_library(
 java_library(
     name = "writing",
     srcs = [
+        "AbstractMethodModifiableBindingExpression.java",
         "AnnotationCreatorGenerator.java",
         "BindingExpression.java",
         "BindingMethodImplementation.java",
@@ -266,7 +267,8 @@ java_library(
         "MembersInjectorProviderCreationExpression.java",
         "MethodBindingExpression.java",
         "MissingBindingExpression.java",
-        "MissingBindingMethods.java",
+        "ModifiableBindingMethods.java",
+        "ModifiableBindingType.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
         "OptionalBindingExpression.java",

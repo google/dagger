@@ -16,28 +16,36 @@
 
 package dagger.internal.codegen;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import dagger.model.Key;
+import dagger.model.RequestKind;
 
 /**
- * A {@link BindingExpression} that invokes a method that encapsulates a binding that requires an
- * instance of a generated type. This expression is used in abstract implementations of a
- * subcomponent when there are no concrete definitions of generated types available. The
- * (unimplemented) method is added to the {@code GeneratedComponentModel} when this dependency
- * expression is requested. The method is overridden when generating the concrete implementation of
- * an ancestor component.
+ * An {@link AbstractMethodModifiableBindingExpression} for a binding that requires an instance of a
+ * generated type. This expression is used in abstract implementations of a subcomponent when there
+ * are no concrete definitions of generated types available. The (unimplemented) method is added to
+ * the {@code GeneratedComponentModel} when this dependency expression is requested. The method is
+ * overridden when generating the concrete implementation of an ancestor component.
  */
-final class GeneratedInstanceBindingExpression extends BindingExpression {
-  private final Key key;
+final class GeneratedInstanceBindingExpression extends AbstractMethodModifiableBindingExpression {
+  private final GeneratedComponentModel generatedComponentModel;
+  private final ContributionBinding binding;
+  private final RequestKind requestKind;
 
-  GeneratedInstanceBindingExpression(ResolvedBindings resolvedBindings) {
-    this.key = resolvedBindings.key();
+  GeneratedInstanceBindingExpression(
+      GeneratedComponentModel generatedComponentModel,
+      ResolvedBindings resolvedBindings,
+      RequestKind requestKind) {
+    super(
+        generatedComponentModel,
+        ModifiableBindingType.GENERATED_INSTANCE,
+        resolvedBindings.key(),
+        requestKind);
+    this.generatedComponentModel = generatedComponentModel;
+    this.binding = resolvedBindings.contributionBinding();
+    this.requestKind = requestKind;
   }
 
   @Override
-  final Expression getDependencyExpression(ClassName requestingClass) {
-    // TODO(b/72748365): Implement method encapsulating binding to invoke in this expression.
-    return Expression.create(key.type(), CodeBlock.of("null"));
+  String chooseMethodName() {
+    return generatedComponentModel.getUniqueGetterMethodName(binding, requestKind);
   }
 }

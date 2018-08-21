@@ -48,7 +48,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.MissingBindingMethods.MissingBindingMethod;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -589,15 +589,15 @@ abstract class ComponentModelBuilder {
         // Since we're overriding a subcomponent implementation we add to its implementation given
         // an expanded binding graph.
 
-        // Implement missing binding methods.
-        for (MissingBindingMethod missingBindingMethod :
-            generatedComponentModel.getMissingBindingMethods()) {
+        // Override modifiable binding methods.
+        for (ModifiableBindingMethod modifiableBindingMethod :
+            generatedComponentModel.getModifiableBindingMethods()) {
           bindingExpressions
-              .getMissingBindingMethodImplementation(missingBindingMethod)
+              .getModifiableBindingMethod(modifiableBindingMethod)
               .ifPresent(
                   method ->
-                      generatedComponentModel.addImplementedMissingBindingMethod(
-                          missingBindingMethod, method));
+                      generatedComponentModel.addImplementedModifiableBindingMethod(
+                          modifiableBindingMethod, method));
         }
       } else {
         super.addInterfaceMethods();

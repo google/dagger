@@ -16,9 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -56,7 +53,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = chooseMethodName();
+      methodName = generatedComponentModel.getUniqueGetterMethodName(binding, requestKind);
       // TODO(user): Fix the order that these generated methods are written to the component.
       generatedComponentModel.addMethod(
           PRIVATE_METHOD,
@@ -72,24 +69,5 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected String methodName() {
     checkState(methodName != null, "addMethod() must be called before methodName()");
     return methodName;
-  }
-
-  private String chooseMethodName() {
-    // TODO(user): Use a better name for @MapKey binding instances.
-    // TODO(user): Include the binding method as part of the method name.
-    return generatedComponentModel.getUniqueMethodName(
-        "get" + bindingName() + dependencyKindName());
-  }
-
-  /** Returns the canonical method name suffix for the binding. */
-  private String bindingName() {
-    return LOWER_CAMEL.to(UPPER_CAMEL, BindingVariableNamer.name(binding));
-  }
-
-  /** Returns a canonical method name suffix for the request kind. */
-  private String dependencyKindName() {
-    return requestKind.equals(RequestKind.INSTANCE)
-        ? ""
-        : UPPER_UNDERSCORE.to(UPPER_CAMEL, requestKind.name());
   }
 }

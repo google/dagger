@@ -47,8 +47,6 @@ import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Validates that the two maps that {@link DispatchingAndroidInjector} injects have logically
@@ -58,9 +56,6 @@ import javax.lang.model.util.Types;
  */
 @AutoService(BindingGraphPlugin.class)
 public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugin {
-  private Types types;
-  private Elements elements;
-
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
     for (BindingNode node : graph.bindingNodes()) {
@@ -159,15 +154,5 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
   @Override
   public String pluginName() {
     return "Dagger/Android/DuplicateAndroidInjectors";
-  }
-
-  @Override
-  public void initTypes(Types types) {
-    this.types = types;
-  }
-
-  @Override
-  public void initElements(Elements elements) {
-    this.elements = elements;
   }
 }

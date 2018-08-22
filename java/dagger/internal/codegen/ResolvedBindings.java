@@ -22,6 +22,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -76,6 +77,15 @@ abstract class ResolvedBindings implements HasContributionType {
    * The optional binding declarations for {@link #key()}.
    */
   abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
+
+  // Computing the hash code is an expensive operation.
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // Suppresses ErrorProne warning that hashCode was overridden w/o equals
+  @Override
+  public abstract boolean equals(Object other);
 
   /**
    * All bindings for {@link #key()}, indexed by the component in which the binding was resolved.

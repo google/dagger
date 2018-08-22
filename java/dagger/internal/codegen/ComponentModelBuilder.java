@@ -304,8 +304,9 @@ abstract class ComponentModelBuilder {
     for (List<ComponentMethodDescriptor> methodsWithSameSignature :
         Multimaps.asMap(componentMethodsBySignature).values()) {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
-      generatedComponentModel.addMethod(
-          COMPONENT_METHOD, bindingExpressions.getComponentMethod(anyOneMethod));
+      bindingExpressions
+          .getComponentMethod(anyOneMethod)
+          .ifPresent(method -> generatedComponentModel.addMethod(COMPONENT_METHOD, method));
     }
   }
 

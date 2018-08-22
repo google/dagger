@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
@@ -236,18 +237,41 @@ final class ComponentBindingExpressions {
     return dependencyExpression;
   }
 
-  /** Returns the implementation of a component method. */
-  MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
+  /**
+   * Returns the implementation of a component method. Returns {@link Optional#empty} if the
+   * component method implementation should not be emitted.
+   */
+  Optional<MethodSpec> getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     DependencyRequest dependencyRequest = componentMethod.dependencyRequest().get();
-    return MethodSpec.overriding(
+    MethodSpec.Builder methodBuilder =
+        MethodSpec.overriding(
             componentMethod.methodElement(),
             MoreTypes.asDeclared(graph.componentType().asType()),
-            types)
-        .addCode(
-            getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
-                .getComponentMethodImplementation(componentMethod, generatedComponentModel))
-        .build();
+            types);
+
+    ModifiableBindingType type =
+        getModifiableBindingType(dependencyRequest.key(), dependencyRequest.kind());
+    if (type.isModifiable()) {
+      generatedComponentModel.registerModifiableBindingMethod(
+          type, dependencyRequest.key(), dependencyRequest.kind(), methodBuilder.build());
+      if (!type.hasBaseClassImplementation()) {
+        // A component method should not be emitted if it encapsulates a modifiable binding that
+        // cannot be satisfied by the abstract base class implementation of a subcomponent.
+        checkState(
+            !generatedComponentModel.supermodel().isPresent(),
+            "Attempting to generate a component method in a subtype of the abstract subcomponent "
+                + "base class.");
+        return Optional.empty();
+      }
+    }
+
+    return Optional.of(
+        methodBuilder
+            .addCode(
+                getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
+                    .getComponentMethodImplementation(componentMethod, generatedComponentModel))
+            .build());
   }
 
   /**

@@ -74,6 +74,8 @@ enum ModifiableBindingType {
 
   private static final ImmutableSet<ModifiableBindingType> TYPES_FINALIZED_ON_MODIFICATION =
       ImmutableSet.of(MISSING, GENERATED_INSTANCE, OPTIONAL, INJECTION);
+  private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =
+      ImmutableSet.of(MULTIBINDING, OPTIONAL, INJECTION);
 
   boolean isModifiable() {
     return !equals(NONE);
@@ -87,5 +89,13 @@ enum ModifiableBindingType {
    */
   boolean finalizedOnModification() {
     return TYPES_FINALIZED_ON_MODIFICATION.contains(this);
+  }
+
+  /**
+   * Returns true if the method encapsulating the modifiable binding should have a concrete
+   * implementation in the abstract base class for a subcomponent.
+   */
+  boolean hasBaseClassImplementation() {
+    return TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS.contains(this);
   }
 }

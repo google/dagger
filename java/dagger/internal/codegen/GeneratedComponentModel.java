@@ -268,6 +268,16 @@ final class GeneratedComponentModel {
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
+  /**
+   * Registers a known method as encapsulating a modifiable binding without adding the method to the
+   * current component. This is relevant when a method of a different type, such as a component
+   * method, encapsulates a modifiable binding.
+   */
+  void registerModifiableBindingMethod(
+      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec methodSpec) {
+    modifiableBindingMethods.addMethod(type, key, kind, methodSpec);
+  }
+
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
   void addImplementedModifiableBindingMethod(
       ModifiableBindingMethod method, MethodSpec methodSpec) {

@@ -33,9 +33,9 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +58,7 @@ import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -87,7 +88,21 @@ final class DiagnosticReporterFactory {
   }
 
   private static <K, V> Function<K, V> memoize(Function<K, V> uncached) {
-    return CacheBuilder.newBuilder().build(CacheLoader.from(uncached));
+    // If Android Guava is on the processor path, then c.g.c.b.Function (which LoadingCache
+    // implements) does not extend j.u.f.Function.
+
+    // First, explicitly convert uncached to c.g.c.b.Function because CacheLoader.from() expects
+    // one.
+    com.google.common.base.Function<K, V> uncachedAsBaseFunction = uncached::apply;
+
+    LoadingCache<K, V> cache =
+        CacheBuilder.newBuilder().build(CacheLoader.from(uncachedAsBaseFunction));
+
+    // Second, explicitly convert LoadingCache to j.u.f.Function.
+    @SuppressWarnings("deprecation") // uncachedAsBaseFunction throws only unchecked exceptions
+    Function<K, V> memoized = cache::apply;
+
+    return memoized;
   }
 
   /**

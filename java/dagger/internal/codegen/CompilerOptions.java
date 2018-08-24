@@ -309,24 +309,30 @@ abstract class CompilerOptions {
       ProcessingEnvironment processingEnv, String key, T defaultValue, Set<T> validValues) {
     Map<String, String> options = processingEnv.getOptions();
     if (options.containsKey(key)) {
-      try {
-        T type =
-            Enum.valueOf(defaultValue.getDeclaringClass(), Ascii.toUpperCase(options.get(key)));
-        if (!validValues.contains(type)) {
-          throw new IllegalArgumentException(); // let handler below print out good msg.
-        }
-        return type;
-      } catch (IllegalArgumentException e) {
+      String optionValue = options.get(key);
+      if (optionValue == null) {
         processingEnv
             .getMessager()
-            .printMessage(
-                Diagnostic.Kind.ERROR,
-                "Processor option -A"
-                    + key
-                    + " may only have the values "
-                    + validValues
-                    + " (case insensitive), found: "
-                    + options.get(key));
+            .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
+      } else {
+        try {
+          T type = Enum.valueOf(defaultValue.getDeclaringClass(), Ascii.toUpperCase(optionValue));
+          if (!validValues.contains(type)) {
+            throw new IllegalArgumentException(); // let handler below print out good msg.
+          }
+          return type;
+        } catch (IllegalArgumentException e) {
+          processingEnv
+              .getMessager()
+              .printMessage(
+                  Diagnostic.Kind.ERROR,
+                  "Processor option -A"
+                      + key
+                      + " may only have the values "
+                      + validValues
+                      + " (case insensitive), found: "
+                      + options.get(key));
+        }
       }
     }
     return defaultValue;

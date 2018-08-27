@@ -26,37 +26,29 @@ import dagger.producers.Producer;
 import javax.inject.Provider;
 
 /** Whether a binding or declaration is for provision, production, or a {@link MembersInjector}. */
-// TODO(dpb): Merge with FrameworkType?
 enum BindingType {
   /** A binding with this type is a {@link ProvisionBinding}. */
-  PROVISION(Provider.class, FrameworkType.PROVIDER),
+  PROVISION(Provider.class),
 
   /** A binding with this type is a {@link MembersInjectionBinding}. */
-  MEMBERS_INJECTION(MembersInjector.class, FrameworkType.MEMBERS_INJECTOR),
+  MEMBERS_INJECTION(MembersInjector.class),
 
   /** A binding with this type is a {@link ProductionBinding}. */
-  PRODUCTION(Producer.class, FrameworkType.PRODUCER),
+  PRODUCTION(Producer.class),
   ;
 
   static final ImmutableSet<BindingType> CONTRIBUTION_TYPES =
       Sets.immutableEnumSet(PROVISION, PRODUCTION);
 
   private final Class<?> frameworkClass;
-  private final FrameworkType frameworkType;
 
-  private BindingType(Class<?> frameworkClass, FrameworkType frameworkType) {
+  BindingType(Class<?> frameworkClass) {
     this.frameworkClass = frameworkClass;
-    this.frameworkType = frameworkType;
   }
 
   /** The framework class associated with bindings of this type. */
   Class<?> frameworkClass() {
     return frameworkClass;
-  }
-
-  /** The framework type used to represent bindings of this type. */
-  FrameworkType frameworkType() {
-    return frameworkType;
   }
 
   /** Returns the {@link #frameworkClass()} parameterized with a type. */

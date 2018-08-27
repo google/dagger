@@ -336,7 +336,7 @@ final class ComponentBindingExpressions {
           return frameworkInstanceBindingExpression(resolvedBindings);
         } else {
           return new DerivedFromFrameworkInstanceBindingExpression(
-              resolvedBindings, requestKind, this, types);
+              resolvedBindings, FrameworkType.PRODUCER, requestKind, this, types);
         }
 
       default:
@@ -464,16 +464,15 @@ final class ComponentBindingExpressions {
             : new FrameworkFieldInitializer(
                 generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression);
 
-    FrameworkType frameworkType = resolvedBindings.bindingType().frameworkType();
-    switch (frameworkType) {
-      case PROVIDER:
+    switch (resolvedBindings.bindingType()) {
+      case PROVISION:
         return new ProviderInstanceBindingExpression(
             resolvedBindings, frameworkInstanceSupplier, types, elements);
-      case PRODUCER:
+      case PRODUCTION:
         return new ProducerInstanceBindingExpression(
             resolvedBindings, frameworkInstanceSupplier, types, elements);
       default:
-        throw new AssertionError("invalid framework type: " + frameworkType);
+        throw new AssertionError("invalid binding type: " + resolvedBindings.bindingType());
     }
   }
 
@@ -593,7 +592,7 @@ final class ComponentBindingExpressions {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromFrameworkInstanceBindingExpression(
-            resolvedBindings, requestKind, this, types);
+            resolvedBindings, FrameworkType.PROVIDER, requestKind, this, types);
 
       case PRODUCER:
         return producerFromProviderBindingExpression(resolvedBindings);
@@ -643,7 +642,7 @@ final class ComponentBindingExpressions {
    */
   private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
       ResolvedBindings resolvedBindings) {
-    checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
+    checkArgument(resolvedBindings.bindingType().equals(BindingType.PROVISION));
     return new ProducerInstanceBindingExpression(
         resolvedBindings,
         new FrameworkFieldInitializer(
@@ -679,7 +678,7 @@ final class ComponentBindingExpressions {
           : directInstanceExpression;
     }
     return new DerivedFromFrameworkInstanceBindingExpression(
-        resolvedBindings, RequestKind.INSTANCE, this, types);
+        resolvedBindings, FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
   }
 
   /**

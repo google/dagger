@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.CodeBlock;
 import dagger.Lazy;
-import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
 import dagger.model.DependencyRequest;
@@ -137,25 +136,6 @@ enum FrameworkType {
           throw new IllegalArgumentException(
               String.format("Cannot request a %s from a %s", requestKind, this));
       }
-    }
-  },
-
-  // TODO(ronshapiro): Remove this once MembersInjectionBinding no longer extends Binding
-  /** A {@link MembersInjector}. */
-  MEMBERS_INJECTOR {
-    @Override
-    RequestKind requestKind() {
-      return RequestKind.MEMBERS_INJECTION;
-    }
-
-    @Override
-    CodeBlock to(RequestKind requestKind, CodeBlock from) {
-      throw new UnsupportedOperationException(requestKind.toString());
-    }
-
-    @Override
-    Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
-      throw new UnsupportedOperationException(requestKind.toString());
     }
   },
   ;

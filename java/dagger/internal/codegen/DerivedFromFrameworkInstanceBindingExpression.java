@@ -33,12 +33,13 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
 
   DerivedFromFrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
+      FrameworkType frameworkType,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
     this.key = resolvedBindings.key();
     this.requestKind = checkNotNull(requestKind);
-    this.frameworkType = resolvedBindings.bindingType().frameworkType();
+    this.frameworkType = checkNotNull(frameworkType);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
   }

@@ -198,6 +198,8 @@ the GitHub project's master branch.
 
 ## Building Dagger
 
+TODO Add link to CONTRIBUTING
+
 Dagger is built with [`bazel`]. The tests can be run with `bazel test //...`.
 `util/install-local-snapshot.sh` will build all of the Dagger libraries and
 install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.

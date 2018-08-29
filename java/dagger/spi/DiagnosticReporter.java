@@ -18,15 +18,17 @@ package dagger.spi;
 
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
+import dagger.model.BindingGraph.MaybeBindingNode;
 import javax.tools.Diagnostic;
 
 /**
  * An object that {@link BindingGraphPlugin}s can use to report diagnostics while visiting a {@link
  * BindingGraph}.
+ *
+ * <p>Note: This API is still experimental and will change.
  */
 public interface DiagnosticReporter {
   /**
@@ -48,19 +50,19 @@ public interface DiagnosticReporter {
       Object... moreArgs);
 
   /**
-   * Reports a diagnostic for a binding. Includes information about how the binding is reachable
-   * from entry points.
+   * Reports a diagnostic for a binding or missing binding. Includes information about how the
+   * binding is reachable from entry points.
    */
-  void reportBinding(Diagnostic.Kind diagnosticKind, BindingNode bindingNode, String message);
+  void reportBinding(Diagnostic.Kind diagnosticKind, MaybeBindingNode bindingNode, String message);
 
   /**
-   * Reports a diagnostic for a binding. Includes information about how the binding is reachable
-   * from entry points.
+   * Reports a diagnostic for a binding or missing binding. Includes information about how the
+   * binding is reachable from entry points.
    */
   @FormatMethod
   void reportBinding(
       Diagnostic.Kind diagnosticKind,
-      BindingNode bindingNode,
+      MaybeBindingNode bindingNode,
       String messageFormat,
       Object firstArg,
       Object... moreArgs);

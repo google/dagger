@@ -111,6 +111,6 @@ final class ProvisionDependencyOnProducerBindingValidation implements BindingGra
       DependencyEdge dependencyOnProduction, BindingGraph bindingGraph) {
     return String.format(
         "%s is a provision, which cannot depend on a production.",
-        bindingRequestingDependency(dependencyOnProduction, bindingGraph).binding().key());
+        bindingRequestingDependency(dependencyOnProduction, bindingGraph).key());
   }
 }

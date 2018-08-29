@@ -33,6 +33,8 @@ import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.MaybeBindingNode;
+import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
 import dagger.model.BindingKind;
@@ -278,23 +280,32 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
 
     DotNode dotNode(Node node) {
       DotNode dotNode = new DotNode(nodeId(node));
-      if (node instanceof BindingNode) {
-        dagger.model.Binding binding = ((BindingNode) node).binding();
-        if (binding.kind().equals(BindingKind.MEMBERS_INJECTION)) {
-          dotNode.addAttributeFormat("label", "inject(%s)", binding.key());
-        } else if (binding.isProduction()) {
-          dotNode.addAttributeFormat("label", "@Produces %s", binding.key());
-        } else {
-          dotNode.addAttribute("label", binding.key());
-        }
+      if (node instanceof MaybeBindingNode) {
         dotNode.addAttribute("tooltip", "");
         if (bindingGraph.entryPointBindingNodes().contains(node)) {
           dotNode.addAttribute("penwidth", 3);
+        }
+        if (node instanceof BindingNode) {
+          dotNode.addAttribute("label", label((BindingNode) node));
+        }
+        if (node instanceof MissingBindingNode) {
+          dotNode.addAttributeFormat(
+              "label", "missing binding for %s", ((MissingBindingNode) node).key());
         }
       } else {
         dotNode.addAttribute("style", "invis").addAttribute("shape", "point");
       }
       return dotNode;
+    }
+
+    private String label(BindingNode bindingNode) {
+      if (bindingNode.binding().kind().equals(BindingKind.MEMBERS_INJECTION)) {
+        return String.format("inject(%s)", bindingNode.key());
+      } else if (bindingNode.binding().isProduction()) {
+        return String.format("@Produces %s", bindingNode.key());
+      } else {
+        return bindingNode.key().toString();
+      }
     }
 
     private static String clusterName(ComponentPath owningComponentPath) {

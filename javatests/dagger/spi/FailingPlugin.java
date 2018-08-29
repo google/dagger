@@ -43,10 +43,8 @@ public final class FailingPlugin implements BindingGraphPlugin {
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     if (options.containsKey("error_on_binding")) {
       String key = options.get("error_on_binding");
-      bindingGraph
-          .bindingNodes()
-          .stream()
-          .filter(node -> node.binding().key().toString().equals(key))
+      bindingGraph.bindingNodes().stream()
+          .filter(node -> node.key().toString().equals(key))
           .forEach(node -> diagnosticReporter.reportBinding(ERROR, node, "Bad %s!", "Binding"));
     }
 

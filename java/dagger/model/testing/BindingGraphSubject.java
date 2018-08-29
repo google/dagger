@@ -96,10 +96,8 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
   }
 
   private ImmutableSet<BindingNode> getBindingNodes(String keyString) {
-    return actual()
-        .bindingNodes()
-        .stream()
-        .filter(node -> node.binding().key().toString().equals(keyString))
+    return actual().bindingNodes().stream()
+        .filter(node -> node.key().toString().equals(keyString))
         .collect(toImmutableSet());
   }
 
@@ -139,12 +137,10 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
     }
 
     private void dependsOnBindingWithKeyString(String keyString) {
-      if (actualBindingGraph()
-          .successors(actual())
-          .stream()
+      if (actualBindingGraph().successors(actual()).stream()
           .filter(node -> node instanceof BindingNode)
           .map(node -> (BindingNode) node)
-          .noneMatch(node -> node.binding().key().toString().equals(keyString))) {
+          .noneMatch(node -> node.key().toString().equals(keyString))) {
         fail("has successor with key", keyString);
       }
     }

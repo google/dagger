@@ -85,7 +85,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   /** Returns the binding nodes for a key. */
   public ImmutableSet<BindingNode> bindingNodes(Key key) {
     return nodeStream(BindingNode.class)
-        .filter(node -> node.binding().key().equals(key))
+        .filter(node -> node.key().equals(key))
         .collect(toImmutableSet());
   }
 
@@ -166,19 +166,19 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     return entryPointEdgeStream().collect(toImmutableSet());
   }
 
-  /** Returns the binding nodes for bindings that directly satisfy entry points. */
-  public ImmutableSet<BindingNode> entryPointBindingNodes() {
+  /** Returns the binding nodes or missing binding nodes that directly satisfy entry points. */
+  public ImmutableSet<MaybeBindingNode> entryPointBindingNodes() {
     return entryPointEdgeStream()
-        .map(edge -> (BindingNode) incidentNodes(edge).target())
+        .map(edge -> (MaybeBindingNode) incidentNodes(edge).target())
         .collect(toImmutableSet());
   }
 
   /**
-   * Returns the edges for entry points that transitively depend on a binding. Never returns an
-   * empty set.
+   * Returns the edges for entry points that transitively depend on a binding or missing binding for
+   * a key. Never returns an empty set.
    */
   public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
-      BindingNode bindingNode) {
+      MaybeBindingNode bindingNode) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
     Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
         inducedSubgraph(
@@ -329,10 +329,27 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   /**
+   * A node in the binding graph that is either a {@link BindingNode} or a {@link
+   * MissingBindingNode}.
+   */
+  public interface MaybeBindingNode extends Node {
+
+    /** The component that owns the binding, or in which the binding is missing. */
+    @Override
+    ComponentPath componentPath();
+
+    /** The key of the binding, or for which there is no binding. */
+    Key key();
+
+    /** The binding, or empty if missing. */
+    Optional<Binding> maybeBinding();
+  }
+
+  /**
    * A <b>binding node</b> in the binding graph. If a binding is owned by more than one component,
    * there is one binding node for that binding for every owning component.
    */
-  public interface BindingNode extends Node {
+  public interface BindingNode extends MaybeBindingNode {
 
     /** The component that owns the {@link #binding()}. */
     @Override
@@ -340,11 +357,21 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
     /** The binding. */
     Binding binding();
+
+    @Override
+    default Key key() {
+      return binding().key();
+    }
+
+    @Override
+    default Optional<Binding> maybeBinding() {
+      return Optional.of(binding());
+    }
   }
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */
   @AutoValue
-  public abstract static class MissingBindingNode implements Node {
+  public abstract static class MissingBindingNode implements MaybeBindingNode {
     static MissingBindingNode create(ComponentPath component, Key key) {
       return new AutoValue_BindingGraph_MissingBindingNode(component, key);
     }
@@ -357,7 +384,12 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     public abstract Key key();
 
     @Override
-    public String toString() {
+    public final Optional<Binding> maybeBinding() {
+      return Optional.empty();
+    }
+
+    @Override
+    public final String toString() {
       return String.format("missing binding for %s in %s", key(), componentPath());
     }
   }

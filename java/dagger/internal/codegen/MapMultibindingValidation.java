@@ -91,8 +91,7 @@ final class MapMultibindingValidation implements BindingGraphPlugin {
         diagnosticReporter.reportBinding(
             ERROR,
             multiboundMapBindingNode,
-            duplicateMapKeyErrorMessage(
-                contributionsForOneMapKey, multiboundMapBindingNode.binding().key()));
+            duplicateMapKeyErrorMessage(contributionsForOneMapKey, multiboundMapBindingNode.key()));
       }
     }
   }
@@ -109,7 +108,7 @@ final class MapMultibindingValidation implements BindingGraphPlugin {
           ERROR,
           multiboundMapBindingNode,
           inconsistentMapKeyAnnotationTypesErrorMessage(
-              contributionsByMapKeyAnnotationType, multiboundMapBindingNode.binding().key()));
+              contributionsByMapKeyAnnotationType, multiboundMapBindingNode.key()));
     }
   }
 

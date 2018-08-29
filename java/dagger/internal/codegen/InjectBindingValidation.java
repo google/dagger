@@ -53,7 +53,7 @@ final class InjectBindingValidation implements BindingGraphPlugin {
 
   private void validateInjectionBinding(BindingNode node, DiagnosticReporter diagnosticReporter) {
     ValidationReport<TypeElement> typeReport =
-        injectValidator.validateType(MoreTypes.asTypeElement(node.binding().key().type()));
+        injectValidator.validateType(MoreTypes.asTypeElement(node.key().type()));
     for (Item item : typeReport.allItems()) {
       diagnosticReporter.reportBinding(item.kind(), node, item.message());
     }

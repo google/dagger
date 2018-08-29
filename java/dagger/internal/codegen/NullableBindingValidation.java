@@ -49,7 +49,7 @@ final class NullableBindingValidation implements BindingGraphPlugin {
             compilerOptions.nullableValidationKind(),
             dependencyEdge,
             nullableToNonNullable(
-                bindingNode.binding().key().toString(),
+                bindingNode.key().toString(),
                 bindingNode.toString())); // will include the @Nullable
       }
     }

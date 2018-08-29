@@ -20,10 +20,10 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.asList;
+import static com.google.common.collect.Sets.filter;
 import static dagger.internal.codegen.DaggerElements.DECLARATION_ORDER;
 import static dagger.internal.codegen.DaggerElements.elementEncloses;
 import static dagger.internal.codegen.DaggerElements.elementToString;
@@ -40,7 +40,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.FormatMethod;
@@ -50,13 +49,13 @@ import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.MaybeBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.processing.Messager;
@@ -118,7 +117,7 @@ final class DiagnosticReporterFactory {
                 transform(types.supertypes(component.asType()), type -> asTypeElement(type)));
 
     /** The shortest path (value) from an entry point (column) to a binding (row). */
-    private final Table<BindingNode, DependencyEdge, ImmutableList<Node>> shortestPaths =
+    private final Table<MaybeBindingNode, DependencyEdge, ImmutableList<Node>> shortestPaths =
         HashBasedTable.create();
 
     private final BindingGraph graph;
@@ -161,7 +160,7 @@ final class DiagnosticReporterFactory {
     // TODO(ronshapiro): should this also include the binding element?
     @Override
     public void reportBinding(
-        Diagnostic.Kind diagnosticKind, BindingNode bindingNode, String message) {
+        Diagnostic.Kind diagnosticKind, MaybeBindingNode bindingNode, String message) {
       StringBuilder messageBuilder = new StringBuilder(message);
       appendEntryPointsAndOneTrace(messageBuilder, bindingNode);
       printMessage(diagnosticKind, messageBuilder, rootComponent);
@@ -170,7 +169,7 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportBinding(
         Diagnostic.Kind diagnosticKind,
-        BindingNode bindingNode,
+        MaybeBindingNode bindingNode,
         String messageFormat,
         Object firstArg,
         Object... moreArgs) {
@@ -238,7 +237,7 @@ final class DiagnosticReporterFactory {
      * Appends the dependency trace to {@code bindingNode} from one of the entry points from which
      * it is reachable, and any remaining entry points, to {@code message}.
      */
-    private void appendEntryPointsAndOneTrace(StringBuilder message, BindingNode bindingNode) {
+    private void appendEntryPointsAndOneTrace(StringBuilder message, MaybeBindingNode bindingNode) {
       ImmutableSet<DependencyEdge> entryPoints =
           graph.entryPointEdgesDependingOnBindingNode(bindingNode);
       // Show the full dependency trace for one entry point.
@@ -288,16 +287,11 @@ final class DiagnosticReporterFactory {
     }
 
     // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
-    // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, BindingNode)
+    // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
     private void appendDependencyTrace(
-        StringBuilder message, DependencyEdge entryPoint, BindingNode bindingNode) {
+        StringBuilder message, DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
       checkArgument(entryPoint.isEntryPoint());
-      Node entryPointBinding = graph.incidentNodes(entryPoint).target();
-      ImmutableList<Node> shortestBindingPath =
-          shortestPath(
-              node -> Sets.filter(graph.successors(node), BindingNode.class::isInstance),
-              entryPointBinding,
-              bindingNode);
+      ImmutableList<Node> shortestBindingPath = shortestPathFromEntryPoint(entryPoint, bindingNode);
       verify(
           !shortestBindingPath.isEmpty(),
           "no dependency path from %s to %s in %s",
@@ -364,24 +358,21 @@ final class DiagnosticReporterFactory {
      * Returns a comparator that puts entry points whose shortest dependency path to {@code
      * bindingNode} is shortest first.
      */
-    private Comparator<DependencyEdge> shortestDependencyPathFirst(BindingNode bindingNode) {
-      Map<DependencyEdge, ImmutableList<Node>> shortestPathsToBinding =
-          shortestPaths.row(bindingNode);
-      return comparing(
-          entryPoint ->
-              shortestPathsToBinding
-                  .computeIfAbsent(
-                      entryPoint, computeShortestPathToBindingFromEntryNode(bindingNode))
-                  .size());
+    private Comparator<DependencyEdge> shortestDependencyPathFirst(MaybeBindingNode bindingNode) {
+      return comparing(entryPoint -> shortestPathFromEntryPoint(entryPoint, bindingNode).size());
     }
 
-    private Function<DependencyEdge, ImmutableList<Node>> computeShortestPathToBindingFromEntryNode(
-        BindingNode bindingNode) {
-      return entryPoint ->
-          shortestPath(
-              node -> filter(graph.successors(node), successor -> successor instanceof BindingNode),
-              graph.incidentNodes(entryPoint).target(),
-              bindingNode);
+    private ImmutableList<Node> shortestPathFromEntryPoint(
+        DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
+      return shortestPaths
+          .row(bindingNode)
+          .computeIfAbsent(
+              entryPoint,
+              ep ->
+                  shortestPath(
+                      node -> filter(graph.successors(node), MaybeBindingNode.class::isInstance),
+                      graph.incidentNodes(ep).target(),
+                      bindingNode));
     }
 
     /**

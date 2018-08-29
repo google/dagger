@@ -66,7 +66,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
   }
 
   private boolean isDispatchingAndroidInjector(BindingNode node) {
-    Key key = node.binding().key();
+    Key key = node.key();
     return MoreTypes.isTypeOf(DispatchingAndroidInjector.class, key.type())
         && !key.qualifier().isPresent();
   }
@@ -129,7 +129,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
         .filter(
             node -> {
               TypeMirror valueType =
-                  MoreTypes.asDeclared(node.binding().key().type()).getTypeArguments().get(1);
+                  MoreTypes.asDeclared(node.key().type()).getTypeArguments().get(1);
               if (!MoreTypes.isTypeOf(Provider.class, valueType)
                   || !valueType.getKind().equals(TypeKind.DECLARED)) {
                 return false;

@@ -66,10 +66,10 @@ final class MembersInjectionBindingValidation implements BindingGraphPlugin {
   private Optional<TypeMirror> membersInjectedType(BindingNode bindingNode) {
     switch (bindingNode.binding().kind()) {
       case MEMBERS_INJECTION:
-        return Optional.of(bindingNode.binding().key().type());
+        return Optional.of(bindingNode.key().type());
 
       case MEMBERS_INJECTOR:
-        return Optional.of(types.unwrapType(bindingNode.binding().key().type()));
+        return Optional.of(types.unwrapType(bindingNode.key().type()));
 
       default:
         return Optional.empty();

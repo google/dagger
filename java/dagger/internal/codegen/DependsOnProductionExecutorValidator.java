@@ -54,22 +54,17 @@ final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
     Key productionImplementationExecutorKey = keyFactory.forProductionImplementationExecutor();
     Key productionExecutorKey = keyFactory.forProductionExecutor();
 
-    bindingGraph
-        .bindingNodes(productionExecutorKey)
-        .stream()
+    bindingGraph.bindingNodes(productionExecutorKey).stream()
         .flatMap(
             productionExecutorBinding ->
                 bindingGraph.predecessors(productionExecutorBinding).stream())
         .flatMap(instancesOf(BindingNode.class))
-        .filter(binding -> !binding.binding().key().equals(productionImplementationExecutorKey))
+        .filter(binding -> !binding.key().equals(productionImplementationExecutorKey))
         .forEach(binding -> reportError(diagnosticReporter, binding));
   }
 
   private void reportError(DiagnosticReporter diagnosticReporter, BindingNode bindingNode) {
     diagnosticReporter.reportBinding(
-        ERROR,
-        bindingNode,
-        "%s may not depend on the production executor",
-        bindingNode.binding().key());
+        ERROR, bindingNode, "%s may not depend on the production executor", bindingNode.key());
   }
 }

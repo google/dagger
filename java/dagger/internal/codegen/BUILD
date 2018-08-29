@@ -304,6 +304,18 @@ java_library(
     ],
 )
 
+genrule(
+    name = "processor_manifest_files",
+    srcs = glob(["META-INF/**"]),
+    outs = ["processor_manifest_files.jar"],
+    cmd = """
+    pushd java/dagger/internal/codegen &> /dev/null
+    jar -cfM out.jar .
+    popd &> /dev/null
+    mv java/dagger/internal/codegen/out.jar $@
+    """,
+)
+
 # The processor's "main", if you will
 java_library(
     name = "processor",
@@ -329,6 +341,7 @@ java_library(
         "ProductionExecutorModuleProcessingStep.java",
     ],
     plugins = CODEGEN_PLUGINS,
+    resource_jars = [":processor_manifest_files.jar"],
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
         ":base",

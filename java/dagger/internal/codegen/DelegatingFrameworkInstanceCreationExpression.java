@@ -46,6 +46,6 @@ final class DelegatingFrameworkInstanceCreationExpression
         componentBindingExpressions
             .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
             .codeBlock(),
-        binding.bindingType().frameworkClass());
+        frameworkDependency.frameworkClass());
   }
 }

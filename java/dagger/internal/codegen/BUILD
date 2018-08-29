@@ -124,7 +124,6 @@ java_library(
         "BindingGraph.java",
         "BindingNodeImpl.java",
         "BindingType.java",
-        "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
         "BindsTypeChecker.java",
         "ComponentDescriptor.java",
@@ -140,6 +139,7 @@ java_library(
         "FrameworkDependency.java",
         "FrameworkField.java",  # Used by SourceFiles
         "FrameworkType.java",
+        "FrameworkTypeMapper.java",
         "InjectBindingRegistry.java",
         "KeyFactory.java",
         "MapKeys.java",

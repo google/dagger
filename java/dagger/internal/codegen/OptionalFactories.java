@@ -83,7 +83,7 @@ final class OptionalFactories {
   private final Map<PresentFactorySpec, TypeSpec> presentFactoryClasses =
       new TreeMap<>(
           Comparator.comparing(PresentFactorySpec::valueKind)
-              .thenComparing(PresentFactorySpec::bindingType)
+              .thenComparing(PresentFactorySpec::frameworkType)
               .thenComparing(PresentFactorySpec::optionalKind));
 
   /**
@@ -173,7 +173,7 @@ final class OptionalFactories {
   @AutoValue
   abstract static class PresentFactorySpec {
     /** Whether the factory is a {@link Provider} or a {@link Producer}. */
-    abstract BindingType bindingType();
+    abstract FrameworkType frameworkType();
 
     /** What kind of {@code Optional} is returned. */
     abstract OptionalKind optionalKind();
@@ -198,12 +198,12 @@ final class OptionalFactories {
 
     /** The type of the factory. */
     ParameterizedTypeName factoryType() {
-      return bindingType().frameworkClassOf(optionalType());
+      return frameworkType().frameworkClassOf(optionalType());
     }
 
     /** The type of the delegate provider or producer. */
     ParameterizedTypeName delegateType() {
-      return bindingType().frameworkClassOf(typeVariable());
+      return frameworkType().frameworkClassOf(typeVariable());
     }
 
     /** The name of the factory class. */
@@ -211,13 +211,13 @@ final class OptionalFactories {
       return new StringBuilder("Present")
           .append(UPPER_UNDERSCORE.to(UPPER_CAMEL, optionalKind().name()))
           .append(UPPER_UNDERSCORE.to(UPPER_CAMEL, valueKind().toString()))
-          .append(bindingType().frameworkClass().getSimpleName())
+          .append(frameworkType().frameworkClass().getSimpleName())
           .toString();
     }
 
     private static PresentFactorySpec of(ContributionBinding binding) {
       return new AutoValue_OptionalFactories_PresentFactorySpec(
-          binding.bindingType(),
+          FrameworkType.forBindingType(binding.bindingType()),
           OptionalType.from(binding.key()).kind(),
           getOnlyElement(binding.dependencies()).kind());
     }
@@ -301,8 +301,8 @@ final class OptionalFactories {
     MethodSpec.Builder getMethodBuilder =
         methodBuilder("get").addAnnotation(Override.class).addModifiers(PUBLIC);
 
-    switch (spec.bindingType()) {
-      case PROVISION:
+    switch (spec.frameworkType()) {
+      case PROVIDER:
         return getMethodBuilder
             .returns(spec.optionalType())
             .addCode(
@@ -313,7 +313,7 @@ final class OptionalFactories {
                             spec.valueKind(), CodeBlock.of("$N", delegateField))))
             .build();
 
-      case PRODUCTION:
+      case PRODUCER:
         getMethodBuilder.returns(listenableFutureOf(spec.optionalType()));
 
         switch (spec.valueKind()) {
@@ -356,7 +356,7 @@ final class OptionalFactories {
         }
 
       default:
-        throw new AssertionError(spec.bindingType());
+        throw new AssertionError(spec.frameworkType());
     }
   }
 

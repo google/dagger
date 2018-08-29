@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen;
 
-import javax.lang.model.util.Elements;
-
 /** Binding expression for producer instances. */
 final class ProducerInstanceBindingExpression extends FrameworkInstanceBindingExpression {
 
@@ -25,7 +23,7 @@ final class ProducerInstanceBindingExpression extends FrameworkInstanceBindingEx
       ResolvedBindings resolvedBindings,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
-      Elements elements) {
+      DaggerElements elements) {
     super(
         resolvedBindings,
         frameworkInstanceSupplier,

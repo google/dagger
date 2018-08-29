@@ -274,13 +274,6 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /**
-   * The framework class associated with these bindings.
-   */
-  Class<?> frameworkClass() {
-    return bindingType().frameworkClass();
-  }
-
-  /**
    * The scope associated with the single binding.
    *
    * @throws IllegalStateException if {@link #bindings()} does not have exactly one element

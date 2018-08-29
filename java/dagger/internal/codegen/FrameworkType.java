@@ -18,12 +18,14 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.RequestKinds.frameworkClass;
 import static dagger.model.RequestKind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
@@ -39,6 +41,11 @@ import javax.lang.model.type.TypeMirror;
 enum FrameworkType {
   /** A {@link Provider}. */
   PROVIDER {
+    @Override
+    Class<?> frameworkClass() {
+      return Provider.class;
+    }
+
     @Override
     RequestKind requestKind() {
       return RequestKind.PROVIDER;
@@ -94,13 +101,18 @@ enum FrameworkType {
 
         default:
           return Expression.create(
-              types.rewrapType(from.type(), frameworkClass(requestKind)), codeBlock);
+              types.rewrapType(from.type(), RequestKinds.frameworkClass(requestKind)), codeBlock);
       }
     }
   },
 
   /** A {@link Producer}. */
   PRODUCER {
+    @Override
+    Class<?> frameworkClass() {
+      return Producer.class;
+    }
+
     @Override
     RequestKind requestKind() {
       return RequestKind.PRODUCER;
@@ -139,6 +151,26 @@ enum FrameworkType {
     }
   },
   ;
+
+  /** Returns the framework type appropriate for fields for a given binding type. */
+  static FrameworkType forBindingType(BindingType bindingType) {
+    switch (bindingType) {
+      case PROVISION:
+        return PROVIDER;
+      case PRODUCTION:
+        return PRODUCER;
+      case MEMBERS_INJECTION:
+    }
+    throw new AssertionError(bindingType);
+  }
+
+  /** The class of fields of this type. */
+  abstract Class<?> frameworkClass();
+
+  /** Returns the {@link #frameworkClass()} parameterized with a type. */
+  ParameterizedTypeName frameworkClassOf(TypeName valueType) {
+    return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
+  }
 
   /** Returns the {@link RequestKind} matching this framework type. */
   abstract RequestKind requestKind();

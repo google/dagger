@@ -16,43 +16,16 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import dagger.MembersInjector;
-import dagger.producers.Producer;
-import javax.inject.Provider;
 
 /** Whether a binding or declaration is for provision, production, or a {@link MembersInjector}. */
 enum BindingType {
   /** A binding with this type is a {@link ProvisionBinding}. */
-  PROVISION(Provider.class),
+  PROVISION,
 
   /** A binding with this type is a {@link MembersInjectionBinding}. */
-  MEMBERS_INJECTION(MembersInjector.class),
+  MEMBERS_INJECTION,
 
   /** A binding with this type is a {@link ProductionBinding}. */
-  PRODUCTION(Producer.class),
-  ;
-
-  static final ImmutableSet<BindingType> CONTRIBUTION_TYPES =
-      Sets.immutableEnumSet(PROVISION, PRODUCTION);
-
-  private final Class<?> frameworkClass;
-
-  BindingType(Class<?> frameworkClass) {
-    this.frameworkClass = frameworkClass;
-  }
-
-  /** The framework class associated with bindings of this type. */
-  Class<?> frameworkClass() {
-    return frameworkClass;
-  }
-
-  /** Returns the {@link #frameworkClass()} parameterized with a type. */
-  ParameterizedTypeName frameworkClassOf(TypeName valueType) {
-    return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
-  }
+  PRODUCTION,
 }

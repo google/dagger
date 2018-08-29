@@ -180,7 +180,9 @@ final class ComponentBindingExpressions {
   Expression getDependencyExpression(
       FrameworkDependency frameworkDependency, ClassName requestingClass) {
     return getDependencyExpression(
-        frameworkDependency.key(), frameworkDependency.dependencyRequestKind(), requestingClass);
+        frameworkDependency.key(),
+        frameworkDependency.frameworkType().requestKind(),
+        requestingClass);
   }
 
   /**

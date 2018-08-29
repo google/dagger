@@ -17,30 +17,32 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingType.CONTRIBUTION_TYPES;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
-import static dagger.internal.codegen.BindingType.PROVISION;
+import static java.util.stream.Collectors.toSet;
 
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
+import java.util.Set;
 import javax.inject.Provider;
 
 /**
- * A mapper for associating a {@link RequestKind} to a {@link BindingType}, dependent on the type of
- * code to be generated (e.g., for {@link Provider} or {@link Producer}).
+ * A mapper for associating a {@link RequestKind} to a {@link FrameworkType}, dependent on the type
+ * of code to be generated (e.g., for {@link Provider} or {@link Producer}).
  */
-enum BindingTypeMapper {
+enum FrameworkTypeMapper {
   FOR_PROVIDER() {
-    @Override public BindingType getBindingType(RequestKind requestKind) {
+    @Override
+    public FrameworkType getFrameworkType(RequestKind requestKind) {
       switch (requestKind) {
         case INSTANCE:
         case PROVIDER:
         case PROVIDER_OF_LAZY:
         case LAZY:
-          return PROVISION;
+          return FrameworkType.PROVIDER;
         case PRODUCED:
         case PRODUCER:
           throw new IllegalArgumentException(requestKind.toString());
@@ -50,42 +52,45 @@ enum BindingTypeMapper {
     }
   },
   FOR_PRODUCER() {
-    @Override public BindingType getBindingType(RequestKind requestKind) {
+    @Override
+    public FrameworkType getFrameworkType(RequestKind requestKind) {
       switch (requestKind) {
         case INSTANCE:
         case PRODUCED:
         case PRODUCER:
-          return PRODUCTION;
+          return FrameworkType.PRODUCER;
         case PROVIDER:
         case PROVIDER_OF_LAZY:
         case LAZY:
-          return PROVISION;
+          return FrameworkType.PROVIDER;
         default:
           throw new AssertionError(requestKind);
       }
     }
   };
 
-  static BindingTypeMapper forBindingType(BindingType bindingType) {
+  static FrameworkTypeMapper forBindingType(BindingType bindingType) {
     return bindingType.equals(PRODUCTION) ? FOR_PRODUCER : FOR_PROVIDER;
   }
 
-  abstract BindingType getBindingType(RequestKind requestKind);
+  abstract FrameworkType getFrameworkType(RequestKind requestKind);
 
   /**
-   * Returns the {@link BindingType} to use for a collection of requests of the same {@link
-   * dagger.model.Key}. This allows factories to only take a single argument for multiple requests
-   * of the same key.
+   * Returns the {@link FrameworkType} to use for a collection of requests of the same {@link Key}.
+   * This allows factories to only take a single argument for multiple requests of the same key.
    */
-  BindingType getBindingType(Iterable<DependencyRequest> requests) {
-    ImmutableSet<BindingType> classes =
-        FluentIterable.from(requests).transform(request -> getBindingType(request.kind())).toSet();
-    if (classes.size() == 1) {
-      return getOnlyElement(classes);
-    } else if (classes.equals(CONTRIBUTION_TYPES)) {
-      return PROVISION;
+  FrameworkType getFrameworkType(Set<DependencyRequest> requests) {
+    Set<FrameworkType> frameworkTypes =
+        requests.stream().map(request -> getFrameworkType(request.kind())).collect(toSet());
+    if (frameworkTypes.size() == 1) {
+      return getOnlyElement(frameworkTypes);
+    } else if (frameworkTypes.equals(CONTRIBUTION_TYPES)) {
+      return FrameworkType.PROVIDER;
     } else {
-      throw new IllegalArgumentException("Bad set of framework classes: " + classes);
+      throw new IllegalArgumentException("Bad set of framework classes: " + frameworkTypes);
     }
   }
+
+  private static final ImmutableSet<FrameworkType> CONTRIBUTION_TYPES =
+      Sets.immutableEnumSet(FrameworkType.PROVIDER, FrameworkType.PRODUCER);
 }

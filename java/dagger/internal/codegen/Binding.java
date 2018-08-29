@@ -28,15 +28,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.Scope;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -157,15 +158,16 @@ abstract class Binding extends BindingDeclaration implements dagger.model.Bindin
   private final Supplier<ImmutableList<DependencyAssociation>> dependencyAssociations =
       memoize(
           () -> {
-            BindingTypeMapper bindingTypeMapper = BindingTypeMapper.forBindingType(bindingType());
+            FrameworkTypeMapper frameworkTypeMapper =
+                FrameworkTypeMapper.forBindingType(bindingType());
             ImmutableList.Builder<DependencyAssociation> list = ImmutableList.builder();
-            for (Collection<DependencyRequest> requests : groupByUnresolvedKey()) {
+            for (Set<DependencyRequest> requests : groupByUnresolvedKey()) {
               list.add(
                   DependencyAssociation.create(
                       FrameworkDependency.create(
                           getOnlyElement(
                               requests.stream().map(DependencyRequest::key).collect(toSet())),
-                          bindingTypeMapper.getBindingType(requests)),
+                          frameworkTypeMapper.getFrameworkType(requests)),
                       requests));
             }
             return list.build();
@@ -212,7 +214,7 @@ abstract class Binding extends BindingDeclaration implements dagger.model.Bindin
    * Groups {@code binding}'s implicit dependencies by their binding key, using the dependency keys
    * from the {@link Binding#unresolved()} binding if it exists.
    */
-  private ImmutableList<Collection<DependencyRequest>> groupByUnresolvedKey() {
+  private ImmutableList<Set<DependencyRequest>> groupByUnresolvedKey() {
     ImmutableSetMultimap.Builder<Key, DependencyRequest> dependenciesByKeyBuilder =
         ImmutableSetMultimap.builder();
     Iterator<DependencyRequest> dependencies = dependencies().iterator();
@@ -222,10 +224,8 @@ abstract class Binding extends BindingDeclaration implements dagger.model.Bindin
       dependenciesByKeyBuilder.put(unresolvedDependencies.next().key(), dependencies.next());
     }
     return ImmutableList.copyOf(
-        dependenciesByKeyBuilder
-            .orderValuesBy(SourceFiles.DEPENDENCY_ORDERING)
-            .build()
-            .asMap()
+        Multimaps.asMap(
+                dependenciesByKeyBuilder.orderValuesBy(SourceFiles.DEPENDENCY_ORDERING).build())
             .values());
   }
 

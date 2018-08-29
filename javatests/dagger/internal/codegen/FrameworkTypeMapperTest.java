@@ -17,8 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.BindingType.PRODUCTION;
-import static dagger.internal.codegen.BindingType.PROVISION;
 import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.LAZY;
 import static dagger.model.RequestKind.PRODUCED;
@@ -29,32 +27,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Test case for {@link BindingTypeMapper}.
- */
+/** Test case for {@link FrameworkTypeMapper}. */
 @RunWith(JUnit4.class)
-public class BindingTypeMapperTest {
+public class FrameworkTypeMapperTest {
   @Test public void forProvider() {
-    BindingTypeMapper mapper = BindingTypeMapper.FOR_PROVIDER;
-    assertThat(mapper.getBindingType(INSTANCE))
-        .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(LAZY))
-        .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(PROVIDER))
-        .isEqualTo(PROVISION);
+    FrameworkTypeMapper mapper = FrameworkTypeMapper.FOR_PROVIDER;
+    assertThat(mapper.getFrameworkType(INSTANCE)).isEqualTo(FrameworkType.PROVIDER);
+    assertThat(mapper.getFrameworkType(LAZY)).isEqualTo(FrameworkType.PROVIDER);
+    assertThat(mapper.getFrameworkType(PROVIDER)).isEqualTo(FrameworkType.PROVIDER);
   }
 
   @Test public void forProducer() {
-    BindingTypeMapper mapper = BindingTypeMapper.FOR_PRODUCER;
-    assertThat(mapper.getBindingType(INSTANCE))
-        .isEqualTo(PRODUCTION);
-    assertThat(mapper.getBindingType(LAZY))
-        .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(PROVIDER))
-        .isEqualTo(PROVISION);
-    assertThat(mapper.getBindingType(PRODUCER))
-        .isEqualTo(PRODUCTION);
-    assertThat(mapper.getBindingType(PRODUCED))
-        .isEqualTo(PRODUCTION);
+    FrameworkTypeMapper mapper = FrameworkTypeMapper.FOR_PRODUCER;
+    assertThat(mapper.getFrameworkType(INSTANCE)).isEqualTo(FrameworkType.PRODUCER);
+    assertThat(mapper.getFrameworkType(LAZY)).isEqualTo(FrameworkType.PROVIDER);
+    assertThat(mapper.getFrameworkType(PROVIDER)).isEqualTo(FrameworkType.PROVIDER);
+    assertThat(mapper.getFrameworkType(PRODUCER)).isEqualTo(FrameworkType.PRODUCER);
+    assertThat(mapper.getFrameworkType(PRODUCED)).isEqualTo(FrameworkType.PRODUCER);
   }
 }

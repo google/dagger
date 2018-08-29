@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.BindingType.PROVISION;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -47,7 +46,7 @@ final class ProducerFromProviderCreationExpression implements FrameworkInstanceC
         RequestKind.PRODUCER,
         componentBindingExpressions
             .getDependencyExpression(
-                FrameworkDependency.create(binding.key(), PROVISION),
+                FrameworkDependency.create(binding.key(), FrameworkType.PROVIDER),
                 generatedComponentModel.name())
             .codeBlock());
   }

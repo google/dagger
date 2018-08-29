@@ -24,11 +24,11 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import java.util.Optional;
+import javax.inject.Provider;
 
 /**
- * A {@link javax.inject.Provider} creation expression for an {@link
- * javax.inject.Inject @Inject}-constructed class or a {@link dagger.Provides @Provides}-annotated
- * module method.
+ * A {@link Provider} creation expression for an {@link javax.inject.Inject @Inject}-constructed
+ * class or a {@link dagger.Provides @Provides}-annotated module method.
  */
 // TODO(dpb): Resolve with ProducerCreationExpression.
 final class InjectionOrProvisionProviderCreationExpression
@@ -56,7 +56,7 @@ final class InjectionOrProvisionProviderCreationExpression
     if (binding.kind().equals(INJECTION)
         && binding.unresolved().isPresent()
         && binding.scope().isPresent()) {
-      return CodeBlocks.cast(createFactory, binding.bindingType().frameworkClass());
+      return CodeBlocks.cast(createFactory, Provider.class);
     } else {
       return createFactory;
     }

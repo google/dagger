@@ -24,20 +24,19 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A binding expression that uses a {@link FrameworkType} field. */
 abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ResolvedBindings resolvedBindings;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
   private final DaggerTypes types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
-      Elements elements) {
+      DaggerElements elements) {
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
     this.types = checkNotNull(types);
@@ -58,7 +57,7 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
         frameworkInstanceSupplier.specificType().isPresent()
                 || isTypeAccessibleFrom(contributedType, requestingClass.packageName())
                 || isInlinedFactoryCreation(memberSelect)
-            ? types.wrapType(contributedType, resolvedBindings.frameworkClass())
+            ? types.wrapType(contributedType, frameworkType().frameworkClass())
             : rawFrameworkType();
     return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
   }
@@ -82,7 +81,6 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   }
 
   private DeclaredType rawFrameworkType() {
-    return types.getDeclaredType(
-        elements.getTypeElement(resolvedBindings.frameworkClass().getCanonicalName()));
+    return types.getDeclaredType(elements.getTypeElement(frameworkType().frameworkClass()));
   }
 }

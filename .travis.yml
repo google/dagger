@@ -36,7 +36,9 @@ before_install:
   - ln -s $(which g++-4.8) travis_bin/g++
   - export PATH="${PWD}/travis_bin:${PATH}"
 
-script: bazel test --test_output errors //...
+script:
+  - bazel test --test_output errors //...
+  - pushd examples && mvn compile && popd
 
 env:
   global:

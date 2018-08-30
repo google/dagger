@@ -20,7 +20,7 @@
   <parent>
     <groupId>com.google.dagger.example</groupId>
     <artifactId>dagger-example-parent</artifactId>
-    <version>HEAD-SNAPSHOT</version>
+    <version>2.17</version>
   </parent>
 
   <artifactId>simple</artifactId>
@@ -36,10 +36,24 @@
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.google.dagger</groupId>
-      <artifactId>dagger-compiler</artifactId>
-      <optional>true</optional>
-    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.6.1</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.dagger</groupId>
+              <artifactId>dagger-compiler</artifactId>
+              <version>${project.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -32,12 +32,12 @@ import javax.inject.Inject;
  * Reports errors or warnings (depending on the {@code -Adagger.nullableValidation} value) for each
  * non-nullable dependency request that is satisfied by a nullable binding.
  */
-final class NonNullableRequestForNullableBindingValidation implements BindingGraphPlugin {
+final class NullableBindingValidation implements BindingGraphPlugin {
 
   private final CompilerOptions compilerOptions;
 
   @Inject
-  NonNullableRequestForNullableBindingValidation(CompilerOptions compilerOptions) {
+  NullableBindingValidation(CompilerOptions compilerOptions) {
     this.compilerOptions = compilerOptions;
   }
 

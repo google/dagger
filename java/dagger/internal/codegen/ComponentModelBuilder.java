@@ -48,11 +48,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.util.Elements;
 
 /** Builds the model for an implementation of a component or subcomponent. */
 abstract class ComponentModelBuilder {
@@ -62,7 +62,8 @@ abstract class ComponentModelBuilder {
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       ClassName name,
-      BindingGraph graph) {
+      BindingGraph graph,
+      BindingGraphFactory bindingGraphFactory) {
     GeneratedComponentModel generatedComponentModel;
     if (graph.componentDescriptor().kind().isTopLevel()) {
       generatedComponentModel = GeneratedComponentModel.forComponent(name);
@@ -90,28 +91,35 @@ abstract class ComponentModelBuilder {
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'buildComponentModel()' on %s when not generating ahead-of-time subcomponents.",
           graph.componentDescriptor().componentDefinitionType());
-      return new BaseSubcomponentModelBuilder(
+      return new AbstractSubcomponentModelBuilder(
+              Optional.empty(), /* parent */
               types,
               elements,
+              keyFactory,
               graph,
               generatedComponentModel,
               subcomponentNames,
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              builder)
+              builder,
+              bindingGraphFactory,
+              compilerOptions)
           .build();
     } else {
       return new RootComponentModelBuilder(
               types,
               elements,
+              keyFactory,
               graph,
               generatedComponentModel,
               subcomponentNames,
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              builder)
+              builder,
+              bindingGraphFactory,
+              compilerOptions)
           .build();
     }
   }
@@ -138,8 +146,74 @@ abstract class ComponentModelBuilder {
         .build();
   }
 
-  private final Elements elements;
+  private GeneratedComponentModel buildAbstractInnerSubcomponentModel(BindingGraph childGraph) {
+    ClassName childName =
+        generatedComponentModel
+            .name()
+            .nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
+    GeneratedComponentModel supermodel =
+        getSubcomponentSupermodel(childGraph.componentDescriptor());
+    GeneratedComponentModel childModel =
+        GeneratedComponentModel.forAbstractSubcomponent(childName, supermodel);
+    Optional<ComponentBuilder> childBuilder =
+        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
+    ComponentRequirementFields childComponentRequirementFields =
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
+    ComponentBindingExpressions childBindingExpressions =
+        bindingExpressions.forChildComponent(
+            childGraph, childModel, childComponentRequirementFields);
+    return new AbstractSubcomponentModelBuilder(
+            Optional.of(this),
+            types,
+            elements,
+            keyFactory,
+            childGraph,
+            childModel,
+            subcomponentNames,
+            optionalFactories,
+            childBindingExpressions,
+            childComponentRequirementFields,
+            childBuilder,
+            bindingGraphFactory,
+            compilerOptions)
+        .build();
+  }
+
+  private GeneratedComponentModel getSubcomponentSupermodel(ComponentDescriptor subcomponent) {
+    // If the current model is for a subcomponent that has a defined supermodel, that supermodel
+    // should contain a reference to a model for `subcomponent`
+    if (generatedComponentModel.supermodel().isPresent()) {
+      Optional<GeneratedComponentModel> supermodel =
+          generatedComponentModel.supermodel().get().subcomponentModel(subcomponent);
+      checkState(
+          supermodel.isPresent(),
+          "Attempting to generate an implementation of a subcomponent [%s] whose parent is a "
+              + "subcomponent [%s], but whose supermodel is not present on the parent's "
+              + "supermodel.",
+          subcomponent.componentDefinitionType(),
+          graph.componentType());
+      return supermodel.get();
+    }
+
+    // Otherwise, the enclosing component is top-level, so we must generate the supermodel for the
+    // subcomponent. We do so by building the model for the abstract base class for the
+    // subcomponent. This is done by truncating the binding graph at the subcomponent.
+    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(subcomponent);
+    return buildComponentModel(
+        // TODO(ronshapiro): extract a factory class here so that we don't need to pass around
+        // types, elements, keyFactory, etc...
+        types,
+        elements,
+        keyFactory,
+        compilerOptions,
+        ComponentGenerator.componentName(truncatedBindingGraph.componentType()),
+        truncatedBindingGraph,
+        bindingGraphFactory);
+  }
+
+  private final DaggerElements elements;
   private final DaggerTypes types;
+  private final KeyFactory keyFactory;
   private final BindingGraph graph;
   private final SubcomponentNames subcomponentNames;
   private final ComponentBindingExpressions bindingExpressions;
@@ -147,20 +221,26 @@ abstract class ComponentModelBuilder {
   private final GeneratedComponentModel generatedComponentModel;
   private final OptionalFactories optionalFactories;
   private final Optional<ComponentBuilder> builder;
+  private final BindingGraphFactory bindingGraphFactory;
+  private final CompilerOptions compilerOptions;
   private boolean done;
 
   private ComponentModelBuilder(
       DaggerTypes types,
-      Elements elements,
+      DaggerElements elements,
+      KeyFactory keyFactory,
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
       SubcomponentNames subcomponentNames,
       OptionalFactories optionalFactories,
       ComponentBindingExpressions bindingExpressions,
       ComponentRequirementFields componentRequirementFields,
-      Optional<ComponentBuilder> builder) {
+      Optional<ComponentBuilder> builder,
+      BindingGraphFactory bindingGraphFactory,
+      CompilerOptions compilerOptions) {
     this.types = types;
     this.elements = elements;
+    this.keyFactory = keyFactory;
     this.graph = graph;
     this.subcomponentNames = subcomponentNames;
     this.generatedComponentModel = generatedComponentModel;
@@ -168,6 +248,8 @@ abstract class ComponentModelBuilder {
     this.bindingExpressions = bindingExpressions;
     this.componentRequirementFields = componentRequirementFields;
     this.builder = builder;
+    this.bindingGraphFactory = bindingGraphFactory;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -180,7 +262,7 @@ abstract class ComponentModelBuilder {
         !done,
         "ComponentModelBuilder has already built the GeneratedComponentModel for [%s].",
         generatedComponentModel.name());
-    generatedComponentModel.addSupertype(graph.componentType());
+    setSupertype();
     builder.map(ComponentBuilder::typeSpec).ifPresent(this::addBuilderClass);
 
     getLocalAndInheritedMethods(
@@ -196,6 +278,15 @@ abstract class ComponentModelBuilder {
     return generatedComponentModel;
   }
 
+  /** Set the supertype for this generated class. */
+  private void setSupertype() {
+    if (generatedComponentModel.supermodel().isPresent()) {
+      generatedComponentModel.addSuperclass(generatedComponentModel.supermodel().get().name());
+    } else {
+      generatedComponentModel.addSupertype(graph.componentType());
+    }
+  }
+
   /**
    * Adds {@code builder} as a nested builder class. Root components and subcomponents will nest
    * this in different classes.
@@ -205,7 +296,7 @@ abstract class ComponentModelBuilder {
   /** Adds component factory methods. */
   protected abstract void addFactoryMethods();
 
-  private void addInterfaceMethods() {
+  protected void addInterfaceMethods() {
     /* Each component method may have been declared by several supertypes. We want to implement only
      * one method for each distinct signature.*/
     ImmutableListMultimap<MethodSignature, ComponentMethodDescriptor> componentMethodsBySignature =
@@ -213,8 +304,9 @@ abstract class ComponentModelBuilder {
     for (List<ComponentMethodDescriptor> methodsWithSameSignature :
         Multimaps.asMap(componentMethodsBySignature).values()) {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
-      generatedComponentModel.addMethod(
-          COMPONENT_METHOD, bindingExpressions.getComponentMethod(anyOneMethod));
+      bindingExpressions
+          .getComponentMethod(anyOneMethod)
+          .ifPresent(method -> generatedComponentModel.addMethod(COMPONENT_METHOD, method));
     }
   }
 
@@ -223,9 +315,13 @@ abstract class ComponentModelBuilder {
         method, MoreTypes.asDeclared(graph.componentType().asType()), types);
   }
 
-  protected void addSubcomponents() {
+  private void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      generatedComponentModel.addSubcomponent(buildSubcomponentModel(subgraph));
+      generatedComponentModel.addSubcomponent(
+          subgraph.componentDescriptor(),
+          generatedComponentModel.isAbstract()
+              ? buildAbstractInnerSubcomponentModel(subgraph)
+              : buildSubcomponentModel(subgraph));
     }
   }
 
@@ -241,6 +337,16 @@ abstract class ComponentModelBuilder {
         constructorBuilder()
             .addModifiers(generatedComponentModel.isAbstract() ? PROTECTED : PRIVATE)
             .addParameters(constructorParameters);
+
+    if (generatedComponentModel.supermodel().isPresent()) {
+      constructor.addStatement(
+          CodeBlock.of(
+              "super($L)",
+              constructorParameters
+                  .stream()
+                  .map(param -> CodeBlock.of("$N", param))
+                  .collect(toParametersCodeBlock())));
+    }
 
     ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
     CodeBlock initializeParametersCodeBlock =
@@ -294,24 +400,30 @@ abstract class ComponentModelBuilder {
   private static final class RootComponentModelBuilder extends ComponentModelBuilder {
     RootComponentModelBuilder(
         DaggerTypes types,
-        Elements elements,
+        DaggerElements elements,
+        KeyFactory keyFactory,
         BindingGraph graph,
         GeneratedComponentModel generatedComponentModel,
         SubcomponentNames subcomponentNames,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilder> builder) {
+        Optional<ComponentBuilder> builder,
+        BindingGraphFactory bindingGraphFactory,
+        CompilerOptions compilerOptions) {
       super(
           types,
           elements,
+          keyFactory,
           graph,
           generatedComponentModel,
           subcomponentNames,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder);
+          builder,
+          bindingGraphFactory,
+          compilerOptions);
     }
 
     @Override
@@ -358,7 +470,10 @@ abstract class ComponentModelBuilder {
     }
   }
 
-  /** Builds the model for a nested subcomponent. */
+  /**
+   * Builds the model for a nested subcomponent. This is used when ahead-of-time components are not
+   * enabled (current default mode).
+   */
   private static final class SubComponentModelBuilder extends ComponentModelBuilder {
     private final ComponentModelBuilder parent;
 
@@ -372,13 +487,16 @@ abstract class ComponentModelBuilder {
       super(
           parent.types,
           parent.elements,
+          parent.keyFactory,
           graph,
           generatedComponentModel,
           parent.subcomponentNames,
           parent.optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder);
+          builder,
+          parent.bindingGraphFactory,
+          parent.compilerOptions);
       this.parent = parent;
     }
 
@@ -413,36 +531,52 @@ abstract class ComponentModelBuilder {
     }
   }
 
-  /** Builds the model for a top-level abstract base implementation of a subcomponent. */
-  private static final class BaseSubcomponentModelBuilder extends ComponentModelBuilder {
+  /** Builds the model for abstract implementations of a subcomponent. */
+  private static final class AbstractSubcomponentModelBuilder extends ComponentModelBuilder {
+    private final Optional<ComponentModelBuilder> parent;
     private final GeneratedComponentModel generatedComponentModel;
+    private final ComponentBindingExpressions bindingExpressions;
 
-    BaseSubcomponentModelBuilder(
+    AbstractSubcomponentModelBuilder(
+        Optional<ComponentModelBuilder> parent,
         DaggerTypes types,
-        Elements elements,
+        DaggerElements elements,
+        KeyFactory keyFactory,
         BindingGraph graph,
         GeneratedComponentModel generatedComponentModel,
         SubcomponentNames subcomponentNames,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilder> builder) {
+        Optional<ComponentBuilder> builder,
+        BindingGraphFactory bindingGraphFactory,
+        CompilerOptions compilerOptions) {
       super(
           types,
           elements,
+          keyFactory,
           graph,
           generatedComponentModel,
           subcomponentNames,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder);
+          builder,
+          bindingGraphFactory,
+          compilerOptions);
+      this.parent = parent;
       this.generatedComponentModel = generatedComponentModel;
+      this.bindingExpressions = bindingExpressions;
     }
 
     @Override
     protected void addBuilderClass(TypeSpec builder) {
-      generatedComponentModel.addType(SUBCOMPONENT, builder);
+      if (parent.isPresent()) {
+        // If an inner implementation of a subcomponent the builder is a peer class.
+        parent.get().generatedComponentModel.addType(SUBCOMPONENT, builder);
+      } else {
+        generatedComponentModel.addType(SUBCOMPONENT, builder);
+      }
     }
 
     @Override
@@ -451,8 +585,24 @@ abstract class ComponentModelBuilder {
     }
 
     @Override
-    protected void addSubcomponents() {
-      // TODO(b/72748365): Implement abstract inner subcomponents.
+    protected void addInterfaceMethods() {
+      if (generatedComponentModel.supermodel().isPresent()) {
+        // Since we're overriding a subcomponent implementation we add to its implementation given
+        // an expanded binding graph.
+
+        // Override modifiable binding methods.
+        for (ModifiableBindingMethod modifiableBindingMethod :
+            generatedComponentModel.getModifiableBindingMethods()) {
+          bindingExpressions
+              .getModifiableBindingMethod(modifiableBindingMethod)
+              .ifPresent(
+                  method ->
+                      generatedComponentModel.addImplementedModifiableBindingMethod(
+                          modifiableBindingMethod, method));
+        }
+      } else {
+        super.addInterfaceMethods();
+      }
     }
   }
 

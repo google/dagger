@@ -98,7 +98,7 @@ public final class DuplicateAndroidInjectorsCheckerTest {
     assertThat(compilation)
         .hadErrorContaining("Multiple injector factories bound for the same type")
         .inFile(component)
-        .onLineContaining("dispatchingInjector()");
+        .onLineContaining("interface TestComponent");
     assertThat(compilation).hadErrorContaining("classKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorContaining("stringKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorCount(1);

@@ -41,6 +41,11 @@ enum FrameworkType {
   /** A {@link Provider}. */
   PROVIDER {
     @Override
+    RequestKind requestKind() {
+      return RequestKind.PROVIDER;
+    }
+
+    @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case INSTANCE:
@@ -98,6 +103,11 @@ enum FrameworkType {
   /** A {@link Producer}. */
   PRODUCER {
     @Override
+    RequestKind requestKind() {
+      return RequestKind.PRODUCER;
+    }
+
+    @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case FUTURE:
@@ -134,6 +144,11 @@ enum FrameworkType {
   /** A {@link MembersInjector}. */
   MEMBERS_INJECTOR {
     @Override
+    RequestKind requestKind() {
+      return RequestKind.MEMBERS_INJECTION;
+    }
+
+    @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
       throw new UnsupportedOperationException(requestKind.toString());
     }
@@ -144,6 +159,9 @@ enum FrameworkType {
     }
   },
   ;
+
+  /** Returns the {@link RequestKind} matching this framework type. */
+  abstract RequestKind requestKind();
 
   /**
    * Returns a {@link CodeBlock} that evaluates to a requested object given an expression that

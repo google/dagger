@@ -22,80 +22,49 @@ import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import dagger.model.RequestKind;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-/** A binding expression that uses an instance of a {@link FrameworkType}. */
-final class FrameworkInstanceBindingExpression extends BindingExpression {
+/** A binding expression that uses a {@link FrameworkType} field. */
+abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   private final ResolvedBindings resolvedBindings;
-  private final RequestKind requestKind;
-  private final ComponentBindingExpressions componentBindingExpressions;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
-  private final FrameworkType frameworkType;
   private final DaggerTypes types;
   private final Elements elements;
 
   FrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
-      ComponentBindingExpressions componentBindingExpressions,
-      FrameworkType frameworkType,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       Elements elements) {
     this.resolvedBindings = checkNotNull(resolvedBindings);
-    this.requestKind = checkNotNull(requestKind);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.frameworkType = checkNotNull(frameworkType);
     this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
   }
 
   /**
-   * The expression for the framework instance for this binding. If the instance comes from a
-   * component field, it will be {@link GeneratedComponentModel#addInitialization(CodeBlock)
-   * initialized} and {@link GeneratedComponentModel#addField(GeneratedComponentModel.FieldSpecKind,
-   * FieldSpec) added} to the component the first time this method is invoked.
+   * The expression for the framework instance for this binding. The field will be {@link
+   * GeneratedComponentModel#addInitialization(CodeBlock) initialized} and {@link
+   * GeneratedComponentModel#addField(GeneratedComponentModel.FieldSpecKind, FieldSpec) added} to
+   * the component the first time this method is invoked.
    */
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    if (requestKind.equals(frameworkRequestKind())) {
-      MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
-      TypeMirror contributedType = resolvedBindings.contributionBinding().contributedType();
-      TypeMirror expressionType =
-          frameworkInstanceSupplier.specificType().isPresent()
-                  || isTypeAccessibleFrom(contributedType, requestingClass.packageName())
-                  || isInlinedFactoryCreation(memberSelect)
-              ? types.wrapType(contributedType, resolvedBindings.frameworkClass())
-              : rawFrameworkType();
-      return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
-    }
-
-    // The following expressions form a composite with the expression for the framework type. For
-    // example, the expression for RequestKind.LAZY is a composite of the expression for a
-    // RequestKind.PROVIDER (the framework type):
-    //    lazyExpression = DoubleCheck.lazy(providerExpression);
-    return frameworkType.to(
-        requestKind,
-        componentBindingExpressions.getDependencyExpression(
-            resolvedBindings.key(), frameworkRequestKind(), requestingClass),
-        types);
+    MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
+    TypeMirror contributedType = resolvedBindings.contributionBinding().contributedType();
+    TypeMirror expressionType =
+        frameworkInstanceSupplier.specificType().isPresent()
+                || isTypeAccessibleFrom(contributedType, requestingClass.packageName())
+                || isInlinedFactoryCreation(memberSelect)
+            ? types.wrapType(contributedType, resolvedBindings.frameworkClass())
+            : rawFrameworkType();
+    return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
   }
 
-  /** Returns the request kind that matches the framework type. */
-  private RequestKind frameworkRequestKind() {
-    switch (frameworkType) {
-      case PROVIDER:
-        return RequestKind.PROVIDER;
-      case PRODUCER:
-        return RequestKind.PRODUCER;
-      default:
-        throw new AssertionError(frameworkType);
-    }
-  }
+  /** Returns the framework type for the binding. */
+  protected abstract FrameworkType frameworkType();
 
   /**
    * Returns {@code true} if a factory is created inline each time it is requested. For example, in

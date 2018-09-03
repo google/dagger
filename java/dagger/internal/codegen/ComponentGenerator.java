@@ -36,6 +36,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final DaggerElements elements;
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
+  private final BindingGraphFactory bindingGraphFactory;
 
   @Inject
   ComponentGenerator(
@@ -44,12 +45,14 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       SourceVersion sourceVersion,
       DaggerTypes types,
       KeyFactory keyFactory,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      BindingGraphFactory bindingGraphFactory) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.compilerOptions = compilerOptions;
+    this.bindingGraphFactory = bindingGraphFactory;
   }
 
   @Override
@@ -71,7 +74,13 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph input) {
     return Optional.of(
         ComponentModelBuilder.buildComponentModel(
-                types, elements, keyFactory, compilerOptions, componentName, input)
+                types,
+                elements,
+                keyFactory,
+                compilerOptions,
+                componentName,
+                input,
+                bindingGraphFactory)
             .generate());
   }
 }

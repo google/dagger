@@ -28,7 +28,7 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin bindingCycle(BindingCycleValidation validation);
+  BindingGraphPlugin dependencyCycle(DependencyCycleValidation validation);
 
   @Binds
   @IntoSet
@@ -68,12 +68,12 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin nullable(NonNullableRequestForNullableBindingValidation validation);
+  BindingGraphPlugin nullableBinding(NullableBindingValidation validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin providerDependsOnProducer(
+  BindingGraphPlugin provisionDependencyOnProducerBinding(
       ProvisionDependencyOnProducerBindingValidation validation);
 
   @Binds

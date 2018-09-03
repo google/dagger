@@ -40,11 +40,11 @@ abstract class BindingExpression {
   /**
    * Returns an expression for the implementation of a component method with the given request.
    *
-   * @param componentName the component that will contain the implemented method
+   * @param component the component that will contain the implemented method
    */
   CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName componentName) {
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
     // By default, just delegate to #getDependencyExpression().
-    return CodeBlock.of("return $L;", getDependencyExpression(componentName).codeBlock());
+    return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
   }
 }

@@ -101,6 +101,7 @@ final class ComponentBuilder {
     private final TypeSpec.Builder builder;
     private final GeneratedComponentModel generatedComponentModel;
     private final ClassName builderName;
+    private final SubcomponentNames subcomponentNames;
     private final Elements elements;
     private final Types types;
 
@@ -121,6 +122,7 @@ final class ComponentBuilder {
         builder = classBuilder(builderName);
       }
       this.graph = graph;
+      this.subcomponentNames = subcomponentNames;
       this.elements = elements;
       this.types = types;
     }
@@ -132,7 +134,7 @@ final class ComponentBuilder {
         } else {
           builder.addModifiers(PRIVATE);
         }
-        addSupertype(builder, builderSpec().get().builderDefinitionType());
+        setSupertype();
       } else {
         builder.addModifiers(PUBLIC).addMethod(constructorBuilder().addModifiers(PRIVATE).build());
       }
@@ -153,6 +155,27 @@ final class ComponentBuilder {
           .addMethods(builderMethods(builderFields));
 
       return new ComponentBuilder(builder.build(), builderName, builderFields);
+    }
+
+    /** Set the superclass being extended or interface being implemented for this builder. */
+    private void setSupertype() {
+      if (generatedComponentModel.supermodel().isPresent()) {
+        // If there's a superclass, extend the Builder defined there.
+        GeneratedComponentModel subcomponentSupermodel = generatedComponentModel.supermodel().get();
+        if (subcomponentSupermodel.isNested()) {
+          // If the subcomponent superclass is nested we're overriding the builder that was
+          // defined as a peer of the superclass.
+          builder.superclass(
+              subcomponentSupermodel
+                  .name()
+                  .peerClass(subcomponentNames.get(graph.componentDescriptor()) + "Builder"));
+        } else {
+          // Otherwise we're extending the builder defined inside the subcomponent definition.
+          builder.superclass(subcomponentSupermodel.name().nestedClass("Builder"));
+        }
+      } else {
+        addSupertype(builder, builderSpec().get().builderDefinitionType());
+      }
     }
 
     /**

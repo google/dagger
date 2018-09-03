@@ -101,8 +101,7 @@ public final class SetFactory<T> implements Factory<Set<T>> {
   }
 
   /**
-   * Returns a {@link Set} whose iteration order is that of the elements given by each of the
-   * providers, which are invoked in the order given at creation.
+   * Returns a {@link Set} that contains the elements given by each of the providers.
    *
    * @throws NullPointerException if any of the delegate {@link Set} instances or elements therein
    *     are {@code null}

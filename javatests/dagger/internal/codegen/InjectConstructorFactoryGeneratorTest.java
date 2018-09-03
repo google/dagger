@@ -564,7 +564,7 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).failed();
     // for whatever reason, javac only reports the error once on the constructor
     assertThat(compilation)
-        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .hadErrorContaining("A single dependency request may not use more than one @Qualifier")
         .inFile(file)
         .onLine(6);
   }
@@ -824,12 +824,12 @@ public final class InjectConstructorFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .hadErrorContaining("A single dependency request may not use more than one @Qualifier")
         .inFile(file)
         .onLine(6)
         .atColumn(11);
     assertThat(compilation)
-        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .hadErrorContaining("A single dependency request may not use more than one @Qualifier")
         .inFile(file)
         .onLine(6)
         .atColumn(23);
@@ -943,7 +943,7 @@ public final class InjectConstructorFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(file, QUALIFIER_A, QUALIFIER_B);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("A single injection site may not use more than one @Qualifier")
+        .hadErrorContaining("A single dependency request may not use more than one @Qualifier")
         .inFile(file)
         .onLine(6);
   }

@@ -1017,7 +1017,8 @@ public class MembersInjectionTest {
     assertThat(compilation).succeeded();
   }
 
-  @Test public void rawFrameworkTypes() {
+  @Test
+  public void rawFrameworkTypeField() {
     JavaFileObject file =
         JavaFileObjects.forSourceLines(
             "test.RawFrameworkTypes",
@@ -1031,25 +1032,45 @@ public class MembersInjectionTest {
             "  @Inject Provider fieldWithRawProvider;",
             "}",
             "",
+            "@Component",
+            "interface C {",
+            "  void inject(RawProviderField rawProviderField);",
+            "}");
+
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .inFile(file)
+        .onLineContaining("interface C");
+  }
+
+  @Test
+  public void rawFrameworkTypeParameter() {
+    JavaFileObject file =
+        JavaFileObjects.forSourceLines(
+            "test.RawFrameworkTypes",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
             "class RawProviderParameter {",
             "  @Inject void methodInjection(Provider rawProviderParameter) {}",
             "}",
             "",
             "@Component",
             "interface C {",
-            "  void inject(RawProviderField rawProviderField);",
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
+
     Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("javax.inject.Provider cannot be provided")
         .inFile(file)
-        .onLine(17);
-    assertThat(compilation)
-        .hadErrorContaining("javax.inject.Provider cannot be provided")
-        .inFile(file)
-        .onLine(18);
+        .onLineContaining("interface C");
   }
 
   @Test

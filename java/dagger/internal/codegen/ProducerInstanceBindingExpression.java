@@ -16,18 +16,25 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.base.Joiner;
+import javax.lang.model.util.Elements;
 
-/** Utility methods useful for codegen tests. */
-final class TestUtils {
+/** Binding expression for producer instances. */
+final class ProducerInstanceBindingExpression extends FrameworkInstanceBindingExpression {
 
-  private static final Joiner MESSAGE_JOINER = Joiner.on("\n  ");
+  ProducerInstanceBindingExpression(
+      ResolvedBindings resolvedBindings,
+      FrameworkInstanceSupplier frameworkInstanceSupplier,
+      DaggerTypes types,
+      Elements elements) {
+    super(
+        resolvedBindings,
+        frameworkInstanceSupplier,
+        types,
+        elements);
+  }
 
-  /**
-   * Returns the lines joined by newline plus two spaces. Useful for passing to {@link
-   * com.google.testing.compile.CompilationSubject#hadErrorContaining(String)}, etc.
-   */
-  static String message(String... lines) {
-    return MESSAGE_JOINER.join(lines);
+  @Override
+  protected FrameworkType frameworkType() {
+    return FrameworkType.PRODUCER;
   }
 }

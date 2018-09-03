@@ -22,31 +22,33 @@ import com.squareup.javapoet.ClassName;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 
-/** A binding expression that depends on the expression for the {@link RequestKind#PROVIDER}. */
-final class DerivedFromProviderBindingExpression extends BindingExpression {
+/** A binding expression that depends on a framework instance. */
+final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpression {
 
   private final Key key;
   private final RequestKind requestKind;
+  private final FrameworkType frameworkType;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
 
-  DerivedFromProviderBindingExpression(
+  DerivedFromFrameworkInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
     this.key = resolvedBindings.key();
     this.requestKind = checkNotNull(requestKind);
+    this.frameworkType = resolvedBindings.bindingType().frameworkType();
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    return FrameworkType.PROVIDER.to(
+    return frameworkType.to(
         requestKind,
         componentBindingExpressions.getDependencyExpression(
-            key, RequestKind.PROVIDER, requestingClass),
+            key, frameworkType.requestKind(), requestingClass),
         types);
   }
 }

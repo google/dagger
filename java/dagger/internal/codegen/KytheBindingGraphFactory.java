@@ -111,21 +111,17 @@ final class KytheBindingGraphFactory {
   private static BindingGraphFactory createBindingGraphFactory(
       DaggerTypes types, DaggerElements elements, CompilerOptions compilerOptions) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
-    DependencyRequestFactory dependencyRequestFactory =
-        new DependencyRequestFactory(keyFactory, types);
-    Messager messager = new NullMessager();
 
     BindingFactory bindingFactory =
-        new BindingFactory(types, elements, keyFactory, dependencyRequestFactory);
-
-    InjectValidator injectMethodValidator = new InjectValidator(types, elements, compilerOptions);
+        new BindingFactory(
+            types, elements, keyFactory, new DependencyRequestFactory(keyFactory, types));
 
     InjectBindingRegistry injectBindingRegistry =
         new InjectBindingRegistryImpl(
             elements,
             types,
-            messager,
-            injectMethodValidator,
+            new NullMessager(),
+            new InjectValidator(types, elements, new DependencyRequestValidator(), compilerOptions),
             keyFactory,
             bindingFactory,
             compilerOptions);

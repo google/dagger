@@ -171,7 +171,7 @@ public class AndroidMapKeyValidatorTest {
                 + "dagger.android.AndroidInjector.Factory<? extends android.app.Activity>");
     assertThat(compilation)
         .hadErrorContaining(
-            "test.FooActivity.Builder does not implement " + "AndroidInjector<test.BazFragment>")
+            "test.FooActivity.Builder does not implement AndroidInjector<test.BazFragment>")
         .inFile(module)
         .onLine(LINES_BEFORE_METHOD + 3);
   }

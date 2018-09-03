@@ -17,6 +17,7 @@
 package dagger.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -172,15 +173,20 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
         .collect(toImmutableSet());
   }
 
-  /** Returns the edges for entry points that transitively depend on a binding. */
+  /**
+   * Returns the edges for entry points that transitively depend on a binding. Never returns an
+   * empty set.
+   */
   public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
       BindingNode bindingNode) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
     Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
         inducedSubgraph(
             dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), bindingNode));
-    return ImmutableSet.copyOf(
-        intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()));
+    ImmutableSet<DependencyEdge> entryPointEdges =
+        intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()).immutableCopy();
+    verify(!entryPointEdges.isEmpty(), "No entry points depend on binding %s", bindingNode);
+    return entryPointEdges;
   }
 
   // TODO(dpb): Make public. Cache.

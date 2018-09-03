@@ -55,19 +55,19 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
-/** Reports errors for binding cycles. */
-final class BindingCycleValidation implements BindingGraphPlugin {
+/** Reports errors for dependency cycles. */
+final class DependencyCycleValidation implements BindingGraphPlugin {
 
   private final DependencyRequestFormatter dependencyRequestFormatter;
 
   @Inject
-  BindingCycleValidation(DependencyRequestFormatter dependencyRequestFormatter) {
+  DependencyCycleValidation(DependencyRequestFormatter dependencyRequestFormatter) {
     this.dependencyRequestFormatter = dependencyRequestFormatter;
   }
 
   @Override
   public String pluginName() {
-    return "Dagger/BindingCycle";
+    return "Dagger/DependencyCycle";
   }
 
   @Override
@@ -291,7 +291,7 @@ final class BindingCycleValidation implements BindingGraphPlugin {
       ImmutableSet.Builder<EndpointPair<N>> shifted = ImmutableSet.builder();
       shifted.addAll(skip(endpointPairs(), startIndex));
       shifted.addAll(limit(endpointPairs(), size() - startIndex));
-      return new AutoValue_BindingCycleValidation_Cycle<>(shifted.build());
+      return new AutoValue_DependencyCycleValidation_Cycle<>(shifted.build());
     }
 
     @Override
@@ -310,7 +310,7 @@ final class BindingCycleValidation implements BindingGraphPlugin {
       for (int i = 0; i < nodes.size() - 1; i++) {
         cycle.add(EndpointPair.ordered(nodes.get(i), nodes.get(i + 1)));
       }
-      return new AutoValue_BindingCycleValidation_Cycle<>(cycle.build());
+      return new AutoValue_DependencyCycleValidation_Cycle<>(cycle.build());
     }
   }
 }

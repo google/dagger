@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
+import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -28,6 +29,7 @@ import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.graph.MutableNetwork;
+import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.BindingNode;
@@ -63,7 +65,24 @@ final class BindingGraphConverter {
   dagger.model.BindingGraph convert(BindingGraph rootGraph) {
     Traverser traverser = new Traverser(rootGraph);
     traverser.traverseComponents();
+
+    // When bindings are copied down into child graphs because they transitively depend on local
+    // multibindings or optional bindings, the parent-owned binding is still there. If that
+    // parent-owned binding is not reachable from its component, it doesn't need to be in the graph
+    // because it will never be used. So remove all nodes that are not reachable from the root
+    // component.
+    unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
+        .forEach(traverser.network::removeNode);
+
     return BindingGraphProxies.bindingGraph(traverser.network);
+  }
+
+  // TODO(dpb): Example of BindingGraph logic applied to derived networks.
+  private ComponentNode rootComponentNode(Network<Node, Edge> network) {
+    return (ComponentNode)
+        Iterables.find(
+            network.nodes(),
+            node -> node instanceof ComponentNode && node.componentPath().atRoot());
   }
 
   private final class Traverser extends ComponentTreeTraverser {

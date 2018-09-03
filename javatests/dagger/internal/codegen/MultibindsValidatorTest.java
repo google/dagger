@@ -141,7 +141,7 @@ public class MultibindsValidatorTest {
                 + "abstract Set<Object> tooManyQualifiersSet();")
         .withDeclaration(moduleDeclaration)
         .importing(SomeQualifier.class, OtherQualifier.class)
-        .hasError("Cannot use more than one @Qualifier");
+        .hasError("may not use more than one @Qualifier");
   }
 
   @Test
@@ -151,7 +151,7 @@ public class MultibindsValidatorTest {
                 + "abstract Map<String, Object> tooManyQualifiersMap();")
         .withDeclaration(moduleDeclaration)
         .importing(SomeQualifier.class, OtherQualifier.class)
-        .hasError("Cannot use more than one @Qualifier");
+        .hasError("may not use more than one @Qualifier");
   }
 
   @Test

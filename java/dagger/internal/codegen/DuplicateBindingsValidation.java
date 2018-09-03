@@ -144,7 +144,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
 
     Set<BindingNode> uniqueBindings =
         Sets.filter(duplicateBindings, binding -> !binding.equals(multibinding));
-    message.append(INDENT).append("Unique bindings and declarations:");
+    message.append('\n').append(INDENT).append("Unique bindings and declarations:");
     formatDeclarations(
         message,
         2,
@@ -160,7 +160,6 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
       Iterable<? extends BindingDeclaration> bindingDeclarations) {
     bindingDeclarationFormatter.formatIndentedList(
         builder, ImmutableList.copyOf(bindingDeclarations), indentLevel);
-    builder.append('\n');
   }
 
   private ImmutableSet<BindingDeclaration> declarations(

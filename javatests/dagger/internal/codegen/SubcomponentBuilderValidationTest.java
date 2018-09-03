@@ -18,8 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.TestUtils.message;
 
-import com.google.common.base.Joiner;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -719,15 +719,17 @@ public class SubcomponentBuilderValidationTest {
             "    @BindsInstance void set2(String s);",
             "  }",
             "}");
+
     Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            Joiner.on("\n      ")
-                .join(
-                    "[test.ChildComponent.s()] java.lang.String is bound multiple times:",
-                    "@BindsInstance void test.ChildComponent.Builder.set1(String)",
-                    "@BindsInstance void test.ChildComponent.Builder.set2(String)"))
+            message(
+                "java.lang.String is bound multiple times:",
+                "    @BindsInstance void test.ChildComponent.Builder.set1(String)",
+                "    @BindsInstance void test.ChildComponent.Builder.set2(String)",
+                "    java.lang.String is provided at",
+                "        test.ChildComponent.s() [test.ParentComponent → test.ChildComponent]"))
         .inFile(componentFile)
         .onLineContaining("interface ParentComponent {");
   }

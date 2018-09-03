@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
@@ -30,6 +31,7 @@ import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashBasedTable;
@@ -40,6 +42,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -234,18 +237,66 @@ final class ComponentBindingExpressions {
     return dependencyExpression;
   }
 
-  /** Returns the implementation of a component method. */
-  MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
+  /**
+   * Returns the implementation of a component method. Returns {@link Optional#empty} if the
+   * component method implementation should not be emitted.
+   */
+  Optional<MethodSpec> getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     DependencyRequest dependencyRequest = componentMethod.dependencyRequest().get();
-    return MethodSpec.overriding(
+    MethodSpec.Builder methodBuilder =
+        MethodSpec.overriding(
             componentMethod.methodElement(),
             MoreTypes.asDeclared(graph.componentType().asType()),
-            types)
-        .addCode(
-            getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
-                .getComponentMethodImplementation(componentMethod, generatedComponentModel.name()))
-        .build();
+            types);
+
+    ModifiableBindingType type =
+        getModifiableBindingType(dependencyRequest.key(), dependencyRequest.kind());
+    if (type.isModifiable()) {
+      generatedComponentModel.registerModifiableBindingMethod(
+          type, dependencyRequest.key(), dependencyRequest.kind(), methodBuilder.build());
+      if (!type.hasBaseClassImplementation()) {
+        // A component method should not be emitted if it encapsulates a modifiable binding that
+        // cannot be satisfied by the abstract base class implementation of a subcomponent.
+        checkState(
+            !generatedComponentModel.supermodel().isPresent(),
+            "Attempting to generate a component method in a subtype of the abstract subcomponent "
+                + "base class.");
+        return Optional.empty();
+      }
+    }
+
+    return Optional.of(
+        methodBuilder
+            .addCode(
+                getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
+                    .getComponentMethodImplementation(componentMethod, generatedComponentModel))
+            .build());
+  }
+
+  /**
+   * Returns the implementation of a method encapsulating a modifiable binding in a supertype
+   * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
+   * or should not be modified by the current binding graph. This is only relevant for ahead-of-time
+   * subcomponents.
+   */
+  Optional<MethodSpec> getModifiableBindingMethod(ModifiableBindingMethod modifiableBindingMethod) {
+    if (shouldOverrideModifiableBindingMethod(modifiableBindingMethod)) {
+      Expression bindingExpression =
+          getDependencyExpression(
+              modifiableBindingMethod.key(),
+              modifiableBindingMethod.kind(),
+              generatedComponentModel.name());
+      MethodSpec baseMethod = modifiableBindingMethod.baseMethod();
+      return Optional.of(
+          MethodSpec.methodBuilder(baseMethod.name)
+              .addModifiers(PUBLIC)
+              .returns(baseMethod.returnType)
+              .addAnnotation(Override.class)
+              .addStatement("return $L", bindingExpression.codeBlock())
+              .build());
+    }
+    return Optional.empty();
   }
 
   private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
@@ -253,11 +304,13 @@ final class ComponentBindingExpressions {
       return expressions.get(key, requestKind);
     }
     Optional<BindingExpression> expression = Optional.empty();
-    if (resolvedInThisComponent(key, requestKind)) {
+    ModifiableBindingType modifiableBindingType = getModifiableBindingType(key, requestKind);
+    if (modifiableBindingType.isModifiable()) {
+      expression =
+          Optional.of(createModifiableBindingExpression(modifiableBindingType, key, requestKind));
+    } else if (resolvedInThisComponent(key, requestKind)) {
       ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
       expression = Optional.of(createBindingExpression(resolvedBindings, requestKind));
-    } else if (!resolvableBinding(key, requestKind) && generatedComponentModel.isAbstract()) {
-      expression = Optional.of(new MissingBindingExpression(key));
     }
     if (expression.isPresent()) {
       expressions.put(key, requestKind, expression.get());
@@ -270,9 +323,6 @@ final class ComponentBindingExpressions {
   /** Creates a binding expression. */
   private BindingExpression createBindingExpression(
       ResolvedBindings resolvedBindings, RequestKind requestKind) {
-    if (generatedInstanceForAbstractSubcomponent(resolvedBindings)) {
-      return new GeneratedInstanceBindingExpression(resolvedBindings);
-    }
     switch (resolvedBindings.bindingType()) {
       case MEMBERS_INJECTION:
         checkArgument(requestKind.equals(RequestKind.MEMBERS_INJECTION));
@@ -282,7 +332,12 @@ final class ComponentBindingExpressions {
         return provisionBindingExpression(resolvedBindings, requestKind);
 
       case PRODUCTION:
-        return frameworkInstanceBindingExpression(resolvedBindings, requestKind);
+        if (requestKind.equals(RequestKind.PRODUCER)) {
+          return frameworkInstanceBindingExpression(resolvedBindings);
+        } else {
+          return new DerivedFromFrameworkInstanceBindingExpression(
+              resolvedBindings, requestKind, this, types);
+        }
 
       default:
         throw new AssertionError(resolvedBindings);
@@ -290,13 +345,81 @@ final class ComponentBindingExpressions {
   }
 
   /**
-   * Returns true if the binding exposes an instance of a generated type, but no concrete
-   * implementation of that type is available.
+   * Creates a binding expression for a binding that may be modified across implementations of a
+   * subcomponent. This is only relevant for ahead-of-time subcomponents.
    */
-  private boolean generatedInstanceForAbstractSubcomponent(ResolvedBindings resolvedBindings) {
-    return !resolvedBindings.contributionBindings().isEmpty()
-        && resolvedBindings.contributionBinding().requiresGeneratedInstance()
-        && generatedComponentModel.isAbstract();
+  private BindingExpression createModifiableBindingExpression(
+      ModifiableBindingType type, Key key, RequestKind requestKind) {
+    switch (type) {
+      case GENERATED_INSTANCE:
+        ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+        return new GeneratedInstanceBindingExpression(
+            generatedComponentModel, resolvedBindings, requestKind);
+      case MISSING:
+        return new MissingBindingExpression(generatedComponentModel, key, requestKind);
+      default:
+        throw new IllegalStateException(
+            String.format(
+                "Building binding expression for unsupported ModifiableBindingType [%s].", type));
+    }
+  }
+
+  /**
+   * The reason why a binding may need to be modified across implementations of a subcomponent, if
+   * at all. This is only relevant for ahead-of-time subcomponents.
+   */
+  private ModifiableBindingType getModifiableBindingType(Key key, RequestKind requestKind) {
+    if (!compilerOptions.aheadOfTimeSubcomponents()) {
+      return ModifiableBindingType.NONE;
+    }
+
+    // When generating a final (concrete) implementation of a (sub)component the binding is no
+    // longer considered modifiable. It cannot be further modified by a subclass implementation.
+    if (!generatedComponentModel.isAbstract()) {
+      return ModifiableBindingType.NONE;
+    }
+
+    if (resolvedInThisComponent(key, requestKind)) {
+      ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+      if (resolvedBindings.contributionBindings().isEmpty()) {
+        // TODO(ronshapiro): Confirm whether a resolved binding must have a single contribution
+        // binding.
+        return ModifiableBindingType.NONE;
+      }
+
+      ContributionBinding binding = resolvedBindings.contributionBinding();
+      if (binding.requiresGeneratedInstance()) {
+        return ModifiableBindingType.GENERATED_INSTANCE;
+      }
+    } else if (!resolvableBinding(key, requestKind)) {
+      return ModifiableBindingType.MISSING;
+    }
+
+    // TODO(b/72748365): Add support for remaining types.
+    return ModifiableBindingType.NONE;
+  }
+
+  /**
+   * Returns true if the current binding graph can, and should, modify a binding by overriding a
+   * modfiable binding method. This is only relevant for ahead-of-time subcomponents.
+   */
+  private boolean shouldOverrideModifiableBindingMethod(
+      ModifiableBindingMethod modifiableBindingMethod) {
+    switch (modifiableBindingMethod.type()) {
+      case GENERATED_INSTANCE:
+        return !generatedComponentModel.isAbstract();
+      case MISSING:
+        // TODO(b/72748365): investigate beder@'s comment about having intermediate component
+        // ancestors satisfy missing bindings of their children with their own missing binding
+        // methods so that we can minimize the cases where we need to reach into doubly-nested
+        // descendant component implementations
+        return resolvableBinding(modifiableBindingMethod.key(), modifiableBindingMethod.kind());
+      default:
+        throw new IllegalStateException(
+            String.format(
+                "Overriding modifiable binding method with unsupported ModifiableBindingType [%s].",
+                modifiableBindingMethod.type()));
+    }
   }
 
   /**
@@ -325,7 +448,7 @@ final class ComponentBindingExpressions {
    * or a {@link dagger.producers.Producer} for production bindings.
    */
   private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
-      ResolvedBindings resolvedBindings, RequestKind requestKind) {
+      ResolvedBindings resolvedBindings) {
     // TODO(user): Consider merging the static factory creation logic into CreationExpressions?
     Optional<MemberSelect> staticMethod =
         useStaticFactoryCreation(resolvedBindings.contributionBinding())
@@ -335,17 +458,23 @@ final class ComponentBindingExpressions {
         resolvedBindings.scope().isPresent()
             ? scope(resolvedBindings, frameworkInstanceCreationExpression(resolvedBindings))
             : frameworkInstanceCreationExpression(resolvedBindings);
-    return new FrameworkInstanceBindingExpression(
-        resolvedBindings,
-        requestKind,
-        this,
-        resolvedBindings.bindingType().frameworkType(),
+    FrameworkInstanceSupplier frameworkInstanceSupplier =
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
-                generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression),
-        types,
-        elements);
+                generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression);
+
+    FrameworkType frameworkType = resolvedBindings.bindingType().frameworkType();
+    switch (frameworkType) {
+      case PROVIDER:
+        return new ProviderInstanceBindingExpression(
+            resolvedBindings, frameworkInstanceSupplier, types, elements);
+      case PRODUCER:
+        return new ProducerInstanceBindingExpression(
+            resolvedBindings, frameworkInstanceSupplier, types, elements);
+      default:
+        throw new AssertionError("invalid framework type: " + frameworkType);
+    }
   }
 
   private FrameworkInstanceCreationExpression scope(
@@ -463,10 +592,11 @@ final class ComponentBindingExpressions {
       case LAZY:
       case PRODUCED:
       case PROVIDER_OF_LAZY:
-        return new DerivedFromProviderBindingExpression(resolvedBindings, requestKind, this, types);
+        return new DerivedFromFrameworkInstanceBindingExpression(
+            resolvedBindings, requestKind, this, types);
 
       case PRODUCER:
-        return producerFromProviderBindingExpression(resolvedBindings, requestKind);
+        return producerFromProviderBindingExpression(resolvedBindings);
 
       case FUTURE:
         return new ImmediateFutureBindingExpression(resolvedBindings, this, types);
@@ -498,13 +628,13 @@ final class ComponentBindingExpressions {
     } else if (compilerOptions.fastInit()
         && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
         && !(instanceBindingExpression(resolvedBindings)
-        instanceof DerivedFromProviderBindingExpression)) {
+            instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
           resolvedBindings,
           RequestKind.PROVIDER,
           innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
     }
-    return frameworkInstanceBindingExpression(resolvedBindings, RequestKind.PROVIDER);
+    return frameworkInstanceBindingExpression(resolvedBindings);
   }
 
   /**
@@ -512,13 +642,10 @@ final class ComponentBindingExpressions {
    * provision binding.
    */
   private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
-      ResolvedBindings resolvedBindings, RequestKind requestKind) {
+      ResolvedBindings resolvedBindings) {
     checkArgument(resolvedBindings.bindingType().frameworkType().equals(FrameworkType.PROVIDER));
-    return new FrameworkInstanceBindingExpression(
+    return new ProducerInstanceBindingExpression(
         resolvedBindings,
-        requestKind,
-        this,
-        FrameworkType.PRODUCER,
         new FrameworkFieldInitializer(
             generatedComponentModel,
             resolvedBindings,
@@ -551,7 +678,7 @@ final class ComponentBindingExpressions {
           ? wrapInMethod(resolvedBindings, RequestKind.INSTANCE, directInstanceExpression)
           : directInstanceExpression;
     }
-    return new DerivedFromProviderBindingExpression(
+    return new DerivedFromFrameworkInstanceBindingExpression(
         resolvedBindings, RequestKind.INSTANCE, this, types);
   }
 

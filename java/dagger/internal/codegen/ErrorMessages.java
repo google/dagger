@@ -149,6 +149,16 @@ final class ErrorMessages {
           "@Component.Builder methods must not have type parameters. Inherited method: %s");
     }
 
+    final String nonBindsInstanceMethodsMayNotTakePrimitives() {
+      return process(
+          "@Component.Builder methods that are not annotated with @BindsInstance "
+              + "must take either a module or a component dependency, not a primitive");
+    }
+
+    final String inheritedNonBindsInstanceMethodsMayNotTakePrimitives() {
+      return nonBindsInstanceMethodsMayNotTakePrimitives() + process(". Inherited method: %s");
+    }
+
     final String buildMethodReturnsSupertypeWithMissingMethods(
         TypeElement component,
         TypeElement componentBuilder,

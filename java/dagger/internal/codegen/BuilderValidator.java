@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -27,6 +28,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import dagger.BindsInstance;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -110,51 +112,66 @@ class BuilderValidator {
       ExecutableType resolvedMethodType =
           MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
       TypeMirror returnType = resolvedMethodType.getReturnType();
-      if (method.getParameters().size() == 0) {
-        // If this is potentially a build() method, validate it returns the correct type.
-        if (types.isSubtype(componentElement.asType(), returnType)) {
-          validateBuildMethodReturnType(
-              builder,
-              // since types.isSubtype() passed, componentElement cannot be a PackageElement
-              MoreElements.asType(componentElement),
-              msgs,
-              method,
-              returnType);
-          if (buildMethod != null) {
-            // If we found more than one build-like method, fail.
+      switch (method.getParameters().size()) {
+        case 0: // If this is potentially a build() method, validate it returns the correct type.
+          if (types.isSubtype(componentElement.asType(), returnType)) {
+            validateBuildMethodReturnType(
+                builder,
+                // since types.isSubtype() passed, componentElement cannot be a PackageElement
+                MoreElements.asType(componentElement),
+                msgs,
+                method,
+                returnType);
+            if (buildMethod != null) {
+              // If we found more than one build-like method, fail.
+              error(
+                  builder,
+                  method,
+                  msgs.twoBuildMethods(),
+                  msgs.inheritedTwoBuildMethods(),
+                  buildMethod);
+            }
+          } else {
             error(
                 builder,
                 method,
-                msgs.twoBuildMethods(),
-                msgs.inheritedTwoBuildMethods(),
-                buildMethod);
+                msgs.buildMustReturnComponentType(),
+                msgs.inheritedBuildMustReturnComponentType());
           }
-        } else {
+          // We set the buildMethod regardless of the return type to reduce error spam.
+          buildMethod = method;
+          break;
+
+        case 1: // If this correctly had one parameter, make sure the return types are valid.
+          if (returnType.getKind() != TypeKind.VOID
+              && !types.isSubtype(subject.asType(), returnType)) {
+            error(
+                builder,
+                method,
+                msgs.methodsMustReturnVoidOrBuilder(),
+                msgs.inheritedMethodsMustReturnVoidOrBuilder());
+          }
+          if (!method.getTypeParameters().isEmpty()) {
+            error(
+                builder,
+                method,
+                msgs.methodsMayNotHaveTypeParameters(),
+                msgs.inheritedMethodsMayNotHaveTypeParameters());
+          }
+          if (!isAnyAnnotationPresent(method, BindsInstance.class)
+              && method.getParameters().get(0).asType().getKind().isPrimitive()) {
+            error(
+                builder,
+                method,
+                msgs.nonBindsInstanceMethodsMayNotTakePrimitives(),
+                msgs.inheritedNonBindsInstanceMethodsMayNotTakePrimitives());
+          }
+          break;
+
+        default: // more than one parameter
           error(
-              builder,
-              method,
-              msgs.buildMustReturnComponentType(),
-              msgs.inheritedBuildMustReturnComponentType());
-        }
-        // We set the buildMethod regardless of the return type to reduce error spam.
-        buildMethod = method;
-      } else if (method.getParameters().size() > 1) {
-        // If this is a setter, make sure it has one arg.
-        error(builder, method, msgs.methodsMustTakeOneArg(), msgs.inheritedMethodsMustTakeOneArg());
-      } else if (returnType.getKind() != TypeKind.VOID
-          && !types.isSubtype(subject.asType(), returnType)) {
-        // If this correctly had one arg, make sure the return types are valid.
-        error(
-            builder,
-            method,
-            msgs.methodsMustReturnVoidOrBuilder(),
-            msgs.inheritedMethodsMustReturnVoidOrBuilder());
-      } else if (!method.getTypeParameters().isEmpty()) {
-        error(
-            builder,
-            method,
-            msgs.methodsMayNotHaveTypeParameters(),
-            msgs.inheritedMethodsMayNotHaveTypeParameters());
+              builder, method, msgs.methodsMustTakeOneArg(), msgs.inheritedMethodsMustTakeOneArg());
+          break;
       }
     }
 

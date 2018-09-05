@@ -17,9 +17,9 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.asList;
@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Table;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
@@ -52,10 +51,10 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MaybeBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
-import dagger.model.DependencyRequest;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
+import java.util.Formatter;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.processing.Messager;
@@ -140,9 +139,9 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportComponent(
         Diagnostic.Kind diagnosticKind, ComponentNode componentNode, String messageFormat) {
-      StringBuilder messageBuilder = new StringBuilder(messageFormat);
-      appendComponentPathUnlessAtRoot(messageBuilder, componentNode);
-      printMessage(diagnosticKind, messageBuilder, rootComponent);
+      StringBuilder message = new StringBuilder(messageFormat);
+      appendComponentPathUnlessAtRoot(message, componentNode);
+      printMessage(diagnosticKind, message, rootComponent);
     }
 
     @Override
@@ -161,9 +160,7 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportBinding(
         Diagnostic.Kind diagnosticKind, MaybeBindingNode bindingNode, String message) {
-      StringBuilder messageBuilder = new StringBuilder(message);
-      appendEntryPointsAndOneTrace(messageBuilder, bindingNode);
-      printMessage(diagnosticKind, messageBuilder, rootComponent);
+      printMessage(diagnosticKind, message + new DiagnosticInfo(bindingNode), rootComponent);
     }
 
     @Override
@@ -179,9 +176,7 @@ final class DiagnosticReporterFactory {
     @Override
     public void reportDependency(
         Diagnostic.Kind diagnosticKind, DependencyEdge dependencyEdge, String message) {
-      StringBuilder messageBuilder = new StringBuilder(message);
-      appendEntryPointsAndOneTrace(messageBuilder, dependencyEdge);
-      printMessage(diagnosticKind, messageBuilder, rootComponent);
+      printMessage(diagnosticKind, message + new DiagnosticInfo(dependencyEdge), rootComponent);
     }
 
     @Override
@@ -200,8 +195,7 @@ final class DiagnosticReporterFactory {
         Diagnostic.Kind diagnosticKind,
         ChildFactoryMethodEdge childFactoryMethodEdge,
         String message) {
-      printMessage(
-          diagnosticKind, new StringBuilder(message), childFactoryMethodEdge.factoryMethod());
+      printMessage(diagnosticKind, message, childFactoryMethodEdge.factoryMethod());
     }
 
     @Override
@@ -219,196 +213,208 @@ final class DiagnosticReporterFactory {
       return String.format(messageFormat, asList(firstArg, moreArgs).toArray());
     }
 
-    /**
-     * Appends the dependency trace to {@code dependencyEdge} from one of the entry points from
-     * which it is reachable, and any remaining entry points, to {@code message}.
-     */
-    private void appendEntryPointsAndOneTrace(
-        StringBuilder message, DependencyEdge dependencyEdge) {
-      if (dependencyEdge.isEntryPoint()) {
-        appendEntryPoint(message, dependencyEdge);
-      } else { // it's part of a binding
-        dependencyRequestFormatter.appendFormatLine(message, dependencyEdge.dependencyRequest());
-        appendEntryPointsAndOneTrace(message, (BindingNode) source(dependencyEdge));
-      }
-    }
-
-    /**
-     * Appends the dependency trace to {@code bindingNode} from one of the entry points from which
-     * it is reachable, and any remaining entry points, to {@code message}.
-     */
-    private void appendEntryPointsAndOneTrace(StringBuilder message, MaybeBindingNode bindingNode) {
-      ImmutableSet<DependencyEdge> entryPoints =
-          graph.entryPointEdgesDependingOnBindingNode(bindingNode);
-      // Show the full dependency trace for one entry point.
-      DependencyEdge entryPointForTrace =
-          min(
-              entryPoints,
-              // prefer entry points in components closest to the root
-              rootComponentFirst()
-                  // then prefer entry points with a short dependency path to the error
-                  .thenComparing(shortestDependencyPathFirst(bindingNode))
-                  // then prefer entry points declared in the component to those declared in a
-                  // supertype
-                  .thenComparing(nearestComponentSupertypeFirst())
-                  // finally prefer entry points declared first in their enclosing type
-                  .thenComparing(requestElementDeclarationOrder()));
-      appendDependencyTrace(message, entryPointForTrace, bindingNode);
-
-      // List the remaining entry points, showing which component they're in.
-      if (entryPoints.size() > 1) {
-        message.append("\nThe following other entry points also depend on it:");
-        entryPoints
-            .stream()
-            .filter(entryPoint -> !entryPoint.equals(entryPointForTrace))
-            .sorted(
-                // start with entry points in components closest to the root
-                rootComponentFirst()
-                    // then list entry points declared in the component before those declared in a
-                    // supertype
-                    .thenComparing(nearestComponentSupertypeFirst())
-                    // finally list entry points in declaration order in their declaring type
-                    .thenComparing(requestElementDeclarationOrder()))
-            .forEachOrdered(
-                entryPoint -> {
-                  message.append("\n    ");
-                  Element requestElement = entryPoint.dependencyRequest().requestElement().get();
-                  message.append(elementToString(requestElement));
-
-                  // For entry points declared in subcomponents or supertypes of the root component,
-                  // append the component path to make clear to the user which component it's in.
-                  ComponentPath componentPath = source(entryPoint).componentPath();
-                  if (!componentPath.atRoot()
-                      || !requestElement.getEnclosingElement().equals(rootComponent)) {
-                    message.append(String.format(" [%s]", componentPath));
-                  }
-                });
-      }
-    }
-
-    // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
-    // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
-    private void appendDependencyTrace(
-        StringBuilder message, DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
-      checkArgument(entryPoint.isEntryPoint());
-      ImmutableList<Node> shortestBindingPath = shortestPathFromEntryPoint(entryPoint, bindingNode);
-      verify(
-          !shortestBindingPath.isEmpty(),
-          "no dependency path from %s to %s in %s",
-          entryPoint,
-          bindingNode,
-          graph);
-
-      message.ensureCapacity(
-          message.capacity() + shortestBindingPath.size() * 100 /* a guess heuristic */);
-      for (int i = shortestBindingPath.size() - 1; i > 0; i--) {
-        Set<Edge> dependenciesBetween =
-            graph.edgesConnecting(shortestBindingPath.get(i - 1), shortestBindingPath.get(i));
-        DependencyRequest dependencyRequest =
-            // If a binding requests a key more than once, any of them should be fine to get to
-            // the shortest path
-            ((DependencyEdge) Iterables.get(dependenciesBetween, 0)).dependencyRequest();
-        dependencyRequestFormatter.appendFormatLine(message, dependencyRequest);
-      }
-      appendEntryPoint(message, entryPoint);
-    }
-
-    private void appendEntryPoint(StringBuilder message, DependencyEdge entryPoint) {
-      checkArgument(entryPoint.isEntryPoint());
-      dependencyRequestFormatter.appendFormatLine(message, entryPoint.dependencyRequest());
-      appendComponentPathUnlessAtRoot(message, source(entryPoint));
-    }
-
     private Node source(Edge edge) {
       return graph.incidentNodes(edge).source();
     }
 
-    private void printMessage(
-        Diagnostic.Kind diagnosticKind, StringBuilder message, Element elementToReport) {
+    void printMessage(
+        Diagnostic.Kind diagnosticKind, CharSequence message, Element elementToReport) {
       reportedDiagnosticKinds.add(diagnosticKind);
+      StringBuilder fullMessage = new StringBuilder();
+      appendBracketPrefix(fullMessage, plugin);
       // TODO(ronshapiro): should we create a HashSet out of elementEncloses() so we don't
       // need to do an O(n) contains() each time?
       if (!elementEncloses(rootComponent, elementToReport)) {
-        insertBracketPrefix(message, elementToString(elementToReport));
+        appendBracketPrefix(fullMessage, elementToString(elementToReport));
         elementToReport = rootComponent;
       }
-      messager.printMessage(diagnosticKind, insertBracketPrefix(message, plugin), elementToReport);
+      messager.printMessage(diagnosticKind, fullMessage.append(message), elementToReport);
     }
 
     private void appendComponentPathUnlessAtRoot(StringBuilder message, Node node) {
       if (!node.componentPath().equals(graph.rootComponentNode().componentPath())) {
-        message.append(String.format(" [%s]", node.componentPath()));
+        new Formatter(message).format(" [%s]", node.componentPath());
       }
     }
 
-    @CanIgnoreReturnValue
-    private StringBuilder insertBracketPrefix(StringBuilder messageBuilder, String prefix) {
-      return messageBuilder.insert(0, String.format("[%s] ", prefix));
+    private void appendBracketPrefix(StringBuilder message, String prefix) {
+      new Formatter(message).format("[%s] ", prefix);
     }
 
-    /**
-     * Returns a comparator that sorts entry points in components whose paths from the root are
-     * shorter first.
-     */
-    private Comparator<DependencyEdge> rootComponentFirst() {
-      return comparingInt(entryPoint -> source(entryPoint).componentPath().components().size());
-    }
+    /** The diagnostic information associated with an error. */
+    private final class DiagnosticInfo {
+      final ImmutableList<DependencyEdge> dependencyTrace;
+      final ImmutableSet<DependencyEdge> entryPoints;
 
-    /**
-     * Returns a comparator that puts entry points whose shortest dependency path to {@code
-     * bindingNode} is shortest first.
-     */
-    private Comparator<DependencyEdge> shortestDependencyPathFirst(MaybeBindingNode bindingNode) {
-      return comparing(entryPoint -> shortestPathFromEntryPoint(entryPoint, bindingNode).size());
-    }
+      DiagnosticInfo(MaybeBindingNode bindingNode) {
+        entryPoints = graph.entryPointEdgesDependingOnBindingNode(bindingNode);
+        dependencyTrace = dependencyTrace(bindingNode, entryPoints);
+      }
 
-    private ImmutableList<Node> shortestPathFromEntryPoint(
-        DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
-      return shortestPaths
-          .row(bindingNode)
-          .computeIfAbsent(
-              entryPoint,
-              ep ->
-                  shortestPath(
-                      node -> filter(graph.successors(node), MaybeBindingNode.class::isInstance),
-                      graph.incidentNodes(ep).target(),
-                      bindingNode));
-    }
+      DiagnosticInfo(DependencyEdge dependencyEdge) {
+        ImmutableList.Builder<DependencyEdge> dependencyTraceBuilder = ImmutableList.builder();
+        dependencyTraceBuilder.add(dependencyEdge);
 
-    /**
-     * Returns a comparator that sorts entry points in by the distance of the type that declares
-     * them from the type of the component that contains them.
-     *
-     * <p>For instance, an entry point declared directly in the component type would sort before one
-     * declared in a direct supertype, which would sort before one declared in a supertype of a
-     * supertype.
-     */
-    private Comparator<DependencyEdge> nearestComponentSupertypeFirst() {
-      return comparingInt(
-          entryPoint ->
-              indexOf(
-                  supertypes.apply(componentContainingEntryPoint(entryPoint)),
-                  equalTo(typeDeclaringEntryPoint(entryPoint))));
-    }
+        if (dependencyEdge.isEntryPoint()) {
+          entryPoints = ImmutableSet.of(dependencyEdge);
+        } else {
+          // It's not an entry point, so it's part of a binding
+          BindingNode bindingNode = (BindingNode) source(dependencyEdge);
+          entryPoints = graph.entryPointEdgesDependingOnBindingNode(bindingNode);
+          dependencyTraceBuilder.addAll(dependencyTrace(bindingNode, entryPoints));
+        }
+        dependencyTrace = dependencyTraceBuilder.build();
+      }
 
-    private TypeElement componentContainingEntryPoint(DependencyEdge entryPoint) {
-      return source(entryPoint).componentPath().currentComponent();
-    }
+      @Override
+      public String toString() {
+        StringBuilder message =
+            new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */);
 
-    private TypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
-      return MoreElements.asType(
-          entryPoint.dependencyRequest().requestElement().get().getEnclosingElement());
-    }
+        // Print the dependency trace.
+        dependencyTrace.forEach(
+            edge -> dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
+        appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
 
-    /**
-     * Returns a comparator that sorts entry points in the order in which they were declared in
-     * their declaring type.
-     *
-     * <p>Only useful to compare entry points declared in the same type.
-     */
-    private Comparator<DependencyEdge> requestElementDeclarationOrder() {
-      return comparing(
-          entryPoint -> entryPoint.dependencyRequest().requestElement().get(), DECLARATION_ORDER);
+        // List the remaining entry points, showing which component they're in.
+        if (entryPoints.size() > 1) {
+          message.append("\nThe following other entry points also depend on it:");
+          entryPoints.stream()
+              .filter(entryPoint -> !entryPoint.equals(getLast(dependencyTrace)))
+              .sorted(
+                  // start with entry points in components closest to the root
+                  rootComponentFirst()
+                      // then list entry points declared in the component before those declared in a
+                      // supertype
+                      .thenComparing(nearestComponentSupertypeFirst())
+                      // finally list entry points in declaration order in their declaring type
+                      .thenComparing(requestElementDeclarationOrder()))
+              .forEachOrdered(
+                  entryPoint -> {
+                    message.append("\n    ");
+                    Element requestElement = entryPoint.dependencyRequest().requestElement().get();
+                    message.append(elementToString(requestElement));
+
+                    // For entry points declared in subcomponents or supertypes of the root
+                    // component, append the component path to make clear to the user which
+                    // component it's in.
+                    ComponentPath componentPath = source(entryPoint).componentPath();
+                    if (!componentPath.atRoot()
+                        || !requestElement.getEnclosingElement().equals(rootComponent)) {
+                      message.append(String.format(" [%s]", componentPath));
+                    }
+                  });
+        }
+        return message.toString();
+      }
+
+      /**
+       * Returns the dependency trace from one of the {@code entryPoints} to {@code bindingNode} to
+       * {@code message} as a list <i>ending with</i> the entry point.
+       */
+      // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
+      // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
+      ImmutableList<DependencyEdge> dependencyTrace(
+          MaybeBindingNode bindingNode, ImmutableSet<DependencyEdge> entryPoints) {
+        // Show the full dependency trace for one entry point.
+        DependencyEdge entryPointForTrace =
+            min(
+                entryPoints,
+                // prefer entry points in components closest to the root
+                rootComponentFirst()
+                    // then prefer entry points with a short dependency path to the error
+                    .thenComparing(shortestDependencyPathFirst(bindingNode))
+                    // then prefer entry points declared in the component to those declared in a
+                    // supertype
+                    .thenComparing(nearestComponentSupertypeFirst())
+                    // finally prefer entry points declared first in their enclosing type
+                    .thenComparing(requestElementDeclarationOrder()));
+
+        ImmutableList<Node> shortestBindingPath =
+            shortestPathFromEntryPoint(entryPointForTrace, bindingNode);
+        verify(
+            !shortestBindingPath.isEmpty(),
+            "no dependency path from %s to %s in %s",
+            entryPointForTrace,
+            bindingNode,
+            graph);
+
+        ImmutableList.Builder<DependencyEdge> dependencyTrace = ImmutableList.builder();
+        dependencyTrace.add(entryPointForTrace);
+        for (int i = 0; i < shortestBindingPath.size() - 1; i++) {
+          Set<Edge> dependenciesBetween =
+              graph.edgesConnecting(shortestBindingPath.get(i), shortestBindingPath.get(i + 1));
+          // If a binding requests a key more than once, any of them should be fine to get to the
+          // shortest path
+          dependencyTrace.add((DependencyEdge) Iterables.get(dependenciesBetween, 0));
+        }
+        return dependencyTrace.build().reverse();
+      }
+
+      /**
+       * Returns a comparator that sorts entry points in components whose paths from the root are
+       * shorter first.
+       */
+      Comparator<DependencyEdge> rootComponentFirst() {
+        return comparingInt(entryPoint -> source(entryPoint).componentPath().components().size());
+      }
+
+      /**
+       * Returns a comparator that puts entry points whose shortest dependency path to {@code
+       * bindingNode} is shortest first.
+       */
+      Comparator<DependencyEdge> shortestDependencyPathFirst(MaybeBindingNode bindingNode) {
+        return comparing(entryPoint -> shortestPathFromEntryPoint(entryPoint, bindingNode).size());
+      }
+
+      ImmutableList<Node> shortestPathFromEntryPoint(
+          DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
+        return shortestPaths
+            .row(bindingNode)
+            .computeIfAbsent(
+                entryPoint,
+                ep ->
+                    shortestPath(
+                        node -> filter(graph.successors(node), MaybeBindingNode.class::isInstance),
+                        graph.incidentNodes(ep).target(),
+                        bindingNode));
+      }
+
+      /**
+       * Returns a comparator that sorts entry points in by the distance of the type that declares
+       * them from the type of the component that contains them.
+       *
+       * <p>For instance, an entry point declared directly in the component type would sort before
+       * one declared in a direct supertype, which would sort before one declared in a supertype of
+       * a supertype.
+       */
+      Comparator<DependencyEdge> nearestComponentSupertypeFirst() {
+        return comparingInt(
+            entryPoint ->
+                indexOf(
+                    supertypes.apply(componentContainingEntryPoint(entryPoint)),
+                    equalTo(typeDeclaringEntryPoint(entryPoint))));
+      }
+
+      TypeElement componentContainingEntryPoint(DependencyEdge entryPoint) {
+        return source(entryPoint).componentPath().currentComponent();
+      }
+
+      TypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
+        return MoreElements.asType(
+            entryPoint.dependencyRequest().requestElement().get().getEnclosingElement());
+      }
+
+      /**
+       * Returns a comparator that sorts edges in the order in which their request elements were
+       * declared in their declaring type.
+       *
+       * <p>Only useful to compare edges whose request elements were declared in the same type.
+       */
+      Comparator<DependencyEdge> requestElementDeclarationOrder() {
+        return comparing(
+            edge -> edge.dependencyRequest().requestElement().get(), DECLARATION_ORDER);
+      }
     }
   }
 }

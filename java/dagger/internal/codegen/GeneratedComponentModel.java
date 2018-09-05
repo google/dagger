@@ -263,8 +263,12 @@ final class GeneratedComponentModel {
    * ahead-of-time subcomponents.
    */
   void addModifiableBindingMethod(
-      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec methodSpec) {
-    modifiableBindingMethods.addMethod(type, key, kind, methodSpec);
+      ModifiableBindingType type,
+      Key key,
+      RequestKind kind,
+      MethodSpec methodSpec,
+      boolean finalized) {
+    modifiableBindingMethods.addMethod(type, key, kind, methodSpec, finalized);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
@@ -274,15 +278,18 @@ final class GeneratedComponentModel {
    * method, encapsulates a modifiable binding.
    */
   void registerModifiableBindingMethod(
-      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec methodSpec) {
-    modifiableBindingMethods.addMethod(type, key, kind, methodSpec);
+      ModifiableBindingType type,
+      Key key,
+      RequestKind kind,
+      MethodSpec methodSpec,
+      boolean finalized) {
+    modifiableBindingMethods.addMethod(type, key, kind, methodSpec, finalized);
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
-  void addImplementedModifiableBindingMethod(
-      ModifiableBindingMethod method, MethodSpec methodSpec) {
+  void addImplementedModifiableBindingMethod(ModifiableBindingMethod method) {
     modifiableBindingMethods.methodImplemented(method);
-    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
+    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method.methodSpec());
   }
 
   /** Adds the given type to the component. */
@@ -358,11 +365,23 @@ final class GeneratedComponentModel {
       ImmutableList<ModifiableBindingMethod> superclassModifiableBindingMethods =
           supermodel.get().getModifiableBindingMethods();
       superclassModifiableBindingMethods.stream()
-          .filter(method -> !modifiableBindingMethods.isFinalized(method))
+          .filter(method -> !modifiableBindingMethods.finalized(method))
           .forEach(modifiableBindingMethodsBuilder::add);
     }
-    modifiableBindingMethodsBuilder.addAll(modifiableBindingMethods.getMethods());
+    modifiableBindingMethodsBuilder.addAll(modifiableBindingMethods.getNonFinalizedMethods());
     return modifiableBindingMethodsBuilder.build();
+  }
+
+  /**
+   * Returns the {@link ModifiableBindingMethod} for this subcomponent for the given binding, if it
+   * exists.
+   */
+  Optional<ModifiableBindingMethod> getModifiableBindingMethod(Key key, RequestKind requestKind) {
+    Optional<ModifiableBindingMethod> method = modifiableBindingMethods.getMethod(key, requestKind);
+    if (!method.isPresent() && supermodel.isPresent()) {
+      return supermodel.get().getModifiableBindingMethod(key, requestKind);
+    }
+    return method;
   }
 
   /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */

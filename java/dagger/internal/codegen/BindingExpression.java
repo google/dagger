@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
 // TODO(user): Rename this to RequestExpression?
@@ -45,6 +46,15 @@ abstract class BindingExpression {
   CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
     // By default, just delegate to #getDependencyExpression().
+    return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
+  }
+
+  /**
+   * Returns an expression for the implementation of a modifiable binding method for the given
+   * component model.
+   */
+  CodeBlock getModifiableBindingMethodImplementation(
+      ModifiableBindingMethod modifiableBindingMethod, GeneratedComponentModel component) {
     return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
   }
 }

@@ -16,7 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -26,6 +28,7 @@ import com.squareup.javapoet.MethodSpec;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -38,62 +41,73 @@ import java.util.Set;
  * superclasses to know what binding methods to attempt to modify.
  */
 final class ModifiableBindingMethods {
-  private final Map<KeyAndKind, ModifiableBindingMethod> methods = Maps.newHashMap();
+  private final Map<KeyAndKind, ModifiableBindingMethod> methods = Maps.newLinkedHashMap();
   private final Set<KeyAndKind> finalizedMethods = Sets.newHashSet();
 
   /** Register a method encapsulating a modifiable binding. */
   void addMethod(
-      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec unimplementedMethod) {
+      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec method, boolean finalized) {
+    checkArgument(type.isModifiable());
     KeyAndKind keyAndKind = KeyAndKind.create(key, kind);
-    checkState(
-        !finalizedMethods.contains(keyAndKind),
-        "Adding a modifiable binding method for a binding that has been marked as finalized for "
-            + "the current subcomponent implementation. The binding is for a %s-%s of type %s.",
-        key,
-        kind,
-        type);
-    methods.put(keyAndKind, ModifiableBindingMethod.create(type, key, kind, unimplementedMethod));
+    if (finalized) {
+      finalizedMethods.add(keyAndKind);
+    }
+    methods.put(keyAndKind, ModifiableBindingMethod.create(type, key, kind, method, finalized));
   }
 
-  /** Returns all {@link ModifiableBindingMethod}s. */
-  ImmutableList<ModifiableBindingMethod> getMethods() {
-    // We will never add a modifiable binding method and mark it as having been finalized in the
-    // same instance of ModifiableBindingMethods, so there's no need to filter `methods` by
-    // `finalizedMethods`.
-    return ImmutableList.copyOf(methods.values());
+  /** Returns all {@link ModifiableBindingMethod}s that have not been marked as finalized. */
+  ImmutableList<ModifiableBindingMethod> getNonFinalizedMethods() {
+    return methods.values().stream().filter(m -> !m.finalized()).collect(toImmutableList());
+  }
+
+  /** Returns the {@link ModifiableBindingMethod} for the given binding if present. */
+  Optional<ModifiableBindingMethod> getMethod(Key key, RequestKind kind) {
+    return Optional.ofNullable(methods.get(KeyAndKind.create(key, kind)));
   }
 
   /**
    * Mark the {@link ModifiableBindingMethod} as having been implemented, thus modifying the
-   * binding. For those bindings that are finalized when modified, mark the binding as finalized,
-   * meaning it should no longer be modified.
+   * binding.
    */
   void methodImplemented(ModifiableBindingMethod method) {
-    if (method.type().finalizedOnModification()) {
-      KeyAndKind keyAndKind = KeyAndKind.create(method.key(), method.kind());
+    if (method.finalized()) {
       checkState(
-          !methods.containsKey(keyAndKind),
-          "Indicating a modifiable binding method is finalized when it was registered as "
-              + "modifiable for the current subcomponent implementation. The binding is for a "
-              + "%s-%s of type %s.",
+          finalizedMethods.add(KeyAndKind.create(method.key(), method.kind())),
+          "Implementing and finalizing a modifiable binding method that has been marked as "
+              + "finalized in the current subcomponent implementation. The binding is for a %s-%s "
+              + "of type %s.",
           method.key(),
           method.kind(),
           method.type());
-      finalizedMethods.add(keyAndKind);
     }
   }
 
   /** Whether a given binding has been marked as finalized. */
-  boolean isFinalized(ModifiableBindingMethod method) {
+  boolean finalized(ModifiableBindingMethod method) {
     return finalizedMethods.contains(KeyAndKind.create(method.key(), method.kind()));
   }
 
   @AutoValue
   abstract static class ModifiableBindingMethod {
     private static ModifiableBindingMethod create(
-        ModifiableBindingType type, Key key, RequestKind kind, MethodSpec unimplementedMethod) {
+        ModifiableBindingType type,
+        Key key,
+        RequestKind kind,
+        MethodSpec methodSpec,
+        boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          type, key, kind, unimplementedMethod);
+          type, key, kind, methodSpec, finalized);
+    }
+
+    /** Create a {@ModifiableBindingMethod} representing an implementation of an existing method. */
+    static ModifiableBindingMethod implement(
+        ModifiableBindingMethod unimplementedMethod, MethodSpec methodSpec, boolean finalized) {
+      return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
+          unimplementedMethod.type(),
+          unimplementedMethod.key(),
+          unimplementedMethod.kind(),
+          methodSpec,
+          finalized);
     }
 
     abstract ModifiableBindingType type();
@@ -102,7 +116,9 @@ final class ModifiableBindingMethods {
 
     abstract RequestKind kind();
 
-    abstract MethodSpec baseMethod();
+    abstract MethodSpec methodSpec();
+
+    abstract boolean finalized();
   }
 
   @AutoValue

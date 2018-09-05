@@ -43,6 +43,7 @@ import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -246,18 +247,27 @@ final class ComponentBindingExpressions {
   Optional<MethodSpec> getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     DependencyRequest dependencyRequest = componentMethod.dependencyRequest().get();
-    MethodSpec.Builder methodBuilder =
+    MethodSpec method =
         MethodSpec.overriding(
-            componentMethod.methodElement(),
-            MoreTypes.asDeclared(graph.componentType().asType()),
-            types);
+                componentMethod.methodElement(),
+                MoreTypes.asDeclared(graph.componentType().asType()),
+                types)
+            .addCode(
+                getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
+                    .getComponentMethodImplementation(componentMethod, generatedComponentModel))
+            .build();
 
-    ModifiableBindingType type =
+    ModifiableBindingType modifiableBindingType =
         getModifiableBindingType(dependencyRequest.key(), dependencyRequest.kind());
-    if (type.isModifiable()) {
+    if (modifiableBindingType.isModifiable()) {
       generatedComponentModel.registerModifiableBindingMethod(
-          type, dependencyRequest.key(), dependencyRequest.kind(), methodBuilder.build());
-      if (!type.hasBaseClassImplementation()) {
+          modifiableBindingType,
+          dependencyRequest.key(),
+          dependencyRequest.kind(),
+          method,
+          newModifiableBindingWillBeFinalized(
+              modifiableBindingType, dependencyRequest.key(), dependencyRequest.kind()));
+      if (!modifiableBindingType.hasBaseClassImplementation()) {
         // A component method should not be emitted if it encapsulates a modifiable binding that
         // cannot be satisfied by the abstract base class implementation of a subcomponent.
         checkState(
@@ -268,37 +278,69 @@ final class ComponentBindingExpressions {
       }
     }
 
-    return Optional.of(
-        methodBuilder
-            .addCode(
-                getBindingExpression(dependencyRequest.key(), dependencyRequest.kind())
-                    .getComponentMethodImplementation(componentMethod, generatedComponentModel))
-            .build());
+    return Optional.of(method);
   }
 
   /**
-   * Returns the implementation of a method encapsulating a modifiable binding in a supertype
+   * Returns the implementation of a modifiable binding method originally defined in a supertype
    * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
    * or should not be modified by the current binding graph. This is only relevant for ahead-of-time
    * subcomponents.
    */
-  Optional<MethodSpec> getModifiableBindingMethod(ModifiableBindingMethod modifiableBindingMethod) {
-    if (shouldOverrideModifiableBindingMethod(modifiableBindingMethod)) {
-      Expression bindingExpression =
-          getDependencyExpression(
-              modifiableBindingMethod.key(),
-              modifiableBindingMethod.kind(),
-              generatedComponentModel.name());
-      MethodSpec baseMethod = modifiableBindingMethod.baseMethod();
+  Optional<ModifiableBindingMethod> getModifiableBindingMethod(
+      ModifiableBindingMethod modifiableBindingMethod) {
+    if (shouldModifyKnownBinding(modifiableBindingMethod)) {
+      Key key = modifiableBindingMethod.key();
+      RequestKind requestKind = modifiableBindingMethod.kind();
+      MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
       return Optional.of(
-          MethodSpec.methodBuilder(baseMethod.name)
-              .addModifiers(PUBLIC)
-              .returns(baseMethod.returnType)
-              .addAnnotation(Override.class)
-              .addStatement("return $L", bindingExpression.codeBlock())
-              .build());
+          ModifiableBindingMethod.implement(
+              modifiableBindingMethod,
+              MethodSpec.methodBuilder(baseMethod.name)
+                  .addModifiers(PUBLIC)
+                  .returns(baseMethod.returnType)
+                  .addAnnotation(Override.class)
+                  .addCode(
+                      getBindingExpression(key, requestKind)
+                          .getModifiableBindingMethodImplementation(
+                              modifiableBindingMethod, generatedComponentModel))
+                  .build(),
+              knownModifiableBindingWillBeFinalized(modifiableBindingMethod)));
     }
     return Optional.empty();
+  }
+
+  /**
+   * Returns true if a modifiable binding method that was registered in a superclass implementation
+   * of this subcomponent should be marked as "finalized" if it is being overridden by this
+   * subcomponent implementation. "Finalized" means we should not attempt to modify the binding in
+   * any subcomponent subclass. This is only relevant for ahead-of-time subcomponents.
+   */
+  // TODO(user): extract a ModifiableBindingExpressions class? This may need some dependencies
+  // (like the GCM) but could remove some concerns from this class
+  private boolean knownModifiableBindingWillBeFinalized(
+      ModifiableBindingMethod modifiableBindingMethod) {
+    ModifiableBindingType newModifiableBindingType =
+        getModifiableBindingType(modifiableBindingMethod.key(), modifiableBindingMethod.kind());
+    if (!newModifiableBindingType.isModifiable()) {
+      // If a modifiable binding has become non-modifiable it is final by definition.
+      return true;
+    }
+    // All currently supported modifiable types are finalized upon modification.
+    return shouldModifyBinding(
+        newModifiableBindingType, modifiableBindingMethod.key(), modifiableBindingMethod.kind());
+  }
+
+  /**
+   * Returns true if a newly discovered modifiable binding method, once it is defined in this
+   * subcomponent implementation, should be marked as "finalized", meaning we should not attempt to
+   * modify the binding in any subcomponent subclass. This is only relevant for ahead-of-time
+   * subcomponents.
+   */
+  private boolean newModifiableBindingWillBeFinalized(
+      ModifiableBindingType modifiableBindingType, Key key, RequestKind requestKind) {
+    // All currently supported modifiable types are finalized upon modification.
+    return shouldModifyBinding(modifiableBindingType, key, requestKind);
   }
 
   private BindingExpression getBindingExpression(Key key, RequestKind requestKind) {
@@ -352,13 +394,34 @@ final class ComponentBindingExpressions {
    */
   private BindingExpression createModifiableBindingExpression(
       ModifiableBindingType type, Key key, RequestKind requestKind) {
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+    Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
+        generatedComponentModel.getModifiableBindingMethod(key, requestKind);
+    Optional<ComponentMethodDescriptor> matchingComponentMethod =
+        findMatchingComponentMethod(key, requestKind);
     switch (type) {
       case GENERATED_INSTANCE:
-        ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
         return new GeneratedInstanceBindingExpression(
-            generatedComponentModel, resolvedBindings, requestKind);
+            generatedComponentModel,
+            resolvedBindings,
+            requestKind,
+            matchingModifiableBindingMethod,
+            matchingComponentMethod);
       case MISSING:
-        return new MissingBindingExpression(generatedComponentModel, key, requestKind);
+        return new MissingBindingExpression(
+            generatedComponentModel,
+            key,
+            requestKind,
+            matchingModifiableBindingMethod,
+            matchingComponentMethod);
+      case OPTIONAL:
+        BindingExpression expression = createBindingExpression(resolvedBindings, requestKind);
+        // If the expression hasn't already been registered as a modifiable binding method then wrap
+        // the binding here.
+        if (!generatedComponentModel.getModifiableBindingMethod(key, requestKind).isPresent()) {
+          return wrapInMethod(resolvedBindings, requestKind, expression);
+        }
+        return expression;
       default:
         throw new IllegalStateException(
             String.format(
@@ -393,6 +456,10 @@ final class ComponentBindingExpressions {
       if (binding.requiresGeneratedInstance()) {
         return ModifiableBindingType.GENERATED_INSTANCE;
       }
+
+      if (binding.kind().equals(BindingKind.OPTIONAL)) {
+        return ModifiableBindingType.OPTIONAL;
+      }
     } else if (!resolvableBinding(key, requestKind)) {
       return ModifiableBindingType.MISSING;
     }
@@ -403,11 +470,29 @@ final class ComponentBindingExpressions {
 
   /**
    * Returns true if the current binding graph can, and should, modify a binding by overriding a
-   * modfiable binding method. This is only relevant for ahead-of-time subcomponents.
+   * modifiable binding method. This is only relevant for ahead-of-time subcomponents.
    */
-  private boolean shouldOverrideModifiableBindingMethod(
-      ModifiableBindingMethod modifiableBindingMethod) {
-    switch (modifiableBindingMethod.type()) {
+  private boolean shouldModifyKnownBinding(ModifiableBindingMethod modifiableBindingMethod) {
+    ModifiableBindingType newModifiableBindingType =
+        getModifiableBindingType(modifiableBindingMethod.key(), modifiableBindingMethod.kind());
+    if (!newModifiableBindingType.equals(modifiableBindingMethod.type())) {
+      // It is possible that a binding can change types, in which case we should always modify the
+      // binding.
+      return true;
+    }
+    return shouldModifyBinding(
+        modifiableBindingMethod.type(),
+        modifiableBindingMethod.key(),
+        modifiableBindingMethod.kind());
+  }
+
+  /**
+   * Returns true if the current binding graph can, and should, modify a binding by overriding a
+   * modifiable binding method. This is only relevant for ahead-of-time subcomponents.
+   */
+  private boolean shouldModifyBinding(
+      ModifiableBindingType modifiableBindingType, Key key, RequestKind requestKind) {
+    switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
         return !generatedComponentModel.isAbstract();
       case MISSING:
@@ -415,12 +500,16 @@ final class ComponentBindingExpressions {
         // ancestors satisfy missing bindings of their children with their own missing binding
         // methods so that we can minimize the cases where we need to reach into doubly-nested
         // descendant component implementations
-        return resolvableBinding(modifiableBindingMethod.key(), modifiableBindingMethod.kind());
+        return resolvableBinding(key, requestKind);
+      case OPTIONAL:
+        // Only override optional binding methods if we have a non-empty binding.
+        ResolvedBindings resolvedBindings = graph.resolvedBindings(requestKind, key);
+        return !resolvedBindings.contributionBinding().dependencies().isEmpty();
       default:
         throw new IllegalStateException(
             String.format(
                 "Overriding modifiable binding method with unsupported ModifiableBindingType [%s].",
-                modifiableBindingMethod.type()));
+                modifiableBindingType));
     }
   }
 
@@ -764,10 +853,10 @@ final class ComponentBindingExpressions {
   /**
    * Returns {@code true} if the binding should use the static factory creation strategy.
    *
-   * In default mode, we always use the static factory creation strategy. In fastInit mode, we
+   * <p>In default mode, we always use the static factory creation strategy. In fastInit mode, we
    * prefer to use a SwitchingProvider instead of static factories in order to reduce class loading;
-   * however, we allow static factories that can reused across multiple bindings, e.g.
-   * {@code MapFactory} or {@code SetFactory}.
+   * however, we allow static factories that can reused across multiple bindings, e.g. {@code
+   * MapFactory} or {@code SetFactory}.
    */
   private boolean useStaticFactoryCreation(ContributionBinding binding) {
     return !(compilerOptions.experimentalAndroidMode2() || compilerOptions.fastInit())
@@ -791,8 +880,10 @@ final class ComponentBindingExpressions {
 
   /**
    * Returns a binding expression that uses a given one as the body of a method that users call. If
-   * a component provision method matches it, it will be the method implemented. If not, a new
-   * private method will be written.
+   * a component provision method matches it, it will be the method implemented. If it does not
+   * match a component provision method and the binding is modifiable the a new public modifiable
+   * binding method will be written. If the binding doesn't match a component method nor is it
+   * modifiable, then a new private method will be written.
    */
   private BindingExpression wrapInMethod(
       ResolvedBindings resolvedBindings,
@@ -800,8 +891,24 @@ final class ComponentBindingExpressions {
       BindingExpression bindingExpression) {
     BindingMethodImplementation methodImplementation =
         methodImplementation(resolvedBindings, requestKind, bindingExpression);
+    Optional<ComponentMethodDescriptor> matchingComponentMethod =
+        findMatchingComponentMethod(resolvedBindings.key(), requestKind);
 
-    return findMatchingComponentMethod(resolvedBindings.key(), requestKind)
+    ModifiableBindingType modifiableBindingType =
+        getModifiableBindingType(resolvedBindings.key(), requestKind);
+    if (modifiableBindingType.isModifiable() && !matchingComponentMethod.isPresent()) {
+      return new ModifiableConcreteMethodBindingExpression(
+          resolvedBindings,
+          requestKind,
+          modifiableBindingType,
+          methodImplementation,
+          generatedComponentModel,
+          generatedComponentModel.getModifiableBindingMethod(resolvedBindings.key(), requestKind),
+          newModifiableBindingWillBeFinalized(
+              modifiableBindingType, resolvedBindings.key(), requestKind));
+    }
+
+    return matchingComponentMethod
         .<BindingExpression>map(
             componentMethod ->
                 new ComponentMethodBindingExpression(

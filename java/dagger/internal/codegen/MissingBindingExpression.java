@@ -22,23 +22,36 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 
 import com.google.auto.common.MoreTypes;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import java.util.Optional;
 
 /**
- * A {@link AbstractMethodModifiableBindingExpression} for a binding that is missing when generating
+ * A {@link ModifiableAbstractMethodBindingExpression} for a binding that is missing when generating
  * the abstract base class implementation of a subcomponent. The (unimplemented) method is added to
  * the {@link GeneratedComponentModel} when the dependency expression is requested. The method is
  * overridden when generating the implementation of an ancestor component.
  */
-final class MissingBindingExpression extends AbstractMethodModifiableBindingExpression {
+final class MissingBindingExpression extends ModifiableAbstractMethodBindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final Key key;
   private final RequestKind kind;
 
   MissingBindingExpression(
-      GeneratedComponentModel generatedComponentModel, Key key, RequestKind kind) {
-    super(generatedComponentModel, ModifiableBindingType.MISSING, key, kind);
+      GeneratedComponentModel generatedComponentModel,
+      Key key,
+      RequestKind kind,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
+    super(
+        generatedComponentModel,
+        ModifiableBindingType.MISSING,
+        key,
+        kind,
+        matchingModifiableBindingMethod,
+        matchingComponentMethod);
     this.generatedComponentModel = generatedComponentModel;
     this.key = key;
     this.kind = kind;

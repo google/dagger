@@ -24,8 +24,11 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import java.util.Optional;
 
 /**
  * A {@link BindingExpression} that invokes a method that encapsulates a binding that cannot be
@@ -34,42 +37,64 @@ import dagger.model.RequestKind;
  * expression is requested. The method is overridden when generating the implementation of an
  * ancestor component.
  */
-abstract class AbstractMethodModifiableBindingExpression extends BindingExpression {
+abstract class ModifiableAbstractMethodBindingExpression extends BindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final ModifiableBindingType modifiableBindingType;
   private final Key key;
   private final RequestKind kind;
-  private String methodName;
+  private Optional<String> methodName;
 
-  AbstractMethodModifiableBindingExpression(
+  ModifiableAbstractMethodBindingExpression(
       GeneratedComponentModel generatedComponentModel,
       ModifiableBindingType modifiableBindingType,
       Key key,
-      RequestKind kind) {
+      RequestKind kind,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     this.generatedComponentModel = generatedComponentModel;
     this.modifiableBindingType = modifiableBindingType;
     this.key = key;
     this.kind = kind;
+    this.methodName =
+        initializeMethodName(matchingComponentMethod, matchingModifiableBindingMethod);
+  }
+
+  /**
+   * If this binding corresponds to an existing component method, or a known modifiable binding
+   * method, use them to initialize the method name, which is a signal to call the existing method
+   * rather than emit an abstract method.
+   */
+  private static Optional<String> initializeMethodName(
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
+    if (matchingComponentMethod.isPresent()) {
+      return Optional.of(matchingComponentMethod.get().methodElement().getSimpleName().toString());
+    }
+    if (matchingModifiableBindingMethod.isPresent()) {
+      return Optional.of(matchingModifiableBindingMethod.get().methodSpec().name);
+    }
+    return Optional.empty();
   }
 
   @Override
   final Expression getDependencyExpression(ClassName requestingClass) {
     addUnimplementedMethod();
-    return Expression.create(key.type(), CodeBlock.of("$L()", methodName));
+    return Expression.create(key.type(), CodeBlock.of("$L()", methodName.get()));
   }
 
   private void addUnimplementedMethod() {
-    if (methodName == null) {
+    if (!methodName.isPresent()) {
       // Only add the method once in case of repeated references to the missing binding.
-      methodName = chooseMethodName();
+      methodName = Optional.of(chooseMethodName());
       generatedComponentModel.addModifiableBindingMethod(
           modifiableBindingType,
           key,
           kind,
-          MethodSpec.methodBuilder(methodName)
+          MethodSpec.methodBuilder(methodName.get())
               .addModifiers(PUBLIC, ABSTRACT)
               .returns(requestTypeName(kind, TypeName.get(key.type())))
-              .build());
+              .build(),
+          false /* finalized */);
     }
   }
 

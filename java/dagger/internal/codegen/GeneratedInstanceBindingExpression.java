@@ -16,16 +16,19 @@
 
 package dagger.internal.codegen;
 
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.RequestKind;
+import java.util.Optional;
 
 /**
- * An {@link AbstractMethodModifiableBindingExpression} for a binding that requires an instance of a
+ * An {@link ModifiableAbstractMethodBindingExpression} for a binding that requires an instance of a
  * generated type. This expression is used in abstract implementations of a subcomponent when there
  * are no concrete definitions of generated types available. The (unimplemented) method is added to
  * the {@code GeneratedComponentModel} when this dependency expression is requested. The method is
  * overridden when generating the concrete implementation of an ancestor component.
  */
-final class GeneratedInstanceBindingExpression extends AbstractMethodModifiableBindingExpression {
+final class GeneratedInstanceBindingExpression extends ModifiableAbstractMethodBindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final ContributionBinding binding;
   private final RequestKind requestKind;
@@ -33,12 +36,16 @@ final class GeneratedInstanceBindingExpression extends AbstractMethodModifiableB
   GeneratedInstanceBindingExpression(
       GeneratedComponentModel generatedComponentModel,
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind) {
+      RequestKind requestKind,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     super(
         generatedComponentModel,
         ModifiableBindingType.GENERATED_INSTANCE,
         resolvedBindings.key(),
-        requestKind);
+        requestKind,
+        matchingModifiableBindingMethod,
+        matchingComponentMethod);
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings.contributionBinding();
     this.requestKind = requestKind;

@@ -317,6 +317,8 @@ abstract class ComponentModelBuilder {
 
   private void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
+      // TODO(b/72748365): Can an abstract inner subcomponent implementation be elided if it's
+      // totally empty?
       generatedComponentModel.addSubcomponent(
           subgraph.componentDescriptor(),
           generatedComponentModel.isAbstract()
@@ -596,9 +598,7 @@ abstract class ComponentModelBuilder {
           bindingExpressions
               .getModifiableBindingMethod(modifiableBindingMethod)
               .ifPresent(
-                  method ->
-                      generatedComponentModel.addImplementedModifiableBindingMethod(
-                          modifiableBindingMethod, method));
+                  method -> generatedComponentModel.addImplementedModifiableBindingMethod(method));
         }
       } else {
         super.addInterfaceMethods();

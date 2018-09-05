@@ -72,23 +72,11 @@ enum ModifiableBindingType {
   INJECTION,
   ;
 
-  private static final ImmutableSet<ModifiableBindingType> TYPES_FINALIZED_ON_MODIFICATION =
-      ImmutableSet.of(MISSING, GENERATED_INSTANCE, OPTIONAL, INJECTION);
   private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =
       ImmutableSet.of(MULTIBINDING, OPTIONAL, INJECTION);
 
   boolean isModifiable() {
     return !equals(NONE);
-  }
-
-  /**
-   * Returns true if the modifiable binding should not be further modified once it's base
-   * implementation has been overridden. For example, a missing or optional binding may only be
-   * satisfied once in a subcomponent implementation class hierarchy, but a multibinding may be
-   * modified with every implementation of a subcomponent.
-   */
-  boolean finalizedOnModification() {
-    return TYPES_FINALIZED_ON_MODIFICATION.contains(this);
   }
 
   /**

@@ -56,12 +56,12 @@ import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** Reports errors for dependency cycles. */
-final class DependencyCycleValidation implements BindingGraphPlugin {
+final class DependencyCycleValidator implements BindingGraphPlugin {
 
   private final DependencyRequestFormatter dependencyRequestFormatter;
 
   @Inject
-  DependencyCycleValidation(DependencyRequestFormatter dependencyRequestFormatter) {
+  DependencyCycleValidator(DependencyRequestFormatter dependencyRequestFormatter) {
     this.dependencyRequestFormatter = dependencyRequestFormatter;
   }
 
@@ -156,9 +156,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
   private String errorMessage(Cycle<Node> cycle, BindingGraph graph) {
     StringBuilder message = new StringBuilder("Found a dependency cycle:");
     ImmutableList<DependencyRequest> cycleRequests =
-        cycle
-            .endpointPairs()
-            .stream()
+        cycle.endpointPairs().stream()
             // TODO(dpb): Would be nice to take the dependency graph here.
             .map(endpointPair -> nonCycleBreakingEdge(endpointPair, graph))
             .map(DependencyEdge::dependencyRequest)
@@ -173,9 +171,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
    * #breaksCycle(DependencyEdge, BindingGraph) break} a cycle.
    */
   private DependencyEdge nonCycleBreakingEdge(EndpointPair<Node> endpointPair, BindingGraph graph) {
-    return graph
-        .edgesConnecting(endpointPair.source(), endpointPair.target())
-        .stream()
+    return graph.edgesConnecting(endpointPair.source(), endpointPair.target()).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> !breaksCycle(edge, graph))
         .findFirst()
@@ -222,9 +218,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
 
   private DependencyEdge chooseDependencyEdgeConnecting(
       Node source, Node target, BindingGraph bindingGraph) {
-    return bindingGraph
-        .edgesConnecting(source, target)
-        .stream()
+    return bindingGraph.edgesConnecting(source, target).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .findFirst()
         .get();
@@ -238,9 +232,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
             .expectedNodeCount(bindingGraph.nodes().size())
             .expectedEdgeCount(bindingGraph.dependencyEdges().size())
             .build();
-    bindingGraph
-        .dependencyEdges()
-        .stream()
+    bindingGraph.dependencyEdges().stream()
         .filter(edge -> !breaksCycle(edge, bindingGraph))
         .forEach(
             edge -> {
@@ -265,8 +257,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
 
     /** Returns the nodes that participate in the cycle. */
     ImmutableSet<N> nodes() {
-      return endpointPairs()
-          .stream()
+      return endpointPairs().stream()
           .flatMap(pair -> Stream.of(pair.source(), pair.target()))
           .collect(toImmutableSet());
     }
@@ -291,7 +282,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
       ImmutableSet.Builder<EndpointPair<N>> shifted = ImmutableSet.builder();
       shifted.addAll(skip(endpointPairs(), startIndex));
       shifted.addAll(limit(endpointPairs(), size() - startIndex));
-      return new AutoValue_DependencyCycleValidation_Cycle<>(shifted.build());
+      return new AutoValue_DependencyCycleValidator_Cycle<>(shifted.build());
     }
 
     @Override
@@ -310,7 +301,7 @@ final class DependencyCycleValidation implements BindingGraphPlugin {
       for (int i = 0; i < nodes.size() - 1; i++) {
         cycle.add(EndpointPair.ordered(nodes.get(i), nodes.get(i + 1)));
       }
-      return new AutoValue_DependencyCycleValidation_Cycle<>(cycle.build());
+      return new AutoValue_DependencyCycleValidator_Cycle<>(cycle.build());
     }
   }
 }

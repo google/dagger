@@ -36,10 +36,10 @@ import javax.inject.Inject;
  * binding.
  */
 // TODO(b/29509141): Clarify the error.
-final class ProvisionDependencyOnProducerBindingValidation implements BindingGraphPlugin {
+final class ProvisionDependencyOnProducerBindingValidator implements BindingGraphPlugin {
 
   @Inject
-  ProvisionDependencyOnProducerBindingValidation() {}
+  ProvisionDependencyOnProducerBindingValidator() {}
 
   @Override
   public String pluginName() {
@@ -61,9 +61,7 @@ final class ProvisionDependencyOnProducerBindingValidation implements BindingGra
 
   private Stream<DependencyEdge> provisionDependenciesOnProductionBindings(
       BindingGraph bindingGraph) {
-    return bindingGraph
-        .bindingNodes()
-        .stream()
+    return bindingGraph.bindingNodes().stream()
         .filter(bindingNode -> bindingNode.binding().isProduction())
         .flatMap(binding -> incomingDependencies(binding, bindingGraph))
         .filter(edge -> !dependencyCanUseProduction(edge, bindingGraph));

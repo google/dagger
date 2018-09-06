@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class BindsMethodValidatorTest {
+public class BindsMethodValidationTest {
   @Parameters
   public static Collection<Object[]> data() {
     return ImmutableList.copyOf(new Object[][] {{Module.class}, {ProducerModule.class}});
@@ -45,7 +45,7 @@ public class BindsMethodValidatorTest {
 
   private final String moduleDeclaration;
 
-  public BindsMethodValidatorTest(Class<? extends Annotation> moduleAnnotation) {
+  public BindsMethodValidationTest(Class<? extends Annotation> moduleAnnotation) {
     moduleDeclaration = "@" + moduleAnnotation.getCanonicalName() + " abstract class %s { %s }";
   }
 
@@ -59,7 +59,7 @@ public class BindsMethodValidatorTest {
   public void notAssignable() {
     assertThatMethod("@Binds abstract String notAssignable(Object impl);").hasError("assignable");
   }
-  
+
   @Test
   public void moreThanOneParameter() {
     assertThatMethod("@Binds abstract Object tooManyParameters(String s1, String s2);")
@@ -134,7 +134,7 @@ public class BindsMethodValidatorTest {
   @Test
   public void intoMap_noMapKey() {
     assertThatMethod("@Binds @IntoMap abstract Object bindNoMapKey(String string);")
-         .hasError("methods of type map must declare a map key");
+        .hasError("methods of type map must declare a map key");
   }
 
   @Test

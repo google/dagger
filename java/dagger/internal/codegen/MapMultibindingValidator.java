@@ -41,12 +41,12 @@ import javax.lang.model.type.DeclaredType;
  * Reports an error for any map binding with either more than one contribution with the same map key
  * or contributions with inconsistent map key annotation types.
  */
-final class MapMultibindingValidation implements BindingGraphPlugin {
+final class MapMultibindingValidator implements BindingGraphPlugin {
 
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
-  MapMultibindingValidation(BindingDeclarationFormatter bindingDeclarationFormatter) {
+  MapMultibindingValidator(BindingDeclarationFormatter bindingDeclarationFormatter) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
   }
 
@@ -70,9 +70,7 @@ final class MapMultibindingValidation implements BindingGraphPlugin {
   private ImmutableSet<ContributionBinding> mapBindingContributions(
       BindingNode bindingNode, BindingGraph bindingGraph) {
     checkArgument(bindingNode.binding().kind().equals(MULTIBOUND_MAP));
-    return bindingGraph
-        .successors(bindingNode)
-        .stream()
+    return bindingGraph.successors(bindingNode).stream()
         .flatMap(instancesOf(BindingNode.class))
         .map(node -> (ContributionBinding) node.binding())
         .collect(toImmutableSet());

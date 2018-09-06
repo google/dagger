@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public final class ModuleValidatorTest {
+public final class ModuleValidationTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
@@ -66,7 +66,7 @@ public final class ModuleValidatorTest {
 
   private final ModuleType moduleType;
 
-  public ModuleValidatorTest(ModuleType moduleType) {
+  public ModuleValidationTest(ModuleType moduleType) {
     this.moduleType = moduleType;
   }
 

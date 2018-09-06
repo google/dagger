@@ -32,12 +32,12 @@ import javax.inject.Inject;
  * Reports errors or warnings (depending on the {@code -Adagger.nullableValidation} value) for each
  * non-nullable dependency request that is satisfied by a nullable binding.
  */
-final class NullableBindingValidation implements BindingGraphPlugin {
+final class NullableBindingValidator implements BindingGraphPlugin {
 
   private final CompilerOptions compilerOptions;
 
   @Inject
-  NullableBindingValidation(CompilerOptions compilerOptions) {
+  NullableBindingValidator(CompilerOptions compilerOptions) {
     this.compilerOptions = compilerOptions;
   }
 
@@ -61,18 +61,14 @@ final class NullableBindingValidation implements BindingGraphPlugin {
   }
 
   private ImmutableList<BindingNode> nullableBindings(BindingGraph bindingGraph) {
-    return bindingGraph
-        .bindingNodes()
-        .stream()
+    return bindingGraph.bindingNodes().stream()
         .filter(bindingNode -> bindingNode.binding().isNullable())
         .collect(toImmutableList());
   }
 
   private ImmutableList<DependencyEdge> nonNullableDependencies(
       BindingGraph bindingGraph, BindingNode bindingNode) {
-    return bindingGraph
-        .inEdges(bindingNode)
-        .stream()
+    return bindingGraph.inEdges(bindingNode).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> !edge.dependencyRequest().isNullable())
         .collect(toImmutableList());

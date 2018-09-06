@@ -28,7 +28,7 @@ import org.junit.runners.JUnit4;
 
 /** Tests for {ComponentHierarchyValidator}. */
 @RunWith(JUnit4.class)
-public class ComponentHierarchyValidatorTest {
+public class ComponentHierarchyValidationTest {
   @Test
   public void singletonSubcomponent() {
     JavaFileObject component =
@@ -67,7 +67,7 @@ public class ComponentHierarchyValidatorTest {
             .compile(component, subcomponent);
     assertThat(withoutScopeValidation).succeeded();
   }
-  
+
   @Test
   public void productionComponents_productionScopeImplicitOnBoth() {
     JavaFileObject component =

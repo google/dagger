@@ -34,7 +34,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /** Tests {@link BindsOptionalOfMethodValidator}. */
 @RunWith(Parameterized.class)
-public class BindsOptionalOfMethodValidatorTest {
+public class BindsOptionalOfMethodValidationTest {
   @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return ImmutableList.copyOf(new Object[][] {{Module.class}, {ProducerModule.class}});
@@ -42,7 +42,7 @@ public class BindsOptionalOfMethodValidatorTest {
 
   private final String moduleDeclaration;
 
-  public BindsOptionalOfMethodValidatorTest(Class<? extends Annotation> moduleAnnotation) {
+  public BindsOptionalOfMethodValidationTest(Class<? extends Annotation> moduleAnnotation) {
     moduleDeclaration = "@" + moduleAnnotation.getCanonicalName() + " abstract class %s { %s }";
   }
 

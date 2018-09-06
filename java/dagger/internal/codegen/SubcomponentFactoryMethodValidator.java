@@ -44,13 +44,13 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 
 /** Reports an error if a subcomponent factory method is missing required modules. */
-final class SubcomponentFactoryMethodValidation implements BindingGraphPlugin {
+final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   private final DaggerTypes types;
   private final Map<ComponentNode, Set<TypeElement>> inheritedModulesCache = new HashMap<>();
 
   @Inject
-  SubcomponentFactoryMethodValidation(DaggerTypes types) {
+  SubcomponentFactoryMethodValidator(DaggerTypes types) {
     this.types = types;
   }
 
@@ -61,9 +61,7 @@ final class SubcomponentFactoryMethodValidation implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    bindingGraph
-        .edges()
-        .stream()
+    bindingGraph.edges().stream()
         .flatMap(instancesOf(ChildFactoryMethodEdge.class))
         .forEach(
             edge -> {
@@ -81,9 +79,7 @@ final class SubcomponentFactoryMethodValidation implements BindingGraphPlugin {
         subgraphFactoryMethodParameters(edge, graph);
     ComponentNode child = (ComponentNode) graph.incidentNodes(edge).target();
     SetView<TypeElement> modulesOwnedByChild = ownedModules(child, graph);
-    return graph
-        .bindingNodes()
-        .stream()
+    return graph.bindingNodes().stream()
         // bindings owned by child
         .filter(node -> node.componentPath().equals(child.componentPath()))
         // that require a module instance

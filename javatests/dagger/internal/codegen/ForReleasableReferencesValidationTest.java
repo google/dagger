@@ -28,7 +28,7 @@ import org.junit.runners.JUnit4;
 
 /** Tests validation of {@code @ForReleasableRefernces}. */
 @RunWith(JUnit4.class)
-public class ForReleasableReferencesValidatorTest {
+public class ForReleasableReferencesValidationTest {
   @Test
   public void notAScope() {
     JavaFileObject notAScope =

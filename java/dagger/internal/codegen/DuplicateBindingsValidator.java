@@ -21,7 +21,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
-import static dagger.internal.codegen.DuplicateBindingsValidation.SourceAndRequest.indexEdgesBySourceAndRequest;
+import static dagger.internal.codegen.DuplicateBindingsValidator.SourceAndRequest.indexEdgesBySourceAndRequest;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Optionals.emptiesLast;
 import static java.util.Comparator.comparing;
@@ -48,7 +48,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** Reports errors for conflicting bindings with the same key. */
-final class DuplicateBindingsValidation implements BindingGraphPlugin {
+final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
   // 1. contributing module or enclosing type
   // 2. binding element's simple name
@@ -69,7 +69,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
-  DuplicateBindingsValidation(BindingDeclarationFormatter bindingDeclarationFormatter) {
+  DuplicateBindingsValidator(BindingDeclarationFormatter bindingDeclarationFormatter) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
   }
 
@@ -96,8 +96,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
       BindingGraph bindingGraph,
       DiagnosticReporter diagnosticReporter) {
     ImmutableSet<BindingNode> duplicateBindings =
-        duplicateDependencies
-            .stream()
+        duplicateDependencies.stream()
             .map(edge -> bindingGraph.incidentNodes(edge).target())
             .flatMap(instancesOf(BindingNode.class))
             .collect(toImmutableSet());
@@ -124,8 +123,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
       ImmutableSet<BindingNode> duplicateBindings,
       BindingGraph graph) {
     ImmutableSet<BindingNode> multibindings =
-        duplicateBindings
-            .stream()
+        duplicateBindings.stream()
             .filter(node -> node.binding().kind().isMultibinding())
             .collect(toImmutableSet());
     verify(
@@ -164,8 +162,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
 
   private ImmutableSet<BindingDeclaration> declarations(
       BindingGraph graph, Set<BindingNode> bindings) {
-    return bindings
-        .stream()
+    return bindings.stream()
         .flatMap(node -> declarations(graph, node).stream())
         .distinct()
         .sorted(BINDING_DECLARATION_COMPARATOR)
@@ -180,9 +177,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
       if (bindingDeclarationFormatter.canFormat(declaration)) {
         declarations.add(declaration);
       } else {
-        graph
-            .successors(node)
-            .stream()
+        graph.successors(node).stream()
             .flatMap(instancesOf(BindingNode.class))
             .flatMap(dependency -> declarations(graph, dependency).stream())
             .forEach(declarations::add);
@@ -211,9 +206,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
 
     static ImmutableSetMultimap<SourceAndRequest, DependencyEdge> indexEdgesBySourceAndRequest(
         BindingGraph bindingGraph) {
-      return bindingGraph
-          .dependencyEdges()
-          .stream()
+      return bindingGraph.dependencyEdges().stream()
           .collect(
               toImmutableSetMultimap(
                   edge ->
@@ -222,7 +215,7 @@ final class DuplicateBindingsValidation implements BindingGraphPlugin {
     }
 
     static SourceAndRequest create(Node source, DependencyRequest request) {
-      return new AutoValue_DuplicateBindingsValidation_SourceAndRequest(source, request);
+      return new AutoValue_DuplicateBindingsValidator_SourceAndRequest(source, request);
     }
   }
 }

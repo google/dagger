@@ -28,12 +28,12 @@ import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 
 /** Validates bindings from {@code @Inject}-annotated constructors. */
-final class InjectBindingValidation implements BindingGraphPlugin {
+final class InjectBindingValidator implements BindingGraphPlugin {
 
   private final InjectValidator injectValidator;
 
   @Inject
-  InjectBindingValidation(InjectValidator injectValidator) {
+  InjectBindingValidator(InjectValidator injectValidator) {
     this.injectValidator = injectValidator.whenGeneratingCode();
   }
 
@@ -44,9 +44,7 @@ final class InjectBindingValidation implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    bindingGraph
-        .bindingNodes()
-        .stream()
+    bindingGraph.bindingNodes().stream()
         .filter(node -> node.binding().kind().equals(INJECTION)) // TODO(dpb): Move to BindingGraph
         .forEach(node -> validateInjectionBinding(node, diagnosticReporter));
   }

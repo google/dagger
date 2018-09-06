@@ -56,14 +56,14 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** Reports errors for missing bindings. */
-final class MissingBindingValidation implements BindingGraphPlugin {
+final class MissingBindingValidator implements BindingGraphPlugin {
 
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final InjectBindingRegistry injectBindingRegistry;
 
   @Inject
-  MissingBindingValidation(
+  MissingBindingValidator(
       DaggerTypes types, DaggerElements elements, InjectBindingRegistry injectBindingRegistry) {
     this.types = types;
     this.injectBindingRegistry = injectBindingRegistry;
@@ -78,9 +78,7 @@ final class MissingBindingValidation implements BindingGraphPlugin {
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
     // TODO(ronshapiro): Maybe report each missing binding once instead of each dependency.
-    graph
-        .missingBindingNodes()
-        .stream()
+    graph.missingBindingNodes().stream()
         .flatMap(node -> graph.inEdges(node).stream())
         .flatMap(instancesOf(DependencyEdge.class))
         .forEach(edge -> reportMissingBinding(edge, graph, diagnosticReporter));
@@ -115,9 +113,7 @@ final class MissingBindingValidation implements BindingGraphPlugin {
       errorMessage.append(
           " This type supports members injection but cannot be implicitly provided.");
     }
-    graph
-        .bindingNodes(key)
-        .stream()
+    graph.bindingNodes(key).stream()
         .map(bindingNode -> bindingNode.componentPath().currentComponent())
         .distinct()
         .forEach(
@@ -214,9 +210,7 @@ final class MissingBindingValidation implements BindingGraphPlugin {
   }
 
   private Stream<Scope> releasableReferencesScopes(BindingGraph graph) {
-    return graph
-        .componentNodes()
-        .stream()
+    return graph.componentNodes().stream()
         .flatMap(node -> node.scopes().stream())
         .filter(Scope::canReleaseReferences);
   }

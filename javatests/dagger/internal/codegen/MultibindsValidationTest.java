@@ -31,7 +31,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class MultibindsValidatorTest {
+public class MultibindsValidationTest {
 
   @Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
@@ -40,7 +40,7 @@ public class MultibindsValidatorTest {
 
   private final String moduleDeclaration;
 
-  public MultibindsValidatorTest(Class<? extends Annotation> moduleAnnotation) {
+  public MultibindsValidationTest(Class<? extends Annotation> moduleAnnotation) {
     moduleDeclaration = "@" + moduleAnnotation.getCanonicalName() + " abstract class %s { %s }";
   }
 

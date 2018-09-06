@@ -38,12 +38,12 @@ import javax.inject.Inject;
  * Reports an error for any component that uses bindings with scopes that are not assigned to the
  * component.
  */
-final class IncompatiblyScopedBindingsValidation implements BindingGraphPlugin {
+final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
 
   private final MethodSignatureFormatter methodSignatureFormatter;
 
   @Inject
-  IncompatiblyScopedBindingsValidation(MethodSignatureFormatter methodSignatureFormatter) {
+  IncompatiblyScopedBindingsValidator(MethodSignatureFormatter methodSignatureFormatter) {
     this.methodSignatureFormatter = methodSignatureFormatter;
   }
 

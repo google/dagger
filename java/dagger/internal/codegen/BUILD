@@ -19,6 +19,7 @@ package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:simple_jar.bzl", "simple_jar")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
@@ -305,6 +306,11 @@ java_library(
     ],
 )
 
+simple_jar(
+    name = "processor_manifest_files",
+    srcs = glob(["META-INF/**"]),
+)
+
 # The processor's "main", if you will
 java_library(
     name = "processor",
@@ -330,6 +336,7 @@ java_library(
         "ProductionExecutorModuleProcessingStep.java",
     ],
     plugins = CODEGEN_PLUGINS,
+    resource_jars = [":processor_manifest_files.jar"],
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
         ":base",

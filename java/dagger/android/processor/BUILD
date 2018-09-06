@@ -23,6 +23,7 @@ load(
     "DOCLINT_REFERENCES",
 )
 load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:simple_jar.bzl", "simple_jar")
 
 filegroup(
     name = "srcs",
@@ -33,6 +34,7 @@ java_library(
     name = "processor",
     srcs = [":srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    resource_jars = [":processor_manifest_files.jar"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android-processor:" + POM_VERSION],
     deps = [
         "@google_bazel_common//third_party/java/guava",
@@ -67,6 +69,11 @@ java_import(
         "maven_coordinates=com.google.dagger:dagger-android-support-jarimpl:" + POM_VERSION,
     ],
     visibility = ["//visibility:private"],
+)
+
+simple_jar(
+    name = "processor_manifest_files",
+    srcs = glob(["META-INF/**"]),
 )
 
 pom_file(

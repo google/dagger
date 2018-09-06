@@ -23,6 +23,7 @@ android_library(
         ["*.java"],
         exclude = ["*Test.java"],
     ),
+    exports_manifest = 1,
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [

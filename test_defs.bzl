@@ -59,9 +59,13 @@ def GenRobolectricTests(
         plugins = None,
         javacopts = None,
         lib_javacopts = None,
-        test_javacopts = None):
-    # TODO(ronshapiro): enable these when Bazel supports robolectric tests
-  pass
+        test_javacopts = None,
+        manifest_values = None):
+    # TODO(ronshapiro): enable these with these instructions:
+    # https://docs.bazel.build/versions/master/be/android.html#android_local_test_examples
+    # We probably want to import all of Robolectric's dependencies into bazel-common because there
+    # are some differences (i.e. we both provide Guava).
+    pass
 
 def _GenTests(
         library_rule_type,
@@ -74,7 +78,8 @@ def _GenTests(
         javacopts = None,
         lib_javacopts = None,
         test_javacopts = None,
-        functional = True):
+        functional = True,
+        test_kwargs = {}):
     _gen_tests(
         library_rule_type,
         test_rule_type,
@@ -86,6 +91,7 @@ def _GenTests(
         javacopts,
         lib_javacopts,
         test_javacopts,
+        test_kwargs = test_kwargs,
     )
 
     if functional:
@@ -103,6 +109,7 @@ def _GenTests(
                 lib_javacopts,
                 test_javacopts,
                 variant_name,
+                test_kwargs = test_kwargs,
             )
 
 def _gen_tests(
@@ -116,7 +123,8 @@ def _gen_tests(
         javacopts,
         lib_javacopts,
         test_javacopts,
-        variant_name = None):
+        variant_name = None,
+        test_kwargs = {}):
     if variant_name:
         suffix = "_" + variant_name
         tags = [variant_name]
@@ -170,4 +178,5 @@ def _gen_tests(
             tags = tags,
             test_class = test_class,
             deps = test_deps,
+            **test_kwargs
         )

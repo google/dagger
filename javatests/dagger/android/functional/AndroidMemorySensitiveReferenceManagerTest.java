@@ -25,11 +25,11 @@ import static dagger.android.functional.AndroidMemorySensitiveReferenceManagerTe
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.GcFinalization;
 import com.google.common.testing.GcFinalization.FinalizationPredicate;
-import org.robolectric.RobolectricTestRunner;
 import java.lang.ref.WeakReference;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 /** Functional tests of {@link dagger.android.AndroidMemorySensitiveReferenceManager}. */
 @RunWith(RobolectricTestRunner.class)

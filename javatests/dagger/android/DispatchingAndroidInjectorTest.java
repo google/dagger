@@ -21,11 +21,11 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import com.google.common.collect.ImmutableMap;
-import org.robolectric.RobolectricTestRunner;
 import dagger.android.DispatchingAndroidInjector.InvalidInjectorBindingException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @Config(manifest = Config.NONE)

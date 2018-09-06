@@ -24,6 +24,7 @@ GenRobolectricTests(
     name = "android_tests",
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
+    manifest_values = {"minSdkVersion": "17"},
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/android",

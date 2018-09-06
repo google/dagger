@@ -22,10 +22,10 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Fragment;
-import org.robolectric.RobolectricTestRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.FragmentTestUtil;
 

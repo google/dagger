@@ -21,10 +21,10 @@ import static org.junit.Assert.fail;
 
 import android.app.Application;
 import android.support.v4.app.Fragment;
-import org.robolectric.RobolectricTestRunner;
 import dagger.android.AndroidInjector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.support.v4.SupportFragmentTestUtil;
 

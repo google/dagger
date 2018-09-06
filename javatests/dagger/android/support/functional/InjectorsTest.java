@@ -20,21 +20,17 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.content.res.Configuration;
-import org.robolectric.RobolectricTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
 public class InjectorsTest {
-  private static final String MANIFEST =
-      "//javatests/dagger/android/support/functional"
-          + ":functional/AndroidManifest.xml";
-
   private ActivityController<TestActivity> activityController;
   private TestActivity activity;
   private TestParentFragment parentFragment;
@@ -69,10 +65,7 @@ public class InjectorsTest {
   }
 
   @Test
-  @Config(
-    manifest = MANIFEST,
-    application = ComponentStructureFollowsControllerStructureApplication.class
-  )
+  @Config(application = ComponentStructureFollowsControllerStructureApplication.class)
   public void componentStructureFollowsControllerStructure() {
     assertThat(activity.componentHierarchy)
         .containsExactly(
@@ -138,7 +131,7 @@ public class InjectorsTest {
   }
 
   @Test
-  @Config(manifest = MANIFEST, application = AllControllersAreDirectChildrenOfApplication.class)
+  @Config(application = AllControllersAreDirectChildrenOfApplication.class)
   public void allControllersAreDirectChildrenOfApplication() {
     assertThat(activity.componentHierarchy)
         .containsExactly(
@@ -196,7 +189,7 @@ public class InjectorsTest {
   }
 
   @Test
-  @Config(manifest = MANIFEST, application = UsesGeneratedModulesApplication.class)
+  @Config(application = UsesGeneratedModulesApplication.class)
   public void usesGeneratedModules() {
     assertThat(activity.componentHierarchy)
         .containsExactly(

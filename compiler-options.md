@@ -25,6 +25,15 @@ loading is expensive, consider using fastInit mode.
 To enable fastInit mode, pass the following option to javac when building your
 Dagger [`@Component`]: `-Adagger.fastInit=enabled`
 
+## Gradle incremental compilation
+
+Dagger has conditional support for Gradle's incremental annotation processing.
+To enable this in your build, pass `-Adagger.gradle.incremental` as an option to
+`javac`. Please help us validate (and file bugs if you see weirdness!) so that
+we can enable this broadly.
+
+
+
 <!-- References -->
 
 [`@Component`]: https://google.github.io/dagger/api/latest/dagger/Component.html

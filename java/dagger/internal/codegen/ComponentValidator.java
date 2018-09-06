@@ -83,6 +83,7 @@ final class ComponentValidator {
   private final ModuleValidator moduleValidator;
   private final BuilderValidator builderValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
+  private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
 
@@ -93,6 +94,7 @@ final class ComponentValidator {
       ModuleValidator moduleValidator,
       BuilderValidator builderValidator,
       DependencyRequestValidator dependencyRequestValidator,
+      MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory) {
     this.elements = elements;
@@ -100,6 +102,7 @@ final class ComponentValidator {
     this.moduleValidator = moduleValidator;
     this.builderValidator = builderValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
+    this.membersInjectionValidator = membersInjectionValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
   }
@@ -152,8 +155,7 @@ final class ComponentValidator {
     DeclaredType subjectType = MoreTypes.asDeclared(subject.asType());
 
     SetMultimap<Element, ExecutableElement> referencedSubcomponents = LinkedHashMultimap.create();
-    getLocalAndInheritedMethods(subject, types, elements)
-        .stream()
+    getLocalAndInheritedMethods(subject, types, elements).stream()
         .filter(method -> method.getModifiers().contains(ABSTRACT))
         .forEachOrdered(
             method -> {
@@ -208,6 +210,8 @@ final class ComponentValidator {
                   case 1:
                     // one parameter means that it's a members injection method
                     TypeMirror onlyParameter = Iterables.getOnlyElement(parameterTypes);
+                    membersInjectionValidator.validateMembersInjectionRequest(
+                        report, method, onlyParameter);
                     if (!(returnType.getKind().equals(VOID)
                         || types.isSameType(returnType, onlyParameter))) {
                       report.addError(

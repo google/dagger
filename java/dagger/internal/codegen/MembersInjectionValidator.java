@@ -16,15 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static javax.tools.Diagnostic.Kind.ERROR;
-
 import com.google.auto.common.MoreElements;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
-import java.util.Optional;
 import javax.inject.Inject;
+import javax.lang.model.element.Element;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
@@ -33,61 +27,26 @@ import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
- * Validates bindings that satisfy members-injecting entry point methods or requests for a {@link
- * dagger.MembersInjector}.
+ * Validates members injection requests (members injection methods on components and requests for
+ * {@code MembersInjector<Foo>}).
  */
-final class MembersInjectionBindingValidation implements BindingGraphPlugin {
-
-  private final DaggerTypes types;
+final class MembersInjectionValidator {
 
   @Inject
-  MembersInjectionBindingValidation(DaggerTypes types) {
-    this.types = types;
-  }
-
-  @Override
-  public String pluginName() {
-    return "Dagger/MembersInjection";
-  }
-
-  @Override
-  public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    for (BindingNode bindingNode : bindingGraph.bindingNodes()) {
-      membersInjectedType(bindingNode)
-          .ifPresent(type -> validateMembersInjectionType(type, bindingNode, diagnosticReporter));
-    }
-  }
+  MembersInjectionValidator() {}
 
   /**
-   * Returns the type whose members will be injected if the binding is a {@link
-   * dagger.model.BindingKind#MEMBERS_INJECTION} or {@link
-   * dagger.model.BindingKind#MEMBERS_INJECTOR} binding.
+   * Reports errors if a members injection dependency request (an injection method on a component or
+   * a request for a {@code MembersInjector<Foo>}) is invalid.
    */
-  private Optional<TypeMirror> membersInjectedType(BindingNode bindingNode) {
-    switch (bindingNode.binding().kind()) {
-      case MEMBERS_INJECTION:
-        return Optional.of(bindingNode.key().type());
-
-      case MEMBERS_INJECTOR:
-        return Optional.of(types.unwrapType(bindingNode.key().type()));
-
-      default:
-        return Optional.empty();
-    }
-  }
-
-  /** Reports errors if a members injection binding is invalid. */
-  private void validateMembersInjectionType(
-      TypeMirror membersInjectedType,
-      BindingNode bindingNode,
-      DiagnosticReporter diagnosticReporter) {
+  void validateMembersInjectionRequest(
+      ValidationReport.Builder<?> report, Element requestElement, TypeMirror membersInjectedType) {
     membersInjectedType.accept(
         new SimpleTypeVisitor8<Void, Void>() {
           @Override
-          protected Void defaultAction(TypeMirror e, Void v) {
+          protected Void defaultAction(TypeMirror type, Void v) {
             // Only declared types can be members-injected.
-            diagnosticReporter.reportBinding(
-                ERROR, bindingNode, "Cannot inject members into %s", e);
+            report.addError("Cannot inject members into " + type, requestElement);
             return null;
           }
 
@@ -98,8 +57,7 @@ final class MembersInjectionBindingValidation implements BindingGraphPlugin {
               // Foo<T> as just 'Foo', which we don't allow.  (This is a judgement call; we
               // *could* allow it and instantiate the type bounds, but we don't.)
               if (!MoreElements.asType(type.asElement()).getTypeParameters().isEmpty()) {
-                diagnosticReporter.reportBinding(
-                    ERROR, bindingNode, "Cannot inject members into raw type %s", type);
+                report.addError("Cannot inject members into raw type " + type, requestElement);
               }
             } else {
               // If the type has arguments, validate that each type argument is declared.
@@ -108,11 +66,9 @@ final class MembersInjectionBindingValidation implements BindingGraphPlugin {
               // the array.
               for (TypeMirror arg : type.getTypeArguments()) {
                 if (!arg.accept(DECLARED_OR_ARRAY, null)) {
-                  diagnosticReporter.reportBinding(
-                      ERROR,
-                      bindingNode,
-                      "Cannot inject members into types with unbounded type arguments: %s",
-                      type);
+                  report.addError(
+                      "Cannot inject members into types with unbounded type arguments: " + type,
+                      requestElement);
                 }
               }
             }

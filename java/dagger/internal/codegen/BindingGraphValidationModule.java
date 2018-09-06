@@ -58,11 +58,6 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin membersInjection(MembersInjectionBindingValidation validation);
-
-  @Binds
-  @IntoSet
-  @Validation
   BindingGraphPlugin missingBinding(MissingBindingValidation validation);
 
   @Binds

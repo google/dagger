@@ -18,16 +18,18 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/**
+ * Tests that errors are reported for invalid members injection methods and {@link
+ * dagger.MembersInjector} dependency requests.
+ */
 @RunWith(JUnit4.class)
 public class MembersInjectionValidationTest {
   @Test
@@ -44,34 +46,17 @@ public class MembersInjectionValidationTest {
             "class InjectsUnboundedType {",
             "  @Inject MembersInjector<ArrayList<?>> listInjector;",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "",
-            "@Component",
-            "interface TestComponent {",
-            "  void injectsUnboundedType(InjectsUnboundedType injects);",
-            "}");
 
-    Compilation compilation = daggerCompiler().compile(injectsUnboundedType, component);
+    Compilation compilation = daggerCompiler().compile(injectsUnboundedType);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            message(
-                "Cannot inject members into types with unbounded type arguments: "
-                    + "java.util.ArrayList<?>",
-                "    dagger.MembersInjector<java.util.ArrayList<?>> is injected at",
-                "        test.InjectsUnboundedType.listInjector",
-                "    test.InjectsUnboundedType is injected at",
-                "        test.TestComponent.injectsUnboundedType(test.InjectsUnboundedType)"))
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+            "Cannot inject members into types with unbounded type arguments: "
+                + "java.util.ArrayList<?>")
+        .inFile(injectsUnboundedType)
+        .onLineContaining("@Inject MembersInjector<ArrayList<?>> listInjector;");
   }
 
-  @Ignore // TODO(b/77220343)
   @Test
   public void membersInjectPrimitive() {
     JavaFileObject component =
@@ -93,7 +78,6 @@ public class MembersInjectionValidationTest {
         .onLineContaining("void inject(int primitive);");
   }
 
-  @Ignore // TODO(b/77220343)
   @Test
   public void membersInjectArray() {
     JavaFileObject component =
@@ -115,7 +99,6 @@ public class MembersInjectionValidationTest {
         .onLineContaining("void inject(Object[] array);");
   }
 
-  @Ignore // TODO(b/77220343)
   @Test
   public void membersInjectorOfArray() {
     JavaFileObject component =

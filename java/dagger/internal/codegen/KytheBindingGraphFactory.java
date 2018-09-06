@@ -121,7 +121,11 @@ final class KytheBindingGraphFactory {
             elements,
             types,
             new NullMessager(),
-            new InjectValidator(types, elements, new DependencyRequestValidator(), compilerOptions),
+            new InjectValidator(
+                types,
+                elements,
+                new DependencyRequestValidator(new MembersInjectionValidator()),
+                compilerOptions),
             keyFactory,
             bindingFactory,
             compilerOptions);

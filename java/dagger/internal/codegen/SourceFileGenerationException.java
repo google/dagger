@@ -28,17 +28,14 @@ import javax.lang.model.element.Element;
  * An exception thrown to indicate that a source file could not be generated.
  *
  * <p>This exception <b>should not</b> be used to report detectable, logical errors as it may mask
- * other errors that might have been caught upon further processing.  Use a {@link ValidationReport}
+ * other errors that might have been caught upon further processing. Use a {@link ValidationReport}
  * for that.
  */
 final class SourceFileGenerationException extends Exception {
-  // TODO(ronshapiro): remove these unused values
-  private final Optional<? extends Element> associatedElement;
+  private final Element associatedElement;
 
   SourceFileGenerationException(
-      Optional<ClassName> generatedClassName,
-      Throwable cause,
-      Optional<? extends Element> associatedElement) {
+      Optional<ClassName> generatedClassName, Throwable cause, Element associatedElement) {
     super(createMessage(generatedClassName, cause.getMessage()), cause);
     this.associatedElement = checkNotNull(associatedElement);
   }
@@ -52,10 +49,6 @@ final class SourceFileGenerationException extends Exception {
   }
 
   void printMessageTo(Messager messager) {
-    if (associatedElement.isPresent()) {
-      messager.printMessage(ERROR, getMessage(), associatedElement.get());
-    } else {
-      messager.printMessage(ERROR, getMessage());
-    }
+    messager.printMessage(ERROR, getMessage(), associatedElement);
   }
 }

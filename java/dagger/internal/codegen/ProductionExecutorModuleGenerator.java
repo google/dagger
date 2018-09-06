@@ -53,8 +53,8 @@ final class ProductionExecutorModuleGenerator extends SourceFileGenerator<TypeEl
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(TypeElement componentElement) {
-    return Optional.of(componentElement);
+  Element originatingElement(TypeElement componentElement) {
+    return componentElement;
   }
 
   @Override

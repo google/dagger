@@ -52,8 +52,9 @@ final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<Contrib
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(ContributionBinding binding) {
-    return binding.bindingElement();
+  Element originatingElement(ContributionBinding binding) {
+    // a map key is only ever present on bindings that have a binding element
+    return binding.bindingElement().get();
   }
 
   @Override

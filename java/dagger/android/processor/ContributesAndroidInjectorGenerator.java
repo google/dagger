@@ -104,7 +104,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
             .peerClass(
                 Joiner.on('_').join(descriptor.enclosingModule().simpleNames())
                     + "_"
-                    + LOWER_CAMEL.to(UPPER_CAMEL, descriptor.methodName()));
+                    + LOWER_CAMEL.to(UPPER_CAMEL, descriptor.method().getSimpleName().toString()));
 
     String baseName = descriptor.injectedType().simpleName();
     ClassName subcomponentName = moduleName.nestedClass(baseName + "Subcomponent");
@@ -112,6 +112,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
 
     TypeSpec.Builder module =
         classBuilder(moduleName)
+            .addOriginatingElement(descriptor.method())
             .addAnnotation(
                 AnnotationSpec.builder(Module.class)
                     .addMember("subcomponents", "$T.class", subcomponentName)

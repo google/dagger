@@ -66,8 +66,8 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(BindingGraph input) {
-    return Optional.of(input.componentType());
+  Element originatingElement(BindingGraph input) {
+    return input.componentType();
   }
 
   @Override

@@ -147,8 +147,8 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
     }
 
     @Override
-    Optional<? extends Element> getElementForErrorReporting(ComponentDescriptor input) {
-      return Optional.of(input.componentDefinitionType());
+    Element originatingElement(ComponentDescriptor input) {
+      return input.componentDefinitionType();
     }
 
     @Override

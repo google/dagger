@@ -78,8 +78,8 @@ abstract class AndroidInjectorDescriptor {
   /** The {@link Module} that contains the {@link ContributesAndroidInjector} method. */
   abstract ClassName enclosingModule();
 
-  /** Simple name of the {@link ContributesAndroidInjector} method. */
-  abstract String methodName();
+  /** The method annotated with {@link ContributesAndroidInjector}. */
+  abstract ExecutableElement method();
 
   @AutoValue.Builder
   abstract static class Builder {
@@ -95,7 +95,7 @@ abstract class AndroidInjectorDescriptor {
 
     abstract Builder enclosingModule(ClassName enclosingModule);
 
-    abstract Builder methodName(String methodName);
+    abstract Builder method(ExecutableElement method);
 
     abstract AndroidInjectorDescriptor build();
   }
@@ -126,8 +126,8 @@ abstract class AndroidInjectorDescriptor {
         reporter.reportError("@ContributesAndroidInjector methods cannot have parameters");
       }
 
-      AndroidInjectorDescriptor.Builder builder = new AutoValue_AndroidInjectorDescriptor.Builder();
-      builder.methodName(method.getSimpleName().toString());
+      AndroidInjectorDescriptor.Builder builder =
+          new AutoValue_AndroidInjectorDescriptor.Builder().method(method);
       TypeElement enclosingElement = MoreElements.asType(method.getEnclosingElement());
       if (!isAnnotationPresent(enclosingElement, Module.class)) {
         reporter.reportError("@ContributesAndroidInjector methods must be in a @Module");

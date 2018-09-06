@@ -91,8 +91,9 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(ProvisionBinding binding) {
-    return binding.bindingElement();
+  Element originatingElement(ProvisionBinding binding) {
+    // we only create factories for bindings that have a binding element
+    return binding.bindingElement().get();
   }
 
   @Override

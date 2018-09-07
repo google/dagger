@@ -24,7 +24,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.RequestKind;
 import java.util.Optional;
 
 /**
@@ -34,7 +33,7 @@ import java.util.Optional;
  */
 final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpression {
   private final ContributionBinding binding;
-  private final RequestKind requestKind;
+  private final BindingRequest request;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingMethodImplementation methodImplementation;
   private final GeneratedComponentModel generatedComponentModel;
@@ -43,7 +42,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
 
   ModifiableConcreteMethodBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       ModifiableBindingType modifiableBindingType,
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel,
@@ -51,7 +50,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       boolean bindingFinalized) {
     super(methodImplementation, generatedComponentModel);
     this.binding = resolvedBindings.contributionBinding();
-    this.requestKind = checkNotNull(requestKind);
+    this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
@@ -64,12 +63,10 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   protected void addMethod() {
     // Add the modifiable binding method to the component model if we haven't already.
     if (!methodName.isPresent()) {
-      methodName =
-          Optional.of(generatedComponentModel.getUniqueGetterMethodName(binding, requestKind));
+      methodName = Optional.of(generatedComponentModel.getUniqueMethodName(request, binding));
       generatedComponentModel.addModifiableBindingMethod(
           modifiableBindingType,
-          binding.key(),
-          requestKind,
+          request,
           methodBuilder(methodName.get())
               .addModifiers(bindingFinalized ? PRIVATE : PUBLIC)
               .returns(TypeName.get(methodImplementation.returnType()))

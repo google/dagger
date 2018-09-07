@@ -62,15 +62,16 @@ abstract class BindingGraph {
   abstract ImmutableMap<Key, ResolvedBindings> membersInjectionBindings();
 
   /**
-   * Returns the {@link ResolvedBindings resolved bindings} instance for {@code key}. If {@code
-   * requestKind} is {@link RequestKind#MEMBERS_INJECTION}, a {@link ResolvedBindings} with
-   * {@linkplain #membersInjectionBindings() members injection bindings} will be returned, otherwise
-   * a {@link ResolvedBindings} with {@link #contributionBindings()} will be returned.
+   * Returns the {@link ResolvedBindings resolved bindings} instance for {@code
+   * bindingExpressionKey}. If the bindings will be used for members injection, a {@link
+   * ResolvedBindings} with {@linkplain #membersInjectionBindings() members injection bindings} will
+   * be returned, otherwise a {@link ResolvedBindings} with {@link #contributionBindings()} will be
+   * returned.
    */
-  final ResolvedBindings resolvedBindings(RequestKind requestKind, Key key) {
-    return requestKind.equals(RequestKind.MEMBERS_INJECTION)
-        ? membersInjectionBindings().get(key)
-        : contributionBindings().get(key);
+  final ResolvedBindings resolvedBindings(BindingRequest request) {
+    return request.isRequestKind(RequestKind.MEMBERS_INJECTION)
+        ? membersInjectionBindings().get(request.key())
+        : contributionBindings().get(request.key());
   }
 
   @Memoized

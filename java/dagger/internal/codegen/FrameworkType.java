@@ -34,6 +34,7 @@ import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -162,6 +163,18 @@ enum FrameworkType {
       case MEMBERS_INJECTION:
     }
     throw new AssertionError(bindingType);
+  }
+
+  /** Returns the framework type that exactly matches the given request kind, if one exists. */
+  static Optional<FrameworkType> forRequestKind(RequestKind requestKind) {
+    switch (requestKind) {
+      case PROVIDER:
+        return Optional.of(FrameworkType.PROVIDER);
+      case PRODUCER:
+        return Optional.of(FrameworkType.PRODUCER);
+      default:
+        return Optional.empty();
+    }
   }
 
   /** The class of fields of this type. */

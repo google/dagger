@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.RequestKind;
 import java.util.Optional;
 
 /**
@@ -31,28 +30,27 @@ import java.util.Optional;
 final class GeneratedInstanceBindingExpression extends ModifiableAbstractMethodBindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final ContributionBinding binding;
-  private final RequestKind requestKind;
+  private final BindingRequest request;
 
   GeneratedInstanceBindingExpression(
       GeneratedComponentModel generatedComponentModel,
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     super(
         generatedComponentModel,
         ModifiableBindingType.GENERATED_INSTANCE,
-        resolvedBindings.key(),
-        requestKind,
+        request,
         matchingModifiableBindingMethod,
         matchingComponentMethod);
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings.contributionBinding();
-    this.requestKind = requestKind;
+    this.request = request;
   }
 
   @Override
   String chooseMethodName() {
-    return generatedComponentModel.getUniqueGetterMethodName(binding, requestKind);
+    return generatedComponentModel.getUniqueMethodName(request, binding);
   }
 }

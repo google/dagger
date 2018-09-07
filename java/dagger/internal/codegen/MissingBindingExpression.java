@@ -16,16 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.SourceFiles.simpleVariableName;
-
-import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.Key;
-import dagger.model.RequestKind;
 import java.util.Optional;
 
 /**
@@ -36,34 +28,25 @@ import java.util.Optional;
  */
 final class MissingBindingExpression extends ModifiableAbstractMethodBindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
-  private final Key key;
-  private final RequestKind kind;
+  private final BindingRequest request;
 
   MissingBindingExpression(
       GeneratedComponentModel generatedComponentModel,
-      Key key,
-      RequestKind kind,
+      BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     super(
         generatedComponentModel,
         ModifiableBindingType.MISSING,
-        key,
-        kind,
+        request,
         matchingModifiableBindingMethod,
         matchingComponentMethod);
     this.generatedComponentModel = generatedComponentModel;
-    this.key = key;
-    this.kind = kind;
+    this.request = request;
   }
 
   @Override
   String chooseMethodName() {
-    return generatedComponentModel.getUniqueMethodName(
-        "get"
-            + LOWER_CAMEL.to(UPPER_CAMEL, simpleVariableName(MoreTypes.asTypeElement(key.type())))
-            + (kind.equals(RequestKind.INSTANCE)
-                ? ""
-                : UPPER_UNDERSCORE.to(UPPER_CAMEL, kind.name())));
+    return generatedComponentModel.getUniqueMethodName(request);
   }
 }

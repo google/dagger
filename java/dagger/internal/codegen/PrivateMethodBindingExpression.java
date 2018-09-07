@@ -23,7 +23,6 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRI
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.TypeName;
-import dagger.model.RequestKind;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.
@@ -32,19 +31,19 @@ import dagger.model.RequestKind;
  */
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
   private final ContributionBinding binding;
-  private final RequestKind requestKind;
+  private final BindingRequest request;
   private final BindingMethodImplementation methodImplementation;
   private final GeneratedComponentModel generatedComponentModel;
   private String methodName;
 
   PrivateMethodBindingExpression(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel) {
     super(methodImplementation, generatedComponentModel);
     this.binding = resolvedBindings.contributionBinding();
-    this.requestKind = checkNotNull(requestKind);
+    this.request = checkNotNull(request);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
   }
@@ -53,7 +52,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = generatedComponentModel.getUniqueGetterMethodName(binding, requestKind);
+      methodName = generatedComponentModel.getUniqueMethodName(request, binding);
       // TODO(user): Fix the order that these generated methods are written to the component.
       generatedComponentModel.addMethod(
           PRIVATE_METHOD,

@@ -25,8 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.MethodSpec;
-import dagger.model.Key;
-import dagger.model.RequestKind;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -41,18 +39,17 @@ import java.util.Set;
  * superclasses to know what binding methods to attempt to modify.
  */
 final class ModifiableBindingMethods {
-  private final Map<KeyAndKind, ModifiableBindingMethod> methods = Maps.newLinkedHashMap();
-  private final Set<KeyAndKind> finalizedMethods = Sets.newHashSet();
+  private final Map<BindingRequest, ModifiableBindingMethod> methods = Maps.newLinkedHashMap();
+  private final Set<BindingRequest> finalizedMethods = Sets.newHashSet();
 
   /** Register a method encapsulating a modifiable binding. */
   void addMethod(
-      ModifiableBindingType type, Key key, RequestKind kind, MethodSpec method, boolean finalized) {
+      ModifiableBindingType type, BindingRequest request, MethodSpec method, boolean finalized) {
     checkArgument(type.isModifiable());
-    KeyAndKind keyAndKind = KeyAndKind.create(key, kind);
     if (finalized) {
-      finalizedMethods.add(keyAndKind);
+      finalizedMethods.add(request);
     }
-    methods.put(keyAndKind, ModifiableBindingMethod.create(type, key, kind, method, finalized));
+    methods.put(request, ModifiableBindingMethod.create(type, request, method, finalized));
   }
 
   /** Returns all {@link ModifiableBindingMethod}s that have not been marked as finalized. */
@@ -61,8 +58,8 @@ final class ModifiableBindingMethods {
   }
 
   /** Returns the {@link ModifiableBindingMethod} for the given binding if present. */
-  Optional<ModifiableBindingMethod> getMethod(Key key, RequestKind kind) {
-    return Optional.ofNullable(methods.get(KeyAndKind.create(key, kind)));
+  Optional<ModifiableBindingMethod> getMethod(BindingRequest request) {
+    return Optional.ofNullable(methods.get(request));
   }
 
   /**
@@ -72,63 +69,44 @@ final class ModifiableBindingMethods {
   void methodImplemented(ModifiableBindingMethod method) {
     if (method.finalized()) {
       checkState(
-          finalizedMethods.add(KeyAndKind.create(method.key(), method.kind())),
+          finalizedMethods.add(method.request()),
           "Implementing and finalizing a modifiable binding method that has been marked as "
-              + "finalized in the current subcomponent implementation. The binding is for a %s-%s "
+              + "finalized in the current subcomponent implementation. The binding is for a %s "
               + "of type %s.",
-          method.key(),
-          method.kind(),
+          method.request(),
           method.type());
     }
   }
 
   /** Whether a given binding has been marked as finalized. */
   boolean finalized(ModifiableBindingMethod method) {
-    return finalizedMethods.contains(KeyAndKind.create(method.key(), method.kind()));
+    return finalizedMethods.contains(method.request());
   }
 
   @AutoValue
   abstract static class ModifiableBindingMethod {
     private static ModifiableBindingMethod create(
         ModifiableBindingType type,
-        Key key,
-        RequestKind kind,
+        BindingRequest request,
         MethodSpec methodSpec,
         boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          type, key, kind, methodSpec, finalized);
+          type, request, methodSpec, finalized);
     }
 
     /** Create a {@ModifiableBindingMethod} representing an implementation of an existing method. */
     static ModifiableBindingMethod implement(
         ModifiableBindingMethod unimplementedMethod, MethodSpec methodSpec, boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          unimplementedMethod.type(),
-          unimplementedMethod.key(),
-          unimplementedMethod.kind(),
-          methodSpec,
-          finalized);
+          unimplementedMethod.type(), unimplementedMethod.request(), methodSpec, finalized);
     }
 
     abstract ModifiableBindingType type();
 
-    abstract Key key();
-
-    abstract RequestKind kind();
+    abstract BindingRequest request();
 
     abstract MethodSpec methodSpec();
 
     abstract boolean finalized();
-  }
-
-  @AutoValue
-  abstract static class KeyAndKind {
-    private static KeyAndKind create(Key key, RequestKind kind) {
-      return new AutoValue_ModifiableBindingMethods_KeyAndKind(key, kind);
-    }
-
-    abstract Key key();
-
-    abstract RequestKind kind();
   }
 }

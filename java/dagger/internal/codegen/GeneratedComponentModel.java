@@ -22,11 +22,13 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import com.google.auto.common.MoreTypes;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
@@ -38,7 +40,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -264,11 +265,10 @@ final class GeneratedComponentModel {
    */
   void addModifiableBindingMethod(
       ModifiableBindingType type,
-      Key key,
-      RequestKind kind,
+      BindingRequest request,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, key, kind, methodSpec, finalized);
+    modifiableBindingMethods.addMethod(type, request, methodSpec, finalized);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
@@ -279,11 +279,10 @@ final class GeneratedComponentModel {
    */
   void registerModifiableBindingMethod(
       ModifiableBindingType type,
-      Key key,
-      RequestKind kind,
+      BindingRequest request,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, key, kind, methodSpec, finalized);
+    modifiableBindingMethods.addMethod(type, request, methodSpec, finalized);
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
@@ -329,19 +328,30 @@ final class GeneratedComponentModel {
     return componentMethodNames.getUniqueName(name);
   }
 
+  /** Returns a new, unique method name for a getter method for the given request. */
+  String getUniqueMethodName(BindingRequest request) {
+    return uniqueMethodName(
+        request, simpleVariableName(MoreTypes.asTypeElement(request.key().type())));
+  }
+
   /**
-   * Returns a new, unique method name for a "getter" method exposing this binding and binding kind
-   * for this component.
+   * Returns a new, unique method name for a getter method exposing the given binding for the given
+   * request.
    */
-  String getUniqueGetterMethodName(ContributionBinding binding, RequestKind requestKind) {
+  String getUniqueMethodName(BindingRequest request, ContributionBinding binding) {
     // TODO(user): Use a better name for @MapKey binding instances.
     // TODO(user): Include the binding method as part of the method name.
-    String bindingName = LOWER_CAMEL.to(UPPER_CAMEL, BindingVariableNamer.name(binding));
-    String kindName =
-        requestKind.equals(RequestKind.INSTANCE)
-            ? ""
-            : UPPER_UNDERSCORE.to(UPPER_CAMEL, requestKind.name());
-    return getUniqueMethodName("get" + bindingName + kindName);
+    return uniqueMethodName(request, BindingVariableNamer.name(binding));
+  }
+
+  private String uniqueMethodName(BindingRequest request, String bindingName) {
+    String baseMethodName =
+        "get"
+            + LOWER_CAMEL.to(UPPER_CAMEL, bindingName)
+            + (request.isRequestKind(RequestKind.INSTANCE)
+                ? ""
+                : UPPER_UNDERSCORE.to(UPPER_CAMEL, request.kindName()));
+    return getUniqueMethodName(baseMethodName);
   }
 
   /** Claims a new method name for the component. Does nothing if method name already exists. */
@@ -376,10 +386,10 @@ final class GeneratedComponentModel {
    * Returns the {@link ModifiableBindingMethod} for this subcomponent for the given binding, if it
    * exists.
    */
-  Optional<ModifiableBindingMethod> getModifiableBindingMethod(Key key, RequestKind requestKind) {
-    Optional<ModifiableBindingMethod> method = modifiableBindingMethods.getMethod(key, requestKind);
+  Optional<ModifiableBindingMethod> getModifiableBindingMethod(BindingRequest request) {
+    Optional<ModifiableBindingMethod> method = modifiableBindingMethods.getMethod(request);
     if (!method.isPresent() && supermodel.isPresent()) {
-      return supermodel.get().getModifiableBindingMethod(key, requestKind);
+      return supermodel.get().getModifiableBindingMethod(request);
     }
     return method;
   }

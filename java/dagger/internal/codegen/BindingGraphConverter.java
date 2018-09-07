@@ -175,7 +175,7 @@ final class BindingGraphConverter {
       return componentTreePath()
           .pathFromRootToAncestor(source.componentPath().currentComponent())
           .currentGraph()
-          .resolvedBindings(dependencyRequest.kind(), dependencyRequest.key());
+          .resolvedBindings(BindingRequest.forDependencyRequest(dependencyRequest));
     }
 
     /** Adds a binding node and edges for all its dependencies. */

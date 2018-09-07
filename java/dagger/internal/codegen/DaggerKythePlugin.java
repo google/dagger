@@ -98,7 +98,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (!dependency.requestElement().isPresent()) {
       return;
     }
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(dependency.kind(), targetKey);
+    BindingRequest request = BindingRequest.forDependencyRequest(targetKey, dependency.kind());
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     for (Binding binding : resolvedBindings.bindings()) {
       if (binding.bindingElement().isPresent()) {
         addDependencyEdge(dependency, binding);

@@ -16,18 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.RequestKinds.requestTypeName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.Key;
-import dagger.model.RequestKind;
 import java.util.Optional;
 
 /**
@@ -40,21 +36,18 @@ import java.util.Optional;
 abstract class ModifiableAbstractMethodBindingExpression extends BindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final ModifiableBindingType modifiableBindingType;
-  private final Key key;
-  private final RequestKind kind;
+  private final BindingRequest request;
   private Optional<String> methodName;
 
   ModifiableAbstractMethodBindingExpression(
       GeneratedComponentModel generatedComponentModel,
       ModifiableBindingType modifiableBindingType,
-      Key key,
-      RequestKind kind,
+      BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     this.generatedComponentModel = generatedComponentModel;
     this.modifiableBindingType = modifiableBindingType;
-    this.key = key;
-    this.kind = kind;
+    this.request = request;
     this.methodName =
         initializeMethodName(matchingComponentMethod, matchingModifiableBindingMethod);
   }
@@ -79,7 +72,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   @Override
   final Expression getDependencyExpression(ClassName requestingClass) {
     addUnimplementedMethod();
-    return Expression.create(key.type(), CodeBlock.of("$L()", methodName.get()));
+    return Expression.create(request.key().type(), CodeBlock.of("$L()", methodName.get()));
   }
 
   private void addUnimplementedMethod() {
@@ -88,11 +81,10 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
       methodName = Optional.of(chooseMethodName());
       generatedComponentModel.addModifiableBindingMethod(
           modifiableBindingType,
-          key,
-          kind,
+          request,
           MethodSpec.methodBuilder(methodName.get())
               .addModifiers(PUBLIC, ABSTRACT)
-              .returns(requestTypeName(kind, TypeName.get(key.type())))
+              .returns(request.typeName())
               .build(),
           false /* finalized */);
     }

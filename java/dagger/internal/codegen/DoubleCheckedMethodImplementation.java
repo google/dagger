@@ -27,7 +27,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.DoubleCheck;
 import dagger.internal.MemoizedSentinel;
-import dagger.model.RequestKind;
 
 /**
  * Defines a method body and return type for double checked locking of the given {@link
@@ -41,11 +40,11 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
 
   DoubleCheckedMethodImplementation(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       BindingExpression bindingExpression,
       DaggerTypes types,
       GeneratedComponentModel generatedComponentModel) {
-    super(resolvedBindings, requestKind, bindingExpression, generatedComponentModel.name(), types);
+    super(resolvedBindings, request, bindingExpression, generatedComponentModel.name(), types);
     this.generatedComponentModel = generatedComponentModel;
     this.binding = resolvedBindings.contributionBinding();
   }

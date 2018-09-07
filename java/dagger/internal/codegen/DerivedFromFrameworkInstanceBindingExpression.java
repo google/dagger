@@ -48,8 +48,7 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   Expression getDependencyExpression(ClassName requestingClass) {
     return frameworkType.to(
         requestKind,
-        componentBindingExpressions.getDependencyExpression(
-            key, frameworkType.requestKind(), requestingClass),
+        componentBindingExpressions.getDependencyExpression(key, frameworkType, requestingClass),
         types);
   }
 }

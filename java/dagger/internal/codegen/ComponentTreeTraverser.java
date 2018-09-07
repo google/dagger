@@ -393,7 +393,7 @@ public class ComponentTreeTraverser {
     private void nextDependencyRequest(
         DependencyRequest dependencyRequest, BindingGraph bindingGraph) {
       ResolvedBindings resolvedBindings =
-          bindingGraph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key());
+          bindingGraph.resolvedBindings(BindingRequest.forDependencyRequest(dependencyRequest));
       dependencyRequestPath.addLast(dependencyRequest);
       resolvedBindingsPath.addLast(resolvedBindings);
       // Don't add the key of a members injection request, as it doesn't participate in cycles
@@ -660,7 +660,7 @@ public class ComponentTreeTraverser {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       return graphsInPath()
           .stream()
           .map(BindingGraph::componentType)

@@ -606,4 +606,61 @@ public class MissingBindingValidationTest {
         .inFile(parent)
         .onLineContaining("interface Parent");
   }
+
+  @Test
+  public void manyDependencies() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Object object();",
+            "  String string();",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Binds abstract Object object(NotBound notBound);",
+            "",
+            "  @Provides static String string(NotBound notBound, Object object) {",
+            "    return notBound.toString();",
+            "  }",
+            "}");
+    JavaFileObject notBound =
+        JavaFileObjects.forSourceLines(
+            "test.NotBound", //
+            "package test;",
+            "",
+            "interface NotBound {}");
+    Compilation compilation = daggerCompiler().compile(component, module, notBound);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "[Dagger/MissingBinding] "
+                    + "test.NotBound cannot be provided without an @Provides-annotated method.",
+                "    test.NotBound is injected at",
+                "        test.TestModule.object(notBound)",
+                "    java.lang.Object is provided at",
+                "        test.TestComponent.object()",
+                "It is also requested at:",
+                "    test.TestModule.string(notBound, …)",
+                "The following other entry points also depend on it:",
+                "    test.TestComponent.string()"))
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+    assertThat(compilation).hadErrorCount(1);
+  }
 }

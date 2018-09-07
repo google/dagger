@@ -25,9 +25,12 @@ import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.asList;
 import static com.google.common.collect.Sets.filter;
 import static dagger.internal.codegen.DaggerElements.DECLARATION_ORDER;
+import static dagger.internal.codegen.DaggerElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.DaggerElements.elementEncloses;
 import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerGraphs.shortestPath;
+import static dagger.internal.codegen.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Collections.min;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
@@ -244,14 +247,17 @@ final class DiagnosticReporterFactory {
     /** The diagnostic information associated with an error. */
     private final class DiagnosticInfo {
       final ImmutableList<DependencyEdge> dependencyTrace;
+      final ImmutableSet<DependencyEdge> requests;
       final ImmutableSet<DependencyEdge> entryPoints;
 
       DiagnosticInfo(MaybeBindingNode bindingNode) {
         entryPoints = graph.entryPointEdgesDependingOnBindingNode(bindingNode);
+        requests = requests(bindingNode);
         dependencyTrace = dependencyTrace(bindingNode, entryPoints);
       }
 
       DiagnosticInfo(DependencyEdge dependencyEdge) {
+        requests = ImmutableSet.of(dependencyEdge);
         ImmutableList.Builder<DependencyEdge> dependencyTraceBuilder = ImmutableList.builder();
         dependencyTraceBuilder.add(dependencyEdge);
 
@@ -275,6 +281,21 @@ final class DiagnosticReporterFactory {
         dependencyTrace.forEach(
             edge -> dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
         appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
+
+        // List any other dependency requests.
+        ImmutableSet<Element> otherRequests =
+            requests.stream()
+                .filter(request -> !request.isEntryPoint()) // skip entry points, listed below
+                // skip the request from the dependency trace above
+                .filter(request -> !request.equals(dependencyTrace.get(0)))
+                .map(request -> request.dependencyRequest().requestElement().get())
+                .collect(toImmutableSet());
+        if (!otherRequests.isEmpty()) {
+          message.append("\nIt is also requested at:");
+          for (Element otherRequest : otherRequests) {
+            message.append("\n    ").append(elementToString(otherRequest));
+          }
+        }
 
         // List the remaining entry points, showing which component they're in.
         if (entryPoints.size() > 1) {
@@ -351,6 +372,15 @@ final class DiagnosticReporterFactory {
         return dependencyTrace.build().reverse();
       }
 
+      /** Returns all the nonsynthetic dependency requests for a binding node. */
+      ImmutableSet<DependencyEdge> requests(MaybeBindingNode bindingNode) {
+        return graph.inEdges(bindingNode).stream()
+            .flatMap(instancesOf(DependencyEdge.class))
+            .filter(edge -> edge.dependencyRequest().requestElement().isPresent())
+            .sorted(requestEnclosingTypeName().thenComparing(requestElementDeclarationOrder()))
+            .collect(toImmutableSet());
+      }
+
       /**
        * Returns a comparator that sorts entry points in components whose paths from the root are
        * shorter first.
@@ -403,6 +433,18 @@ final class DiagnosticReporterFactory {
       TypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
         return MoreElements.asType(
             entryPoint.dependencyRequest().requestElement().get().getEnclosingElement());
+      }
+
+      /**
+       * Returns a comparator that sorts dependency edges lexicographically by the qualified name of
+       * the type that contains them. Only appropriate for edges with request elements.
+       */
+      Comparator<DependencyEdge> requestEnclosingTypeName() {
+        return comparing(
+            edge ->
+                closestEnclosingTypeElement(edge.dependencyRequest().requestElement().get())
+                    .getQualifiedName()
+                    .toString());
       }
 
       /**

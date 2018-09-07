@@ -37,6 +37,7 @@ import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
+import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
 import dagger.model.Key;
 import dagger.model.Scope;
@@ -77,35 +78,35 @@ final class MissingBindingValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
-    // TODO(ronshapiro): Maybe report each missing binding once instead of each dependency.
-    graph.missingBindingNodes().stream()
-        .flatMap(node -> graph.inEdges(node).stream())
-        .flatMap(instancesOf(DependencyEdge.class))
-        .forEach(edge -> reportMissingBinding(edge, graph, diagnosticReporter));
+    graph
+        .missingBindingNodes()
+        .forEach(node -> reportMissingBinding(node, graph, diagnosticReporter));
   }
 
   private void reportMissingBinding(
-      DependencyEdge edge, BindingGraph graph, DiagnosticReporter diagnosticReporter) {
-    diagnosticReporter.reportDependency(
+      MissingBindingNode missingBindingNode,
+      BindingGraph graph,
+      DiagnosticReporter diagnosticReporter) {
+    diagnosticReporter.reportBinding(
         ERROR,
-        edge,
-        missingReleasableReferenceManagerBindingErrorMessage(edge, graph)
-            .orElseGet(() -> missingBindingErrorMessage(edge, graph)));
+        missingBindingNode,
+        missingReleasableReferenceManagerBindingErrorMessage(missingBindingNode, graph)
+            .orElseGet(() -> missingBindingErrorMessage(missingBindingNode, graph)));
   }
 
-  private String missingBindingErrorMessage(DependencyEdge edge, BindingGraph graph) {
-    Key key = edge.dependencyRequest().key();
+  private String missingBindingErrorMessage(
+      MissingBindingNode missingBindingNode, BindingGraph graph) {
+    Key key = missingBindingNode.key();
     StringBuilder errorMessage = new StringBuilder();
     // Wildcards should have already been checked by DependencyRequestValidator.
-    verify(
-        !key.type().getKind().equals(TypeKind.WILDCARD), "unexpected wildcard request: %s", edge);
+    verify(!key.type().getKind().equals(TypeKind.WILDCARD), "unexpected wildcard request: %s", key);
     // TODO(ronshapiro): replace "provided" with "satisfied"?
     errorMessage.append(key).append(" cannot be provided without ");
     if (isValidImplicitProvisionKey(key, types)) {
       errorMessage.append("an @Inject constructor or ");
     }
     errorMessage.append("an @Provides-"); // TODO(dpb): s/an/a
-    if (dependencyCanBeProduction(edge, graph)) {
+    if (allIncomingDependenciesCanUseProduction(missingBindingNode, graph)) {
       errorMessage.append(" or @Produces-");
     }
     errorMessage.append("annotated method.");
@@ -122,6 +123,13 @@ final class MissingBindingValidator implements BindingGraphPlugin {
                     .append("\nA binding with matching key exists in component: ")
                     .append(component.getQualifiedName()));
     return errorMessage.toString();
+  }
+
+  private boolean allIncomingDependenciesCanUseProduction(
+      MissingBindingNode missingBindingNode, BindingGraph graph) {
+    return graph.inEdges(missingBindingNode).stream()
+        .flatMap(instancesOf(DependencyEdge.class))
+        .allMatch(edge -> dependencyCanBeProduction(edge, graph));
   }
 
   private boolean dependencyCanBeProduction(DependencyEdge edge, BindingGraph graph) {
@@ -143,10 +151,10 @@ final class MissingBindingValidator implements BindingGraphPlugin {
   }
 
   /**
-   * If {@code edge} is missing a binding because it's an invalid {@code @ForReleasableReferences}
-   * request, returns a more specific error message.
+   * If {@code missingBindingNode}'s key is for an invalid {@code @ForReleasableReferences}, returns
+   * a more specific error message.
    *
-   * <p>An invalid request is one whose type is either {@link ReleasableReferenceManager} or {@link
+   * <p>An invalid key is one whose type is either {@link ReleasableReferenceManager} or {@link
    * TypedReleasableReferenceManager}, and whose scope:
    *
    * <ul>
@@ -156,8 +164,8 @@ final class MissingBindingValidator implements BindingGraphPlugin {
    * </ul>
    */
   private Optional<String> missingReleasableReferenceManagerBindingErrorMessage(
-      DependencyEdge edge, BindingGraph graph) {
-    Key key = edge.dependencyRequest().key();
+      MissingBindingNode missingBindingNode, BindingGraph graph) {
+    Key key = missingBindingNode.key();
     if (!key.qualifier().isPresent()
         || !isTypeOf(ForReleasableReferences.class, key.qualifier().get().getAnnotationType())
         || !isType(key.type())) {

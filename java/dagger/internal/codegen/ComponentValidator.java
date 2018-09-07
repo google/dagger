@@ -209,11 +209,12 @@ final class ComponentValidator {
                     break;
                   case 1:
                     // one parameter means that it's a members injection method
-                    TypeMirror onlyParameter = Iterables.getOnlyElement(parameterTypes);
-                    membersInjectionValidator.validateMembersInjectionRequest(
-                        report, method, onlyParameter);
+                    TypeMirror parameterType = Iterables.getOnlyElement(parameterTypes);
+                    report.addSubreport(
+                        membersInjectionValidator.validateMembersInjectionMethod(
+                            method, parameterType));
                     if (!(returnType.getKind().equals(VOID)
-                        || types.isSameType(returnType, onlyParameter))) {
+                        || types.isSameType(returnType, parameterType))) {
                       report.addError(
                           "Members injection methods may only return the injected type or void.",
                           method);

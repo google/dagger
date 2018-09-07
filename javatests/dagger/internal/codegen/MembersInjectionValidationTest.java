@@ -141,6 +141,75 @@ public class MembersInjectionValidationTest {
   }
 
   @Test
+  public void qualifiedMembersInjector() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.MembersInjector;",
+            "import javax.inject.Named;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Named(\"foo\") MembersInjector<Object> objectInjector();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into qualified types")
+        .inFile(component)
+        .onLineContaining("objectInjector();");
+  }
+
+  @Test
+  public void qualifiedMembersInjectionMethod() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.MembersInjector;",
+            "import javax.inject.Named;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Named(\"foo\") void injectObject(Object object);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into qualified types")
+        .inFile(component)
+        .onLineContaining("injectObject(Object object);");
+  }
+
+  @Test
+  public void qualifiedMembersInjectionMethodParameter() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.MembersInjector;",
+            "import javax.inject.Named;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  void injectObject(@Named(\"foo\") Object object);",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot inject members into qualified types")
+        .inFile(component)
+        .onLineContaining("injectObject(@Named(\"foo\") Object object);");
+  }
+
+  @Test
   public void staticFieldInjection() {
     JavaFileObject injected =
         JavaFileObjects.forSourceLines(

@@ -70,8 +70,9 @@ final class DependencyRequestValidator {
       if (membersInjectorType.getTypeArguments().isEmpty()) {
         report.addError("Cannot inject a raw MembersInjector", requestElement);
       } else {
-        membersInjectionValidator.validateMembersInjectionRequest(
-            report, requestElement, membersInjectorType.getTypeArguments().get(0));
+        report.addSubreport(
+            membersInjectionValidator.validateMembersInjectionRequest(
+                requestElement, membersInjectorType.getTypeArguments().get(0)));
       }
     }
   }

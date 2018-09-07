@@ -108,5 +108,10 @@ final class ModifiableBindingMethods {
     abstract MethodSpec methodSpec();
 
     abstract boolean finalized();
+
+    /** Whether a {@link ModifiableBindingMethod} is for the same binding request. */
+    boolean fulfillsSameRequestAs(ModifiableBindingMethod other) {
+      return request().equals(other.request());
+    }
   }
 }

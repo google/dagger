@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
@@ -30,9 +31,12 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Supplier;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -40,6 +44,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,6 +151,8 @@ final class GeneratedComponentModel {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
+  private final SetMultimap<Key, DependencyRequest> contributionsByMultibinding =
+      HashMultimap.create();
 
   private GeneratedComponentModel(
       ClassName name,
@@ -401,5 +409,44 @@ final class GeneratedComponentModel {
     typeSpecsMap.asMap().values().forEach(component::addTypes);
     switchingProviderSupplier.stream().map(Supplier::get).forEach(component::addType);
     return component;
+  }
+
+  /**
+   * Registers a {@ProvisionBinding} representing a multibinding as having been implemented in this
+   * component. Multibindings are modifiable across subcomponent implementations and this allows us
+   * to know whether a contribution has been made by a superclass implementation. This is only
+   * relevant for ahead-of-time subcomponents.
+   */
+  void registerImplementedMultibinding(ContributionBinding multibinding) {
+    checkArgument(multibinding.isSyntheticMultibinding());
+    // We register a multibinding as implemented each time we request the multibinding expression,
+    // so only modify the set of contributions once.
+    if (!contributionsByMultibinding.containsKey(multibinding.key())) {
+      contributionsByMultibinding.putAll(multibinding.key(), multibinding.dependencies());
+    }
+  }
+
+  /**
+   * Returns the set of multibinding contributions associated with all superclass implementations of
+   * a multibinding.
+   */
+  ImmutableSet<DependencyRequest> superclassContributionsMade(Key key) {
+    ImmutableSet.Builder<DependencyRequest> contributionsBuilder = ImmutableSet.builder();
+    if (supermodel.isPresent()) {
+      contributionsBuilder.addAll(supermodel.get().getAllMultibindingContributions(key));
+    }
+    return contributionsBuilder.build();
+  }
+
+  /**
+   * Returns the set of multibinding contributions associated with all implementations of a
+   * multibinding.
+   */
+  private ImmutableSet<DependencyRequest> getAllMultibindingContributions(Key key) {
+    ImmutableSet.Builder<DependencyRequest> contributionsBuilder = ImmutableSet.builder();
+    if (contributionsByMultibinding.containsKey(key)) {
+      contributionsBuilder.addAll(contributionsByMultibinding.get(key));
+    }
+    return contributionsBuilder.addAll(superclassContributionsMade(key)).build();
   }
 }

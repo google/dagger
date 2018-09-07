@@ -32,11 +32,12 @@ import dagger.internal.MapBuilder;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import java.util.Collections;
+import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link BindingExpression} for multibound maps. */
-final class MapBindingExpression extends SimpleInvocationBindingExpression {
+final class MapBindingExpression extends MultibindingExpression {
   /** Maximum number of key-value pairs that can be passed to ImmutableMap.of(K, V, K, V, ...). */
   private static final int MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS = 5;
 
@@ -48,11 +49,12 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
 
   MapBindingExpression(
       ResolvedBindings resolvedBindings,
+      GeneratedComponentModel generatedComponentModel,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings);
+    super(resolvedBindings, generatedComponentModel);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
@@ -66,11 +68,14 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  Expression getDependencyExpression(ClassName requestingClass) {
+  protected Expression buildDependencyExpression(ClassName requestingClass) {
+    Optional<CodeBlock> superMethodCall = superMethodCall();
     // TODO(ronshapiro): We should also make an ImmutableMap version of MapFactory
     boolean isImmutableMapAvailable = isImmutableMapAvailable();
     // TODO(ronshapiro, gak): Use Maps.immutableEnumMap() if it's available?
-    if (isImmutableMapAvailable && dependencies.size() <= MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS) {
+    if (isImmutableMapAvailable
+        && dependencies.size() <= MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS
+        && !superMethodCall.isPresent()) {
       return Expression.create(
           immutableMapType(),
           CodeBlock.builder()
@@ -106,8 +111,11 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
         } else {
           instantiation.add("newMapBuilder($L)", dependencies.size());
         }
-        for (DependencyRequest dependency : dependencies.keySet()) {
+        for (DependencyRequest dependency : getNewContributions(dependencies.keySet())) {
           instantiation.add(".put($L)", keyAndValueExpression(dependency, requestingClass));
+        }
+        if (superMethodCall.isPresent()) {
+          instantiation.add(CodeBlock.of(".putAll($L)", superMethodCall.get()));
         }
         return Expression.create(
             isImmutableMapAvailable ? immutableMapType() : binding.key().type(),

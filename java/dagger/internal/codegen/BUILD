@@ -274,6 +274,7 @@ java_library(
         "ModifiableConcreteMethodBindingExpression.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
+        "MultibindingExpression.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
         "OptionalFactoryInstanceCreationExpression.java",

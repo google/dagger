@@ -37,13 +37,12 @@ public final class AheadOfTimeSubcomponentsTest {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
     createAncillaryClasses(
         filesToCompile,
-        "Foo",
-        "Bar",
-        "RequiresBar",
-        "Baz",
-        "Qux",
-        "RequiresQux",
-        "RequiresRequiresQux");
+        "InGrandChild",
+        "InChild",
+        "RequiresInChild",
+        "NonComponentMethodInChild",
+        "RequiresNonComponentMethodInChild",
+        "RequiresRequiresNonComponentMethodInChild");
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -54,10 +53,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Subcomponent(modules = GreatGrandchildModule.class)",
             "interface GreatGrandchild {",
-            "  RequiresBar requiresComponentMethodMissingBinding();",
-            "  RequiresRequiresQux requiresNonComponentMethodMissingBinding();",
-            "  Foo satisfiedByGrandchild();",
-            "  Bar satisfiedByChild();",
+            "  RequiresInChild requiresComponentMethodMissingBinding();",
+            "  RequiresRequiresNonComponentMethodInChild",
+            "      requiresNonComponentMethodMissingBinding();",
+            "  InGrandChild satisfiedByGrandchild();",
+            "  InChild satisfiedByChild();",
             "}"));
 
     filesToCompile.add(
@@ -70,12 +70,14 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class GreatGrandchildModule {",
-            "  @Provides static RequiresBar provideRequiresBar(Bar bar) {",
-            "    return new RequiresBar();",
+            "  @Provides static RequiresInChild provideRequiresInChild(InChild inChild) {",
+            "    return new RequiresInChild();",
             "  }",
             "",
-            "  @Provides static RequiresRequiresQux provideRequiresRequiresQux(RequiresQux qux) {",
-            "    return new RequiresRequiresQux();",
+            "  @Provides static RequiresRequiresNonComponentMethodInChild",
+            "      provideRequiresRequiresNonComponentMethodInChild(",
+            "          RequiresNonComponentMethodInChild requiresNonComponentMethodInChild) {",
+            "    return new RequiresRequiresNonComponentMethodInChild();",
             "  }",
             "}"));
 
@@ -90,18 +92,22 @@ public final class AheadOfTimeSubcomponentsTest {
             "  protected DaggerGreatGrandchild() {}",
             "",
             "  @Override",
-            "  public RequiresBar requiresComponentMethodMissingBinding() {",
-            "    return GreatGrandchildModule_ProvideRequiresBarFactory.proxyProvideRequiresBar(",
-            "        satisfiedByChild());",
+            "  public RequiresInChild requiresComponentMethodMissingBinding() {",
+            "    return GreatGrandchildModule_ProvideRequiresInChildFactory",
+            "        .proxyProvideRequiresInChild(satisfiedByChild());",
             "  }",
             "",
             "  @Override",
-            "  public RequiresRequiresQux requiresNonComponentMethodMissingBinding() {",
-            "    return GreatGrandchildModule_ProvideRequiresRequiresQuxFactory",
-            "        .proxyProvideRequiresRequiresQux(getRequiresQux());",
+            "  public RequiresRequiresNonComponentMethodInChild",
+            "      requiresNonComponentMethodMissingBinding() {",
+            "    return",
+            "        GreatGrandchildModule_ProvideRequiresRequiresNonComponentMethodInChildFactory",
+            "        .proxyProvideRequiresRequiresNonComponentMethodInChild(",
+            "            getRequiresNonComponentMethodInChild());",
             "  }",
             "",
-            "  public abstract RequiresQux getRequiresQux();",
+            "  public abstract RequiresNonComponentMethodInChild",
+            "      getRequiresNonComponentMethodInChild();",
             "}");
 
     filesToCompile.add(
@@ -126,10 +132,12 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class GrandchildModule {",
-            "  @Provides static Foo provideFoo() { return new Foo(); }",
+            "  @Provides static InGrandChild provideInGrandChild() { return new InGrandChild(); }",
             "",
-            "  @Provides static RequiresQux provideRequiresQux(Qux qux) {",
-            "    return new RequiresQux();",
+            "  @Provides static RequiresNonComponentMethodInChild",
+            "      provideRequiresNonComponentMethodInChild(",
+            "          NonComponentMethodInChild nonComponentMethodInChild) {",
+            "    return new RequiresNonComponentMethodInChild();",
             "  }",
             "}"));
 
@@ -143,12 +151,13 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  private RequiresQux getRequiresQux() {",
-            "    return GrandchildModule_ProvideRequiresQuxFactory.proxyProvideRequiresQux(",
-            "        getQux());",
+            "  private RequiresNonComponentMethodInChild getRequiresNonComponentMethodInChild() {",
+            "    return GrandchildModule_ProvideRequiresNonComponentMethodInChildFactory",
+            "        .proxyProvideRequiresNonComponentMethodInChild(",
+            "            getNonComponentMethodInChild());",
             "  }",
             "",
-            "  public abstract Qux getQux();",
+            "  public abstract NonComponentMethodInChild getNonComponentMethodInChild();",
             "",
             "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
             "    protected GreatGrandchildImpl() {",
@@ -156,13 +165,13 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public RequiresQux getRequiresQux() {",
-            "      return DaggerGrandchild.this.getRequiresQux();",
+            "    public RequiresNonComponentMethodInChild getRequiresNonComponentMethodInChild() {",
+            "      return DaggerGrandchild.this.getRequiresNonComponentMethodInChild();",
             "    }",
             "",
             "    @Override",
-            "    public Foo satisfiedByGrandchild() {",
-            "      return GrandchildModule_ProvideFooFactory.proxyProvideFoo();",
+            "    public InGrandChild satisfiedByGrandchild() {",
+            "      return GrandchildModule_ProvideInGrandChildFactory.proxyProvideInGrandChild();",
             "    }",
             "  }",
             "}");
@@ -189,8 +198,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class ChildModule {",
-            "  @Provides static Bar provideBar() { return new Bar(); }",
-            "  @Provides static Qux provideQux() { return new Qux(); }",
+            "  @Provides static InChild provideInChild() { return new InChild(); }",
+            "  @Provides static NonComponentMethodInChild provideNonComponentMethodInChild() {",
+            "      return new NonComponentMethodInChild();",
+            "  }",
             "}"));
 
     JavaFileObject generatedChild =
@@ -209,8 +220,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public Qux getQux() {",
-            "      return ChildModule_ProvideQuxFactory.proxyProvideQux();",
+            "    public NonComponentMethodInChild getNonComponentMethodInChild() {",
+            "      return ChildModule_ProvideNonComponentMethodInChildFactory",
+            "          .proxyProvideNonComponentMethodInChild();",
             "    }",
             "",
             "    public abstract class GreatGrandchildImpl extends",
@@ -220,8 +232,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "      }",
             "",
             "      @Override",
-            "      public Bar satisfiedByChild() {",
-            "        return ChildModule_ProvideBarFactory.proxyProvideBar();",
+            "      public InChild satisfiedByChild() {",
+            "        return ChildModule_ProvideInChildFactory.proxyProvideInChild();",
             "      }",
             "    }",
             "  }",
@@ -414,7 +426,8 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_satisfiedByDifferentAncestors() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Baz", "Qux", "Flob", "Thud");
+    createAncillaryClasses(
+        filesToCompile, "Unsatisfied", "InGreatGrandchild", "InGrandchild", "InChild");
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -426,10 +439,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Subcomponent(modules = GreatGrandchildModule.class)",
             "interface GreatGrandchild {",
-            "  Optional<Baz> unsatisfied();",
-            "  Optional<Qux> satisfiedByGreatGrandchild();",
-            "  Optional<Flob> satisfiedByGrandchild();",
-            "  Optional<Thud> satisfiedByChild();",
+            "  Optional<Unsatisfied> unsatisfied();",
+            "  Optional<InGreatGrandchild> satisfiedByGreatGrandchild();",
+            "  Optional<InGrandchild> satisfiedByGrandchild();",
+            "  Optional<InChild> satisfiedByChild();",
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
@@ -449,11 +462,13 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "abstract class GreatGrandchildModule {",
-            "  @BindsOptionalOf abstract Baz optionalBaz();",
-            "  @BindsOptionalOf abstract Qux optionalQux();",
-            "  @Provides static Qux provideQux() { return new Qux(); }",
-            "  @BindsOptionalOf abstract Flob optionalFlob();",
-            "  @BindsOptionalOf abstract Thud optionalThud();",
+            "  @BindsOptionalOf abstract Unsatisfied optionalUnsatisfied();",
+            "  @BindsOptionalOf abstract InGreatGrandchild optionalInGreatGrandchild();",
+            "  @Provides static InGreatGrandchild provideInGreatGrandchild() {",
+            "      return new InGreatGrandchild();",
+            "  }",
+            "  @BindsOptionalOf abstract InGrandchild optionalInGrandchild();",
+            "  @BindsOptionalOf abstract InChild optionalInChild();",
             "}"));
 
     JavaFileObject generatedGreatGrandchild =
@@ -469,23 +484,25 @@ public final class AheadOfTimeSubcomponentsTest {
             "  protected DaggerGreatGrandchild(Builder builder) {}",
             "",
             "  @Override",
-            "  public Optional<Baz> unsatisfied() {",
-            "    return Optional.<Baz>empty();",
+            "  public Optional<Unsatisfied> unsatisfied() {",
+            "    return Optional.<Unsatisfied>empty();",
             "  }",
             "",
             "  @Override",
-            "  public Optional<Qux> satisfiedByGreatGrandchild() {",
-            "    return Optional.of(GreatGrandchildModule_ProvideQuxFactory.proxyProvideQux());",
+            "  public Optional<InGreatGrandchild> satisfiedByGreatGrandchild() {",
+            "    return Optional.of(",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildFactory",
+            "            .proxyProvideInGreatGrandchild());",
             "  }",
             "",
             "  @Override",
-            "  public Optional<Flob> satisfiedByGrandchild() {",
-            "    return Optional.<Flob>empty();",
+            "  public Optional<InGrandchild> satisfiedByGrandchild() {",
+            "    return Optional.<InGrandchild>empty();",
             "  }",
             "",
             "  @Override",
-            "  public Optional<Thud> satisfiedByChild() {",
-            "    return Optional.<Thud>empty();",
+            "  public Optional<InChild> satisfiedByChild() {",
+            "    return Optional.<InChild>empty();",
             "  }",
             "",
             "  protected abstract static class Builder implements GreatGrandchild.Builder {}",
@@ -513,7 +530,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "abstract class GrandchildModule {",
-            "  @Provides static Flob provideFlob() { return new Flob(); }",
+            "  @Provides static InGrandchild provideInGrandchild() { return new InGrandchild(); }",
             "}"));
 
     JavaFileObject generatedGrandchild =
@@ -537,9 +554,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public Optional<Flob> satisfiedByGrandchild() {",
+            "    public Optional<InGrandchild> satisfiedByGrandchild() {",
             "      return Optional.of(",
-            "          GrandchildModule_ProvideFlobFactory.proxyProvideFlob());",
+            "          GrandchildModule_ProvideInGrandchildFactory.proxyProvideInGrandchild());",
             "    }",
             "  }",
             "}");
@@ -566,7 +583,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class ChildModule {",
-            "  @Provides static Thud provideThud() { return new Thud(); }",
+            "  @Provides static InChild provideInChild() { return new InChild(); }",
             "}"));
 
     JavaFileObject generatedChild =
@@ -596,8 +613,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "      }",
             "",
             "      @Override",
-            "      public Optional<Thud> satisfiedByChild() {",
-            "        return Optional.of(ChildModule_ProvideThudFactory.proxyProvideThud());",
+            "      public Optional<InChild> satisfiedByChild() {",
+            "        return Optional.of(ChildModule_ProvideInChildFactory.proxyProvideInChild());",
             "      }",
             "    }",
             "  }",
@@ -623,12 +640,12 @@ public final class AheadOfTimeSubcomponentsTest {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
     createAncillaryClasses(
         filesToCompile,
-        "Bar",
-        "NeedsOptionalBar",
-        "AlsoNeedsOptionalBar",
-        "Baz",
-        "NeedsOptionalBaz",
-        "AlsoNeedsOptionalBaz");
+        "NonComponentMethodInChild",
+        "NeedsOptionalNonComponentMethodInChild",
+        "AlsoNeedsOptionalNonComponentMethodInChild",
+        "ComponentMethodInGrandchild",
+        "NeedsOptionalComponentMethodInGrandchild",
+        "AlsoNeedsOptionalComponentMethodInGrandchild");
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -640,11 +657,14 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Subcomponent(modules = GreatGrandchildModule.class)",
             "interface GreatGrandchild {",
-            "  NeedsOptionalBaz needsOptionalBaz();",
-            "  Optional<Baz> componentMethod();",
-            "  NeedsOptionalBar needsOptionalBar();",
-            "  AlsoNeedsOptionalBar alsoNeedsOptionalBar();",
-            "  AlsoNeedsOptionalBaz alsoNeedsOptionalBaz();",
+            "  NeedsOptionalComponentMethodInGrandchild",
+            "      needsOptionalComponentMethodInGrandchild();",
+            "  Optional<ComponentMethodInGrandchild> componentMethod();",
+            "  NeedsOptionalNonComponentMethodInChild needsOptionalNonComponentMethodInChild();",
+            "  AlsoNeedsOptionalNonComponentMethodInChild",
+            "      alsoNeedsOptionalNonComponentMethodInChild();",
+            "  AlsoNeedsOptionalComponentMethodInGrandchild",
+            "      alsoNeedsOptionalComponentMethodInGrandchild();",
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
@@ -664,23 +684,32 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "abstract class GreatGrandchildModule {",
-            "  @Provides static NeedsOptionalBar needsOptionalBar(Optional<Bar> optionalBar) {",
-            "    return new NeedsOptionalBar();",
+            "  @Provides static NeedsOptionalNonComponentMethodInChild",
+            "      needsOptionalNonComponentMethodInChild(",
+            "          Optional<NonComponentMethodInChild> optionalNonComponentMethodInChild) {",
+            "    return new NeedsOptionalNonComponentMethodInChild();",
             "  }",
-            "  @Provides static AlsoNeedsOptionalBar alsoNeedsOptionalBar(",
-            "      Optional<Bar> optionalBar) {",
-            "    return new AlsoNeedsOptionalBar();",
+            "  @Provides static AlsoNeedsOptionalNonComponentMethodInChild",
+            "      alsoNeedsOptionalNonComponentMethodInChild(",
+            "          Optional<NonComponentMethodInChild> optionalNonComponentMethodInChild) {",
+            "    return new AlsoNeedsOptionalNonComponentMethodInChild();",
             "  }",
-            "  @Provides static NeedsOptionalBaz needsOptionalBaz(",
-            "      Optional<Baz> optionalBaz) {",
-            "    return new NeedsOptionalBaz();",
+            "  @Provides static NeedsOptionalComponentMethodInGrandchild",
+            "      needsOptionalComponentMethodInGrandchild(",
+            "          Optional<ComponentMethodInGrandchild>",
+            "              optionalComponentMethodInGrandchild) {",
+            "    return new NeedsOptionalComponentMethodInGrandchild();",
             "  }",
-            "  @Provides static AlsoNeedsOptionalBaz alsoNeedsOptionalBaz(",
-            "      Optional<Baz> optionalBaz) {",
-            "    return new AlsoNeedsOptionalBaz();",
+            "  @Provides static AlsoNeedsOptionalComponentMethodInGrandchild",
+            "      alsoNeedsOptionalComponentMethodInGrandchild(",
+            "          Optional<ComponentMethodInGrandchild>",
+            "              optionalComponentMethodInGrandchild) {",
+            "    return new AlsoNeedsOptionalComponentMethodInGrandchild();",
             "  }",
-            "  @BindsOptionalOf abstract Baz optionalBaz();",
-            "  @BindsOptionalOf abstract Bar optionalBar();",
+            "  @BindsOptionalOf abstract ComponentMethodInGrandchild",
+            "      optionalComponentMethodInGrandchild();",
+            "  @BindsOptionalOf abstract NonComponentMethodInChild",
+            "      optionalNonComponentMethodInChild();",
             "}"));
 
     JavaFileObject generatedGreatGrandchild =
@@ -696,37 +725,44 @@ public final class AheadOfTimeSubcomponentsTest {
             "  protected DaggerGreatGrandchild(Builder builder) {}",
             "",
             "  @Override",
-            "  public NeedsOptionalBaz needsOptionalBaz() {",
-            "    return GreatGrandchildModule_NeedsOptionalBazFactory.proxyNeedsOptionalBaz(",
-            "        componentMethod());",
+            "  public NeedsOptionalComponentMethodInGrandchild",
+            "      needsOptionalComponentMethodInGrandchild() {",
+            "    return GreatGrandchildModule_NeedsOptionalComponentMethodInGrandchildFactory",
+            "        .proxyNeedsOptionalComponentMethodInGrandchild(componentMethod());",
             "  }",
             "",
             "  @Override",
-            "  public Optional<Baz> componentMethod() {",
-            "    return Optional.<Baz>empty();",
+            "  public Optional<ComponentMethodInGrandchild> componentMethod() {",
+            "    return Optional.<ComponentMethodInGrandchild>empty();",
             "  }",
             "",
             "  @Override",
-            "  public NeedsOptionalBar needsOptionalBar() {",
-            "    return GreatGrandchildModule_NeedsOptionalBarFactory.proxyNeedsOptionalBar(",
-            "        getOptionalOfBar());",
+            "  public NeedsOptionalNonComponentMethodInChild",
+            "      needsOptionalNonComponentMethodInChild() {",
+            "    return GreatGrandchildModule_NeedsOptionalNonComponentMethodInChildFactory",
+            "        .proxyNeedsOptionalNonComponentMethodInChild(",
+            "            getOptionalOfNonComponentMethodInChild());",
             "  }",
             "",
             "  @Override",
-            "  public AlsoNeedsOptionalBar alsoNeedsOptionalBar() {",
+            "  public AlsoNeedsOptionalNonComponentMethodInChild",
+            "      alsoNeedsOptionalNonComponentMethodInChild() {",
             "    return",
-            "        GreatGrandchildModule_AlsoNeedsOptionalBarFactory.proxyAlsoNeedsOptionalBar(",
-            "        getOptionalOfBar());",
+            "        GreatGrandchildModule_AlsoNeedsOptionalNonComponentMethodInChildFactory",
+            "            .proxyAlsoNeedsOptionalNonComponentMethodInChild(",
+            "                getOptionalOfNonComponentMethodInChild());",
             "  }",
             "",
             "  @Override",
-            "  public AlsoNeedsOptionalBaz alsoNeedsOptionalBaz() {",
-            "    return GreatGrandchildModule_AlsoNeedsOptionalBazFactory",
-            "        .proxyAlsoNeedsOptionalBaz(componentMethod());",
+            "  public AlsoNeedsOptionalComponentMethodInGrandchild",
+            "      alsoNeedsOptionalComponentMethodInGrandchild() {",
+            "    return GreatGrandchildModule_AlsoNeedsOptionalComponentMethodInGrandchildFactory",
+            "        .proxyAlsoNeedsOptionalComponentMethodInGrandchild(componentMethod());",
             "  }",
             "",
-            "  public Optional<Bar> getOptionalOfBar() {",
-            "    return Optional.<Bar>empty();",
+            "  public Optional<NonComponentMethodInChild>",
+            "      getOptionalOfNonComponentMethodInChild() {",
+            "    return Optional.<NonComponentMethodInChild>empty();",
             "  }",
             "",
             "  protected abstract static class Builder implements GreatGrandchild.Builder {}",
@@ -755,7 +791,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "abstract class GrandchildModule {",
-            "  @Provides static Baz provideBaz() { return new Baz(); }",
+            "  @Provides static ComponentMethodInGrandchild provideComponentMethodInGrandchild() {",
+            "    return new ComponentMethodInGrandchild();",
+            "  }",
             "}"));
 
     JavaFileObject generatedGrandchild =
@@ -779,8 +817,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public Optional<Baz> componentMethod() {",
-            "      return Optional.of(GrandchildModule_ProvideBazFactory.proxyProvideBaz());",
+            "    public Optional<ComponentMethodInGrandchild> componentMethod() {",
+            "      return Optional.of(GrandchildModule_ProvideComponentMethodInGrandchildFactory",
+            "          .proxyProvideComponentMethodInGrandchild());",
             "    }",
             "  }",
             "}");
@@ -807,7 +846,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class ChildModule {",
-            "  @Provides static Bar provideBar() { return new Bar(); }",
+            "  @Provides static NonComponentMethodInChild provideNonComponentMethodInChild() {",
+            "    return new NonComponentMethodInChild();",
+            "  }",
             "}"));
 
     JavaFileObject generatedChild =
@@ -837,8 +878,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "      }",
             "",
             "      @Override",
-            "      public Optional<Bar> getOptionalOfBar() {",
-            "        return Optional.of(ChildModule_ProvideBarFactory.proxyProvideBar());",
+            "      public Optional<NonComponentMethodInChild>",
+            "          getOptionalOfNonComponentMethodInChild() {",
+            "        return Optional.of(ChildModule_ProvideNonComponentMethodInChildFactory",
+            "            .proxyProvideNonComponentMethodInChild());",
             "      }",
             "    }",
             "  }",
@@ -862,7 +905,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_typeChanges() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Wobble");
+    createAncillaryClasses(filesToCompile, "InChild");
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -874,7 +917,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Subcomponent",
             "interface GreatGrandchild {",
-            "  Optional<Wobble> satisfiedByChildAndBoundInGrandchild();",
+            "  Optional<InChild> satisfiedByChildAndBoundInGrandchild();",
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
@@ -920,7 +963,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "abstract class GrandchildModule {",
-            "  @BindsOptionalOf abstract Wobble optionalWobble();",
+            "  @BindsOptionalOf abstract InChild optionalInChild();",
             "}"));
 
     JavaFileObject generatedGrandchild =
@@ -944,8 +987,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public Optional<Wobble> satisfiedByChildAndBoundInGrandchild() {",
-            "      return Optional.<Wobble>empty();",
+            "    public Optional<InChild> satisfiedByChildAndBoundInGrandchild() {",
+            "      return Optional.<InChild>empty();",
             "    }",
             "  }",
             "}");
@@ -972,7 +1015,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Module",
             "class ChildModule {",
-            "  @Provides static Wobble provideWobble() { return new Wobble(); }",
+            "  @Provides static InChild provideInChild() { return new InChild(); }",
             "}"));
 
     JavaFileObject generatedChild =
@@ -1002,8 +1045,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "      }",
             "",
             "      @Override",
-            "      public Optional<Wobble> satisfiedByChildAndBoundInGrandchild() {",
-            "        return Optional.of(ChildModule_ProvideWobbleFactory.proxyProvideWobble());",
+            "      public Optional<InChild> satisfiedByChildAndBoundInGrandchild() {",
+            "        return Optional.of(ChildModule_ProvideInChildFactory.proxyProvideInChild());",
             "      }",
             "    }",
             "  }",
@@ -1012,6 +1055,1314 @@ public final class AheadOfTimeSubcomponentsTest {
         daggerCompiler()
             .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
             .compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void setMultibindings_satisfiedByDifferentAncestors() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile,
+        "InGreatGrandchild",
+        "InChild",
+        "InGreatGrandchildAndChild",
+        "InAllSubcomponents");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = GreatGrandchildModule.class)",
+            "interface GreatGrandchild {",
+            "  Set<InGreatGrandchild> contributionsInGreatGrandchildOnly();",
+            "  Set<InChild> contributionsInChildOnly();",
+            "  Set<InGreatGrandchildAndChild> contributionsInGreatGrandchildAndChild();",
+            "  Set<InAllSubcomponents> contributionsAtAllLevels();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class GreatGrandchildModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InGreatGrandchild provideInGreatGrandchild() {",
+            "    return new InGreatGrandchild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InGreatGrandchildAndChild provideInGreatGrandchildAndChild() {",
+            "    return new InGreatGrandchildAndChild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild() {}",
+            "",
+            "  @Override",
+            "  public Set<InGreatGrandchild> contributionsInGreatGrandchildOnly() {",
+            "    return ImmutableSet.<InGreatGrandchild>of(",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildFactory",
+            "            .proxyProvideInGreatGrandchild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Set<InGreatGrandchildAndChild> contributionsInGreatGrandchildAndChild() {",
+            "    return ImmutableSet.<InGreatGrandchildAndChild>of(",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildAndChildFactory",
+            "            .proxyProvideInGreatGrandchildAndChild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "    return ImmutableSet.<InAllSubcomponents>of(",
+            "        GreatGrandchildModule_ProvideInAllSubcomponentsFactory",
+            "            .proxyProvideInAllSubcomponents());",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  GreatGrandchild greatGrandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Arrays;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "  @Provides",
+            "  @ElementsIntoSet",
+            "  static Set<InAllSubcomponents> provideInAllSubcomponents() {",
+            "      return ImmutableSet.of(new InAllSubcomponents(), new InAllSubcomponents());",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "      return ImmutableSet.<InAllSubcomponents>builderWithExpectedSize(2)",
+            "          .addAll(GrandchildModule_ProvideInAllSubcomponentsFactory",
+            "              .proxyProvideInAllSubcomponents())",
+            "          .addAll(super.contributionsAtAllLevels())",
+            "          .build();",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Arrays;",
+            "import java.util.HashSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "  @Provides",
+            "  @ElementsIntoSet",
+            "  static Set<InChild> provideInChilds() {",
+            "    return new HashSet<InChild>(Arrays.asList(new InChild(), new InChild()));",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InGreatGrandchildAndChild provideInGreatGrandchildAndChild() {",
+            "    return new InGreatGrandchildAndChild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl() {",
+            "        super();",
+            "      }",
+            "",
+            "      @Override",
+            "      public Set<InChild> contributionsInChildOnly() {",
+            "        return ImmutableSet.<InChild>copyOf(",
+            "            ChildModule_ProvideInChildsFactory.proxyProvideInChilds());",
+            "      }",
+            "",
+            "      @Override",
+            "      public Set<InGreatGrandchildAndChild>",
+            "          contributionsInGreatGrandchildAndChild() {",
+            "        return ImmutableSet.<InGreatGrandchildAndChild>builderWithExpectedSize(2)",
+            "            .add(ChildModule_ProvideInGreatGrandchildAndChildFactory",
+            "                .proxyProvideInGreatGrandchildAndChild())",
+            "            .addAll(super.contributionsInGreatGrandchildAndChild())",
+            "            .build();",
+            "      }",
+            "",
+            "      @Override",
+            "      public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "        return ImmutableSet.<InAllSubcomponents>builderWithExpectedSize(3)",
+            "            .add(ChildModule_ProvideInAllSubcomponentsFactory",
+            "                .proxyProvideInAllSubcomponents())",
+            "            .addAll(super.contributionsAtAllLevels())",
+            "            .build();",
+            "      }",
+            "",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void setMultibindings_methodDependencies() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile,
+        "InAllSubcomponents",
+        "RequiresInAllSubcomponents",
+        "NoContributions",
+        "RequiresNoContributions");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = GreatGrandchildModule.class)",
+            "interface GreatGrandchild {",
+            "  Set<InAllSubcomponents> contributionsAtAllLevels();",
+            "  RequiresNoContributions requiresNonComponentMethodSet();",
+            "  RequiresInAllSubcomponents requiresComponentMethodSet();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Builder module(GreatGrandchildModule module);",
+            "",
+            "    GreatGrandchild build();",
+            "  }",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class GreatGrandchildModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "",
+            "  @Provides",
+            "  static RequiresNoContributions providesRequiresNonComponentMethodSet(",
+            "      Set<NoContributions> noContributions) {",
+            "    return new RequiresNoContributions();",
+            "  }",
+            "",
+            "  @Provides",
+            "  static RequiresInAllSubcomponents providesRequiresComponentMethodSet(",
+            "      Set<InAllSubcomponents> inAllSubcomponents) {",
+            "    return new RequiresInAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "    return ImmutableSet.<InAllSubcomponents>of(",
+            "        GreatGrandchildModule_ProvideInAllSubcomponentsFactory",
+            "            .proxyProvideInAllSubcomponents());",
+            "  }",
+            "",
+            "  @Override",
+            "  public RequiresNoContributions requiresNonComponentMethodSet() {",
+            "    return GreatGrandchildModule_ProvidesRequiresNonComponentMethodSetFactory",
+            "        .proxyProvidesRequiresNonComponentMethodSet(getSet());",
+            "  }",
+            "",
+            "  @Override",
+            "  public RequiresInAllSubcomponents requiresComponentMethodSet() {",
+            "    return GreatGrandchildModule_ProvidesRequiresComponentMethodSetFactory",
+            "        .proxyProvidesRequiresComponentMethodSet(contributionsAtAllLevels());",
+            "  }",
+            "",
+            "  public abstract Set<NoContributions> getSet();",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  GreatGrandchild.Builder greatGrandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Arrays;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "  @Provides",
+            "  @ElementsIntoSet",
+            "  static Set<InAllSubcomponents> provideInAllSubcomponents() {",
+            "      return ImmutableSet.of(new InAllSubcomponents(), new InAllSubcomponents());",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  protected abstract class GreatGrandchildBuilder extends",
+            "      DaggerGreatGrandchild.Builder {",
+            "    @Override",
+            "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "",
+            "    @Override",
+            "    public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "      return ImmutableSet.<InAllSubcomponents>builderWithExpectedSize(2)",
+            "          .addAll(GrandchildModule_ProvideInAllSubcomponentsFactory",
+            "              .proxyProvideInAllSubcomponents())",
+            "          .addAll(super.contributionsAtAllLevels())",
+            "          .build();",
+            "    }",
+            "",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder {",
+            "      @Override",
+            "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "        return this;",
+            "      }",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "",
+            "      @Override",
+            "      public Set<InAllSubcomponents> contributionsAtAllLevels() {",
+            "        return ImmutableSet.<InAllSubcomponents>builderWithExpectedSize(3)",
+            "            .add(ChildModule_ProvideInAllSubcomponentsFactory",
+            "                .proxyProvideInAllSubcomponents())",
+            "            .addAll(super.contributionsAtAllLevels())",
+            "            .build();",
+            "      }",
+            "",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void setMultibindings_typeChanges() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "InGrandchild");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface GreatGrandchild {",
+            "  InGrandchild missingWithSetDependency();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    GreatGrandchild build();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder { }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  GreatGrandchild.Builder greatGrandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "",
+            "  @Provides",
+            "  static InGrandchild provideInGrandchild(Set<Long> longs) {",
+            "    return new InGrandchild();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  private InGrandchild getInGrandchild() {",
+            "    return GrandchildModule_ProvideInGrandchildFactory",
+            "        .proxyProvideInGrandchild(getSet());",
+            "  }",
+            "",
+            "  public abstract Set<Long> getSet();",
+            "",
+            "  protected abstract class GreatGrandchildBuilder extends",
+            "      DaggerGreatGrandchild.Builder { }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "",
+            "    @Override",
+            "    public InGrandchild missingWithSetDependency() {",
+            "      return DaggerGrandchild.this.getInGrandchild();",
+            "    }",
+            "",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Long provideLong() { return 0L; }",
+            "}"));
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Set<Long> getSet() {",
+            "      return ImmutableSet.<Long>of(",
+            "          ChildModule_ProvideLongFactory.proxyProvideLong());",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder { }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void mapMultibindings_satisfiedByDifferentAncestors() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile,
+        "InGreatGrandchild",
+        "InChild",
+        "InGreatGrandchildAndChild",
+        "InAllSubcomponents");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "",
+            "@Subcomponent(modules = GreatGrandchildModule.class)",
+            "interface GreatGrandchild {",
+            "  Map<String, InGreatGrandchild> contributionsInGreatGrandchildOnly();",
+            "  Map<String, InChild> contributionsInChildOnly();",
+            "  Map<String, InGreatGrandchildAndChild> contributionsInGreatGrandchildAndChild();",
+            "  Map<String, InAllSubcomponents> contributionsAtAllLevels();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Builder module(GreatGrandchildModule module);",
+            "",
+            "    GreatGrandchild build();",
+            "  }",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "class GreatGrandchildModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"great-grandchild\")",
+            "  static InGreatGrandchild provideInGreatGrandchild() {",
+            "    return new InGreatGrandchild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"great-grandchild\")",
+            "  static InGreatGrandchildAndChild provideInGreatGrandchildAndChild() {",
+            "    return new InGreatGrandchildAndChild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"great-grandchild\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Map<String, InGreatGrandchild> contributionsInGreatGrandchildOnly() {",
+            "    return ImmutableMap.<String, InGreatGrandchild>of(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildFactory",
+            "            .proxyProvideInGreatGrandchild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<String, InGreatGrandchildAndChild>",
+            "      contributionsInGreatGrandchildAndChild() {",
+            "    return ImmutableMap.<String, InGreatGrandchildAndChild>of(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildAndChildFactory",
+            "            .proxyProvideInGreatGrandchildAndChild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "    return ImmutableMap.<String, InAllSubcomponents>of(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInAllSubcomponentsFactory",
+            "            .proxyProvideInAllSubcomponents());",
+            "  }",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  GreatGrandchild.Builder greatGrandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"grandchild\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  protected abstract class GreatGrandchildBuilder extends",
+            "      DaggerGreatGrandchild.Builder {",
+            "    @Override",
+            "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "",
+            "    @Override",
+            "    public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "      return ImmutableMap.<String, InAllSubcomponents>builderWithExpectedSize(2)",
+            "          .put(\"grandchild\", GrandchildModule_ProvideInAllSubcomponentsFactory",
+            "              .proxyProvideInAllSubcomponents())",
+            "          .putAll(super.contributionsAtAllLevels())",
+            "          .build();",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"child\")",
+            "  static InChild provideInChild() {",
+            "    return new InChild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"child\")",
+            "  static InGreatGrandchildAndChild provideInGreatGrandchildAndChild() {",
+            "    return new InGreatGrandchildAndChild();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"child\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder {",
+            "      @Override",
+            "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "        return this;",
+            "      }",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InChild> contributionsInChildOnly() {",
+            "        return ImmutableMap.<String, InChild>of(",
+            "            \"child\", ChildModule_ProvideInChildFactory.proxyProvideInChild());",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InGreatGrandchildAndChild>",
+            "          contributionsInGreatGrandchildAndChild() {",
+            "        return",
+            "            ImmutableMap.<String, InGreatGrandchildAndChild>builderWithExpectedSize(",
+            "                2)",
+            "            .put(\"child\",",
+            "                ChildModule_ProvideInGreatGrandchildAndChildFactory",
+            "                    .proxyProvideInGreatGrandchildAndChild())",
+            "            .putAll(super.contributionsInGreatGrandchildAndChild())",
+            "            .build();",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "        return ImmutableMap.<String, InAllSubcomponents>builderWithExpectedSize(3)",
+            "            .put(\"child\",",
+            "                ChildModule_ProvideInAllSubcomponentsFactory",
+            "                    .proxyProvideInAllSubcomponents())",
+            "            .putAll(super.contributionsAtAllLevels())",
+            "            .build();",
+            "      }",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(generatedChild);
+  }
+
+  @Test
+  public void mapMultibindings_methodDependencies() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile,
+        "InAllSubcomponents",
+        "RequiresInAllSubcomponentsMap",
+        "Unsatisfied",
+        "RequiresUnsatisfiedMap");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "",
+            "@Subcomponent(modules = GreatGrandchildModule.class)",
+            "interface GreatGrandchild {",
+            "  Map<String, InAllSubcomponents> contributionsAtAllLevels();",
+            "  RequiresUnsatisfiedMap requiresNonComponentMethodMap();",
+            "  RequiresInAllSubcomponentsMap requiresComponentMethodMap();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Builder module(GreatGrandchildModule module);",
+            "",
+            "    GreatGrandchild build();",
+            "  }",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GreatGrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "class GreatGrandchildModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"great-grandchild\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "",
+            "  @Provides",
+            "  static RequiresUnsatisfiedMap providesRequiresNonComponentMethodMap(",
+            "      Map<String, Unsatisfied> unsatisfiedMap) {",
+            "    return new RequiresUnsatisfiedMap();",
+            "  }",
+            "",
+            "  @Provides",
+            "  static RequiresInAllSubcomponentsMap providesRequiresComponentMethodMap(",
+            "      Map<String, InAllSubcomponents> inAllSubcomponentsMap) {",
+            "    return new RequiresInAllSubcomponentsMap();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "    return ImmutableMap.<String, InAllSubcomponents>of(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInAllSubcomponentsFactory",
+            "            .proxyProvideInAllSubcomponents());",
+            "  }",
+            "",
+            "  @Override",
+            "  public RequiresUnsatisfiedMap requiresNonComponentMethodMap() {",
+            "    return GreatGrandchildModule_ProvidesRequiresNonComponentMethodMapFactory",
+            "        .proxyProvidesRequiresNonComponentMethodMap(getMap());",
+            "  }",
+            "",
+            "  @Override",
+            "  public RequiresInAllSubcomponentsMap requiresComponentMethodMap() {",
+            "    return GreatGrandchildModule_ProvidesRequiresComponentMethodMapFactory",
+            "        .proxyProvidesRequiresComponentMethodMap(contributionsAtAllLevels());",
+            "  }",
+            "",
+            "  public abstract Map<String, Unsatisfied> getMap();",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface Grandchild {",
+            "  GreatGrandchild.Builder greatGrandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "@Module",
+            "class GrandchildModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"grandchild\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  protected abstract class GreatGrandchildBuilder extends",
+            "      DaggerGreatGrandchild.Builder {",
+            "    @Override",
+            "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "",
+            "    @Override",
+            "    public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "      return ImmutableMap.<String, InAllSubcomponents>builderWithExpectedSize(2)",
+            "          .put(\"grandchild\",",
+            "              GrandchildModule_ProvideInAllSubcomponentsFactory",
+            "                  .proxyProvideInAllSubcomponents())",
+            "          .putAll(super.contributionsAtAllLevels())",
+            "          .build();",
+            "    }",
+            "  }",
+            "}");
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}"));
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "@Module",
+            "class ChildModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"child\")",
+            "  static InAllSubcomponents provideInAllSubcomponents() {",
+            "    return new InAllSubcomponents();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder {",
+            "      @Override",
+            "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "        return this;",
+            "      }",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl extends",
+            "        DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "        return ImmutableMap.<String, InAllSubcomponents>builderWithExpectedSize(3)",
+            "            .put(\"child\",",
+            "                ChildModule_ProvideInAllSubcomponentsFactory",
+            "                    .proxyProvideInAllSubcomponents())",
+            "            .putAll(super.contributionsAtAllLevels())",
+            "            .build();",
+            "      }",
+            "    }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerGreatGrandchild")

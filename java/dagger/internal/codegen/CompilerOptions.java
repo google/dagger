@@ -189,6 +189,8 @@ abstract class CompilerOptions {
 
   static final String FLOATING_BINDS_METHODS_KEY = "dagger.floatingBindsMethods";
 
+  static final String GRADLE_INCREMENTAL = "dagger.gradle.incremental";
+
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
       ImmutableSet.of(
           FAST_INIT,
@@ -202,7 +204,8 @@ abstract class CompilerOptions {
           WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
           IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
           AHEAD_OF_TIME_COMPONENTS_KEY,
-          FLOATING_BINDS_METHODS_KEY);
+          FLOATING_BINDS_METHODS_KEY,
+          GRADLE_INCREMENTAL);
 
   private static boolean fastInitEnabled(ProcessingEnvironment processingEnv) {
     return valueOf(

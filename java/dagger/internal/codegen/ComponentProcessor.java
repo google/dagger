@@ -93,7 +93,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
     options.addAll(spiPlugins.allSupportedOptions());
     options.addAll(validationPlugins.allSupportedOptions());
-    if (processingEnv.getOptions().containsKey("dagger.gradle.incremental")) {
+    if (processingEnv.getOptions().containsKey(CompilerOptions.GRADLE_INCREMENTAL)) {
       options.add("org.gradle.annotation.processing.isolating");
     }
     return options.build();

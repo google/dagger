@@ -33,226 +33,320 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class AheadOfTimeSubcomponentsTest {
   @Test
-  public void missingBindings() {
+  public void missingBindings_fromComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
-        filesToCompile,
-        "InGrandChild",
-        "InChild",
-        "RequiresInChild",
-        "NonComponentMethodInChild",
-        "RequiresNonComponentMethodInChild",
-        "RequiresRequiresNonComponentMethodInChild");
-
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
-            "test.GreatGrandchild",
+            "test.Leaf",
             "package test;",
             "",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent(modules = GreatGrandchildModule.class)",
-            "interface GreatGrandchild {",
-            "  RequiresInChild requiresComponentMethodMissingBinding();",
-            "  RequiresRequiresNonComponentMethodInChild",
-            "      requiresNonComponentMethodMissingBinding();",
-            "  InGrandChild satisfiedByGrandchild();",
-            "  InChild satisfiedByChild();",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  MissingInLeaf missingFromComponentMethod();",
             "}"));
-
-    filesToCompile.add(
+    JavaFileObject generatedLeaf =
         JavaFileObjects.forSourceLines(
-            "test.GreatGrandchildModule",
+            "test.DaggerLeaf",
             "package test;",
             "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "",
-            "@Module",
-            "class GreatGrandchildModule {",
-            "  @Provides static RequiresInChild provideRequiresInChild(InChild inChild) {",
-            "    return new RequiresInChild();",
-            "  }",
-            "",
-            "  @Provides static RequiresRequiresNonComponentMethodInChild",
-            "      provideRequiresRequiresNonComponentMethodInChild(",
-            "          RequiresNonComponentMethodInChild requiresNonComponentMethodInChild) {",
-            "    return new RequiresRequiresNonComponentMethodInChild();",
-            "  }",
-            "}"));
-
-    JavaFileObject generatedGreatGrandchild =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerGreatGrandchild",
-            "package test;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
-            "  protected DaggerGreatGrandchild() {}",
-            "",
-            "  @Override",
-            "  public RequiresInChild requiresComponentMethodMissingBinding() {",
-            "    return GreatGrandchildModule_ProvideRequiresInChildFactory",
-            "        .proxyProvideRequiresInChild(satisfiedByChild());",
-            "  }",
-            "",
-            "  @Override",
-            "  public RequiresRequiresNonComponentMethodInChild",
-            "      requiresNonComponentMethodMissingBinding() {",
-            "    return",
-            "        GreatGrandchildModule_ProvideRequiresRequiresNonComponentMethodInChildFactory",
-            "        .proxyProvideRequiresRequiresNonComponentMethodInChild(",
-            "            getRequiresNonComponentMethodInChild());",
-            "  }",
-            "",
-            "  public abstract RequiresNonComponentMethodInChild",
-            "      getRequiresNonComponentMethodInChild();",
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
             "}");
-
-    filesToCompile.add(
-        JavaFileObjects.forSourceLines(
-            "test.Grandchild",
-            "package test;",
-            "",
-            "import dagger.Subcomponent;",
-            "",
-            "@Subcomponent(modules = GrandchildModule.class)",
-            "interface Grandchild {",
-            "  GreatGrandchild greatGrandchild();",
-            "}"));
-
-    filesToCompile.add(
-        JavaFileObjects.forSourceLines(
-            "test.GrandchildModule",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "",
-            "@Module",
-            "class GrandchildModule {",
-            "  @Provides static InGrandChild provideInGrandChild() { return new InGrandChild(); }",
-            "",
-            "  @Provides static RequiresNonComponentMethodInChild",
-            "      provideRequiresNonComponentMethodInChild(",
-            "          NonComponentMethodInChild nonComponentMethodInChild) {",
-            "    return new RequiresNonComponentMethodInChild();",
-            "  }",
-            "}"));
-
-    JavaFileObject generatedGrandchild =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerGrandchild",
-            "package test;",
-            IMPORT_GENERATED_ANNOTATION,
-            "",
-            GENERATED_ANNOTATION,
-            "public abstract class DaggerGrandchild implements Grandchild {",
-            "  protected DaggerGrandchild() {}",
-            "",
-            "  private RequiresNonComponentMethodInChild getRequiresNonComponentMethodInChild() {",
-            "    return GrandchildModule_ProvideRequiresNonComponentMethodInChildFactory",
-            "        .proxyProvideRequiresNonComponentMethodInChild(",
-            "            getNonComponentMethodInChild());",
-            "  }",
-            "",
-            "  public abstract NonComponentMethodInChild getNonComponentMethodInChild();",
-            "",
-            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
-            "    protected GreatGrandchildImpl() {",
-            "      super();",
-            "    }",
-            "",
-            "    @Override",
-            "    public RequiresNonComponentMethodInChild getRequiresNonComponentMethodInChild() {",
-            "      return DaggerGrandchild.this.getRequiresNonComponentMethodInChild();",
-            "    }",
-            "",
-            "    @Override",
-            "    public InGrandChild satisfiedByGrandchild() {",
-            "      return GrandchildModule_ProvideInGrandChildFactory.proxyProvideInGrandChild();",
-            "    }",
-            "  }",
-            "}");
-
-    filesToCompile.add(
-        JavaFileObjects.forSourceLines(
-            "test.Child",
-            "package test;",
-            "",
-            "import dagger.Subcomponent;",
-            "",
-            "@Subcomponent(modules = ChildModule.class)",
-            "interface Child {",
-            "  Grandchild grandchild();",
-            "}"));
-
-    filesToCompile.add(
-        JavaFileObjects.forSourceLines(
-            "test.ChildModule",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.Provides;",
-            "",
-            "@Module",
-            "class ChildModule {",
-            "  @Provides static InChild provideInChild() { return new InChild(); }",
-            "  @Provides static NonComponentMethodInChild provideNonComponentMethodInChild() {",
-            "      return new NonComponentMethodInChild();",
-            "  }",
-            "}"));
-
-    JavaFileObject generatedChild =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerChild",
-            "package test;",
-            IMPORT_GENERATED_ANNOTATION,
-            "",
-            GENERATED_ANNOTATION,
-            "public abstract class DaggerChild implements Child {",
-            "  protected DaggerChild() {}",
-            "",
-            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
-            "    protected GrandchildImpl() {",
-            "      super();",
-            "    }",
-            "",
-            "    @Override",
-            "    public NonComponentMethodInChild getNonComponentMethodInChild() {",
-            "      return ChildModule_ProvideNonComponentMethodInChildFactory",
-            "          .proxyProvideNonComponentMethodInChild();",
-            "    }",
-            "",
-            "    public abstract class GreatGrandchildImpl extends",
-            "        DaggerGrandchild.GreatGrandchildImpl {",
-            "      protected GreatGrandchildImpl() {",
-            "        super();",
-            "      }",
-            "",
-            "      @Override",
-            "      public InChild satisfiedByChild() {",
-            "        return ChildModule_ProvideInChildFactory.proxyProvideInChild();",
-            "      }",
-            "    }",
-            "  }",
-            "}");
-
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
-            .compile(filesToCompile.build());
+    Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerGreatGrandchild")
-        .hasSourceEquivalentTo(generatedGreatGrandchild);
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  static MissingInLeaf satisfiedInAncestor() { return new MissingInLeaf(); }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public MissingInLeaf missingFromComponentMethod() {",
+            "      return AncestorModule_SatisfiedInAncestorFactory.proxySatisfiedInAncestor();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerGrandchild")
-        .hasSourceEquivalentTo(generatedGrandchild);
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void missingBindings_dependsOnBindingWithMatchingComponentMethod() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  MissingInLeaf missingComponentMethod();",
+            "  DependsOnComponentMethod dependsOnComponentMethod();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.DependsOnComponentMethod",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class DependsOnComponentMethod {",
+            "  @Inject DependsOnComponentMethod(MissingInLeaf missingInLeaf) {}",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public DependsOnComponentMethod dependsOnComponentMethod() {",
+            "    return new DependsOnComponentMethod(missingComponentMethod());",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerChild")
-        .hasSourceEquivalentTo(generatedChild);
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+  }
+
+  @Test
+  public void missingBindings_dependsOnMissingBinding() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  DependsOnMissingBinding dependsOnMissingBinding();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.DependsOnMissingBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class DependsOnMissingBinding {",
+            "  @Inject DependsOnMissingBinding(MissingInLeaf missing) {}",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public DependsOnMissingBinding dependsOnMissingBinding() {",
+            "    return new DependsOnMissingBinding(getMissingInLeaf());",
+            "  }",
+            "",
+            "  public abstract MissingInLeaf getMissingInLeaf();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  static MissingInLeaf satisfiedInAncestor() { return new MissingInLeaf(); }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public MissingInLeaf getMissingInLeaf() {",
+            "      return AncestorModule_SatisfiedInAncestorFactory.proxySatisfiedInAncestor();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void missingBindings_satisfiedInGreatAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  DependsOnMissingBinding dependsOnMissingBinding();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.DependsOnMissingBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class DependsOnMissingBinding {",
+            "  @Inject DependsOnMissingBinding(MissingInLeaf missing) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.GreatAncestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = SatisfiesMissingBindingModule.class)",
+            "interface GreatAncestor {",
+            "  Ancestor ancestor();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.SatisfiesMissingBindingModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class SatisfiesMissingBindingModule {",
+            "  @Provides",
+            "  static MissingInLeaf satisfy() { return new MissingInLeaf(); }",
+            "}"));
+    // DaggerLeaf+DaggerAncestor generated types are ignored - they're not the focus of this test
+    // and are tested elsewhere
+    JavaFileObject generatedGreatAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatAncestor implements GreatAncestor {",
+            "  protected DaggerGreatAncestor() {}",
+            "",
+            "  public abstract class AncestorImpl extends DaggerAncestor {",
+            "    protected AncestorImpl() { super(); }",
+            "",
+            "    public abstract class LeafImpl extends DaggerAncestor.LeafImpl {",
+            "      protected LeafImpl() { super(); }",
+            "",
+            "      @Override",
+            "      public MissingInLeaf getMissingInLeaf() {",
+            "        return SatisfiesMissingBindingModule_SatisfyFactory.proxySatisfy();",
+            "      }",
+            "    }",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatAncestor")
+        .hasSourceEquivalentTo(generatedGreatAncestor);
   }
 
   @Test

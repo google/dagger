@@ -353,16 +353,15 @@ public final class AheadOfTimeSubcomponentsTest {
   public void moduleInstanceDependency() {
     JavaFileObject subcomponent =
         JavaFileObjects.forSourceLines(
-            "test.Child",
+            "test.Sub",
             "package test;",
             "",
             "import dagger.Subcomponent;",
             "",
             "@Subcomponent(modules = TestModule.class)",
-            "interface Child {",
+            "interface Sub {",
             "  String string();",
             "}");
-
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -375,18 +374,17 @@ public final class AheadOfTimeSubcomponentsTest {
             "class TestModule {",
             "  @Provides String provideString() { return \"florp\"; }",
             "}");
-
     JavaFileObject generatedSubcomponent =
         JavaFileObjects.forSourceLines(
-            "test.DaggerChild",
+            "test.DaggerSub",
             "package test;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public abstract class DaggerChild implements Child {",
+            "public abstract class DaggerSub implements Sub {",
             "  private TestModule testModule;",
             "",
-            "  protected DaggerChild() {",
+            "  protected DaggerSub() {",
             "    initialize();",
             "  }",
             "",
@@ -400,121 +398,114 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return TestModule_ProvideStringFactory.proxyProvideString(testModule);",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
-            .compile(subcomponent, module);
+    Compilation compilation = compile(subcomponent, module);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerChild")
+        .generatedSourceFile("test.DaggerSub")
         .hasSourceEquivalentTo(generatedSubcomponent);
   }
 
   @Test
   public void generatedInstanceBinding() {
-    JavaFileObject grandchild =
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
         JavaFileObjects.forSourceLines(
-            "test.Grandchild",
+            "test.Leaf",
             "package test;",
             "",
             "import dagger.Subcomponent;",
             "",
-            "@Subcomponent(modules = GrandchildModule.class)",
-            "interface Grandchild {",
-            "  Integer i();",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Integer integer();",
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
-            "    Builder module(GrandchildModule module);",
+            "    Builder module(LeafModule module);",
             "",
-            "    Grandchild build();",
+            "    Leaf build();",
             "  }",
-            "}");
-
-    JavaFileObject grandchildModule =
+            "}"),
         JavaFileObjects.forSourceLines(
-            "test.GrandchildModule",
+            "test.LeafModule",
             "package test;",
             "",
             "import dagger.Module;",
             "import dagger.Provides;",
             "",
             "@Module",
-            "class GrandchildModule {",
+            "class LeafModule {",
             "  @Provides static Integer provideInteger() { return 0; }",
-            "}");
-
-    JavaFileObject generatedGrandchild =
+            "}"));
+    JavaFileObject generatedLeaf =
         JavaFileObjects.forSourceLines(
-            "test.DaggerGrandchild",
+            "test.DaggerLeaf",
             "package test;",
             "",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public abstract class DaggerGrandchild implements Grandchild {",
-            "  protected DaggerGrandchild(Builder builder) {}",
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf(Builder builder) {}",
             "",
             "  @Override",
-            "  public Integer i() {",
-            "    return GrandchildModule_ProvideIntegerFactory.proxyProvideInteger();",
+            "  public Integer integer() {",
+            "    return LeafModule_ProvideIntegerFactory.proxyProvideInteger();",
             "  }",
             "",
-            "  protected abstract static class Builder implements Grandchild.Builder {",
+            "  protected abstract static class Builder implements Leaf.Builder {",
             "",
             "    @Override",
-            "    public Builder module(GrandchildModule module) {",
+            "    public Builder module(LeafModule module) {",
             "      return this;",
             "    }",
             "  }",
             "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
 
-    JavaFileObject child =
+    filesToCompile.add(
         JavaFileObjects.forSourceLines(
-            "test.Child",
+            "test.Ancestor",
             "package test;",
             "",
             "import dagger.Subcomponent;",
             "",
             "@Subcomponent",
-            "interface Child {",
-            "  Grandchild.Builder grandchild();",
-            "}");
-
-    JavaFileObject generatedChild =
+            "interface Ancestor {",
+            "  Leaf.Builder leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
         JavaFileObjects.forSourceLines(
-            "test.DaggerChild",
+            "test.DaggerAncestor",
             "package test;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public abstract class DaggerChild implements Child {",
-            "  protected DaggerChild() {}",
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
             "",
-            "  protected abstract class GrandchildBuilder extends DaggerGrandchild.Builder {",
+            "  protected abstract class LeafBuilder extends DaggerLeaf.Builder {",
             "    @Override",
-            "    public GrandchildBuilder module(GrandchildModule module) {",
+            "    public LeafBuilder module(LeafModule module) {",
             "      return this;",
             "    }",
             "  }",
             "",
-            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
-            "    protected GrandchildImpl(GrandchildBuilder builder) {",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl(LeafBuilder builder) {",
             "      super(builder);",
             "    }",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
-            .compile(child, grandchild, grandchildModule);
+    compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerGrandchild")
-        .hasSourceEquivalentTo(generatedGrandchild);
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerChild")
-        .hasSourceEquivalentTo(generatedChild);
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
   }
 
   @Test
@@ -2836,6 +2827,12 @@ public final class AheadOfTimeSubcomponentsTest {
   }
 
   private static Compilation compile(Iterable<JavaFileObject> files) {
+    return daggerCompiler()
+        .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+        .compile(files);
+  }
+
+  private static Compilation compile(JavaFileObject... files) {
     return daggerCompiler()
         .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
         .compile(files);

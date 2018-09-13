@@ -124,93 +124,6 @@ abstract class ComponentModelBuilder {
     }
   }
 
-  private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
-    ClassName parentName = generatedComponentModel.name();
-    ClassName childName =
-        parentName.nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
-    GeneratedComponentModel childModel = GeneratedComponentModel.forSubcomponent(childName);
-    Optional<ComponentBuilder> childBuilder =
-        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
-    ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
-    ComponentBindingExpressions childBindingExpressions =
-        bindingExpressions.forChildComponent(
-            childGraph, childModel, childComponentRequirementFields);
-    return new SubComponentModelBuilder(
-            this,
-            childGraph,
-            childModel,
-            childBindingExpressions,
-            childComponentRequirementFields,
-            childBuilder)
-        .build();
-  }
-
-  private GeneratedComponentModel buildAbstractInnerSubcomponentModel(BindingGraph childGraph) {
-    ClassName childName =
-        generatedComponentModel
-            .name()
-            .nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
-    GeneratedComponentModel supermodel =
-        getSubcomponentSupermodel(childGraph.componentDescriptor());
-    GeneratedComponentModel childModel =
-        GeneratedComponentModel.forAbstractSubcomponent(childName, supermodel);
-    Optional<ComponentBuilder> childBuilder =
-        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
-    ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
-    ComponentBindingExpressions childBindingExpressions =
-        bindingExpressions.forChildComponent(
-            childGraph, childModel, childComponentRequirementFields);
-    return new AbstractSubcomponentModelBuilder(
-            Optional.of(this),
-            types,
-            elements,
-            keyFactory,
-            childGraph,
-            childModel,
-            subcomponentNames,
-            optionalFactories,
-            childBindingExpressions,
-            childComponentRequirementFields,
-            childBuilder,
-            bindingGraphFactory,
-            compilerOptions)
-        .build();
-  }
-
-  private GeneratedComponentModel getSubcomponentSupermodel(ComponentDescriptor subcomponent) {
-    // If the current model is for a subcomponent that has a defined supermodel, that supermodel
-    // should contain a reference to a model for `subcomponent`
-    if (generatedComponentModel.supermodel().isPresent()) {
-      Optional<GeneratedComponentModel> supermodel =
-          generatedComponentModel.supermodel().get().subcomponentModel(subcomponent);
-      checkState(
-          supermodel.isPresent(),
-          "Attempting to generate an implementation of a subcomponent [%s] whose parent is a "
-              + "subcomponent [%s], but whose supermodel is not present on the parent's "
-              + "supermodel.",
-          subcomponent.componentDefinitionType(),
-          graph.componentType());
-      return supermodel.get();
-    }
-
-    // Otherwise, the enclosing component is top-level, so we must generate the supermodel for the
-    // subcomponent. We do so by building the model for the abstract base class for the
-    // subcomponent. This is done by truncating the binding graph at the subcomponent.
-    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(subcomponent);
-    return buildComponentModel(
-        // TODO(ronshapiro): extract a factory class here so that we don't need to pass around
-        // types, elements, keyFactory, etc...
-        types,
-        elements,
-        keyFactory,
-        compilerOptions,
-        ComponentGenerator.componentName(truncatedBindingGraph.componentType()),
-        truncatedBindingGraph,
-        bindingGraphFactory);
-  }
-
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final KeyFactory keyFactory;
@@ -325,6 +238,93 @@ abstract class ComponentModelBuilder {
               ? buildAbstractInnerSubcomponentModel(subgraph)
               : buildSubcomponentModel(subgraph));
     }
+  }
+
+  private GeneratedComponentModel buildAbstractInnerSubcomponentModel(BindingGraph childGraph) {
+    ClassName childName =
+        generatedComponentModel
+            .name()
+            .nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
+    GeneratedComponentModel supermodel =
+        getSubcomponentSupermodel(childGraph.componentDescriptor());
+    GeneratedComponentModel childModel =
+        GeneratedComponentModel.forAbstractSubcomponent(childName, supermodel);
+    Optional<ComponentBuilder> childBuilder =
+        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
+    ComponentRequirementFields childComponentRequirementFields =
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
+    ComponentBindingExpressions childBindingExpressions =
+        bindingExpressions.forChildComponent(
+            childGraph, childModel, childComponentRequirementFields);
+    return new AbstractSubcomponentModelBuilder(
+            Optional.of(this),
+            types,
+            elements,
+            keyFactory,
+            childGraph,
+            childModel,
+            subcomponentNames,
+            optionalFactories,
+            childBindingExpressions,
+            childComponentRequirementFields,
+            childBuilder,
+            bindingGraphFactory,
+            compilerOptions)
+        .build();
+  }
+
+  private GeneratedComponentModel getSubcomponentSupermodel(ComponentDescriptor subcomponent) {
+    // If the current model is for a subcomponent that has a defined supermodel, that supermodel
+    // should contain a reference to a model for `subcomponent`
+    if (generatedComponentModel.supermodel().isPresent()) {
+      Optional<GeneratedComponentModel> supermodel =
+          generatedComponentModel.supermodel().get().subcomponentModel(subcomponent);
+      checkState(
+          supermodel.isPresent(),
+          "Attempting to generate an implementation of a subcomponent [%s] whose parent is a "
+              + "subcomponent [%s], but whose supermodel is not present on the parent's "
+              + "supermodel.",
+          subcomponent.componentDefinitionType(),
+          graph.componentType());
+      return supermodel.get();
+    }
+
+    // Otherwise, the enclosing component is top-level, so we must generate the supermodel for the
+    // subcomponent. We do so by building the model for the abstract base class for the
+    // subcomponent. This is done by truncating the binding graph at the subcomponent.
+    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(subcomponent);
+    return buildComponentModel(
+        // TODO(ronshapiro): extract a factory class here so that we don't need to pass around
+        // types, elements, keyFactory, etc...
+        types,
+        elements,
+        keyFactory,
+        compilerOptions,
+        ComponentGenerator.componentName(truncatedBindingGraph.componentType()),
+        truncatedBindingGraph,
+        bindingGraphFactory);
+  }
+
+  private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
+    ClassName parentName = generatedComponentModel.name();
+    ClassName childName =
+        parentName.nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
+    GeneratedComponentModel childModel = GeneratedComponentModel.forSubcomponent(childName);
+    Optional<ComponentBuilder> childBuilder =
+        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
+    ComponentRequirementFields childComponentRequirementFields =
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
+    ComponentBindingExpressions childBindingExpressions =
+        bindingExpressions.forChildComponent(
+            childGraph, childModel, childComponentRequirementFields);
+    return new SubComponentModelBuilder(
+            this,
+            childGraph,
+            childModel,
+            childBindingExpressions,
+            childComponentRequirementFields,
+            childBuilder)
+        .build();
   }
 
   private static final int INITIALIZATIONS_PER_INITIALIZE_METHOD = 100;

@@ -57,6 +57,8 @@ abstract class CompilerOptions {
    */
   abstract boolean experimentalAndroidMode2();
 
+  abstract boolean formatGeneratedSource();
+
   abstract boolean writeProducerNameInToken();
 
   abstract Diagnostic.Kind nullableValidationKind();
@@ -98,6 +100,8 @@ abstract class CompilerOptions {
         .fastInit(fastInitEnabled(processingEnv))
         .experimentalAndroidMode2(
             experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
+        .formatGeneratedSource(
+            formatGeneratedSourceFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .writeProducerNameInToken(
             writeProducerNameInTokenFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
         .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
@@ -128,6 +132,8 @@ abstract class CompilerOptions {
     Builder fastInit(boolean fastInit);
 
     Builder experimentalAndroidMode2(boolean experimentalAndroidMode2);
+
+    Builder formatGeneratedSource(boolean formatGeneratedSource);
 
     Builder writeProducerNameInToken(boolean writeProducerNameInToken);
 
@@ -160,6 +166,8 @@ abstract class CompilerOptions {
   static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
 
   static final String EXPERIMENTAL_ANDROID_MODE2 = "dagger.experimentalAndroidMode2";
+
+  static final String FORMAT_GENERATED_SOURCE = "dagger.formatGeneratedSource";
 
   static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
 
@@ -196,6 +204,7 @@ abstract class CompilerOptions {
           FAST_INIT,
           EXPERIMENTAL_ANDROID_MODE,
           HEADER_COMPILATION,
+          FORMAT_GENERATED_SOURCE,
           WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
           DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
           NULLABLE_VALIDATION_KEY,
@@ -228,6 +237,15 @@ abstract class CompilerOptions {
         processingEnv,
         EXPERIMENTAL_ANDROID_MODE2,
         FeatureStatus.DISABLED,
+        EnumSet.allOf(FeatureStatus.class));
+  }
+
+  private static FeatureStatus formatGeneratedSourceFeatureStatus(
+      ProcessingEnvironment processingEnv) {
+    return valueOf(
+        processingEnv,
+        FORMAT_GENERATED_SOURCE,
+        FeatureStatus.ENABLED,
         EnumSet.allOf(FeatureStatus.class));
   }
 

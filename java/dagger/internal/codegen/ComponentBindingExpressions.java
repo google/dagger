@@ -311,6 +311,8 @@ final class ComponentBindingExpressions {
               modifiableBindingMethod,
               MethodSpec.methodBuilder(baseMethod.name)
                   .addModifiers(PUBLIC)
+                  // TODO(b/72748365): Mark method as final if binding should not be further
+                  // modified.
                   .returns(baseMethod.returnType)
                   .addAnnotation(Override.class)
                   .addCode(
@@ -367,6 +369,7 @@ final class ComponentBindingExpressions {
       case MISSING:
       case GENERATED_INSTANCE:
       case OPTIONAL:
+      case INJECTION:
         // Once we modify any of the above a single time, then they are finalized.
         return modifyingBinding;
       case MULTIBINDING:
@@ -445,6 +448,7 @@ final class ComponentBindingExpressions {
             matchingComponentMethod);
       case OPTIONAL:
       case MULTIBINDING:
+      case INJECTION:
         return wrapInMethod(
             resolvedBindings, request, createBindingExpression(resolvedBindings, request));
       default:
@@ -490,11 +494,14 @@ final class ComponentBindingExpressions {
           && binding.isSyntheticMultibinding()) {
         return ModifiableBindingType.MULTIBINDING;
       }
+
+      if (binding.kind().equals(BindingKind.INJECTION)) {
+        return ModifiableBindingType.INJECTION;
+      }
     } else if (!resolvableBinding(request)) {
       return ModifiableBindingType.MISSING;
     }
 
-    // TODO(b/72748365): Add support for remaining types.
     return ModifiableBindingType.NONE;
   }
 
@@ -537,6 +544,8 @@ final class ComponentBindingExpressions {
         return !generatedComponentModel
             .superclassContributionsMade(request.key())
             .containsAll(resolvedBindings.contributionBinding().dependencies());
+      case INJECTION:
+        return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
       default:
         throw new IllegalStateException(
             String.format(

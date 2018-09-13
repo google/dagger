@@ -2375,6 +2375,360 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedChild);
   }
 
+  @Test
+  public void provisionOverInjection_providedInAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ProvidedInAncestor",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class ProvidedInAncestor {",
+            "  @Inject",
+            "  ProvidedInAncestor(String string) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  ProvidedInAncestor injectedInLeaf();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public ProvidedInAncestor injectedInLeaf() {",
+            "    return new ProvidedInAncestor(getString());",
+            "  }",
+            "",
+            "  public abstract String getString();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  static ProvidedInAncestor provideProvidedInAncestor() {",
+            "    return new ProvidedInAncestor(\"static\");",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public ProvidedInAncestor injectedInLeaf() {",
+            "      return AncestorModule_ProvideProvidedInAncestorFactory",
+            "          .proxyProvideProvidedInAncestor();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void provisionOverInjection_providedInGrandAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ProvidedInGrandAncestor",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class ProvidedInGrandAncestor {",
+            "  @Inject",
+            "  ProvidedInGrandAncestor(String string) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  ProvidedInGrandAncestor injectedInLeaf();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public ProvidedInGrandAncestor injectedInLeaf() {",
+            "    return new ProvidedInGrandAncestor(getString());",
+            "  }",
+            "",
+            "  public abstract String getString();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.GrandAncestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandAncestorModule.class)",
+            "interface GrandAncestor {",
+            "  Ancestor ancestor();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.GrandAncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class GrandAncestorModule {",
+            "  @Provides",
+            "  static ProvidedInGrandAncestor provideProvidedInGrandAncestor() {",
+            "    return new ProvidedInGrandAncestor(\"static\");",
+            "  }",
+            "}"));
+    JavaFileObject generatedGrandAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandAncestor",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandAncestor implements GrandAncestor {",
+            "  protected DaggerGrandAncestor() {}",
+            "",
+            "  public abstract class AncestorImpl extends DaggerAncestor {",
+            "    protected AncestorImpl() { super(); }",
+            "",
+            "    public abstract class LeafImpl extends DaggerAncestor.LeafImpl {",
+            "      protected LeafImpl() { super(); }",
+            "",
+            "      @Override",
+            "      public ProvidedInGrandAncestor injectedInLeaf() {",
+            "        return GrandAncestorModule_ProvideProvidedInGrandAncestorFactory",
+            "            .proxyProvideProvidedInGrandAncestor();",
+            "      }",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandAncestor")
+        .hasSourceEquivalentTo(generatedGrandAncestor);
+  }
+
+  @Test
+  public void provisionOverInjection_indirectDependency() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.ProvidedInAncestor",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class ProvidedInAncestor {",
+            "  @Inject",
+            "  ProvidedInAncestor(String string) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.InjectedInLeaf",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectedInLeaf {",
+            "  @Inject",
+            "  InjectedInLeaf(ProvidedInAncestor providedInAncestor) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  InjectedInLeaf injectedInLeaf();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public InjectedInLeaf injectedInLeaf() {",
+            "    return new InjectedInLeaf(getProvidedInAncestor());",
+            "  }",
+            "",
+            "  public abstract String getString();",
+            "",
+            "  public ProvidedInAncestor getProvidedInAncestor() {",
+            "    return new ProvidedInAncestor(getString());",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  static ProvidedInAncestor provideProvidedInAncestor() {",
+            "    return new ProvidedInAncestor(\"static\");",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    @Override",
+            "    public ProvidedInAncestor getProvidedInAncestor() {",
+            "      return AncestorModule_ProvideProvidedInAncestorFactory",
+            "          .proxyProvideProvidedInAncestor();",
+            "    }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {
@@ -2385,5 +2739,11 @@ public final class AheadOfTimeSubcomponentsTest {
               "",
               String.format("class %s { }", className)));
     }
+  }
+
+  private static Compilation compile(Iterable<JavaFileObject> files) {
+    return daggerCompiler()
+        .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+        .compile(files);
   }
 }

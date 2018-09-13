@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -363,7 +362,7 @@ final class GeneratedComponentModel {
   }
 
   /** Claims a new method name for the component. Does nothing if method name already exists. */
-  void claimMethodName(Name name) {
+  void claimMethodName(CharSequence name) {
     componentMethodNames.claim(name);
   }
 

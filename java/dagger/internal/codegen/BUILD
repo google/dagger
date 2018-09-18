@@ -128,6 +128,7 @@ java_library(
         "BindingType.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
         "BindsTypeChecker.java",
+        "ChildFactoryMethodEdgeImpl.java",
         "ComponentDescriptor.java",
         "ComponentNodeImpl.java",
         "ComponentRequirement.java",
@@ -135,6 +136,7 @@ java_library(
         "ConfigurationAnnotations.java",  # Uses ModuleDescriptors
         "ContributionBinding.java",
         "DelegateDeclaration.java",
+        "DependencyEdgeImpl.java",
         "DependencyRequestFactory.java",
         "DependencyVariableNamer.java",  # Used by SourceFiles
         "ErrorMessages.java",  # Consider splitting this up as it pulls in too much
@@ -154,6 +156,7 @@ java_library(
         "ProvisionBinding.java",
         "ResolvedBindings.java",
         "SourceFiles.java",  # Consider splitting this up?
+        "SubcomponentBuilderBindingEdgeImpl.java",
         "SubcomponentDeclaration.java",
     ],
     plugins = CODEGEN_PLUGINS,

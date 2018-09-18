@@ -16,7 +16,6 @@
 
 package dagger.model;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
@@ -240,56 +239,21 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * <p>For dependencies on missing bindings, the target node is a {@link MissingBindingNode}.
    * Otherwise the target node is a {@link BindingNode}.
    */
-  public static final class DependencyEdge implements Edge {
-
-    private final DependencyRequest dependencyRequest;
-    private final boolean entryPoint;
-
-    DependencyEdge(DependencyRequest dependencyRequest, boolean entryPoint) {
-      this.dependencyRequest = dependencyRequest;
-      this.entryPoint = entryPoint;
-    }
-
+  public interface DependencyEdge extends Edge {
     /** The dependency request. */
-    public DependencyRequest dependencyRequest() {
-      return dependencyRequest;
-    }
+    DependencyRequest dependencyRequest();
 
     /** Returns {@code true} if this edge represents an entry point. */
-    public boolean isEntryPoint() {
-      return entryPoint;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this)
-          .add("dependencyRequest", dependencyRequest)
-          .add("entryPoint", entryPoint)
-          .toString();
-    }
+    boolean isEntryPoint();
   }
 
   /**
    * An edge that represents a subcomponent factory method linking a parent component to a child
    * subcomponent.
    */
-  public static final class ChildFactoryMethodEdge implements Edge {
-
-    private final ExecutableElement factoryMethod;
-
-    ChildFactoryMethodEdge(ExecutableElement factoryMethod) {
-      this.factoryMethod = factoryMethod;
-    }
-
+  public interface ChildFactoryMethodEdge extends Edge {
     /** The subcomponent factory method element. */
-    public ExecutableElement factoryMethod() {
-      return factoryMethod;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this).add("factoryMethod", factoryMethod).toString();
-    }
+    ExecutableElement factoryMethod();
   }
 
   /**
@@ -299,27 +263,13 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * the {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
    * ComponentNode} for the child subcomponent.
    */
-  public static final class SubcomponentBuilderBindingEdge implements Edge {
-
-    private final ImmutableSet<TypeElement> declaringModules;
-
-    SubcomponentBuilderBindingEdge(Iterable<TypeElement> declaringModules) {
-      this.declaringModules = ImmutableSet.copyOf(declaringModules);
-    }
-
+  public interface SubcomponentBuilderBindingEdge extends Edge {
     /**
      * The modules that {@linkplain Module#subcomponents() declare the subcomponent} that generated
      * this edge. Empty if the parent component has a subcomponent builder method and there are no
      * declaring modules.
      */
-    public ImmutableSet<TypeElement> declaringModules() {
-      return declaringModules;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this).add("declaringModules", declaringModules).toString();
-    }
+    ImmutableSet<TypeElement> declaringModules();
   }
 
   /** A node in the binding graph. Either a {@link BindingNode} or a {@link ComponentNode}. */

@@ -21,9 +21,6 @@ import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.model.BindingGraphProxies.childFactoryMethodEdge;
-import static dagger.model.BindingGraphProxies.dependencyEdge;
-import static dagger.model.BindingGraphProxies.subcomponentBuilderBindingEdge;
 import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 
 import com.google.common.collect.ImmutableSet;
@@ -119,7 +116,8 @@ final class BindingGraphConverter {
             network.addEdge(
                 node,
                 subcomponentNode(node.key().type(), graph),
-                subcomponentBuilderBindingEdge(subcomponentDeclaringModules(resolvedBindings)));
+                new SubcomponentBuilderBindingEdgeImpl(
+                    subcomponentDeclaringModules(resolvedBindings)));
           }
         }
       }
@@ -133,7 +131,8 @@ final class BindingGraphConverter {
     @Override
     protected void visitSubcomponentFactoryMethod(
         BindingGraph graph, BindingGraph parent, ExecutableElement factoryMethod) {
-      network.addEdge(parentComponent, currentComponent, childFactoryMethodEdge(factoryMethod));
+      network.addEdge(
+          parentComponent, currentComponent, new ChildFactoryMethodEdgeImpl(factoryMethod));
       super.visitSubcomponentFactoryMethod(graph, parent, factoryMethod);
     }
 
@@ -157,7 +156,9 @@ final class BindingGraphConverter {
       network.addNode(dependency);
       if (!hasDependencyEdge(source, dependency, dependencyRequest)) {
         network.addEdge(
-            source, dependency, dependencyEdge(dependencyRequest, source instanceof ComponentNode));
+            source,
+            dependency,
+            new DependencyEdgeImpl(dependencyRequest, source instanceof ComponentNode));
       }
     }
 

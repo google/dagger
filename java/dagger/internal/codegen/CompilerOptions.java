@@ -111,7 +111,7 @@ abstract class CompilerOptions {
             staticMemberValidationType(processingEnv).diagnosticKind().get())
         .ignorePrivateAndStaticInjectionForComponent(
             ignorePrivateAndStaticInjectionForComponentFeatureStatus(processingEnv)
-                .equals(FeatureStatus.DISABLED))
+                .equals(FeatureStatus.ENABLED))
         .scopeCycleValidationType(scopeValidationType(processingEnv))
         .warnIfInjectionFactoryNotGeneratedUpstream(
             warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(processingEnv)

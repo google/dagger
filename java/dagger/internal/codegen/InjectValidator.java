@@ -82,17 +82,18 @@ final class InjectValidator {
 
   /**
    * Returns a new validator that performs the same validation as this one, but is strict about
-   * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support.
+   * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support (unless {@code
+   * -Adagger.ignorePrivateAndStaticInjectionForComponent=enabled} was set in the javac options).
    */
   InjectValidator whenGeneratingCode() {
     return compilerOptions.ignorePrivateAndStaticInjectionForComponent()
-        ? new InjectValidator(
+        ? this
+        : new InjectValidator(
             types,
             elements,
             compilerOptions,
             dependencyRequestValidator,
-            Optional.of(Diagnostic.Kind.ERROR))
-        : this;
+            Optional.of(Diagnostic.Kind.ERROR));
   }
 
   ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
@@ -124,8 +125,7 @@ final class InjectValidator {
     if (throwsCheckedExceptions(constructorElement)) {
       builder.addItem(
           "Dagger does not support checked exceptions on @Inject constructors",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           constructorElement);
     }
 
@@ -178,16 +178,14 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           "Dagger does not support injection into private fields",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           fieldElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           "Dagger does not support injection into static fields",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.staticMemberValidationKind()),
+          staticMemberDiagnosticKind(),
           fieldElement);
     }
 
@@ -206,16 +204,14 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           "Dagger does not support injection into private methods",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           methodElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           "Dagger does not support injection into static methods",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.staticMemberValidationKind()),
+          staticMemberDiagnosticKind(),
           methodElement);
     }
 
@@ -317,9 +313,18 @@ final class InjectValidator {
         DaggerElements.closestEnclosingTypeElement(element))) {
       builder.addItem(
           "Dagger does not support injection into private classes",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           element);
     }
+  }
+
+  private Diagnostic.Kind privateMemberDiagnosticKind() {
+    return privateAndStaticInjectionDiagnosticKind.orElse(
+        compilerOptions.privateMemberValidationKind());
+  }
+
+  private Diagnostic.Kind staticMemberDiagnosticKind() {
+    return privateAndStaticInjectionDiagnosticKind.orElse(
+        compilerOptions.staticMemberValidationKind());
   }
 }

@@ -77,7 +77,8 @@ final class KytheBindingGraphFactory {
         .experimentalAndroidMode2(false)
         .aheadOfTimeSubcomponents(false)
         .floatingBindsMethods(false)
-        .build();
+        .build()
+        .validate();
   }
 
   private static ComponentDescriptor.Factory createComponentDescriptorFactory(

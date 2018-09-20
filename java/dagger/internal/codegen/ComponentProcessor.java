@@ -54,6 +54,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject MembersInjectorGenerator membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins spiPlugins;
+  @Inject CompilerOptions compilerOptions;
   @Inject @Validation BindingGraphPlugins validationPlugins;
 
   public ComponentProcessor() {
@@ -93,7 +94,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
     options.addAll(spiPlugins.allSupportedOptions());
     options.addAll(validationPlugins.allSupportedOptions());
-    if (processingEnv.getOptions().containsKey(CompilerOptions.GRADLE_INCREMENTAL)) {
+    if (compilerOptions.useGradleIncrementalProcessing()) {
       options.add("org.gradle.annotation.processing.isolating");
     }
     return options.build();

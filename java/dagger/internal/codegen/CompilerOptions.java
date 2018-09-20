@@ -16,18 +16,32 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Sets.immutableEnumSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.FeatureStatus.DISABLED;
+import static dagger.internal.codegen.FeatureStatus.ENABLED;
+import static dagger.internal.codegen.ValidationType.ERROR;
+import static dagger.internal.codegen.ValidationType.WARNING;
+import static java.util.EnumSet.allOf;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.producers.Produces;
-import java.util.EnumSet;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
 import javax.tools.Diagnostic;
-import javax.tools.Diagnostic.Kind;
 
 /** A collection of options that dictate how the compiler will run. */
 @AutoValue
@@ -64,13 +78,20 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind nullableValidationKind();
 
   boolean doCheckForNulls() {
-    return nullableValidationKind().equals(Kind.ERROR);
+    return nullableValidationKind().equals(Diagnostic.Kind.ERROR);
   }
 
   abstract Diagnostic.Kind privateMemberValidationKind();
 
   abstract Diagnostic.Kind staticMemberValidationKind();
 
+  /**
+   * If {@code true}, Dagger will generate factories and components even if some members-injected
+   * types have {@code private} or {@code static} {@code @Inject}-annotated members.
+   *
+   * <p>This should only ever be enabled by the TCK tests. Disabling this validation could lead to
+   * generating code that does not compile.
+   */
   abstract boolean ignorePrivateAndStaticInjectionForComponent();
 
   abstract ValidationType scopeCycleValidationType();
@@ -84,46 +105,31 @@ abstract class CompilerOptions {
   /** See b/79859714 */
   abstract boolean floatingBindsMethods();
 
+  abstract boolean useGradleIncrementalProcessing();
+
   static Builder builder() {
-    return new AutoValue_CompilerOptions.Builder().headerCompilation(false);
+    return new AutoValue_CompilerOptions.Builder()
+        .headerCompilation(false)
+        .useGradleIncrementalProcessing(false);
   }
 
-  static CompilerOptions create(ProcessingEnvironment processingEnv, DaggerElements elements) {
-    checkState(
-        !(fastInitEnabled(processingEnv)
-            && experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED)),
-        "fastInit/experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
+  static CompilerOptions create(ProcessingEnvironment processingEnv) {
+    Builder builder = new AutoValue_CompilerOptions.Builder();
+    for (Option option : concat(allOf(Feature.class), allOf(Validation.class))) {
+      option.set(builder, processingEnv);
+    }
+    return builder.build().validate();
+  }
 
-    return builder()
-        .usesProducers(elements.getTypeElement(Produces.class) != null)
-        .headerCompilation(processingEnv.getOptions().containsKey(HEADER_COMPILATION))
-        .fastInit(fastInitEnabled(processingEnv))
-        .experimentalAndroidMode2(
-            experimentalAndroidMode2FeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .formatGeneratedSource(
-            formatGeneratedSourceFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .writeProducerNameInToken(
-            writeProducerNameInTokenFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .nullableValidationKind(nullableValidationType(processingEnv).diagnosticKind().get())
-        .privateMemberValidationKind(
-            privateMemberValidationType(processingEnv).diagnosticKind().get())
-        .staticMemberValidationKind(
-            staticMemberValidationType(processingEnv).diagnosticKind().get())
-        .ignorePrivateAndStaticInjectionForComponent(
-            ignorePrivateAndStaticInjectionForComponentFeatureStatus(processingEnv)
-                .equals(FeatureStatus.ENABLED))
-        .scopeCycleValidationType(scopeValidationType(processingEnv))
-        .warnIfInjectionFactoryNotGeneratedUpstream(
-            warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(processingEnv)
-                .equals(FeatureStatus.ENABLED))
-        .aheadOfTimeSubcomponents(
-            aheadOfTimeSubcomponentsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .floatingBindsMethods(
-            floatingBindsMethodsFeatureStatus(processingEnv).equals(FeatureStatus.ENABLED))
-        .build();
+  CompilerOptions validate() {
+    checkState(
+        !(fastInit() && experimentalAndroidMode2()),
+        "fastInit/experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
+    return this;
   }
 
   @AutoValue.Builder
+  @CanIgnoreReturnValue
   interface Builder {
     Builder usesProducers(boolean usesProduces);
 
@@ -155,175 +161,187 @@ abstract class CompilerOptions {
 
     Builder floatingBindsMethods(boolean enabled);
 
+    Builder useGradleIncrementalProcessing(boolean enabled);
+
+    @CheckReturnValue
     CompilerOptions build();
   }
 
-  private static final String HEADER_COMPILATION = "experimental_turbine_hjar";
+  /** An option that can be set into {@link CompilerOptions}. */
+  private interface Option {
 
-  static final String FAST_INIT = "dagger.fastInit";
+    /** Sets the appropriate property on a {@link CompilerOptions,Builder}. */
+    void set(Builder builder, ProcessingEnvironment processingEnvironment);
 
-  // TODO(user): Remove once all usages are migrated to FAST_INIT.
-  static final String EXPERIMENTAL_ANDROID_MODE = "dagger.experimentalAndroidMode";
+    /**
+     * {@code true} if {@link #toString()} represents a {@linkplain Processor#getSupportedOptions()
+     * supported command line option}.
+     */
+    default boolean useCommandLineOption() {
+      return true;
+    }
+  }
 
-  static final String EXPERIMENTAL_ANDROID_MODE2 = "dagger.experimentalAndroidMode2";
+  /** A feature that can be enabled or disabled. */
+  private enum Feature implements Option {
+    HEADER_COMPILATION(Builder::headerCompilation) {
+      @Override
+      boolean isEnabled(ProcessingEnvironment processingEnvironment) {
+        return processingEnvironment.getOptions().containsKey(toString());
+      }
 
-  static final String FORMAT_GENERATED_SOURCE = "dagger.formatGeneratedSource";
+      @Override
+      public boolean useCommandLineOption() {
+        return false;
+      }
 
-  static final String WRITE_PRODUCER_NAME_IN_TOKEN_KEY = "dagger.writeProducerNameInToken";
+      @Override
+      public String toString() {
+        return "experimental_turbine_hjar";
+      }
+    },
 
-  static final String DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY =
-      "dagger.disableInterComponentScopeValidation";
+    FAST_INIT(Builder::fastInit) {
+      @Override
+      boolean isEnabled(ProcessingEnvironment processingEnvironment) {
+        return super.isEnabled(processingEnvironment)
+            || EXPERIMENTAL_ANDROID_MODE.isEnabled(processingEnvironment);
+      }
+    },
 
-  static final String NULLABLE_VALIDATION_KEY = "dagger.nullableValidation";
+    // TODO(user): Remove once all usages are migrated to FAST_INIT.
+    EXPERIMENTAL_ANDROID_MODE((builder, enabled) -> {}),
 
-  static final String PRIVATE_MEMBER_VALIDATION_TYPE_KEY = "dagger.privateMemberValidation";
+    EXPERIMENTAL_ANDROID_MODE2(Builder::experimentalAndroidMode2),
 
-  static final String STATIC_MEMBER_VALIDATION_TYPE_KEY = "dagger.staticMemberValidation";
+    FORMAT_GENERATED_SOURCE(Builder::formatGeneratedSource, ENABLED),
 
-  static final String WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY =
-      "dagger.warnIfInjectionFactoryNotGeneratedUpstream";
+    WRITE_PRODUCER_NAME_IN_TOKEN(Builder::writeProducerNameInToken),
 
-  /**
-   * If true, Dagger will generate factories and components even if some members-injected types have
-   * private or static {@code @Inject}-annotated members.
-   *
-   * <p>This defaults to false, and should only ever be enabled by the TCK tests. Disabling this
-   * validation could lead to generating code that does not compile.
-   */
-  static final String IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT =
-      "dagger.ignorePrivateAndStaticInjectionForComponent";
+    WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM(
+        Builder::warnIfInjectionFactoryNotGeneratedUpstream),
 
-  static final String AHEAD_OF_TIME_COMPONENTS_KEY = "dagger.experimentalAheadOfTimeSubcomponents";
+    IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT(
+        Builder::ignorePrivateAndStaticInjectionForComponent),
 
-  static final String FLOATING_BINDS_METHODS_KEY = "dagger.floatingBindsMethods";
+    EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS(Builder::aheadOfTimeSubcomponents),
 
-  static final String GRADLE_INCREMENTAL = "dagger.gradle.incremental";
+    FLOATING_BINDS_METHODS(Builder::floatingBindsMethods),
+
+    USE_GRADLE_INCREMENTAL_PROCESSING(Builder::useGradleIncrementalProcessing) {
+      @Override
+      boolean isEnabled(ProcessingEnvironment processingEnvironment) {
+        return processingEnvironment.getOptions().containsKey(toString());
+      }
+
+      @Override
+      public String toString() {
+        return "dagger.gradle.incremental";
+      }
+    },
+
+    USES_PRODUCERS(Builder::usesProducers) {
+      @Override
+      boolean isEnabled(ProcessingEnvironment processingEnvironment) {
+        return processingEnvironment
+                .getElementUtils()
+                .getTypeElement(Produces.class.getCanonicalName())
+            != null;
+      }
+
+      @Override
+      public boolean useCommandLineOption() {
+        return false;
+      }
+    },
+    ;
+
+    final FeatureStatus defaultValue;
+    final BiConsumer<Builder, Boolean> setter;
+
+    Feature(BiConsumer<Builder, Boolean> setter) {
+      this(setter, DISABLED);
+    }
+
+    Feature(BiConsumer<Builder, Boolean> setter, FeatureStatus defaultValue) {
+      this.setter = setter;
+      this.defaultValue = defaultValue;
+    }
+
+    @Override
+    public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
+      setter.accept(builder, isEnabled(processingEnvironment));
+    }
+
+    boolean isEnabled(ProcessingEnvironment processingEnvironment) {
+      return CompilerOptions.valueOf(
+              processingEnvironment, toString(), defaultValue, allOf(FeatureStatus.class))
+          .equals(ENABLED);
+    }
+
+    @Override
+    public String toString() {
+      return optionName(name());
+    }
+  }
+
+  /** The diagnostic kind or validation type for a kind of validation. */
+  private enum Validation implements Option {
+    DISABLE_INTER_COMPONENT_SCOPE_VALIDATION(Builder::scopeCycleValidationType),
+
+    NULLABLE_VALIDATION(kindSetter(Builder::nullableValidationKind), ERROR, WARNING) {
+    },
+
+    PRIVATE_MEMBER_VALIDATION(kindSetter(Builder::privateMemberValidationKind), ERROR, WARNING),
+
+    STATIC_MEMBER_VALIDATION(kindSetter(Builder::staticMemberValidationKind), ERROR, WARNING),
+    ;
+
+    static BiConsumer<Builder, ValidationType> kindSetter(
+        BiConsumer<Builder, Diagnostic.Kind> setter) {
+      return (builder, validationType) ->
+          setter.accept(builder, validationType.diagnosticKind().get());
+    }
+
+    final ImmutableSet<ValidationType> validTypes;
+    final BiConsumer<Builder, ValidationType> setter;
+
+    Validation(BiConsumer<Builder, ValidationType> setter) {
+      this.setter = setter;
+      this.validTypes = immutableEnumSet(allOf(ValidationType.class));
+    }
+
+    Validation(
+        BiConsumer<Builder, ValidationType> setter,
+        ValidationType validType,
+        ValidationType... moreValidTypes) {
+      this.setter = setter;
+      this.validTypes = immutableEnumSet(validType, moreValidTypes);
+    }
+
+    @Override
+    public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
+      setter.accept(builder, validationType(processingEnvironment));
+    }
+
+    ValidationType validationType(ProcessingEnvironment processingEnvironment) {
+      return CompilerOptions.valueOf(processingEnvironment, toString(), ERROR, validTypes);
+    }
+
+    @Override
+    public String toString() {
+      return optionName(name());
+    }
+  }
 
   static final ImmutableSet<String> SUPPORTED_OPTIONS =
-      ImmutableSet.of(
-          FAST_INIT,
-          EXPERIMENTAL_ANDROID_MODE,
-          HEADER_COMPILATION,
-          FORMAT_GENERATED_SOURCE,
-          WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
-          DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
-          NULLABLE_VALIDATION_KEY,
-          PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
-          STATIC_MEMBER_VALIDATION_TYPE_KEY,
-          WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
-          IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
-          AHEAD_OF_TIME_COMPONENTS_KEY,
-          FLOATING_BINDS_METHODS_KEY,
-          GRADLE_INCREMENTAL);
+      Stream.<Option>concat(Arrays.stream(Feature.values()), Arrays.stream(Validation.values()))
+          .filter(Option::useCommandLineOption)
+          .map(Object::toString)
+          .collect(toImmutableSet());
 
-  private static boolean fastInitEnabled(ProcessingEnvironment processingEnv) {
-    return valueOf(
-            processingEnv,
-            FAST_INIT,
-            FeatureStatus.DISABLED,
-            EnumSet.allOf(FeatureStatus.class))
-        .equals(FeatureStatus.ENABLED)
-      || valueOf(
-            processingEnv,
-            EXPERIMENTAL_ANDROID_MODE,
-            FeatureStatus.DISABLED,
-            EnumSet.allOf(FeatureStatus.class))
-        .equals(FeatureStatus.ENABLED);
-  }
-
-  private static FeatureStatus experimentalAndroidMode2FeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        EXPERIMENTAL_ANDROID_MODE2,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus formatGeneratedSourceFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        FORMAT_GENERATED_SOURCE,
-        FeatureStatus.ENABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus writeProducerNameInTokenFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        WRITE_PRODUCER_NAME_IN_TOKEN_KEY,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static ValidationType scopeValidationType(ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        DISABLE_INTER_COMPONENT_SCOPE_VALIDATION_KEY,
-        ValidationType.ERROR,
-        EnumSet.allOf(ValidationType.class));
-  }
-
-  private static ValidationType nullableValidationType(ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        NULLABLE_VALIDATION_KEY,
-        ValidationType.ERROR,
-        EnumSet.of(ValidationType.ERROR, ValidationType.WARNING));
-  }
-
-  private static ValidationType privateMemberValidationType(ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        PRIVATE_MEMBER_VALIDATION_TYPE_KEY,
-        ValidationType.ERROR,
-        EnumSet.of(ValidationType.ERROR, ValidationType.WARNING));
-  }
-
-  private static ValidationType staticMemberValidationType(ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        STATIC_MEMBER_VALIDATION_TYPE_KEY,
-        ValidationType.ERROR,
-        EnumSet.of(ValidationType.ERROR, ValidationType.WARNING));
-  }
-
-  private static FeatureStatus ignorePrivateAndStaticInjectionForComponentFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus warnIfInjectionFactoryNotGeneratedUpstreamFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM_KEY,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus aheadOfTimeSubcomponentsFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        AHEAD_OF_TIME_COMPONENTS_KEY,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
-  }
-
-  private static FeatureStatus floatingBindsMethodsFeatureStatus(
-      ProcessingEnvironment processingEnv) {
-    return valueOf(
-        processingEnv,
-        FLOATING_BINDS_METHODS_KEY,
-        FeatureStatus.DISABLED,
-        EnumSet.allOf(FeatureStatus.class));
+  private static String optionName(String enumName) {
+    return "dagger." + UPPER_UNDERSCORE.to(LOWER_CAMEL, enumName);
   }
 
   private static <T extends Enum<T>> T valueOf(
@@ -347,12 +365,10 @@ abstract class CompilerOptions {
               .getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
-                  "Processor option -A"
-                      + key
-                      + " may only have the values "
-                      + validValues
-                      + " (case insensitive), found: "
-                      + options.get(key));
+                  String.format(
+                      "Processor option -A%s may only have the values %s "
+                          + "(case insensitive), found: %s",
+                      key, validValues, options.get(key)));
         }
       }
     }

@@ -79,8 +79,8 @@ final class ProcessingEnvironmentModule {
 
   @Provides
   @Reusable // to avoid parsing options more than once
-  CompilerOptions compilerOptions(DaggerElements elements) {
-    return CompilerOptions.create(processingEnvironment, elements);
+  CompilerOptions compilerOptions() {
+    return CompilerOptions.create(processingEnvironment);
   }
 
   @Module

@@ -19,7 +19,6 @@ package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 load("//tools:maven.bzl", "pom_file", "POM_VERSION")
-load("//tools:simple_jar.bzl", "simple_jar")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
@@ -308,9 +307,20 @@ java_library(
     ],
 )
 
-simple_jar(
+genrule(
     name = "processor_manifest_files",
-    srcs = glob(["META-INF/**"]),
+    srcs = [
+        "META-INF/gradle/incremental.annotation.processors",
+    ],
+    outs = [
+        "processor_manifest_files.jar",
+    ],
+    cmd = """
+OUT="$$(pwd)/$@"
+mkdir -p $(@D)/META-INF/gradle
+cp $(<) $(@D)/META-INF/gradle
+cd $(@D)
+zip "$$OUT" -r * &> /dev/null"""
 )
 
 # The processor's "main", if you will

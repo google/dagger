@@ -36,13 +36,13 @@ CODEGEN_SRCS = glob(
 CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
 
 CODEGEN_SHARED_DEPS = [
+    "@bazel_tools//third_party/java/jdk/langtools:javac",
     "@google_bazel_common//third_party/java/auto:service",
     "@google_bazel_common//third_party/java/auto:value",
     "@google_bazel_common//third_party/java/auto:common",
     "@google_bazel_common//third_party/java/error_prone:annotations",
     "@google_bazel_common//third_party/java/google_java_format",
     "@google_bazel_common//third_party/java/javapoet",
-    "@local_jdk//:lib/tools.jar",
     "@google_bazel_common//third_party/java/jsr250_annotations",
     "@google_bazel_common//third_party/java/jsr330_inject",
     "//java/dagger:core",

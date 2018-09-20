@@ -943,8 +943,8 @@ final class ComponentBindingExpressions {
   /**
    * Returns a binding expression that uses a given one as the body of a method that users call. If
    * a component provision method matches it, it will be the method implemented. If it does not
-   * match a component provision method and the binding is modifiable the a new public modifiable
-   * binding method will be written. If the binding doesn't match a component method nor is it
+   * match a component provision method and the binding is modifiable, then a new public modifiable
+   * binding method will be written. If the binding doesn't match a component method and is not
    * modifiable, then a new private method will be written.
    */
   private BindingExpression wrapInMethod(

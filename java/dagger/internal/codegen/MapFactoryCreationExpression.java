@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 
@@ -83,7 +84,8 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
           graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
       CodeBlock value =
           componentBindingExpressions
-              .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
+              .getDependencyExpression(
+                  bindingRequest(frameworkDependency), generatedComponentModel.name())
               .codeBlock();
       builder.add(
           ".put($L, $L)",

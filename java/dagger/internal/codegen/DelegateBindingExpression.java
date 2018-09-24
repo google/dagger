@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.RequestKinds.requestType;
 import static dagger.model.BindingKind.DELEGATE;
 
@@ -71,7 +72,8 @@ final class DelegateBindingExpression extends BindingExpression {
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression delegateExpression =
         componentBindingExpressions.getDependencyExpression(
-            getOnlyElement(binding.dependencies()).key(), requestKind, requestingClass);
+            bindingRequest(getOnlyElement(binding.dependencies()).key(), requestKind),
+            requestingClass);
 
     TypeMirror contributedType = binding.contributedType();
     switch (requestKind) {

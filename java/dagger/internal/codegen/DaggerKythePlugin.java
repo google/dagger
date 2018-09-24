@@ -19,6 +19,8 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
+
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
@@ -98,7 +100,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (!dependency.requestElement().isPresent()) {
       return;
     }
-    BindingRequest request = BindingRequest.forDependencyRequest(targetKey, dependency.kind());
+    BindingRequest request = bindingRequest(targetKey, dependency.kind());
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     for (Binding binding : resolvedBindings.bindings()) {
       if (binding.bindingElement().isPresent()) {

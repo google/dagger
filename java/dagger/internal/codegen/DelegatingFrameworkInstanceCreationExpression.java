@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -44,7 +45,8 @@ final class DelegatingFrameworkInstanceCreationExpression
     FrameworkDependency frameworkDependency = getOnlyElement(binding.frameworkDependencies());
     return CodeBlocks.cast(
         componentBindingExpressions
-            .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
+            .getDependencyExpression(
+                bindingRequest(frameworkDependency), generatedComponentModel.name())
             .codeBlock(),
         frameworkDependency.frameworkClass());
   }

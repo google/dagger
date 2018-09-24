@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -51,7 +52,8 @@ final class OptionalFactoryInstanceCreationExpression
             binding,
             componentBindingExpressions
                 .getDependencyExpression(
-                    getOnlyElement(binding.frameworkDependencies()), generatedComponentModel.name())
+                    bindingRequest(getOnlyElement(binding.frameworkDependencies())),
+                    generatedComponentModel.name())
                 .codeBlock());
   }
 

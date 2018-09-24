@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -75,7 +76,7 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
     if (generatedComponentModel.supermodel().isPresent()) {
       Optional<ModifiableBindingMethod> method =
           generatedComponentModel.getModifiableBindingMethod(
-              BindingRequest.forDependencyRequest(binding.key(), RequestKind.INSTANCE));
+              bindingRequest(binding.key(), RequestKind.INSTANCE));
       checkState(
           method.isPresent(),
           "Generating a multibinding super method call when no method has been registered for the "

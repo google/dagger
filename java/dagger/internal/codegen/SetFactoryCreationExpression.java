@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 
 import com.squareup.javapoet.CodeBlock;
@@ -78,7 +79,8 @@ final class SetFactoryCreationExpression implements FrameworkInstanceCreationExp
 
       CodeBlock argument =
           componentBindingExpressions
-              .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
+              .getDependencyExpression(
+                  bindingRequest(frameworkDependency), generatedComponentModel.name())
               .codeBlock();
       builderMethodCalls.add(
           ".$L($L)",

@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
@@ -176,7 +177,7 @@ final class BindingGraphConverter {
       return componentTreePath()
           .pathFromRootToAncestor(source.componentPath().currentComponent())
           .currentGraph()
-          .resolvedBindings(BindingRequest.forDependencyRequest(dependencyRequest));
+          .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
     /** Adds a binding node and edges for all its dependencies. */

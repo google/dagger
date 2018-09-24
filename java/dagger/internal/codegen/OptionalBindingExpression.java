@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -63,7 +64,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
 
     CodeBlock dependencyExpression =
         componentBindingExpressions
-            .getDependencyExpression(dependency, requestingClass)
+            .getDependencyExpression(bindingRequest(dependency), requestingClass)
             .codeBlock();
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else

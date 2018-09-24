@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -133,7 +134,7 @@ final class SetBindingExpression extends MultibindingExpression {
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
     return componentBindingExpressions
-        .getDependencyExpression(dependency, requestingClass)
+        .getDependencyExpression(bindingRequest(dependency), requestingClass)
         .codeBlock();
   }
 

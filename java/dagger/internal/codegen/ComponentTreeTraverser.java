@@ -25,6 +25,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Multimaps.asMap;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
@@ -393,7 +394,7 @@ public class ComponentTreeTraverser {
     private void nextDependencyRequest(
         DependencyRequest dependencyRequest, BindingGraph bindingGraph) {
       ResolvedBindings resolvedBindings =
-          bindingGraph.resolvedBindings(BindingRequest.forDependencyRequest(dependencyRequest));
+          bindingGraph.resolvedBindings(bindingRequest(dependencyRequest));
       dependencyRequestPath.addLast(dependencyRequest);
       resolvedBindingsPath.addLast(resolvedBindings);
       // Don't add the key of a members injection request, as it doesn't participate in cycles

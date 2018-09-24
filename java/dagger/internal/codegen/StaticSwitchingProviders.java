@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.squareup.javapoet.ClassName.OBJECT;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.TypeName.INT;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
@@ -141,7 +142,9 @@ final class StaticSwitchingProviders extends SwitchingProviders {
 
       for (FrameworkDependency dependency : binding.frameworkDependencies()) {
         TypeMirror type =
-            componentBindingExpressions.getDependencyExpression(dependency, owningComponent).type();
+            componentBindingExpressions
+                .getDependencyExpression(bindingRequest(dependency), owningComponent)
+                .type();
         arguments.add(argument(type, i++));
       }
       return makeParametersCodeBlock(arguments.build());

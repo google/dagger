@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import dagger.model.Key;
@@ -48,7 +49,8 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   Expression getDependencyExpression(ClassName requestingClass) {
     return frameworkType.to(
         requestKind,
-        componentBindingExpressions.getDependencyExpression(key, frameworkType, requestingClass),
+        componentBindingExpressions.getDependencyExpression(
+            bindingRequest(key, frameworkType), requestingClass),
         types);
   }
 }

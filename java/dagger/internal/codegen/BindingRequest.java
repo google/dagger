@@ -34,15 +34,15 @@ import java.util.Optional;
 abstract class BindingRequest {
 
   /** Creates a {@link BindingRequest} for the given {@link DependencyRequest}. */
-  static BindingRequest forDependencyRequest(DependencyRequest dependencyRequest) {
-    return forDependencyRequest(dependencyRequest.key(), dependencyRequest.kind());
+  static BindingRequest bindingRequest(DependencyRequest dependencyRequest) {
+    return bindingRequest(dependencyRequest.key(), dependencyRequest.kind());
   }
 
   /**
    * Creates a {@link BindingRequest} for a normal dependency request for the given {@link Key} and
    * {@link RequestKind}.
    */
-  static BindingRequest forDependencyRequest(Key key, RequestKind requestKind) {
+  static BindingRequest bindingRequest(Key key, RequestKind requestKind) {
     // When there's a request that has a 1:1 mapping to a FrameworkType, the request should be
     // associated with that FrameworkType as well, because we want to ensure that if a request
     // comes in for that as a dependency first and as a framework instance later, they resolve to
@@ -59,14 +59,14 @@ abstract class BindingRequest {
    * Creates a {@link BindingRequest} for a request for a framework instance for the given {@link
    * Key} with the given {@link FrameworkType}.
    */
-  static BindingRequest forFrameworkDependency(Key key, FrameworkType frameworkType) {
+  static BindingRequest bindingRequest(Key key, FrameworkType frameworkType) {
     return new AutoValue_BindingRequest(
         key, Optional.of(frameworkType.requestKind()), Optional.of(frameworkType));
   }
 
   /** Creates a {@link BindingRequest} for the given {@link FrameworkDependency}. */
-  static BindingRequest forFrameworkDependency(FrameworkDependency frameworkDependency) {
-    return forFrameworkDependency(frameworkDependency.key(), frameworkDependency.frameworkType());
+  static BindingRequest bindingRequest(FrameworkDependency frameworkDependency) {
+    return bindingRequest(frameworkDependency.key(), frameworkDependency.frameworkType());
   }
 
   /** Returns the {@link Key} for the requested binding. */

@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,7 +51,7 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
   private CodeBlock instanceExpression(ClassName requestingClass) {
     Expression expression =
         componentBindingExpressions.getDependencyExpression(
-            key, RequestKind.INSTANCE, requestingClass);
+            bindingRequest(key, RequestKind.INSTANCE), requestingClass);
     // Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
     // cast.
     //

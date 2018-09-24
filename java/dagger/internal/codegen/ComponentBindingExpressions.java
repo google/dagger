@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
@@ -43,7 +44,6 @@ import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreati
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
@@ -147,59 +147,13 @@ final class ComponentBindingExpressions {
   }
 
   /**
-   * Returns an expression that evaluates to the value of a dependency request for a binding owned
-   * by this component or an ancestor.
-   *
-   * @param requestingClass the class that will contain the expression
-   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
-   *     request
-   */
-  Expression getDependencyExpression(Key key, RequestKind requestKind, ClassName requestingClass) {
-    return getDependencyExpression(
-        BindingRequest.forDependencyRequest(key, requestKind), requestingClass);
-  }
-
-  /**
-   * Returns an expression that evaluates to the value of a dependency request for a binding owned
-   * by this component or an ancestor.
-   *
-   * @param requestingClass the class that will contain the expression
-   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
-   *     request
-   */
-  Expression getDependencyExpression(DependencyRequest request, ClassName requestingClass) {
-    return getDependencyExpression(BindingRequest.forDependencyRequest(request), requestingClass);
-  }
-
-  /**
-   * Returns an expression that evaluates to the value of a framework dependency for a binding owned
-   * in this component or an ancestor.
-   *
-   * @param requestingClass the class that will contain the expression
-   * @throws IllegalStateException if there is no binding expression that satisfies the dependency
-   *     request
-   */
-  Expression getDependencyExpression(
-      FrameworkDependency frameworkDependency, ClassName requestingClass) {
-    return getDependencyExpression(
-        BindingRequest.forFrameworkDependency(frameworkDependency), requestingClass);
-  }
-
-  /**
-   * Returns an expression that evaluates to the value of a framework request for a binding owned by
+   * Returns an expression that evaluates to the value of a binding request for a binding owned by
    * this component or an ancestor.
    *
    * @param requestingClass the class that will contain the expression
-   * @throws IllegalStateException if there is no binding expression that satisfies the framework
-   *     request
+   * @throws IllegalStateException if there is no binding expression that satisfies the request
    */
-  Expression getDependencyExpression(
-      Key key, FrameworkType frameworkType, ClassName requestingClass) {
-    return getDependencyExpression(
-        BindingRequest.forFrameworkDependency(key, frameworkType), requestingClass);
-  }
-
-  private Expression getDependencyExpression(BindingRequest request, ClassName requestingClass) {
+  Expression getDependencyExpression(BindingRequest request, ClassName requestingClass) {
     return getBindingExpression(request).getDependencyExpression(requestingClass);
   }
 
@@ -221,10 +175,11 @@ final class ComponentBindingExpressions {
               generatedComponentModel.name()));
     }
 
-    binding
-        .frameworkDependencies()
-        .stream()
-        .map(dependency -> getDependencyExpression(dependency, generatedComponentModel.name()))
+    binding.frameworkDependencies().stream()
+        .map(BindingRequest::bindingRequest)
+        .map(
+            request ->
+                getDependencyExpression(request, generatedComponentModel.name()))
         .map(Expression::codeBlock)
         .forEach(arguments::add);
 
@@ -241,12 +196,12 @@ final class ComponentBindingExpressions {
    *
    * @param requestingClass the class that will contain the expression
    */
-  // TODO(b/64024402) Merge with getDependencyExpression(DependencyRequest, ClassName) if possible.
   Expression getDependencyArgumentExpression(
       DependencyRequest dependencyRequest, ClassName requestingClass) {
 
     TypeMirror dependencyType = dependencyRequest.key().type();
-    Expression dependencyExpression = getDependencyExpression(dependencyRequest, requestingClass);
+    Expression dependencyExpression =
+        getDependencyExpression(bindingRequest(dependencyRequest), requestingClass);
 
     if (dependencyRequest.kind().equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
@@ -263,8 +218,7 @@ final class ComponentBindingExpressions {
    */
   Optional<MethodSpec> getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
-    BindingRequest request =
-        BindingRequest.forDependencyRequest(componentMethod.dependencyRequest().get());
+    BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
     MethodSpec method =
         MethodSpec.overriding(
                 componentMethod.methodElement(),
@@ -778,7 +732,7 @@ final class ComponentBindingExpressions {
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
           resolvedBindings,
-          BindingRequest.forDependencyRequest(resolvedBindings.key(), RequestKind.PROVIDER),
+          bindingRequest(resolvedBindings.key(), RequestKind.PROVIDER),
           innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
     }
     return frameworkInstanceBindingExpression(resolvedBindings);
@@ -824,7 +778,7 @@ final class ComponentBindingExpressions {
               || needsCaching(resolvedBindings)
           ? wrapInMethod(
               resolvedBindings,
-              BindingRequest.forDependencyRequest(resolvedBindings.key(), RequestKind.INSTANCE),
+              bindingRequest(resolvedBindings.key(), RequestKind.INSTANCE),
               directInstanceExpression)
           : directInstanceExpression;
     }
@@ -1014,7 +968,7 @@ final class ComponentBindingExpressions {
       ComponentMethodDescriptor componentMethod, BindingRequest request) {
     return componentMethod
         .dependencyRequest()
-        .map(BindingRequest::forDependencyRequest)
+        .map(BindingRequest::bindingRequest)
         .filter(request::equals)
         .isPresent();
   }

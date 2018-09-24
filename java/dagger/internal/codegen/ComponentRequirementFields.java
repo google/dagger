@@ -47,33 +47,33 @@ final class ComponentRequirementFields {
       new HashMap<>();
   private final BindingGraph graph;
   private final GeneratedComponentModel generatedComponentModel;
-  private final Optional<ComponentBuilder> componentBuilder;
+  private final Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel;
 
   private ComponentRequirementFields(
       Optional<ComponentRequirementFields> parent,
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      Optional<ComponentBuilder> componentBuilder) {
+      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
     this.parent = parent;
     this.graph = graph;
     this.generatedComponentModel = generatedComponentModel;
-    this.componentBuilder = componentBuilder;
+    this.generatedComponentBuilderModel = generatedComponentBuilderModel;
   }
 
   ComponentRequirementFields(
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      Optional<ComponentBuilder> componentBuilder) {
-    this(Optional.empty(), graph, generatedComponentModel, componentBuilder);
+      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
+    this(Optional.empty(), graph, generatedComponentModel, generatedComponentBuilderModel);
   }
 
   /** Returns a new object representing the fields available from a child component of this one. */
   ComponentRequirementFields forChildComponent(
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      Optional<ComponentBuilder> componentBuilder) {
+      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
     return new ComponentRequirementFields(
-        Optional.of(this), graph, generatedComponentModel, componentBuilder);
+        Optional.of(this), graph, generatedComponentModel, generatedComponentBuilderModel);
   }
 
   /**
@@ -110,8 +110,9 @@ final class ComponentRequirementFields {
 
   /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
   private ComponentRequirementField create(ComponentRequirement requirement) {
-    if (componentBuilder.isPresent()) {
-      FieldSpec builderField = componentBuilder.get().builderFields().get(requirement);
+    if (generatedComponentBuilderModel.isPresent()) {
+      FieldSpec builderField =
+          generatedComponentBuilderModel.get().builderFields().get(requirement);
       return new BuilderField(requirement, generatedComponentModel, builderField);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {

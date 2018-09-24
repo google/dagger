@@ -72,10 +72,12 @@ abstract class ComponentModelBuilder {
     }
     SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
     OptionalFactories optionalFactories = new OptionalFactories(generatedComponentModel);
-    Optional<ComponentBuilder> builder =
-        ComponentBuilder.create(generatedComponentModel, graph, subcomponentNames, elements, types);
+    Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel =
+        GeneratedComponentBuilderModel.create(
+            generatedComponentModel, graph, subcomponentNames, elements, types);
     ComponentRequirementFields componentRequirementFields =
-        new ComponentRequirementFields(graph, generatedComponentModel, builder);
+        new ComponentRequirementFields(
+            graph, generatedComponentModel, generatedComponentBuilderModel);
     ComponentBindingExpressions bindingExpressions =
         new ComponentBindingExpressions(
             graph,
@@ -102,7 +104,7 @@ abstract class ComponentModelBuilder {
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              builder,
+              generatedComponentBuilderModel,
               bindingGraphFactory,
               compilerOptions)
           .build();
@@ -117,7 +119,7 @@ abstract class ComponentModelBuilder {
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              builder,
+              generatedComponentBuilderModel,
               bindingGraphFactory,
               compilerOptions)
           .build();
@@ -133,7 +135,7 @@ abstract class ComponentModelBuilder {
   private final ComponentRequirementFields componentRequirementFields;
   private final GeneratedComponentModel generatedComponentModel;
   private final OptionalFactories optionalFactories;
-  private final Optional<ComponentBuilder> builder;
+  private final Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel;
   private final BindingGraphFactory bindingGraphFactory;
   private final CompilerOptions compilerOptions;
   private boolean done;
@@ -148,7 +150,7 @@ abstract class ComponentModelBuilder {
       OptionalFactories optionalFactories,
       ComponentBindingExpressions bindingExpressions,
       ComponentRequirementFields componentRequirementFields,
-      Optional<ComponentBuilder> builder,
+      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel,
       BindingGraphFactory bindingGraphFactory,
       CompilerOptions compilerOptions) {
     this.types = types;
@@ -160,7 +162,7 @@ abstract class ComponentModelBuilder {
     this.optionalFactories = optionalFactories;
     this.bindingExpressions = bindingExpressions;
     this.componentRequirementFields = componentRequirementFields;
-    this.builder = builder;
+    this.generatedComponentBuilderModel = generatedComponentBuilderModel;
     this.bindingGraphFactory = bindingGraphFactory;
     this.compilerOptions = compilerOptions;
   }
@@ -176,7 +178,9 @@ abstract class ComponentModelBuilder {
         "ComponentModelBuilder has already built the GeneratedComponentModel for [%s].",
         generatedComponentModel.name());
     setSupertype();
-    builder.map(ComponentBuilder::typeSpec).ifPresent(this::addBuilderClass);
+    generatedComponentBuilderModel
+        .map(GeneratedComponentBuilderModel::typeSpec)
+        .ifPresent(this::addBuilderClass);
 
     getLocalAndInheritedMethods(
             graph.componentDescriptor().componentDefinitionType(), types, elements)
@@ -249,10 +253,11 @@ abstract class ComponentModelBuilder {
         getSubcomponentSupermodel(childGraph.componentDescriptor());
     GeneratedComponentModel childModel =
         GeneratedComponentModel.forAbstractSubcomponent(childName, supermodel);
-    Optional<ComponentBuilder> childBuilder =
-        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
+    Optional<GeneratedComponentBuilderModel> childBuilderModel =
+        GeneratedComponentBuilderModel.create(
+            childModel, childGraph, subcomponentNames, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilderModel);
     ComponentBindingExpressions childBindingExpressions =
         bindingExpressions.forChildComponent(
             childGraph, childModel, childComponentRequirementFields);
@@ -267,7 +272,7 @@ abstract class ComponentModelBuilder {
             optionalFactories,
             childBindingExpressions,
             childComponentRequirementFields,
-            childBuilder,
+            childBuilderModel,
             bindingGraphFactory,
             compilerOptions)
         .build();
@@ -310,10 +315,11 @@ abstract class ComponentModelBuilder {
     ClassName childName =
         parentName.nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
     GeneratedComponentModel childModel = GeneratedComponentModel.forSubcomponent(childName);
-    Optional<ComponentBuilder> childBuilder =
-        ComponentBuilder.create(childModel, childGraph, subcomponentNames, elements, types);
+    Optional<GeneratedComponentBuilderModel> childBuilderModel =
+        GeneratedComponentBuilderModel.create(
+            childModel, childGraph, subcomponentNames, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilder);
+        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilderModel);
     ComponentBindingExpressions childBindingExpressions =
         bindingExpressions.forChildComponent(
             childGraph, childModel, childComponentRequirementFields);
@@ -323,7 +329,7 @@ abstract class ComponentModelBuilder {
             childModel,
             childBindingExpressions,
             childComponentRequirementFields,
-            childBuilder)
+            childBuilderModel)
         .build();
   }
 
@@ -386,8 +392,9 @@ abstract class ComponentModelBuilder {
 
   /** Returns the list of {@link ParameterSpec}s for the constructor. */
   private ImmutableList<ParameterSpec> constructorParameters() {
-    if (builder.isPresent()) {
-      return ImmutableList.of(ParameterSpec.builder(builder.get().name(), "builder").build());
+    if (generatedComponentBuilderModel.isPresent()) {
+      return ImmutableList.of(
+          ParameterSpec.builder(generatedComponentBuilderModel.get().name(), "builder").build());
     } else if (graph.factoryMethod().isPresent()) {
       return getFactoryMethodParameterSpecs(graph);
     } else if (generatedComponentModel.isAbstract() && !generatedComponentModel.isNested()) {
@@ -410,7 +417,7 @@ abstract class ComponentModelBuilder {
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilder> builder,
+        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel,
         BindingGraphFactory bindingGraphFactory,
         CompilerOptions compilerOptions) {
       super(
@@ -423,7 +430,7 @@ abstract class ComponentModelBuilder {
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder,
+          generatedComponentBuilderModel,
           bindingGraphFactory,
           compilerOptions);
     }
@@ -443,8 +450,8 @@ abstract class ComponentModelBuilder {
               .returns(
                   builderSpec().isPresent()
                       ? ClassName.get(builderSpec().get().builderDefinitionType())
-                      : super.builder.get().name())
-              .addStatement("return new $T()", super.builder.get().name())
+                      : super.generatedComponentBuilderModel.get().name())
+              .addStatement("return new $T()", super.generatedComponentBuilderModel.get().name())
               .build();
       super.generatedComponentModel.addMethod(BUILDER_METHOD, builderFactoryMethod);
       if (canInstantiateAllRequirements()) {
@@ -485,7 +492,7 @@ abstract class ComponentModelBuilder {
         GeneratedComponentModel generatedComponentModel,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilder> builder) {
+        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
       super(
           parent.types,
           parent.elements,
@@ -496,7 +503,7 @@ abstract class ComponentModelBuilder {
           parent.optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder,
+          generatedComponentBuilderModel,
           parent.bindingGraphFactory,
           parent.compilerOptions);
       this.parent = parent;
@@ -550,7 +557,7 @@ abstract class ComponentModelBuilder {
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilder> builder,
+        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel,
         BindingGraphFactory bindingGraphFactory,
         CompilerOptions compilerOptions) {
       super(
@@ -563,7 +570,7 @@ abstract class ComponentModelBuilder {
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder,
+          generatedComponentBuilderModel,
           bindingGraphFactory,
           compilerOptions);
       this.parent = parent;

@@ -50,12 +50,12 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 /** Models the generated code for a component builder. */
-final class ComponentBuilder {
+final class GeneratedComponentBuilderModel {
   private final TypeSpec typeSpec;
   private final ClassName name;
   private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
-  private ComponentBuilder(
+  private GeneratedComponentBuilderModel(
       TypeSpec typeSpec,
       ClassName name,
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
@@ -76,7 +76,7 @@ final class ComponentBuilder {
     return builderFields;
   }
 
-  static Optional<ComponentBuilder> create(
+  static Optional<GeneratedComponentBuilderModel> create(
       GeneratedComponentModel generatedComponentModel,
       BindingGraph graph,
       SubcomponentNames subcomponentNames,
@@ -127,7 +127,7 @@ final class ComponentBuilder {
       this.types = types;
     }
 
-    ComponentBuilder create() {
+    GeneratedComponentBuilderModel create() {
       if (builderSpec().isPresent()) {
         if (generatedComponentModel.isAbstract()) {
           builder.addModifiers(PROTECTED);
@@ -154,7 +154,7 @@ final class ComponentBuilder {
           // compile-testing tests that rely on the order of the methods
           .addMethods(builderMethods(builderFields));
 
-      return new ComponentBuilder(builder.build(), builderName, builderFields);
+      return new GeneratedComponentBuilderModel(builder.build(), builderName, builderFields);
     }
 
     /** Set the superclass being extended or interface being implemented for this builder. */

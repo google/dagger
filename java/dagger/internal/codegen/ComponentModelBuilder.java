@@ -64,12 +64,7 @@ abstract class ComponentModelBuilder {
       ClassName name,
       BindingGraph graph,
       BindingGraphFactory bindingGraphFactory) {
-    GeneratedComponentModel generatedComponentModel;
-    if (graph.componentDescriptor().kind().isTopLevel()) {
-      generatedComponentModel = GeneratedComponentModel.forComponent(name);
-    } else {
-      generatedComponentModel = GeneratedComponentModel.forBaseSubcomponent(name);
-    }
+    GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.create(name, graph);
     SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
     OptionalFactories optionalFactories = new OptionalFactories(generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel =

@@ -20,6 +20,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
@@ -158,6 +159,7 @@ final class GeneratedComponentModel {
       NestingKind nestingKind,
       Optional<GeneratedComponentModel> supermodel,
       Modifier... modifiers) {
+    checkName(name, nestingKind);
     this.name = name;
     this.nestingKind = nestingKind;
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
@@ -165,10 +167,31 @@ final class GeneratedComponentModel {
     this.component = classBuilder(name).addModifiers(modifiers);
   }
 
-  /** Create a model for a root component. */
-  static GeneratedComponentModel forComponent(ClassName name) {
+  private static void checkName(ClassName name, NestingKind nestingKind) {
+    switch (nestingKind) {
+      case TOP_LEVEL:
+        checkArgument(
+            name.enclosingClassName() == null, "must be a top-level class name: %s", name);
+        break;
+
+      case MEMBER:
+        checkNotNull(name.enclosingClassName(), "must not be a top-level class name: %s", name);
+        break;
+
+      default:
+        throw new IllegalArgumentException(
+            "nestingKind must be TOP_LEVEL or MEMBER: " + nestingKind);
+    }
+  }
+
+  /** Creates a model for a root component or top-level abstract subcomponent. */
+  static GeneratedComponentModel create(ClassName name, BindingGraph graph) {
     return new GeneratedComponentModel(
-        name, NestingKind.TOP_LEVEL, Optional.empty(), /* supermodel */ PUBLIC, FINAL);
+        name,
+        NestingKind.TOP_LEVEL,
+        Optional.empty(), // supermodel
+        PUBLIC,
+        graph.componentDescriptor().kind().isTopLevel() ? FINAL : ABSTRACT);
   }
 
   /**
@@ -178,15 +201,6 @@ final class GeneratedComponentModel {
   static GeneratedComponentModel forSubcomponent(ClassName name) {
     return new GeneratedComponentModel(
         name, NestingKind.MEMBER, Optional.empty(), /* supermodel */ PRIVATE, FINAL);
-  }
-
-  /**
-   * Create a model for the top-level abstract subcomponent implementation when generating
-   * ahead-of-time subcomponents.
-   */
-  static GeneratedComponentModel forBaseSubcomponent(ClassName name) {
-    return new GeneratedComponentModel(
-        name, NestingKind.TOP_LEVEL, Optional.empty(), /* supermodel */ PUBLIC, ABSTRACT);
   }
 
   /**

@@ -61,7 +61,6 @@ final class ComponentBindingExpressions {
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
   private final GeneratedComponentModel generatedComponentModel;
-  private final SubcomponentNames subcomponentNames;
   private final ComponentRequirementFields componentRequirementFields;
   private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final OptionalFactories optionalFactories;
@@ -76,7 +75,6 @@ final class ComponentBindingExpressions {
   ComponentBindingExpressions(
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      SubcomponentNames subcomponentNames,
       ComponentRequirementFields componentRequirementFields,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -86,7 +84,6 @@ final class ComponentBindingExpressions {
         Optional.empty(),
         graph,
         generatedComponentModel,
-        subcomponentNames,
         componentRequirementFields,
         new ReferenceReleasingManagerFields(graph, generatedComponentModel, compilerOptions),
         new StaticSwitchingProviders(generatedComponentModel, types),
@@ -100,7 +97,6 @@ final class ComponentBindingExpressions {
       Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      SubcomponentNames subcomponentNames,
       ComponentRequirementFields componentRequirementFields,
       ReferenceReleasingManagerFields referenceReleasingManagerFields,
       StaticSwitchingProviders staticSwitchingProviders,
@@ -111,7 +107,6 @@ final class ComponentBindingExpressions {
     this.parent = parent;
     this.graph = graph;
     this.generatedComponentModel = generatedComponentModel;
-    this.subcomponentNames = checkNotNull(subcomponentNames);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
     this.optionalFactories = checkNotNull(optionalFactories);
@@ -136,7 +131,6 @@ final class ComponentBindingExpressions {
         Optional.of(this),
         childGraph,
         childComponentModel,
-        subcomponentNames,
         childComponentRequirementFields,
         referenceReleasingManagerFields,
         staticSwitchingProviders,
@@ -609,7 +603,7 @@ final class ComponentBindingExpressions {
 
       case SUBCOMPONENT_BUILDER:
         return new SubcomponentBuilderProviderCreationExpression(
-            binding.key().type(), subcomponentNames.get(binding.key()));
+            binding.key().type(), generatedComponentModel.getSubcomponentName(binding.key()));
 
       case INJECTION:
       case PROVISION:
@@ -818,7 +812,8 @@ final class ComponentBindingExpressions {
       case SUBCOMPONENT_BUILDER:
         return Optional.of(
             new SubcomponentBuilderBindingExpression(
-                resolvedBindings, subcomponentNames.get(resolvedBindings.key())));
+                resolvedBindings,
+                generatedComponentModel.getSubcomponentName(resolvedBindings.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(

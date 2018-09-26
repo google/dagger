@@ -79,13 +79,10 @@ final class GeneratedComponentBuilderModel {
   static Optional<GeneratedComponentBuilderModel> create(
       GeneratedComponentModel generatedComponentModel,
       BindingGraph graph,
-      SubcomponentNames subcomponentNames,
       Elements elements,
       Types types) {
     return hasBuilder(graph.componentDescriptor())
-        ? Optional.of(
-            new Creator(generatedComponentModel, graph, subcomponentNames, elements, types)
-                .create())
+        ? Optional.of(new Creator(generatedComponentModel, graph, elements, types).create())
         : Optional.empty();
   }
 
@@ -101,14 +98,12 @@ final class GeneratedComponentBuilderModel {
     private final TypeSpec.Builder builder;
     private final GeneratedComponentModel generatedComponentModel;
     private final ClassName builderName;
-    private final SubcomponentNames subcomponentNames;
     private final Elements elements;
     private final Types types;
 
     Creator(
         GeneratedComponentModel generatedComponentModel,
         BindingGraph graph,
-        SubcomponentNames subcomponentNames,
         Elements elements,
         Types types) {
       this.generatedComponentModel = generatedComponentModel;
@@ -118,11 +113,12 @@ final class GeneratedComponentBuilderModel {
         builder = classBuilder(builderName).addModifiers(STATIC);
       } else {
         builderName =
-            componentName.peerClass(subcomponentNames.get(graph.componentDescriptor()) + "Builder");
+            componentName.peerClass(
+                generatedComponentModel.getSubcomponentName(graph.componentDescriptor())
+                    + "Builder");
         builder = classBuilder(builderName);
       }
       this.graph = graph;
-      this.subcomponentNames = subcomponentNames;
       this.elements = elements;
       this.types = types;
     }
@@ -168,7 +164,9 @@ final class GeneratedComponentBuilderModel {
           builder.superclass(
               subcomponentSupermodel
                   .name()
-                  .peerClass(subcomponentNames.get(graph.componentDescriptor()) + "Builder"));
+                  .peerClass(
+                      subcomponentSupermodel.getSubcomponentName(graph.componentDescriptor())
+                          + "Builder"));
         } else {
           // Otherwise we're extending the builder defined inside the subcomponent definition.
           builder.superclass(subcomponentSupermodel.name().nestedClass("Builder"));

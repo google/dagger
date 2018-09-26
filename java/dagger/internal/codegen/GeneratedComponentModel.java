@@ -140,6 +140,7 @@ final class GeneratedComponentModel {
   private final Optional<GeneratedComponentModel> supermodel;
   private final Map<TypeElement, GeneratedComponentModel> subcomponentModels = new HashMap<>();
   private final TypeSpec.Builder component;
+  private final SubcomponentNames subcomponentNames;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
@@ -158,6 +159,7 @@ final class GeneratedComponentModel {
       ClassName name,
       NestingKind nestingKind,
       Optional<GeneratedComponentModel> supermodel,
+      SubcomponentNames subcomponentNames,
       Modifier... modifiers) {
     checkName(name, nestingKind);
     this.name = name;
@@ -165,6 +167,7 @@ final class GeneratedComponentModel {
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
     this.supermodel = supermodel;
     this.component = classBuilder(name).addModifiers(modifiers);
+    this.subcomponentNames = subcomponentNames;
   }
 
   private static void checkName(ClassName name, NestingKind nestingKind) {
@@ -185,11 +188,12 @@ final class GeneratedComponentModel {
   }
 
   /** Creates a model for a root component or top-level abstract subcomponent. */
-  static GeneratedComponentModel create(ClassName name, BindingGraph graph) {
+  static GeneratedComponentModel create(ClassName name, BindingGraph graph, KeyFactory keyFactory) {
     return new GeneratedComponentModel(
         name,
         NestingKind.TOP_LEVEL,
         Optional.empty(), // supermodel
+        new SubcomponentNames(graph, keyFactory),
         PUBLIC,
         graph.componentDescriptor().kind().isTopLevel() ? FINAL : ABSTRACT);
   }
@@ -198,9 +202,15 @@ final class GeneratedComponentModel {
    * Create a model for a subcomponent. This is for concrete subcomponents implementations when not
    * generating ahead-of-time subcomponents.
    */
-  static GeneratedComponentModel forSubcomponent(ClassName name) {
+  static GeneratedComponentModel forSubcomponent(
+      ClassName name, GeneratedComponentModel parentModel) {
     return new GeneratedComponentModel(
-        name, NestingKind.MEMBER, Optional.empty(), /* supermodel */ PRIVATE, FINAL);
+        name,
+        NestingKind.MEMBER,
+        Optional.empty(), // supermodel
+        parentModel.subcomponentNames,
+        PRIVATE,
+        FINAL);
   }
 
   /**
@@ -208,9 +218,14 @@ final class GeneratedComponentModel {
    * generating ahead-of-time subcomponents.
    */
   static GeneratedComponentModel forAbstractSubcomponent(
-      ClassName name, GeneratedComponentModel supermodel) {
+      ClassName name, GeneratedComponentModel supermodel, GeneratedComponentModel parentModel) {
     return new GeneratedComponentModel(
-        name, NestingKind.MEMBER, Optional.of(supermodel), PUBLIC, ABSTRACT);
+        name,
+        NestingKind.MEMBER,
+        Optional.of(supermodel),
+        parentModel.subcomponentNames,
+        PUBLIC,
+        ABSTRACT);
   }
 
   /** Returns the name of the component. */
@@ -231,6 +246,16 @@ final class GeneratedComponentModel {
   /** Returns the model of this model's superclass. */
   Optional<GeneratedComponentModel> supermodel() {
     return supermodel;
+  }
+
+  /** Returns the simple subcomponent name for the given {@link ComponentDescriptor}. */
+  String getSubcomponentName(ComponentDescriptor componentDescriptor) {
+    return subcomponentNames.get(componentDescriptor);
+  }
+
+  /** Returns the simple subcomponent name for the given subcomponent builder {@link Key}. */
+  String getSubcomponentName(Key key) {
+    return subcomponentNames.get(key);
   }
 
   /** Returns the model of the child subcomponent. */

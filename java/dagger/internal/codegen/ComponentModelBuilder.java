@@ -64,12 +64,11 @@ abstract class ComponentModelBuilder {
       ClassName name,
       BindingGraph graph,
       BindingGraphFactory bindingGraphFactory) {
-    GeneratedComponentModel generatedComponentModel = GeneratedComponentModel.create(name, graph);
-    SubcomponentNames subcomponentNames = new SubcomponentNames(graph, keyFactory);
+    GeneratedComponentModel generatedComponentModel =
+        GeneratedComponentModel.create(name, graph, keyFactory);
     OptionalFactories optionalFactories = new OptionalFactories(generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel =
-        GeneratedComponentBuilderModel.create(
-            generatedComponentModel, graph, subcomponentNames, elements, types);
+        GeneratedComponentBuilderModel.create(generatedComponentModel, graph, elements, types);
     ComponentRequirementFields componentRequirementFields =
         new ComponentRequirementFields(
             graph, generatedComponentModel, generatedComponentBuilderModel);
@@ -77,7 +76,6 @@ abstract class ComponentModelBuilder {
         new ComponentBindingExpressions(
             graph,
             generatedComponentModel,
-            subcomponentNames,
             componentRequirementFields,
             optionalFactories,
             types,
@@ -95,7 +93,6 @@ abstract class ComponentModelBuilder {
               keyFactory,
               graph,
               generatedComponentModel,
-              subcomponentNames,
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
@@ -110,7 +107,6 @@ abstract class ComponentModelBuilder {
               keyFactory,
               graph,
               generatedComponentModel,
-              subcomponentNames,
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
@@ -125,7 +121,6 @@ abstract class ComponentModelBuilder {
   private final DaggerTypes types;
   private final KeyFactory keyFactory;
   private final BindingGraph graph;
-  private final SubcomponentNames subcomponentNames;
   private final ComponentBindingExpressions bindingExpressions;
   private final ComponentRequirementFields componentRequirementFields;
   private final GeneratedComponentModel generatedComponentModel;
@@ -141,7 +136,6 @@ abstract class ComponentModelBuilder {
       KeyFactory keyFactory,
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
-      SubcomponentNames subcomponentNames,
       OptionalFactories optionalFactories,
       ComponentBindingExpressions bindingExpressions,
       ComponentRequirementFields componentRequirementFields,
@@ -152,7 +146,6 @@ abstract class ComponentModelBuilder {
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.graph = graph;
-    this.subcomponentNames = subcomponentNames;
     this.generatedComponentModel = generatedComponentModel;
     this.optionalFactories = optionalFactories;
     this.bindingExpressions = bindingExpressions;
@@ -243,14 +236,16 @@ abstract class ComponentModelBuilder {
     ClassName childName =
         generatedComponentModel
             .name()
-            .nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
+            .nestedClass(
+                generatedComponentModel.getSubcomponentName(childGraph.componentDescriptor())
+                    + "Impl");
     GeneratedComponentModel supermodel =
         getSubcomponentSupermodel(childGraph.componentDescriptor());
     GeneratedComponentModel childModel =
-        GeneratedComponentModel.forAbstractSubcomponent(childName, supermodel);
+        GeneratedComponentModel.forAbstractSubcomponent(
+            childName, supermodel, generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> childBuilderModel =
-        GeneratedComponentBuilderModel.create(
-            childModel, childGraph, subcomponentNames, elements, types);
+        GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
         componentRequirementFields.forChildComponent(childGraph, childModel, childBuilderModel);
     ComponentBindingExpressions childBindingExpressions =
@@ -263,7 +258,6 @@ abstract class ComponentModelBuilder {
             keyFactory,
             childGraph,
             childModel,
-            subcomponentNames,
             optionalFactories,
             childBindingExpressions,
             childComponentRequirementFields,
@@ -308,11 +302,12 @@ abstract class ComponentModelBuilder {
   private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
     ClassName parentName = generatedComponentModel.name();
     ClassName childName =
-        parentName.nestedClass(subcomponentNames.get(childGraph.componentDescriptor()) + "Impl");
-    GeneratedComponentModel childModel = GeneratedComponentModel.forSubcomponent(childName);
+        parentName.nestedClass(
+            generatedComponentModel.getSubcomponentName(childGraph.componentDescriptor()) + "Impl");
+    GeneratedComponentModel childModel =
+        GeneratedComponentModel.forSubcomponent(childName, generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> childBuilderModel =
-        GeneratedComponentBuilderModel.create(
-            childModel, childGraph, subcomponentNames, elements, types);
+        GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
         componentRequirementFields.forChildComponent(childGraph, childModel, childBuilderModel);
     ComponentBindingExpressions childBindingExpressions =
@@ -408,7 +403,6 @@ abstract class ComponentModelBuilder {
         KeyFactory keyFactory,
         BindingGraph graph,
         GeneratedComponentModel generatedComponentModel,
-        SubcomponentNames subcomponentNames,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
@@ -421,7 +415,6 @@ abstract class ComponentModelBuilder {
           keyFactory,
           graph,
           generatedComponentModel,
-          subcomponentNames,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
@@ -494,7 +487,6 @@ abstract class ComponentModelBuilder {
           parent.keyFactory,
           graph,
           generatedComponentModel,
-          parent.subcomponentNames,
           parent.optionalFactories,
           bindingExpressions,
           componentRequirementFields,
@@ -548,7 +540,6 @@ abstract class ComponentModelBuilder {
         KeyFactory keyFactory,
         BindingGraph graph,
         GeneratedComponentModel generatedComponentModel,
-        SubcomponentNames subcomponentNames,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
@@ -561,7 +552,6 @@ abstract class ComponentModelBuilder {
           keyFactory,
           graph,
           generatedComponentModel,
-          subcomponentNames,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,

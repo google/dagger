@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
@@ -32,7 +31,6 @@ import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -41,8 +39,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import java.util.HashMap;
@@ -70,6 +66,7 @@ final class ComponentBindingExpressions {
   private final MembersInjectionMethods membersInjectionMethods;
   private final InnerSwitchingProviders innerSwitchingProviders;
   private final StaticSwitchingProviders staticSwitchingProviders;
+  private final ModifiableBindingExpressions modifiableBindingExpressions;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
 
   ComponentBindingExpressions(
@@ -118,6 +115,13 @@ final class ComponentBindingExpressions {
     this.innerSwitchingProviders =
         new InnerSwitchingProviders(generatedComponentModel, this, types);
     this.staticSwitchingProviders = staticSwitchingProviders;
+    this.modifiableBindingExpressions =
+        new ModifiableBindingExpressions(
+            parent.map(cbe -> cbe.modifiableBindingExpressions),
+            this,
+            graph,
+            generatedComponentModel,
+            compilerOptions);
   }
 
   /**
@@ -138,6 +142,11 @@ final class ComponentBindingExpressions {
         types,
         elements,
         compilerOptions);
+  }
+
+  /* Returns the {@link ModifiableBindingExpressions} for this component. */
+  ModifiableBindingExpressions modifiableBindingExpressions() {
+    return modifiableBindingExpressions;
   }
 
   /**
@@ -206,141 +215,32 @@ final class ComponentBindingExpressions {
     return dependencyExpression;
   }
 
-  /**
-   * Returns the implementation of a component method. Returns {@link Optional#empty} if the
-   * component method implementation should not be emitted.
-   */
-  Optional<MethodSpec> getComponentMethod(ComponentMethodDescriptor componentMethod) {
+  /** Returns the implementation of a component method. */
+  MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    MethodSpec method =
-        MethodSpec.overriding(
-                componentMethod.methodElement(),
-                MoreTypes.asDeclared(graph.componentType().asType()),
-                types)
-            .addCode(
-                getBindingExpression(request)
-                    .getComponentMethodImplementation(componentMethod, generatedComponentModel))
-            .build();
-
-    ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
-    if (modifiableBindingType.isModifiable()) {
-      generatedComponentModel.registerModifiableBindingMethod(
-          modifiableBindingType,
-          request,
-          method,
-          newModifiableBindingWillBeFinalized(modifiableBindingType, request));
-      if (!modifiableBindingType.hasBaseClassImplementation()) {
-        // A component method should not be emitted if it encapsulates a modifiable binding that
-        // cannot be satisfied by the abstract base class implementation of a subcomponent.
-        checkState(
-            !generatedComponentModel.supermodel().isPresent(),
-            "Attempting to generate a component method in a subtype of the abstract subcomponent "
-                + "base class.");
-        return Optional.empty();
-      }
-    }
-
-    return Optional.of(method);
+    return MethodSpec.overriding(
+            componentMethod.methodElement(),
+            MoreTypes.asDeclared(graph.componentType().asType()),
+            types)
+        .addCode(
+            getBindingExpression(request)
+                .getComponentMethodImplementation(componentMethod, generatedComponentModel))
+        .build();
   }
 
-  /**
-   * Returns the implementation of a modifiable binding method originally defined in a supertype
-   * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
-   * or should not be modified by the current binding graph. This is only relevant for ahead-of-time
-   * subcomponents.
-   */
-  Optional<ModifiableBindingMethod> getModifiableBindingMethod(
-      ModifiableBindingMethod modifiableBindingMethod) {
-    if (shouldModifyKnownBinding(modifiableBindingMethod)) {
-      MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
-      return Optional.of(
-          ModifiableBindingMethod.implement(
-              modifiableBindingMethod,
-              MethodSpec.methodBuilder(baseMethod.name)
-                  .addModifiers(PUBLIC)
-                  // TODO(b/72748365): Mark method as final if binding should not be further
-                  // modified.
-                  .returns(baseMethod.returnType)
-                  .addAnnotation(Override.class)
-                  .addCode(
-                      getBindingExpression(modifiableBindingMethod.request())
-                          .getModifiableBindingMethodImplementation(
-                              modifiableBindingMethod, generatedComponentModel))
-                  .build(),
-              knownModifiableBindingWillBeFinalized(modifiableBindingMethod)));
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * Returns true if a modifiable binding method that was registered in a superclass implementation
-   * of this subcomponent should be marked as "finalized" if it is being overridden by this
-   * subcomponent implementation. "Finalized" means we should not attempt to modify the binding in
-   * any subcomponent subclass. This is only relevant for ahead-of-time subcomponents.
-   */
-  // TODO(user): extract a ModifiableBindingExpressions class? This may need some dependencies
-  // (like the GCM) but could remove some concerns from this class
-  private boolean knownModifiableBindingWillBeFinalized(
-      ModifiableBindingMethod modifiableBindingMethod) {
-    ModifiableBindingType newModifiableBindingType =
-        getModifiableBindingType(modifiableBindingMethod.request());
-    if (!newModifiableBindingType.isModifiable()) {
-      // If a modifiable binding has become non-modifiable it is final by definition.
-      return true;
-    }
-    // All currently supported modifiable types are finalized upon modification.
-    return modifiableBindingWillBeFinalized(
-        newModifiableBindingType,
-        shouldModifyBinding(newModifiableBindingType, modifiableBindingMethod.request()));
-  }
-
-  /**
-   * Returns true if a newly discovered modifiable binding method, once it is defined in this
-   * subcomponent implementation, should be marked as "finalized", meaning we should not attempt to
-   * modify the binding in any subcomponent subclass. This is only relevant for ahead-of-time
-   * subcomponents.
-   */
-  private boolean newModifiableBindingWillBeFinalized(
-      ModifiableBindingType modifiableBindingType, BindingRequest request) {
-    return modifiableBindingWillBeFinalized(
-        modifiableBindingType, shouldModifyBinding(modifiableBindingType, request));
-  }
-
-  /**
-   * Returns true if we shouldn't attempt to further modify a modifiable binding once we complete
-   * the implementation for the current subcomponent.
-   */
-  private boolean modifiableBindingWillBeFinalized(
-      ModifiableBindingType modifiableBindingType, boolean modifyingBinding) {
-    switch (modifiableBindingType) {
-      case MISSING:
-      case GENERATED_INSTANCE:
-      case OPTIONAL:
-      case INJECTION:
-        // Once we modify any of the above a single time, then they are finalized.
-        return modifyingBinding;
-      case MULTIBINDING:
-        return false;
-      default:
-        throw new IllegalStateException(
-            String.format(
-                "Building binding expression for unsupported ModifiableBindingType [%s].",
-                modifiableBindingType));
-    }
-  }
-
-  private BindingExpression getBindingExpression(BindingRequest request) {
+  /** Returns the {@link BindingExpression} for the given {@link BindingRequest}. */
+  BindingExpression getBindingExpression(BindingRequest request) {
     if (expressions.containsKey(request)) {
       return expressions.get(request);
     }
-    Optional<BindingExpression> expression = Optional.empty();
-    ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
-    if (modifiableBindingType.isModifiable()) {
-      expression = Optional.of(createModifiableBindingExpression(modifiableBindingType, request));
-    } else if (resolvedInThisComponent(request)) {
+    Optional<BindingExpression> expression =
+        modifiableBindingExpressions.maybeCreateModifiableBindingExpression(request);
+    if (!expression.isPresent()) {
       ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-      expression = Optional.of(createBindingExpression(resolvedBindings, request));
+      if (resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty()) {
+        expression = Optional.of(createBindingExpression(resolvedBindings, request));
+      }
     }
     if (expression.isPresent()) {
       expressions.put(request, expression.get());
@@ -351,7 +251,7 @@ final class ComponentBindingExpressions {
   }
 
   /** Creates a binding expression. */
-  private BindingExpression createBindingExpression(
+  BindingExpression createBindingExpression(
       ResolvedBindings resolvedBindings, BindingRequest request) {
     switch (resolvedBindings.bindingType()) {
       case MEMBERS_INJECTION:
@@ -367,160 +267,6 @@ final class ComponentBindingExpressions {
       default:
         throw new AssertionError(resolvedBindings);
     }
-  }
-
-  /**
-   * Creates a binding expression for a binding that may be modified across implementations of a
-   * subcomponent. This is only relevant for ahead-of-time subcomponents.
-   */
-  private BindingExpression createModifiableBindingExpression(
-      ModifiableBindingType type, BindingRequest request) {
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-    Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
-        generatedComponentModel.getModifiableBindingMethod(request);
-    Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        findMatchingComponentMethod(request);
-    switch (type) {
-      case GENERATED_INSTANCE:
-        return new GeneratedInstanceBindingExpression(
-            generatedComponentModel,
-            resolvedBindings,
-            request,
-            matchingModifiableBindingMethod,
-            matchingComponentMethod);
-      case MISSING:
-        return new MissingBindingExpression(
-            generatedComponentModel,
-            request,
-            matchingModifiableBindingMethod,
-            matchingComponentMethod);
-      case OPTIONAL:
-      case MULTIBINDING:
-      case INJECTION:
-        return wrapInMethod(
-            resolvedBindings, request, createBindingExpression(resolvedBindings, request));
-      default:
-        throw new IllegalStateException(
-            String.format(
-                "Building binding expression for unsupported ModifiableBindingType [%s].", type));
-    }
-  }
-
-  /**
-   * The reason why a binding may need to be modified across implementations of a subcomponent, if
-   * at all. This is only relevant for ahead-of-time subcomponents.
-   */
-  private ModifiableBindingType getModifiableBindingType(BindingRequest request) {
-    if (!compilerOptions.aheadOfTimeSubcomponents()) {
-      return ModifiableBindingType.NONE;
-    }
-
-    // When generating a final (concrete) implementation of a (sub)component the binding is no
-    // longer considered modifiable. It cannot be further modified by a subclass implementation.
-    if (!generatedComponentModel.isAbstract()) {
-      return ModifiableBindingType.NONE;
-    }
-
-    if (resolvedInThisComponent(request)) {
-      ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-      if (resolvedBindings.contributionBindings().isEmpty()) {
-        // TODO(ronshapiro): Confirm whether a resolved binding must have a single contribution
-        // binding.
-        return ModifiableBindingType.NONE;
-      }
-
-      ContributionBinding binding = resolvedBindings.contributionBinding();
-      if (binding.requiresGeneratedInstance()) {
-        return ModifiableBindingType.GENERATED_INSTANCE;
-      }
-
-      if (binding.kind().equals(BindingKind.OPTIONAL)) {
-        return ModifiableBindingType.OPTIONAL;
-      }
-
-      if (resolvedBindings.bindingType().equals(BindingType.PROVISION)
-          && binding.isSyntheticMultibinding()) {
-        return ModifiableBindingType.MULTIBINDING;
-      }
-
-      if (binding.kind().equals(BindingKind.INJECTION)) {
-        return ModifiableBindingType.INJECTION;
-      }
-    } else if (!resolvableBinding(request)) {
-      return ModifiableBindingType.MISSING;
-    }
-
-    return ModifiableBindingType.NONE;
-  }
-
-  /**
-   * Returns true if the current binding graph can, and should, modify a binding by overriding a
-   * modifiable binding method. This is only relevant for ahead-of-time subcomponents.
-   */
-  private boolean shouldModifyKnownBinding(ModifiableBindingMethod modifiableBindingMethod) {
-    ModifiableBindingType newModifiableBindingType =
-        getModifiableBindingType(modifiableBindingMethod.request());
-    if (!newModifiableBindingType.equals(modifiableBindingMethod.type())) {
-      // It is possible that a binding can change types, in which case we should always modify the
-      // binding.
-      return true;
-    }
-    return shouldModifyBinding(modifiableBindingMethod.type(), modifiableBindingMethod.request());
-  }
-
-  /**
-   * Returns true if the current binding graph can, and should, modify a binding by overriding a
-   * modifiable binding method. This is only relevant for ahead-of-time subcomponents.
-   */
-  private boolean shouldModifyBinding(
-      ModifiableBindingType modifiableBindingType, BindingRequest request) {
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-    switch (modifiableBindingType) {
-      case GENERATED_INSTANCE:
-        return !generatedComponentModel.isAbstract();
-      case MISSING:
-        // TODO(b/72748365): investigate beder@'s comment about having intermediate component
-        // ancestors satisfy missing bindings of their children with their own missing binding
-        // methods so that we can minimize the cases where we need to reach into doubly-nested
-        // descendant component implementations
-        return resolvableBinding(request);
-      case OPTIONAL:
-        // Only override optional binding methods if we have a non-empty binding.
-        return !resolvedBindings.contributionBinding().dependencies().isEmpty();
-      case MULTIBINDING:
-        // Only modify a multibinding if there are new contributions.
-        return !generatedComponentModel
-            .superclassContributionsMade(request.key())
-            .containsAll(resolvedBindings.contributionBinding().dependencies());
-      case INJECTION:
-        return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
-      default:
-        throw new IllegalStateException(
-            String.format(
-                "Overriding modifiable binding method with unsupported ModifiableBindingType [%s].",
-                modifiableBindingType));
-    }
-  }
-
-  /**
-   * Returns true if the binding can be resolved by the graph for this component or any parent
-   * component.
-   */
-  private boolean resolvableBinding(BindingRequest request) {
-    for (ComponentBindingExpressions expressions = this;
-        expressions != null;
-        expressions = expressions.parent.orElse(null)) {
-      if (expressions.resolvedInThisComponent(request)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /** Returns true if the binding can be resolved by the graph for this component. */
-  private boolean resolvedInThisComponent(BindingRequest request) {
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-    return resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty();
   }
 
   /**
@@ -896,7 +642,7 @@ final class ComponentBindingExpressions {
    * binding method will be written. If the binding doesn't match a component method and is not
    * modifiable, then a new private method will be written.
    */
-  private BindingExpression wrapInMethod(
+  BindingExpression wrapInMethod(
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       BindingExpression bindingExpression) {
@@ -908,19 +654,17 @@ final class ComponentBindingExpressions {
     BindingMethodImplementation methodImplementation =
         methodImplementation(resolvedBindings, request, bindingExpression);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        findMatchingComponentMethod(request);
+        graph.componentDescriptor().findMatchingComponentMethod(request);
 
-    ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
-    if (shouldUseAModifiableConcreteMethodBindingExpression(
-        modifiableBindingType, matchingComponentMethod)) {
-      return new ModifiableConcreteMethodBindingExpression(
-          resolvedBindings,
-          request,
-          modifiableBindingType,
-          methodImplementation,
-          generatedComponentModel,
-          generatedComponentModel.getModifiableBindingMethod(request),
-          newModifiableBindingWillBeFinalized(modifiableBindingType, request));
+    Optional<BindingExpression> modifiableBindingExpression =
+        modifiableBindingExpressions.maybeWrapInModifiableMethodBindingExpression(
+            resolvedBindings,
+            request,
+            bindingExpression,
+            methodImplementation,
+            matchingComponentMethod);
+    if (modifiableBindingExpression.isPresent()) {
+      return modifiableBindingExpression.get();
     }
 
     return matchingComponentMethod
@@ -932,40 +676,6 @@ final class ComponentBindingExpressions {
             () ->
                 new PrivateMethodBindingExpression(
                     resolvedBindings, request, methodImplementation, generatedComponentModel));
-  }
-
-  /**
-   * Returns true if we should wrap a binding expression using a {@link
-   * ModifiableConcreteMethodBindingExpression}. If we're generating the abstract base class of a
-   * subcomponent and the binding matches a component method, even if it is modifiable, then it
-   * should be "wrapped" by a {@link ComponentMethodBindingExpression}. If it isn't a base class
-   * then modifiable methods should be handled by a {@link
-   * ModifiableConcreteMethodBindingExpression}. When generating an inner subcomponent it doesn't
-   * matter whether the binding matches a component method: All modifiable bindings should be
-   * handled by a {@link ModifiableConcreteMethodBindingExpression}.
-   */
-  private boolean shouldUseAModifiableConcreteMethodBindingExpression(
-      ModifiableBindingType type, Optional<ComponentMethodDescriptor> matchingComponentMethod) {
-    return type.isModifiable()
-        && (generatedComponentModel.supermodel().isPresent()
-            || !matchingComponentMethod.isPresent());
-  }
-
-  /** Returns the first component method associated with this request kind, if one exists. */
-  private Optional<ComponentMethodDescriptor> findMatchingComponentMethod(BindingRequest request) {
-    return graph.componentDescriptor().componentMethods().stream()
-        .filter(method -> doesComponentMethodMatch(method, request))
-        .findFirst();
-  }
-
-  /** Returns true if the component method matches the binding request. */
-  private boolean doesComponentMethodMatch(
-      ComponentMethodDescriptor componentMethod, BindingRequest request) {
-    return componentMethod
-        .dependencyRequest()
-        .map(BindingRequest::bindingRequest)
-        .filter(request::equals)
-        .isPresent();
   }
 
   private BindingMethodImplementation methodImplementation(

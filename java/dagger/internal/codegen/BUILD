@@ -272,6 +272,7 @@ java_library(
         "MethodBindingExpression.java",
         "MissingBindingExpression.java",
         "ModifiableAbstractMethodBindingExpression.java",
+        "ModifiableBindingExpressions.java",
         "ModifiableBindingMethods.java",
         "ModifiableBindingType.java",
         "ModifiableConcreteMethodBindingExpression.java",

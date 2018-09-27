@@ -315,6 +315,23 @@ abstract class ComponentDescriptor {
 
   abstract ImmutableSet<ComponentMethodDescriptor> componentMethods();
 
+  /** Returns the first component method associated with this binding request, if one exists. */
+  Optional<ComponentMethodDescriptor> findMatchingComponentMethod(BindingRequest request) {
+    return componentMethods().stream()
+        .filter(method -> doesComponentMethodMatch(method, request))
+        .findFirst();
+  }
+
+  /** Returns true if the component method matches the binding request. */
+  private static boolean doesComponentMethodMatch(
+      ComponentMethodDescriptor componentMethod, BindingRequest request) {
+    return componentMethod
+        .dependencyRequest()
+        .map(BindingRequest::bindingRequest)
+        .filter(request::equals)
+        .isPresent();
+  }
+
   /** The entry point methods on the component type. */
   ImmutableSet<ComponentMethodDescriptor> entryPointMethods() {
     return componentMethods()

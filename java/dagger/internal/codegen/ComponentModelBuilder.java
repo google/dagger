@@ -209,9 +209,18 @@ abstract class ComponentModelBuilder {
     for (List<ComponentMethodDescriptor> methodsWithSameSignature :
         Multimaps.asMap(componentMethodsBySignature).values()) {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
-      bindingExpressions
-          .getComponentMethod(anyOneMethod)
-          .ifPresent(method -> generatedComponentModel.addMethod(COMPONENT_METHOD, method));
+      MethodSpec methodSpec = bindingExpressions.getComponentMethod(anyOneMethod);
+
+      // If the binding for the component method is modifiable, register it as such.
+      ModifiableBindingType modifiableBindingType =
+          bindingExpressions
+              .modifiableBindingExpressions()
+              .registerComponentMethodIfModifiable(anyOneMethod, methodSpec);
+
+      // If the method should be implemented in this component, implement it.
+      if (modifiableBindingType.hasBaseClassImplementation()) {
+        generatedComponentModel.addMethod(COMPONENT_METHOD, methodSpec);
+      }
     }
   }
 
@@ -579,6 +588,7 @@ abstract class ComponentModelBuilder {
         for (ModifiableBindingMethod modifiableBindingMethod :
             generatedComponentModel.getModifiableBindingMethods()) {
           bindingExpressions
+              .modifiableBindingExpressions()
               .getModifiableBindingMethod(modifiableBindingMethod)
               .ifPresent(
                   method -> generatedComponentModel.addImplementedModifiableBindingMethod(method));

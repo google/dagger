@@ -73,7 +73,7 @@ enum ModifiableBindingType {
   ;
 
   private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =
-      ImmutableSet.of(MULTIBINDING, OPTIONAL, INJECTION);
+      ImmutableSet.of(NONE, MULTIBINDING, OPTIONAL, INJECTION);
 
   boolean isModifiable() {
     return !equals(NONE);

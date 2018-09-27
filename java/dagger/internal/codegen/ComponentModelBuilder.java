@@ -233,17 +233,11 @@ abstract class ComponentModelBuilder {
   }
 
   private GeneratedComponentModel buildAbstractInnerSubcomponentModel(BindingGraph childGraph) {
-    ClassName childName =
-        generatedComponentModel
-            .name()
-            .nestedClass(
-                generatedComponentModel.getSubcomponentName(childGraph.componentDescriptor())
-                    + "Impl");
     GeneratedComponentModel supermodel =
         getSubcomponentSupermodel(childGraph.componentDescriptor());
     GeneratedComponentModel childModel =
         GeneratedComponentModel.forAbstractSubcomponent(
-            childName, supermodel, generatedComponentModel);
+            childGraph.componentDescriptor(), supermodel, generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> childBuilderModel =
         GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
@@ -300,12 +294,9 @@ abstract class ComponentModelBuilder {
   }
 
   private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
-    ClassName parentName = generatedComponentModel.name();
-    ClassName childName =
-        parentName.nestedClass(
-            generatedComponentModel.getSubcomponentName(childGraph.componentDescriptor()) + "Impl");
     GeneratedComponentModel childModel =
-        GeneratedComponentModel.forSubcomponent(childName, generatedComponentModel);
+        GeneratedComponentModel.forSubcomponent(
+            childGraph.componentDescriptor(), generatedComponentModel);
     Optional<GeneratedComponentBuilderModel> childBuilderModel =
         GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
     ComponentRequirementFields childComponentRequirementFields =

@@ -134,6 +134,7 @@ final class GeneratedComponentModel {
     SUBCOMPONENT
   }
 
+  private final ComponentDescriptor componentDescriptor;
   private final ClassName name;
   private final NestingKind nestingKind;
   private final boolean isAbstract;
@@ -156,12 +157,14 @@ final class GeneratedComponentModel {
       HashMultimap.create();
 
   private GeneratedComponentModel(
+      ComponentDescriptor componentDescriptor,
       ClassName name,
       NestingKind nestingKind,
       Optional<GeneratedComponentModel> supermodel,
       SubcomponentNames subcomponentNames,
       Modifier... modifiers) {
     checkName(name, nestingKind);
+    this.componentDescriptor = componentDescriptor;
     this.name = name;
     this.nestingKind = nestingKind;
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
@@ -190,6 +193,7 @@ final class GeneratedComponentModel {
   /** Creates a model for a root component or top-level abstract subcomponent. */
   static GeneratedComponentModel create(ClassName name, BindingGraph graph, KeyFactory keyFactory) {
     return new GeneratedComponentModel(
+        graph.componentDescriptor(),
         name,
         NestingKind.TOP_LEVEL,
         Optional.empty(), // supermodel
@@ -203,9 +207,10 @@ final class GeneratedComponentModel {
    * generating ahead-of-time subcomponents.
    */
   static GeneratedComponentModel forSubcomponent(
-      ClassName name, GeneratedComponentModel parentModel) {
+      ComponentDescriptor componentDescriptor, GeneratedComponentModel parentModel) {
     return new GeneratedComponentModel(
-        name,
+        componentDescriptor,
+        parentModel.getSubcomponentName(componentDescriptor),
         NestingKind.MEMBER,
         Optional.empty(), // supermodel
         parentModel.subcomponentNames,
@@ -218,14 +223,22 @@ final class GeneratedComponentModel {
    * generating ahead-of-time subcomponents.
    */
   static GeneratedComponentModel forAbstractSubcomponent(
-      ClassName name, GeneratedComponentModel supermodel, GeneratedComponentModel parentModel) {
+      ComponentDescriptor componentDescriptor,
+      GeneratedComponentModel supermodel,
+      GeneratedComponentModel parentModel) {
     return new GeneratedComponentModel(
-        name,
+        componentDescriptor,
+        parentModel.getSubcomponentName(componentDescriptor),
         NestingKind.MEMBER,
         Optional.of(supermodel),
         parentModel.subcomponentNames,
         PUBLIC,
         ABSTRACT);
+  }
+
+  /** Returns the descriptor for the component being generated. */
+  ComponentDescriptor componentDescriptor() {
+    return componentDescriptor;
   }
 
   /** Returns the name of the component. */
@@ -248,9 +261,24 @@ final class GeneratedComponentModel {
     return supermodel;
   }
 
-  /** Returns the simple subcomponent name for the given {@link ComponentDescriptor}. */
-  String getSubcomponentName(ComponentDescriptor componentDescriptor) {
-    return subcomponentNames.get(componentDescriptor);
+  /**
+   * Returns the name of the builder class for this component. It will be a sibling of this
+   * generated class unless this is a top-level component, in which case it will be nested.
+   */
+  ClassName getBuilderName() {
+    return isNested()
+        ? name.peerClass(subcomponentNames.get(componentDescriptor) + "Builder")
+        : name.nestedClass("Builder");
+  }
+
+  /** Returns the name of the nested implementation class for a child component. */
+  private ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
+    checkArgument(
+        componentDescriptor.subcomponents().contains(childDescriptor),
+        "%s is not a child of %s",
+        childDescriptor.componentDefinitionType(),
+        componentDescriptor.componentDefinitionType());
+    return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
   /** Returns the simple subcomponent name for the given subcomponent builder {@link Key}. */

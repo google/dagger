@@ -97,7 +97,6 @@ final class GeneratedComponentBuilderModel {
     private final BindingGraph graph;
     private final TypeSpec.Builder builder;
     private final GeneratedComponentModel generatedComponentModel;
-    private final ClassName builderName;
     private final Elements elements;
     private final Types types;
 
@@ -107,23 +106,16 @@ final class GeneratedComponentBuilderModel {
         Elements elements,
         Types types) {
       this.generatedComponentModel = generatedComponentModel;
-      ClassName componentName = generatedComponentModel.name();
-      if (!generatedComponentModel.isNested()) {
-        builderName = componentName.nestedClass("Builder");
-        builder = classBuilder(builderName).addModifiers(STATIC);
-      } else {
-        builderName =
-            componentName.peerClass(
-                generatedComponentModel.getSubcomponentName(graph.componentDescriptor())
-                    + "Builder");
-        builder = classBuilder(builderName);
-      }
+      this.builder = classBuilder(generatedComponentModel.getBuilderName());
       this.graph = graph;
       this.elements = elements;
       this.types = types;
     }
 
     GeneratedComponentBuilderModel create() {
+      if (!generatedComponentModel.isNested()) {
+        builder.addModifiers(STATIC);
+      }
       if (builderSpec().isPresent()) {
         if (generatedComponentModel.isAbstract()) {
           builder.addModifiers(PROTECTED);
@@ -150,27 +142,15 @@ final class GeneratedComponentBuilderModel {
           // compile-testing tests that rely on the order of the methods
           .addMethods(builderMethods(builderFields));
 
-      return new GeneratedComponentBuilderModel(builder.build(), builderName, builderFields);
+      return new GeneratedComponentBuilderModel(
+          builder.build(), generatedComponentModel.getBuilderName(), builderFields);
     }
 
     /** Set the superclass being extended or interface being implemented for this builder. */
     private void setSupertype() {
       if (generatedComponentModel.supermodel().isPresent()) {
         // If there's a superclass, extend the Builder defined there.
-        GeneratedComponentModel subcomponentSupermodel = generatedComponentModel.supermodel().get();
-        if (subcomponentSupermodel.isNested()) {
-          // If the subcomponent superclass is nested we're overriding the builder that was
-          // defined as a peer of the superclass.
-          builder.superclass(
-              subcomponentSupermodel
-                  .name()
-                  .peerClass(
-                      subcomponentSupermodel.getSubcomponentName(graph.componentDescriptor())
-                          + "Builder"));
-        } else {
-          // Otherwise we're extending the builder defined inside the subcomponent definition.
-          builder.superclass(subcomponentSupermodel.name().nestedClass("Builder"));
-        }
+        builder.superclass(generatedComponentModel.supermodel().get().getBuilderName());
       } else {
         addSupertype(builder, builderSpec().get().builderDefinitionType());
       }
@@ -289,7 +269,7 @@ final class GeneratedComponentBuilderModel {
           String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)
-                  .returns(builderName)
+                  .returns(generatedComponentModel.getBuilderName())
                   .addModifiers(PUBLIC)
                   .addParameter(
                       TypeName.get(componentRequirement.type()), componentRequirementName);
@@ -322,7 +302,7 @@ final class GeneratedComponentBuilderModel {
       // Otherwise we use the generated builder name and take advantage of covariant returns
       // (so that we don't have to worry about setter methods that return type variables).
       if (!returnType.getKind().equals(VOID)) {
-        builderMethod.returns(builderName);
+        builderMethod.returns(generatedComponentModel.getBuilderName());
       }
       return builderMethod;
     }

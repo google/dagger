@@ -44,6 +44,11 @@ public final class MapBuilder<K, V> {
     return this;
   }
 
+  public MapBuilder<K, V> putAll(Map<K, V> map) {
+    contributions.putAll(map);
+    return this;
+  }
+
   public Map<K, V> build() {
     switch (contributions.size()) {
       case 0:

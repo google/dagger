@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.AHEAD_OF_TIME_SUBCOMPONENTS_MODE;
+import static dagger.internal.codegen.Compilers.CLASS_PATH_WITHOUT_GUAVA_OPTION;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -1856,7 +1857,6 @@ public final class AheadOfTimeSubcomponentsTest {
         "InChild",
         "InGreatGrandchildAndChild",
         "InAllSubcomponents");
-
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.GreatGrandchild",
@@ -1878,9 +1878,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    GreatGrandchild build();",
             "  }",
-            "}"));
-
-    filesToCompile.add(
+            "}"),
         JavaFileObjects.forSourceLines(
             "test.GreatGrandchildModule",
             "package test;",
@@ -1914,7 +1912,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return new InAllSubcomponents();",
             "  }",
             "}"));
-
     JavaFileObject generatedGreatGrandchild =
         JavaFileObjects.forSourceLines(
             "test.DaggerGreatGrandchild",
@@ -1962,6 +1959,63 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(generatedGreatGrandchild);
+
+    JavaFileObject nonGuavaGeneratedGreatGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGreatGrandchild",
+            "package test;",
+            "",
+            "import java.util.Collections;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
+            "  protected DaggerGreatGrandchild(Builder builder) {}",
+            "",
+            "  @Override",
+            "  public Map<String, InGreatGrandchild> contributionsInGreatGrandchildOnly() {",
+            "    return Collections.<String, InGreatGrandchild>singletonMap(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildFactory",
+            "            .proxyProvideInGreatGrandchild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<String, InGreatGrandchildAndChild>",
+            "      contributionsInGreatGrandchildAndChild() {",
+            "    return Collections.<String, InGreatGrandchildAndChild>singletonMap(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInGreatGrandchildAndChildFactory",
+            "            .proxyProvideInGreatGrandchildAndChild());",
+            "  }",
+            "",
+            "  @Override",
+            "  public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "    return Collections.<String, InAllSubcomponents>singletonMap(",
+            "        \"great-grandchild\",",
+            "        GreatGrandchildModule_ProvideInAllSubcomponentsFactory",
+            "            .proxyProvideInAllSubcomponents());",
+            "  }",
+            "",
+            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public Builder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compileWithoutGuava(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGreatGrandchild")
+        .hasSourceEquivalentTo(nonGuavaGeneratedGreatGrandchild);
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -1973,9 +2027,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "@Subcomponent(modules = GrandchildModule.class)",
             "interface Grandchild {",
             "  GreatGrandchild.Builder greatGrandchild();",
-            "}"));
-
-    filesToCompile.add(
+            "}"),
         JavaFileObjects.forSourceLines(
             "test.GrandchildModule",
             "package test;",
@@ -1994,7 +2046,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return new InAllSubcomponents();",
             "  }",
             "}"));
-
     JavaFileObject generatedGrandchild =
         JavaFileObjects.forSourceLines(
             "test.DaggerGrandchild",
@@ -2032,6 +2083,56 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(generatedGrandchild);
+
+    JavaFileObject nonGuavaGeneratedGrandchild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerGrandchild",
+            "package test;",
+            "",
+            "import dagger.internal.MapBuilder;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerGrandchild implements Grandchild {",
+            "  protected DaggerGrandchild() {}",
+            "",
+            "  protected abstract class GreatGrandchildBuilder",
+            "      extends DaggerGreatGrandchild.Builder {",
+            "",
+            "    @Override",
+            "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "      return this;",
+            "    }",
+            "  }",
+            "",
+            "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
+            "    protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "",
+            "    @Override",
+            "    public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "      return MapBuilder.<String, InAllSubcomponents>newMapBuilder(2)",
+            "          .put(",
+            "              \"grandchild\",",
+            "              GrandchildModule_ProvideInAllSubcomponentsFactory",
+            "                  .proxyProvideInAllSubcomponents())",
+            "          .putAll(super.contributionsAtAllLevels())",
+            "          .build();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compileWithoutGuava(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerGrandchild")
+        .hasSourceEquivalentTo(nonGuavaGeneratedGrandchild);
 
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -2043,9 +2144,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "@Subcomponent(modules = ChildModule.class)",
             "interface Child {",
             "  Grandchild grandchild();",
-            "}"));
-
-    filesToCompile.add(
+            "}"),
         JavaFileObjects.forSourceLines(
             "test.ChildModule",
             "package test;",
@@ -2079,7 +2178,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return new InAllSubcomponents();",
             "  }",
             "}"));
-
     JavaFileObject generatedChild =
         JavaFileObjects.forSourceLines(
             "test.DaggerChild",
@@ -2143,20 +2241,82 @@ public final class AheadOfTimeSubcomponentsTest {
             "      }",
             "    }",
             "}");
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
-            .compile(filesToCompile.build().toArray(new JavaFileObject[0]));
+    compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerGreatGrandchild")
-        .hasSourceEquivalentTo(generatedGreatGrandchild);
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerGrandchild")
-        .hasSourceEquivalentTo(generatedGrandchild);
     assertThat(compilation)
         .generatedSourceFile("test.DaggerChild")
         .hasSourceEquivalentTo(generatedChild);
+
+    JavaFileObject nonGuavaGeneratedChild =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerChild",
+            "package test;",
+            "",
+            "import dagger.internal.MapBuilder;",
+            "import java.util.Collections;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerChild implements Child {",
+            "  protected DaggerChild() {}",
+            "",
+            "  public abstract class GrandchildImpl extends DaggerGrandchild {",
+            "    protected GrandchildImpl() {",
+            "      super();",
+            "    }",
+            "",
+            "    protected abstract class GreatGrandchildBuilder",
+            "        extends DaggerGrandchild.GreatGrandchildBuilder {",
+            "",
+            "      @Override",
+            "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
+            "        return this;",
+            "      }",
+            "    }",
+            "",
+            "    public abstract class GreatGrandchildImpl",
+            "        extends DaggerGrandchild.GreatGrandchildImpl {",
+            "      protected GreatGrandchildImpl(GreatGrandchildBuilder builder) {",
+            "        super(builder);",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InChild> contributionsInChildOnly() {",
+            "        return Collections.<String, InChild>singletonMap(",
+            "            \"child\", ChildModule_ProvideInChildFactory.proxyProvideInChild());",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InGreatGrandchildAndChild>",
+            "          contributionsInGreatGrandchildAndChild() {",
+            "        return MapBuilder.<String, InGreatGrandchildAndChild>newMapBuilder(2)",
+            "            .put(",
+            "                \"child\",",
+            "                ChildModule_ProvideInGreatGrandchildAndChildFactory",
+            "                    .proxyProvideInGreatGrandchildAndChild())",
+            "            .putAll(super.contributionsInGreatGrandchildAndChild())",
+            "            .build();",
+            "      }",
+            "",
+            "      @Override",
+            "      public Map<String, InAllSubcomponents> contributionsAtAllLevels() {",
+            "        return MapBuilder.<String, InAllSubcomponents>newMapBuilder(3)",
+            "            .put(",
+            "                \"child\",",
+            "                ChildModule_ProvideInAllSubcomponentsFactory",
+            "                   .proxyProvideInAllSubcomponents())",
+            "            .putAll(super.contributionsAtAllLevels())",
+            "            .build();",
+            "      }",
+            "    }",
+            "  }",
+            "}");
+    compilation = compileWithoutGuava(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerChild")
+        .hasSourceEquivalentTo(nonGuavaGeneratedChild);
   }
 
   @Test
@@ -2807,6 +2967,13 @@ public final class AheadOfTimeSubcomponentsTest {
   private static Compilation compile(JavaFileObject... files) {
     return daggerCompiler()
         .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
+        .compile(files);
+  }
+
+  private static Compilation compileWithoutGuava(Iterable<JavaFileObject> files) {
+    return daggerCompiler()
+        .withOptions(
+            AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts().append(CLASS_PATH_WITHOUT_GUAVA_OPTION))
         .compile(files);
   }
 }

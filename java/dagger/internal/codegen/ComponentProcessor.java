@@ -171,6 +171,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
           bindsInstanceProcessingStep,
           moduleProcessingStep,
           compilerOptions.headerCompilation()
+                  // TODO(b/72748365): Support hjars for ahead-of-time subcomponents.
+                  && !compilerOptions.aheadOfTimeSubcomponents()
               ? componentHjarProcessingStep
               : componentProcessingStep,
           bindingMethodProcessingStep);

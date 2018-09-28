@@ -142,7 +142,7 @@ dependencies {
 ```groovy
 // Add Dagger dependencies
 dependencies {
-  compile 'com.google.dagger:dagger:2.x'
+  implementation 'com.google.dagger:dagger:2.x'
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```
@@ -150,8 +150,8 @@ dependencies {
 If you're using classes in `dagger.android` you'll also want to include:
 
 ```groovy
-compile 'com.google.dagger:dagger-android:2.x'
-compile 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
+implementation 'com.google.dagger:dagger-android:2.x'
+implementation 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
 annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
 ```
 

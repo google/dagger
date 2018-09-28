@@ -127,13 +127,13 @@ final class MissingBindingValidator implements BindingGraphPlugin {
 
   private boolean allIncomingDependenciesCanUseProduction(
       MissingBindingNode missingBindingNode, BindingGraph graph) {
-    return graph.inEdges(missingBindingNode).stream()
+    return graph.network().inEdges(missingBindingNode).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .allMatch(edge -> dependencyCanBeProduction(edge, graph));
   }
 
   private boolean dependencyCanBeProduction(DependencyEdge edge, BindingGraph graph) {
-    Node source = graph.incidentNodes(edge).source();
+    Node source = graph.network().incidentNodes(edge).source();
     if (source instanceof ComponentNode) {
       return entryPointCanUseProduction(edge.dependencyRequest().kind());
     }

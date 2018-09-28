@@ -61,7 +61,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    bindingGraph.edges().stream()
+    bindingGraph.network().edges().stream()
         .flatMap(instancesOf(ChildFactoryMethodEdge.class))
         .forEach(
             edge -> {
@@ -77,7 +77,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
       ChildFactoryMethodEdge edge, BindingGraph graph) {
     ImmutableSet<TypeElement> factoryMethodParameters =
         subgraphFactoryMethodParameters(edge, graph);
-    ComponentNode child = (ComponentNode) graph.incidentNodes(edge).target();
+    ComponentNode child = (ComponentNode) graph.network().incidentNodes(edge).target();
     SetView<TypeElement> modulesOwnedByChild = ownedModules(child, graph);
     return graph.bindingNodes().stream()
         // bindings owned by child
@@ -100,7 +100,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   private ImmutableSet<TypeElement> subgraphFactoryMethodParameters(
       ChildFactoryMethodEdge edge, BindingGraph bindingGraph) {
-    ComponentNode parent = (ComponentNode) bindingGraph.incidentNodes(edge).source();
+    ComponentNode parent = (ComponentNode) bindingGraph.network().incidentNodes(edge).source();
     DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().asType());
     ExecutableType factoryMethodType =
         asExecutable(types.asMemberOf(parentType, edge.factoryMethod()));
@@ -138,7 +138,13 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         edge,
         "%s requires modules which have no visible default constructors. "
             + "Add the following modules as parameters to this method: %s",
-        graph.incidentNodes(edge).target().componentPath().currentComponent().getQualifiedName(),
+        graph
+            .network()
+            .incidentNodes(edge)
+            .target()
+            .componentPath()
+            .currentComponent()
+            .getQualifiedName(),
         Joiner.on(", ").join(missingModules));
   }
 }

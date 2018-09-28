@@ -97,7 +97,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
       DiagnosticReporter diagnosticReporter) {
     ImmutableSet<BindingNode> duplicateBindings =
         duplicateDependencies.stream()
-            .map(edge -> bindingGraph.incidentNodes(edge).target())
+            .map(edge -> bindingGraph.network().incidentNodes(edge).target())
             .flatMap(instancesOf(BindingNode.class))
             .collect(toImmutableSet());
     diagnosticReporter.reportDependency(
@@ -177,7 +177,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
       if (bindingDeclarationFormatter.canFormat(declaration)) {
         declarations.add(declaration);
       } else {
-        graph.successors(node).stream()
+        graph.network().successors(node).stream()
             .flatMap(instancesOf(BindingNode.class))
             .flatMap(dependency -> declarations(graph, dependency).stream())
             .forEach(declarations::add);
@@ -210,7 +210,9 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
           .collect(
               toImmutableSetMultimap(
                   edge ->
-                      create(bindingGraph.incidentNodes(edge).source(), edge.dependencyRequest()),
+                      create(
+                          bindingGraph.network().incidentNodes(edge).source(),
+                          edge.dependencyRequest()),
                   edge -> edge));
     }
 

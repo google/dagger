@@ -57,7 +57,7 @@ final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
     bindingGraph.bindingNodes(productionExecutorKey).stream()
         .flatMap(
             productionExecutorBinding ->
-                bindingGraph.predecessors(productionExecutorBinding).stream())
+                bindingGraph.network().predecessors(productionExecutorBinding).stream())
         .flatMap(instancesOf(BindingNode.class))
         .filter(binding -> !binding.key().equals(productionImplementationExecutorKey))
         .forEach(binding -> reportError(diagnosticReporter, binding));

@@ -58,7 +58,7 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 /**
- * Experimental network visualizer used as a proof-of-concept for {@link BindingGraphPlugin}.
+ * Experimental visualizer used as a proof-of-concept for {@link BindingGraphPlugin}.
  *
  * <p>For each component, writes a <a href=http://www.graphviz.org/content/dot-language>DOT file</a>
  * in the same package. The file name is the name of the component type (with enclosing type names,
@@ -224,9 +224,7 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
     DotGraph graph() {
       if (nodeIds.isEmpty()) {
         Iterator<String> colors = Iterators.cycle(COMPONENT_COLORS);
-        bindingGraph
-            .nodes()
-            .stream()
+        bindingGraph.network().nodes().stream()
             .collect(groupingBy(Node::componentPath))
             .forEach(
                 (component, networkNodes) -> {
@@ -241,7 +239,7 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
                     subgraph.add(dotNode(node));
                   }
                 });
-        for (Edge edge : bindingGraph.edges()) {
+        for (Edge edge : bindingGraph.network().edges()) {
           dotEdge(edge).ifPresent(graph::add);
         }
       }
@@ -259,7 +257,7 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
     }
 
     Optional<DotEdge> dotEdge(Edge edge) {
-      EndpointPair<Node> incidentNodes = bindingGraph.incidentNodes(edge);
+      EndpointPair<Node> incidentNodes = bindingGraph.network().incidentNodes(edge);
       DotEdge dotEdge = new DotEdge(nodeId(incidentNodes.source()), nodeId(incidentNodes.target()));
       if (edge instanceof DependencyEdge) {
         if (((DependencyEdge) edge).isEntryPoint()) {

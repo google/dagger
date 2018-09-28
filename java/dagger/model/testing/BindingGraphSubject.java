@@ -137,7 +137,7 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
     }
 
     private void dependsOnBindingWithKeyString(String keyString) {
-      if (actualBindingGraph().successors(actual()).stream()
+      if (actualBindingGraph().network().successors(actual()).stream()
           .filter(node -> node instanceof BindingNode)
           .map(node -> (BindingNode) node)
           .noneMatch(node -> node.key().toString().equals(keyString))) {

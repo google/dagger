@@ -217,7 +217,7 @@ final class DiagnosticReporterFactory {
     }
 
     private Node source(Edge edge) {
-      return graph.incidentNodes(edge).source();
+      return graph.network().incidentNodes(edge).source();
     }
 
     void printMessage(
@@ -364,7 +364,9 @@ final class DiagnosticReporterFactory {
         dependencyTrace.add(entryPointForTrace);
         for (int i = 0; i < shortestBindingPath.size() - 1; i++) {
           Set<Edge> dependenciesBetween =
-              graph.edgesConnecting(shortestBindingPath.get(i), shortestBindingPath.get(i + 1));
+              graph
+                  .network()
+                  .edgesConnecting(shortestBindingPath.get(i), shortestBindingPath.get(i + 1));
           // If a binding requests a key more than once, any of them should be fine to get to the
           // shortest path
           dependencyTrace.add((DependencyEdge) Iterables.get(dependenciesBetween, 0));
@@ -374,7 +376,7 @@ final class DiagnosticReporterFactory {
 
       /** Returns all the nonsynthetic dependency requests for a binding node. */
       ImmutableSet<DependencyEdge> requests(MaybeBindingNode bindingNode) {
-        return graph.inEdges(bindingNode).stream()
+        return graph.network().inEdges(bindingNode).stream()
             .flatMap(instancesOf(DependencyEdge.class))
             .filter(edge -> edge.dependencyRequest().requestElement().isPresent())
             .sorted(requestEnclosingTypeName().thenComparing(requestElementDeclarationOrder()))
@@ -405,8 +407,11 @@ final class DiagnosticReporterFactory {
                 entryPoint,
                 ep ->
                     shortestPath(
-                        node -> filter(graph.successors(node), MaybeBindingNode.class::isInstance),
-                        graph.incidentNodes(ep).target(),
+                        node ->
+                            filter(
+                                graph.network().successors(node),
+                                MaybeBindingNode.class::isInstance),
+                        graph.network().incidentNodes(ep).target(),
                         bindingNode));
       }
 

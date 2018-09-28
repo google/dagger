@@ -70,7 +70,7 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
   private ImmutableSet<ContributionBinding> mapBindingContributions(
       BindingNode bindingNode, BindingGraph bindingGraph) {
     checkArgument(bindingNode.binding().kind().equals(MULTIBOUND_MAP));
-    return bindingGraph.successors(bindingNode).stream()
+    return bindingGraph.network().successors(bindingNode).stream()
         .flatMap(instancesOf(BindingNode.class))
         .map(node -> (ContributionBinding) node.binding())
         .collect(toImmutableSet());

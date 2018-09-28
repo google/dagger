@@ -71,7 +71,8 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
   // TODO(dpb): Move to BindingGraph.
   private Stream<DependencyEdge> incomingDependencies(
       BindingNode binding, BindingGraph bindingGraph) {
-    return bindingGraph.inEdges(binding).stream().flatMap(instancesOf(DependencyEdge.class));
+    return bindingGraph.network().inEdges(binding).stream()
+        .flatMap(instancesOf(DependencyEdge.class));
   }
 
   private boolean dependencyCanUseProduction(DependencyEdge edge, BindingGraph bindingGraph) {
@@ -90,7 +91,7 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
   private BindingNode bindingRequestingDependency(
       DependencyEdge dependency, BindingGraph bindingGraph) {
     checkArgument(!dependency.isEntryPoint());
-    Node source = bindingGraph.incidentNodes(dependency).source();
+    Node source = bindingGraph.network().incidentNodes(dependency).source();
     verify(
         source instanceof BindingNode,
         "expected source of %s to be a binding node, but was: %s",

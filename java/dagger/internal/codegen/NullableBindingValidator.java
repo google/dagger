@@ -18,9 +18,11 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.DependencyEdge;
@@ -66,12 +68,12 @@ final class NullableBindingValidator implements BindingGraphPlugin {
         .collect(toImmutableList());
   }
 
-  private ImmutableList<DependencyEdge> nonNullableDependencies(
+  private ImmutableSet<DependencyEdge> nonNullableDependencies(
       BindingGraph bindingGraph, BindingNode bindingNode) {
-    return bindingGraph.inEdges(bindingNode).stream()
+    return bindingGraph.network().inEdges(bindingNode).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> !edge.dependencyRequest().isNullable())
-        .collect(toImmutableList());
+        .collect(toImmutableSet());
   }
 
   @VisibleForTesting

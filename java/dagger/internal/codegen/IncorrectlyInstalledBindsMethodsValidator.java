@@ -123,9 +123,9 @@ final class IncorrectlyInstalledBindsMethodsValidator implements BindingGraphPlu
   }
 
   private ImmutableNetwork<Node, Edge> dependencyGraph(BindingGraph graph) {
-    MutableNetwork<Node, Edge> dependencyGraph = NetworkBuilder.from(graph).build();
+    MutableNetwork<Node, Edge> dependencyGraph = NetworkBuilder.from(graph.network()).build();
     for (DependencyEdge dependencyEdge : graph.dependencyEdges()) {
-      EndpointPair<Node> endpoint = graph.incidentNodes(dependencyEdge);
+      EndpointPair<Node> endpoint = graph.network().incidentNodes(dependencyEdge);
       dependencyGraph.addEdge(endpoint.source(), endpoint.target(), dependencyEdge);
     }
     return ImmutableNetwork.copyOf(dependencyGraph);

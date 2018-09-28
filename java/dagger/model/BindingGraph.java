@@ -34,8 +34,6 @@ import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
 import dagger.Module;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.Node;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.lang.model.element.ExecutableElement;
@@ -71,9 +69,26 @@ import javax.lang.model.element.TypeElement;
  *
  * <p><b>Note that this API is experimental and will change.</b>
  */
-public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
+public final class BindingGraph {
+  private final ImmutableNetwork<Node, Edge> network;
+
   BindingGraph(Network<Node, Edge> network) {
-    super(ImmutableNetwork.copyOf(network));
+    this.network = ImmutableNetwork.copyOf(network);
+  }
+
+  /** Returns the graph in its {@link Network} representation. */
+  public ImmutableNetwork<Node, Edge> network() {
+    return network;
+  }
+
+  @Override
+  public int hashCode() {
+    return network.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return network.toString();
   }
 
   /** Returns the binding nodes. */
@@ -154,7 +169,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream(Node node) {
-    return outEdges(node).stream().flatMap(instancesOf(DependencyEdge.class));
+    return network.outEdges(node).stream().flatMap(instancesOf(DependencyEdge.class));
   }
 
   /**
@@ -168,7 +183,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   /** Returns the binding nodes or missing binding nodes that directly satisfy entry points. */
   public ImmutableSet<MaybeBindingNode> entryPointBindingNodes() {
     return entryPointEdgeStream()
-        .map(edge -> (MaybeBindingNode) incidentNodes(edge).target())
+        .map(edge -> (MaybeBindingNode) network.incidentNodes(edge).target())
         .collect(toImmutableSet());
   }
 
@@ -191,14 +206,14 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   // TODO(dpb): Make public. Cache.
   private ImmutableNetwork<Node, DependencyEdge> dependencyGraph() {
     MutableNetwork<Node, DependencyEdge> dependencyGraph =
-        NetworkBuilder.from(this)
-            .expectedNodeCount(nodes().size())
+        NetworkBuilder.from(network)
+            .expectedNodeCount(network.nodes().size())
             .expectedEdgeCount((int) dependencyEdgeStream().count())
             .build();
     dependencyEdgeStream()
         .forEach(
             edge -> {
-              EndpointPair<Node> endpoints = incidentNodes(edge);
+              EndpointPair<Node> endpoints = network.incidentNodes(edge);
               dependencyGraph.addEdge(endpoints.source(), endpoints.target(), edge);
             });
     return ImmutableNetwork.copyOf(dependencyGraph);
@@ -209,11 +224,11 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   private <N extends Node> Stream<N> nodeStream(Class<N> clazz) {
-    return nodes().stream().flatMap(instancesOf(clazz));
+    return network.nodes().stream().flatMap(instancesOf(clazz));
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream() {
-    return edges().stream().flatMap(instancesOf(DependencyEdge.class));
+    return network.edges().stream().flatMap(instancesOf(DependencyEdge.class));
   }
 
   private Stream<DependencyEdge> entryPointEdgeStream() {

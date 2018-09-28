@@ -111,9 +111,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
   }
 
   private Stream<BindingNode> dependencies(BindingNode bindingNode, BindingGraph graph) {
-    return graph
-        .successors(bindingNode)
-        .stream()
+    return graph.network().successors(bindingNode).stream()
         // TODO(ronshapiro): reuse DaggerStreams.instancesOf()?
         .filter(BindingNode.class::isInstance)
         .map(BindingNode.class::cast);

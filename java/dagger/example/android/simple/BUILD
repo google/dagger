@@ -34,6 +34,7 @@ android_library(
 
 android_binary(
     name = "simple",
+    aapt_version = "aapt",
     manifest = "AndroidManifest.xml",
     deps = [
         ":simple_lib",

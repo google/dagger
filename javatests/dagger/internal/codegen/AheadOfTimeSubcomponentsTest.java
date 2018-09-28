@@ -437,7 +437,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf(Builder builder) {}",
             "",
-            "  protected abstract static class Builder implements Leaf.Builder {}",
+            "  public abstract static class Builder implements Leaf.Builder {}",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -466,7 +466,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerAncestor implements Ancestor {",
             "  protected DaggerAncestor() {}",
             "",
-            "  protected abstract class LeafBuilder extends DaggerLeaf.Builder {}",
+            "  public abstract class LeafBuilder extends DaggerLeaf.Builder {}",
             "",
             "  public abstract class LeafImpl extends DaggerLeaf {",
             "    protected LeafImpl(LeafBuilder builder) {",
@@ -563,7 +563,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return Optional.<InChild>empty();",
             "  }",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {}",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {}",
             "}");
 
     filesToCompile.add(
@@ -603,7 +603,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder",
+            "  public abstract class GreatGrandchildBuilder",
             "      extends DaggerGreatGrandchild.Builder {}",
             "",
             "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
@@ -661,7 +661,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {}",
             "",
             "    public abstract class GreatGrandchildImpl",
@@ -823,7 +823,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return Optional.<NonComponentMethodInChild>empty();",
             "  }",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {}",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {}",
             "}");
 
     filesToCompile.add(
@@ -866,7 +866,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder",
+            "  public abstract class GreatGrandchildBuilder",
             "      extends DaggerGreatGrandchild.Builder {}",
             "",
             "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
@@ -926,7 +926,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {}",
             "",
             "    public abstract class GreatGrandchildImpl",
@@ -994,7 +994,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
             "  protected DaggerGreatGrandchild(Builder builder) {}",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {}",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {}",
             "}");
 
     filesToCompile.add(
@@ -1036,7 +1036,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder",
+            "  public abstract class GreatGrandchildBuilder",
             "      extends DaggerGreatGrandchild.Builder {}",
             "",
             "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
@@ -1093,7 +1093,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {}",
             "",
             "    public abstract class GreatGrandchildImpl",
@@ -1493,7 +1493,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  public abstract Set<NoContributions> getSet();",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {",
             "",
             "    @Override",
             "    public Builder module(GreatGrandchildModule module) {",
@@ -1550,7 +1550,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder extends",
+            "  public abstract class GreatGrandchildBuilder extends",
             "      DaggerGreatGrandchild.Builder {",
             "    @Override",
             "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -1625,7 +1625,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {",
             "      @Override",
             "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -1699,7 +1699,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGreatGrandchild implements GreatGrandchild {",
             "  protected DaggerGreatGrandchild(Builder builder) {}",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder { }",
+            "  public abstract static class Builder implements GreatGrandchild.Builder { }",
             "}");
 
     filesToCompile.add(
@@ -1752,7 +1752,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  public abstract Set<Long> getSet();",
             "",
-            "  protected abstract class GreatGrandchildBuilder extends",
+            "  public abstract class GreatGrandchildBuilder extends",
             "      DaggerGreatGrandchild.Builder { }",
             "",
             "  public abstract class GreatGrandchildImpl extends DaggerGreatGrandchild {",
@@ -1822,7 +1822,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "          ChildModule_ProvideLongFactory.proxyProvideLong());",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder { }",
             "",
             "    public abstract class GreatGrandchildImpl extends",
@@ -1951,7 +1951,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "            .proxyProvideInAllSubcomponents());",
             "  }",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {",
             "",
             "    @Override",
             "    public Builder module(GreatGrandchildModule module) {",
@@ -2003,7 +2003,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "            .proxyProvideInAllSubcomponents());",
             "  }",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {",
             "",
             "    @Override",
             "    public Builder module(GreatGrandchildModule module) {",
@@ -2060,7 +2060,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder extends",
+            "  public abstract class GreatGrandchildBuilder extends",
             "      DaggerGreatGrandchild.Builder {",
             "    @Override",
             "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -2102,7 +2102,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder",
+            "  public abstract class GreatGrandchildBuilder",
             "      extends DaggerGreatGrandchild.Builder {",
             "",
             "    @Override",
@@ -2197,7 +2197,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {",
             "      @Override",
             "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -2266,7 +2266,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {",
             "",
             "      @Override",
@@ -2420,7 +2420,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  public abstract Map<String, Unsatisfied> getMap();",
             "",
-            "  protected abstract static class Builder implements GreatGrandchild.Builder {",
+            "  public abstract static class Builder implements GreatGrandchild.Builder {",
             "",
             "    @Override",
             "    public Builder module(GreatGrandchildModule module) {",
@@ -2475,7 +2475,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerGrandchild implements Grandchild {",
             "  protected DaggerGrandchild() {}",
             "",
-            "  protected abstract class GreatGrandchildBuilder extends",
+            "  public abstract class GreatGrandchildBuilder extends",
             "      DaggerGreatGrandchild.Builder {",
             "    @Override",
             "    public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -2551,7 +2551,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      super();",
             "    }",
             "",
-            "    protected abstract class GreatGrandchildBuilder",
+            "    public abstract class GreatGrandchildBuilder",
             "        extends DaggerGrandchild.GreatGrandchildBuilder {",
             "      @Override",
             "      public GreatGrandchildBuilder module(GreatGrandchildModule module) {",
@@ -2938,6 +2938,80 @@ public final class AheadOfTimeSubcomponentsTest {
             "      return AncestorModule_ProvideProvidedInAncestorFactory",
             "          .proxyProvideProvidedInAncestor();",
             "    }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void differentPackages() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.sub.Leaf",
+            "package test.sub;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "public interface Leaf {",
+            "  @Subcomponent.Builder",
+            "  public interface Builder {",
+            "    Leaf build();",
+            "  }",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.sub.DaggerLeaf",
+            "package test.sub;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf(Builder builder) {}",
+            "",
+            "  public abstract static class Builder implements Leaf.Builder {}",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.sub.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import test.sub.Leaf;",
+            "",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  Leaf.Builder leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import test.sub.DaggerLeaf;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafBuilder extends DaggerLeaf.Builder {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl(LeafBuilder builder) {",
+            "      super(builder);",
+            "    }",
+            "  }",
             "}");
     compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();

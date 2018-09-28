@@ -24,7 +24,6 @@ import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -118,7 +117,7 @@ final class GeneratedComponentBuilderModel {
       }
       if (builderSpec().isPresent()) {
         if (generatedComponentModel.isAbstract()) {
-          builder.addModifiers(PROTECTED);
+          builder.addModifiers(PUBLIC);
         } else {
           builder.addModifiers(PRIVATE);
         }

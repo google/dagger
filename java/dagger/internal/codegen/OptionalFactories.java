@@ -31,6 +31,7 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.ABS
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.PRESENT_FACTORY;
 import static dagger.internal.codegen.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.TypeNames.PROVIDER;
+import static dagger.internal.codegen.TypeNames.abstractProducerOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -60,6 +61,7 @@ import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import javax.inject.Provider;
@@ -206,6 +208,44 @@ final class OptionalFactories {
       return frameworkType().frameworkClassOf(typeVariable());
     }
 
+    /** Returns the superclass the generated factory should have, if any. */
+    Optional<ParameterizedTypeName> superclass() {
+      switch (frameworkType()) {
+        case PRODUCER_NODE:
+          // TODO(cgdecker): This probably isn't a big issue for now, but it's possible this
+          // shouldn't be an AbstractProducer:
+          // - As AbstractProducer, it'll only call the delegate's get() method once and then cache
+          //   that result (essentially) rather than calling the delegate's get() method each time
+          //   its get() method is called (which was what it did before the cancellation change).
+          // - It's not 100% clear to me whether the view-creation methods should return a view of
+          //   the same view created by the delegate or if they should just return their own views.
+          return Optional.of(abstractProducerOf(optionalType()));
+        default:
+          return Optional.empty();
+      }
+    }
+
+    /** Returns the superinterface the generated factory should have, if any. */
+    Optional<ParameterizedTypeName> superinterface() {
+      switch (frameworkType()) {
+        case PROVIDER:
+          return Optional.of(factoryType());
+        default:
+          return Optional.empty();
+      }
+    }
+
+    /** Returns the name of the factory method to generate. */
+    String factoryMethodName() {
+      switch (frameworkType()) {
+        case PROVIDER:
+          return "get";
+        case PRODUCER_NODE:
+          return "compute";
+      }
+      throw new AssertionError(frameworkType());
+    }
+
     /** The name of the factory class. */
     String factoryClassName() {
       return new StringBuilder("Present")
@@ -263,12 +303,19 @@ final class OptionalFactories {
     FieldSpec delegateField =
         FieldSpec.builder(spec.delegateType(), "delegate", PRIVATE, FINAL).build();
     ParameterSpec delegateParameter = ParameterSpec.builder(delegateField.type, "delegate").build();
-    return classBuilder(spec.factoryClassName())
-        .addTypeVariable(spec.typeVariable())
-        .addModifiers(PRIVATE, STATIC, FINAL)
-        .addSuperinterface(spec.factoryType())
-        .addJavadoc(
-            "A {@code $T} that uses a delegate {@code $T}.", spec.factoryType(), delegateField.type)
+    TypeSpec.Builder factoryClassBuilder =
+        classBuilder(spec.factoryClassName())
+            .addTypeVariable(spec.typeVariable())
+            .addModifiers(PRIVATE, STATIC, FINAL)
+            .addJavadoc(
+                "A {@code $T} that uses a delegate {@code $T}.",
+                spec.factoryType(),
+                delegateField.type);
+
+    spec.superclass().ifPresent(factoryClassBuilder::superclass);
+    spec.superinterface().ifPresent(factoryClassBuilder::addSuperinterface);
+
+    return factoryClassBuilder
         .addField(delegateField)
         .addMethod(
             constructorBuilder()
@@ -299,7 +346,7 @@ final class OptionalFactories {
   private MethodSpec presentOptionalFactoryGetMethod(
       PresentFactorySpec spec, FieldSpec delegateField) {
     MethodSpec.Builder getMethodBuilder =
-        methodBuilder("get").addAnnotation(Override.class).addModifiers(PUBLIC);
+        methodBuilder(spec.factoryMethodName()).addAnnotation(Override.class).addModifiers(PUBLIC);
 
     switch (spec.frameworkType()) {
       case PROVIDER:
@@ -313,7 +360,7 @@ final class OptionalFactories {
                             spec.valueKind(), CodeBlock.of("$N", delegateField))))
             .build();
 
-      case PRODUCER:
+      case PRODUCER_NODE:
         getMethodBuilder.returns(listenableFutureOf(spec.optionalType()));
 
         switch (spec.valueKind()) {
@@ -325,7 +372,7 @@ final class OptionalFactories {
                     Futures.class,
                     spec.optionalKind()
                         .presentExpression(
-                            FrameworkType.PRODUCER.to(
+                            FrameworkType.PRODUCER_NODE.to(
                                 spec.valueKind(), CodeBlock.of("$N", delegateField))))
                 .build();
 

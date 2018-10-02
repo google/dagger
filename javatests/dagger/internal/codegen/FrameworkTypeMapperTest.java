@@ -39,10 +39,10 @@ public class FrameworkTypeMapperTest {
 
   @Test public void forProducer() {
     FrameworkTypeMapper mapper = FrameworkTypeMapper.FOR_PRODUCER;
-    assertThat(mapper.getFrameworkType(INSTANCE)).isEqualTo(FrameworkType.PRODUCER);
+    assertThat(mapper.getFrameworkType(INSTANCE)).isEqualTo(FrameworkType.PRODUCER_NODE);
     assertThat(mapper.getFrameworkType(LAZY)).isEqualTo(FrameworkType.PROVIDER);
     assertThat(mapper.getFrameworkType(PROVIDER)).isEqualTo(FrameworkType.PROVIDER);
-    assertThat(mapper.getFrameworkType(PRODUCER)).isEqualTo(FrameworkType.PRODUCER);
-    assertThat(mapper.getFrameworkType(PRODUCED)).isEqualTo(FrameworkType.PRODUCER);
+    assertThat(mapper.getFrameworkType(PRODUCER)).isEqualTo(FrameworkType.PRODUCER_NODE);
+    assertThat(mapper.getFrameworkType(PRODUCED)).isEqualTo(FrameworkType.PRODUCER_NODE);
   }
 }

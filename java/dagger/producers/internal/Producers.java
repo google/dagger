@@ -126,7 +126,7 @@ public final class Producers {
    */
   public static <T> Producer<T> producerFromProvider(final Provider<T> provider) {
     checkNotNull(provider);
-    return new Producer<T>() {
+    return new CompletedProducer<T>() {
       @Override
       public ListenableFuture<T> get() {
         return Futures.immediateFuture(provider.get());
@@ -136,22 +136,74 @@ public final class Producers {
 
   /** Returns a producer that succeeds with the given value. */
   public static <T> Producer<T> immediateProducer(final T value) {
-    return new Producer<T>() {
+    final ListenableFuture<T> future = Futures.immediateFuture(value);
+    return new CompletedProducer<T>() {
       @Override
       public ListenableFuture<T> get() {
-        return Futures.immediateFuture(value);
+        return future;
       }
     };
   }
 
   /** Returns a producer that fails with the given exception. */
   public static <T> Producer<T> immediateFailedProducer(final Throwable throwable) {
-    return new Producer<T>() {
+    final ListenableFuture<T> future = Futures.immediateFailedFuture(throwable);
+    return new CompletedProducer<T>() {
       @Override
       public ListenableFuture<T> get() {
-        return Futures.immediateFailedFuture(throwable);
+        return future;
       }
     };
+  }
+
+  /**
+   * Returns a new view of the given {@code producer} if and only if it is a {@link
+   * CancellableProducer}. Cancelling the returned producer's future will not cancel the underlying
+   * task for the given producer.
+   *
+   * @throws IllegalArgumentException if {@code producer} is not a {@code CancellableProducer}
+   */
+  public static <T> Producer<T> nonCancellationPropagatingViewOf(Producer<T> producer) {
+    // This is a hack until we change the types of Producer fields to be CancellableProducer or
+    // some other type.
+    if (producer instanceof CancellableProducer) {
+      return ((CancellableProducer<T>) producer).newDependencyView();
+    }
+    throw new IllegalArgumentException(
+        "nonCancellationPropagatingViewOf called with non-CancellableProducer: " + producer);
+  }
+
+  /**
+   * Returns a new view of the given {@code producer} for use as an entry point in a production
+   * component, if and only if it is a {@link CancellableProducer}. When the returned producer's
+   * future is cancelled, the given {@code cancellable} will also be cancelled.
+   *
+   * @throws IllegalArgumentException if {@code producer} is not a {@code CancellableProducer}
+   */
+  public static <T> Producer<T> entryPointViewOf(
+      Producer<T> producer, CancellationListener cancellationListener) {
+    // This is a hack until we change the types of Producer fields to be CancellableProducer or
+    // some other type.
+    if (producer instanceof CancellableProducer) {
+      return ((CancellableProducer<T>) producer).newEntryPointView(cancellationListener);
+    }
+    throw new IllegalArgumentException(
+        "entryPointViewOf called with non-CancellableProducer: " + producer);
+  }
+
+  /**
+   * Calls {@code cancel} on the given {@code producer} if it is a {@link CancellableProducer}.
+   *
+   * @throws IllegalArgumentException if {@code producer} is not a {@code CancellableProducer}
+   */
+  public static void cancel(Producer<?> producer, boolean mayInterruptIfRunning) {
+    // This is a hack until we change the types of Producer fields to be CancellableProducer or
+    // some other type.
+    if (producer instanceof CancellableProducer) {
+      ((CancellableProducer<?>) producer).cancel(mayInterruptIfRunning);
+    } else {
+      throw new IllegalArgumentException("cancel called with non-CancellableProducer: " + producer);
+    }
   }
 
   private static final Producer<Map<Object, Object>> EMPTY_MAP_PRODUCER =
@@ -160,6 +212,25 @@ public final class Producers {
   @SuppressWarnings("unchecked") // safe contravariant cast
   public static <K, V> Producer<Map<K, V>> emptyMapProducer() {
     return (Producer<Map<K, V>>) (Producer) EMPTY_MAP_PRODUCER;
+  }
+
+  /**
+   * A {@link CancellableProducer} which can't be cancelled because it represents an
+   * already-completed task.
+   */
+  private abstract static class CompletedProducer<T> implements CancellableProducer<T> {
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {}
+
+    @Override
+    public Producer<T> newDependencyView() {
+      return this;
+    }
+
+    @Override
+    public Producer<T> newEntryPointView(CancellationListener cancellationListener) {
+      return this;
+    }
   }
 
   private Producers() {}

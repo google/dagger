@@ -522,13 +522,19 @@ public class MapBindingExpressionWithGuavaTest {
             "test.DaggerTestComponent",
             "package test;",
             "",
+            "import dagger.producers.internal.CancellationListener;",
+            "",
             GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent {",
+            "public final class DaggerTestComponent implements TestComponent, "
+                + "CancellationListener {",
             "  @Override",
             "  public ListenableFuture<Map<String, String>> stringMap() {",
             "    return Futures.immediateFuture(",
             "        (Map<String, String>) ImmutableMap.<String, String>of());",
             "  }",
+            "",
+            "  @Override",
+            "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {}",
             "}");
     Compilation compilation =
         daggerCompiler()

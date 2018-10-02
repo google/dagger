@@ -61,7 +61,7 @@ abstract class BindingRequest {
    */
   static BindingRequest bindingRequest(Key key, FrameworkType frameworkType) {
     return new AutoValue_BindingRequest(
-        key, Optional.of(frameworkType.requestKind()), Optional.of(frameworkType));
+        key, frameworkType.requestKind(), Optional.of(frameworkType));
   }
 
   /** Creates a {@link BindingRequest} for the given {@link FrameworkDependency}. */

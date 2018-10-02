@@ -39,12 +39,7 @@ import java.util.Set;
  */
 public final class SetProducer<T> extends AbstractProducer<Set<T>> {
   private static final Producer<Set<Object>> EMPTY_PRODUCER =
-      new Producer<Set<Object>>() {
-        @Override
-        public ListenableFuture<Set<Object>> get() {
-          return Futures.<Set<Object>>immediateFuture(ImmutableSet.<Object>of());
-        }
-      };
+      Producers.<Set<Object>>immediateProducer(ImmutableSet.<Object>of());
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // safe covariant cast
   public static <T> Producer<Set<T>> empty() {

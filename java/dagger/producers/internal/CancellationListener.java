@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.producers.internal;
 
-/** Binding expression for producer instances. */
-final class ProducerInstanceBindingExpression extends FrameworkInstanceBindingExpression {
-
-  ProducerInstanceBindingExpression(
-      ResolvedBindings resolvedBindings,
-      FrameworkInstanceSupplier frameworkInstanceSupplier,
-      DaggerTypes types,
-      DaggerElements elements) {
-    super(
-        resolvedBindings,
-        frameworkInstanceSupplier,
-        types,
-        elements);
-  }
-
-  @Override
-  protected FrameworkType frameworkType() {
-    return FrameworkType.PRODUCER;
-  }
+/** A listener for producer future cancellation. */
+public interface CancellationListener {
+  /** Called when the future for a producer this listener has been added to is cancelled. */
+  // Note that this name is intentionally a bit verbose to make it unlikely that it will conflict
+  // with any user-defined methods on a component.
+  void onProducerFutureCancelled(boolean mayInterruptIfRunning);
 }

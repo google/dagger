@@ -48,8 +48,8 @@ enum FrameworkType {
     }
 
     @Override
-    RequestKind requestKind() {
-      return RequestKind.PROVIDER;
+    Optional<RequestKind> requestKind() {
+      return Optional.of(RequestKind.PROVIDER);
     }
 
     @Override
@@ -108,15 +108,18 @@ enum FrameworkType {
   },
 
   /** A {@link Producer}. */
-  PRODUCER {
+  PRODUCER_NODE {
     @Override
     Class<?> frameworkClass() {
+      // TODO(cgdecker): Replace this with new class for representing internal producer nodes.
+      // Currently the new class is CancellableProducer, but it may be changed to ProducerNode and
+      // made to not implement Producer.
       return Producer.class;
     }
 
     @Override
-    RequestKind requestKind() {
-      return RequestKind.PRODUCER;
+    Optional<RequestKind> requestKind() {
+      return Optional.empty();
     }
 
     @Override
@@ -143,7 +146,7 @@ enum FrameworkType {
               to(requestKind, from.codeBlock()));
 
         case PRODUCER:
-          return from;
+          return Expression.create(from.type(), to(requestKind, from.codeBlock()));
 
         default:
           throw new IllegalArgumentException(
@@ -159,7 +162,7 @@ enum FrameworkType {
       case PROVISION:
         return PROVIDER;
       case PRODUCTION:
-        return PRODUCER;
+        return PRODUCER_NODE;
       case MEMBERS_INJECTION:
     }
     throw new AssertionError(bindingType);
@@ -170,8 +173,6 @@ enum FrameworkType {
     switch (requestKind) {
       case PROVIDER:
         return Optional.of(FrameworkType.PROVIDER);
-      case PRODUCER:
-        return Optional.of(FrameworkType.PRODUCER);
       default:
         return Optional.empty();
     }
@@ -185,8 +186,8 @@ enum FrameworkType {
     return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
   }
 
-  /** Returns the {@link RequestKind} matching this framework type. */
-  abstract RequestKind requestKind();
+  /** The request kind that an instance of this framework type can satisfy directly, if any. */
+  abstract Optional<RequestKind> requestKind();
 
   /**
    * Returns a {@link CodeBlock} that evaluates to a requested object given an expression that

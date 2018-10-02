@@ -25,11 +25,13 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.BUILDER_METHOD;
+import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.CANCELLATION_LISTENER_METHOD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.COMPONENT_METHOD;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.CONSTRUCTOR;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.INITIALIZE_METHOD;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_BUILDER;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
+import static dagger.internal.codegen.ProducerNodeInstanceBindingExpression.MAY_INTERRUPT_IF_RUNNING;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
@@ -49,6 +51,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.producers.internal.CancellationListener;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -179,6 +182,10 @@ abstract class ComponentModelBuilder {
     addSubcomponents();
     addConstructor();
 
+    if (graph.componentDescriptor().kind().isProducer()) {
+      addCancellationListenerImplementation();
+    }
+
     done = true;
     return generatedComponentModel;
   }
@@ -222,6 +229,56 @@ abstract class ComponentModelBuilder {
         generatedComponentModel.addMethod(COMPONENT_METHOD, methodSpec);
       }
     }
+  }
+
+  private static final int STATEMENTS_PER_METHOD = 100;
+
+  private static final String CANCELLATION_LISTENER_METHOD_NAME = "onProducerFutureCancelled";
+
+  private void addCancellationListenerImplementation() {
+    generatedComponentModel.addSupertype(elements.getTypeElement(CancellationListener.class));
+    generatedComponentModel.claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
+
+    // Reversing should order cancellations starting from entry points and going down to leaves
+    // rather than the other way around. This shouldn't really matter but seems *slightly*
+    // preferable because:
+    // When a future that another future depends on is cancelled, that cancellation will propagate
+    // up the future graph toward the entry point. Cancelling in reverse order should ensure that
+    // everything that depends on a particular node has already been cancelled when that node is
+    // cancelled, so there's no need to propagate. Otherwise, when we cancel a leaf node, it might
+    // propagate through most of the graph, making most of the cancel calls that follow in the
+    // onProducerFutureCancelled method do nothing.
+    ImmutableList<CodeBlock> cancellationStatements =
+        generatedComponentModel.getCancellations().reverse();
+    MethodSpec.Builder methodBuilder =
+        methodBuilder(CANCELLATION_LISTENER_METHOD_NAME)
+            .addModifiers(PUBLIC)
+            .addAnnotation(Override.class)
+            .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING);
+    if (generatedComponentModel.supermodel().isPresent()) {
+      methodBuilder.addStatement(
+          "super.$L($L)", CANCELLATION_LISTENER_METHOD_NAME, MAY_INTERRUPT_IF_RUNNING);
+    }
+
+    if (cancellationStatements.size() < STATEMENTS_PER_METHOD) {
+      methodBuilder.addCode(CodeBlocks.concat(cancellationStatements)).build();
+    } else {
+      List<List<CodeBlock>> partitions =
+          Lists.partition(cancellationStatements, STATEMENTS_PER_METHOD);
+      for (List<CodeBlock> partition : partitions) {
+        String methodName = generatedComponentModel.getUniqueMethodName("cancelProducers");
+        MethodSpec method =
+            MethodSpec.methodBuilder(methodName)
+                .addModifiers(PRIVATE)
+                .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING)
+                .addCode(CodeBlocks.concat(partition))
+                .build();
+        methodBuilder.addStatement("$N($L)", method, MAY_INTERRUPT_IF_RUNNING);
+        generatedComponentModel.addMethod(CANCELLATION_LISTENER_METHOD, method);
+      }
+    }
+
+    generatedComponentModel.addMethod(CANCELLATION_LISTENER_METHOD, methodBuilder.build());
   }
 
   private MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
@@ -323,12 +380,9 @@ abstract class ComponentModelBuilder {
         .build();
   }
 
-  private static final int INITIALIZATIONS_PER_INITIALIZE_METHOD = 100;
-
   private void addConstructor() {
     List<List<CodeBlock>> partitions =
-        Lists.partition(
-            generatedComponentModel.getInitializations(), INITIALIZATIONS_PER_INITIALIZE_METHOD);
+        Lists.partition(generatedComponentModel.getInitializations(), STATEMENTS_PER_METHOD);
 
     ImmutableList<ParameterSpec> constructorParameters = constructorParameters();
     MethodSpec.Builder constructor =
@@ -353,16 +407,15 @@ abstract class ComponentModelBuilder {
             .map(param -> CodeBlock.of("$N", param))
             .collect(toParametersCodeBlock());
 
-    UniqueNameSet methodNames = new UniqueNameSet();
     for (List<CodeBlock> partition : partitions) {
-      String methodName = methodNames.getUniqueName("initialize");
+      String methodName = generatedComponentModel.getUniqueMethodName("initialize");
       MethodSpec.Builder initializeMethod =
           methodBuilder(methodName)
               .addModifiers(PRIVATE)
               /* TODO(gak): Strictly speaking, we only need the suppression here if we are also
                * initializing a raw field in this method, but the structure of this code makes it
                * awkward to pass that bit through.  This will be cleaned up when we no longer
-               * separate fields and initilization as we do now. */
+               * separate fields and initialization as we do now. */
               .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
               .addCode(CodeBlocks.concat(partition));
       initializeMethod.addParameters(initializeParameters);
@@ -372,7 +425,7 @@ abstract class ComponentModelBuilder {
     generatedComponentModel.addMethod(CONSTRUCTOR, constructor.build());
   }
 
-  /** Returns the list of {@link ParameterSpec}s for the initialze methods. */
+  /** Returns the list of {@link ParameterSpec}s for the initialize methods. */
   private ImmutableList<ParameterSpec> initializeParameters() {
     return constructorParameters()
         .stream()

@@ -48,6 +48,7 @@ import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import dagger.producers.internal.CancellationListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -116,6 +117,12 @@ final class GeneratedComponentModel {
      * subcomponents.
      */
     MODIFIABLE_BINDING_METHOD,
+
+    /**
+     * The {@link CancellationListener#onProducerFutureCancelled(boolean)} method for a production
+     * component.
+     */
+    CANCELLATION_LISTENER_METHOD,
     ;
   }
 
@@ -145,6 +152,7 @@ final class GeneratedComponentModel {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
+  private final List<CodeBlock> cancellations = new ArrayList<>();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
   private final ListMultimap<MethodSpecKind, MethodSpec> methodSpecsMap =
@@ -392,6 +400,11 @@ final class GeneratedComponentModel {
     initializations.add(codeBlock);
   }
 
+  /** Adds the given code block to the cancellation listener method of the component. */
+  void addCancellation(CodeBlock codeBlock) {
+    cancellations.add(codeBlock);
+  }
+
   /** Returns a new, unique field name for the component based on the given name. */
   String getUniqueFieldName(String name) {
     return componentFieldNames.getUniqueName(name);
@@ -436,6 +449,11 @@ final class GeneratedComponentModel {
   /** Returns the list of {@link CodeBlock}s that need to go in the initialize method. */
   ImmutableList<CodeBlock> getInitializations() {
     return ImmutableList.copyOf(initializations);
+  }
+
+  /** Returns the list of {@link CodeBlock}s that need to go in the cancellation listener method. */
+  ImmutableList<CodeBlock> getCancellations() {
+    return ImmutableList.copyOf(cancellations);
   }
 
   /**

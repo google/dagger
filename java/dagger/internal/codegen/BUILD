@@ -286,7 +286,7 @@ java_library(
         "ProducerCreationExpression.java",
         "ProducerFactoryGenerator.java",
         "ProducerFromProviderCreationExpression.java",
-        "ProducerInstanceBindingExpression.java",
+        "ProducerNodeInstanceBindingExpression.java",
         "ProductionExecutorModuleGenerator.java",
         "ProviderInstanceBindingExpression.java",
         "ReferenceReleasingManagerFields.java",

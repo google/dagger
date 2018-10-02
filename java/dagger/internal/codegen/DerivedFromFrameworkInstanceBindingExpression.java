@@ -20,13 +20,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
-import dagger.model.Key;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.RequestKind;
 
 /** A binding expression that depends on a framework instance. */
 final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpression {
 
-  private final Key key;
+  private final BindingRequest frameworkRequest;
   private final RequestKind requestKind;
   private final FrameworkType frameworkType;
   private final ComponentBindingExpressions componentBindingExpressions;
@@ -38,7 +38,7 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    this.key = resolvedBindings.key();
+    this.frameworkRequest = bindingRequest(resolvedBindings.key(), frameworkType);
     this.requestKind = checkNotNull(requestKind);
     this.frameworkType = checkNotNull(frameworkType);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
@@ -49,8 +49,16 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   Expression getDependencyExpression(ClassName requestingClass) {
     return frameworkType.to(
         requestKind,
-        componentBindingExpressions.getDependencyExpression(
-            bindingRequest(key, frameworkType), requestingClass),
+        componentBindingExpressions.getDependencyExpression(frameworkRequest, requestingClass),
         types);
+  }
+
+  @Override
+  Expression getDependencyExpressionForComponentMethod(
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+    Expression expression =
+        componentBindingExpressions.getDependencyExpressionForComponentMethod(
+            frameworkRequest, componentMethod, component);
+    return frameworkType.to(requestKind, expression, types);
   }
 }

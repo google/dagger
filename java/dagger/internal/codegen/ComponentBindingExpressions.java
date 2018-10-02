@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
@@ -161,7 +162,21 @@ final class ComponentBindingExpressions {
   }
 
   /**
-   * Returns the {@link CodeBlock} for the method argmuments used with the factory {@code create()}
+   * Equivalent to {@link #getDependencyExpression(BindingRequest, ClassName)} that is used only
+   * when the request is for implementation of a component method.
+   *
+   * @throws IllegalStateException if there is no binding expression that satisfies the request
+   */
+  Expression getDependencyExpressionForComponentMethod(
+      BindingRequest request,
+      ComponentMethodDescriptor componentMethod,
+      GeneratedComponentModel componentModel) {
+    return getBindingExpression(request)
+        .getDependencyExpressionForComponentMethod(componentMethod, componentModel);
+  }
+
+  /**
+   * Returns the {@link CodeBlock} for the method arguments used with the factory {@code create()}
    * method for the given {@link ContributionBinding binding}.
    */
   CodeBlock getCreateMethodArgumentsCodeBlock(ContributionBinding binding) {
@@ -295,8 +310,8 @@ final class ComponentBindingExpressions {
         return new ProviderInstanceBindingExpression(
             resolvedBindings, frameworkInstanceSupplier, types, elements);
       case PRODUCTION:
-        return new ProducerInstanceBindingExpression(
-            resolvedBindings, frameworkInstanceSupplier, types, elements);
+        return new ProducerNodeInstanceBindingExpression(
+            resolvedBindings, frameworkInstanceSupplier, types, elements, generatedComponentModel);
       default:
         throw new AssertionError("invalid binding type: " + resolvedBindings.bindingType());
     }
@@ -407,9 +422,13 @@ final class ComponentBindingExpressions {
   /** Returns a binding expression for a provision binding. */
   private BindingExpression provisionBindingExpression(
       ResolvedBindings resolvedBindings, BindingRequest request) {
-    // All provision requests should have an associated RequestKind, even if they're a framework
-    // request.
-    checkArgument(request.requestKind().isPresent());
+    if (!request.requestKind().isPresent()) {
+      verify(
+          request.frameworkType().get().equals(FrameworkType.PRODUCER_NODE),
+          "expected a PRODUCER_NODE: %s",
+          request);
+      return producerFromProviderBindingExpression(resolvedBindings);
+    }
     RequestKind requestKind = request.requestKind().get();
     switch (requestKind) {
       case INSTANCE:
@@ -445,7 +464,7 @@ final class ComponentBindingExpressions {
     } else {
       // If no FrameworkType is present, a RequestKind is guaranteed to be present.
       return new DerivedFromFrameworkInstanceBindingExpression(
-          resolvedBindings, FrameworkType.PRODUCER, request.requestKind().get(), this, types);
+          resolvedBindings, FrameworkType.PRODUCER_NODE, request.requestKind().get(), this, types);
     }
   }
 
@@ -485,7 +504,7 @@ final class ComponentBindingExpressions {
   private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
       ResolvedBindings resolvedBindings) {
     checkArgument(resolvedBindings.bindingType().equals(BindingType.PROVISION));
-    return new ProducerInstanceBindingExpression(
+    return new ProducerNodeInstanceBindingExpression(
         resolvedBindings,
         new FrameworkFieldInitializer(
             generatedComponentModel,
@@ -493,7 +512,8 @@ final class ComponentBindingExpressions {
             new ProducerFromProviderCreationExpression(
                 resolvedBindings.contributionBinding(), generatedComponentModel, this)),
         types,
-        elements);
+        elements,
+        generatedComponentModel);
   }
 
   /**

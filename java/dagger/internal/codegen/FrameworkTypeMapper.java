@@ -20,8 +20,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
 import static java.util.stream.Collectors.toSet;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -58,7 +56,7 @@ enum FrameworkTypeMapper {
         case INSTANCE:
         case PRODUCED:
         case PRODUCER:
-          return FrameworkType.PRODUCER;
+          return FrameworkType.PRODUCER_NODE;
         case PROVIDER:
         case PROVIDER_OF_LAZY:
         case LAZY:
@@ -82,15 +80,6 @@ enum FrameworkTypeMapper {
   FrameworkType getFrameworkType(Set<DependencyRequest> requests) {
     Set<FrameworkType> frameworkTypes =
         requests.stream().map(request -> getFrameworkType(request.kind())).collect(toSet());
-    if (frameworkTypes.size() == 1) {
-      return getOnlyElement(frameworkTypes);
-    } else if (frameworkTypes.equals(CONTRIBUTION_TYPES)) {
-      return FrameworkType.PROVIDER;
-    } else {
-      throw new IllegalArgumentException("Bad set of framework classes: " + frameworkTypes);
-    }
+    return frameworkTypes.size() == 1 ? getOnlyElement(frameworkTypes) : FrameworkType.PROVIDER;
   }
-
-  private static final ImmutableSet<FrameworkType> CONTRIBUTION_TYPES =
-      Sets.immutableEnumSet(FrameworkType.PROVIDER, FrameworkType.PRODUCER);
 }

@@ -33,6 +33,16 @@ abstract class BindingExpression {
    */
   abstract Expression getDependencyExpression(ClassName requestingClass);
 
+  /**
+   * Equivalent to {@link #getDependencyExpression} that is used only when the request is for an
+   * implementation of a component method. By default, just delegates to {@link
+   * #getDependencyExpression}.
+   */
+  Expression getDependencyExpressionForComponentMethod(
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+    return getDependencyExpression(component.name());
+  }
+
   /** Returns {@code true} if this binding expression should be encapsulated in a method. */
   boolean requiresMethodEncapsulation() {
     return false;
@@ -46,7 +56,9 @@ abstract class BindingExpression {
   CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
     // By default, just delegate to #getDependencyExpression().
-    return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
+    return CodeBlock.of(
+        "return $L;",
+        getDependencyExpressionForComponentMethod(componentMethod, component).codeBlock());
   }
 
   /**

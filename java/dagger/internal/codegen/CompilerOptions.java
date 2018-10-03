@@ -191,11 +191,6 @@ abstract class CompilerOptions {
       }
 
       @Override
-      public boolean useCommandLineOption() {
-        return false;
-      }
-
-      @Override
       public String toString() {
         return "experimental_turbine_hjar";
       }

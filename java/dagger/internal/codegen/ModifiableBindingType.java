@@ -70,10 +70,21 @@ enum ModifiableBindingType {
    * such bindings are modifiable across subcomponent implementations.
    */
   INJECTION,
+
+  /**
+   * If a binding requires an instance of a module then it is possible for that same module to be
+   * re-instantiated with different state by an ancestor component and thereby bind to a different
+   * instance of the same object. For this reason we reimplement the binding in the base
+   * implementation of the subcomponent, but then allow for all modifiations by re-implementing the
+   * binding when generating the root component. This allows for as much of the known binding graph
+   * to be implemented as early as possible, even if the binding requiring a module must be
+   * overridden later on.
+   */
+  MODULE_INSTANCE,
   ;
 
   private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =
-      ImmutableSet.of(NONE, MULTIBINDING, OPTIONAL, INJECTION);
+      ImmutableSet.of(NONE, MULTIBINDING, OPTIONAL, INJECTION, MODULE_INSTANCE);
 
   boolean isModifiable() {
     return !equals(NONE);

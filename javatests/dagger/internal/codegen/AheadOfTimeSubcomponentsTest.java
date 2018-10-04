@@ -352,18 +352,18 @@ public final class AheadOfTimeSubcomponentsTest {
 
   @Test
   public void moduleInstanceDependency() {
-    JavaFileObject subcomponent =
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
         JavaFileObjects.forSourceLines(
-            "test.Sub",
+            "test.Leaf",
             "package test;",
             "",
             "import dagger.Subcomponent;",
             "",
             "@Subcomponent(modules = TestModule.class)",
-            "interface Sub {",
+            "interface Leaf {",
             "  String string();",
-            "}");
-    JavaFileObject module =
+            "}"),
         JavaFileObjects.forSourceLines(
             "test.TestModule",
             "package test;",
@@ -374,18 +374,18 @@ public final class AheadOfTimeSubcomponentsTest {
             "@Module",
             "class TestModule {",
             "  @Provides String provideString() { return \"florp\"; }",
-            "}");
-    JavaFileObject generatedSubcomponent =
+            "}"));
+    JavaFileObject generatedLeaf =
         JavaFileObjects.forSourceLines(
-            "test.DaggerSub",
+            "test.DaggerLeaf",
             "package test;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "public abstract class DaggerSub implements Sub {",
+            "public abstract class DaggerLeaf implements Leaf {",
             "  private TestModule testModule;",
             "",
-            "  protected DaggerSub() {",
+            "  protected DaggerLeaf() {",
             "    initialize();",
             "  }",
             "",
@@ -399,11 +399,44 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return TestModule_ProvideStringFactory.proxyProvideString(testModule);",
             "  }",
             "}");
-    Compilation compilation = compile(subcomponent, module);
+    Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
-        .generatedSourceFile("test.DaggerSub")
-        .hasSourceEquivalentTo(generatedSubcomponent);
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() {",
+            "      super();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
   }
 
   @Test
@@ -2668,12 +2701,6 @@ public final class AheadOfTimeSubcomponentsTest {
   }
 
   private static Compilation compile(Iterable<JavaFileObject> files) {
-    return daggerCompiler()
-        .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
-        .compile(files);
-  }
-
-  private static Compilation compile(JavaFileObject... files) {
     return daggerCompiler()
         .withOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE.javacopts())
         .compile(files);

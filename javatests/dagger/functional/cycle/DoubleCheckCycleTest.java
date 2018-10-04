@@ -157,6 +157,7 @@ public class DoubleCheckCycleTest {
   }
 
   @Test(timeout = 5000)
+
   public void testGetFromMultipleThreads() throws Exception {
     AtomicInteger callCount = new AtomicInteger(0);
     AtomicInteger requestCount = new AtomicInteger(0);

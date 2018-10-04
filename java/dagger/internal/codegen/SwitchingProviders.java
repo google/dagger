@@ -61,13 +61,13 @@ abstract class SwitchingProviders {
     Key key();
 
     /** Returns the {@link Expression} that returns the provided instance for this case. */
-    Expression getReturnExpression();
+    Expression getReturnExpression(ClassName switchingProviderClass);
 
     /**
      * Returns the {@link Expression} that returns the {@code SwitchProvider} instance for this
      * case.
      */
-    Expression getProviderExpression(ClassName switchType, int switchId);
+    Expression getProviderExpression(ClassName switchingProviderClass, int switchId);
   }
 
   /**
@@ -147,7 +147,8 @@ abstract class SwitchingProviders {
     }
 
     private CodeBlock createSwitchCaseCodeBlock(SwitchCase switchCase) {
-      CodeBlock instanceCodeBlock = switchCase.getReturnExpression().box(types).codeBlock();
+      CodeBlock instanceCodeBlock =
+          switchCase.getReturnExpression(switchingProviderType).box(types).codeBlock();
 
       return CodeBlock.builder()
           // TODO(user): Is there something else more useful than the key?

@@ -250,7 +250,7 @@ public class ElidedFactoriesTest {
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0: return (T) getDependsOnScoped();",
+                "        case 0: return (T) DaggerSimpleComponent.this.getDependsOnScoped();",
                 "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",

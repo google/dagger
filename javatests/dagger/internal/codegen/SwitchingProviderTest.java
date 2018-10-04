@@ -373,7 +373,7 @@ public class SwitchingProviderTest {
                 "    public T get() {",
                 "      switch (id) {",
                 "        case 0:",
-                "          return (T) getCharSequence();",
+                "          return (T) DaggerTestComponent.this.getCharSequence();",
                 "        default:",
                 "          throw new AssertionError(id);",
                 "      }",

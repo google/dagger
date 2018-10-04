@@ -1167,7 +1167,7 @@ public class DelegateBindingExpressionTest {
                     "    @Override",
                     "    public T get() {",
                     "      switch (id) {",
-                    "        case 0: return (T) getObject2();",
+                    "        case 0: return (T) DaggerTestComponent.this.getObject2();",
                     "        default: throw new AssertionError(id);",
                     "      }",
                     "    }",

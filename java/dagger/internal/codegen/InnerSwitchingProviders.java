@@ -88,17 +88,17 @@ final class InnerSwitchingProviders extends SwitchingProviders {
     }
 
     @Override
-    public Expression getProviderExpression(ClassName switchType, int switchId) {
+    public Expression getProviderExpression(ClassName switchingProviderClass, int switchId) {
       TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
       return Expression.create(
           types.wrapType(instanceType, Provider.class),
-          CodeBlock.of("new $T<>($L)", switchType, switchId));
+          CodeBlock.of("new $T<>($L)", switchingProviderClass, switchId));
     }
 
     @Override
-    public Expression getReturnExpression() {
+    public Expression getReturnExpression(ClassName switchingProviderClass) {
       return componentBindingExpressions.getDependencyExpression(
-          bindingRequest(binding.key(), INSTANCE), requestingClass);
+          bindingRequest(binding.key(), INSTANCE), switchingProviderClass);
     }
   }
 }

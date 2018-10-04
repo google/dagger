@@ -105,7 +105,7 @@ final class StaticSwitchingProviders extends SwitchingProviders {
     }
 
     @Override
-    public Expression getProviderExpression(ClassName switchType, int switchId) {
+    public Expression getProviderExpression(ClassName switchingProviderClass, int switchId) {
       TypeMirror accessibleType = types.accessibleType(binding.contributedType(), owningComponent);
       // Java 7 type inference can't figure out that instance in
       // DoubleCheck.provider(new SwitchingProvider<>()) is Provider<T> and not Provider<Object>
@@ -120,20 +120,20 @@ final class StaticSwitchingProviders extends SwitchingProviders {
 
       return Expression.create(
           types.wrapType(accessibleType, Provider.class),
-          CodeBlock.of("new $T<$L>($L)", switchType, typeParameter, arguments));
+          CodeBlock.of("new $T<$L>($L)", switchingProviderClass, typeParameter, arguments));
     }
 
     @Override
-    public Expression getReturnExpression() {
+    public Expression getReturnExpression(ClassName switchingProviderClass) {
       return Expression.create(
           binding.contributedType(),
           CodeBlock.of(
               "$T.provideInstance($L)",
               generatedClassNameForBinding(binding),
-              getMethodArguments()));
+              getMethodArguments(switchingProviderClass)));
     }
 
-    private CodeBlock getMethodArguments() {
+    private CodeBlock getMethodArguments(ClassName switchingProviderClass) {
       int i = 0;
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       if (binding.requiresModuleInstance()) {
@@ -143,7 +143,7 @@ final class StaticSwitchingProviders extends SwitchingProviders {
       for (FrameworkDependency dependency : binding.frameworkDependencies()) {
         TypeMirror type =
             componentBindingExpressions
-                .getDependencyExpression(bindingRequest(dependency), owningComponent)
+                .getDependencyExpression(bindingRequest(dependency), switchingProviderClass)
                 .type();
         arguments.add(argument(type, i++));
       }

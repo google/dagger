@@ -269,7 +269,7 @@ final class ModifiableBindingExpressions {
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
-        return !generatedComponentModel.isAbstract();
+        return false;
       case MISSING:
         // TODO(b/72748365): investigate beder@'s comment about having intermediate component
         // ancestors satisfy missing bindings of their children with their own missing binding

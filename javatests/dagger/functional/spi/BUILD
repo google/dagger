@@ -42,6 +42,7 @@ GenJavaTests(
         ["*.java"],
         exclude = ["TestPlugin.java"],
     ),
+    functional = 0,
     test_only_deps = [
         "@google_bazel_common//third_party/java/truth",
         "@google_bazel_common//third_party/java/junit",

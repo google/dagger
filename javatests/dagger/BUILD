@@ -23,6 +23,7 @@ load("//:test_defs.bzl", "GenJavaTests")
 GenJavaTests(
     name = "core_tests",
     srcs = glob(["**/*.java"]),
+    functional = 0,
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",

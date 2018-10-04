@@ -87,6 +87,17 @@ public final class BindingGraph {
   }
 
   @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+    if (other instanceof BindingGraph) {
+      return network.equals(((BindingGraph) other).network);
+    }
+    return false;
+  }
+
+  @Override
   public String toString() {
     return network.toString();
   }

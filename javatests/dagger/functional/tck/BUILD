@@ -40,3 +40,21 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/junit",
     ],
 )
+
+GenJavaTests(
+    name = "tck_tests_with_aot",
+    srcs = glob(["*.java"]),
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    lib_javacopts = [
+        "-Adagger.privateMemberValidation=warning",
+        "-Adagger.staticMemberValidation=warning",
+        "-Adagger.ignorePrivateAndStaticInjectionForComponent=enabled",
+    ],
+    with_aot = True,
+    deps = [
+        "//:dagger_with_compiler",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@google_bazel_common//third_party/java/jsr330_inject:tck",
+        "@google_bazel_common//third_party/java/junit",
+    ],
+)

@@ -51,3 +51,17 @@ GenRobolectricTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+GenRobolectricTests(
+    name = "android_functional_tests_with_aot",
+    srcs = glob(["*Test.java"]),
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    with_aot = True,
+    deps = [
+        ":code_under_test",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/guava:testlib",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)

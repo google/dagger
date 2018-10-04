@@ -38,3 +38,18 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+GenJavaTests(
+    name = "producers_tests_with_aot",
+    srcs = glob(["**/*.java"]),
+    javacopts = SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
+    with_aot = True,
+    deps = [
+        "//java/dagger/producers",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/guava:testlib",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/mockito",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)

@@ -51,3 +51,18 @@ GenRobolectricTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+GenRobolectricTests(
+    name = "functional_tests_with_aot",
+    srcs = glob(["*Test.java"]),
+    with_aot = True,
+    deps = [
+        ":functional",
+        "//:android",
+        "//:android-support",
+        "//:dagger_with_compiler",
+        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)

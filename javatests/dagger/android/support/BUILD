@@ -35,3 +35,20 @@ GenRobolectricTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+GenRobolectricTests(
+    name = "android-support-tests-with-aot",
+    srcs = glob(["*.java"]),
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    with_aot = True,
+    deps = [
+        "//:dagger_with_compiler",
+        "//java/dagger/android",
+        "//java/dagger/android/support",
+        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
+        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)

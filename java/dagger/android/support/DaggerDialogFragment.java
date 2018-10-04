@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2018 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package dagger.android;
+package dagger.android.support;
 
-import android.app.DialogFragment;
-import android.app.Fragment;
 import android.content.Context;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
@@ -26,25 +28,21 @@ import javax.inject.Inject;
  * A {@link DialogFragment} that injects its members in {@link #onAttach(Context)} and can be used
  * to inject child {@link Fragment}s attached to it. Note that when this fragment gets reattached,
  * its members will be injected again.
- *
- * @deprecated Framework fragments are deprecated in Android P; prefer {@code
- *     dagger.android.support.DaggerDialogFragment} to use a support-library-friendly {@code
- *     dagger.android} dialog fragment implementation.
  */
-@Deprecated
 @Beta
-public abstract class DaggerDialogFragment extends DialogFragment implements HasFragmentInjector {
+public abstract class DaggerDialogFragment extends DialogFragment
+    implements HasSupportFragmentInjector {
 
   @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
 
   @Override
   public void onAttach(Context context) {
-    AndroidInjection.inject(this);
+    AndroidSupportInjection.inject(this);
     super.onAttach(context);
   }
 
   @Override
-  public AndroidInjector<Fragment> fragmentInjector() {
+  public AndroidInjector<Fragment> supportFragmentInjector() {
     return childFragmentInjector;
   }
 }

@@ -122,9 +122,7 @@ final class DaggerElements implements Elements {
         public String visitExecutable(ExecutableElement executableElement, Void aVoid) {
           return enclosingTypeAndMemberName(executableElement)
               .append(
-                  executableElement
-                      .getParameters()
-                      .stream()
+                  executableElement.getParameters().stream()
                       .map(parameter -> parameter.asType().toString())
                       .collect(joining(", ", "(", ")")))
               .toString();
@@ -161,10 +159,11 @@ final class DaggerElements implements Elements {
         }
 
         private StringBuilder enclosingTypeAndMemberName(Element element) {
-          return new StringBuilder()
-              .append(element.getEnclosingElement().accept(this, null))
-              .append('.')
-              .append(element.getSimpleName());
+          StringBuilder name = new StringBuilder(element.getEnclosingElement().accept(this, null));
+          if (!element.getSimpleName().contentEquals("<init>")) {
+            name.append('.').append(element.getSimpleName());
+          }
+          return name;
         }
       };
 

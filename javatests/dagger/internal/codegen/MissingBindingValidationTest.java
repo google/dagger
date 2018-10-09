@@ -305,7 +305,7 @@ public class MissingBindingValidationTest {
             message(
                 "test.TestClass.A cannot be provided without an @Provides-annotated method.",
                 "    test.TestClass.A is injected at",
-                "        test.TestClass.B.<init>(a)",
+                "        test.TestClass.B(a)",
                 "    test.TestClass.B is injected at",
                 "        test.TestClass.C.b",
                 "    test.TestClass.C is injected at",
@@ -360,7 +360,7 @@ public class MissingBindingValidationTest {
                 "java.lang.String cannot be provided without an @Inject constructor or an "
                     + "@Provides-annotated method.",
                 "    java.lang.String is injected at",
-                "        TestImplementation.<init>(missingBinding)",
+                "        TestImplementation(missingBinding)",
                 "    TestImplementation is injected at",
                 "        TestModule.bindTestInterface(implementation)",
                 "    TestInterface is provided at",
@@ -413,11 +413,11 @@ public class MissingBindingValidationTest {
             message(
                 "java.util.List cannot be provided without an @Provides-annotated method.",
                 "    java.util.List is injected at",
-                "        test.TestClass.<init>(list)",
+                "        test.TestClass(list)",
                 "    test.TestClass is injected at",
-                "        test.Generic.<init>(t)",
+                "        test.Generic(t)",
                 "    test.Generic<test.TestClass> is injected at",
-                "        test.UsesTest.<init>(genericTestClass)",
+                "        test.UsesTest(genericTestClass)",
                 "    test.UsesTest is provided at",
                 "        test.TestComponent.usesTest()"));
   }
@@ -467,11 +467,11 @@ public class MissingBindingValidationTest {
             message(
                 "java.util.List cannot be provided without an @Provides-annotated method.",
                 "    java.util.List is injected at",
-                "        test.TestClass.<init>(list)",
+                "        test.TestClass(list)",
                 "    test.TestClass is injected at",
                 "        test.Generic.t",
                 "    test.Generic<test.TestClass> is injected at",
-                "        test.UsesTest.<init>(genericTestClass)",
+                "        test.UsesTest(genericTestClass)",
                 "    test.UsesTest is provided at",
                 "        test.TestComponent.usesTest()"));
   }

@@ -64,11 +64,11 @@ public class DependencyCycleValidationTest {
             message(
                 "Found a dependency cycle:",
                 "    test.Outer.C is injected at",
-                "        test.Outer.A.<init>(cParam)",
+                "        test.Outer.A(cParam)",
                 "    test.Outer.A is injected at",
-                "        test.Outer.B.<init>(aParam)",
+                "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
-                "        test.Outer.C.<init>(bParam)",
+                "        test.Outer.C(bParam)",
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
@@ -116,13 +116,13 @@ public class DependencyCycleValidationTest {
             message(
                 "Found a dependency cycle:",
                 "    test.Outer.C is injected at",
-                "        test.Outer.A.<init>(cParam)",
+                "        test.Outer.A(cParam)",
                 "    test.Outer.A is injected at",
-                "        test.Outer.B.<init>(aParam)",
+                "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
-                "        test.Outer.C.<init>(bParam)",
+                "        test.Outer.C(bParam)",
                 "    test.Outer.C is injected at",
-                "        test.Outer.D.<init>(cParam)",
+                "        test.Outer.D(cParam)",
                 "    test.Outer.D is provided at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)
@@ -181,11 +181,11 @@ public class DependencyCycleValidationTest {
                 "    test.Outer.C is injected at",
                 "        test.Outer.CModule.c(c)",
                 "    java.util.Map<java.lang.String,test.Outer.C> is injected at",
-                "        test.Outer.A.<init>(cMap)",
+                "        test.Outer.A(cMap)",
                 "    test.Outer.A is injected at",
-                "        test.Outer.B.<init>(aParam)",
+                "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
-                "        test.Outer.C.<init>(bParam)",
+                "        test.Outer.C(bParam)",
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
@@ -242,11 +242,11 @@ public class DependencyCycleValidationTest {
                 "    test.Outer.C is injected at",
                 "        test.Outer.CModule.c(c)",
                 "    java.util.Set<test.Outer.C> is injected at",
-                "        test.Outer.A.<init>(cSet)",
+                "        test.Outer.A(cSet)",
                 "    test.Outer.A is injected at",
-                "        test.Outer.B.<init>(aParam)",
+                "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
-                "        test.Outer.C.<init>(bParam)",
+                "        test.Outer.C(bParam)",
                 "    test.Outer.C is provided at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
@@ -296,13 +296,13 @@ public class DependencyCycleValidationTest {
             message(
                 "Found a dependency cycle:",
                 "    test.Outer.C is injected at",
-                "        test.Outer.A.<init>(cParam)",
+                "        test.Outer.A(cParam)",
                 "    test.Outer.A is injected at",
-                "        test.Outer.B.<init>(aParam)",
+                "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
-                "        test.Outer.C.<init>(bParam)",
+                "        test.Outer.C(bParam)",
                 "    javax.inject.Provider<test.Outer.C> is injected at",
-                "        test.Outer.D.<init>(cParam)",
+                "        test.Outer.D(cParam)",
                 "    test.Outer.D is provided at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)

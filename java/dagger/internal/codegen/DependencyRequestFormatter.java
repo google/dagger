@@ -40,25 +40,21 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor8;
 
 /**
- * Formats a {@link DependencyRequest} into a {@link String} suitable for an error message listing
- * a chain of dependencies.
- * 
+ * Formats a {@link DependencyRequest} into a {@link String} suitable for an error message listing a
+ * chain of dependencies.
+ *
  * <dl>
- * <dt>For component provision methods
- * <dd>{@code @Qualifier SomeType is provided at\n    ComponentType.method()}
- * 
- * <dt>For component injection methods
- * <dd>{@code SomeType is injected at\n    ComponentType.method(foo)}
- * 
- * <dt>For parameters to {@link Provides @Provides}, {@link Produces @Produces}, or
- * {@link Inject @Inject} methods:
- * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.method([…, ]param[, …])}
- * 
- * <dt>For parameters to {@link Inject @Inject} constructors:
- * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.<init>([…, ]param[, …])}
- * 
- * <dt>For {@link Inject @Inject} fields:
- * <dd>{@code @Qualified ResolvedType is injected at\n    EnclosingType.field}
+ *   <dt>For component provision methods
+ *   <dd>{@code @Qualifier SomeType is provided at\n ComponentType.method()}
+ *   <dt>For component injection methods
+ *   <dd>{@code SomeType is injected at\n ComponentType.method(foo)}
+ *   <dt>For parameters to {@link Provides @Provides}, {@link Produces @Produces}, or {@link
+ *       Inject @Inject} methods:
+ *   <dd>{@code @Qualified ResolvedType is injected at\n EnclosingType.method([…, ]param[, …])}
+ *   <dt>For parameters to {@link Inject @Inject} constructors:
+ *   <dd>{@code @Qualified ResolvedType is injected at\n EnclosingType([…, ]param[, …])}
+ *   <dt>For {@link Inject @Inject} fields:
+ *   <dd>{@code @Qualified ResolvedType is injected at\n EnclosingType.field}
  * </dl>
  */
 final class DependencyRequestFormatter extends Formatter<DependencyRequest> {

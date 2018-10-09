@@ -95,11 +95,16 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
       }
       builder.append(' ');
     }
-    builder.append(nameOfType(methodType.getReturnType()));
-    builder.append(' ');
-    builder.append(declaringType.getQualifiedName());
-    builder.append('.');
-    builder.append(method.getSimpleName());
+    if (method.getSimpleName().contentEquals("<init>")) {
+      builder.append(declaringType.getQualifiedName());
+    } else {
+      builder
+          .append(nameOfType(methodType.getReturnType()))
+          .append(' ')
+          .append(declaringType.getQualifiedName())
+          .append('.')
+          .append(method.getSimpleName());
+    }
     builder.append('(');
     checkState(method.getParameters().size() == methodType.getParameterTypes().size());
     Iterator<? extends VariableElement> parameters = method.getParameters().iterator();

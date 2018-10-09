@@ -56,6 +56,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject BindingGraphPlugins spiPlugins;
   @Inject CompilerOptions compilerOptions;
   @Inject @Validation BindingGraphPlugins validationPlugins;
+  @Inject DaggerStatistics daggerStatistics;
 
   public ComponentProcessor() {
     this.testingPlugins = Optional.empty();
@@ -108,6 +109,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         .build()
         .inject(this);
 
+    daggerStatistics.processingStarted();
     spiPlugins.initializePlugins();
     validationPlugins.initializePlugins();
     return processingSteps;
@@ -122,6 +124,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingMethodValidatorsModule.class,
         IncorrectlyInstalledBindsMethodsValidator.Module.class,
         ProcessingStepsModule.class,
+        SystemComponentsModule.class
       })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
@@ -184,7 +187,9 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected void postRound(RoundEnvironment roundEnv) {
-    if (!roundEnv.processingOver()) {
+    if (roundEnv.processingOver()) {
+      daggerStatistics.processingStopped();
+    } else {
       try {
         injectBindingRegistry.generateSourcesForRequiredBindings(
             factoryGenerator, membersInjectorGenerator);

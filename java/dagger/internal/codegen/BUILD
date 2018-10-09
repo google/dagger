@@ -53,8 +53,8 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    "@google_bazel_common//third_party/java/guava",
     ":shared-with-spi",
+    "@google_bazel_common//third_party/java/guava",
 ]
 
 # Code that is shared with the dagger.model and dagger.spi packages. This code is merged into both
@@ -80,6 +80,7 @@ java_library(
         "ContributionType.java",
         "DaggerElements.java",
         "DaggerGraphs.java",
+        "DaggerStatistics.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
         "Expression.java",
@@ -340,6 +341,7 @@ java_library(
         "ProcessingEnvironmentModule.java",
         "ProcessingOptions.java",
         "ProductionExecutorModuleProcessingStep.java",
+        "SystemComponentsModule.java",
     ],
     plugins = CODEGEN_PLUGINS,
     resource_jars = [":processor_manifest_files.jar"],

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
@@ -37,7 +38,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.FluentIterable;
@@ -54,6 +54,7 @@ import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
+import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -126,6 +127,12 @@ final class ComponentValidator {
 
     ComponentDescriptor.Kind componentKind =
         ComponentDescriptor.Kind.forAnnotatedElement(subject).get();
+
+    if (isAnnotationPresent(subject, CancellationPolicy.class) && !componentKind.isProducer()) {
+      report.addError(
+          "@CancellationPolicy may only be applied to production components and subcomponents",
+          subject);
+    }
 
     if (!subject.getKind().equals(INTERFACE)
         && !(subject.getKind().equals(CLASS) && subject.getModifiers().contains(ABSTRACT))) {
@@ -388,8 +395,7 @@ final class ComponentValidator {
                 @Override
                 public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
                   for (ModuleDescriptor.Kind moduleKind : subcomponentKind.moduleKinds()) {
-                    if (MoreElements.isAnnotationPresent(
-                        t.asElement(), moduleKind.moduleAnnotation())) {
+                    if (isAnnotationPresent(t.asElement(), moduleKind.moduleAnnotation())) {
                       return Optional.of(MoreTypes.asTypeElement(t));
                     }
                   }

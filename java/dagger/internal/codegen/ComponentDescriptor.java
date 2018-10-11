@@ -55,6 +55,7 @@ import dagger.Module;
 import dagger.Subcomponent;
 import dagger.model.DependencyRequest;
 import dagger.model.Scope;
+import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import dagger.releasablereferences.CanReleaseReferences;
@@ -368,6 +369,16 @@ abstract class ComponentDescriptor {
   /** {@link Traverser} for the subcomponent tree. */
   private static final Traverser<ComponentDescriptor> SUBCOMPONENT_TRAVERSER =
       Traverser.forTree(ComponentDescriptor::subcomponents);
+
+  /**
+   * Returns the {@link CancellationPolicy} for this component, or an empty optional if either the
+   * component is not a production component or no {@code CancellationPolicy} annotation is present.
+   */
+  Optional<CancellationPolicy> cancellationPolicy() {
+    return kind().isProducer()
+        ? Optional.ofNullable(componentDefinitionType().getAnnotation(CancellationPolicy.class))
+        : Optional.empty();
+  }
 
   /** A function that returns all {@link #scopes()} of its input. */
   @AutoValue

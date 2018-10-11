@@ -32,6 +32,8 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.INI
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_BUILDER;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
 import static dagger.internal.codegen.ProducerNodeInstanceBindingExpression.MAY_INTERRUPT_IF_RUNNING;
+import static dagger.producers.CancellationPolicy.Propagation.IGNORE;
+import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
@@ -51,6 +53,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.producers.CancellationPolicy;
 import dagger.producers.internal.CancellationListener;
 import java.util.List;
 import java.util.Optional;
@@ -278,7 +281,15 @@ abstract class ComponentModelBuilder {
       }
     }
 
+    addCancelParentStatement(methodBuilder);
+
     generatedComponentModel.addMethod(CANCELLATION_LISTENER_METHOD, methodBuilder.build());
+  }
+
+  protected void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
+    // Does nothing by default. Overridden in subclass(es) to add a statement if and only if the
+    // component being generated is a concrete subcomponent implementation with a parent that allows
+    // cancellation to propagate to it from subcomponents.
   }
 
   private MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
@@ -577,6 +588,27 @@ abstract class ComponentModelBuilder {
 
     private DeclaredType parentType() {
       return asDeclared(parent.graph.componentType().asType());
+    }
+
+    @Override
+    protected void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
+      if (shouldPropagateCancellationToParent()) {
+        methodBuilder.addStatement(
+            "$T.this.$L($L)",
+            parent.generatedComponentModel.name(),
+            CANCELLATION_LISTENER_METHOD_NAME,
+            MAY_INTERRUPT_IF_RUNNING);
+      }
+    }
+
+    private boolean shouldPropagateCancellationToParent() {
+      return parent
+          .generatedComponentModel
+          .componentDescriptor()
+          .cancellationPolicy()
+          .map(CancellationPolicy::fromSubcomponents)
+          .orElse(IGNORE)
+          .equals(PROPAGATE);
     }
   }
 

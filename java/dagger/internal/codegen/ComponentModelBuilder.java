@@ -400,16 +400,17 @@ abstract class ComponentModelBuilder {
         constructorBuilder()
             .addModifiers(generatedComponentModel.isAbstract() ? PROTECTED : PRIVATE)
             .addParameters(constructorParameters);
-
-    if (generatedComponentModel.supermodel().isPresent()) {
-      constructor.addStatement(
-          CodeBlock.of(
-              "super($L)",
-              constructorParameters
-                  .stream()
-                  .map(param -> CodeBlock.of("$N", param))
-                  .collect(toParametersCodeBlock())));
-    }
+    generatedComponentModel.setConstructorParameters(constructorParameters);
+    generatedComponentModel
+        .supermodel()
+        .ifPresent(
+            supermodel ->
+                constructor.addStatement(
+                    CodeBlock.of(
+                        "super($L)",
+                        supermodel.constructorParameters().stream()
+                            .map(param -> CodeBlock.of("$N", param))
+                            .collect(toParametersCodeBlock()))));
 
     ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
     CodeBlock initializeParametersCodeBlock =
@@ -449,9 +450,15 @@ abstract class ComponentModelBuilder {
     if (generatedComponentBuilderModel.isPresent()) {
       return ImmutableList.of(
           ParameterSpec.builder(generatedComponentBuilderModel.get().name(), "builder").build());
+    } else if (generatedComponentModel.isAbstract() && generatedComponentModel.isNested()) {
+      // If we're generating an abstract inner subcomponent, then we are not implementing module
+      // instance bindings and have no need for factory method parameters.
+      return ImmutableList.of();
     } else if (graph.factoryMethod().isPresent()) {
       return getFactoryMethodParameterSpecs(graph);
-    } else if (generatedComponentModel.isAbstract() && !generatedComponentModel.isNested()) {
+    } else if (generatedComponentModel.isAbstract()) {
+      // If we're generating an abstract base implementation of a subcomponent it's acceptable to
+      // have neither a builder nor factory method.
       return ImmutableList.of();
     } else {
       throw new AssertionError(

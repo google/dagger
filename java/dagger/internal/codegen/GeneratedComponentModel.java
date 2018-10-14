@@ -42,6 +42,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.ReferenceReleasingProviderManager;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
@@ -163,6 +164,7 @@ final class GeneratedComponentModel {
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
   private final SetMultimap<Key, DependencyRequest> contributionsByMultibinding =
       HashMultimap.create();
+  private ImmutableList<ParameterSpec> constructorParameters;
 
   private GeneratedComponentModel(
       ComponentDescriptor componentDescriptor,
@@ -267,6 +269,11 @@ final class GeneratedComponentModel {
   /** Returns the model of this model's superclass. */
   Optional<GeneratedComponentModel> supermodel() {
     return supermodel;
+  }
+
+  /** Returns the arguments to the modeled class's constructor. */
+  ImmutableList<ParameterSpec> constructorParameters() {
+    return constructorParameters;
   }
 
   /**
@@ -403,6 +410,11 @@ final class GeneratedComponentModel {
   /** Adds the given code block to the cancellation listener method of the component. */
   void addCancellation(CodeBlock codeBlock) {
     cancellations.add(codeBlock);
+  }
+
+  /** Records the constructor parameters for an instance of this component. */
+  void setConstructorParameters(ImmutableList<ParameterSpec> parameters) {
+    constructorParameters = parameters;
   }
 
   /** Returns a new, unique field name for the component based on the given name. */

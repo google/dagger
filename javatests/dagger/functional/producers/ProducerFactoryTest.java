@@ -76,7 +76,7 @@ public class ProducerFactoryTest {
   public void noArgMethod() throws Exception {
     ProducerToken token = ProducerToken.create(SimpleProducerModule_StrFactory.class);
     Producer<String> producer =
-        new SimpleProducerModule_StrFactory(executorProvider, componentMonitorProvider);
+        SimpleProducerModule_StrFactory.create(executorProvider, componentMonitorProvider);
     assertThat(producer.get().get()).isEqualTo("str");
     InOrder order = inOrder(componentMonitor, monitor);
     order.verify(componentMonitor).producerMonitorFor(token);
@@ -91,7 +91,7 @@ public class ProducerFactoryTest {
     SettableFuture<Integer> intFuture = SettableFuture.create();
     CancellableProducer<Integer> intProducer = producerOfFuture(intFuture);
     Producer<String> producer =
-        new SimpleProducerModule_StrWithArgFactory(
+        SimpleProducerModule_StrWithArgFactory.create(
             executorProvider, componentMonitorProvider, intProducer);
     assertThat(producer.get().isDone()).isFalse();
     intFuture.set(42);
@@ -108,7 +108,7 @@ public class ProducerFactoryTest {
     CancellableProducer<SettableFuture<String>> strFutureProducer =
         producerOfFuture(strFutureFuture);
     Producer<String> producer =
-        new SimpleProducerModule_SettableFutureStrFactory(
+        SimpleProducerModule_SettableFutureStrFactory.create(
             executorProvider, componentMonitorProvider, strFutureProducer);
     assertThat(producer.get().isDone()).isFalse();
 
@@ -137,7 +137,7 @@ public class ProducerFactoryTest {
     CancellableProducer<SettableFuture<String>> strFutureProducer =
         producerOfFuture(strFutureFuture);
     Producer<String> producer =
-        new SimpleProducerModule_SettableFutureStrFactory(
+        SimpleProducerModule_SettableFutureStrFactory.create(
             executorProvider, componentMonitorProvider, strFutureProducer);
     assertThat(producer.get().isDone()).isFalse();
 
@@ -167,7 +167,7 @@ public class ProducerFactoryTest {
     ProducerToken token = ProducerToken.create(SimpleProducerModule_ThrowingProducerFactory.class);
 
     Producer<String> producer =
-        new SimpleProducerModule_ThrowingProducerFactory(
+        SimpleProducerModule_ThrowingProducerFactory.create(
             executorProvider, componentMonitorProvider);
     assertThat(producer.get().isDone()).isTrue();
 
@@ -189,7 +189,7 @@ public class ProducerFactoryTest {
 
   @Test(expected = NullPointerException.class)
   public void nullComponentMonitorProvider() throws Exception {
-    new SimpleProducerModule_StrFactory(executorProvider, null);
+    SimpleProducerModule_StrFactory.create(executorProvider, null);
   }
 
   private static <T> CancellableProducer<T> producerOfFuture(final ListenableFuture<T> future) {

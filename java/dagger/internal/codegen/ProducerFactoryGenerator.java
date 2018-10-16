@@ -24,11 +24,13 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
 import static dagger.internal.codegen.TypeNames.FUTURES;
 import static dagger.internal.codegen.TypeNames.PRODUCERS;
 import static dagger.internal.codegen.TypeNames.PRODUCER_TOKEN;
@@ -41,6 +43,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -122,7 +125,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     ImmutableMap.Builder<Key, FieldSpec> fieldsBuilder = ImmutableMap.builder();
 
-    MethodSpec.Builder constructorBuilder = constructorBuilder().addModifiers(PUBLIC);
+    MethodSpec.Builder constructorBuilder = constructorBuilder().addModifiers(PRIVATE);
 
     Optional<FieldSpec> moduleField =
         binding.requiresModuleInstance()
@@ -209,13 +212,15 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       callProducesMethod.addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED));
     }
 
+    MethodSpec constructor = constructorBuilder.build();
     factoryBuilder
         .superclass(
             ParameterizedTypeName.get(
                 ClassName.get(AbstractProducesMethodProducer.class),
                 futureTransform.applyArgType(),
                 providedTypeName))
-        .addMethod(constructorBuilder.build())
+        .addMethod(constructor)
+        .addMethod(staticFactoryMethod(binding, constructor))
         .addMethod(collectDependenciesBuilder.build())
         .addMethod(callProducesMethod.build());
 
@@ -223,6 +228,21 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     // TODO(gak): write a sensible toString
     return Optional.of(factoryBuilder);
+  }
+
+  private MethodSpec staticFactoryMethod(ProductionBinding binding, MethodSpec constructor) {
+    return MethodSpec.methodBuilder("create")
+        .addModifiers(PUBLIC, STATIC)
+        .returns(parameterizedGeneratedTypeNameForBinding(binding))
+        .addTypeVariables(bindingTypeElementTypeVariableNames(binding))
+        .addParameters(constructor.parameters)
+        .addStatement(
+            "return new $T($L)",
+            parameterizedGeneratedTypeNameForBinding(binding),
+            constructor.parameters.stream()
+                .map(p -> CodeBlock.of("$N", p.name))
+                .collect(toParametersCodeBlock()))
+        .build();
   }
 
   // TODO(ronshapiro): consolidate versions of these

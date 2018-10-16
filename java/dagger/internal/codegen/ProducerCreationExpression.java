@@ -43,7 +43,7 @@ final class ProducerCreationExpression implements FrameworkInstanceCreationExpre
   @Override
   public CodeBlock creationExpression() {
     return CodeBlock.of(
-        "new $T($L)",
+        "$T.create($L)",
         generatedClassNameForBinding(binding),
         componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
   }

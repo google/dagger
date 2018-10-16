@@ -20,12 +20,13 @@ BUILD_VARIANTS = {
     "ExperimentalAndroidMode2": ["-Adagger.experimentalAndroidMode2=enabled"],
 }
 
-# TODO(b/72748365): Revert cl/215561379 when all functional tests are passing for AOT.
+# TODO(b/72748365): Revert cl/215561379 and cl/217211240 when all functional tests are passing for
+# AOT.
 AOT_BUILD_VARIANTS = {
-    "ExperimentalAheadOfTimeSubcomponents": [
+    "": [
         "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
     ],
-    "FastInitAndAheadOfTimeSubcomponents": [
+    "FastInit": [
         "-Adagger.fastInit=enabled",
         "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
     ],
@@ -122,6 +123,7 @@ def _GenTests(
                 test_javacopts,
                 variant_name,
                 test_kwargs = test_kwargs,
+                with_aot = with_aot,
             )
 
 def _gen_tests(
@@ -136,8 +138,9 @@ def _gen_tests(
         lib_javacopts,
         test_javacopts,
         variant_name = None,
-        test_kwargs = {}):
-    if variant_name:
+        test_kwargs = {},
+        with_aot = None):
+    if variant_name and len(variant_name):
         suffix = "_" + variant_name
         tags = [variant_name]
 
@@ -181,8 +184,12 @@ def _gen_tests(
         if package_name.find("javatests/") != -1:
             prefix_path = "javatests/"
         test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
+        test_rule_name = test_name
+        if with_aot:
+            test_rule_name += "_with_aot"
+        test_rule_name += suffix
         test_rule_type(
-            name = test_name + suffix,
+            name = test_rule_name,
             srcs = [test_file],
             javacopts = (javacopts or []) + (test_javacopts or []),
             jvm_flags = jvm_flags,

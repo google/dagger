@@ -47,8 +47,8 @@ final class ModuleProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ModuleValidator moduleValidator;
   private final BindingFactory bindingFactory;
-  private final SourceFileGenerator<ProvisionBinding> factoryGenerator;
-  private final SourceFileGenerator<ProductionBinding> producerFactoryGenerator;
+  private final FactoryGenerator factoryGenerator;
+  private final ProducerFactoryGenerator producerFactoryGenerator;
   private final InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator;
   private final DelegateDeclaration.Factory delegateDeclarationFactory;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
@@ -58,8 +58,8 @@ final class ModuleProcessingStep implements ProcessingStep {
       Messager messager,
       ModuleValidator moduleValidator,
       BindingFactory bindingFactory,
-      SourceFileGenerator<ProvisionBinding> factoryGenerator,
-      SourceFileGenerator<ProductionBinding> producerFactoryGenerator,
+      FactoryGenerator factoryGenerator,
+      ProducerFactoryGenerator producerFactoryGenerator,
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
       Factory delegateDeclarationFactory) {
     this.messager = messager;

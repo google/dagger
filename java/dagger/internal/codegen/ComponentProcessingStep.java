@@ -49,7 +49,7 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final ComponentDescriptorValidator componentDescriptorValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
-  private final SourceFileGenerator<BindingGraph> componentGenerator;
+  private final ComponentGenerator componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphPlugins validationPlugins;
   private final BindingGraphPlugins spiPlugins;
@@ -63,7 +63,7 @@ final class ComponentProcessingStep implements ProcessingStep {
       ComponentDescriptorValidator componentDescriptorValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
-      SourceFileGenerator<BindingGraph> componentGenerator,
+      ComponentGenerator componentGenerator,
       BindingGraphConverter bindingGraphConverter,
       @Validation BindingGraphPlugins validationPlugins,
       BindingGraphPlugins spiPlugins,

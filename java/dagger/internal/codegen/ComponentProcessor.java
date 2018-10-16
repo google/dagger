@@ -50,8 +50,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
 
   @Inject InjectBindingRegistry injectBindingRegistry;
-  @Inject SourceFileGenerator<ProvisionBinding> factoryGenerator;
-  @Inject SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator;
+  @Inject FactoryGenerator factoryGenerator;
+  @Inject MembersInjectorGenerator membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins spiPlugins;
   @Inject CompilerOptions compilerOptions;
@@ -124,7 +124,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingMethodValidatorsModule.class,
         IncorrectlyInstalledBindsMethodsValidator.Module.class,
         ProcessingStepsModule.class,
-        SourceFileGeneratorsModule.class,
         SystemComponentsModule.class
       })
   interface ProcessorComponent {
@@ -175,9 +174,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
           bindsInstanceProcessingStep,
           moduleProcessingStep,
           compilerOptions.headerCompilation()
-                  // Ahead Of Time subcomponents use the regular hjar filtering in
-                  // HjarSourceFileGenerator since they must retain protected implementation methods
-                  // between subcomponents
+                  // TODO(b/72748365): Support hjars for ahead-of-time subcomponents.
                   && !compilerOptions.aheadOfTimeSubcomponents()
               ? componentHjarProcessingStep
               : componentProcessingStep,

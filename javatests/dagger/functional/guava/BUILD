@@ -35,4 +35,18 @@ GenJavaTests(
     ],
 )
 
-# TODO(b/72748365): Add "with aot" tests, once they pass.
+GenJavaTests(
+    name = "guava_tests_with_aot",
+    srcs = glob(["**/*.java"]),
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    with_aot = True,
+    deps = [
+        "//:dagger_with_compiler",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/jsr305_annotations",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)

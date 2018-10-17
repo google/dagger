@@ -22,7 +22,6 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
@@ -39,7 +38,6 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   private final BindingMethodImplementation methodImplementation;
   private final GeneratedComponentModel generatedComponentModel;
   private final boolean bindingFinalized;
-  private final Optional<ModifiableBindingMethod> matchingModifiableBindingMethod;
   private Optional<String> methodName;
 
   ModifiableConcreteMethodBindingExpression(
@@ -50,30 +48,15 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       GeneratedComponentModel generatedComponentModel,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       boolean bindingFinalized) {
-    super(methodImplementation, generatedComponentModel);
+    super(methodImplementation, generatedComponentModel, matchingModifiableBindingMethod);
     this.binding = resolvedBindings.contributionBinding();
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.bindingFinalized = bindingFinalized;
-    this.matchingModifiableBindingMethod = matchingModifiableBindingMethod;
     this.methodName =
         matchingModifiableBindingMethod.map(modifiableMethod -> modifiableMethod.methodSpec().name);
-  }
-
-  @Override
-  CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, GeneratedComponentModel component) {
-    // Only emit the method implementation if the binding was known when the expression was created
-    // (and not registered when calling 'getDependencyExpression'), and we're generating a
-    // modifiable binding method for the original component (and not an ancestor component).
-    if (matchingModifiableBindingMethod.isPresent() && generatedComponentModel.equals(component)) {
-      checkState(
-          matchingModifiableBindingMethod.get().fulfillsSameRequestAs(modifiableBindingMethod));
-      return methodImplementation.body();
-    }
-    return super.getModifiableBindingMethodImplementation(modifiableBindingMethod, component);
   }
 
   @Override

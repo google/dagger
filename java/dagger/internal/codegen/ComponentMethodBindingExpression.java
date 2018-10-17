@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -36,8 +38,9 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
   ComponentMethodBindingExpression(
       BindingMethodImplementation methodImplementation,
       GeneratedComponentModel generatedComponentModel,
-      ComponentMethodDescriptor componentMethod) {
-    super(methodImplementation, generatedComponentModel);
+      ComponentMethodDescriptor componentMethod,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
+    super(methodImplementation, generatedComponentModel, matchingModifiableBindingMethod);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentMethod = checkNotNull(componentMethod);

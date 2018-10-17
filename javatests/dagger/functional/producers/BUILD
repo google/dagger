@@ -48,8 +48,9 @@ GenJavaTests(
         # TODO(b/72748365): Remove these exclusions
         exclude = [
             "subcomponent/*.java",
-            "subcomponent/pruning/*.java",
-            "cancellation/*.java",
+            "subcomponent/pruning/ProductionSubcomponentOnlyRequestedBySiblingTest.java",
+            "cancellation/ProducerSubcomponentCancellationTest.java",
+            "cancellation/CancellationPolicyTest.java",
         ],
     ),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,

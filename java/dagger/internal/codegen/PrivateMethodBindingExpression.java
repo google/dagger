@@ -23,6 +23,8 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.PRI
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import java.util.Optional;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.
@@ -40,8 +42,9 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       BindingMethodImplementation methodImplementation,
-      GeneratedComponentModel generatedComponentModel) {
-    super(methodImplementation, generatedComponentModel);
+      GeneratedComponentModel generatedComponentModel,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
+    super(methodImplementation, generatedComponentModel, matchingModifiableBindingMethod);
     this.binding = resolvedBindings.contributionBinding();
     this.request = checkNotNull(request);
     this.methodImplementation = checkNotNull(methodImplementation);

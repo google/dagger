@@ -58,8 +58,6 @@ GenJavaTests(
             "HjarTest.java",
             # TODO(b/72748365): Remove these exclusions
             "ReleasableReferencesComponentsTest.java",
-            "ReusableTest.java",
-            "ComponentWithReusableBindings.java",
         ],
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,

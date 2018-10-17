@@ -40,6 +40,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import java.util.HashMap;
@@ -675,6 +676,8 @@ final class ComponentBindingExpressions {
         methodImplementation(resolvedBindings, request, bindingExpression);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().findMatchingComponentMethod(request);
+    Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
+        generatedComponentModel.getModifiableBindingMethod(request);
 
     Optional<BindingExpression> modifiableBindingExpression =
         modifiableBindingExpressions.maybeWrapInModifiableMethodBindingExpression(
@@ -682,7 +685,8 @@ final class ComponentBindingExpressions {
             request,
             bindingExpression,
             methodImplementation,
-            matchingComponentMethod);
+            matchingComponentMethod,
+            matchingModifiableBindingMethod);
     if (modifiableBindingExpression.isPresent()) {
       return modifiableBindingExpression.get();
     }
@@ -691,11 +695,18 @@ final class ComponentBindingExpressions {
         .<BindingExpression>map(
             componentMethod ->
                 new ComponentMethodBindingExpression(
-                    methodImplementation, generatedComponentModel, componentMethod))
+                    methodImplementation,
+                    generatedComponentModel,
+                    componentMethod,
+                    matchingModifiableBindingMethod))
         .orElseGet(
             () ->
                 new PrivateMethodBindingExpression(
-                    resolvedBindings, request, methodImplementation, generatedComponentModel));
+                    resolvedBindings,
+                    request,
+                    methodImplementation,
+                    generatedComponentModel,
+                    matchingModifiableBindingMethod));
   }
 
   private BindingMethodImplementation methodImplementation(

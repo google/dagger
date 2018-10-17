@@ -367,7 +367,8 @@ final class ModifiableBindingExpressions {
       BindingRequest request,
       BindingExpression bindingExpression,
       BindingMethodImplementation methodImplementation,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
     if (shouldUseAModifiableConcreteMethodBindingExpression(
         modifiableBindingType, matchingComponentMethod)) {
@@ -378,7 +379,7 @@ final class ModifiableBindingExpressions {
               modifiableBindingType,
               methodImplementation,
               generatedComponentModel,
-              generatedComponentModel.getModifiableBindingMethod(request),
+              matchingModifiableBindingMethod,
               newModifiableBindingWillBeFinalized(modifiableBindingType, request)));
     }
     return Optional.empty();

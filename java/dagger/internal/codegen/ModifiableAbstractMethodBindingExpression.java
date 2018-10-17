@@ -33,11 +33,6 @@ import java.util.Optional;
  * expression is requested. The method is overridden when generating the implementation of an
  * ancestor component.
  */
-// TODO(b/72748365): There may be unimplemented abstract binding methods even after considering a
-// complete binding graph: If there are @Provides-over-@Inject bindings then there could be branches
-// of dependencies (of the @Inject binding) that have induced abstract modifiable binding methods
-// that are missing in the full binding graph (given the @Provides binding). Such abstract
-// modifiable methods should be overridden and an exception thrown.
 abstract class ModifiableAbstractMethodBindingExpression extends BindingExpression {
   private final GeneratedComponentModel generatedComponentModel;
   private final ModifiableBindingType modifiableBindingType;

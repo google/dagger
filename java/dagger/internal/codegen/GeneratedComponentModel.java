@@ -229,13 +229,13 @@ final class GeneratedComponentModel {
   }
 
   /**
-   * Create a model for an inner abstract implementation of a subcomponent. This is applicable when
+   * Create a model for an inner implementation of a subcomponent. This is applicable when
    * generating ahead-of-time subcomponents.
    */
-  static GeneratedComponentModel forAbstractSubcomponent(
+  static GeneratedComponentModel forSubcomponent(
       ComponentDescriptor componentDescriptor,
-      GeneratedComponentModel supermodel,
-      GeneratedComponentModel parentModel) {
+      GeneratedComponentModel parentModel,
+      GeneratedComponentModel supermodel) {
     return new GeneratedComponentModel(
         componentDescriptor,
         parentModel.getSubcomponentName(componentDescriptor),
@@ -243,7 +243,7 @@ final class GeneratedComponentModel {
         Optional.of(supermodel),
         parentModel.subcomponentNames,
         PUBLIC,
-        ABSTRACT);
+        parentModel.isAbstract() ? ABSTRACT : FINAL);
   }
 
   /** Returns the descriptor for the component being generated. */

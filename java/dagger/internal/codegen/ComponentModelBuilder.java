@@ -92,7 +92,7 @@ abstract class ComponentModelBuilder {
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'buildComponentModel()' on %s when not generating ahead-of-time subcomponents.",
           graph.componentDescriptor().componentDefinitionType());
-      return new AbstractSubcomponentModelBuilder(
+      return new SubComponentModelBuilder(
               Optional.empty(), /* parent */
               types,
               elements,
@@ -302,40 +302,8 @@ abstract class ComponentModelBuilder {
       // TODO(b/72748365): Can an abstract inner subcomponent implementation be elided if it's
       // totally empty?
       generatedComponentModel.addSubcomponent(
-          subgraph.componentDescriptor(),
-          generatedComponentModel.isAbstract()
-              ? buildAbstractInnerSubcomponentModel(subgraph)
-              : buildSubcomponentModel(subgraph));
+          subgraph.componentDescriptor(), buildSubcomponentModel(subgraph));
     }
-  }
-
-  private GeneratedComponentModel buildAbstractInnerSubcomponentModel(BindingGraph childGraph) {
-    GeneratedComponentModel supermodel =
-        getSubcomponentSupermodel(childGraph.componentDescriptor());
-    GeneratedComponentModel childModel =
-        GeneratedComponentModel.forAbstractSubcomponent(
-            childGraph.componentDescriptor(), supermodel, generatedComponentModel);
-    Optional<GeneratedComponentBuilderModel> childBuilderModel =
-        GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
-    ComponentRequirementFields childComponentRequirementFields =
-        componentRequirementFields.forChildComponent(childGraph, childModel, childBuilderModel);
-    ComponentBindingExpressions childBindingExpressions =
-        bindingExpressions.forChildComponent(
-            childGraph, childModel, childComponentRequirementFields);
-    return new AbstractSubcomponentModelBuilder(
-            Optional.of(this),
-            types,
-            elements,
-            keyFactory,
-            childGraph,
-            childModel,
-            optionalFactories,
-            childBindingExpressions,
-            childComponentRequirementFields,
-            childBuilderModel,
-            bindingGraphFactory,
-            compilerOptions)
-        .build();
   }
 
   private GeneratedComponentModel getSubcomponentSupermodel(ComponentDescriptor subcomponent) {
@@ -371,9 +339,18 @@ abstract class ComponentModelBuilder {
   }
 
   private GeneratedComponentModel buildSubcomponentModel(BindingGraph childGraph) {
-    GeneratedComponentModel childModel =
-        GeneratedComponentModel.forSubcomponent(
-            childGraph.componentDescriptor(), generatedComponentModel);
+    GeneratedComponentModel childModel;
+    if (compilerOptions.aheadOfTimeSubcomponents()) {
+      childModel =
+          GeneratedComponentModel.forSubcomponent(
+              childGraph.componentDescriptor(),
+              generatedComponentModel,
+              getSubcomponentSupermodel(childGraph.componentDescriptor()));
+    } else {
+      childModel =
+          GeneratedComponentModel.forSubcomponent(
+              childGraph.componentDescriptor(), generatedComponentModel);
+    }
     Optional<GeneratedComponentBuilderModel> childBuilderModel =
         GeneratedComponentBuilderModel.create(childModel, childGraph, elements, types);
     ComponentRequirementFields childComponentRequirementFields =
@@ -382,12 +359,18 @@ abstract class ComponentModelBuilder {
         bindingExpressions.forChildComponent(
             childGraph, childModel, childComponentRequirementFields);
     return new SubComponentModelBuilder(
-            this,
+            Optional.of(this),
+            types,
+            elements,
+            keyFactory,
             childGraph,
             childModel,
+            optionalFactories,
             childBindingExpressions,
             childComponentRequirementFields,
-            childBuilderModel)
+            childBuilderModel,
+            bindingGraphFactory,
+            compilerOptions)
         .build();
   }
 
@@ -539,93 +522,17 @@ abstract class ComponentModelBuilder {
   }
 
   /**
-   * Builds the model for a nested subcomponent. This is used when ahead-of-time components are not
-   * enabled (current default mode).
+   * Builds the model for a subcomponent. If generating ahead-of-time subcomponents this model may
+   * be for an abstract base class implementation, an abstract inner implementation, or a concrete
+   * implementation that extends an abstract base implementation. Otherwise it represents a private,
+   * inner, concrete, final implementation of a subcomponent which extends a user defined type.
    */
   private static final class SubComponentModelBuilder extends ComponentModelBuilder {
-    private final ComponentModelBuilder parent;
-
-    SubComponentModelBuilder(
-        ComponentModelBuilder parent,
-        BindingGraph graph,
-        GeneratedComponentModel generatedComponentModel,
-        ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields,
-        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
-      super(
-          parent.types,
-          parent.elements,
-          parent.keyFactory,
-          graph,
-          generatedComponentModel,
-          parent.optionalFactories,
-          bindingExpressions,
-          componentRequirementFields,
-          generatedComponentBuilderModel,
-          parent.bindingGraphFactory,
-          parent.compilerOptions);
-      this.parent = parent;
-    }
-
-    @Override
-    protected void addBuilderClass(TypeSpec builder) {
-      parent.generatedComponentModel.addType(SUBCOMPONENT, builder);
-    }
-
-    @Override
-    protected void addFactoryMethods() {
-      // The parent's factory method to create this subcomponent if the
-      // subcomponent was not added via {@link dagger.Module#subcomponents()}.
-      super.graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
-    }
-
-    private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
-      parent.generatedComponentModel.addMethod(
-          COMPONENT_METHOD,
-          MethodSpec.overriding(factoryMethod, parentType(), super.types)
-              .addStatement(
-                  "return new $T($L)",
-                  super.generatedComponentModel.name(),
-                  getFactoryMethodParameterSpecs(super.graph)
-                      .stream()
-                      .map(param -> CodeBlock.of("$N", param))
-                      .collect(toParametersCodeBlock()))
-              .build());
-    }
-
-    private DeclaredType parentType() {
-      return asDeclared(parent.graph.componentType().asType());
-    }
-
-    @Override
-    protected void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
-      if (shouldPropagateCancellationToParent()) {
-        methodBuilder.addStatement(
-            "$T.this.$L($L)",
-            parent.generatedComponentModel.name(),
-            CANCELLATION_LISTENER_METHOD_NAME,
-            MAY_INTERRUPT_IF_RUNNING);
-      }
-    }
-
-    private boolean shouldPropagateCancellationToParent() {
-      return parent
-          .generatedComponentModel
-          .componentDescriptor()
-          .cancellationPolicy()
-          .map(CancellationPolicy::fromSubcomponents)
-          .orElse(IGNORE)
-          .equals(PROPAGATE);
-    }
-  }
-
-  /** Builds the model for abstract implementations of a subcomponent. */
-  private static final class AbstractSubcomponentModelBuilder extends ComponentModelBuilder {
     private final Optional<ComponentModelBuilder> parent;
     private final GeneratedComponentModel generatedComponentModel;
     private final ComponentBindingExpressions bindingExpressions;
 
-    AbstractSubcomponentModelBuilder(
+    SubComponentModelBuilder(
         Optional<ComponentModelBuilder> parent,
         DaggerTypes types,
         DaggerElements elements,
@@ -635,7 +542,7 @@ abstract class ComponentModelBuilder {
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel,
+        Optional<GeneratedComponentBuilderModel> builder,
         BindingGraphFactory bindingGraphFactory,
         CompilerOptions compilerOptions) {
       super(
@@ -647,7 +554,7 @@ abstract class ComponentModelBuilder {
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          generatedComponentBuilderModel,
+          builder,
           bindingGraphFactory,
           compilerOptions);
       this.parent = parent;
@@ -658,7 +565,7 @@ abstract class ComponentModelBuilder {
     @Override
     protected void addBuilderClass(TypeSpec builder) {
       if (parent.isPresent()) {
-        // If an inner implementation of a subcomponent the builder is a peer class.
+        // In an inner implementation of a subcomponent the builder is a peer class.
         parent.get().generatedComponentModel.addType(SUBCOMPONENT, builder);
       } else {
         generatedComponentModel.addType(SUBCOMPONENT, builder);
@@ -668,6 +575,32 @@ abstract class ComponentModelBuilder {
     @Override
     protected void addFactoryMethods() {
       // Only construct instances of subcomponents that have concrete implementations.
+      if (!generatedComponentModel.isAbstract()) {
+        // Use the parent's factory method to create this subcomponent if the
+        // subcomponent was not added via {@link dagger.Module#subcomponents()}.
+        super.graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
+      }
+    }
+
+    private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
+      checkState(parent.isPresent());
+      parent
+          .get()
+          .generatedComponentModel
+          .addMethod(
+              COMPONENT_METHOD,
+              MethodSpec.overriding(factoryMethod, parentType(), super.types)
+                  .addStatement(
+                      "return new $T($L)",
+                      generatedComponentModel.name(),
+                      getFactoryMethodParameterSpecs(super.graph).stream()
+                          .map(param -> CodeBlock.of("$N", param))
+                          .collect(toParametersCodeBlock()))
+                  .build());
+    }
+
+    private DeclaredType parentType() {
+      return asDeclared(parent.get().graph.componentType().asType());
     }
 
     @Override
@@ -688,6 +621,29 @@ abstract class ComponentModelBuilder {
       } else {
         super.addInterfaceMethods();
       }
+    }
+
+    @Override
+    protected void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
+      if (shouldPropagateCancellationToParent()) {
+        methodBuilder.addStatement(
+            "$T.this.$L($L)",
+            parent.get().generatedComponentModel.name(),
+            CANCELLATION_LISTENER_METHOD_NAME,
+            MAY_INTERRUPT_IF_RUNNING);
+      }
+    }
+
+    private boolean shouldPropagateCancellationToParent() {
+      return parent.isPresent()
+          && parent
+              .get()
+              .generatedComponentModel
+              .componentDescriptor()
+              .cancellationPolicy()
+              .map(CancellationPolicy::fromSubcomponents)
+              .orElse(IGNORE)
+              .equals(PROPAGATE);
     }
   }
 

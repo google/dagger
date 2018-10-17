@@ -290,6 +290,7 @@ java_library(
         "ProducerNodeInstanceBindingExpression.java",
         "ProductionExecutorModuleGenerator.java",
         "ProviderInstanceBindingExpression.java",
+        "PrunedConcreteMethodBindingExpression.java",
         "ReferenceReleasingManagerFields.java",
         "ReleasableReferenceManagerProviderCreationExpression.java",
         "ReleasableReferenceManagerSetProviderCreationExpression.java",

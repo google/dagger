@@ -173,18 +173,38 @@ final class ModifiableBindingExpressions {
         graph.componentDescriptor().findMatchingComponentMethod(request);
     switch (type) {
       case GENERATED_INSTANCE:
-        return new GeneratedInstanceBindingExpression(
-            generatedComponentModel,
+        // If the subcomponent is abstract then we need to define an (un-implemented)
+        // GeneratedInstanceBindingExpression.
+        if (generatedComponentModel.isAbstract()) {
+          return new GeneratedInstanceBindingExpression(
+              generatedComponentModel,
+              resolvedBindings,
+              request,
+              matchingModifiableBindingMethod,
+              matchingComponentMethod);
+        }
+        // Otherwise return a concrete implementation.
+        return bindingExpressions.wrapInMethod(
             resolvedBindings,
             request,
-            matchingModifiableBindingMethod,
-            matchingComponentMethod);
+            bindingExpressions.createBindingExpression(resolvedBindings, request));
       case MISSING:
-        return new MissingBindingExpression(
-            generatedComponentModel,
-            request,
-            matchingModifiableBindingMethod,
-            matchingComponentMethod);
+        // If we need an expression for a missing binding and the current implementation is
+        // abstract, then we need an (un-implemented) MissingBindingExpression.
+        if (generatedComponentModel.isAbstract()) {
+          return new MissingBindingExpression(
+              generatedComponentModel,
+              request,
+              matchingModifiableBindingMethod,
+              matchingComponentMethod);
+        }
+        // Otherwise we assume that it is valid to have a missing binding as it is part of a
+        // dependency chain that has been passively pruned.
+        // TODO(b/117833324): Identify pruned bindings when generating the subcomponent
+        //     implementation in which the bindings are pruned. If we hold a reference to the
+        //     binding graph used to generate a given model then we can compare a model's graph with
+        //     its supermodel graph to detect pruned dependency branches.
+        return new PrunedConcreteMethodBindingExpression();
       case OPTIONAL:
       case MULTIBINDING:
       case INJECTION:
@@ -209,9 +229,9 @@ final class ModifiableBindingExpressions {
       return ModifiableBindingType.NONE;
     }
 
-    // When generating a final (concrete) implementation of a (sub)component the binding is no
-    // longer considered modifiable. It cannot be further modified by a subclass implementation.
-    if (!generatedComponentModel.isAbstract()) {
+    // When generating a component the binding is not considered modifiable. Bindings are modifiable
+    // only across subcomponent implementations.
+    if (generatedComponentModel.componentDescriptor().kind().isTopLevel()) {
       return ModifiableBindingType.NONE;
     }
 
@@ -278,13 +298,18 @@ final class ModifiableBindingExpressions {
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
-        return false;
+        return !generatedComponentModel.isAbstract();
       case MISSING:
         // TODO(b/72748365): investigate beder@'s comment about having intermediate component
         // ancestors satisfy missing bindings of their children with their own missing binding
         // methods so that we can minimize the cases where we need to reach into doubly-nested
-        // descendant component implementations
-        return resolvableBinding(request);
+        // descendant component implementations.
+
+        // Implement a missing binding if it is resolvable, or if we're generating a concrete
+        // subcomponent implementation. If a binding is still missing when the subcomponent
+        // implementation is concrete then it is assumed to be part of a dependency that would have
+        // been passively pruned when implementing the full component hierarchy.
+        return resolvableBinding(request) || !generatedComponentModel.isAbstract();
       case OPTIONAL:
         // Only override optional binding methods if we have a non-empty binding.
         return !resolvedBindings.contributionBinding().dependencies().isEmpty();
@@ -300,7 +325,8 @@ final class ModifiableBindingExpressions {
         // the implementation has changed, so we implement the binding once in the base
         // implementation of the subcomponent. It will be re-implemented when generating the
         // component.
-        return !generatedComponentModel.supermodel().isPresent();
+        return !generatedComponentModel.supermodel().isPresent()
+            || !generatedComponentModel.isAbstract();
       default:
         throw new IllegalStateException(
             String.format(

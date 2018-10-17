@@ -60,8 +60,6 @@ GenJavaTests(
             "ReleasableReferencesComponentsTest.java",
             "ReusableTest.java",
             "ComponentWithReusableBindings.java",
-            "subcomponent/MultibindingSubcomponents.java",
-            "subcomponent/SubcomponentMultibindingsTest.java",
         ],
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.google.common.collect.ImmutableSet;
@@ -55,11 +54,11 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
   protected abstract Expression buildDependencyExpression(ClassName requestingClass);
 
   /**
-   * Returns the subset of {@code dependencies} that represent multibinding
-   * contributions that were not included in a superclass implementation of this multibinding
-   * method. This is relevant only for ahead-of-time subcomponents. When not generating
-   * ahead-of-time subcomponents there is only one implementation of a multibinding expression and
-   * all {@link DependencyRequest}s from the argment are returned.
+   * Returns the subset of {@code dependencies} that represent multibinding contributions that were
+   * not included in a superclass implementation of this multibinding method. This is relevant only
+   * for ahead-of-time subcomponents. When not generating ahead-of-time subcomponents there is only
+   * one implementation of a multibinding expression and all {@link DependencyRequest}s from the
+   * argment are returned.
    */
   protected SetView<DependencyRequest> getNewContributions(
       ImmutableSet<DependencyRequest> dependencies) {
@@ -77,16 +76,12 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
       Optional<ModifiableBindingMethod> method =
           generatedComponentModel.getModifiableBindingMethod(
               bindingRequest(binding.key(), RequestKind.INSTANCE));
-      checkState(
-          method.isPresent(),
-          "Generating a multibinding super method call when no method has been registered for the "
-              + "binding. Binding is for a %s in %s",
-          binding.key(),
-          generatedComponentModel.name());
-      ImmutableSet<DependencyRequest> superclassContributions =
-          generatedComponentModel.superclassContributionsMade(binding.key());
-      if (!superclassContributions.isEmpty()) {
-        return Optional.of(CodeBlock.of("super.$L()", method.get().methodSpec().name));
+      if (method.isPresent()) {
+        ImmutableSet<DependencyRequest> superclassContributions =
+            generatedComponentModel.superclassContributionsMade(binding.key());
+        if (!superclassContributions.isEmpty()) {
+          return Optional.of(CodeBlock.of("super.$L()", method.get().methodSpec().name));
+        }
       }
     }
     return Optional.empty();

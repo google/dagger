@@ -69,24 +69,17 @@ abstract class FrameworkField {
   static FrameworkField forResolvedBindings(
       ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
     return create(
-        frameworkClass.orElse(ClassName.get(resolvedBindings.frameworkClass())),
+        frameworkClass.orElse(
+            ClassName.get(
+                FrameworkType.forBindingType(resolvedBindings.bindingType()).frameworkClass())),
         TypeName.get(fieldValueType(resolvedBindings)),
         frameworkFieldName(resolvedBindings));
   }
 
   private static TypeMirror fieldValueType(ResolvedBindings resolvedBindings) {
-    if (resolvedBindings.isMultibindingContribution()) {
-      switch (resolvedBindings.contributionType()) {
-        case MAP:
-          return MapType.from(resolvedBindings.key())
-              .unwrappedValueType(resolvedBindings.frameworkClass());
-        case SET:
-          return SetType.from(resolvedBindings.key()).elementType();
-        default:
-          // do nothing
-      }
-    }
-    return resolvedBindings.key().type();
+    return resolvedBindings.isMultibindingContribution()
+        ? resolvedBindings.contributionBinding().contributedType()
+        : resolvedBindings.key().type();
   }
 
   private static String frameworkFieldName(ResolvedBindings resolvedBindings) {

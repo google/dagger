@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -177,7 +177,7 @@ public class DelegateBindingExpressionTest {
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
                     "  private volatile ReusableScoped reusableScoped;",
                     "",
@@ -275,7 +275,7 @@ public class DelegateBindingExpressionTest {
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
                     "  private volatile ReusableScoped reusableScoped;",
                     "",
@@ -370,7 +370,7 @@ public class DelegateBindingExpressionTest {
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
                     "  private volatile ReusableScoped reusableScoped;",
                     "  private volatile Provider<Unscoped> unscopedProvider;",
@@ -426,7 +426,7 @@ public class DelegateBindingExpressionTest {
                     "        ReferenceReleasingProvider.create(",
                     "            (Provider) Unscoped_Factory.create(), customScopeReferences);")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "    this.unscopedProvider2 =",
                     "        ReferenceReleasingProvider.create(",
                     "            (Provider) getUnscopedProvider(), customScopeReferences);")
@@ -440,7 +440,7 @@ public class DelegateBindingExpressionTest {
                     "        };",
                     "  }")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private final class SwitchingProvider<T> implements Provider<T> {",
                     "    @SuppressWarnings(\"unchecked\")",
                     "    @Override",
@@ -491,7 +491,7 @@ public class DelegateBindingExpressionTest {
                     GENERATED_ANNOTATION,
                     "public final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
                     "  private volatile ReusableScoped reusableScoped;",
                     "",
@@ -619,7 +619,7 @@ public class DelegateBindingExpressionTest {
                     "    return (Supertype) subtypeProvider.get();",
                     "  }")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object subtype = new MemoizedSentinel();",
                     "",
                     "  private Object getSubtype() {",
@@ -725,7 +725,7 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "}")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Object subtype = new MemoizedSentinel();",
                     "",
                     "  private Object getSubtype() {",
@@ -817,7 +817,7 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "}")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Provider<String> provideStringProvider;",
                     "",
                     "  private Provider<String> getStringProvider() {",
@@ -918,7 +918,7 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "}")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Provider<String> provideStringProvider;",
                     "",
                     "  private Provider<String> getStringProvider() {",
@@ -1021,7 +1021,7 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "}")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Provider subtypeProvider;",
                     "",
                     "  private Provider getSubtypeProvider() {",
@@ -1124,7 +1124,7 @@ public class DelegateBindingExpressionTest {
                     "  }",
                     "}")
                 .addLinesIn(
-                    EXPERIMENTAL_ANDROID_MODE,
+                    FAST_INIT_MODE,
                     "  private volatile Provider<Object> bindStringProvider;",
                     "  private volatile Object object = new MemoizedSentinel();",
                     "  private volatile String string;",

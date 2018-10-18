@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.ErrorMessages.provisionMayNotDependOnProducerType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.Scopes.scopesOf;
@@ -46,6 +45,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+import javax.tools.Diagnostic.Kind;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link Inject}-annotated elements and the types
@@ -55,32 +55,45 @@ final class InjectValidator {
   private final Types types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
+  private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
 
   @Inject
-  InjectValidator(Types types, DaggerElements elements, CompilerOptions compilerOptions) {
-    this(types, elements, compilerOptions, Optional.empty());
+  InjectValidator(
+      Types types,
+      DaggerElements elements,
+      DependencyRequestValidator dependencyRequestValidator,
+      CompilerOptions compilerOptions) {
+    this(types, elements, compilerOptions, dependencyRequestValidator, Optional.empty());
   }
 
   private InjectValidator(
       Types types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
-      Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind) {
+      DependencyRequestValidator dependencyRequestValidator,
+      Optional<Kind> privateAndStaticInjectionDiagnosticKind) {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
+    this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
   }
 
   /**
    * Returns a new validator that performs the same validation as this one, but is strict about
-   * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support.
+   * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support (unless {@code
+   * -Adagger.ignorePrivateAndStaticInjectionForComponent=enabled} was set in the javac options).
    */
   InjectValidator whenGeneratingCode() {
     return compilerOptions.ignorePrivateAndStaticInjectionForComponent()
-        ? new InjectValidator(types, elements, compilerOptions, Optional.of(Diagnostic.Kind.ERROR))
-        : this;
+        ? this
+        : new InjectValidator(
+            types,
+            elements,
+            compilerOptions,
+            dependencyRequestValidator,
+            Optional.of(Diagnostic.Kind.ERROR));
   }
 
   ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
@@ -106,17 +119,13 @@ final class InjectValidator {
     }
 
     for (VariableElement parameter : constructorElement.getParameters()) {
-      checkMultipleQualifiers(constructorElement, parameter, builder);
-      if (FrameworkTypes.isProducerType(parameter.asType())) {
-        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
-      }
+      validateDependencyRequest(builder, parameter);
     }
 
     if (throwsCheckedExceptions(constructorElement)) {
       builder.addItem(
           "Dagger does not support checked exceptions on @Inject constructors",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           constructorElement);
     }
 
@@ -169,24 +178,18 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           "Dagger does not support injection into private fields",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           fieldElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           "Dagger does not support injection into static fields",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.staticMemberValidationKind()),
+          staticMemberDiagnosticKind(),
           fieldElement);
     }
 
-    checkMultipleQualifiers(fieldElement, fieldElement, builder);
-
-    if (FrameworkTypes.isProducerType(fieldElement.asType())) {
-      builder.addError(provisionMayNotDependOnProducerType(fieldElement.asType()), fieldElement);
-    }
+    validateDependencyRequest(builder, fieldElement);
 
     return builder.build();
   }
@@ -201,16 +204,14 @@ final class InjectValidator {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(
           "Dagger does not support injection into private methods",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           methodElement);
     }
 
     if (modifiers.contains(STATIC)) {
       builder.addItem(
           "Dagger does not support injection into static methods",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.staticMemberValidationKind()),
+          staticMemberDiagnosticKind(),
           methodElement);
     }
 
@@ -219,13 +220,16 @@ final class InjectValidator {
     }
 
     for (VariableElement parameter : methodElement.getParameters()) {
-      checkMultipleQualifiers(methodElement, parameter, builder);
-      if (FrameworkTypes.isProducerType(parameter.asType())) {
-        builder.addError(provisionMayNotDependOnProducerType(parameter.asType()), parameter);
-      }
+      validateDependencyRequest(builder, parameter);
     }
 
     return builder.build();
+  }
+
+  private void validateDependencyRequest(
+      ValidationReport.Builder<?> builder, VariableElement parameter) {
+    dependencyRequestValidator.validateDependencyRequest(builder, parameter, parameter.asType());
+    dependencyRequestValidator.checkNotProducer(builder, parameter);
   }
 
   ValidationReport<TypeElement> validateMembersInjectionType(TypeElement typeElement) {
@@ -304,30 +308,23 @@ final class InjectValidator {
     return false;
   }
 
-  // TODO(dpb,ronshapiro): Use this on AnyBindingMethodValidator, or a DependencyRequestValidator.
-  // Currently, @Provides and @Produces methods with multiple qualifiers on a dependency will crash
-  // the compiler.
-  private void checkMultipleQualifiers(
-      Element errorElement, Element qualifiedElement, ValidationReport.Builder<?> builder) {
-    ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(qualifiedElement);
-    if (qualifiers.size() > 1) {
-      for (AnnotationMirror qualifier : qualifiers) {
-        builder.addError(
-            "A single injection site may not use more than one @Qualifier",
-            errorElement,
-            qualifier);
-      }
-    }
-  }
-
   private void checkInjectIntoPrivateClass(Element element, Builder<TypeElement> builder) {
     if (!Accessibility.isElementAccessibleFromOwnPackage(
         DaggerElements.closestEnclosingTypeElement(element))) {
       builder.addItem(
           "Dagger does not support injection into private classes",
-          privateAndStaticInjectionDiagnosticKind.orElse(
-              compilerOptions.privateMemberValidationKind()),
+          privateMemberDiagnosticKind(),
           element);
     }
+  }
+
+  private Diagnostic.Kind privateMemberDiagnosticKind() {
+    return privateAndStaticInjectionDiagnosticKind.orElse(
+        compilerOptions.privateMemberValidationKind());
+  }
+
+  private Diagnostic.Kind staticMemberDiagnosticKind() {
+    return privateAndStaticInjectionDiagnosticKind.orElse(
+        compilerOptions.staticMemberValidationKind());
   }
 }

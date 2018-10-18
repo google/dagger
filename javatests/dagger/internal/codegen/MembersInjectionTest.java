@@ -21,7 +21,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -1017,7 +1017,8 @@ public class MembersInjectionTest {
     assertThat(compilation).succeeded();
   }
 
-  @Test public void rawFrameworkTypes() {
+  @Test
+  public void rawFrameworkTypeField() {
     JavaFileObject file =
         JavaFileObjects.forSourceLines(
             "test.RawFrameworkTypes",
@@ -1031,25 +1032,45 @@ public class MembersInjectionTest {
             "  @Inject Provider fieldWithRawProvider;",
             "}",
             "",
+            "@Component",
+            "interface C {",
+            "  void inject(RawProviderField rawProviderField);",
+            "}");
+
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .inFile(file)
+        .onLineContaining("interface C");
+  }
+
+  @Test
+  public void rawFrameworkTypeParameter() {
+    JavaFileObject file =
+        JavaFileObjects.forSourceLines(
+            "test.RawFrameworkTypes",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
             "class RawProviderParameter {",
             "  @Inject void methodInjection(Provider rawProviderParameter) {}",
             "}",
             "",
             "@Component",
             "interface C {",
-            "  void inject(RawProviderField rawProviderField);",
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
+
     Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("javax.inject.Provider cannot be provided")
         .inFile(file)
-        .onLine(17);
-    assertThat(compilation)
-        .hadErrorContaining("javax.inject.Provider cannot be provided")
-        .inFile(file)
-        .onLine(18);
+        .onLineContaining("interface C");
   }
 
   @Test
@@ -1362,7 +1383,7 @@ public class MembersInjectionTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Object listOfInaccessible = new MemoizedSentinel();",
                 "",
                 "  private List getListOfInaccessible() {",
@@ -1402,7 +1423,7 @@ public class MembersInjectionTest {
                 "        UsesInaccessibles instance) {",
                 "    UsesInaccessibles_MembersInjector.injectInaccessibles(")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        instance, (List) getListOfInaccessible());")
             .addLinesIn(
                 DEFAULT_MODE,

@@ -35,8 +35,8 @@ GenJavaTests(
     ],
     deps = [
         "//:dagger_with_compiler",
-        "//third_party:jsr330_inject",
-        "//third_party:jsr330_inject_tck",
-        "//third_party:junit",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@google_bazel_common//third_party/java/jsr330_inject:tck",
+        "@google_bazel_common//third_party/java/junit",
     ],
 )

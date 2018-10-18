@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static javax.lang.model.util.ElementFilter.typesIn;
-import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
@@ -47,39 +46,39 @@ final class ComponentProcessingStep implements ProcessingStep {
   private final Messager messager;
   private final ComponentValidator componentValidator;
   private final BuilderValidator builderValidator;
-  private final ComponentHierarchyValidator componentHierarchyValidator;
-  private final BindingGraphValidator bindingGraphValidator;
+  private final ComponentDescriptorValidator componentDescriptorValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final ComponentGenerator componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphPlugins validationPlugins;
   private final BindingGraphPlugins spiPlugins;
+  private final CompilerOptions compilerOptions;
 
   @Inject
   ComponentProcessingStep(
       Messager messager,
       ComponentValidator componentValidator,
       BuilderValidator builderValidator,
-      ComponentHierarchyValidator componentHierarchyValidator,
-      BindingGraphValidator bindingGraphValidator,
+      ComponentDescriptorValidator componentDescriptorValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       ComponentGenerator componentGenerator,
       BindingGraphConverter bindingGraphConverter,
       @Validation BindingGraphPlugins validationPlugins,
-      BindingGraphPlugins spiPlugins) {
+      BindingGraphPlugins spiPlugins,
+      CompilerOptions compilerOptions) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.builderValidator = builderValidator;
-    this.componentHierarchyValidator = componentHierarchyValidator;
-    this.bindingGraphValidator = bindingGraphValidator;
+    this.componentDescriptorValidator = componentDescriptorValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
     this.bindingGraphConverter = bindingGraphConverter;
     this.validationPlugins = validationPlugins;
     this.spiPlugins = spiPlugins;
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -136,10 +135,10 @@ final class ComponentProcessingStep implements ProcessingStep {
         }
         ComponentDescriptor componentDescriptor =
             componentDescriptorFactory.forComponent(componentTypeElement);
-        ValidationReport<TypeElement> hierarchyReport =
-            componentHierarchyValidator.validate(componentDescriptor);
-        hierarchyReport.printMessagesTo(messager);
-        if (!hierarchyReport.isClean()) {
+        ValidationReport<TypeElement> componentDescriptorReport =
+            componentDescriptorValidator.validate(componentDescriptor);
+        componentDescriptorReport.printMessagesTo(messager);
+        if (!componentDescriptorReport.isClean()) {
           continue;
         }
         BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
@@ -150,18 +149,32 @@ final class ComponentProcessingStep implements ProcessingStep {
         rejectedElements.add(componentTypeElement);
       }
     }
+
+    if (compilerOptions.aheadOfTimeSubcomponents()) {
+      for (TypeElement subcomponentTypeElement : typesIn(subcomponentElements)) {
+        if (!subcomponentIsClean(
+            subcomponentTypeElement, reportsBySubcomponent, builderReportsBySubcomponent)) {
+          continue;
+        }
+        try {
+          ComponentDescriptor componentDescriptor =
+              componentDescriptorFactory.forComponent(subcomponentTypeElement);
+          BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
+          // TODO(b/72748365): Do subgraph validation.
+          generateComponent(bindingGraph);
+        } catch (TypeNotPresentException e) {
+          rejectedElements.add(subcomponentTypeElement);
+        }
+      }
+    }
+
     return rejectedElements.build();
   }
 
   private boolean isValid(BindingGraph bindingGraph) {
-    ValidationReport<TypeElement> graphReport = bindingGraphValidator.validate(bindingGraph);
-    graphReport.printMessagesTo(messager);
-
     dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
-    if (validationPlugins.visitGraph(modelGraph).contains(ERROR) || !graphReport.isClean()) {
-      return false;
-    }
-    return !spiPlugins.visitGraph(modelGraph).contains(ERROR);
+    return !validationPlugins.pluginsReportErrors(modelGraph)
+        && !spiPlugins.pluginsReportErrors(modelGraph);
   }
 
   private void generateComponent(BindingGraph bindingGraph) {
@@ -221,14 +234,26 @@ final class ComponentProcessingStep implements ProcessingStep {
       return false;
     }
     for (Element element : report.referencedSubcomponents()) {
-      ValidationReport<?> subcomponentBuilderReport = builderReportsBySubcomponent.get(element);
-      if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
+      if (!subcomponentIsClean(element, reportsBySubcomponent, builderReportsBySubcomponent)) {
         return false;
       }
-      ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(element);
-      if (subcomponentReport != null && !subcomponentReport.isClean()) {
-        return false;
-      }
+    }
+    return true;
+  }
+
+  /** Returns true if the reports associated with the subcomponent are clean. */
+  private boolean subcomponentIsClean(
+      Element subcomponentElement,
+      Map<Element, ValidationReport<TypeElement>> reportsBySubcomponent,
+      Map<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent) {
+    ValidationReport<?> subcomponentBuilderReport =
+        builderReportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
+      return false;
+    }
+    ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentReport != null && !subcomponentReport.isClean()) {
+      return false;
     }
     return true;
   }

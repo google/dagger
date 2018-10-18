@@ -62,7 +62,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
    */
   public static Object reentrantCheck(Object currentInstance, Object newInstance) {
     boolean isReentrant = !(currentInstance == UNINITIALIZED
-        // This check is needed for AndroidMode's implementation, which uses MemoizedSentinel types.
+        // This check is needed for fastInit's implementation, which uses MemoizedSentinel types.
         || currentInstance instanceof MemoizedSentinel);
 
     if (isReentrant && currentInstance != newInstance) {

@@ -596,6 +596,6 @@ public class SwitchingProviderTest {
   private Compiler compilerWithAndroidMode() {
     return javac()
         .withProcessors(new ComponentProcessor())
-        .withOptions(CompilerMode.EXPERIMENTAL_ANDROID_MODE.javacopts());
+        .withOptions(CompilerMode.FAST_INIT_MODE.javacopts());
   }
 }

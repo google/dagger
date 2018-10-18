@@ -19,6 +19,8 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
+
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
@@ -98,7 +100,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (!dependency.requestElement().isPresent()) {
       return;
     }
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(dependency.kind(), targetKey);
+    BindingRequest request = bindingRequest(targetKey, dependency.kind());
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     for (Binding binding : resolvedBindings.bindings()) {
       if (binding.bindingElement().isPresent()) {
         addDependencyEdge(dependency, binding);
@@ -155,6 +158,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
       DaggerDaggerKythePlugin_PluginComponent.builder()
           .types(JavacTypes.instance(javaContext))
           .elements(JavacElements.instance(javaContext))
+          .compilerOptions(KytheBindingGraphFactory.createCompilerOptions())
           .build()
           .inject(this);
     }
@@ -168,8 +172,15 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
     @Component.Builder
     interface Builder {
-      @BindsInstance Builder types(Types types);
-      @BindsInstance Builder elements(Elements elements);
+      @BindsInstance
+      Builder types(Types types);
+
+      @BindsInstance
+      Builder elements(Elements elements);
+
+      @BindsInstance
+      Builder compilerOptions(CompilerOptions compilerOptions);
+
       PluginComponent build();
     }
   }

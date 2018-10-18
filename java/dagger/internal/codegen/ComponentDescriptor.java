@@ -31,6 +31,7 @@ import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -63,6 +64,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -206,6 +208,17 @@ abstract class ComponentDescriptor {
    */
   abstract ImmutableSet<ComponentRequirement> dependencies();
 
+  /** The non-abstract {@link #transitiveModules()} and the {@link #dependencies()}. */
+  ImmutableSet<ComponentRequirement> availableDependencies() {
+    return Stream.concat(
+            transitiveModuleTypes()
+                .stream()
+                .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
+                .map(module -> ComponentRequirement.forModule(module.asType())),
+            dependencies().stream())
+        .collect(toImmutableSet());
+  }
+
   /**
    * The set of {@link ModuleDescriptor modules} declared directly in {@link Component#modules}.
    * Use {@link #transitiveModules} to get the full set of modules available upon traversing
@@ -301,6 +314,23 @@ abstract class ComponentDescriptor {
   }
 
   abstract ImmutableSet<ComponentMethodDescriptor> componentMethods();
+
+  /** Returns the first component method associated with this binding request, if one exists. */
+  Optional<ComponentMethodDescriptor> findMatchingComponentMethod(BindingRequest request) {
+    return componentMethods().stream()
+        .filter(method -> doesComponentMethodMatch(method, request))
+        .findFirst();
+  }
+
+  /** Returns true if the component method matches the binding request. */
+  private static boolean doesComponentMethodMatch(
+      ComponentMethodDescriptor componentMethod, BindingRequest request) {
+    return componentMethod
+        .dependencyRequest()
+        .map(BindingRequest::bindingRequest)
+        .filter(request::equals)
+        .isPresent();
+  }
 
   /** The entry point methods on the component type. */
   ImmutableSet<ComponentMethodDescriptor> entryPointMethods() {
@@ -429,30 +459,38 @@ abstract class ComponentDescriptor {
     private final Types types;
     private final DependencyRequestFactory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
+    private final CompilerOptions compilerOptions;
 
     @Inject
     Factory(
         DaggerElements elements,
         Types types,
         DependencyRequestFactory dependencyRequestFactory,
-        ModuleDescriptor.Factory moduleDescriptorFactory) {
+        ModuleDescriptor.Factory moduleDescriptorFactory,
+        CompilerOptions compilerOptions) {
       this.elements = elements;
       this.types = types;
       this.dependencyRequestFactory = dependencyRequestFactory;
       this.moduleDescriptorFactory = moduleDescriptorFactory;
+      this.compilerOptions = compilerOptions;
     }
 
     /**
      * Returns a component descriptor for a type annotated with either {@link Component @Component}
-     * or {@link ProductionComponent @ProductionComponent}.
+     * or {@link ProductionComponent @ProductionComponent}. This is also compatible with {@link
+     * Subcomponent @Subcomponent} or {@link ProductionSubcomponent @ProductionSubcomponent} when
+     * generating ahead-of-time subcomponents.
      */
-    ComponentDescriptor forComponent(TypeElement componentDefinitionType) {
-      Optional<Kind> kind = Kind.forAnnotatedElement(componentDefinitionType);
+    ComponentDescriptor forComponent(TypeElement componentType) {
+      Optional<Kind> kind = Kind.forAnnotatedElement(componentType);
       checkArgument(
-          kind.isPresent() && kind.get().isTopLevel(),
-          "%s must be annotated with @Component or @ProductionComponent",
-          componentDefinitionType);
-      return create(componentDefinitionType, kind.get(), Optional.empty());
+          kind.isPresent(), "%s must have a component or subcomponent annotation", componentType);
+      if (!compilerOptions.aheadOfTimeSubcomponents()) {
+        checkArgument(kind.get().isTopLevel(),
+            "%s must be annotated with @Component or @ProductionComponent.",
+            componentType);
+      }
+      return create(componentType, kind.get(), Optional.empty());
     }
 
     private ComponentDescriptor create(

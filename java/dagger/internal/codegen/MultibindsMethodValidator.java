@@ -36,12 +36,14 @@ class MultibindsMethodValidator extends BindingMethodValidator {
 
   /** Creates a validator for {@link Multibinds @Multibinds} methods. */
   @Inject
-  MultibindsMethodValidator(DaggerElements elements, Types types) {
+  MultibindsMethodValidator(
+      DaggerElements elements, Types types, DependencyRequestValidator dependencyRequestValidator) {
     super(
         elements,
         types,
         Multibinds.class,
         ImmutableSet.of(Module.class, ProducerModule.class),
+        dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         NO_MULTIBINDINGS);
@@ -54,7 +56,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     checkParameters(builder);
   }
 
-  private void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
+  @Override
+  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
     if (!builder.getSubject().getParameters().isEmpty()) {
       builder.addError(bindingMethods("cannot have parameters"));
     }

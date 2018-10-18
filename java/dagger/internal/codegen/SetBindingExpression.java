@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -27,11 +28,12 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
 import dagger.model.DependencyRequest;
 import java.util.Collections;
+import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for multibound sets. */
-final class SetBindingExpression extends SimpleInvocationBindingExpression {
+final class SetBindingExpression extends MultibindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final ComponentBindingExpressions componentBindingExpressions;
@@ -40,11 +42,12 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   SetBindingExpression(
       ResolvedBindings resolvedBindings,
+      GeneratedComponentModel generatedComponentModel,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings);
+    super(resolvedBindings, generatedComponentModel);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
@@ -53,11 +56,14 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   @Override
-  Expression getDependencyExpression(ClassName requestingClass) {
+  protected Expression buildDependencyExpression(ClassName requestingClass) {
+    Optional<CodeBlock> superMethodCall = superMethodCall();
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
-    if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
+    if (isImmutableSetAvailable
+        && binding.dependencies().stream().allMatch(this::isSingleValue)
+        && !superMethodCall.isPresent()) {
       return Expression.create(
           immutableSetType(),
           CodeBlock.builder()
@@ -105,10 +111,13 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         } else {
           instantiation.add("newSetBuilder($L)", binding.dependencies().size());
         }
-        for (DependencyRequest dependency : binding.dependencies()) {
+        for (DependencyRequest dependency : getNewContributions(binding.dependencies())) {
           String builderMethod = isSingleValue(dependency) ? "add" : "addAll";
           instantiation.add(
               ".$L($L)", builderMethod, getContributionExpression(dependency, requestingClass));
+        }
+        if (superMethodCall.isPresent()) {
+          instantiation.add(CodeBlock.of(".addAll($L)", superMethodCall.get()));
         }
         instantiation.add(".build()");
         return Expression.create(
@@ -125,7 +134,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
     return componentBindingExpressions
-        .getDependencyExpression(dependency, requestingClass)
+        .getDependencyExpression(bindingRequest(dependency), requestingClass)
         .codeBlock();
   }
 

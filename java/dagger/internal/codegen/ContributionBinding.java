@@ -143,7 +143,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   final TypeMirror contributedType() {
     switch (contributionType()) {
       case MAP:
-        return MapType.from(key()).unwrappedValueType(bindingType().frameworkClass());
+        return MapType.from(key()).unwrappedFrameworkValueType();
       case SET:
         return SetType.from(key()).elementType();
       case SET_VALUES:
@@ -158,6 +158,17 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     switch (kind()) {
       case MULTIBOUND_SET:
       case MULTIBOUND_MAP:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /** Whether the bound type has a generated implementation. */
+  final boolean requiresGeneratedInstance() {
+    switch (kind()) {
+      case COMPONENT:
+      case SUBCOMPONENT_BUILDER:
         return true;
       default:
         return false;

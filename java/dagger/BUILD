@@ -22,13 +22,22 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "SOURCE_7_TARGET_7",
 )
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 
 java_library(
     name = "core",
     srcs = glob(["**/*.java"]),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
-    exports = ["//third_party:jsr330_inject"],
-    deps = ["//third_party:jsr330_inject"],
+    tags = ["maven_coordinates=com.google.dagger:dagger:" + POM_VERSION],
+    exports = ["@google_bazel_common//third_party/java/jsr330_inject"],
+    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger",
+    artifact_name = "Dagger",
+    targets = [":core"],
 )
 
 filegroup(
@@ -36,12 +45,12 @@ filegroup(
     srcs = glob(["**/*"]),
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "core-javadoc",
     srcs = [":javadoc-srcs"],
     exclude_packages = ["dagger.internal"],
     root_packages = ["dagger"],
-    deps = ["//third_party:jsr330_inject"],
+    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )

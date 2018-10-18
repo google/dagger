@@ -18,15 +18,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.google.dagger</groupId>
-    <artifactId>dagger-parent</artifactId>
-    <version>HEAD-SNAPSHOT</version>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>9</version>
   </parent>
 
   <groupId>com.google.dagger.example</groupId>
   <artifactId>dagger-example-parent</artifactId>
   <packaging>pom</packaging>
   <name>Examples</name>
+  <version>2.17</version>
 
   <modules>
     <module>simple</module>
@@ -44,6 +45,11 @@
         <groupId>com.google.dagger</groupId>
         <artifactId>dagger-compiler</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>26.0-jre</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

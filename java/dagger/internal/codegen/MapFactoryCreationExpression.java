@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 
@@ -37,16 +38,19 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
   private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingGraph graph;
   private final ContributionBinding binding;
+  private final DaggerElements elements;
 
   MapFactoryCreationExpression(
       ContributionBinding binding,
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
-      BindingGraph graph) {
+      BindingGraph graph,
+      DaggerElements elements) {
     this.binding = checkNotNull(binding);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.graph = checkNotNull(graph);
+    this.elements = checkNotNull(elements);
   }
 
   @Override
@@ -80,11 +84,12 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
           graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
       CodeBlock value =
           componentBindingExpressions
-              .getDependencyExpression(frameworkDependency, generatedComponentModel.name())
+              .getDependencyExpression(
+                  bindingRequest(frameworkDependency), generatedComponentModel.name())
               .codeBlock();
       builder.add(
           ".put($L, $L)",
-          getMapKeyExpression(contributionBinding, generatedComponentModel.name()),
+          getMapKeyExpression(contributionBinding, generatedComponentModel.name(), elements),
           useRawType ? CodeBlocks.cast(value, frameworkDependency.frameworkClass()) : value);
     }
     builder.add(".build()");

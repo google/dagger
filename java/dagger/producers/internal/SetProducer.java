@@ -39,12 +39,7 @@ import java.util.Set;
  */
 public final class SetProducer<T> extends AbstractProducer<Set<T>> {
   private static final Producer<Set<Object>> EMPTY_PRODUCER =
-      new Producer<Set<Object>>() {
-        @Override
-        public ListenableFuture<Set<Object>> get() {
-          return Futures.<Set<Object>>immediateFuture(ImmutableSet.<Object>of());
-        }
-      };
+      Producers.<Set<Object>>immediateProducer(ImmutableSet.<Object>of());
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // safe covariant cast
   public static <T> Producer<Set<T>> empty() {
@@ -109,8 +104,7 @@ public final class SetProducer<T> extends AbstractProducer<Set<T>> {
   }
 
   /**
-   * Returns a future {@link Set} whose iteration order is that of the elements given by each of the
-   * producers, which are invoked in the order given at creation.
+   * Returns a future {@link Set} that contains the elements given by each of the producers.
    *
    * <p>If any of the delegate collections, or any elements therein, are null, then this future will
    * fail with a NullPointerException.

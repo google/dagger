@@ -22,6 +22,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -109,5 +110,10 @@ final class BindingGraphPlugins {
       diagnosticKinds.addAll(reporter.reportedDiagnosticKinds());
     }
     return diagnosticKinds.build();
+  }
+
+  /** Returns {@code true} if any errors are reported by any of the plugins for {@code graph}. */
+  boolean pluginsReportErrors(BindingGraph graph) {
+    return visitGraph(graph).contains(ERROR);
   }
 }

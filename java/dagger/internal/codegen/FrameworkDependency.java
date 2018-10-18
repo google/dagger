@@ -18,8 +18,6 @@ package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
 import dagger.model.Key;
-import dagger.model.RequestKind;
-import javax.inject.Provider;
 
 /**
  * The framework class and binding key for a resolved dependency of a binding. If a binding has
@@ -34,7 +32,7 @@ import javax.inject.Provider;
  *
  * But they both can be satisfied with the same instance of {@code Provider<Bar>}. So one instance
  * of {@code FrameworkDependency} will be used for both. Its {@link #key()} will be for {@code Bar},
- * and its {@link #frameworkClass()} will be {@link Provider}.
+ * and its {@link #frameworkType()} will be {@link FrameworkType#PROVIDER}.
  *
  * <pre><code>
  *   {@literal @Provides} static Foo provideFoo(Bar bar, {@literal Provider<Bar>} barProvider) {
@@ -48,30 +46,16 @@ abstract class FrameworkDependency {
   /** The fully-resolved key shared by all the dependency requests. */
   abstract Key key();
 
-  /** The binding type of the framework dependency. */
-  abstract BindingType bindingType();
+  /** The type of the framework dependency. */
+  abstract FrameworkType frameworkType();
 
-  /** The dependency request kind that is equivalent to requesting the framework dependency. */
-  RequestKind dependencyRequestKind() {
-    switch (bindingType()) {
-      case PROVISION:
-        return RequestKind.PROVIDER;
-
-      case PRODUCTION:
-        return RequestKind.PRODUCER;
-
-      default:
-        throw new AssertionError(bindingType());
-    }
-  }
-
-  /** The framework class to use for these requests. */
+  /** The framework class to use for this dependency. */
   final Class<?> frameworkClass() {
-    return bindingType().frameworkClass();
+    return frameworkType().frameworkClass();
   }
 
   /** Returns a new instance with the given key and type. */
-  static FrameworkDependency create(Key key, BindingType bindingType) {
-    return new AutoValue_FrameworkDependency(key, bindingType);
+  static FrameworkDependency create(Key key, FrameworkType frameworkType) {
+    return new AutoValue_FrameworkDependency(key, frameworkType);
   }
 }

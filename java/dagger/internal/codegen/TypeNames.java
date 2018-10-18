@@ -39,6 +39,7 @@ import dagger.internal.TypedReleasableReferenceManagerDecorator;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducer;
+import dagger.producers.internal.DependencyMethodProducer;
 import dagger.producers.internal.MapOfProducedProducer;
 import dagger.producers.internal.MapOfProducerProducer;
 import dagger.producers.internal.MapProducer;
@@ -60,6 +61,7 @@ final class TypeNames {
 
   static final ClassName ABSTRACT_PRODUCER = ClassName.get(AbstractProducer.class);
   static final ClassName ASYNC_FUNCTION = ClassName.get(AsyncFunction.class);
+  static final ClassName DEPENDENCY_METHOD_PRODUCER = ClassName.get(DependencyMethodProducer.class);
   static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
   static final ClassName EXECUTOR = ClassName.get(Executor.class);
   static final ClassName FACTORY = ClassName.get(Factory.class);
@@ -137,6 +139,10 @@ final class TypeNames {
 
   static ParameterizedTypeName producerOf(TypeName typeName) {
     return ParameterizedTypeName.get(PRODUCER, typeName);
+  }
+
+  static ParameterizedTypeName dependencyMethodProducerOf(TypeName typeName) {
+    return ParameterizedTypeName.get(DEPENDENCY_METHOD_PRODUCER, typeName);
   }
 
   static ParameterizedTypeName providerOf(TypeName typeName) {

@@ -79,8 +79,8 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(MembersInjectionBinding binding) {
-    return Optional.of(binding.membersInjectedType());
+  Element originatingElement(MembersInjectionBinding binding) {
+    return binding.membersInjectedType();
   }
 
   @Override

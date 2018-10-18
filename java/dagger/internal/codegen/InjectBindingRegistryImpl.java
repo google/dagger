@@ -33,6 +33,7 @@ import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import dagger.Component;
+import dagger.MembersInjector;
 import dagger.Provides;
 import dagger.model.Key;
 import java.util.ArrayDeque;
@@ -42,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -68,13 +70,13 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final CompilerOptions compilerOptions;
 
   final class BindingsCollection<B extends Binding> {
-    private final BindingType bindingType;
+    private final Class<?> factoryClass;
     private final Map<Key, B> bindingsByKey = Maps.newLinkedHashMap();
     private final Deque<B> bindingsRequiringGeneration = new ArrayDeque<>();
     private final Set<Key> materializedBindingKeys = Sets.newLinkedHashSet();
-    
-    BindingsCollection(BindingType bindingType) {
-      this.bindingType = bindingType;
+
+    BindingsCollection(Class<?> factoryClass) {
+      this.factoryClass = factoryClass;
     }
 
     void generateBindings(SourceFileGenerator<B> generator) throws SourceFileGenerationException {
@@ -117,7 +119,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
               String.format(
                   "Generating a %s for %s. "
                       + "Prefer to run the dagger processor over that class instead.",
-                  bindingType.frameworkClass().getSimpleName(),
+                  factoryClass.getSimpleName(),
                   types.erasure(binding.key().type()))); // erasure to strip <T> from msgs.
         }
       }
@@ -147,9 +149,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   }
 
   private final BindingsCollection<ProvisionBinding> provisionBindings =
-      new BindingsCollection<>(BindingType.PROVISION);
+      new BindingsCollection<>(Provider.class);
   private final BindingsCollection<MembersInjectionBinding> membersInjectionBindings =
-      new BindingsCollection<>(BindingType.MEMBERS_INJECTION);
+      new BindingsCollection<>(MembersInjector.class);
 
   @Inject
   InjectBindingRegistryImpl(

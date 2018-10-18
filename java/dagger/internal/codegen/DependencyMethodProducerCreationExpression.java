@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
+import static dagger.internal.codegen.TypeNames.dependencyMethodProducerOf;
 import static dagger.internal.codegen.TypeNames.listenableFutureOf;
-import static dagger.internal.codegen.TypeNames.producerOf;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -74,10 +74,10 @@ final class DependencyMethodProducerCreationExpression
     return CodeBlock.of(
         "$L",
         anonymousClassBuilder("")
-            .superclass(producerOf(keyType))
+            .superclass(dependencyMethodProducerOf(keyType))
             .addField(dependencyField)
             .addMethod(
-                methodBuilder("get")
+                methodBuilder("callDependencyMethod")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(listenableFutureOf(keyType))

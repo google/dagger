@@ -45,7 +45,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
 
   @Override
   protected CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName componentName) {
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
     // There could be several methods on the component for the same request key and kind.
     // Only one should use the BindingMethodImplementation; the others can delegate that one. So
     // use methodImplementation.body() only if componentMethod equals the method for this instance.
@@ -55,10 +55,9 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
     // for the parent and the child. Only the parent's should use the BindingMethodImplementation;
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
-    return componentMethod.equals(this.componentMethod)
-            && componentName.equals(generatedComponentModel.name())
+    return componentMethod.equals(this.componentMethod) && component.equals(generatedComponentModel)
         ? methodImplementation.body()
-        : super.getComponentMethodImplementation(componentMethod, componentName);
+        : super.getComponentMethodImplementation(componentMethod, component);
   }
 
   @Override

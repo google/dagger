@@ -213,13 +213,12 @@ public class ModuleFactoryGeneratorTest {
         "",
         "@Module(includes = Void.class)",
         "class TestModule {}");
+
     Compilation compilation = daggerCompiler().compile(module);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            String.format(
-                "%s is listed as a module, but is not annotated with %s",
-                "java.lang.Void", "@Module"));
+            "java.lang.Void is listed as a module, but is not annotated with @Module");
   }
 
   @Test public void singleProvidesMethodNoArgs() {
@@ -379,21 +378,6 @@ public class ModuleFactoryGeneratorTest {
         .compilesWithoutError()
         .and().generatesSources(factoryFile);
   }
-
-  private static final JavaFileObject QUALIFIER_A =
-      JavaFileObjects.forSourceLines("test.QualifierA",
-          "package test;",
-          "",
-          "import javax.inject.Qualifier;",
-          "",
-          "@Qualifier @interface QualifierA {}");
-  private static final JavaFileObject QUALIFIER_B =
-      JavaFileObjects.forSourceLines("test.QualifierB",
-          "package test;",
-          "",
-          "import javax.inject.Qualifier;",
-          "",
-          "@Qualifier @interface QualifierB {}");
 
   @Test public void multipleProvidesMethods() {
     JavaFileObject classXFile = JavaFileObjects.forSourceLines("test.X",
@@ -1298,14 +1282,31 @@ public class ModuleFactoryGeneratorTest {
             provideNonGenericTypeWithDepsFactory);
   }
 
-  @Test public void providesMethodMultipleQualifiers() {
+  private static final JavaFileObject QUALIFIER_A =
+      JavaFileObjects.forSourceLines(
+          "test.QualifierA",
+          "package test;",
+          "",
+          "import javax.inject.Qualifier;",
+          "",
+          "@Qualifier @interface QualifierA {}");
+
+  private static final JavaFileObject QUALIFIER_B =
+      JavaFileObjects.forSourceLines(
+          "test.QualifierB",
+          "package test;",
+          "",
+          "import javax.inject.Qualifier;",
+          "",
+          "@Qualifier @interface QualifierB {}");
+
+  @Test
+  public void providesMethodMultipleQualifiersOnMethod() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "import dagger.Provides;",
-        "import javax.annotation.Nullable;",
-        "import javax.inject.Singleton;",
         "",
         "@Module",
         "final class TestModule {",
@@ -1315,7 +1316,102 @@ public class ModuleFactoryGeneratorTest {
         "}");
     Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("Cannot use more than one @Qualifier");
+    assertThat(compilation).hadErrorContaining("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void providesMethodMultipleQualifiersOnParameter() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides static String provideString(@QualifierA @QualifierB Object object) {",
+            "    return \"foo\";",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("may not use more than one @Qualifier");
+  }
+
+  @Test
+  public void providesMethodWildcardDependency() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides static String provideString(Provider<? extends Number> numberProvider) {",
+            "    return \"foo\";",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(moduleFile, QUALIFIER_A, QUALIFIER_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, or Produced<T> "
+                + "when T is a wildcard type such as ? extends java.lang.Number");
+  }
+
+  private static final JavaFileObject SCOPE_A =
+      JavaFileObjects.forSourceLines(
+          "test.ScopeA",
+          "package test;",
+          "",
+          "import javax.inject.Scope;",
+          "",
+          "@Scope @interface ScopeA {}");
+
+  private static final JavaFileObject SCOPE_B =
+      JavaFileObjects.forSourceLines(
+          "test.ScopeB",
+          "package test;",
+          "",
+          "import javax.inject.Scope;",
+          "",
+          "@Scope @interface ScopeB {}");
+
+  @Test
+  public void providesMethodMultipleScopes() {
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class TestModule {",
+            "  @Provides",
+            "  @ScopeA",
+            "  @ScopeB",
+            "  String provideString() {",
+            "    return \"foo\";",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(moduleFile, SCOPE_A, SCOPE_B);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot use more than one @Scope")
+        .inFile(moduleFile)
+        .onLineContaining("@ScopeA");
+    assertThat(compilation)
+        .hadErrorContaining("Cannot use more than one @Scope")
+        .inFile(moduleFile)
+        .onLineContaining("@ScopeB");
   }
 
   @Test public void providerDependsOnProduced() {

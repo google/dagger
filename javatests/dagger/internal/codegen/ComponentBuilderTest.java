@@ -617,6 +617,36 @@ public class ComponentBuilderTest {
   }
 
   @Test
+  public void builderMethodTakesPrimitive() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Object object();",
+            "",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    Builder primitive(long l);",
+            "    TestComponent build();",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@Component.Builder methods that are not annotated with @BindsInstance must take "
+                + "either a module or a component dependency, not a primitive")
+        .inFile(component)
+        .onLineContaining("primitive(long l);");
+  }
+
+  @Test
   public void testInheritedBuilderBuildReturnsWrongTypeFails() {
     JavaFileObject componentFile =
         JavaFileObjects.forSourceLines(

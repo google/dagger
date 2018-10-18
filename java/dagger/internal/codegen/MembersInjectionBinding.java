@@ -98,10 +98,6 @@ abstract class MembersInjectionBinding extends Binding {
 
     abstract ImmutableSet<DependencyRequest> dependencies();
 
-    int indexAmongSiblingMembers() {
-      return element().getEnclosingElement().getEnclosedElements().indexOf(element());
-    }
-
     /**
      * Returns the index of {@link #element()} in its parents {@code @Inject} members that have the
      * same simple name. This method filters out private elements so that the results will be

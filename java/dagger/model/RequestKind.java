@@ -16,6 +16,9 @@
 
 package dagger.model;
 
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+
 import dagger.Lazy;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -42,8 +45,8 @@ public enum RequestKind {
   PROVIDER_OF_LAZY,
 
   /**
-   * A request for a members injection. E.g. {@code void inject(FooType);}. Can only be requested by
-   * component interfaces.
+   * A request for a members injection. E.g. {@code void injectMembers(FooType);}. Can only be
+   * requested by component interfaces.
    */
   MEMBERS_INJECTION,
 
@@ -59,4 +62,24 @@ public enum RequestKind {
    */
   FUTURE,
   ;
+
+  /** Returns a string that represents requests of this kind for a key. */
+  public String format(Key key) {
+    switch (this) {
+      case INSTANCE:
+        return key.toString();
+
+      case PROVIDER_OF_LAZY:
+        return String.format("Provider<Lazy<%s>>", key);
+
+      case MEMBERS_INJECTION:
+        return String.format("injectMembers(%s)", key);
+
+      case FUTURE:
+        return String.format("ListenableFuture<%s>", key);
+
+      default:
+        return String.format("%s<%s>", UPPER_UNDERSCORE.to(UPPER_CAMEL, name()), key);
+    }
+  }
 }

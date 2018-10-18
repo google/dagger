@@ -42,6 +42,7 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
@@ -145,11 +146,12 @@ final class MapKeys {
    * @throws IllegalStateException if {@code binding} is not a {@link dagger.multibindings.IntoMap
    *     map} contribution.
    */
-  static CodeBlock getMapKeyExpression(ContributionBinding binding, ClassName requestingClass) {
+  static CodeBlock getMapKeyExpression(
+      ContributionBinding binding, ClassName requestingClass, DaggerElements elements) {
     AnnotationMirror mapKeyAnnotation = binding.mapKeyAnnotation().get();
     return MapKeyAccessibility.isMapKeyAccessibleFrom(
             mapKeyAnnotation, requestingClass.packageName())
-        ? directMapKeyExpression(mapKeyAnnotation)
+        ? directMapKeyExpression(mapKeyAnnotation, elements)
         : CodeBlock.of("$T.create()", mapKeyProxyClassName(binding));
   }
 
@@ -157,17 +159,30 @@ final class MapKeys {
    * Returns a code block for the map key annotation {@code mapKey}.
    *
    * <p>This method assumes the map key will be accessible in the context that the returned {@link
-   * CodeBlock} is used. Use {@link #getMapKeyExpression(ContributionBinding, ClassName)} when that
-   * assumption is not guaranteed.
+   * CodeBlock} is used. Use {@link #getMapKeyExpression(ContributionBinding, ClassName,
+   * DaggerElements)} when that assumption is not guaranteed.
    *
    * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
    *     annotation
    * @throws IllegalStateException if {@code bindingElement} is not annotated with a {@code MapKey}
    *     annotation
    */
-  private static CodeBlock directMapKeyExpression(AnnotationMirror mapKey) {
+  private static CodeBlock directMapKeyExpression(
+      AnnotationMirror mapKey, DaggerElements elements) {
     Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
     AnnotationExpression annotationExpression = new AnnotationExpression(mapKey);
+
+    if (MoreTypes.asTypeElement(mapKey.getAnnotationType())
+        .getQualifiedName()
+        .contentEquals("dagger.android.AndroidInjectionKey")) {
+      TypeElement unwrappedType =
+          elements.checkTypePresent((String) unwrappedValue.get().getValue());
+      return CodeBlock.of(
+          "$T.of($S)",
+          ClassName.get("dagger.android.internal", "AndroidInjectionKeys"),
+          ClassName.get(unwrappedType).reflectionName());
+    }
+
     if (unwrappedValue.isPresent()) {
       TypeMirror unwrappedValueType =
           getOnlyElement(getAnnotationValuesWithDefaults(mapKey).keySet()).getReturnType();
@@ -178,8 +193,8 @@ final class MapKeys {
   }
 
   /**
-   * Returns the {@link ClassName} in which {@link #mapKeyFactoryMethod(ContributionBinding, Types)}
-   * is generated.
+   * Returns the {@link ClassName} in which {@link #mapKeyFactoryMethod(ContributionBinding, Types,
+   * DaggerElements)} is generated.
    */
   static ClassName mapKeyProxyClassName(ContributionBinding binding) {
     return elementBasedClassName(
@@ -191,7 +206,8 @@ final class MapKeys {
    * #mapKeyProxyClassName(ContributionBinding)} when the {@code @MapKey} annotation is not publicly
    * accessible.
    */
-  static Optional<MethodSpec> mapKeyFactoryMethod(ContributionBinding binding, Types types) {
+  static Optional<MethodSpec> mapKeyFactoryMethod(
+      ContributionBinding binding, Types types, DaggerElements elements) {
     return binding
         .mapKeyAnnotation()
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
@@ -200,7 +216,7 @@ final class MapKeys {
                 methodBuilder("create")
                     .addModifiers(PUBLIC, STATIC)
                     .returns(TypeName.get(mapKeyType(mapKey, types)))
-                    .addStatement("return $L", directMapKeyExpression(mapKey))
+                    .addStatement("return $L", directMapKeyExpression(mapKey, elements))
                     .build());
   }
 

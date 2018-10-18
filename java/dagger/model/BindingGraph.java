@@ -16,7 +16,7 @@
 
 package dagger.model;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -30,10 +30,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableNetwork;
+import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
+import com.google.common.graph.NetworkBuilder;
 import dagger.Module;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.Node;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.lang.model.element.ExecutableElement;
@@ -69,9 +69,26 @@ import javax.lang.model.element.TypeElement;
  *
  * <p><b>Note that this API is experimental and will change.</b>
  */
-public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
+public final class BindingGraph {
+  private final ImmutableNetwork<Node, Edge> network;
+
   BindingGraph(Network<Node, Edge> network) {
-    super(ImmutableNetwork.copyOf(network));
+    this.network = ImmutableNetwork.copyOf(network);
+  }
+
+  /** Returns the graph in its {@link Network} representation. */
+  public ImmutableNetwork<Node, Edge> network() {
+    return network;
+  }
+
+  @Override
+  public int hashCode() {
+    return network.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return network.toString();
   }
 
   /** Returns the binding nodes. */
@@ -82,7 +99,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   /** Returns the binding nodes for a key. */
   public ImmutableSet<BindingNode> bindingNodes(Key key) {
     return nodeStream(BindingNode.class)
-        .filter(node -> node.binding().key().equals(key))
+        .filter(node -> node.key().equals(key))
         .collect(toImmutableSet());
   }
 
@@ -152,7 +169,7 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream(Node node) {
-    return outEdges(node).stream().flatMap(instancesOf(DependencyEdge.class));
+    return network.outEdges(node).stream().flatMap(instancesOf(DependencyEdge.class));
   }
 
   /**
@@ -163,20 +180,43 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     return entryPointEdgeStream().collect(toImmutableSet());
   }
 
-  /** Returns the binding nodes for bindings that directly satisfy entry points. */
-  public ImmutableSet<BindingNode> entryPointBindingNodes() {
+  /** Returns the binding nodes or missing binding nodes that directly satisfy entry points. */
+  public ImmutableSet<MaybeBindingNode> entryPointBindingNodes() {
     return entryPointEdgeStream()
-        .map(edge -> (BindingNode) incidentNodes(edge).target())
+        .map(edge -> (MaybeBindingNode) network.incidentNodes(edge).target())
         .collect(toImmutableSet());
   }
 
-  /** Returns the edges for entry points that transitively depend on a binding. */
+  /**
+   * Returns the edges for entry points that transitively depend on a binding or missing binding for
+   * a key. Never returns an empty set.
+   */
   public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
-      BindingNode bindingNode) {
-    Network<Node, Edge> subgraphDependingOnBindingNode =
-        inducedSubgraph(this, reachableNodes(transpose(this).asGraph(), bindingNode));
-    return ImmutableSet.copyOf(
-        intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()));
+      MaybeBindingNode bindingNode) {
+    ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
+    Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
+        inducedSubgraph(
+            dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), bindingNode));
+    ImmutableSet<DependencyEdge> entryPointEdges =
+        intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()).immutableCopy();
+    verify(!entryPointEdges.isEmpty(), "No entry points depend on binding %s", bindingNode);
+    return entryPointEdges;
+  }
+
+  // TODO(dpb): Make public. Cache.
+  private ImmutableNetwork<Node, DependencyEdge> dependencyGraph() {
+    MutableNetwork<Node, DependencyEdge> dependencyGraph =
+        NetworkBuilder.from(network)
+            .expectedNodeCount(network.nodes().size())
+            .expectedEdgeCount((int) dependencyEdgeStream().count())
+            .build();
+    dependencyEdgeStream()
+        .forEach(
+            edge -> {
+              EndpointPair<Node> endpoints = network.incidentNodes(edge);
+              dependencyGraph.addEdge(endpoints.source(), endpoints.target(), edge);
+            });
+    return ImmutableNetwork.copyOf(dependencyGraph);
   }
 
   private <N extends Node> ImmutableSet<N> nodes(Class<N> clazz) {
@@ -184,11 +224,11 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   private <N extends Node> Stream<N> nodeStream(Class<N> clazz) {
-    return nodes().stream().flatMap(instancesOf(clazz));
+    return network.nodes().stream().flatMap(instancesOf(clazz));
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream() {
-    return edges().stream().flatMap(instancesOf(DependencyEdge.class));
+    return network.edges().stream().flatMap(instancesOf(DependencyEdge.class));
   }
 
   private Stream<DependencyEdge> entryPointEdgeStream() {
@@ -214,56 +254,21 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * <p>For dependencies on missing bindings, the target node is a {@link MissingBindingNode}.
    * Otherwise the target node is a {@link BindingNode}.
    */
-  public static final class DependencyEdge implements Edge {
-
-    private final DependencyRequest dependencyRequest;
-    private final boolean entryPoint;
-
-    DependencyEdge(DependencyRequest dependencyRequest, boolean entryPoint) {
-      this.dependencyRequest = dependencyRequest;
-      this.entryPoint = entryPoint;
-    }
-
+  public interface DependencyEdge extends Edge {
     /** The dependency request. */
-    public DependencyRequest dependencyRequest() {
-      return dependencyRequest;
-    }
+    DependencyRequest dependencyRequest();
 
     /** Returns {@code true} if this edge represents an entry point. */
-    public boolean isEntryPoint() {
-      return entryPoint;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this)
-          .add("dependencyRequest", dependencyRequest)
-          .add("entryPoint", entryPoint)
-          .toString();
-    }
+    boolean isEntryPoint();
   }
 
   /**
    * An edge that represents a subcomponent factory method linking a parent component to a child
    * subcomponent.
    */
-  public static final class ChildFactoryMethodEdge implements Edge {
-
-    private final ExecutableElement factoryMethod;
-
-    ChildFactoryMethodEdge(ExecutableElement factoryMethod) {
-      this.factoryMethod = factoryMethod;
-    }
-
+  public interface ChildFactoryMethodEdge extends Edge {
     /** The subcomponent factory method element. */
-    public ExecutableElement factoryMethod() {
-      return factoryMethod;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this).add("factoryMethod", factoryMethod).toString();
-    }
+    ExecutableElement factoryMethod();
   }
 
   /**
@@ -273,27 +278,13 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * the {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
    * ComponentNode} for the child subcomponent.
    */
-  public static final class SubcomponentBuilderBindingEdge implements Edge {
-
-    private final ImmutableSet<TypeElement> declaringModules;
-
-    SubcomponentBuilderBindingEdge(Iterable<TypeElement> declaringModules) {
-      this.declaringModules = ImmutableSet.copyOf(declaringModules);
-    }
-
+  public interface SubcomponentBuilderBindingEdge extends Edge {
     /**
      * The modules that {@linkplain Module#subcomponents() declare the subcomponent} that generated
      * this edge. Empty if the parent component has a subcomponent builder method and there are no
      * declaring modules.
      */
-    public ImmutableSet<TypeElement> declaringModules() {
-      return declaringModules;
-    }
-
-    @Override
-    public String toString() {
-      return toStringHelper(this).add("declaringModules", declaringModules).toString();
-    }
+    ImmutableSet<TypeElement> declaringModules();
   }
 
   /** A node in the binding graph. Either a {@link BindingNode} or a {@link ComponentNode}. */
@@ -303,10 +294,27 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
   }
 
   /**
+   * A node in the binding graph that is either a {@link BindingNode} or a {@link
+   * MissingBindingNode}.
+   */
+  public interface MaybeBindingNode extends Node {
+
+    /** The component that owns the binding, or in which the binding is missing. */
+    @Override
+    ComponentPath componentPath();
+
+    /** The key of the binding, or for which there is no binding. */
+    Key key();
+
+    /** The binding, or empty if missing. */
+    Optional<Binding> maybeBinding();
+  }
+
+  /**
    * A <b>binding node</b> in the binding graph. If a binding is owned by more than one component,
    * there is one binding node for that binding for every owning component.
    */
-  public interface BindingNode extends Node {
+  public interface BindingNode extends MaybeBindingNode {
 
     /** The component that owns the {@link #binding()}. */
     @Override
@@ -314,11 +322,21 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
 
     /** The binding. */
     Binding binding();
+
+    @Override
+    default Key key() {
+      return binding().key();
+    }
+
+    @Override
+    default Optional<Binding> maybeBinding() {
+      return Optional.of(binding());
+    }
   }
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */
   @AutoValue
-  public abstract static class MissingBindingNode implements Node {
+  public abstract static class MissingBindingNode implements MaybeBindingNode {
     static MissingBindingNode create(ComponentPath component, Key key) {
       return new AutoValue_BindingGraph_MissingBindingNode(component, key);
     }
@@ -331,7 +349,12 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
     public abstract Key key();
 
     @Override
-    public String toString() {
+    public final Optional<Binding> maybeBinding() {
+      return Optional.empty();
+    }
+
+    @Override
+    public final String toString() {
       return String.format("missing binding for %s in %s", key(), componentPath());
     }
   }
@@ -340,28 +363,16 @@ public final class BindingGraph extends ForwardingNetwork<Node, Edge> {
    * A <b>component node</b> in the graph. Every entry point {@linkplain DependencyEdge dependency
    * edge}'s source node is a component node for the component containing the entry point.
    */
-  @AutoValue
-  public abstract static class ComponentNode implements Node {
-    static ComponentNode create(
-        ComponentPath componentPath,
-        ImmutableSet<DependencyRequest> entryPoints,
-        ImmutableSet<Scope> scopes) {
-      return new AutoValue_BindingGraph_ComponentNode(componentPath, entryPoints, scopes);
-    }
+  public interface ComponentNode extends Node {
 
     /** The component represented by this node. */
     @Override
-    public abstract ComponentPath componentPath();
+    ComponentPath componentPath();
 
     /** The entry points on this component. */
-    public abstract ImmutableSet<DependencyRequest> entryPoints();
+    ImmutableSet<DependencyRequest> entryPoints();
 
     /** The scopes declared on this component. */
-    public abstract ImmutableSet<Scope> scopes();
-
-    @Override
-    public final String toString() {
-      return componentPath().toString();
-    }
+    ImmutableSet<Scope> scopes();
   }
 }

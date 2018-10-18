@@ -16,17 +16,10 @@
 
 package dagger.model;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Network;
-import dagger.model.BindingGraph.ChildFactoryMethodEdge;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MissingBindingNode;
 import dagger.model.BindingGraph.Node;
-import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Exposes package-private constructors to the {@code dagger.internal.codegen} package. <em>This
@@ -42,31 +35,6 @@ public final class BindingGraphProxies {
   /** Creates a new {@link MissingBindingNode}. */
   public static MissingBindingNode missingBindingNode(ComponentPath component, Key key) {
     return MissingBindingNode.create(component, key);
-  }
-
-  /** Creates a new {@link ComponentNode}. */
-  public static ComponentNode componentNode(
-      ComponentPath component,
-      ImmutableSet<DependencyRequest> entryPoints,
-      ImmutableSet<Scope> scopes) {
-    return ComponentNode.create(component, entryPoints, scopes);
-  }
-
-  /** Creates a new {@link DependencyEdge}. */
-  public static DependencyEdge dependencyEdge(
-      DependencyRequest dependencyRequest, boolean entryPoint) {
-    return new DependencyEdge(dependencyRequest, entryPoint);
-  }
-
-  /** Creates a new {@link ChildFactoryMethodEdge}. */
-  public static ChildFactoryMethodEdge childFactoryMethodEdge(ExecutableElement factoryMethod) {
-    return new ChildFactoryMethodEdge(factoryMethod);
-  }
-
-  /** Creates a new {@link SubcomponentBuilderBindingEdge}. */
-  public static SubcomponentBuilderBindingEdge subcomponentBuilderBindingEdge(
-      Iterable<TypeElement> declaringModules) {
-    return new SubcomponentBuilderBindingEdge(declaringModules);
   }
 
   private BindingGraphProxies() {}

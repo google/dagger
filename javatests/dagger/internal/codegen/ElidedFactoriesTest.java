@@ -174,7 +174,7 @@ public class ElidedFactoriesTest {
             "}");
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID_MODE:
+      case FAST_INIT_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerSimpleComponent",
@@ -368,7 +368,7 @@ public class ElidedFactoriesTest {
 
     JavaFileObject generatedComponent;
     switch (compilerMode) {
-      case EXPERIMENTAL_ANDROID_MODE:
+      case FAST_INIT_MODE:
         generatedComponent =
             JavaFileObjects.forSourceLines(
                 "test.DaggerSimpleComponent",

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
 import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
@@ -27,12 +26,6 @@ import javax.lang.model.type.TypeMirror;
  * The collection of error messages to be reported back to users.
  */
 final class ErrorMessages {
-
-  static String provisionMayNotDependOnProducerType(TypeMirror type) {
-    return String.format(
-        "%s may only be injected in @Produces methods",
-        MoreTypes.asTypeElement(type).getSimpleName());
-  }
 
   static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
     switch(kind) {
@@ -125,7 +118,7 @@ final class ErrorMessages {
     }
 
     final String inheritedBuildMustReturnComponentType() {
-      return process(buildMustReturnComponentType() + ". Inherited method: %s");
+      return buildMustReturnComponentType() + ". Inherited method: %s";
     }
 
     final String methodsMustTakeOneArg() {
@@ -154,6 +147,16 @@ final class ErrorMessages {
     final String inheritedMethodsMayNotHaveTypeParameters() {
       return process(
           "@Component.Builder methods must not have type parameters. Inherited method: %s");
+    }
+
+    final String nonBindsInstanceMethodsMayNotTakePrimitives() {
+      return process(
+          "@Component.Builder methods that are not annotated with @BindsInstance "
+              + "must take either a module or a component dependency, not a primitive");
+    }
+
+    final String inheritedNonBindsInstanceMethodsMayNotTakePrimitives() {
+      return nonBindsInstanceMethodsMayNotTakePrimitives() + process(". Inherited method: %s");
     }
 
     final String buildMethodReturnsSupertypeWithMissingMethods(

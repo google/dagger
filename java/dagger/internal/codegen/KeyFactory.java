@@ -64,15 +64,14 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 
 /** A factory for {@link Key}s. */
 final class KeyFactory {
   private final DaggerTypes types;
-  private final Elements elements;
+  private final DaggerElements elements;
 
   @Inject
-  KeyFactory(DaggerTypes types, Elements elements) {
+  KeyFactory(DaggerTypes types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
   }
@@ -192,20 +191,17 @@ final class KeyFactory {
   /**
    * Returns the key for a {@link Multibinds @Multibinds} method.
    *
-   * <p>The key's type is either {@code Set<T>} or {@code Map<K, F<V>>}, where {@code F} is either
-   * {@link Provider} or {@link Producer}, depending on {@code bindingType}.
+   * <p>The key's type is either {@code Set<T>} or {@code Map<K, Provider<V>>}. The latter works
+   * even for maps used by {@code Producer}s.
    */
-  Key forMultibindsMethod(
-      BindingType bindingType, ExecutableType executableType, ExecutableElement method) {
+  Key forMultibindsMethod(ExecutableType executableType, ExecutableElement method) {
     checkArgument(method.getKind().equals(METHOD), "%s must be a method", method);
-    TypeElement factoryType =
-        elements.getTypeElement(bindingType.frameworkClass().getCanonicalName());
     TypeMirror returnType = executableType.getReturnType();
     TypeMirror keyType =
         MapType.isMap(returnType)
             ? mapOfFrameworkType(
                 MapType.from(returnType).keyType(),
-                factoryType,
+                elements.getTypeElement(Provider.class),
                 MapType.from(returnType).valueType())
             : returnType;
     return forMethod(method, keyType);

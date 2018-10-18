@@ -17,8 +17,34 @@
 
 package(default_visibility = ["//:src"])
 
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+
 java_library(
     name = "gwt",
     resource_strip_prefix = "gwt/",
     resources = glob(["**/*.gwt.xml"]),
+    tags = ["maven_coordinates=com.google.dagger:dagger-gwt:" + POM_VERSION],
+    exports = [
+        ":manual_deps",
+        "//java/dagger:core",
+    ],
+)
+
+java_library(
+    name = "manual_deps",
+    tags = [
+        "maven_coordinates=com.google.dagger:dagger:%s:jar:sources" % POM_VERSION,
+        "maven_coordinates=javax.inject:javax.inject:1:jar:sources",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-gwt",
+    artifact_name = "Dagger GWT",
+    targets = [
+        ":gwt",
+        ":manual_deps",
+    ],
 )

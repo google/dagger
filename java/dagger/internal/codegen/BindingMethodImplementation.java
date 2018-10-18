@@ -27,19 +27,19 @@ import javax.lang.model.type.TypeMirror;
 /** Defines a method body and return type for a given {@link BindingExpression}. */
 class BindingMethodImplementation {
   private final ContributionBinding binding;
-  private final RequestKind requestKind;
+  private final BindingRequest request;
   private final BindingExpression bindingExpression;
   private final ClassName componentName;
   private final DaggerTypes types;
 
   BindingMethodImplementation(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       BindingExpression bindingExpression,
       ClassName componentName,
       DaggerTypes types) {
     this.binding = resolvedBindings.contributionBinding();
-    this.requestKind = checkNotNull(requestKind);
+    this.request = checkNotNull(request);
     this.bindingExpression = checkNotNull(bindingExpression);
     this.componentName = checkNotNull(componentName);
     this.types = checkNotNull(types);
@@ -62,11 +62,18 @@ class BindingMethodImplementation {
 
   /** Returns the return type for the dependency request. */
   final TypeMirror returnType() {
-    if (requestKind.equals(RequestKind.INSTANCE)
+    if (request.isRequestKind(RequestKind.INSTANCE)
         && binding.contributedPrimitiveType().isPresent()) {
       return binding.contributedPrimitiveType().get();
     }
-    return types.accessibleType(
-        requestType(requestKind, binding.contributedType(), types), componentName);
+    return types.accessibleType(requestedType(), componentName);
+  }
+
+  private TypeMirror requestedType() {
+    if (request.requestKind().isPresent()) {
+      return requestType(request.requestKind().get(), binding.contributedType(), types);
+    }
+    return types.wrapType(
+        binding.contributedType(), request.frameworkType().get().frameworkClass());
   }
 }

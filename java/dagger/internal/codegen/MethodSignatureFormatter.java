@@ -46,6 +46,22 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
     this.types = types;
   }
 
+  /**
+   * A formatter that uses the type where the method is declared for the annotations and name of the
+   * method, but the method's resolved type as a member of {@code declaredType} for the key.
+   */
+  Formatter<ExecutableElement> typedFormatter(DeclaredType declaredType) {
+    return new Formatter<ExecutableElement>() {
+      @Override
+      public String format(ExecutableElement method) {
+        return MethodSignatureFormatter.this.format(
+            method,
+            MoreTypes.asExecutable(types.asMemberOf(declaredType, method)),
+            MoreElements.asType(method.getEnclosingElement()));
+      }
+    };
+  }
+
   @Override public String format(ExecutableElement method) {
     return format(method, Optional.empty());
   }
@@ -55,14 +71,18 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
    * present.
    */
   public String format(ExecutableElement method, Optional<DeclaredType> container) {
-    StringBuilder builder = new StringBuilder();
     TypeElement type = MoreElements.asType(method.getEnclosingElement());
     ExecutableType executableType = MoreTypes.asExecutable(method.asType());
     if (container.isPresent()) {
       executableType = MoreTypes.asExecutable(types.asMemberOf(container.get(), method));
       type = MoreElements.asType(container.get().asElement());
     }
+    return format(method, executableType, type);
+  }
 
+  private String format(
+      ExecutableElement method, ExecutableType methodType, TypeElement declaringType) {
+    StringBuilder builder = new StringBuilder();
     // TODO(cgruber): AnnotationMirror formatter.
     List<? extends AnnotationMirror> annotations = method.getAnnotationMirrors();
     if (!annotations.isEmpty()) {
@@ -75,15 +95,15 @@ final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
       }
       builder.append(' ');
     }
-    builder.append(nameOfType(executableType.getReturnType()));
+    builder.append(nameOfType(methodType.getReturnType()));
     builder.append(' ');
-    builder.append(type.getQualifiedName());
+    builder.append(declaringType.getQualifiedName());
     builder.append('.');
     builder.append(method.getSimpleName());
     builder.append('(');
-    checkState(method.getParameters().size() == executableType.getParameterTypes().size());
+    checkState(method.getParameters().size() == methodType.getParameterTypes().size());
     Iterator<? extends VariableElement> parameters = method.getParameters().iterator();
-    Iterator<? extends TypeMirror> parameterTypes = executableType.getParameterTypes().iterator();
+    Iterator<? extends TypeMirror> parameterTypes = methodType.getParameterTypes().iterator();
     for (int i = 0; parameters.hasNext(); i++) {
       if (i > 0) {
         builder.append(", ");

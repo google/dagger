@@ -21,17 +21,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import dagger.Module;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
-import dagger.producers.Producer;
-import dagger.producers.ProducerModule;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -48,9 +44,8 @@ import javax.lang.model.util.Types;
 abstract class MultibindingDeclaration extends BindingDeclaration implements HasContributionType {
 
   /**
-   * The map or set key whose availability is declared. For maps, this will be {@code Map<K, F<V>>},
-   * where {@code F} is either {@link Provider} or {@link Producer}. For sets, this will be
-   * {@code Set<T>}.
+   * The map or set key whose availability is declared. For maps, this will be {@code Map<K,
+   * Provider<V>>}. For sets, this will be {@code Set<T>}.
    */
   @Override
   public abstract Key key();
@@ -61,13 +56,6 @@ abstract class MultibindingDeclaration extends BindingDeclaration implements Has
    */
   @Override
   public abstract ContributionType contributionType();
-
-  /**
-   * {@link BindingType#PROVISION} if {@link Multibinds @Multibinds}-annotated method
-   * is enclosed in a {@link Module @Module}, or {@link BindingType#PROVISION} if it is nested in a
-   * {@link ProducerModule @ProducerModule}.
-   */
-  abstract BindingType bindingType();
 
   /**
    * A factory for {@link MultibindingDeclaration}s.
@@ -87,26 +75,13 @@ abstract class MultibindingDeclaration extends BindingDeclaration implements Has
         ExecutableElement moduleMethod, TypeElement moduleElement) {
       checkArgument(isAnnotationPresent(moduleMethod, Multibinds.class));
       return forDeclaredMethod(
-          bindingType(moduleElement),
           moduleMethod,
           MoreTypes.asExecutable(
               types.asMemberOf(MoreTypes.asDeclared(moduleElement.asType()), moduleMethod)),
           moduleElement);
     }
 
-    private BindingType bindingType(Element moduleElement) {
-      if (isAnnotationPresent(moduleElement, Module.class)) {
-        return BindingType.PROVISION;
-      } else if (isAnnotationPresent(moduleElement, ProducerModule.class)) {
-        return BindingType.PRODUCTION;
-      } else {
-        throw new IllegalArgumentException(
-            "Expected " + moduleElement + " to be a @Module or @ProducerModule");
-      }
-    }
-
     private MultibindingDeclaration forDeclaredMethod(
-        BindingType bindingType,
         ExecutableElement method,
         ExecutableType methodType,
         TypeElement contributingType) {
@@ -118,9 +93,8 @@ abstract class MultibindingDeclaration extends BindingDeclaration implements Has
       return new AutoValue_MultibindingDeclaration(
           Optional.<Element>of(method),
           Optional.of(contributingType),
-          keyFactory.forMultibindsMethod(bindingType, methodType, method),
-          contributionType(returnType),
-          bindingType);
+          keyFactory.forMultibindsMethod(methodType, method),
+          contributionType(returnType));
     }
 
     private ContributionType contributionType(TypeMirror returnType) {

@@ -18,14 +18,13 @@ package dagger.internal;
 
 import static dagger.internal.Preconditions.checkNotNull;
 
-import dagger.Lazy;
 import javax.inject.Provider;
 
 /**
  * A {@link Provider} implementation that memoizes the result of another {@link Provider} using
  * simple lazy initialization, not the double-checked lock pattern.
  */
-public final class SingleCheck<T> implements Provider<T>, Lazy<T> {
+public final class SingleCheck<T> implements Provider<T> {
   private static final Object UNINITIALIZED = new Object();
 
   private volatile Provider<T> provider;

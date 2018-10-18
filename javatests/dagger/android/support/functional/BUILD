@@ -23,15 +23,16 @@ android_library(
         ["*.java"],
         exclude = ["*Test.java"],
     ),
+    exports_manifest = 1,
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
-        "//third_party:guava",
         "@androidsdk//com.android.support:appcompat-v7-25.0.0",
         "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@google_bazel_common//third_party/java/guava",
     ],
 )
 
@@ -45,8 +46,8 @@ GenRobolectricTests(
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
-        "//third_party:junit",
-        "//third_party:truth",
         "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
     ],
 )

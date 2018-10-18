@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
-import static dagger.model.RequestKind.INSTANCE;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
@@ -39,20 +38,20 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
   private final GeneratedComponentModel generatedComponentModel;
   private final ResolvedBindings resolvedBindings;
   private final ContributionBinding binding;
-  private final RequestKind requestKind;
+  private final BindingRequest request;
   private final Supplier<FieldSpec> field = Suppliers.memoize(this::createField);
 
   SingleCheckedMethodImplementation(
       ResolvedBindings resolvedBindings,
-      RequestKind requestKind,
+      BindingRequest request,
       BindingExpression bindingExpression,
       DaggerTypes types,
       GeneratedComponentModel generatedComponentModel) {
-    super(resolvedBindings, requestKind, bindingExpression, generatedComponentModel.name(), types);
+    super(resolvedBindings, request, bindingExpression, generatedComponentModel.name(), types);
     this.generatedComponentModel = generatedComponentModel;
     this.resolvedBindings = resolvedBindings;
     this.binding = resolvedBindings.contributionBinding();
-    this.requestKind = requestKind;
+    this.request = request;
   }
 
   @Override
@@ -79,7 +78,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
   private FieldSpec createField() {
     String name =
         generatedComponentModel.getUniqueFieldName(
-            requestKind.equals(INSTANCE)
+            request.isRequestKind(RequestKind.INSTANCE)
                 ? BindingVariableNamer.name(binding)
                 : FrameworkField.forResolvedBindings(resolvedBindings, Optional.empty()).name());
 
@@ -104,6 +103,6 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
   }
 
   private boolean isNullable() {
-    return requestKind.equals(INSTANCE) && binding.isNullable();
+    return request.isRequestKind(RequestKind.INSTANCE) && binding.isNullable();
   }
 }

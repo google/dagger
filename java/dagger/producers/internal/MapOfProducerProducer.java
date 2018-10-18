@@ -17,9 +17,13 @@
 package dagger.producers.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.producers.internal.Producers.entryPointViewOf;
+import static dagger.producers.internal.Producers.nonCancellationPropagatingViewOf;
 import static dagger.producers.internal.Producers.producerFromProvider;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.producers.Producer;
@@ -72,4 +76,45 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
       return new MapOfProducerProducer<>(mapBuilder.build());
     }
   }
+
+  @Override
+  public Producer<Map<K, Producer<V>>> newDependencyView() {
+    return newTransformedValuesView(MapOfProducerProducer.<V>toDependencyView());
+  }
+
+  @Override
+  public Producer<Map<K, Producer<V>>> newEntryPointView(
+      CancellationListener cancellationListener) {
+    return newTransformedValuesView(
+        MapOfProducerProducer.<V>toEntryPointView(cancellationListener));
+  }
+
+  private Producer<Map<K, Producer<V>>> newTransformedValuesView(
+      Function<Producer<V>, Producer<V>> valueTransformationFunction) {
+    return Producers.<Map<K, Producer<V>>>immediateProducer(
+        ImmutableMap.copyOf(Maps.transformValues(contributingMap, valueTransformationFunction)));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> Function<Producer<T>, Producer<T>> toDependencyView() {
+    return (Function) TO_DEPENDENCY_VIEW;
+  }
+
+  private static <T> Function<Producer<T>, Producer<T>> toEntryPointView(
+      final CancellationListener cancellationListener) {
+    return new Function<Producer<T>, Producer<T>>() {
+      @Override
+      public Producer<T> apply(Producer<T> input) {
+        return entryPointViewOf(input, cancellationListener);
+      }
+    };
+  }
+
+  private static final Function<Producer<?>, Producer<?>> TO_DEPENDENCY_VIEW =
+      new Function<Producer<?>, Producer<?>>() {
+        @Override
+        public Producer<?> apply(Producer<?> input) {
+          return nonCancellationPropagatingViewOf(input);
+        }
+      };
 }

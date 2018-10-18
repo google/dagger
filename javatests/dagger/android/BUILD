@@ -24,11 +24,12 @@ GenRobolectricTests(
     name = "android_tests",
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
+    manifest_values = {"minSdkVersion": "17"},
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/android",
-        "//third_party:guava",
-        "//third_party:junit",
-        "//third_party:truth",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
     ],
 )

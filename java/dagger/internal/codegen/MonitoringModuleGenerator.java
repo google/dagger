@@ -57,8 +57,8 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(TypeElement componentElement) {
-    return Optional.of(componentElement);
+  Element originatingElement(TypeElement componentElement) {
+    return componentElement;
   }
 
   @Override

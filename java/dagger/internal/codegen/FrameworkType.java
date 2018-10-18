@@ -18,14 +18,15 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.RequestKinds.frameworkClass;
 import static dagger.model.RequestKind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
-import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
 import dagger.model.DependencyRequest;
@@ -33,6 +34,7 @@ import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -40,6 +42,16 @@ import javax.lang.model.type.TypeMirror;
 enum FrameworkType {
   /** A {@link Provider}. */
   PROVIDER {
+    @Override
+    Class<?> frameworkClass() {
+      return Provider.class;
+    }
+
+    @Override
+    Optional<RequestKind> requestKind() {
+      return Optional.of(RequestKind.PROVIDER);
+    }
+
     @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
@@ -90,13 +102,26 @@ enum FrameworkType {
 
         default:
           return Expression.create(
-              types.rewrapType(from.type(), frameworkClass(requestKind).get()), codeBlock);
+              types.rewrapType(from.type(), RequestKinds.frameworkClass(requestKind)), codeBlock);
       }
     }
   },
 
   /** A {@link Producer}. */
-  PRODUCER {
+  PRODUCER_NODE {
+    @Override
+    Class<?> frameworkClass() {
+      // TODO(cgdecker): Replace this with new class for representing internal producer nodes.
+      // Currently the new class is CancellableProducer, but it may be changed to ProducerNode and
+      // made to not implement Producer.
+      return Producer.class;
+    }
+
+    @Override
+    Optional<RequestKind> requestKind() {
+      return Optional.empty();
+    }
+
     @Override
     CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
@@ -121,7 +146,7 @@ enum FrameworkType {
               to(requestKind, from.codeBlock()));
 
         case PRODUCER:
-          return from;
+          return Expression.create(from.type(), to(requestKind, from.codeBlock()));
 
         default:
           throw new IllegalArgumentException(
@@ -129,21 +154,40 @@ enum FrameworkType {
       }
     }
   },
-
-  // TODO(ronshapiro): Remove this once MembersInjectionBinding no longer extends Binding
-  /** A {@link MembersInjector}. */
-  MEMBERS_INJECTOR {
-    @Override
-    CodeBlock to(RequestKind requestKind, CodeBlock from) {
-      throw new UnsupportedOperationException(requestKind.toString());
-    }
-
-    @Override
-    Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
-      throw new UnsupportedOperationException(requestKind.toString());
-    }
-  },
   ;
+
+  /** Returns the framework type appropriate for fields for a given binding type. */
+  static FrameworkType forBindingType(BindingType bindingType) {
+    switch (bindingType) {
+      case PROVISION:
+        return PROVIDER;
+      case PRODUCTION:
+        return PRODUCER_NODE;
+      case MEMBERS_INJECTION:
+    }
+    throw new AssertionError(bindingType);
+  }
+
+  /** Returns the framework type that exactly matches the given request kind, if one exists. */
+  static Optional<FrameworkType> forRequestKind(RequestKind requestKind) {
+    switch (requestKind) {
+      case PROVIDER:
+        return Optional.of(FrameworkType.PROVIDER);
+      default:
+        return Optional.empty();
+    }
+  }
+
+  /** The class of fields of this type. */
+  abstract Class<?> frameworkClass();
+
+  /** Returns the {@link #frameworkClass()} parameterized with a type. */
+  ParameterizedTypeName frameworkClassOf(TypeName valueType) {
+    return ParameterizedTypeName.get(ClassName.get(frameworkClass()), valueType);
+  }
+
+  /** The request kind that an instance of this framework type can satisfy directly, if any. */
+  abstract Optional<RequestKind> requestKind();
 
   /**
    * Returns a {@link CodeBlock} that evaluates to a requested object given an expression that

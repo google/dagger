@@ -37,10 +37,6 @@ cd gh-pages
 unzip ../bazel-bin/user-docs.jar -d api/$version_name
 rm -rf api/$version_name/META-INF/
 git add api/$version_name
-sed -i -r \
-  s/"2\.[[:digit:]]+(-rc[[:digit:]]+)?"/"${version_name}"/g \
-  _layouts/default.html
-git add _layouts/default.html
 git commit -m "$version_name docs"
 git push origin gh-pages
 cd ..
@@ -50,5 +46,14 @@ for generated_pom_file in dagger*pom.xml; do
   rm "${generated_pom_file}.asc"
 done
 
+git checkout --detach
+# Set the version string that is used as a tag in all of our libraries. If another repo depends on
+# a versioned tag of Dagger, their java_library.tags should match the versioned release.
+sed -i s/'${project.version}'/"${version_name}"/g tools/maven.bzl
+git commit -m "${version_name} release" tools/maven.bzl
+
 git tag -a -m "Dagger ${version_name}" dagger-"${version_name}"
 git push origin tag dagger-"${version_name}"
+
+# Switch back to the original HEAD
+git checkout -

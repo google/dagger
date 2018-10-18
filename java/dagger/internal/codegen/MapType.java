@@ -88,7 +88,20 @@ abstract class MapType {
   boolean valuesAreFrameworkType() {
     return FrameworkTypes.isFrameworkType(valueType());
   }
-  
+
+  /**
+   * {@code V} if {@link #valueType()} is a framework type like {@code Provider<V>} or {@code
+   * Producer<V>}.
+   *
+   * @throws IllegalStateException if {@link #isRawType()} is true or {@link #valueType()} is not a
+   *     framework type
+   */
+  TypeMirror unwrappedFrameworkValueType() {
+    checkState(
+        valuesAreFrameworkType(), "called unwrappedFrameworkValueType() on %s", declaredMapType());
+    return uncheckedUnwrappedValueType();
+  }
+
   /**
    * {@code V} if {@link #valueType()} is a {@code WrappingClass<V>}.
    *
@@ -103,6 +116,10 @@ abstract class MapType {
         "%s must have exactly one type parameter",
         wrappingClass);
     checkState(valuesAreTypeOf(wrappingClass), "expected values to be %s: %s", wrappingClass, this);
+    return uncheckedUnwrappedValueType();
+  }
+
+  private TypeMirror uncheckedUnwrappedValueType() {
     return MoreTypes.asDeclared(valueType()).getTypeArguments().get(0);
   }
 

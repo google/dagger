@@ -71,18 +71,19 @@ abstract class SourceFileGenerator<T> {
       return;
     }
     try {
-      buildJavaFile(generatedTypeName, type.get()).writeTo(filer);
+      buildJavaFile(generatedTypeName, input, type.get()).writeTo(filer);
     } catch (Exception e) {
       // if the code above threw a SFGE, use that
       Throwables.propagateIfPossible(e, SourceFileGenerationException.class);
       // otherwise, throw a new one
       throw new SourceFileGenerationException(
-          Optional.empty(), e, getElementForErrorReporting(input));
+          Optional.empty(), e, originatingElement(input));
     }
   }
 
   private JavaFile buildJavaFile(
-      ClassName generatedTypeName, TypeSpec.Builder typeSpecBuilder) {
+      ClassName generatedTypeName, T input, TypeSpec.Builder typeSpecBuilder) {
+    typeSpecBuilder.addOriginatingElement(originatingElement(input));
     Optional<AnnotationSpec> generatedAnnotation =
         generatedAnnotation(elements, sourceVersion)
             .map(
@@ -106,11 +107,8 @@ abstract class SourceFileGenerator<T> {
    */
   abstract ClassName nameGeneratedType(T input);
 
-  /**
-   * Returns an optional element to be used for reporting errors. This returns a single element
-   * rather than a collection to reduce output noise.
-   */
-  abstract Optional<? extends Element> getElementForErrorReporting(T input);
+  /** Returns the originating element of the generating type. */
+  abstract Element originatingElement(T input);
 
   /**
    * Returns a {@link TypeSpec.Builder type} to be generated for {@code T}, or {@link

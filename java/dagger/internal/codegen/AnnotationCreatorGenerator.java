@@ -91,8 +91,8 @@ class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
   }
 
   @Override
-  Optional<? extends Element> getElementForErrorReporting(TypeElement annotationType) {
-    return Optional.of(annotationType);
+  Element originatingElement(TypeElement annotationType) {
+    return annotationType;
   }
 
   @Override

@@ -18,6 +18,8 @@
 package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
+load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:simple_jar.bzl", "simple_jar")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
@@ -34,15 +36,15 @@ CODEGEN_SRCS = glob(
 CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
 
 CODEGEN_SHARED_DEPS = [
-    "//third_party:auto_service",
-    "//third_party:auto_value",
-    "//third_party:auto_common",
-    "//third_party:error_prone_annotations",
-    "//third_party:google_java_format",
-    "//third_party:javapoet",
+    "@google_bazel_common//third_party/java/auto:service",
+    "@google_bazel_common//third_party/java/auto:value",
+    "@google_bazel_common//third_party/java/auto:common",
+    "@google_bazel_common//third_party/java/error_prone:annotations",
+    "@google_bazel_common//third_party/java/google_java_format",
+    "@google_bazel_common//third_party/java/javapoet",
     "@local_jdk//:lib/tools.jar",
-    "//third_party:jsr250_annotations",
-    "//third_party:jsr330_inject",
+    "@google_bazel_common//third_party/java/jsr250_annotations",
+    "@google_bazel_common//third_party/java/jsr330_inject",
     "//java/dagger:core",
     "//java/dagger/producers",
     "//java/dagger/model",
@@ -51,7 +53,7 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    "//third_party:guava",
+    "@google_bazel_common//third_party/java/guava",
     ":shared-with-spi",
 ]
 
@@ -63,7 +65,7 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = [
-        "//third_party:guava",
+        "@google_bazel_common//third_party/java/guava",
     ],
 )
 
@@ -122,22 +124,26 @@ java_library(
         "BindingFactory.java",
         "BindingGraph.java",
         "BindingNodeImpl.java",
+        "BindingRequest.java",
         "BindingType.java",
-        "BindingTypeMapper.java",
         "BindingVariableNamer.java",  # needed by FrameworkField
         "BindsTypeChecker.java",
+        "ChildFactoryMethodEdgeImpl.java",
         "ComponentDescriptor.java",
+        "ComponentNodeImpl.java",
         "ComponentRequirement.java",
         "ComponentTreeTraverser.java",
         "ConfigurationAnnotations.java",  # Uses ModuleDescriptors
         "ContributionBinding.java",
         "DelegateDeclaration.java",
+        "DependencyEdgeImpl.java",
         "DependencyRequestFactory.java",
         "DependencyVariableNamer.java",  # Used by SourceFiles
         "ErrorMessages.java",  # Consider splitting this up as it pulls in too much
         "FrameworkDependency.java",
         "FrameworkField.java",  # Used by SourceFiles
         "FrameworkType.java",
+        "FrameworkTypeMapper.java",
         "InjectBindingRegistry.java",
         "KeyFactory.java",
         "MapKeys.java",
@@ -150,6 +156,7 @@ java_library(
         "ProvisionBinding.java",
         "ResolvedBindings.java",
         "SourceFiles.java",  # Consider splitting this up?
+        "SubcomponentBuilderBindingEdgeImpl.java",
         "SubcomponentDeclaration.java",
     ],
     plugins = CODEGEN_PLUGINS,
@@ -163,7 +170,6 @@ java_library(
     srcs = [
         "AnyBindingMethodValidator.java",
         "BindingDeclarationFormatter.java",
-        "BindingGraphValidator.java",
         "BindingMethodProcessingStep.java",
         "BindingMethodValidator.java",
         "BindsInstanceProcessingStep.java",
@@ -171,12 +177,15 @@ java_library(
         "BindsOptionalOfMethodValidator.java",
         "BuilderValidator.java",
         "CanReleaseReferencesValidator.java",
+        "ComponentDescriptorValidator.java",
         "ComponentHierarchyValidator.java",
         "ComponentValidator.java",
         "DependencyRequestFormatter.java",
+        "DependencyRequestValidator.java",
         "ForReleasableReferencesValidator.java",
         "InjectValidator.java",
         "MapKeyValidator.java",
+        "MembersInjectionValidator.java",
         "MethodSignatureFormatter.java",
         "ModuleValidator.java",
         "MultibindingAnnotationsProcessingStep.java",
@@ -194,19 +203,23 @@ java_library(
 )
 
 java_library(
-    name = "internal_validation",
+    name = "binding_graph_validation",
     srcs = [
         "BindingGraphValidationModule.java",
-        "DuplicateBindingsValidation.java",
-        "IncompatiblyScopedBindingsValidation.java",
-        "InjectBindingValidation.java",
-        "MapMultibindingValidation.java",
-        "MembersInjectionBindingValidation.java",
-        "MissingBindingValidation.java",
-        "NonNullableRequestForNullableBindingValidation.java",
-        "ProvisionDependencyOnProducerBindingValidation.java",
+        "DependencyCycleValidator.java",
+        "DependsOnProductionExecutorValidator.java",
+        "DuplicateBindingsValidator.java",
+        "IncompatiblyScopedBindingsValidator.java",
+        "IncorrectlyInstalledBindsMethodsValidator.java",
+        "InjectBindingValidator.java",
+        "MapMultibindingValidator.java",
+        "MissingBindingValidator.java",
+        "NullableBindingValidator.java",
+        "ProvisionDependencyOnProducerBindingValidator.java",
+        "SubcomponentFactoryMethodValidator.java",
         "Validation.java",
     ],
+    plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
         ":base",
@@ -223,26 +236,25 @@ java_library(
         "BindingExpression.java",
         "BindingMethodImplementation.java",
         "ComponentBindingExpressions.java",
-        "ComponentBuilder.java",
-        "ComponentGenerator.java",
         "ComponentInstanceBindingExpression.java",
         "ComponentMethodBindingExpression.java",
         "ComponentProvisionBindingExpression.java",
         "ComponentRequirementBindingExpression.java",
         "ComponentRequirementField.java",
         "ComponentRequirementFields.java",
-        "ComponentWriter.java",
         "DelegateBindingExpression.java",
         "DelegatingFrameworkInstanceCreationExpression.java",
         "DependencyMethodProducerCreationExpression.java",
         "DependencyMethodProviderCreationExpression.java",
-        "DerivedFromProviderBindingExpression.java",
+        "DerivedFromFrameworkInstanceBindingExpression.java",
         "DoubleCheckedMethodImplementation.java",
         "FactoryGenerator.java",
         "FrameworkFieldInitializer.java",
         "FrameworkInstanceBindingExpression.java",
         "FrameworkInstanceSupplier.java",
+        "GeneratedComponentBuilderModel.java",
         "GeneratedComponentModel.java",
+        "GeneratedInstanceBindingExpression.java",
         "GwtCompatibility.java",
         "ImmediateFutureBindingExpression.java",
         "InaccessibleMapKeyProxyGenerator.java",
@@ -258,8 +270,15 @@ java_library(
         "MembersInjectorGenerator.java",
         "MembersInjectorProviderCreationExpression.java",
         "MethodBindingExpression.java",
+        "MissingBindingExpression.java",
+        "ModifiableAbstractMethodBindingExpression.java",
+        "ModifiableBindingExpressions.java",
+        "ModifiableBindingMethods.java",
+        "ModifiableBindingType.java",
+        "ModifiableConcreteMethodBindingExpression.java",
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
+        "MultibindingExpression.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
         "OptionalFactoryInstanceCreationExpression.java",
@@ -267,7 +286,9 @@ java_library(
         "ProducerCreationExpression.java",
         "ProducerFactoryGenerator.java",
         "ProducerFromProviderCreationExpression.java",
+        "ProducerNodeInstanceBindingExpression.java",
         "ProductionExecutorModuleGenerator.java",
+        "ProviderInstanceBindingExpression.java",
         "ReferenceReleasingManagerFields.java",
         "ReleasableReferenceManagerProviderCreationExpression.java",
         "ReleasableReferenceManagerSetProviderCreationExpression.java",
@@ -291,6 +312,11 @@ java_library(
     ],
 )
 
+simple_jar(
+    name = "processor_manifest_files",
+    srcs = glob(["META-INF/**"]),
+)
+
 # The processor's "main", if you will
 java_library(
     name = "processor",
@@ -301,7 +327,9 @@ java_library(
         "BindingGraphPluginsModule.java",
         "BindingMethodValidatorsModule.java",
         "CanReleaseReferencesProcessingStep.java",
+        "ComponentGenerator.java",
         "ComponentHjarProcessingStep.java",
+        "ComponentModelBuilder.java",
         "ComponentProcessingStep.java",
         "ComponentProcessor.java",
         "DiagnosticReporterFactory.java",
@@ -314,10 +342,26 @@ java_library(
         "ProductionExecutorModuleProcessingStep.java",
     ],
     plugins = CODEGEN_PLUGINS,
+    resource_jars = [":processor_manifest_files.jar"],
+    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
-        ":internal_validation",
+        ":binding_graph_validation",
+        ":writing",
+        ":validation",
+    ],
+)
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-compiler",
+    artifact_name = "Dagger Compiler",
+    targets = [
+        ":processor",
+        ":base",
+        ":binding",
+        ":binding_graph_validation",
         ":writing",
         ":validation",
     ],
@@ -330,17 +374,28 @@ java_library(
     deps = [
         ":base",
         ":binding",
+        ":binding_graph_validation",
+        ":kythe_plugin",
         ":processor",
         ":validation",
         "//java/dagger:core",
         "//java/dagger/model",
         "//java/dagger/producers",
-        "//third_party:auto_common",
-        "//third_party:auto_service",
-        "//third_party:guava",
-        "//third_party:kythe_plugin",
         "@bazel_tools//third_party/java/jdk/langtools:javac",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/guava",
     ],
+)
+
+# A _deploy.jar consisting of the java_librarys in https://github.com/google/kythe needed to build a
+# Kythe plugin
+# TODO(ronshapiro): replace this with a http_archive of the next release in
+# https://github.com/google/kythe/releases
+java_import(
+    name = "kythe_plugin",
+    jars = ["kythe_plugin_deploy.jar"],
+    neverlink = 1,
 )
 
 java_import(
@@ -357,7 +412,7 @@ java_plugin(
     deps = [":bootstrap_compiler"],
 )
 
-load("//tools:javadoc.bzl", "javadoc_library")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "codegen-javadoc",

@@ -56,10 +56,14 @@ public class ReferenceReleasingManagerFields {
   private final GeneratedComponentModel generatedComponentModel;
 
   ReferenceReleasingManagerFields(
-      BindingGraph graph, GeneratedComponentModel generatedComponentModel) {
+      BindingGraph graph,
+      GeneratedComponentModel generatedComponentModel,
+      CompilerOptions compilerOptions) {
     this.graph = checkNotNull(graph);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
-    checkArgument(graph.componentDescriptor().kind().isTopLevel());
+    if (!compilerOptions.aheadOfTimeSubcomponents()) {
+      checkArgument(graph.componentDescriptor().kind().isTopLevel());
+    }
   }
 
   /**

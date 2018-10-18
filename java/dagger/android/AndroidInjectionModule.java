@@ -39,12 +39,24 @@ public abstract class AndroidInjectionModule {
       activityInjectorFactories();
 
   @Multibinds
+  abstract Map<String, AndroidInjector.Factory<? extends Activity>>
+      activityInjectorFactoriesWithStringKeys();
+
+  @Multibinds
   abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
       fragmentInjectorFactories();
 
   @Multibinds
+  abstract Map<String, AndroidInjector.Factory<? extends Fragment>>
+      fragmentInjectorFactoriesWithStringKeys();
+
+  @Multibinds
   abstract Map<Class<? extends Service>, AndroidInjector.Factory<? extends Service>>
       serviceInjectorFactories();
+
+  @Multibinds
+  abstract Map<String, AndroidInjector.Factory<? extends Service>>
+      serviceInjectorFactoriesWithStringKeys();
 
   @Multibinds
   abstract Map<
@@ -52,9 +64,16 @@ public abstract class AndroidInjectionModule {
       broadcastReceiverInjectorFactories();
 
   @Multibinds
-  abstract Map<
-          Class<? extends ContentProvider>, AndroidInjector.Factory<? extends ContentProvider>>
+  abstract Map<String, AndroidInjector.Factory<? extends BroadcastReceiver>>
+      broadcastReceiverInjectorFactoriesWithStringKeys();
+
+  @Multibinds
+  abstract Map<Class<? extends ContentProvider>, AndroidInjector.Factory<? extends ContentProvider>>
       contentProviderInjectorFactories();
+
+  @Multibinds
+  abstract Map<String, AndroidInjector.Factory<? extends ContentProvider>>
+      contentProviderInjectorFactoriesWithStringKeys();
 
   private AndroidInjectionModule() {}
 }

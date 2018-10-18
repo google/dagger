@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
 // TODO(user): Rename this to RequestExpression?
@@ -32,6 +33,16 @@ abstract class BindingExpression {
    */
   abstract Expression getDependencyExpression(ClassName requestingClass);
 
+  /**
+   * Equivalent to {@link #getDependencyExpression} that is used only when the request is for an
+   * implementation of a component method. By default, just delegates to {@link
+   * #getDependencyExpression}.
+   */
+  Expression getDependencyExpressionForComponentMethod(
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+    return getDependencyExpression(component.name());
+  }
+
   /** Returns {@code true} if this binding expression should be encapsulated in a method. */
   boolean requiresMethodEncapsulation() {
     return false;
@@ -40,11 +51,22 @@ abstract class BindingExpression {
   /**
    * Returns an expression for the implementation of a component method with the given request.
    *
-   * @param componentName the component that will contain the implemented method
+   * @param component the component that will contain the implemented method
    */
   CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, ClassName componentName) {
+      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
     // By default, just delegate to #getDependencyExpression().
-    return CodeBlock.of("return $L;", getDependencyExpression(componentName).codeBlock());
+    return CodeBlock.of(
+        "return $L;",
+        getDependencyExpressionForComponentMethod(componentMethod, component).codeBlock());
+  }
+
+  /**
+   * Returns an expression for the implementation of a modifiable binding method for the given
+   * component model.
+   */
+  CodeBlock getModifiableBindingMethodImplementation(
+      ModifiableBindingMethod modifiableBindingMethod, GeneratedComponentModel component) {
+    return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
   }
 }

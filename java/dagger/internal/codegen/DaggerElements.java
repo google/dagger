@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Formatter.formatArgumentInList;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -32,10 +33,13 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.graph.Traverser;
 import dagger.Reusable;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +77,17 @@ final class DaggerElements implements Elements {
   DaggerElements(ProcessingEnvironment processingEnv) {
     this(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
   }
+
+  /**
+   * Returns {@code true} if {@code encloser} is equal to {@code enclosed} or recursively encloses
+   * it.
+   */
+  static boolean elementEncloses(TypeElement encloser, Element enclosed) {
+    return Iterables.contains(GET_ENCLOSED_ELEMENTS.breadthFirst(encloser), enclosed);
+  }
+
+  private static final Traverser<Element> GET_ENCLOSED_ELEMENTS =
+      Traverser.forTree(Element::getEnclosedElements);
 
   ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
     return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))
@@ -170,6 +185,13 @@ final class DaggerElements implements Elements {
           return type;
         }
       };
+
+  /**
+   * Compares elements according to their declaration order among siblings. Only valid to compare
+   * elements enclosed by the same parent.
+   */
+  static final Comparator<Element> DECLARATION_ORDER =
+      comparing(element -> element.getEnclosingElement().getEnclosedElements().indexOf(element));
 
   /**
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose

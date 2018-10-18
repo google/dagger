@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.model.RequestKind.INSTANCE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -97,7 +98,7 @@ final class InnerSwitchingProviders extends SwitchingProviders {
     @Override
     public Expression getReturnExpression() {
       return componentBindingExpressions.getDependencyExpression(
-          binding.key(), INSTANCE, requestingClass);
+          bindingRequest(binding.key(), INSTANCE), requestingClass);
     }
   }
 }

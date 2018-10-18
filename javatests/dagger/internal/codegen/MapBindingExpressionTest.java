@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.CLASS_PATH_WITHOUT_GUAVA_OPTION;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
@@ -95,7 +95,7 @@ public class MapBindingExpressionTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private volatile Provider<Integer> provideIntProvider;",
                 "  private volatile Provider<Long> provideLong0Provider;",
                 "  private volatile Provider<Long> provideLong1Provider;",
@@ -159,7 +159,7 @@ public class MapBindingExpressionTest {
                 DEFAULT_MODE, //
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        0, getMapOfIntegerAndProviderOfIntegerProvider());")
             .addLines(
                 "  }",
@@ -182,14 +182,14 @@ public class MapBindingExpressionTest {
                 "        .put(1L, MapModule_ProvideLong1Factory.create())",
                 "        .put(2L, MapModule_ProvideLong2Factory.create())")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "        .put(0L, getMapOfLongAndProviderOfLongProvider())",
                 "        .put(1L, getMapOfLongAndProviderOfLongProvider2())",
                 "        .put(2L, getMapOfLongAndProviderOfLongProvider3())")
             .addLines( //
                 "        .build();", "  }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final int id;",
                 "",

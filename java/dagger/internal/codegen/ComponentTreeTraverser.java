@@ -25,6 +25,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Multimaps.asMap;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SIZED;
@@ -74,9 +75,10 @@ public class ComponentTreeTraverser {
   private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
 
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
-  public ComponentTreeTraverser(BindingGraph rootGraph) {
+  public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
     checkArgument(
-        rootGraph.componentDescriptor().kind().isTopLevel(),
+        rootGraph.componentDescriptor().kind().isTopLevel()
+            || compilerOptions.aheadOfTimeSubcomponents(),
         "only top-level graphs can be traversed, not %s",
         rootGraph.componentDescriptor().componentDefinitionType().getQualifiedName());
     bindingGraphPath.add(rootGraph);
@@ -392,7 +394,7 @@ public class ComponentTreeTraverser {
     private void nextDependencyRequest(
         DependencyRequest dependencyRequest, BindingGraph bindingGraph) {
       ResolvedBindings resolvedBindings =
-          bindingGraph.resolvedBindings(dependencyRequest.kind(), dependencyRequest.key());
+          bindingGraph.resolvedBindings(bindingRequest(dependencyRequest));
       dependencyRequestPath.addLast(dependencyRequest);
       resolvedBindingsPath.addLast(resolvedBindings);
       // Don't add the key of a members injection request, as it doesn't participate in cycles
@@ -659,7 +661,7 @@ public class ComponentTreeTraverser {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       return graphsInPath()
           .stream()
           .map(BindingGraph::componentType)

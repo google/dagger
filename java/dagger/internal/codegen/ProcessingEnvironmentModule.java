@@ -54,9 +54,8 @@ final class ProcessingEnvironmentModule {
   }
 
   @Provides
-  @Reusable // to avoid noting about disabling the formatter more than once
-  Filer filer(CompilerOptions compilerOptions, Messager messager) {
-    if (compilerOptions.headerCompilation()) {
+  Filer filer(CompilerOptions compilerOptions) {
+    if (compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()) {
       return processingEnvironment.getFiler();
     } else {
       return new FormattingFiler(processingEnvironment.getFiler());
@@ -80,8 +79,8 @@ final class ProcessingEnvironmentModule {
 
   @Provides
   @Reusable // to avoid parsing options more than once
-  CompilerOptions compilerOptions(DaggerElements elements) {
-    return CompilerOptions.create(processingEnvironment, elements);
+  CompilerOptions compilerOptions() {
+    return CompilerOptions.create(processingEnvironment);
   }
 
   @Module

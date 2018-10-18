@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -93,7 +93,77 @@ public class SubcomponentValidationTest {
                 + "Add the following modules as parameters to this method: "
                 + "test.ModuleWithParameters")
         .inFile(componentFile)
-        .onLine(7);
+        .onLineContaining("ChildComponent newChildComponent();");
+  }
+
+  @Test
+  public void factoryMethod_grandchild() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  ChildComponent newChildComponent();",
+            "}");
+    JavaFileObject childComponent =
+        JavaFileObjects.forSourceLines(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface ChildComponent {",
+            "  GrandchildComponent newGrandchildComponent();",
+            "}");
+    JavaFileObject grandchildComponent =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = GrandchildModule.class)",
+            "interface GrandchildComponent {",
+            "  Object object();",
+            "}");
+    JavaFileObject grandchildModule =
+        JavaFileObjects.forSourceLines(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class GrandchildModule {",
+            "  private final Object object;",
+            "",
+            "  GrandchildModule(Object object) {",
+            "    this.object = object;",
+            "  }",
+            "",
+            "  @Provides Object object() {",
+            "    return object;",
+            "  }",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(component, childComponent, grandchildComponent, grandchildModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.ChildComponent.newGrandchildComponent()] "
+                + "test.GrandchildComponent requires modules which have no visible default "
+                + "constructors. Add the following modules as parameters to this method: "
+                + "test.GrandchildModule")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void factoryMethod_nonModuleParameter() {
@@ -239,11 +309,10 @@ public class SubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "[test.ChildComponent.getString()] "
-                + "java.lang.Integer cannot be provided without an @Inject constructor or an "
+            "java.lang.Integer cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method")
         .inFile(componentFile)
-        .onLine(6);
+        .onLineContaining("interface TestComponent");
   }
 
   @Test public void subcomponentOnConcreteType() {
@@ -408,7 +477,7 @@ public class SubcomponentValidationTest {
                 "  @Override", //
                 "  public Dep1 getDep1() {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "   Object local = dep1;",
                 "    if (local instanceof MemoizedSentinel) {",
                 "      synchronized (local) {",
@@ -429,7 +498,7 @@ public class SubcomponentValidationTest {
                 "  @Override",
                 "  public Dep2 getDep2() {")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "   Object local = dep2;",
                 "    if (local instanceof MemoizedSentinel) {",
                 "      synchronized (local) {",
@@ -453,7 +522,7 @@ public class SubcomponentValidationTest {
                 "  }",
                 "")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "  @CanIgnoreReturnValue",
                 "  private Dep1 injectDep1(Dep1 instance) {",
                 "    Dep1_MembersInjector.injectDep1Method(instance);",
@@ -480,7 +549,7 @@ public class SubcomponentValidationTest {
                 "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());",
                 "    }")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "    private NeedsDep1 getNeedsDep1() {",
                 "      return new NeedsDep1(DaggerParentComponent.this.getDep1());",
                 "    }")
@@ -494,7 +563,7 @@ public class SubcomponentValidationTest {
                 "              DaggerParentComponent.this.dep1Provider.get(),",
                 "              DaggerParentComponent.this.dep2Provider.get()));")
             .addLinesIn(
-                EXPERIMENTAL_ANDROID_MODE,
+                FAST_INIT_MODE,
                 "              DaggerParentComponent.this.getDep1(),",
                 "              DaggerParentComponent.this.getDep2()));")
             .addLines(

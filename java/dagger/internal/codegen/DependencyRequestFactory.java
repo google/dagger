@@ -111,7 +111,7 @@ final class DependencyRequestFactory {
       case MAP:
         MapType mapType = MapType.from(multibindingKey);
         for (RequestKind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
-          if (mapType.valuesAreTypeOf(frameworkClass(kind).get())) {
+          if (mapType.valuesAreTypeOf(frameworkClass(kind))) {
             return kind;
           }
         }

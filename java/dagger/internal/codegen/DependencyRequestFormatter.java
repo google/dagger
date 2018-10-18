@@ -22,6 +22,7 @@ import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
 import dagger.model.DependencyRequest;
@@ -96,6 +97,19 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
         .requestElement()
         .map(element -> element.accept(formatVisitor, request))
         .orElse("");
+  }
+
+  /**
+   * Appends a newline and the formatted dependency request unless {@link
+   * #format(DependencyRequest)} returns the empty string.
+   */
+  @CanIgnoreReturnValue
+  StringBuilder appendFormatLine(StringBuilder builder, DependencyRequest dependencyRequest) {
+    String formatted = format(dependencyRequest);
+    if (!formatted.isEmpty()) {
+      builder.append('\n').append(formatted);
+    }
+    return builder;
   }
 
   private final ElementVisitor<String, DependencyRequest> formatVisitor =

@@ -70,7 +70,7 @@ public final class DaggerCollections {
    * Creates a {@link LinkedHashMap} instance, with a high enough "initial capacity" that it
    * <em>should</em> hold {@code expectedSize} elements without growth.
    */
-  static <K, V> LinkedHashMap<K, V> newLinkedHashMapWithExpectedSize(int expectedSize) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMapWithExpectedSize(int expectedSize) {
     return new LinkedHashMap<K, V>(calculateInitialCapacity(expectedSize));
   }
 

@@ -42,7 +42,6 @@ import dagger.Lazy;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -61,7 +60,7 @@ final class RequestKinds {
         return types.wrapType(type, ListenableFuture.class);
 
       default:
-        return types.wrapType(type, frameworkClass(requestKind).get());
+        return types.wrapType(type, frameworkClass(requestKind));
     }
   }
 
@@ -94,10 +93,17 @@ final class RequestKinds {
     }
   }
 
+  private static final ImmutableMap<RequestKind, Class<?>> FRAMEWORK_CLASSES =
+      ImmutableMap.of(
+          PROVIDER, Provider.class,
+          LAZY, Lazy.class,
+          PRODUCER, Producer.class,
+          PRODUCED, Produced.class);
+
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
   static RequestKind getRequestKind(TypeMirror type) {
     checkTypePresent(type);
-    for (RequestKind kind : RequestKind.values()) {
+    for (RequestKind kind : FRAMEWORK_CLASSES.keySet()) {
       if (matchesKind(kind, type)) {
         if (kind.equals(PROVIDER) && matchesKind(LAZY, extractKeyType(kind, type))) {
           return PROVIDER_OF_LAZY;
@@ -113,10 +119,8 @@ final class RequestKinds {
    * #frameworkClass(RequestKind) framework class}.
    */
   private static boolean matchesKind(RequestKind kind, TypeMirror type) {
-    Optional<Class<?>> frameworkClass = frameworkClass(kind);
-    return frameworkClass.isPresent()
-        && isType(type)
-        && isTypeOf(frameworkClass.get(), type)
+    return isType(type)
+        && isTypeOf(frameworkClass(kind), type)
         && !asDeclared(type).getTypeArguments().isEmpty();
   }
 
@@ -137,17 +141,10 @@ final class RequestKinds {
       case PROVIDER_OF_LAZY:
         return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
       default:
-        checkArgument(isType(type) && isTypeOf(frameworkClass(requestKind).get(), type));
+        checkArgument(isType(type) && isTypeOf(frameworkClass(requestKind), type));
         return getOnlyElement(MoreTypes.asDeclared(type).getTypeArguments());
     }
   }
-
-  private static final ImmutableMap<RequestKind, Class<?>> FRAMEWORK_CLASSES =
-      ImmutableMap.of(
-          PROVIDER, Provider.class,
-          LAZY, Lazy.class,
-          PRODUCER, Producer.class,
-          PRODUCED, Produced.class);
 
   /**
    * A dagger- or {@code javax.inject}-defined class for {@code requestKind} that that can wrap
@@ -161,8 +158,10 @@ final class RequestKinds {
    * classes, and {@link RequestKind#FUTURE} is wrapped with a {@link ListenableFuture}, but for
    * historical/implementation reasons has not had an associated framework class.
    */
-  static Optional<Class<?>> frameworkClass(RequestKind requestKind) {
-    return Optional.ofNullable(FRAMEWORK_CLASSES.get(requestKind));
+  static Class<?> frameworkClass(RequestKind requestKind) {
+    Class<?> result = FRAMEWORK_CLASSES.get(requestKind);
+    checkArgument(result != null, "no framework class for %s", requestKind);
+    return result;
   }
 
   /**

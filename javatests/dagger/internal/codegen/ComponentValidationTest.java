@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -201,4 +202,158 @@ public final class ComponentValidationTest {
         .hadErrorContaining("test.TestModule is a module, which cannot be a component dependency");
   }
 
+  @Test
+  public void componentDependencyMustNotCycle_Direct() {
+    JavaFileObject shortLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentShort",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = ComponentShort.class)",
+            "interface ComponentShort {",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(shortLifetime);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentShort contains a cycle in its component dependencies:",
+                "    test.ComponentShort"));
+  }
+
+  @Test
+  public void componentDependencyMustNotCycle_Indirect() {
+    JavaFileObject longLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentLong",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = ComponentMedium.class)",
+            "interface ComponentLong {",
+            "}");
+    JavaFileObject mediumLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentMedium",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = ComponentLong.class)",
+            "interface ComponentMedium {",
+            "}");
+    JavaFileObject shortLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentShort",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = ComponentMedium.class)",
+            "interface ComponentShort {",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(longLifetime, mediumLifetime, shortLifetime);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentLong contains a cycle in its component dependencies:",
+                "    test.ComponentLong",
+                "    test.ComponentMedium",
+                "    test.ComponentLong"))
+        .inFile(longLifetime);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentMedium contains a cycle in its component dependencies:",
+                "    test.ComponentMedium",
+                "    test.ComponentLong",
+                "    test.ComponentMedium"))
+        .inFile(mediumLifetime);
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentShort contains a cycle in its component dependencies:",
+                "    test.ComponentMedium",
+                "    test.ComponentLong",
+                "    test.ComponentMedium",
+                "    test.ComponentShort"))
+        .inFile(shortLifetime);
+  }
+
+  @Test
+  public void abstractModuleWithInstanceMethod() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides int i() { return 1; }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  int i();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("TestModule is abstract and has instance @Provides methods")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void abstractModuleWithInstanceMethod_subclassedIsAllowed() {
+    JavaFileObject abstractModule =
+        JavaFileObjects.forSourceLines(
+            "test.AbstractModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class AbstractModule {",
+            "  @Provides int i() { return 1; }",
+            "}");
+    JavaFileObject subclassedModule =
+        JavaFileObjects.forSourceLines(
+            "test.SubclassedModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "class SubclassedModule extends AbstractModule {}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = SubclassedModule.class)",
+            "interface TestComponent {",
+            "  int i();",
+            "}");
+    Compilation compilation = daggerCompiler().compile(abstractModule, subclassedModule, component);
+    assertThat(compilation).succeeded();
+  }
 }

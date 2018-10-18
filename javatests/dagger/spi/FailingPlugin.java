@@ -43,16 +43,13 @@ public final class FailingPlugin implements BindingGraphPlugin {
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     if (options.containsKey("error_on_binding")) {
       String key = options.get("error_on_binding");
-      bindingGraph
-          .bindingNodes()
-          .stream()
-          .filter(node -> node.binding().key().toString().equals(key))
-          .forEach(node -> diagnosticReporter.reportBinding(ERROR, node, "Bad %s!", "Binding"));
+      bindingGraph.bindingNodes().stream()
+          .filter(node -> node.key().toString().equals(key))
+          .forEach(node -> diagnosticReporter.reportBinding(ERROR, node, "Bad Binding!"));
     }
 
     if (options.containsKey("error_on_component")) {
-      diagnosticReporter.reportComponent(
-          ERROR, bindingGraph.rootComponentNode(), "Bad %s!", "Component");
+      diagnosticReporter.reportComponent(ERROR, bindingGraph.rootComponentNode(), "Bad Component!");
     }
 
     if (options.containsKey("error_on_subcomponents")) {
@@ -65,9 +62,7 @@ public final class FailingPlugin implements BindingGraphPlugin {
 
     if (options.containsKey("error_on_dependency")) {
       String dependency = options.get("error_on_dependency");
-      bindingGraph
-          .dependencyEdges()
-          .stream()
+      bindingGraph.dependencyEdges().stream()
           .filter(
               edge ->
                   edge.dependencyRequest()
@@ -75,8 +70,7 @@ public final class FailingPlugin implements BindingGraphPlugin {
                       .get()
                       .getSimpleName()
                       .contentEquals(dependency))
-          .forEach(
-              edge -> diagnosticReporter.reportDependency(ERROR, edge, "Bad %s!", "Dependency"));
+          .forEach(edge -> diagnosticReporter.reportDependency(ERROR, edge, "Bad Dependency!"));
     }
   }
 

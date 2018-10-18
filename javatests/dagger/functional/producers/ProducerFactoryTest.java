@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducer;
+import dagger.producers.internal.CancellableProducer;
 import dagger.producers.monitoring.ProducerMonitor;
 import dagger.producers.monitoring.ProducerToken;
 import dagger.producers.monitoring.ProductionComponentMonitor;
@@ -87,7 +89,7 @@ public class ProducerFactoryTest {
   @Test
   public void singleArgMethod() throws Exception {
     SettableFuture<Integer> intFuture = SettableFuture.create();
-    Producer<Integer> intProducer = producerOfFuture(intFuture);
+    CancellableProducer<Integer> intProducer = producerOfFuture(intFuture);
     Producer<String> producer =
         new SimpleProducerModule_StrWithArgFactory(
             executorProvider, componentMonitorProvider, intProducer);
@@ -103,7 +105,8 @@ public class ProducerFactoryTest {
     SettableFuture<String> strFuture = SettableFuture.create();
     @SuppressWarnings("FutureReturnValueIgnored")
     SettableFuture<SettableFuture<String>> strFutureFuture = SettableFuture.create();
-    Producer<SettableFuture<String>> strFutureProducer = producerOfFuture(strFutureFuture);
+    CancellableProducer<SettableFuture<String>> strFutureProducer =
+        producerOfFuture(strFutureFuture);
     Producer<String> producer =
         new SimpleProducerModule_SettableFutureStrFactory(
             executorProvider, componentMonitorProvider, strFutureProducer);
@@ -131,7 +134,8 @@ public class ProducerFactoryTest {
     SettableFuture<String> strFuture = SettableFuture.create();
     @SuppressWarnings("FutureReturnValueIgnored")
     SettableFuture<SettableFuture<String>> strFutureFuture = SettableFuture.create();
-    Producer<SettableFuture<String>> strFutureProducer = producerOfFuture(strFutureFuture);
+    CancellableProducer<SettableFuture<String>> strFutureProducer =
+        producerOfFuture(strFutureFuture);
     Producer<String> producer =
         new SimpleProducerModule_SettableFutureStrFactory(
             executorProvider, componentMonitorProvider, strFutureProducer);
@@ -188,10 +192,10 @@ public class ProducerFactoryTest {
     new SimpleProducerModule_StrFactory(executorProvider, null);
   }
 
-  private static <T> Producer<T> producerOfFuture(final ListenableFuture<T> future) {
-    return new Producer<T>() {
+  private static <T> CancellableProducer<T> producerOfFuture(final ListenableFuture<T> future) {
+    return new AbstractProducer<T>() {
       @Override
-      public ListenableFuture<T> get() {
+      public ListenableFuture<T> compute() {
         return future;
       }
     };

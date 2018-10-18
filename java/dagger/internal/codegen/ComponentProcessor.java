@@ -54,6 +54,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject MembersInjectorGenerator membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins spiPlugins;
+  @Inject CompilerOptions compilerOptions;
   @Inject @Validation BindingGraphPlugins validationPlugins;
 
   public ComponentProcessor() {
@@ -93,6 +94,9 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
     options.addAll(spiPlugins.allSupportedOptions());
     options.addAll(validationPlugins.allSupportedOptions());
+    if (compilerOptions.useGradleIncrementalProcessing()) {
+      options.add("org.gradle.annotation.processing.isolating");
+    }
     return options.build();
   }
 
@@ -116,6 +120,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingGraphPluginsModule.class,
         BindingGraphValidationModule.class,
         BindingMethodValidatorsModule.class,
+        IncorrectlyInstalledBindsMethodsValidator.Module.class,
         ProcessingStepsModule.class,
       })
   interface ProcessorComponent {
@@ -166,6 +171,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
           bindsInstanceProcessingStep,
           moduleProcessingStep,
           compilerOptions.headerCompilation()
+                  // TODO(b/72748365): Support hjars for ahead-of-time subcomponents.
+                  && !compilerOptions.aheadOfTimeSubcomponents()
               ? componentHjarProcessingStep
               : componentProcessingStep,
           bindingMethodProcessingStep);

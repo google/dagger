@@ -28,41 +28,51 @@ interface BindingGraphValidationModule {
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin duplicateBindings(DuplicateBindingsValidation validation);
+  BindingGraphPlugin dependencyCycle(DependencyCycleValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin incompatiblyScopedBindings(IncompatiblyScopedBindingsValidation validation);
+  BindingGraphPlugin dependsOnProductionExecutor(DependsOnProductionExecutorValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin injectBinding(InjectBindingValidation validation);
+  BindingGraphPlugin duplicateBindings(DuplicateBindingsValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin mapMultibinding(MapMultibindingValidation validation);
+  BindingGraphPlugin incompatiblyScopedBindings(IncompatiblyScopedBindingsValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin membersInjection(MembersInjectionBindingValidation validation);
+  BindingGraphPlugin injectBinding(InjectBindingValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin missingBinding(MissingBindingValidation validation);
+  BindingGraphPlugin mapMultibinding(MapMultibindingValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin nullable(NonNullableRequestForNullableBindingValidation validation);
+  BindingGraphPlugin missingBinding(MissingBindingValidator validation);
 
   @Binds
   @IntoSet
   @Validation
-  BindingGraphPlugin providerDependsOnProducer(
-      ProvisionDependencyOnProducerBindingValidation validation);
+  BindingGraphPlugin nullableBinding(NullableBindingValidator validation);
+
+  @Binds
+  @IntoSet
+  @Validation
+  BindingGraphPlugin provisionDependencyOnProducerBinding(
+      ProvisionDependencyOnProducerBindingValidator validation);
+
+  @Binds
+  @IntoSet
+  @Validation
+  BindingGraphPlugin subcomponentFactoryMethod(SubcomponentFactoryMethodValidator validation);
 }

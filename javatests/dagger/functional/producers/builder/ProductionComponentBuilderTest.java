@@ -36,7 +36,7 @@ public final class ProductionComponentBuilderTest {
             .strModule(new StringModule())
             .build();
     assertThat(component.s().get()).isEqualTo("arg: 42");
-    assertThat(component.d().get()).isWithin(0).of(15.3);
+    assertThat(component.d().get()).isEqualTo(15.3);
   }
 
   @Test
@@ -46,7 +46,7 @@ public final class ProductionComponentBuilderTest {
             .depComponent(depComponent(15.3))
             .build();
     assertThat(component.s().get()).isEqualTo("arg: 42");
-    assertThat(component.d().get()).isWithin(0).of(15.3);
+    assertThat(component.d().get()).isEqualTo(15.3);
   }
 
   @Test(expected = IllegalStateException.class)

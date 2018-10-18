@@ -41,11 +41,13 @@ final class KytheBindingGraphFactory {
   private final BindingGraphFactory bindingGraphFactory;
 
   @Inject
-  KytheBindingGraphFactory(Types types, Elements elements) {
+  KytheBindingGraphFactory(Types types, Elements elements, CompilerOptions compilerOptions) {
     DaggerElements daggerElements = new DaggerElements(elements, types);
     DaggerTypes daggerTypes = new DaggerTypes(types, daggerElements);
-    this.componentDescriptorFactory = createComponentDescriptorFactory(daggerElements, daggerTypes);
-    this.bindingGraphFactory = createBindingGraphFactory(daggerTypes, daggerElements);
+    this.componentDescriptorFactory =
+        createComponentDescriptorFactory(daggerElements, daggerTypes, compilerOptions);
+    this.bindingGraphFactory =
+        createBindingGraphFactory(daggerTypes, daggerElements, compilerOptions);
   }
 
   /**
@@ -60,8 +62,27 @@ final class KytheBindingGraphFactory {
     return Optional.empty();
   }
 
+  /** Creates the {@link CompilerOptions} for use during {@link BindingGraph} construction. */
+  static CompilerOptions createCompilerOptions() {
+    return CompilerOptions.builder()
+        .usesProducers(true)
+        .writeProducerNameInToken(true)
+        .nullableValidationKind(Diagnostic.Kind.NOTE)
+        .privateMemberValidationKind(Diagnostic.Kind.NOTE)
+        .staticMemberValidationKind(Diagnostic.Kind.NOTE)
+        .ignorePrivateAndStaticInjectionForComponent(false)
+        .scopeCycleValidationType(ValidationType.NONE)
+        .warnIfInjectionFactoryNotGeneratedUpstream(false)
+        .fastInit(false)
+        .experimentalAndroidMode2(false)
+        .aheadOfTimeSubcomponents(false)
+        .floatingBindsMethods(false)
+        .build()
+        .validate();
+  }
+
   private static ComponentDescriptor.Factory createComponentDescriptorFactory(
-      DaggerElements elements, DaggerTypes types) {
+      DaggerElements elements, DaggerTypes types, CompilerOptions compilerOptions) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
     DependencyRequestFactory dependencyRequestFactory =
         new DependencyRequestFactory(keyFactory, types);
@@ -85,46 +106,37 @@ final class KytheBindingGraphFactory {
             subcomponentDeclarationFactory,
             optionalBindingDeclarationFactory);
     return new ComponentDescriptor.Factory(
-        elements, types, dependencyRequestFactory, moduleDescriptorFactory);
+        elements, types, dependencyRequestFactory, moduleDescriptorFactory, compilerOptions);
   }
 
   private static BindingGraphFactory createBindingGraphFactory(
-      DaggerTypes types, DaggerElements elements) {
+      DaggerTypes types, DaggerElements elements, CompilerOptions compilerOptions) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
-    DependencyRequestFactory dependencyRequestFactory =
-        new DependencyRequestFactory(keyFactory, types);
-    Messager messager = new NullMessager();
-    CompilerOptions compilerOptions =
-        CompilerOptions.builder()
-            .usesProducers(true)
-            .writeProducerNameInToken(true)
-            .nullableValidationKind(Diagnostic.Kind.NOTE)
-            .privateMemberValidationKind(Diagnostic.Kind.NOTE)
-            .staticMemberValidationKind(Diagnostic.Kind.NOTE)
-            .ignorePrivateAndStaticInjectionForComponent(false)
-            .scopeCycleValidationType(ValidationType.NONE)
-            .warnIfInjectionFactoryNotGeneratedUpstream(false)
-            .experimentalAndroidMode(false)
-            .experimentalAndroidMode2(false)
-            .aheadOfTimeComponents(false)
-            .build();
 
     BindingFactory bindingFactory =
-        new BindingFactory(types, elements, keyFactory, dependencyRequestFactory);
-
-    InjectValidator injectMethodValidator = new InjectValidator(types, elements, compilerOptions);
+        new BindingFactory(
+            types, elements, keyFactory, new DependencyRequestFactory(keyFactory, types));
 
     InjectBindingRegistry injectBindingRegistry =
         new InjectBindingRegistryImpl(
             elements,
             types,
-            messager,
-            injectMethodValidator,
+            new NullMessager(),
+            new InjectValidator(
+                types,
+                elements,
+                new DependencyRequestValidator(new MembersInjectionValidator()),
+                compilerOptions),
             keyFactory,
             bindingFactory,
             compilerOptions);
-
-    return new BindingGraphFactory(elements, injectBindingRegistry, keyFactory, bindingFactory);
+    return new BindingGraphFactory(
+        elements,
+        injectBindingRegistry,
+        keyFactory,
+        bindingFactory,
+        new IncorrectlyInstalledBindsMethodsValidator(compilerOptions),
+        compilerOptions);
   }
 
   private static class NullMessager implements Messager {

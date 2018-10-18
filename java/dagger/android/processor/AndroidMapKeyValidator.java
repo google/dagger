@@ -17,11 +17,11 @@
 package dagger.android.processor;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.annotationsAndFrameworkTypes;
+import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
@@ -29,6 +29,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
+import dagger.android.AndroidInjectionKey;
 import dagger.android.AndroidInjector;
 import java.lang.annotation.Annotation;
 import java.util.Set;
@@ -62,7 +63,10 @@ final class AndroidMapKeyValidator implements ProcessingStep {
 
   @Override
   public Set<? extends Class<? extends Annotation>> annotations() {
-    return annotationsAndFrameworkTypes(elements).keySet();
+    return ImmutableSet.<Class<? extends Annotation>>builder()
+        .addAll(annotationsAndFrameworkTypes(elements).keySet())
+        .add(AndroidInjectionKey.class)
+        .build();
   }
 
   @Override
@@ -84,7 +88,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       return;
     }
 
-    TypeMirror frameworkType = annotationsAndFrameworkTypes(elements).get(annotation);
+    TypeMirror frameworkType = frameworkTypeForMapKey(method, annotation);
 
     if (!getAnnotatedAnnotations(method, Scope.class).isEmpty()) {
       SuppressWarnings suppressedWarnings = method.getAnnotation(SuppressWarnings.class);
@@ -102,11 +106,16 @@ final class AndroidMapKeyValidator implements ProcessingStep {
 
     DeclaredType intendedReturnType = injectorFactoryOf(types.getWildcardType(frameworkType, null));
     if (!MoreTypes.equivalence().equivalent(returnType, intendedReturnType)) {
+      String subject =
+          annotation.equals(AndroidInjectionKey.class)
+              ? method.toString()
+              : String.format("@%s methods", annotation.getCanonicalName());
+
       messager.printMessage(
           Kind.ERROR,
           String.format(
-              "@%s methods should bind %s, not %s. See https://google.github.io/dagger/android",
-              annotation.getCanonicalName(), intendedReturnType, returnType),
+              "%s should bind %s, not %s. See https://google.github.io/dagger/android",
+              subject, intendedReturnType, returnType),
           method);
     }
 
@@ -135,14 +144,28 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       Class<? extends Annotation> annotation, ExecutableElement method) {
     TypeMirror parameterType = getOnlyElement(method.getParameters()).asType();
     AnnotationMirror annotationMirror = getAnnotationMirror(method, annotation).get();
-    TypeMirror mapKeyValue = (TypeMirror) getAnnotationValue(annotationMirror, "value").getValue();
-    if (!types.isAssignable(parameterType, injectorFactoryOf(mapKeyValue))) {
+    TypeMirror mapKeyType =
+        elements.getTypeElement(injectedTypeFromMapKey(annotationMirror).get()).asType();
+    if (!types.isAssignable(parameterType, injectorFactoryOf(mapKeyType))) {
       messager.printMessage(
           Kind.ERROR,
-          String.format("%s does not implement AndroidInjector<%s>", parameterType, mapKeyValue),
+          String.format("%s does not implement AndroidInjector<%s>", parameterType, mapKeyType),
           method,
           annotationMirror);
     }
+  }
+
+  private TypeMirror frameworkTypeForMapKey(
+      ExecutableElement method, Class<? extends Annotation> annotation) {
+    AnnotationMirror annotationMirror = getAnnotationMirror(method, annotation).get();
+    TypeMirror mapKeyType =
+        elements.getTypeElement(injectedTypeFromMapKey(annotationMirror).get()).asType();
+    return annotationsAndFrameworkTypes(elements)
+        .values()
+        .stream()
+        .filter(frameworkType -> types.isAssignable(mapKeyType, frameworkType))
+        .findFirst()
+        .get();
   }
 
   /** Returns a {@link DeclaredType} for {@code AndroidInjector.Factory<implementationType>}. */

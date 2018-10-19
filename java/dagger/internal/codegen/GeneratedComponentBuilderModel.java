@@ -186,19 +186,23 @@ final class GeneratedComponentBuilderModel {
       buildMethod.returns(ClassName.get(graph.componentType())).addModifiers(PUBLIC);
 
       builderFields.forEach(
-          (requirement, builderField) -> {
+          (requirement, field) -> {
             switch (requirement.nullPolicy(elements, types)) {
               case NEW:
-                buildMethod.addCode(
-                    "if ($1N == null) { this.$1N = new $2T(); }", builderField, builderField.type);
+                buildMethod
+                    .beginControlFlow("if ($N == null)", field)
+                    .addStatement("this.$N = new $T()", field, field.type)
+                    .endControlFlow();
                 break;
               case THROW:
-                buildMethod.addCode(
-                    "if ($N == null) { throw new $T($T.class.getCanonicalName() + $S); }",
-                    builderField,
-                    IllegalStateException.class,
-                    TypeNames.rawTypeName(builderField.type),
-                    " must be set");
+                buildMethod
+                    .beginControlFlow("if ($N == null)", field)
+                    .addStatement(
+                        "throw new $T($T.class.getCanonicalName() + $S)",
+                        IllegalStateException.class,
+                        TypeNames.rawTypeName(field.type),
+                        " must be set")
+                    .endControlFlow();
                 break;
               case ALLOW:
                 break;

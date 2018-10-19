@@ -69,7 +69,7 @@ public class AndroidMapKeyValidatorTest {
         "import dagger.Module;",
         "import dagger.*;",
         "import dagger.android.*;",
-        "import dagger.multibindings.IntoMap;",
+        "import dagger.multibindings.*;",
         "import javax.inject.*;",
         "",
         "@Module",
@@ -277,6 +277,18 @@ public class AndroidMapKeyValidatorTest {
             "@ActivityKey(FooActivity.class)",
             "abstract AndroidInjector.Factory<? extends Activity> bindCorrectType(",
             "    FooActivity.Builder builder);");
+    Compilation compilation = compile(module, FOO_ACTIVITY);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void bindsCorrectType_unbounded() {
+    JavaFileObject module =
+        moduleWithMethod(
+            "@Binds",
+            "@IntoMap",
+            "@ClassKey(FooActivity.class)",
+            "abstract AndroidInjector.Factory<?> bindCorrectType(FooActivity.Builder builder);");
     Compilation compilation = compile(module, FOO_ACTIVITY);
     assertThat(compilation).succeededWithoutWarnings();
   }

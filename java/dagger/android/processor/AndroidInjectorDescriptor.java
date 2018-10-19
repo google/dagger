@@ -20,7 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.android.processor.AndroidMapKeys.annotationsAndFrameworkTypes;
+import static dagger.android.processor.AndroidMapKeys.frameworkTypesByMapKey;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
@@ -60,15 +60,6 @@ abstract class AndroidInjectorDescriptor {
   /** The type to be injected; the return type of the {@link ContributesAndroidInjector} method. */
   abstract ClassName injectedType();
 
-  /**
-   * The base framework type of {@link #injectedType()}, e.g. {@code Activity}, {@code Fragment},
-   * etc.
-   */
-  abstract ClassName frameworkType();
-
-  /** The {@link dagger.MapKey} type for the associated {@link #frameworkType()}. */
-  abstract ClassName mapKeyType();
-
   /** Scopes to apply to the generated {@link dagger.Subcomponent}. */
   abstract ImmutableSet<AnnotationSpec> scopes();
 
@@ -88,10 +79,6 @@ abstract class AndroidInjectorDescriptor {
     abstract ImmutableSet.Builder<AnnotationSpec> scopesBuilder();
 
     abstract ImmutableSet.Builder<ClassName> modulesBuilder();
-
-    abstract Builder frameworkType(ClassName frameworkType);
-
-    abstract Builder mapKeyType(ClassName mapKeyType);
 
     abstract Builder enclosingModule(ClassName enclosingModule);
 
@@ -136,18 +123,13 @@ abstract class AndroidInjectorDescriptor {
 
       TypeMirror injectedType = method.getReturnType();
       Optional<? extends Class<? extends Annotation>> maybeMapKeyAnnotation =
-          annotationsAndFrameworkTypes(elements)
+          frameworkTypesByMapKey(elements)
               .entrySet()
               .stream()
               .filter(entry -> types.isAssignable(injectedType, entry.getValue()))
               .map(Map.Entry::getKey)
               .findFirst();
       if (maybeMapKeyAnnotation.isPresent()) {
-        Class<? extends Annotation> mapKeyAnnotation = maybeMapKeyAnnotation.get();
-        TypeMirror frameworkType = annotationsAndFrameworkTypes(elements).get(mapKeyAnnotation);
-        builder
-            .mapKeyType(ClassName.get(mapKeyAnnotation))
-            .frameworkType((ClassName) TypeName.get(frameworkType));
         if (MoreTypes.asDeclared(injectedType).getTypeArguments().isEmpty()) {
           builder.injectedType(ClassName.get(MoreTypes.asTypeElement(injectedType)));
         } else {

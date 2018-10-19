@@ -68,13 +68,25 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "interface TestModule {",
             "  @Binds",
             "  @IntoMap",
-            "  @ActivityKey(TestActivity.class)",
-            "  AndroidInjector.Factory<? extends Activity> classKey(TestInjectorFactory factory);",
+            "  @ClassKey(TestActivity.class)",
+            "  AndroidInjector.Factory<?> classKey(TestInjectorFactory factory);",
             "",
             "  @Binds",
             "  @IntoMap",
             "  @AndroidInjectionKey(\"test.TestActivity\")",
-            "  AndroidInjector.Factory<? extends Activity> stringKey(TestInjectorFactory factory);",
+            "  AndroidInjector.Factory<?> stringKey(TestInjectorFactory factory);",
+            "",
+            "  @Binds",
+            "  @IntoMap",
+            "  @ActivityKey(TestActivity.class)",
+            "  AndroidInjector.Factory<? extends Activity> boundedClassKey(",
+            "      TestInjectorFactory factory);",
+            "",
+            "  @Binds",
+            "  @IntoMap",
+            "  @AndroidInjectionKey(\"test.TestActivity\")",
+            "  AndroidInjector.Factory<? extends Activity> boundedStringKey(",
+            "      TestInjectorFactory factory);",
             "}");
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
@@ -101,6 +113,8 @@ public final class DuplicateAndroidInjectorsCheckerTest {
         .onLineContaining("interface TestComponent");
     assertThat(compilation).hadErrorContaining("classKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorContaining("stringKey(test.TestInjectorFactory)");
+    assertThat(compilation).hadErrorContaining("boundedClassKey(test.TestInjectorFactory)");
+    assertThat(compilation).hadErrorContaining("boundedStringKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorCount(1);
   }
 }

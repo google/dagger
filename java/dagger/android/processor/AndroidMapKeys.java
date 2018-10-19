@@ -46,7 +46,7 @@ final class AndroidMapKeys {
    * framework, and only contain the support library types if they are on the classpath of the
    * current compilation.
    */
-  static ImmutableMap<Class<? extends Annotation>, TypeMirror> annotationsAndFrameworkTypes(
+  static ImmutableMap<Class<? extends Annotation>, TypeMirror> frameworkTypesByMapKey(
       Elements elements) {
     return ImmutableMap.copyOf(
         Stream.of(

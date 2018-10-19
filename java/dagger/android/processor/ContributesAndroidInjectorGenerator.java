@@ -50,6 +50,7 @@ import dagger.android.AndroidInjectionKey;
 import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
 import dagger.android.processor.AndroidInjectorDescriptor.Validator;
+import dagger.multibindings.ClassKey;
 import dagger.multibindings.IntoMap;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -144,7 +145,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
         .returns(
             parameterizedTypeName(
                 AndroidInjector.Factory.class,
-                WildcardTypeName.subtypeOf(descriptor.frameworkType())))
+                WildcardTypeName.subtypeOf(TypeName.OBJECT)))
         .addParameter(subcomponentBuilderName, "builder")
         .build();
   }
@@ -155,7 +156,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
           .addMember("value", "$S", descriptor.injectedType().toString())
           .build();
     }
-    return AnnotationSpec.builder(descriptor.mapKeyType())
+    return AnnotationSpec.builder(ClassKey.class)
         .addMember("value", "$T.class", descriptor.injectedType())
         .build();
   }

@@ -35,6 +35,12 @@ import java.util.Map;
 @Module
 public abstract class AndroidInjectionModule {
   @Multibinds
+  abstract Map<Class<?>, AndroidInjector.Factory<?>> allInjectorFactories();
+
+  @Multibinds
+  abstract Map<String, AndroidInjector.Factory<?>> allInjectorFactoriesWithStringKeys();
+
+  @Multibinds
   abstract Map<Class<? extends Activity>, AndroidInjector.Factory<? extends Activity>>
       activityInjectorFactories();
 

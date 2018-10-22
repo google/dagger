@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.CodeBlocks.javadocLinkTo;
-import static dagger.internal.codegen.CodeBlocks.joiningCodeBlocks;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -62,12 +61,6 @@ public final class CodeBlocksTest {
   @Test
   public void testToParametersCodeBlock_oneElement() {
     assertThat(Stream.of(objectO).collect(toParametersCodeBlock())).isEqualTo(objectO);
-  }
-
-  @Test
-  public void testJoiningCodeBlocks() {
-    assertThat(Stream.of(objectO, stringS, intI).collect(joiningCodeBlocks("!")))
-        .isEqualTo(CodeBlock.of("$T o!$T s!$T i", Object.class, String.class, int.class));
   }
 
   @Test

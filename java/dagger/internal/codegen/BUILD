@@ -18,7 +18,7 @@
 package(default_visibility = ["//:src"])
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 load("//tools:simple_jar.bzl", "simple_jar")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
@@ -257,6 +257,7 @@ java_library(
         "GeneratedComponentModel.java",
         "GeneratedInstanceBindingExpression.java",
         "GwtCompatibility.java",
+        "HjarSourceFileGenerator.java",
         "ImmediateFutureBindingExpression.java",
         "InaccessibleMapKeyProxyGenerator.java",
         "InjectionMethods.java",
@@ -342,6 +343,7 @@ java_library(
         "ProcessingEnvironmentModule.java",
         "ProcessingOptions.java",
         "ProductionExecutorModuleProcessingStep.java",
+        "SourceFileGeneratorsModule.java",
         "SystemComponentsModule.java",
     ],
     plugins = CODEGEN_PLUGINS,

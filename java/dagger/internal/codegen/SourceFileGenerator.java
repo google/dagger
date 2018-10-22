@@ -51,6 +51,10 @@ abstract class SourceFileGenerator<T> {
     this.sourceVersion = checkNotNull(sourceVersion);
   }
 
+  SourceFileGenerator(SourceFileGenerator<T> delegate) {
+    this(delegate.filer, delegate.elements, delegate.sourceVersion);
+  }
+
   /**
    * Generates a source file to be compiled for {@code T}. Writes any generation exception to {@code
    * messager} and does not throw.

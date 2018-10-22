@@ -506,9 +506,9 @@ abstract class ComponentDescriptor {
 
     private ComponentDescriptor create(
         TypeElement componentDefinitionType, Kind kind, Optional<Kind> parentKind) {
-      DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
       AnnotationMirror componentMirror =
           getAnnotationMirror(componentDefinitionType, kind.annotationType()).get();
+      DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
       ImmutableSet<ComponentRequirement> componentDependencies =
           kind.isTopLevel()
               ? getComponentDependencies(componentMirror)

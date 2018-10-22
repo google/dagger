@@ -106,8 +106,8 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     abstract class YourActivityModule {
       @Binds
       @IntoMap
-      @ActivityKey(YourActivity.class)
-      abstract AndroidInjector.Factory<? extends Activity>
+      @ClassKey(YourActivity.class)
+      abstract AndroidInjector.Factory<?>
           bindYourActivityInjectorFactory(YourActivitySubcomponent.Builder builder);
     }
 
@@ -179,9 +179,8 @@ activity to `inject(YourActivity)`.
 ### Injecting `Fragment` objects
 
 Injecting a `Fragment` is just as simple as injecting an `Activity`. Define your
-subcomponent in the same way, replacing `Activity` type parameters with
-`Fragment`, `@ActivityKey` with `@FragmentKey`, and
-`HasActivityInjector` with [`HasFragmentInjector`].
+subcomponent in the same way and replace `HasActivityInjector` with
+[`HasFragmentInjector`].
 
 Instead of injecting in `onCreate()` as is done for `Activity`
 types, [inject `Fragment`s to in `onAttach()`](#when-to-inject).
@@ -234,8 +233,8 @@ public interface YourFragmentSubcomponent extends AndroidInjector<YourFragment> 
 abstract class YourFragmentModule {
   @Binds
   @IntoMap
-  @FragmentKey(YourFragment.class)
-  abstract AndroidInjector.Factory<? extends Fragment>
+  @ClassKey(YourFragment.class)
+  abstract AndroidInjector.Factory<?>
       bindYourFragmentInjectorFactory(YourFragmentSubcomponent.Builder builder);
 }
 
@@ -269,10 +268,9 @@ instead.
 ### Support libraries
 
 For users of the Android support library, parallel types exist in the
-`dagger.android.support` package. Note that while support `Fragment` users have
-to bind `AndroidInjector.Factory<? extends android.support.v4.app.Fragment>`,
-AppCompat users should continue to implement `AndroidInjector.Factory<? extends
-Activity>` and not `<? extends AppCompatActivity>` (or `FragmentActivity`).
+`dagger.android.support` package.
+
+> TODO(ronshapiro): we should begin to split this up by androidx packages
 
 ### How do I get it?
 

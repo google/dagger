@@ -64,6 +64,7 @@ jarjar_library(
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
         "//java/dagger/model:internal-proxies",
+        "//java/dagger/errorprone",
         "@com_google_auto_auto_common//jar",
     ],
     rules = SHADE_RULES,
@@ -79,6 +80,7 @@ jarjar_library(
         "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
+        "//java/dagger/errorprone:liberrorprone-src.jar",
     ],
 )
 

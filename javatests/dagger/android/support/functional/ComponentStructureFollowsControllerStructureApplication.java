@@ -16,29 +16,20 @@
 
 package dagger.android.support.functional;
 
-import android.app.Activity;
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.ContentProvider;
-import android.support.v4.app.Fragment;
 import dagger.Binds;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
-import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
-import dagger.android.BroadcastReceiverKey;
-import dagger.android.ContentProviderKey;
-import dagger.android.ServiceKey;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.DaggerApplication;
-import dagger.android.support.FragmentKey;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.BroadcastReceiverSubcomponent.BroadcastReceiverModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.ContentProviderSubcomponent.ContentProviderModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.InnerActivitySubcomponent.InnerActivityModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.IntentServiceSubcomponent.IntentServiceModule;
 import dagger.android.support.functional.ComponentStructureFollowsControllerStructureApplication.ApplicationComponent.ServiceSubcomponent.ServiceModule;
+import dagger.multibindings.ClassKey;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 
@@ -75,38 +66,38 @@ public final class ComponentStructureFollowsControllerStructureApplication
 
       @Binds
       @IntoMap
-      @ActivityKey(TestActivity.class)
-      abstract AndroidInjector.Factory<? extends Activity> bindFactoryForTestActivity(
+      @ClassKey(TestActivity.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForTestActivity(
           ActivitySubcomponent.Builder builder);
 
       @Binds
       @IntoMap
-      @ActivityKey(OuterClass.TestInnerClassActivity.class)
-      abstract AndroidInjector.Factory<? extends Activity> bindFactoryForInnerActivity(
+      @ClassKey(OuterClass.TestInnerClassActivity.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForInnerActivity(
           InnerActivitySubcomponent.Builder builder);
 
       @Binds
       @IntoMap
-      @ServiceKey(TestService.class)
-      abstract AndroidInjector.Factory<? extends Service> bindFactoryForService(
+      @ClassKey(TestService.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForService(
           ServiceSubcomponent.Builder builder);
 
       @Binds
       @IntoMap
-      @ServiceKey(TestIntentService.class)
-      abstract AndroidInjector.Factory<? extends Service> bindFactoryForIntentService(
+      @ClassKey(TestIntentService.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForIntentService(
           IntentServiceSubcomponent.Builder builder);
 
       @Binds
       @IntoMap
-      @BroadcastReceiverKey(TestBroadcastReceiver.class)
-      abstract AndroidInjector.Factory<? extends BroadcastReceiver> bindFactoryForBroadcastReceiver(
+      @ClassKey(TestBroadcastReceiver.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForBroadcastReceiver(
           BroadcastReceiverSubcomponent.Builder builder);
 
       @Binds
       @IntoMap
-      @ContentProviderKey(TestContentProvider.class)
-      abstract AndroidInjector.Factory<? extends ContentProvider> bindFactoryForContentProvider(
+      @ClassKey(TestContentProvider.class)
+      abstract AndroidInjector.Factory<?> bindFactoryForContentProvider(
           ContentProviderSubcomponent.Builder builder);
     }
 
@@ -122,14 +113,14 @@ public final class ComponentStructureFollowsControllerStructureApplication
 
         @Binds
         @IntoMap
-        @FragmentKey(TestParentFragment.class)
-        abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForParentFragment(
+        @ClassKey(TestParentFragment.class)
+        abstract AndroidInjector.Factory<?> bindFactoryForParentFragment(
             ParentFragmentSubcomponent.Builder builder);
 
         @Binds
         @IntoMap
-        @FragmentKey(TestDialogFragment.class)
-        abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForDialogFragment(
+        @ClassKey(TestDialogFragment.class)
+        abstract AndroidInjector.Factory<?> bindFactoryForDialogFragment(
             DialogFragmentSubcomponent.Builder builder);
       }
 
@@ -148,8 +139,8 @@ public final class ComponentStructureFollowsControllerStructureApplication
 
           @Binds
           @IntoMap
-          @FragmentKey(TestChildFragment.class)
-          abstract AndroidInjector.Factory<? extends Fragment> bindFactoryForChildFragment(
+          @ClassKey(TestChildFragment.class)
+          abstract AndroidInjector.Factory<?> bindFactoryForChildFragment(
               ChildFragmentSubcomponent.Builder builder);
         }
 

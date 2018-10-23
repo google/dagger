@@ -16,14 +16,13 @@
 
 package dagger.example.android.simple;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 import dagger.Binds;
-import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerAppCompatActivity;
+import dagger.multibindings.ClassKey;
 import dagger.multibindings.IntoMap;
 import javax.inject.Inject;
 
@@ -44,8 +43,8 @@ public class MainActivity extends DaggerAppCompatActivity {
 
     @Binds
     @IntoMap
-    @ActivityKey(MainActivity.class)
-    abstract AndroidInjector.Factory<? extends Activity> bind(Component.Builder builder);
+    @ClassKey(MainActivity.class)
+    abstract AndroidInjector.Factory<?> bind(Component.Builder builder);
   }
 
   private static final String TAG = MainActivity.class.getSimpleName();

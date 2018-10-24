@@ -32,7 +32,6 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.INI
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_BUILDER;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
 import static dagger.internal.codegen.ProducerNodeInstanceBindingExpression.MAY_INTERRUPT_IF_RUNNING;
-import static dagger.producers.CancellationPolicy.Propagation.IGNORE;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -53,7 +52,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
-import dagger.producers.CancellationPolicy;
 import dagger.producers.internal.CancellationListener;
 import java.util.List;
 import java.util.Optional;
@@ -641,9 +639,8 @@ abstract class ComponentModelBuilder {
               .generatedComponentModel
               .componentDescriptor()
               .cancellationPolicy()
-              .map(CancellationPolicy::fromSubcomponents)
-              .orElse(IGNORE)
-              .equals(PROPAGATE);
+              .map(policy -> policy.fromSubcomponents().equals(PROPAGATE))
+              .orElse(false);
     }
   }
 

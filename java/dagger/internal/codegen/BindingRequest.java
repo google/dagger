@@ -95,7 +95,9 @@ abstract class BindingRequest {
   /** Returns a name that can be used for the kind of request this is. */
   final String kindName() {
     Object requestKindObject =
-        requestKind().isPresent() ? requestKind().get() : frameworkType().get();
+        requestKind().isPresent()
+            ? requestKind().get()
+            : frameworkType().get().frameworkClass().getSimpleName();
     return requestKindObject.toString();
   }
 }

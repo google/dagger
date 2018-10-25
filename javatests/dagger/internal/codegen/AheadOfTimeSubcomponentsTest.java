@@ -3361,7 +3361,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "        ResponseProducerModule_ResponseFactory.create(",
             "            getExecutorProvider(),",
             "            getProductionComponentMonitorProvider(),",
-            "            getResponseDependencyProducernode());",
+            "            getResponseDependencyProducer());",
             "    this.setOfResponseProducer =",
             // TODO(b/72748365): This initialization should be encapsulated in a method to be
             // modified.
@@ -3380,8 +3380,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "  public abstract Provider<ProductionComponentMonitor>",
             "      getProductionComponentMonitorProvider();",
             "",
-            // TODO(b/72748365): Why is the CamelCase wrong at 'node' here.
-            "  public abstract Producer<ResponseDependency> getResponseDependencyProducernode();",
+            "  public abstract Producer<ResponseDependency> getResponseDependencyProducer();",
             "",
             "  @Override",
             "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
@@ -3572,7 +3571,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    @Override",
-            "    public Producer<ResponseDependency> getResponseDependencyProducernode() {",
+            "    public Producer<ResponseDependency> getResponseDependencyProducer() {",
             "      return DaggerRoot.this.responseDependencyProducer;",
             "    }",
             "",

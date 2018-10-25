@@ -47,10 +47,10 @@ import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
@@ -177,14 +177,11 @@ final class BindingGraphFactory {
             indexBindingDeclarationsByKey(subcomponentDeclarations.build()),
             indexBindingDeclarationsByKey(delegatesBuilder.build()),
             indexBindingDeclarationsByKey(optionalsBuilder.build()));
-    for (ComponentMethodDescriptor componentMethod : componentDescriptor.componentMethods()) {
-      if (componentMethod.kind().equals(ComponentMethodKind.MEMBERS_INJECTION)) {
-        requestResolver.resolveMembersInjectionMethod(componentMethod);
+    for (DependencyRequest entryPoint : componentDescriptor.entryPoints()) {
+      if (entryPoint.kind().equals(RequestKind.MEMBERS_INJECTION)) {
+        requestResolver.resolveMembersInjection(entryPoint.key());
       } else {
-        Optional<DependencyRequest> componentMethodRequest = componentMethod.dependencyRequest();
-        if (componentMethodRequest.isPresent()) {
-          requestResolver.resolve(componentMethodRequest.get().key());
-        }
+        requestResolver.resolve(entryPoint.key());
       }
     }
 
@@ -835,9 +832,7 @@ final class BindingGraphFactory {
       }
     }
 
-    private void resolveMembersInjectionMethod(ComponentMethodDescriptor componentMethod) {
-      checkArgument(componentMethod.kind().equals(ComponentMethodKind.MEMBERS_INJECTION));
-      Key key = componentMethod.dependencyRequest().get().key();
+    private void resolveMembersInjection(Key key) {
       ResolvedBindings bindings = lookUpMembersInjectionBinding(key);
       resolveDependencies(bindings);
       resolvedMembersInjectionBindings.put(key, bindings);

@@ -29,7 +29,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
@@ -105,10 +104,6 @@ final class BindingGraphConverter {
 
       network.addNode(currentComponent);
 
-      for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
-        addDependencyEdges(currentComponent, method.dependencyRequest().get());
-      }
-
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
         for (BindingNode node : bindingNodes(resolvedBindings)) {
           addBindingNode(node);
@@ -127,6 +122,12 @@ final class BindingGraphConverter {
 
       currentComponent = parentComponent;
       parentComponent = grandparentComponent;
+    }
+
+    @Override
+    protected void visitEntryPoint(DependencyRequest entryPoint, BindingGraph graph) {
+      addDependencyEdges(currentComponent, entryPoint);
+      super.visitEntryPoint(entryPoint, graph);
     }
 
     @Override

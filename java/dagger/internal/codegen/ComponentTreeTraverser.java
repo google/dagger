@@ -39,10 +39,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.LinkedHashMultiset;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -66,8 +66,8 @@ import javax.lang.model.element.TypeElement;
  * component in the tree, and {@link #visitSubcomponentFactoryMethod(BindingGraph, BindingGraph,
  * ExecutableElement)} to perform custom logic at each subcomponent factory method.
  *
- * <p>Subclasses can override {@link #bindingGraphTraverser(ComponentTreePath,
- * ComponentMethodDescriptor)} to traverse each entry point within each component in the tree.
+ * <p>Subclasses can override {@link #bindingGraphTraverser(ComponentTreePath, DependencyRequest)}
+ * to traverse each entry point within each component in the tree.
  */
 public class ComponentTreeTraverser {
 
@@ -106,8 +106,8 @@ public class ComponentTreeTraverser {
    * <ol>
    *   <li>If this component is installed in its parent by a subcomponent factory method, calls
    *       {@link #visitSubcomponentFactoryMethod(BindingGraph, BindingGraph, ExecutableElement)}.
-   *   <li>For each entry point in the component, calls {@link
-   *       #visitEntryPoint(ComponentMethodDescriptor, BindingGraph)}.
+   *   <li>For each entry point in the component, calls {@link #visitEntryPoint(DependencyRequest,
+   *       BindingGraph)}.
    *   <li>For each child component, calls {@link #visitComponent(BindingGraph)}, updating the
    *       traversal state.
    * </ol>
@@ -128,9 +128,8 @@ public class ComponentTreeTraverser {
       }
     }
 
-    for (ComponentMethodDescriptor entryPointMethod :
-        graph.componentDescriptor().entryPointMethods()) {
-      visitEntryPoint(entryPointMethod, graph);
+    for (DependencyRequest entryPoint : graph.componentDescriptor().entryPoints()) {
+      visitEntryPoint(entryPoint, graph);
     }
 
     for (BindingGraph child : graph.subgraphs()) {
@@ -164,13 +163,13 @@ public class ComponentTreeTraverser {
    * standard order.
    *
    * <p>This implementation passes the entry point and the current component tree path to {@link
-   * #bindingGraphTraverser(ComponentTreePath, ComponentMethodDescriptor)}, and calls {@link
+   * #bindingGraphTraverser(ComponentTreePath, DependencyRequest)}, and calls {@link
    * BindingGraphTraverser#traverseDependencies()} on the returned object.
    *
    * @param graph the graph for the component that contains the entry point
    */
-  protected void visitEntryPoint(ComponentMethodDescriptor entryPointMethod, BindingGraph graph) {
-    bindingGraphTraverser(componentTreePath(), entryPointMethod).traverseDependencies();
+  protected void visitEntryPoint(DependencyRequest entryPoint, BindingGraph graph) {
+    bindingGraphTraverser(componentTreePath(), entryPoint).traverseDependencies();
   }
 
   /**
@@ -181,11 +180,10 @@ public class ComponentTreeTraverser {
    *
    * @param componentPath the path from the root component to the component that includes the entry
    *     point
-   * @param entryPointMethod the entry point method
    */
   protected BindingGraphTraverser bindingGraphTraverser(
-      ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-    return new NoOpBindingGraphTraverser(componentPath, entryPointMethod);
+      ComponentTreePath componentPath, DependencyRequest entryPoint) {
+    return new NoOpBindingGraphTraverser(componentPath, entryPoint);
   }
 
   /**
@@ -205,7 +203,7 @@ public class ComponentTreeTraverser {
   public static class BindingGraphTraverser {
 
     private final ComponentTreePath componentTreePath;
-    private final ComponentMethodDescriptor entryPointMethod;
+    private final DependencyRequest entryPoint;
     private final Deque<DependencyRequest> dependencyRequestPath = new ArrayDeque<>();
     private final Deque<ResolvedBindings> resolvedBindingsPath = new ArrayDeque<>();
     private final LinkedHashMultiset<Key> keysInPath = LinkedHashMultiset.create();
@@ -216,12 +214,11 @@ public class ComponentTreeTraverser {
      *
      * @param componentPath the path from the root component to the component that includes the
      *     entry point to be traversed
-     * @param entryPointMethod the entry point method to be traversed
+     * @param entryPoint the entry point to be traversed
      */
-    public BindingGraphTraverser(
-        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
+    public BindingGraphTraverser(ComponentTreePath componentPath, DependencyRequest entryPoint) {
       this.componentTreePath = componentPath;
-      this.entryPointMethod = entryPointMethod;
+      this.entryPoint = entryPoint;
     }
 
     /**
@@ -235,7 +232,7 @@ public class ComponentTreeTraverser {
       checkState(resolvedBindingsPath.isEmpty());
       checkState(keysInPath.isEmpty());
       checkState(visitedDependencyRequests.isEmpty());
-      nextDependencyRequest(entryPointMethod.dependencyRequest().get(), currentGraph());
+      nextDependencyRequest(entryPoint, currentGraph());
     }
 
     /**
@@ -413,12 +410,12 @@ public class ComponentTreeTraverser {
     }
 
     /**
-     * Returns {@code true} if {@code dependencyRequest} is the {@link #entryPointMethod}'s request
-     * and the entry point is a members injection method.
+     * Returns {@code true} if {@code dependencyRequest} is the {@link #entryPoint} and it's a
+     * members injection method.
      */
     private boolean isComponentMembersInjectionRequest(DependencyRequest dependencyRequest) {
-      return entryPointMethod.kind().equals(ComponentMethodKind.MEMBERS_INJECTION)
-          && entryPointMethod.dependencyRequest().get().equals(dependencyRequest);
+      return dependencyRequest.kind().equals(RequestKind.MEMBERS_INJECTION)
+          && dependencyRequest.equals(entryPoint);
     }
 
     /**
@@ -499,7 +496,7 @@ public class ComponentTreeTraverser {
      * @throws IllegalStateException if this object is not currently traversing dependencies
      */
     protected final Element entryPointElement() {
-      return entryPointMethod.dependencyRequest().get().requestElement().get();
+      return entryPoint.requestElement().get();
     }
 
     /**
@@ -543,8 +540,8 @@ public class ComponentTreeTraverser {
   /** A traverser that does nothing. */
   private static final class NoOpBindingGraphTraverser extends BindingGraphTraverser {
     private NoOpBindingGraphTraverser(
-        ComponentTreePath componentPath, ComponentMethodDescriptor entryPointMethod) {
-      super(componentPath, entryPointMethod);
+        ComponentTreePath componentPath, DependencyRequest entryPoint) {
+      super(componentPath, entryPoint);
     }
 
     @Override

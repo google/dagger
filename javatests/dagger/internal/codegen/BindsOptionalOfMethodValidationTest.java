@@ -16,10 +16,14 @@
 
 package dagger.internal.codegen;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
+import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.producers.ProducerModule;
 import java.lang.annotation.Annotation;
@@ -27,6 +31,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
+import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -97,19 +102,57 @@ public class BindsOptionalOfMethodValidationTest {
   @Test
   public void intoSet() {
     assertThatMethod("@BindsOptionalOf @IntoSet abstract String intoSet();")
-        .hasError("Multibinding annotations");
+        .hasError("cannot have multibinding annotations");
   }
 
   @Test
   public void elementsIntoSet() {
     assertThatMethod("@BindsOptionalOf @ElementsIntoSet abstract Set<String> elementsIntoSet();")
-        .hasError("Multibinding annotations");
+        .hasError("cannot have multibinding annotations");
   }
 
   @Test
   public void intoMap() {
     assertThatMethod("@BindsOptionalOf @IntoMap abstract String intoMap();")
-        .hasError("Multibinding annotations");
+        .hasError("cannot have multibinding annotations");
+  }
+
+  /**
+   * Tests that @BindsOptionalOf @IntoMap actually causes module validation to fail.
+   *
+   * @see <a href="http://b/118434447">bug 118434447</a>
+   */
+  @Test
+  public void intoMapWithComponent() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @BindsOptionalOf @IntoMap Object object();",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {}");
+
+    Compilation compilation = daggerCompiler().compile(module, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("cannot have multibinding annotations")
+        .inFile(module)
+        .onLineContaining("object();");
   }
 
   /** An injectable value object. */

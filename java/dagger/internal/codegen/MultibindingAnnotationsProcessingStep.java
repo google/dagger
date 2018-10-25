@@ -17,39 +17,35 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
+import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
-import dagger.Binds;
-import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
-import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
-import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.tools.Diagnostic.Kind;
 
 /**
  * Processing step that verifies that {@link IntoSet}, {@link ElementsIntoSet} and {@link IntoMap}
- * are not present on invalid elements.
+ * are not present on non-binding methods.
  */
 final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
-
-  private static final ImmutableSet<Class<? extends Annotation>> VALID_BINDING_ANNOTATIONS =
-      ImmutableSet.of(Provides.class, Produces.class, Binds.class);
-
+  private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final Messager messager;
 
   @Inject
-  MultibindingAnnotationsProcessingStep(Messager messager) {
+  MultibindingAnnotationsProcessingStep(
+      AnyBindingMethodValidator anyBindingMethodValidator, Messager messager) {
+    this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.messager = messager;
   }
 
@@ -61,17 +57,20 @@ final class MultibindingAnnotationsProcessingStep implements ProcessingStep {
   @Override
   public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    for (Entry<Class<? extends Annotation>, Element> entry : elementsByAnnotation.entries()) {
-      Element element = entry.getValue();
-      if (!isAnyAnnotationPresent(element, VALID_BINDING_ANNOTATIONS)) {
-        AnnotationMirror annotation = getAnnotationMirror(entry.getValue(), entry.getKey()).get();
-        messager.printMessage(
-            Kind.ERROR,
-            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods",
-            element,
-            annotation);
-      }
-    }
+    Multimaps.asMap(elementsByAnnotation)
+        .forEach(
+            (annotation, elements) -> {
+              for (ExecutableElement method : methodsIn(elements)) {
+                if (!anyBindingMethodValidator.isBindingMethod(method)) {
+                  messager.printMessage(
+                      Kind.ERROR,
+                      "Multibinding annotations may only be on "
+                          + "@Provides, @Produces, or @Binds methods",
+                      method,
+                      getAnnotationMirror(method, annotation).get());
+                }
+              }
+            });
     return ImmutableSet.of();
   }
 }

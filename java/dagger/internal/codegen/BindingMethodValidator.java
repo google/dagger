@@ -342,23 +342,35 @@ abstract class BindingMethodValidator {
   }
 
   /**
-   * Adds errors if the method has more than one {@linkplain MultibindingAnnotations multibinding
-   * annotation} or if it has a multibinding annotation and its {@link Provides} or {@link Produces}
-   * annotation has a {@code type} parameter.
+   * Adds errors if the method doesn't allow {@linkplain MultibindingAnnotations multibinding
+   * annotations} and has any, or if it does allow them but has more than one, or if it has a
+   * multibinding annotation and its {@link Provides} or {@link Produces} annotation has a {@code
+   * type} parameter.
    */
   protected void checkMultibindings(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!allowsMultibindings.allowsMultibindings()) {
-      return;
-    }
     ImmutableSet<AnnotationMirror> multibindingAnnotations =
         MultibindingAnnotations.forMethod(builder.getSubject());
-    if (multibindingAnnotations.size() > 1) {
-      for (AnnotationMirror annotation : multibindingAnnotations) {
-        builder.addError(
-            bindingMethods("cannot have more than one multibinding annotation"),
-            builder.getSubject(),
-            annotation);
-      }
+
+    switch (allowsMultibindings) {
+      case NO_MULTIBINDINGS:
+        for (AnnotationMirror annotation : multibindingAnnotations) {
+          builder.addError(
+              bindingMethods("cannot have multibinding annotations"),
+              builder.getSubject(),
+              annotation);
+        }
+        break;
+
+      case ALLOWS_MULTIBINDINGS:
+        if (multibindingAnnotations.size() > 1) {
+          for (AnnotationMirror annotation : multibindingAnnotations) {
+            builder.addError(
+                bindingMethods("cannot have more than one multibinding annotation"),
+                builder.getSubject(),
+                annotation);
+          }
+        }
+        break;
     }
 
     AnnotationMirror bindingAnnotationMirror =

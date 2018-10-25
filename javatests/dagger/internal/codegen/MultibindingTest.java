@@ -58,7 +58,7 @@ public class MultibindingTest {
 
   @Test
   public void appliedOnInvalidMethods_failsToCompile() {
-    JavaFileObject component =
+    JavaFileObject someType =
         JavaFileObjects.forSourceLines(
             "test.SomeType",
             "package test;",
@@ -76,23 +76,23 @@ public class MultibindingTest {
             "  @IntoMap Map<Integer, Double> map();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation = daggerCompiler().compile(someType);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(component)
-        .onLine(11);
+        .inFile(someType)
+        .onLineContaining("ints();");
     assertThat(compilation)
         .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(component)
-        .onLine(12);
+        .inFile(someType)
+        .onLineContaining("doubles();");
     assertThat(compilation)
         .hadErrorContaining(
             "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(component)
-        .onLine(13);
+        .inFile(someType)
+        .onLineContaining("map();");
   }
 
   @Test

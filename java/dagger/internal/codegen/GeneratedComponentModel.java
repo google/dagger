@@ -527,11 +527,7 @@ final class GeneratedComponentModel {
    * a multibinding.
    */
   ImmutableSet<DependencyRequest> superclassContributionsMade(Key key) {
-    ImmutableSet.Builder<DependencyRequest> contributionsBuilder = ImmutableSet.builder();
-    if (supermodel.isPresent()) {
-      contributionsBuilder.addAll(supermodel.get().getAllMultibindingContributions(key));
-    }
-    return contributionsBuilder.build();
+    return supermodel.map(s -> s.getAllMultibindingContributions(key)).orElse(ImmutableSet.of());
   }
 
   /**

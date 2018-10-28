@@ -73,11 +73,7 @@ final class MapFactoryCreationExpression implements FrameworkInstanceCreationExp
     }
 
     ImmutableList<FrameworkDependency> frameworkDependencies = binding.frameworkDependencies();
-    if (binding.bindingType().equals(BindingType.PROVISION)) {
-      builder.add("builder($L)", frameworkDependencies.size());
-    } else {
-      builder.add("builder()");
-    }
+    builder.add("builder($L)", frameworkDependencies.size());
 
     for (FrameworkDependency frameworkDependency : frameworkDependencies) {
       ContributionBinding contributionBinding =

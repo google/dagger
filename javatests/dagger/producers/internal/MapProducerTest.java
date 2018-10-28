@@ -31,7 +31,7 @@ public final class MapProducerTest {
   @Test
   public void success() throws Exception {
     Producer<Map<Integer, String>> mapProducer =
-        MapProducer.<Integer, String>builder()
+        MapProducer.<Integer, String>builder(2)
             .put(15, Producers.immediateProducer("fifteen"))
             .put(42, Producers.immediateProducer("forty two"))
             .build();
@@ -45,7 +45,7 @@ public final class MapProducerTest {
   public void failingContribution() throws Exception {
     RuntimeException cause = new RuntimeException("monkey");
     Producer<Map<Integer, String>> mapProducer =
-        MapProducer.<Integer, String>builder()
+        MapProducer.<Integer, String>builder(2)
             .put(15, Producers.immediateProducer("fifteen"))
             // TODO(ronshapiro): remove the type parameter when we drop java7 support
             .put(42, Producers.<String>immediateFailedProducer(cause))

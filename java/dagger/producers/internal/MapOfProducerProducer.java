@@ -38,8 +38,8 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
   private final ImmutableMap<K, Producer<V>> contributingMap;
 
   /** Returns a new {@link Builder}. */
-  public static <K, V> Builder<K, V> builder() {
-    return new Builder<>();
+  public static <K, V> Builder<K, V> builder(int size) {
+    return new Builder<>(size);
   }
 
   private MapOfProducerProducer(ImmutableMap<K, Producer<V>> contributingMap) {
@@ -53,7 +53,11 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
 
   /** A builder for {@link MapOfProducerProducer} */
   public static final class Builder<K, V> {
-    private final ImmutableMap.Builder<K, Producer<V>> mapBuilder = ImmutableMap.builder();
+    private final ImmutableMap.Builder<K, Producer<V>> mapBuilder;
+
+    private Builder(int size) {
+      mapBuilder = ImmutableMap.builderWithExpectedSize(size);
+    }
 
     /** Associates {@code key} with {@code producerOfValue}. */
     public Builder<K, V> put(K key, Producer<V> producerOfValue) {

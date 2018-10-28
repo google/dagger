@@ -21,7 +21,10 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import com.google.common.collect.ImmutableMap;
+import dagger.android.AndroidInjector.Factory;
 import dagger.android.DispatchingAndroidInjector.InvalidInjectorBindingException;
+import java.util.Map;
+import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -34,11 +37,8 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void withClassKeys() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
-            ImmutableMap.of(FooActivity.class, FooInjector.Factory::new),
-            ImmutableMap.of(),
-            ImmutableMap.of(),
-            ImmutableMap.of());
+        newDispatchingAndroidInjector(
+            ImmutableMap.of(FooActivity.class, FooInjector.Factory::new), ImmutableMap.of());
 
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
     assertThat(dispatchingAndroidInjector.maybeInject(activity)).isTrue();
@@ -47,11 +47,9 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void withStringKeys() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
+        newDispatchingAndroidInjector(
             ImmutableMap.of(),
-            ImmutableMap.of(FooActivity.class.getName(), FooInjector.Factory::new),
-            ImmutableMap.of(),
-            ImmutableMap.of());
+            ImmutableMap.of(FooActivity.class.getName(), FooInjector.Factory::new));
 
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
     assertThat(dispatchingAndroidInjector.maybeInject(activity)).isTrue();
@@ -60,11 +58,9 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void withMixedKeys() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
+        newDispatchingAndroidInjector(
             ImmutableMap.of(FooActivity.class, FooInjector.Factory::new),
-            ImmutableMap.of(BarActivity.class.getName(), BarInjector.Factory::new),
-            ImmutableMap.of(),
-            ImmutableMap.of());
+            ImmutableMap.of(BarActivity.class.getName(), BarInjector.Factory::new));
 
     FooActivity fooActivity = Robolectric.setupActivity(FooActivity.class);
     assertThat(dispatchingAndroidInjector.maybeInject(fooActivity)).isTrue();
@@ -75,8 +71,7 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void maybeInject_returnsFalse_ifNoMatchingInjectorExists() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
-            ImmutableMap.of(), ImmutableMap.of(), ImmutableMap.of(), ImmutableMap.of());
+        newDispatchingAndroidInjector(ImmutableMap.of(), ImmutableMap.of());
 
     BarActivity activity = Robolectric.setupActivity(BarActivity.class);
     assertThat(dispatchingAndroidInjector.maybeInject(activity)).isFalse();
@@ -85,11 +80,8 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void throwsIfFactoryCreateReturnsNull() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
-            ImmutableMap.of(FooActivity.class, () -> null),
-            ImmutableMap.of(),
-            ImmutableMap.of(),
-            ImmutableMap.of());
+        newDispatchingAndroidInjector(
+            ImmutableMap.of(FooActivity.class, () -> null), ImmutableMap.of());
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
 
     try {
@@ -102,11 +94,8 @@ public final class DispatchingAndroidInjectorTest {
   @Test
   public void throwsIfClassMismatched() {
     DispatchingAndroidInjector<Activity> dispatchingAndroidInjector =
-        new DispatchingAndroidInjector<>(
-            ImmutableMap.of(FooActivity.class, BarInjector.Factory::new),
-            ImmutableMap.of(),
-            ImmutableMap.of(),
-            ImmutableMap.of());
+        newDispatchingAndroidInjector(
+            ImmutableMap.of(FooActivity.class, BarInjector.Factory::new), ImmutableMap.of());
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
 
     try {
@@ -114,6 +103,17 @@ public final class DispatchingAndroidInjectorTest {
       fail("Expected InvalidInjectorBindingException");
     } catch (InvalidInjectorBindingException expected) {
     }
+  }
+
+  private static <T> DispatchingAndroidInjector<T> newDispatchingAndroidInjector(
+      Map<Class<?>, Provider<Factory<?>>> injectorFactoriesWithClassKeys,
+      Map<String, Provider<AndroidInjector.Factory<?>>>
+          injectorFactoriesWithStringKeys) {
+    return new DispatchingAndroidInjector<>(
+        injectorFactoriesWithClassKeys,
+        injectorFactoriesWithStringKeys ,
+        ImmutableMap.of(),
+        ImmutableMap.of());
   }
 
   static class FooActivity extends Activity {}

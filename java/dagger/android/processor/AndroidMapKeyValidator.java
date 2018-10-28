@@ -26,7 +26,9 @@ import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
 import dagger.Binds;
 import dagger.MapKey;
@@ -44,6 +46,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
@@ -130,36 +133,35 @@ final class AndroidMapKeyValidator implements ProcessingStep {
    */
   private void validateReturnTypeMatchesMapKey(
       ExecutableElement method, Class<? extends Annotation> mapKeyType) {
+    WildcardType any = types.getWildcardType(null, null);
+    WildcardType anyExtendsFrameworkType =
+        types.getWildcardType(frameworkTypeForMapKey(method), null);
+
+    if (mapKeyType == ClassKey.class) {
+      validateReturnType(method, injectorFactoryOf(any));
+    } else if (mapKeyType == AndroidInjectionKey.class) {
+      validateReturnType(
+          method,
+          injectorFactoryOf(any) ,
+          injectorFactoryOf(anyExtendsFrameworkType));
+    } else {
+      validateReturnType(method, injectorFactoryOf(anyExtendsFrameworkType));
+    }
+  }
+
+  private void validateReturnType(
+      ExecutableElement method,
+      DeclaredType idealReturnType,
+      DeclaredType... otherPossibleReturnTypes) {
+    Equivalence<TypeMirror> equivalence = MoreTypes.equivalence();
     TypeMirror returnType = method.getReturnType();
-    DeclaredType boundedInjectorFactoryType =
-        injectorFactoryOf(types.getWildcardType(frameworkTypeForMapKey(method), null));
-    DeclaredType unboundedInjectorFactoryType =
-        injectorFactoryOf(types.getWildcardType(null, null));
-
-    // first check the original return type format, AndroidInjector.Factory<? extends FRAMEWORK>.
-    // This should match all map keys besides ClassKey.
-    boolean isValidReturnType =
-        mapKeyType != ClassKey.class
-            && MoreTypes.equivalence().equivalent(returnType, boundedInjectorFactoryType);
-
-    // if the first check fails, check if the return type matches the new, all-encompassing
-    // multibindings: AndroidInjector.Factory<?>. This is only supported for ClassKey (which has an
-    // unbounded Class<?> return type) or AndroidInjectionKey
-    isValidReturnType |=
-        ((mapKeyType == ClassKey.class || mapKeyType == AndroidInjectionKey.class)
-            && MoreTypes.equivalence().equivalent(returnType, unboundedInjectorFactoryType));
-
-    if (!isValidReturnType) {
-      String subject =
-          mapKeyType.equals(AndroidInjectionKey.class)
-              ? method.toString()
-              : String.format("@%s methods", mapKeyType.getCanonicalName());
-
+    if (Lists.asList(idealReturnType, otherPossibleReturnTypes).stream()
+        .noneMatch(validReturnType -> equivalence.equivalent(validReturnType, returnType))) {
       messager.printMessage(
           Kind.ERROR,
           String.format(
               "%s should bind %s, not %s. See https://google.github.io/dagger/android",
-              subject, boundedInjectorFactoryType, returnType),
+              method, idealReturnType, returnType),
           method);
     }
   }

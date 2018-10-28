@@ -87,6 +87,7 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "  @AndroidInjectionKey(\"test.TestActivity\")",
             "  AndroidInjector.Factory<? extends Activity> boundedStringKey(",
             "      TestInjectorFactory factory);",
+
             "}");
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
@@ -115,6 +116,7 @@ public final class DuplicateAndroidInjectorsCheckerTest {
     assertThat(compilation).hadErrorContaining("stringKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorContaining("boundedClassKey(test.TestInjectorFactory)");
     assertThat(compilation).hadErrorContaining("boundedStringKey(test.TestInjectorFactory)");
+
     assertThat(compilation).hadErrorCount(1);
   }
 }

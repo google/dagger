@@ -24,11 +24,17 @@ import dagger.internal.Beta;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Target;
 
-/** {@link MapKey} annotation to key bindings by a type of an {@link Activity}. */
+/**
+ * {@link MapKey} annotation to key bindings by a type of an {@link Activity}.
+ *
+ * @deprecated Use {@link dagger.multibindings.ClassKey} instead. See <a
+ *     href="https://google.github.io/dagger/android">https://google.github.io/dagger/android</a>.
+ */
 @Beta
 @MapKey
 @Documented
 @Target(METHOD)
+@Deprecated
 public @interface ActivityKey {
   Class<? extends Activity> value();
 }

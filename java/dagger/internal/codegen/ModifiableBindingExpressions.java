@@ -253,7 +253,8 @@ final class ModifiableBindingExpressions {
         return ModifiableBindingType.GENERATED_INSTANCE;
       }
 
-      if (binding.kind().equals(BindingKind.OPTIONAL)) {
+      if (binding.kind().equals(BindingKind.OPTIONAL) && binding.dependencies().isEmpty()) {
+        // only empty optional bindings can be modified
         return ModifiableBindingType.OPTIONAL;
       }
 

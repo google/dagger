@@ -25,6 +25,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.Key;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
 import javax.lang.model.type.TypeMirror;
@@ -32,13 +33,11 @@ import javax.lang.model.type.TypeMirror;
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
 
-  static final String MAY_INTERRUPT_IF_RUNNING = "mayInterruptIfRunning";
-
   /** Model for the component defining this binding. */
   private final GeneratedComponentModel generatedComponentModel;
 
+  private final Key key;
   private final TypeMirror type;
-  private boolean addedCancellationStatement = false;
 
   ProducerNodeInstanceBindingExpression(
       ResolvedBindings resolvedBindings,
@@ -48,6 +47,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
       GeneratedComponentModel generatedComponentModel) {
     super(resolvedBindings, frameworkInstanceSupplier, types, elements);
     this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.key = resolvedBindings.key();
     this.type = types.wrapType(resolvedBindings.key().type(), Producer.class);
   }
 
@@ -59,13 +59,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression result = super.getDependencyExpression(requestingClass);
-    if (!addedCancellationStatement) {
-      CodeBlock cancel =
-          CodeBlock.of(
-              "$T.cancel($L, $L);", Producers.class, result.codeBlock(), MAY_INTERRUPT_IF_RUNNING);
-      generatedComponentModel.addCancellation(cancel);
-      addedCancellationStatement = true;
-    }
+    generatedComponentModel.addCancellableProducerKey(key);
     return result;
   }
 

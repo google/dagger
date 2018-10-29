@@ -49,13 +49,14 @@ import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
-import dagger.producers.internal.CancellationListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
@@ -120,8 +121,8 @@ final class GeneratedComponentModel {
     MODIFIABLE_BINDING_METHOD,
 
     /**
-     * The {@link CancellationListener#onProducerFutureCancelled(boolean)} method for a production
-     * component.
+     * The {@link dagger.producers.internal.CancellationListener#onProducerFutureCancelled(boolean)}
+     * method for a production component.
      */
     CANCELLATION_LISTENER_METHOD,
     ;
@@ -153,7 +154,7 @@ final class GeneratedComponentModel {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
-  private final List<CodeBlock> cancellations = new ArrayList<>();
+  private final Set<Key> cancellableProducerKeys = new LinkedHashSet<>();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
   private final ListMultimap<MethodSpecKind, MethodSpec> methodSpecsMap =
@@ -407,9 +408,12 @@ final class GeneratedComponentModel {
     initializations.add(codeBlock);
   }
 
-  /** Adds the given code block to the cancellation listener method of the component. */
-  void addCancellation(CodeBlock codeBlock) {
-    cancellations.add(codeBlock);
+  /**
+   * Marks the given key of a producer as one that should have a cancellation statement in the
+   * cancellation listener method of the component.
+   */
+  void addCancellableProducerKey(Key key) {
+    cancellableProducerKeys.add(key);
   }
 
   /** Records the constructor parameters for an instance of this component. */
@@ -463,9 +467,12 @@ final class GeneratedComponentModel {
     return ImmutableList.copyOf(initializations);
   }
 
-  /** Returns the list of {@link CodeBlock}s that need to go in the cancellation listener method. */
-  ImmutableList<CodeBlock> getCancellations() {
-    return ImmutableList.copyOf(cancellations);
+  /**
+   * Returns the list of producer {@link Key}s that need cancellation statements in the cancellation
+   * listener method.
+   */
+  ImmutableList<Key> getCancellableProducerKeys() {
+    return ImmutableList.copyOf(cancellableProducerKeys);
   }
 
   /**

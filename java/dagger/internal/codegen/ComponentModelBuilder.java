@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
+import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.BUILDER_METHOD;
@@ -31,7 +32,6 @@ import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.CON
 import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.INITIALIZE_METHOD;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_BUILDER;
 import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.SUBCOMPONENT;
-import static dagger.internal.codegen.ProducerNodeInstanceBindingExpression.MAY_INTERRUPT_IF_RUNNING;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -52,7 +52,9 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.model.Key;
 import dagger.producers.internal.CancellationListener;
+import dagger.producers.internal.Producers;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -60,6 +62,8 @@ import javax.lang.model.type.DeclaredType;
 
 /** Builds the model for an implementation of a component or subcomponent. */
 abstract class ComponentModelBuilder {
+  private static final String MAY_INTERRUPT_IF_RUNNING = "mayInterruptIfRunning";
+
   static GeneratedComponentModel buildComponentModel(
       DaggerTypes types,
       DaggerElements elements,
@@ -240,17 +244,6 @@ abstract class ComponentModelBuilder {
     generatedComponentModel.addSupertype(elements.getTypeElement(CancellationListener.class));
     generatedComponentModel.claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
 
-    // Reversing should order cancellations starting from entry points and going down to leaves
-    // rather than the other way around. This shouldn't really matter but seems *slightly*
-    // preferable because:
-    // When a future that another future depends on is cancelled, that cancellation will propagate
-    // up the future graph toward the entry point. Cancelling in reverse order should ensure that
-    // everything that depends on a particular node has already been cancelled when that node is
-    // cancelled, so there's no need to propagate. Otherwise, when we cancel a leaf node, it might
-    // propagate through most of the graph, making most of the cancel calls that follow in the
-    // onProducerFutureCancelled method do nothing.
-    ImmutableList<CodeBlock> cancellationStatements =
-        generatedComponentModel.getCancellations().reverse();
     MethodSpec.Builder methodBuilder =
         methodBuilder(CANCELLATION_LISTENER_METHOD_NAME)
             .addModifiers(PUBLIC)
@@ -261,6 +254,7 @@ abstract class ComponentModelBuilder {
           "super.$L($L)", CANCELLATION_LISTENER_METHOD_NAME, MAY_INTERRUPT_IF_RUNNING);
     }
 
+    ImmutableList<CodeBlock> cancellationStatements = cancellationStatements();
     if (cancellationStatements.size() < STATEMENTS_PER_METHOD) {
       methodBuilder.addCode(CodeBlocks.concat(cancellationStatements)).build();
     } else {
@@ -282,6 +276,35 @@ abstract class ComponentModelBuilder {
     addCancelParentStatement(methodBuilder);
 
     generatedComponentModel.addMethod(CANCELLATION_LISTENER_METHOD, methodBuilder.build());
+  }
+
+  private ImmutableList<CodeBlock> cancellationStatements() {
+    // Reversing should order cancellations starting from entry points and going down to leaves
+    // rather than the other way around. This shouldn't really matter but seems *slightly*
+    // preferable because:
+    // When a future that another future depends on is cancelled, that cancellation will propagate
+    // up the future graph toward the entry point. Cancelling in reverse order should ensure that
+    // everything that depends on a particular node has already been cancelled when that node is
+    // cancelled, so there's no need to propagate. Otherwise, when we cancel a leaf node, it might
+    // propagate through most of the graph, making most of the cancel calls that follow in the
+    // onProducerFutureCancelled method do nothing.
+    ImmutableList<Key> cancellationKeys =
+        generatedComponentModel.getCancellableProducerKeys().reverse();
+
+    ImmutableList.Builder<CodeBlock> cancellationStatements = ImmutableList.builder();
+    for (Key cancellationKey : cancellationKeys) {
+      cancellationStatements.add(
+          CodeBlock.of(
+              "$T.cancel($L, $N);",
+              Producers.class,
+              bindingExpressions
+                  .getDependencyExpression(
+                      bindingRequest(cancellationKey, FrameworkType.PRODUCER_NODE),
+                      generatedComponentModel.name())
+                  .codeBlock(),
+              MAY_INTERRUPT_IF_RUNNING));
+    }
+    return cancellationStatements.build();
   }
 
   protected void addCancelParentStatement(MethodSpec.Builder methodBuilder) {

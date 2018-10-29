@@ -3374,9 +3374,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
-            // TODO(b/72748365): Reference to DaggerRoot is redundant.
-            "    Producers.cancel(DaggerRoot.this.responseDependencyProducer,",
-            "        mayInterruptIfRunning);",
+            "    Producers.cancel(responseDependencyProducer, mayInterruptIfRunning);",
             "  }",
             "",
             "  public static final class Builder {",

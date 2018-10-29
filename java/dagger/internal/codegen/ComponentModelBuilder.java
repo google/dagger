@@ -297,7 +297,7 @@ abstract class ComponentModelBuilder {
 
   private void addSubcomponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      // TODO(b/72748365): Can an abstract inner subcomponent implementation be elided if it's
+      // TODO(b/117833324): Can an abstract inner subcomponent implementation be elided if it's
       // totally empty?
       generatedComponentModel.addSubcomponent(
           subgraph.componentDescriptor(), buildSubcomponentModel(subgraph));

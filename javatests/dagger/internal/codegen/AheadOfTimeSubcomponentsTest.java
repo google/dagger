@@ -702,9 +702,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "@Subcomponent",
             "interface Leaf {",
-            // "  Leaf leaf();", // TODO(b/72748365): enable this (and fix the bug that's causing
-            // this to stack overflow
-            "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
             "    Leaf build();",

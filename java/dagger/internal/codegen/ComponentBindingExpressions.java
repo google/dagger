@@ -683,7 +683,6 @@ final class ComponentBindingExpressions {
         modifiableBindingExpressions.maybeWrapInModifiableMethodBindingExpression(
             resolvedBindings,
             request,
-            bindingExpression,
             methodImplementation,
             matchingComponentMethod,
             matchingModifiableBindingMethod);

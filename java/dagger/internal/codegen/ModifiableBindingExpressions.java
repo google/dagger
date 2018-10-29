@@ -365,7 +365,6 @@ final class ModifiableBindingExpressions {
   Optional<BindingExpression> maybeWrapInModifiableMethodBindingExpression(
       ResolvedBindings resolvedBindings,
       BindingRequest request,
-      BindingExpression bindingExpression,
       BindingMethodImplementation methodImplementation,
       Optional<ComponentMethodDescriptor> matchingComponentMethod,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {

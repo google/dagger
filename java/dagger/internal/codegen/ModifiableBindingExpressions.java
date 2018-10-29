@@ -17,8 +17,10 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
@@ -77,13 +79,16 @@ final class ModifiableBindingExpressions {
       ModifiableBindingMethod modifiableBindingMethod) {
     if (shouldModifyKnownBinding(modifiableBindingMethod)) {
       MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
+      boolean markMethodFinal =
+          knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
+              // no need to mark the method final if the component implementation will be final
+              && generatedComponentModel.isAbstract();
       return Optional.of(
           ModifiableBindingMethod.implement(
               modifiableBindingMethod,
               MethodSpec.methodBuilder(baseMethod.name)
                   .addModifiers(PUBLIC)
-                  // TODO(b/72748365): Mark method as final if binding should not be further
-                  // modified.
+                  .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())
                   .returns(baseMethod.returnType)
                   .addAnnotation(Override.class)
                   .addCode(
@@ -92,7 +97,7 @@ final class ModifiableBindingExpressions {
                           .getModifiableBindingMethodImplementation(
                               modifiableBindingMethod, generatedComponentModel))
                   .build(),
-              knownModifiableBindingWillBeFinalized(modifiableBindingMethod)));
+              markMethodFinal));
     }
     return Optional.empty();
   }

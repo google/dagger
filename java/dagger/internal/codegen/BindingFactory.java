@@ -44,8 +44,6 @@ import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.model.BindingKind.OPTIONAL;
 import static dagger.model.BindingKind.PRODUCTION;
 import static dagger.model.BindingKind.PROVISION;
-import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGER;
-import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGERS;
 import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -66,7 +64,6 @@ import dagger.internal.codegen.ProductionBinding.ProductionKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
-import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.ArrayList;
@@ -428,52 +425,6 @@ final class BindingFactory {
         .dependencies(delegateDeclaration.delegateRequest())
         .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())
         .kind(DELEGATE)
-        .build();
-  }
-
-  /**
-   * Returns a {@link dagger.model.BindingKind#RELEASABLE_REFERENCE_MANAGER} binding for a {@code
-   * ReleasableReferenceManager}.
-   */
-  ProvisionBinding releasableReferenceManagerBinding(Scope scope) {
-    return ProvisionBinding.builder()
-        .contributionType(ContributionType.UNIQUE)
-        .key(keyFactory.forReleasableReferenceManager(scope))
-        .kind(RELEASABLE_REFERENCE_MANAGER)
-        .build();
-  }
-
-  /**
-   * Returns a {@link dagger.model.BindingKind#RELEASABLE_REFERENCE_MANAGER} binding for a {@code
-   * TypedReleasableReferenceManager<M>}.
-   */
-  ProvisionBinding typedReleasableReferenceManagerBinding(Scope scope, DeclaredType metadataType) {
-    return releasableReferenceManagerBinding(scope)
-        .toBuilder()
-        .key(keyFactory.forTypedReleasableReferenceManager(scope, metadataType))
-        .build();
-  }
-
-  /**
-   * Returns a {@link dagger.model.BindingKind#RELEASABLE_REFERENCE_MANAGERS} binding for a set of
-   * {@code ReleasableReferenceManager}s.
-   */
-  ProvisionBinding setOfReleasableReferenceManagersBinding() {
-    return ProvisionBinding.builder()
-        .contributionType(ContributionType.UNIQUE)
-        .key(keyFactory.forSetOfReleasableReferenceManagers())
-        .kind(RELEASABLE_REFERENCE_MANAGERS)
-        .build();
-  }
-
-  /**
-   * Returns a {@link dagger.model.BindingKind#RELEASABLE_REFERENCE_MANAGERS} binding for a set of
-   * {@code TypedReleasableReferenceManager<M>}s.
-   */
-  ProvisionBinding setOfTypedReleasableReferenceManagersBinding(DeclaredType metadataType) {
-    return setOfReleasableReferenceManagersBinding()
-        .toBuilder()
-        .key(keyFactory.forSetOfTypedReleasableReferenceManagers(metadataType))
         .build();
   }
 

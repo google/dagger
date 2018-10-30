@@ -73,23 +73,6 @@ public class DelegateBindingExpressionTest {
           "  @Inject ReusableScoped() {}",
           "}");
 
-  private static final JavaFileObject RELEASABLE_SCOPED =
-      JavaFileObjects.forSourceLines(
-          "test.ReleasableScoped",
-          "package test;",
-          "",
-          "import dagger.releasablereferences.CanReleaseReferences;",
-          "import javax.inject.Scope;",
-          "import javax.inject.Inject;",
-          "",
-          "@ReleasableScoped.CustomScope",
-          "class ReleasableScoped {",
-          "  @Inject ReleasableScoped() {}",
-          "",
-          "  @CanReleaseReferences",
-          "  @Scope @interface CustomScope {}",
-          "}");
-
   private static final JavaFileObject UNSCOPED =
       JavaFileObjects.forSourceLines(
           "test.Unscoped",
@@ -107,12 +90,9 @@ public class DelegateBindingExpressionTest {
           "package test;",
           "",
           "import dagger.Component;",
-          "import dagger.releasablereferences.ForReleasableReferences;",
-          "import dagger.releasablereferences.ReleasableReferenceManager;",
           "",
           "@Component(modules = TestModule.class)",
           "@RegularScoped.CustomScope",
-          "@ReleasableScoped.CustomScope",
           "interface TestComponent {",
           "  @Qualifier(RegularScoped.class)",
           "  Object regular();",
@@ -120,15 +100,8 @@ public class DelegateBindingExpressionTest {
           "  @Qualifier(ReusableScoped.class)",
           "  Object reusable();",
           "",
-          "  @Qualifier(ReleasableScoped.class)",
-          "  Object releasable();",
-          "",
           "  @Qualifier(Unscoped.class)",
           "  Object unscoped();",
-          "",
-          // force a reference releasing provider to be created
-          "  @ForReleasableReferences(ReleasableScoped.CustomScope.class)",
-          "  ReleasableReferenceManager releasableReferenceManager();",
           "}");
 
   private static final JavaFileObject QUALIFIER =
@@ -158,9 +131,6 @@ public class DelegateBindingExpressionTest {
             "",
             "  @Binds @RegularScoped.CustomScope @Qualifier(ReusableScoped.class)",
             "  Object reusable(ReusableScoped delegate);",
-            "",
-            "  @Binds @RegularScoped.CustomScope @Qualifier(ReleasableScoped.class)",
-            "  Object releasable(ReleasableScoped delegate);",
             "",
             "  @Binds @RegularScoped.CustomScope @Qualifier(Unscoped.class)",
             "  Object unscoped(Unscoped delegate);",
@@ -204,36 +174,20 @@ public class DelegateBindingExpressionTest {
                     "    return (ReusableScoped) local;",
                     "  }",
                     "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
                 .addLinesIn(
                     DEFAULT_MODE,
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Builder builder) {",
                     "    this.regularScopedProvider = ",
                     "        DoubleCheck.provider(RegularScoped_Factory.create());",
                     "    this.reusableScopedProvider = ",
                     "        SingleCheck.provider(ReusableScoped_Factory.create());",
                     "    this.reusableProvider = DoubleCheck.provider(",
-                    "        (Provider) reusableScopedProvider);")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.releasableProvider = DoubleCheck.provider(",
-                    "        (Provider) releasableScopedProvider);",
+                    "        (Provider) reusableScopedProvider);",
                     "    this.unscopedProvider = DoubleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());")
-                .addLines(
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
+                    "        (Provider) Unscoped_Factory.create());",
+                    "  }")
+                .addLines( //
                     "}")
                 .build());
   }
@@ -256,9 +210,6 @@ public class DelegateBindingExpressionTest {
             "",
             "  @Binds @Reusable @Qualifier(ReusableScoped.class)",
             "  Object reusable(ReusableScoped delegate);",
-            "",
-            "  @Binds @Reusable @Qualifier(ReleasableScoped.class)",
-            "  Object releasable(ReleasableScoped delegate);",
             "",
             "  @Binds @Reusable @Qualifier(Unscoped.class)",
             "  Object unscoped(Unscoped delegate);",
@@ -302,156 +253,19 @@ public class DelegateBindingExpressionTest {
                     "    return (ReusableScoped) local;",
                     "  }",
                     "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
                 .addLinesIn(
                     DEFAULT_MODE,
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Builder builder) {",
                     "    this.regularScopedProvider = ",
                     "        DoubleCheck.provider(RegularScoped_Factory.create());",
                     "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.releasableProvider = SingleCheck.provider(",
-                    "        (Provider) releasableScopedProvider);",
+                    "        SingleCheck.provider(ReusableScoped_Factory.create());",
                     "    this.unscopedProvider = SingleCheck.provider(",
-                    "        (Provider) Unscoped_Factory.create());")
-                .addLines(
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
+                    "        (Provider) Unscoped_Factory.create());",
+                    "  }")
+                .addLines( //
                     "}")
-                .build());
-  }
-
-  @Test
-  public void toReleasableCheck() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Binds;",
-            "import dagger.Module;",
-            "",
-            "@Module",
-            "interface TestModule {",
-            "  @Binds @ReleasableScoped.CustomScope @Qualifier(RegularScoped.class)",
-            "  Object regular(RegularScoped delegate);",
-            "",
-            "  @Binds @ReleasableScoped.CustomScope @Qualifier(ReusableScoped.class)",
-            "  Object reusable(ReusableScoped delegate);",
-            "",
-            "  @Binds @ReleasableScoped.CustomScope @Qualifier(ReleasableScoped.class)",
-            "  Object releasable(ReleasableScoped delegate);",
-            "",
-            "  @Binds @ReleasableScoped.CustomScope @Qualifier(Unscoped.class)",
-            "  Object unscoped(Unscoped delegate);",
-            "}");
-
-    assertThatCompilationWithModule(module)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .containsElementsIn(
-            compilerMode
-                .javaFileBuilder("test.DaggerTestComponent")
-                .addLines(
-                    "package test;",
-                    "",
-                    GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "  private volatile Object regularScoped = new MemoizedSentinel();",
-                    "  private volatile ReusableScoped reusableScoped;",
-                    "  private volatile Provider<Unscoped> unscopedProvider;",
-                    "",
-                    "  private RegularScoped getRegularScoped() {",
-                    "    Object local = regularScoped;",
-                    "    if (local instanceof MemoizedSentinel) {",
-                    "      synchronized (local) {",
-                    "        local = regularScoped;",
-                    "        if (local instanceof MemoizedSentinel) {",
-                    "          local = new RegularScoped();",
-                    "          regularScoped = DoubleCheck.reentrantCheck(regularScoped, local);",
-                    "        }",
-                    "      }",
-                    "    }",
-                    "    return (RegularScoped) local;",
-                    "  }",
-                    "",
-                    "  private ReusableScoped getReusableScoped() {",
-                    "    Object local = reusableScoped;",
-                    "    if (local == null) {",
-                    "      local = new ReusableScoped();",
-                    "      reusableScoped = (ReusableScoped) local;",
-                    "    }",
-                    "    return (ReusableScoped) local;",
-                    "  }",
-                    "",
-                    "  private Provider<Unscoped> getUnscopedProvider() {",
-                    "    Object local = unscopedProvider;",
-                    "    if (local == null) {",
-                    "      local = new SwitchingProvider<>(0);",
-                    "      unscopedProvider = (Provider<Unscoped>) local;",
-                    "    }",
-                    "    return (Provider<Unscoped>) local;",
-                    "  }",
-                    "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.regularScopedProvider = ",
-                    "        DoubleCheck.provider(RegularScoped_Factory.create());",
-                    "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    this.unscopedProvider =",
-                    "        ReferenceReleasingProvider.create(",
-                    "            (Provider) Unscoped_Factory.create(), customScopeReferences);")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    this.unscopedProvider2 =",
-                    "        ReferenceReleasingProvider.create(",
-                    "            (Provider) getUnscopedProvider(), customScopeReferences);")
-                .addLines(
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "  private final class SwitchingProvider<T> implements Provider<T> {",
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    @Override",
-                    "    public T get() {",
-                    "      switch (id) {",
-                    "        case 0: return (T) new Unscoped();",
-                    "        default: throw new AssertionError(id);",
-                    "      }",
-                    "    }",
-                    "  }")
-                .addLines("}")
                 .build());
   }
 
@@ -472,9 +286,6 @@ public class DelegateBindingExpressionTest {
             "",
             "  @Binds @Qualifier(ReusableScoped.class)",
             "  Object reusable(ReusableScoped delegate);",
-            "",
-            "  @Binds @Qualifier(ReleasableScoped.class)",
-            "  Object releasable(ReleasableScoped delegate);",
             "",
             "  @Binds @Qualifier(Unscoped.class)",
             "  Object unscoped(Unscoped delegate);",
@@ -518,27 +329,16 @@ public class DelegateBindingExpressionTest {
                     "    return (ReusableScoped) local;",
                     "  }",
                     "")
-                .addLines(
-                    "  @SuppressWarnings(\"unchecked\")",
-                    "  private void initialize(final Builder builder) {")
                 .addLinesIn(
                     DEFAULT_MODE,
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Builder builder) {",
                     "    this.regularScopedProvider = ",
                     "        DoubleCheck.provider(RegularScoped_Factory.create());",
                     "    this.reusableScopedProvider = ",
-                    "        SingleCheck.provider(ReusableScoped_Factory.create());")
-                .addLines(
-                    "    this.releasableScopedProvider = ",
-                    "         ReferenceReleasingProvider.create(",
-                    "             ReleasableScoped_Factory.create(), customScopeReferences);",
-                    "    this.forReleasableReferencesReleasableReferenceManagerProvider =",
-                    "        new Provider<ReleasableReferenceManager>() {",
-                    "          @Override",
-                    "          public ReleasableReferenceManager get() {",
-                    "            return customScopeReferences;",
-                    "          }",
-                    "        };",
-                    "  }",
+                    "        SingleCheck.provider(ReusableScoped_Factory.create());",
+                    "  }")
+                .addLines( //
                     "}")
                 .build());
   }
@@ -1185,7 +985,6 @@ public class DelegateBindingExpressionTest {
                 QUALIFIER,
                 REGULAR_SCOPED,
                 REUSABLE_SCOPED,
-                RELEASABLE_SCOPED,
                 UNSCOPED);
     assertThat(compilation).succeeded();
     return assertThat(compilation);

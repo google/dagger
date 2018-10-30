@@ -46,7 +46,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.graph.Traverser;
 import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -58,7 +57,6 @@ import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
-import dagger.releasablereferences.CanReleaseReferences;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -352,23 +350,6 @@ abstract class ComponentDescriptor {
   // TODO(gak): Consider making this non-optional and revising the
   // interaction between the spec & generation
   abstract Optional<BuilderSpec> builderSpec();
-
-  /**
-   * For {@link Component @Component}s, all {@link CanReleaseReferences @CanReleaseReferences}
-   * scopes associated with this component or any subcomponent. Otherwise empty.
-   */
-  ImmutableSet<Scope> releasableReferencesScopes() {
-    return kind().equals(Kind.COMPONENT)
-        ? FluentIterable.from(SUBCOMPONENT_TRAVERSER.breadthFirst(this))
-            .transformAndConcat(ComponentDescriptor::scopes)
-            .filter(Scope::canReleaseReferences)
-            .toSet()
-        : ImmutableSet.<Scope>of();
-  }
-
-  /** {@link Traverser} for the subcomponent tree. */
-  private static final Traverser<ComponentDescriptor> SUBCOMPONENT_TRAVERSER =
-      Traverser.forTree(ComponentDescriptor::subcomponents);
 
   /**
    * Returns the {@link CancellationPolicy} for this component, or an empty optional if either the

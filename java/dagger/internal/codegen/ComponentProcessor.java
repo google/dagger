@@ -152,8 +152,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
     @Provides
     static ImmutableList<ProcessingStep> processingSteps(
         MapKeyProcessingStep mapKeyProcessingStep,
-        ForReleasableReferencesValidator forReleasableReferencesValidator,
-        CanReleaseReferencesProcessingStep canReleaseReferencesProcessingStep,
         InjectProcessingStep injectProcessingStep,
         MonitoringModuleProcessingStep monitoringModuleProcessingStep,
         ProductionExecutorModuleProcessingStep productionExecutorModuleProcessingStep,
@@ -166,8 +164,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         CompilerOptions compilerOptions) {
       return ImmutableList.of(
           mapKeyProcessingStep,
-          forReleasableReferencesValidator,
-          canReleaseReferencesProcessingStep,
           injectProcessingStep,
           monitoringModuleProcessingStep,
           productionExecutorModuleProcessingStep,

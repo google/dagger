@@ -27,7 +27,6 @@ import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
-import static dagger.internal.codegen.TypeNames.REFERENCE_RELEASING_PROVIDER;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
@@ -60,7 +59,6 @@ final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final GeneratedComponentModel generatedComponentModel;
   private final ComponentRequirementFields componentRequirementFields;
-  private final ReferenceReleasingManagerFields referenceReleasingManagerFields;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
   private final DaggerElements elements;
@@ -84,7 +82,6 @@ final class ComponentBindingExpressions {
         graph,
         generatedComponentModel,
         componentRequirementFields,
-        new ReferenceReleasingManagerFields(graph, generatedComponentModel, compilerOptions),
         new StaticSwitchingProviders(generatedComponentModel, types),
         optionalFactories,
         types,
@@ -97,7 +94,6 @@ final class ComponentBindingExpressions {
       BindingGraph graph,
       GeneratedComponentModel generatedComponentModel,
       ComponentRequirementFields componentRequirementFields,
-      ReferenceReleasingManagerFields referenceReleasingManagerFields,
       StaticSwitchingProviders staticSwitchingProviders,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -107,7 +103,6 @@ final class ComponentBindingExpressions {
     this.graph = graph;
     this.generatedComponentModel = generatedComponentModel;
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
-    this.referenceReleasingManagerFields = checkNotNull(referenceReleasingManagerFields);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
@@ -138,7 +133,6 @@ final class ComponentBindingExpressions {
         childGraph,
         childComponentModel,
         childComponentRequirementFields,
-        referenceReleasingManagerFields,
         staticSwitchingProviders,
         optionalFactories,
         types,
@@ -320,21 +314,11 @@ final class ComponentBindingExpressions {
 
   private FrameworkInstanceCreationExpression scope(
       ResolvedBindings resolvedBindings, FrameworkInstanceCreationExpression unscoped) {
-    if (requiresReleasableReferences(resolvedBindings)) {
-      return () ->
-          CodeBlock.of(
-              "$T.create($L, $L)",
-              REFERENCE_RELEASING_PROVIDER,
-              unscoped.creationExpression(),
-              referenceReleasingManagerFields.getExpression(
-                  resolvedBindings.scope().get(), generatedComponentModel.name()));
-    } else {
-      return () ->
-          CodeBlock.of(
-              "$T.provider($L)",
-              resolvedBindings.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
-              unscoped.creationExpression());
-    }
+    return () ->
+        CodeBlock.of(
+            "$T.provider($L)",
+            resolvedBindings.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
+            unscoped.creationExpression());
   }
 
   /**
@@ -386,14 +370,6 @@ final class ComponentBindingExpressions {
       case MULTIBOUND_MAP:
         return new MapFactoryCreationExpression(
             binding, generatedComponentModel, this, graph, elements);
-
-      case RELEASABLE_REFERENCE_MANAGER:
-        return new ReleasableReferenceManagerProviderCreationExpression(
-            binding, generatedComponentModel, referenceReleasingManagerFields);
-
-      case RELEASABLE_REFERENCE_MANAGERS:
-        return new ReleasableReferenceManagerSetProviderCreationExpression(
-            binding, generatedComponentModel, referenceReleasingManagerFields, graph);
 
       case DELEGATE:
         return new DelegatingFrameworkInstanceCreationExpression(
@@ -524,9 +500,6 @@ final class ComponentBindingExpressions {
    * instance of this binding, return it, wrapped in a method if the binding {@linkplain
    * #needsCaching(ResolvedBindings) needs to be cached} or the expression has dependencies.
    *
-   * <p>In default mode, we can use direct expressions for bindings that don't need to be cached in
-   * a reference-releasing scope.
-   *
    * <p>In fastInit mode, we can use direct expressions unless the binding needs to be cached.
    */
   private BindingExpression instanceBindingExpression(ResolvedBindings resolvedBindings) {
@@ -614,9 +587,6 @@ final class ComponentBindingExpressions {
                 elements));
 
       case MEMBERS_INJECTOR:
-      case RELEASABLE_REFERENCE_MANAGER:
-      case RELEASABLE_REFERENCE_MANAGERS:
-        // TODO(dpb): Implement direct expressions for these.
         return Optional.empty();
 
       case MEMBERS_INJECTION:
@@ -648,12 +618,10 @@ final class ComponentBindingExpressions {
    * we can.
    *
    * <p>In fastInit mode, we can use a direct expression even if the binding {@linkplain
-   * #needsCaching(ResolvedBindings) needs to be cached} as long as it's not in a
-   * reference-releasing scope.
+   * #needsCaching(ResolvedBindings) needs to be cached}.
    */
   private boolean canUseDirectInstanceExpression(ResolvedBindings resolvedBindings) {
-    return !needsCaching(resolvedBindings)
-        || (compilerOptions.fastInit() && !requiresReleasableReferences(resolvedBindings));
+    return !needsCaching(resolvedBindings) || compilerOptions.fastInit();
   }
 
   /**
@@ -743,12 +711,5 @@ final class ComponentBindingExpressions {
       return isBindsScopeStrongerThanDependencyScope(resolvedBindings, graph);
     }
     return true;
-  }
-
-  // TODO(user): Enable releasable references in fastInit
-  private boolean requiresReleasableReferences(ResolvedBindings resolvedBindings) {
-    return resolvedBindings.scope().isPresent()
-        && referenceReleasingManagerFields.requiresReleasableReferences(
-            resolvedBindings.scope().get());
   }
 }

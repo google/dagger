@@ -26,7 +26,6 @@ import static dagger.model.BindingKind.DELEGATE;
 
 import com.squareup.javapoet.ClassName;
 import dagger.model.RequestKind;
-import dagger.model.Scope;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link BindingExpression} for {@code @Binds} methods. */
@@ -113,21 +112,15 @@ final class DelegateBindingExpression extends BindingExpression {
 
   private enum ScopeKind {
     UNSCOPED,
-    RELEASABLE,
     SINGLE_CHECK,
     DOUBLE_CHECK,
     ;
 
     static ScopeKind get(Binding binding, BindingGraph graph) {
-      if (!binding.scope().isPresent()) {
-        return UNSCOPED;
-      }
-
-      Scope scope = binding.scope().get();
-      if (graph.scopesRequiringReleasableReferenceManagers().contains(scope)) {
-        return RELEASABLE;
-      }
-      return scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK;
+      return binding
+          .scope()
+          .map(scope -> scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK)
+          .orElse(UNSCOPED);
     }
 
     boolean isStrongerScopeThan(ScopeKind other) {

@@ -84,18 +84,6 @@ public enum BindingKind {
   OPTIONAL,
 
   /**
-   * A binding for a {@link dagger.releasablereferences.ReleasableReferenceManager} or {@link
-   * dagger.releasablereferences.TypedReleasableReferenceManager} object for a scope.
-   */
-  RELEASABLE_REFERENCE_MANAGER,
-
-  /**
-   * A binding for a set of {@link dagger.releasablereferences.ReleasableReferenceManager} or {@link
-   * dagger.releasablereferences.TypedReleasableReferenceManager} objects.
-   */
-  RELEASABLE_REFERENCE_MANAGERS,
-
-  /**
    * A binding for {@link dagger.Binds}-annotated method that that delegates from requests for one
    * key to another.
    */

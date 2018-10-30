@@ -44,7 +44,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
-import dagger.internal.ReferenceReleasingProviderManager;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -65,8 +64,8 @@ import javax.lang.model.type.TypeMirror;
 /** The model of the component being generated. */
 final class GeneratedComponentModel {
   /** A type of field that this component model can generate. */
-  // TODO(user, dpb): Move component requirements and reference managers to top? The order should
-  // be component requirements, reference managers, framework fields, private method fields, ... etc
+  // TODO(user, dpb): Move component requirements to top? The order should be component
+  // requirements, framework fields, private method fields, ... etc
   enum FieldSpecKind {
 
     /**
@@ -80,9 +79,6 @@ final class GeneratedComponentModel {
 
     /** A framework field for type T, e.g. Provider<T>. */
     FRAMEWORK_FIELD,
-
-    /** A field for a {@link ReferenceReleasingProviderManager}. */
-    REFERENCE_RELEASING_MANAGER_FIELD,
 
     /** A static field that always returns an absent {@code Optional} value for the binding. */
     ABSENT_OPTIONAL_FIELD

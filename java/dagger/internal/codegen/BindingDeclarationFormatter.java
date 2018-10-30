@@ -20,8 +20,6 @@ import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
-import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGER;
-import static dagger.model.BindingKind.RELEASABLE_REFERENCE_MANAGERS;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
@@ -30,7 +28,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import dagger.model.BindingKind;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeKind;
@@ -43,11 +40,6 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
   private static final ImmutableSet<TypeKind> FORMATTABLE_ELEMENT_TYPE_KINDS =
       immutableEnumSet(EXECUTABLE, DECLARED);
 
-  private static final ImmutableSet<BindingKind>
-      FORMATTABLE_ELEMENTLESS_BINDING_KINDS =
-          immutableEnumSet(
-              RELEASABLE_REFERENCE_MANAGER, RELEASABLE_REFERENCE_MANAGERS);
-
   private final MethodSignatureFormatter methodSignatureFormatter;
 
   @Inject
@@ -56,14 +48,9 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
   }
 
   /**
-   * Returns {@code true} for declarations that this formatter can format. Specifically:
-   *
-   * <ul>
-   * <li>Those with {@linkplain BindingDeclaration#bindingElement() binding elements} that are
-   *     methods, constructors, or types.
-   * <li>{@link BindingKind#RELEASABLE_REFERENCE_MANAGER} bindings.
-   * <li>{@link BindingKind#RELEASABLE_REFERENCE_MANAGERS} bindings.
-   * </ul>
+   * Returns {@code true} for declarations that this formatter can format. Specifically bindings
+   * from subcomponent declarations or those with {@linkplain BindingDeclaration#bindingElement()
+   * binding elements} that are methods, constructors, or types.
    */
   boolean canFormat(BindingDeclaration bindingDeclaration) {
     if (bindingDeclaration instanceof SubcomponentDeclaration) {
@@ -72,10 +59,6 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
     if (bindingDeclaration.bindingElement().isPresent()) {
       return FORMATTABLE_ELEMENT_TYPE_KINDS.contains(
           bindingDeclaration.bindingElement().get().asType().getKind());
-    }
-    if (bindingDeclaration instanceof ContributionBinding) {
-      ContributionBinding contributionBinding = (ContributionBinding) bindingDeclaration;
-      return FORMATTABLE_ELEMENTLESS_BINDING_KINDS.contains(contributionBinding.kind());
     }
     return false;
   }
@@ -103,12 +86,6 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
           throw new IllegalArgumentException(
               "Formatting unsupported for element: " + bindingElement);
       }
-    }
-
-    if (isReleasableReferenceManagerBinding(bindingDeclaration)) {
-      return String.format(
-          "binding for %s from the scope declaration",
-          stripCommonTypePrefixes(bindingDeclaration.key().toString()));
     }
 
     return String.format(
@@ -142,10 +119,5 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
         simpleName(subcomponentDeclaration.moduleAnnotation()),
         annotationValue,
         subcomponentDeclaration.contributingModule().get());
-  }
-
-  private boolean isReleasableReferenceManagerBinding(BindingDeclaration bindingDeclaration) {
-    return bindingDeclaration instanceof ContributionBinding
-        && ((ContributionBinding) bindingDeclaration).kind().equals(RELEASABLE_REFERENCE_MANAGER);
   }
 }

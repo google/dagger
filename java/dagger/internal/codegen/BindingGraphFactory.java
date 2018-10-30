@@ -54,8 +54,6 @@ import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import dagger.releasablereferences.CanReleaseReferences;
-import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -71,7 +69,6 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -164,10 +161,6 @@ final class BindingGraphFactory {
       optionalsBuilder.addAll(moduleDescriptor.optionalDeclarations());
     }
 
-    ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings =
-        getReleasableReferenceManagerBindings(componentDescriptor);
-    explicitBindingsBuilder.addAll(releasableReferenceManagerBindings.values());
-
     final Resolver requestResolver =
         new Resolver(
             parentResolver,
@@ -214,73 +207,8 @@ final class BindingGraphFactory {
         resolvedContributionBindingsMap,
         requestResolver.getResolvedMembersInjectionBindings(),
         subgraphs.build(),
-        getScopesRequiringReleasableReferenceManagers(
-            releasableReferenceManagerBindings, resolvedContributionBindingsMap.keySet()),
         requestResolver.getOwnedModules(),
         requestResolver.getFactoryMethod());
-  }
-
-  /**
-   * Returns the bindings for {@link ReleasableReferenceManager}s for all {@link
-   * CanReleaseReferences @CanReleaseReferences} scopes.
-   */
-  private ImmutableSetMultimap<Scope, ProvisionBinding> getReleasableReferenceManagerBindings(
-      ComponentDescriptor componentDescriptor) {
-    ImmutableSetMultimap.Builder<Scope, ProvisionBinding> bindings = ImmutableSetMultimap.builder();
-    // TODO(dpb,gak): Do we need to bind an empty Set<ReleasableReferenceManager> if there are
-    // none?
-    for (Scope scope : componentDescriptor.releasableReferencesScopes()) {
-      // Add a binding for @ForReleasableReferences(scope) ReleasableReferenceManager.
-      bindings.put(scope, bindingFactory.releasableReferenceManagerBinding(scope));
-
-      /* Add a binding for Set<ReleasableReferenceManager>. Even if these are added more than
-       * once, each instance will be equal to the rest. Since they're being added to a set, there
-       * will be only one instance. */
-      bindings.put(scope, bindingFactory.setOfReleasableReferenceManagersBinding());
-
-      for (AnnotationMirror metadata : scope.releasableReferencesMetadata()) {
-        // Add a binding for @ForReleasableReferences(scope) TypedReleasableReferenceManager<M>.
-        bindings.put(
-            scope,
-            bindingFactory.typedReleasableReferenceManagerBinding(
-                scope, metadata.getAnnotationType()));
-
-        /* Add a binding for Set<TypedReleasableReferenceManager<M>>. Even if these are added more
-         * than once, each instance will be equal to the rest. Since they're being added to a set,
-         * there will be only one instance. */
-        bindings.put(
-            scope,
-            bindingFactory.setOfTypedReleasableReferenceManagersBinding(
-                metadata.getAnnotationType()));
-      }
-    }
-    return bindings.build();
-  }
-
-  /**
-   * Returns the set of scopes that will be returned by {@link
-   * BindingGraph#scopesRequiringReleasableReferenceManagers()}.
-   *
-   * @param releasableReferenceManagerBindings the {@link ReleasableReferenceManager} bindings for
-   *     each scope
-   * @param resolvedContributionKeys the keys of the resolved bindings for the component
-   */
-  private ImmutableSet<Scope> getScopesRequiringReleasableReferenceManagers(
-      ImmutableSetMultimap<Scope, ProvisionBinding> releasableReferenceManagerBindings,
-      ImmutableSet<Key> resolvedContributionKeys) {
-    ImmutableSet.Builder<Scope> scopes = ImmutableSet.builder();
-    releasableReferenceManagerBindings
-        .asMap()
-        .forEach(
-            (scope, bindings) -> {
-              for (Binding binding : bindings) {
-                if (resolvedContributionKeys.contains(binding.key())) {
-                  scopes.add(scope);
-                  return;
-                }
-              }
-            });
-    return scopes.build();
   }
 
   /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */

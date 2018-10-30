@@ -32,9 +32,6 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
-import dagger.model.Scope;
-import dagger.releasablereferences.CanReleaseReferences;
-import dagger.releasablereferences.ReleasableReferenceManager;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 import javax.lang.model.element.ExecutableElement;
@@ -83,23 +80,6 @@ abstract class BindingGraph {
   }
 
   abstract ImmutableSet<BindingGraph> subgraphs();
-
-  /**
-   * The scopes in the graph that {@linkplain CanReleaseReferences can release their references} for
-   * which there is a dependency request for any of the following:
-   *
-   * <ul>
-   *   <li>{@code @ForReleasableReferences(scope)} {@link ReleasableReferenceManager}
-   *   <li>{@code @ForReleasableReferences(scope)} {@code TypedReleasableReferenceManager<M>}, where
-   *       {@code M} is the releasable-references metadata type for {@code scope}
-   *   <li>{@code Set<ReleasableReferenceManager>}
-   *   <li>{@code Set<TypedReleasableReferenceManager<M>>}, where {@code M} is the metadata type for
-   *       the scope
-   * </ul>
-   *
-   * <p>This set is always empty for subcomponent graphs.
-   */
-  abstract ImmutableSet<Scope> scopesRequiringReleasableReferenceManagers();
 
   /** Returns the resolved bindings for the dependencies of {@code binding}. */
   ImmutableSet<ResolvedBindings> resolvedDependencies(ContributionBinding binding) {
@@ -230,7 +210,6 @@ abstract class BindingGraph {
       ImmutableMap<Key, ResolvedBindings> resolvedContributionBindingsMap,
       ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
       ImmutableSet<BindingGraph> subgraphs,
-      ImmutableSet<Scope> scopesRequiringReleasableReferenceManagers,
       ImmutableSet<ModuleDescriptor> ownedModules,
       Optional<ExecutableElement> factoryMethod) {
     return new AutoValue_BindingGraph(
@@ -238,7 +217,6 @@ abstract class BindingGraph {
         resolvedContributionBindingsMap,
         resolvedMembersInjectionBindings,
         subgraphs,
-        scopesRequiringReleasableReferenceManagers,
         ownedModules,
         factoryMethod);
   }

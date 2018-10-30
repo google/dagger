@@ -33,23 +33,18 @@ import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
 import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.model.RequestKind;
-import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.Production;
 import dagger.producers.internal.ProductionImplementation;
 import dagger.producers.monitoring.ProductionComponentMonitor;
-import dagger.releasablereferences.ForReleasableReferences;
-import dagger.releasablereferences.ReleasableReferenceManager;
-import dagger.releasablereferences.TypedReleasableReferenceManager;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -97,11 +92,6 @@ final class KeyFactory {
   private TypeMirror mapOfFrameworkType(
       TypeMirror keyType, TypeElement frameworkType, TypeMirror valueType) {
     return mapOf(keyType, types.getDeclaredType(frameworkType, boxPrimitives(valueType)));
-  }
-
-  private DeclaredType typedReleasableReferenceManagerOf(DeclaredType metadataType) {
-    return types.getDeclaredType(
-        getClassElement(TypedReleasableReferenceManager.class), metadataType);
   }
 
   Key forComponentMethod(ExecutableElement componentMethod) {
@@ -440,40 +430,5 @@ final class KeyFactory {
         key.toBuilder()
             .type(extractKeyType(getRequestKind(optionalValueType), optionalValueType))
             .build());
-  }
-
-  /** Returns a key for a {@code @ForReleasableReferences(scope) ReleasableReferenceManager}. */
-  Key forReleasableReferenceManager(Scope scope) {
-    return forQualifiedType(
-        Optional.of(forReleasableReferencesAnnotationMirror(scope)),
-        getClassElement(ReleasableReferenceManager.class).asType());
-  }
-
-  /**
-   * Returns a key for a {@code @ForReleasableReferences(scope)
-   * TypedReleasableReferenceManager<metadataType>}
-   */
-  Key forTypedReleasableReferenceManager(Scope scope, DeclaredType metadataType) {
-    return Key.builder(typedReleasableReferenceManagerOf(metadataType))
-        .qualifier(forReleasableReferencesAnnotationMirror(scope))
-        .build();
-  }
-
-  /** Returns a key for a {@code Set<ReleasableReferenceManager>}. */
-  Key forSetOfReleasableReferenceManagers() {
-    return Key.builder(setOf(getClassElement(ReleasableReferenceManager.class).asType())).build();
-  }
-
-  /** Returns a key for a {@code Set<TypedReleasableReferenceManager<metadataType>}. */
-  Key forSetOfTypedReleasableReferenceManagers(DeclaredType metadataType) {
-    return forQualifiedType(
-        Optional.empty(), setOf(typedReleasableReferenceManagerOf(metadataType)));
-  }
-
-  private AnnotationMirror forReleasableReferencesAnnotationMirror(Scope scope) {
-    return SimpleAnnotationMirror.of(
-        getClassElement(ForReleasableReferences.class),
-        ImmutableMap.of(
-            "value", new SimpleTypeAnnotationValue(scope.scopeAnnotationElement().asType())));
   }
 }

@@ -41,10 +41,6 @@ git commit -m "$version_name docs"
 git push origin gh-pages
 cd ..
 rm -rf gh-pages
-for generated_pom_file in dagger*pom.xml; do
-  rm "${generated_pom_file}"
-  rm "${generated_pom_file}.asc"
-done
 
 git checkout --detach
 # Set the version string that is used as a tag in all of our libraries. If another repo depends on

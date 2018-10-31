@@ -335,53 +335,6 @@ class CoffeeFilter {
 
 ```
 
-### Releasable references
-
-_**DEPRECATED:** This feature is deprecated and scheduled for removal in July
-2018._
-
-When a binding uses a scope annotation, that means that the component object
-holds a reference to the bound object until the component object itself is
-garbage-collected. In memory-sensitive environments such as Android, you may
-want to let scoped objects that are not currently being used be deleted during
-garbage collection when the application is under memory pressure.
-
-In that case, you can define a scope and annotate it with
-[`@CanReleaseReferences`].
-
-```java
-@Documented
-@Retention(RUNTIME)
-@CanReleaseReferences
-@Scope
-public @interface MyScope {}
-```
-
-When you determine that you want to allow objects held in that scope to be
-deleted during garbage collection if they're not currently being used by some
-other object, you can inject a [`ReleasableReferenceManager`] object for your
-scope and call `releaseStrongReferences()` on it, which will make the component
-hold a [`WeakReference`] to the object instead of a strong reference:
-
-```java
-@Inject @ForReleasableReferences(MyScope.class)
-ReleasableReferenceManager myScopeReferenceManager;
-
-void lowMemory() {
-  myScopeReferenceManager.releaseStrongReferences();
-}
-```
-
-If you determine that the memory pressure has receded, then you can restore the
-strong references for any cached objects that have not yet been deleted during
-garbage collection by calling `restoreStrongReferences()`:
-
-```java
-void highMemory() {
-  myScopeReferenceManager.restoreStrongReferences();
-}
-```
-
 ### Lazy injections
 
 Sometimes you need an object to be instantiated lazily.  For any binding `T`,
@@ -646,7 +599,6 @@ limitations under the License.
 [`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
 [BindsInstance]: https://google.github.io/dagger/api/latest/dagger/BindsInstance.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
-[`@CanReleaseReferences`]: https://google.github.io/dagger/api/latest/dagger/releasablereferences/CanReleaseReferences.html
 [CoffeeMaker Example]: https://github.com/google/dagger/tree/master/examples/simple/src/main/java/coffee
 [Component#dependencies]: https://google.github.io/dagger/api/latest/dagger/Component.html#dependencies--
 [Component#provision-methods]: https://google.github.io/dagger/api/latest/dagger/Component.html#provision-methods
@@ -668,7 +620,6 @@ limitations under the License.
 [Provider]: http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html
 [Provides]: https://google.github.io/dagger/api/latest/dagger/Provides.html
 [Qualifier]: http://docs.oracle.com/javaee/7/api/javax/inject/Qualifier.html
-[`ReleasableReferenceManager`]: https://google.github.io/dagger/api/latest/dagger/releasablereferences/ReleasableReferenceManager.html
 [`@Reusable`]: https://google.github.io/dagger/api/latest/dagger/Reusable.html
 [Scope]: http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [Singleton]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html

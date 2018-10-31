@@ -7,31 +7,6 @@ Updated: 2016-08
 
 This document outlines our planned features and team efforts.
 
-## Reference-releasing scopes
-
-When a binding is scoped, the generated component executes that
-binding (by calling the `@Provides` method or `@Inject` constructor) at most
-once (using double-checked locking) until the component instance is destroyed
-and caches the returned object for reuse during that lifetime.
-
-In environments with scarce memory, such as Android, it may be useful to let the
-cached values for some user-specified scoped providers be cleared under memory
-pressure.
-
-Reference-releasing scopes will provide an API by which:
-
-1.  Users may specify for a given scope that its providers should be able to
-    switch between a weak reference and a strong reference for their cached
-    values.
-
-1.  A component will have a hook to switch between strong references and weak
-    references for the providers within a given scope.
-
-Then, we will provide an Android-specific adpater by which reference-releasing
-scopes can coordinate with [`onTrimMemory(int)`] to ensure that Dagger
-components release references whenever an Android application finds itself under
-memory pressure.
-
 ## Adding subcomponents via modules
 
 While the logical structure of the component/subcomponent relationship is

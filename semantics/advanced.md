@@ -515,29 +515,3 @@ A -> B -> C -> D
 
 and suppose that a `@Reusable` binding is used in `D` and `G`. Then the binding
 is treated as being scoped in `B`.
-
-### Releasable scope
-
-Sometimes, you might only use a scope for performance reasons, not correctness.
-That is, you want some expensive objects to be optimistically cached, but you
-don't require this for the correctness of the application. In this case, in low
-memory environments, it can be useful to "release" those scoped objects (and
-allow them to be re-constructed), trading some CPU for memory.
-
-Dagger allows a scope to be annotated `@CanReleaseReferences`, which declares
-all scoped objects in this scope "releasable". When a scope is so annotated, a
-qualified `ReleasableReferenceManager` is available for injection:
-
-```java
-@ForReleasableReferences(MyScope.class) ReleasableReferenceManager
-```
-
-When the application would like to release some memory (e.g., it detects somehow
-that is in a low-memory situation), it may call
-`ReleasableReferenceManager#releaseStrongReferences()`, which changes all
-references from the component to scoped objects from strong to weak. This allows
-the garbage collector to collect these objects, if it chooses.
-
-If, later, the application decides it no longer is so memory constrained, it may
-call `ReleasableReferenceManager#restoreStrongReferences()` to revert the
-remaining (uncollected) weak references to strong references.

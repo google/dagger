@@ -56,8 +56,6 @@ GenJavaTests(
         ["**/*.java"],
         exclude = [
             "HjarTest.java",
-            # TODO(b/72748365): Remove these exclusions
-            "ReleasableReferencesComponentsTest.java",
         ],
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,

@@ -3436,13 +3436,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    public Producer<ResponseDependency> getResponseDependencyProducer() {",
             "      return DaggerRoot.this.responseDependencyProducer;",
             "    }",
-            "",
-            "    @Override",
-            "    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
-            // TODO(b/72748365): if this onProducerFutureCancelled method is just a super call, omit
-            // the method
-            "      super.onProducerFutureCancelled(mayInterruptIfRunning);",
-            "    }",
             "  }",
             "}");
     compilation = compile(filesToCompile.build());

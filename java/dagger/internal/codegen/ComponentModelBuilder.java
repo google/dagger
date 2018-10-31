@@ -255,6 +255,12 @@ abstract class ComponentModelBuilder {
     }
 
     ImmutableList<CodeBlock> cancellationStatements = cancellationStatements();
+    if (cancellationStatements.isEmpty() && generatedComponentModel.supermodel().isPresent()) {
+      // Partial subcomponent implementations that have no new cancellations don't need to override
+      // the method just to call super().
+      return;
+    }
+
     if (cancellationStatements.size() < STATEMENTS_PER_METHOD) {
       methodBuilder.addCode(CodeBlocks.concat(cancellationStatements)).build();
     } else {

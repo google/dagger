@@ -30,10 +30,10 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
 
   SetFactoryCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       BindingGraph graph) {
-    super(binding, generatedComponentModel, componentBindingExpressions);
+    super(binding, componentImplementation, componentBindingExpressions);
     this.binding = checkNotNull(binding);
     this.graph = checkNotNull(graph);
   }

@@ -36,19 +36,19 @@ final class ModifiableBindingExpressions {
   private final Optional<ModifiableBindingExpressions> parent;
   private final ComponentBindingExpressions bindingExpressions;
   private final BindingGraph graph;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final CompilerOptions compilerOptions;
 
   ModifiableBindingExpressions(
       Optional<ModifiableBindingExpressions> parent,
       ComponentBindingExpressions bindingExpressions,
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.bindingExpressions = bindingExpressions;
     this.graph = graph;
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.compilerOptions = compilerOptions;
   }
 
@@ -61,7 +61,7 @@ final class ModifiableBindingExpressions {
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
     if (modifiableBindingType.isModifiable()) {
-      generatedComponentModel.registerModifiableBindingMethod(
+      componentImplementation.registerModifiableBindingMethod(
           modifiableBindingType,
           request,
           method,
@@ -82,7 +82,7 @@ final class ModifiableBindingExpressions {
       boolean markMethodFinal =
           knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
               // no need to mark the method final if the component implementation will be final
-              && generatedComponentModel.isAbstract();
+              && componentImplementation.isAbstract();
       return Optional.of(
           ModifiableBindingMethod.implement(
               modifiableBindingMethod,
@@ -95,7 +95,7 @@ final class ModifiableBindingExpressions {
                       bindingExpressions
                           .getBindingExpression(modifiableBindingMethod.request())
                           .getModifiableBindingMethodImplementation(
-                              modifiableBindingMethod, generatedComponentModel))
+                              modifiableBindingMethod, componentImplementation))
                   .build(),
               markMethodFinal));
     }
@@ -173,16 +173,16 @@ final class ModifiableBindingExpressions {
       ModifiableBindingType type, BindingRequest request) {
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
-        generatedComponentModel.getModifiableBindingMethod(request);
+        componentImplementation.getModifiableBindingMethod(request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().findMatchingComponentMethod(request);
     switch (type) {
       case GENERATED_INSTANCE:
         // If the subcomponent is abstract then we need to define an (un-implemented)
         // GeneratedInstanceBindingExpression.
-        if (generatedComponentModel.isAbstract()) {
+        if (componentImplementation.isAbstract()) {
           return new GeneratedInstanceBindingExpression(
-              generatedComponentModel,
+              componentImplementation,
               resolvedBindings,
               request,
               matchingModifiableBindingMethod,
@@ -196,9 +196,9 @@ final class ModifiableBindingExpressions {
       case MISSING:
         // If we need an expression for a missing binding and the current implementation is
         // abstract, then we need an (un-implemented) MissingBindingExpression.
-        if (generatedComponentModel.isAbstract()) {
+        if (componentImplementation.isAbstract()) {
           return new MissingBindingExpression(
-              generatedComponentModel,
+              componentImplementation,
               request,
               matchingModifiableBindingMethod,
               matchingComponentMethod);
@@ -206,9 +206,9 @@ final class ModifiableBindingExpressions {
         // Otherwise we assume that it is valid to have a missing binding as it is part of a
         // dependency chain that has been passively pruned.
         // TODO(b/117833324): Identify pruned bindings when generating the subcomponent
-        //     implementation in which the bindings are pruned. If we hold a reference to the
-        //     binding graph used to generate a given model then we can compare a model's graph with
-        //     its supermodel graph to detect pruned dependency branches.
+        // implementation in which the bindings are pruned. If we hold a reference to the binding
+        // graph used to generate a given implementation then we can compare a implementation's
+        // graph with its superclass implementation's graph to detect pruned dependency branches.
         return new PrunedConcreteMethodBindingExpression();
       case OPTIONAL:
       case MULTIBINDING:
@@ -236,7 +236,7 @@ final class ModifiableBindingExpressions {
 
     // When generating a component the binding is not considered modifiable. Bindings are modifiable
     // only across subcomponent implementations.
-    if (generatedComponentModel.componentDescriptor().kind().isTopLevel()) {
+    if (componentImplementation.componentDescriptor().kind().isTopLevel()) {
       return ModifiableBindingType.NONE;
     }
 
@@ -304,7 +304,7 @@ final class ModifiableBindingExpressions {
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
-        return !generatedComponentModel.isAbstract();
+        return !componentImplementation.isAbstract();
       case MISSING:
         // TODO(b/72748365): investigate beder@'s comment about having intermediate component
         // ancestors satisfy missing bindings of their children with their own missing binding
@@ -315,13 +315,13 @@ final class ModifiableBindingExpressions {
         // subcomponent implementation. If a binding is still missing when the subcomponent
         // implementation is concrete then it is assumed to be part of a dependency that would have
         // been passively pruned when implementing the full component hierarchy.
-        return resolvableBinding(request) || !generatedComponentModel.isAbstract();
+        return resolvableBinding(request) || !componentImplementation.isAbstract();
       case OPTIONAL:
         // Only override optional binding methods if we have a non-empty binding.
         return !resolvedBindings.contributionBinding().dependencies().isEmpty();
       case MULTIBINDING:
         // Only modify a multibinding if there are new contributions.
-        return !generatedComponentModel
+        return !componentImplementation
             .superclassContributionsMade(request.key())
             .containsAll(resolvedBindings.contributionBinding().dependencies());
       case INJECTION:
@@ -331,8 +331,8 @@ final class ModifiableBindingExpressions {
         // the implementation has changed, so we implement the binding once in the base
         // implementation of the subcomponent. It will be re-implemented when generating the
         // component.
-        return !generatedComponentModel.supermodel().isPresent()
-            || !generatedComponentModel.isAbstract();
+        return !componentImplementation.superclassImplementation().isPresent()
+            || !componentImplementation.isAbstract();
       default:
         throw new IllegalStateException(
             String.format(
@@ -383,7 +383,7 @@ final class ModifiableBindingExpressions {
               request,
               modifiableBindingType,
               methodImplementation,
-              generatedComponentModel,
+              componentImplementation,
               matchingModifiableBindingMethod,
               newModifiableBindingWillBeFinalized(modifiableBindingType, request)));
     }
@@ -403,7 +403,7 @@ final class ModifiableBindingExpressions {
   private boolean shouldUseAModifiableConcreteMethodBindingExpression(
       ModifiableBindingType type, Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     return type.isModifiable()
-        && (generatedComponentModel.supermodel().isPresent()
+        && (componentImplementation.superclassImplementation().isPresent()
             || !matchingComponentMethod.isPresent());
   }
 }

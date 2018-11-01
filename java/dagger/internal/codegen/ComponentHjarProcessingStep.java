@@ -188,7 +188,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
       }
 
       DeclaredType componentType = MoreTypes.asDeclared(componentElement.asType());
-      // TODO(ronshapiro): unify with ComponentModelBuilder
+      // TODO(ronshapiro): unify with ComponentImplementationBuilder
       Set<MethodSignature> methodSignatures =
           Sets.newHashSetWithExpectedSize(componentDescriptor.componentMethods().size());
       componentDescriptor

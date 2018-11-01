@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.base.Supplier;
@@ -46,34 +46,34 @@ final class ComponentRequirementFields {
   private final Map<ComponentRequirement, ComponentRequirementField> componentRequirementFields =
       new HashMap<>();
   private final BindingGraph graph;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel;
 
   private ComponentRequirementFields(
       Optional<ComponentRequirementFields> parent,
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
     this.parent = parent;
     this.graph = graph;
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.generatedComponentBuilderModel = generatedComponentBuilderModel;
   }
 
   ComponentRequirementFields(
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
-    this(Optional.empty(), graph, generatedComponentModel, generatedComponentBuilderModel);
+    this(Optional.empty(), graph, componentImplementation, generatedComponentBuilderModel);
   }
 
   /** Returns a new object representing the fields available from a child component of this one. */
   ComponentRequirementFields forChildComponent(
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
     return new ComponentRequirementFields(
-        Optional.of(this), graph, generatedComponentModel, generatedComponentBuilderModel);
+        Optional.of(this), graph, componentImplementation, generatedComponentBuilderModel);
   }
 
   /**
@@ -113,14 +113,14 @@ final class ComponentRequirementFields {
     if (generatedComponentBuilderModel.isPresent()) {
       FieldSpec builderField =
           generatedComponentBuilderModel.get().builderFields().get(requirement);
-      return new BuilderField(requirement, generatedComponentModel, builderField);
+      return new BuilderField(requirement, componentImplementation, builderField);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {
       ParameterSpec factoryParameter =
           ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
-      return new ComponentParameterField(requirement, generatedComponentModel, factoryParameter);
+      return new ComponentParameterField(requirement, componentImplementation, factoryParameter);
     } else if (graph.componentRequirements().contains(requirement)) {
-      return new ComponentInstantiableField(requirement, generatedComponentModel);
+      return new ComponentInstantiableField(requirement, componentImplementation);
     } else {
       throw new AssertionError();
     }
@@ -128,14 +128,14 @@ final class ComponentRequirementFields {
 
   private abstract static class AbstractField implements ComponentRequirementField {
     private final ComponentRequirement componentRequirement;
-    private final GeneratedComponentModel generatedComponentModel;
+    private final ComponentImplementation componentImplementation;
     private final Supplier<MemberSelect> field = memoize(this::createField);
 
     private AbstractField(
         ComponentRequirement componentRequirement,
-        GeneratedComponentModel generatedComponentModel) {
+        ComponentImplementation componentImplementation) {
       this.componentRequirement = checkNotNull(componentRequirement);
-      this.generatedComponentModel = checkNotNull(generatedComponentModel);
+      this.componentImplementation = checkNotNull(componentImplementation);
     }
 
     @Override
@@ -149,15 +149,15 @@ final class ComponentRequirementFields {
     }
 
     private MemberSelect createField() {
-      // TODO(dpb,ronshapiro): think about whether GeneratedComponentModel.addField
+      // TODO(dpb,ronshapiro): think about whether ComponentImplementation.addField
       // should make a unique name for the field.
       String fieldName =
-          generatedComponentModel.getUniqueFieldName(componentRequirement.variableName());
+          componentImplementation.getUniqueFieldName(componentRequirement.variableName());
       FieldSpec field =
           FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE).build();
-      generatedComponentModel.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      generatedComponentModel.addInitialization(fieldInitialization(field));
-      return MemberSelect.localField(generatedComponentModel.name(), fieldName);
+      componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
+      componentImplementation.addInitialization(fieldInitialization(field));
+      return MemberSelect.localField(componentImplementation.name(), fieldName);
     }
 
     /** Returns the {@link CodeBlock} that initializes the component field during construction. */
@@ -173,15 +173,15 @@ final class ComponentRequirementFields {
 
     private BuilderField(
         ComponentRequirement componentRequirement,
-        GeneratedComponentModel generatedComponentModel,
+        ComponentImplementation componentImplementation,
         FieldSpec builderField) {
-      super(componentRequirement, generatedComponentModel);
+      super(componentRequirement, componentImplementation);
       this.builderField = checkNotNull(builderField);
     }
 
     @Override
     public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      if (super.generatedComponentModel.name().equals(requestingClass)) {
+      if (super.componentImplementation.name().equals(requestingClass)) {
         return CodeBlock.of("builder.$N", builderField);
       } else {
         // requesting this component requirement during initialization of a child component requires
@@ -203,8 +203,8 @@ final class ComponentRequirementFields {
   private static final class ComponentInstantiableField extends AbstractField {
     private ComponentInstantiableField(
         ComponentRequirement componentRequirement,
-        GeneratedComponentModel generatedComponentModel) {
-      super(componentRequirement, generatedComponentModel);
+        ComponentImplementation componentImplementation) {
+      super(componentRequirement, componentImplementation);
     }
 
     @Override
@@ -222,9 +222,9 @@ final class ComponentRequirementFields {
 
     private ComponentParameterField(
         ComponentRequirement componentRequirement,
-        GeneratedComponentModel generatedComponentModel,
+        ComponentImplementation componentImplementation,
         ParameterSpec factoryParameter) {
-      super(componentRequirement, generatedComponentModel);
+      super(componentRequirement, componentImplementation);
       this.factoryParameter = checkNotNull(factoryParameter);
     }
 

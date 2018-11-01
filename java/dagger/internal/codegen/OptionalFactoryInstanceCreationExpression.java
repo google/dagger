@@ -30,17 +30,17 @@ final class OptionalFactoryInstanceCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final OptionalFactories optionalFactories;
   private final ContributionBinding binding;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
 
   OptionalFactoryInstanceCreationExpression(
       OptionalFactories optionalFactories,
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions) {
     this.optionalFactories = optionalFactories;
     this.binding = binding;
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.componentBindingExpressions = componentBindingExpressions;
   }
 
@@ -53,7 +53,7 @@ final class OptionalFactoryInstanceCreationExpression
             componentBindingExpressions
                 .getDependencyExpression(
                     bindingRequest(getOnlyElement(binding.frameworkDependencies())),
-                    generatedComponentModel.name())
+                    componentImplementation.name())
                 .codeBlock());
   }
 

@@ -45,8 +45,8 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
 
   /**
    * The expression for the framework instance for this binding. The field will be {@link
-   * GeneratedComponentModel#addInitialization(CodeBlock) initialized} and {@link
-   * GeneratedComponentModel#addField(GeneratedComponentModel.FieldSpecKind, FieldSpec) added} to
+   * ComponentImplementation#addInitialization(CodeBlock) initialized} and {@link
+   * ComponentImplementation#addField(ComponentImplementation.FieldSpecKind, FieldSpec) added} to
    * the component the first time this method is invoked.
    */
   @Override

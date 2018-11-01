@@ -31,19 +31,19 @@ import java.util.Optional;
 /** An abstract base class for multibinding {@link BindingExpression}s. */
 abstract class MultibindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
 
   MultibindingExpression(
-      ResolvedBindings resolvedBindings, GeneratedComponentModel generatedComponentModel) {
+      ResolvedBindings resolvedBindings, ComponentImplementation componentImplementation) {
     super(resolvedBindings);
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression expression = buildDependencyExpression(requestingClass);
-    generatedComponentModel.registerImplementedMultibinding(binding);
+    componentImplementation.registerImplementedMultibinding(binding);
     return expression;
   }
 
@@ -63,7 +63,7 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
   protected SetView<DependencyRequest> getNewContributions(
       ImmutableSet<DependencyRequest> dependencies) {
     return Sets.difference(
-        dependencies, generatedComponentModel.superclassContributionsMade(binding.key()));
+        dependencies, componentImplementation.superclassContributionsMade(binding.key()));
   }
 
   /**
@@ -72,13 +72,13 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
    * when generating ahead-of-time subcomponents.
    */
   protected Optional<CodeBlock> superMethodCall() {
-    if (generatedComponentModel.supermodel().isPresent()) {
+    if (componentImplementation.superclassImplementation().isPresent()) {
       Optional<ModifiableBindingMethod> method =
-          generatedComponentModel.getModifiableBindingMethod(
+          componentImplementation.getModifiableBindingMethod(
               bindingRequest(binding.key(), RequestKind.INSTANCE));
       if (method.isPresent()) {
         ImmutableSet<DependencyRequest> superclassContributions =
-            generatedComponentModel.superclassContributionsMade(binding.key());
+            componentImplementation.superclassContributionsMade(binding.key());
         if (!superclassContributions.isEmpty()) {
           return Optional.of(CodeBlock.of("super.$L()", method.get().methodSpec().name));
         }

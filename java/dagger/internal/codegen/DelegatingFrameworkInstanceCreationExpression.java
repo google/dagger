@@ -28,15 +28,15 @@ final class DelegatingFrameworkInstanceCreationExpression
     implements FrameworkInstanceCreationExpression {
 
   private final ContributionBinding binding;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
 
   DelegatingFrameworkInstanceCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
 
@@ -46,7 +46,7 @@ final class DelegatingFrameworkInstanceCreationExpression
     return CodeBlocks.cast(
         componentBindingExpressions
             .getDependencyExpression(
-                bindingRequest(frameworkDependency), generatedComponentModel.name())
+                bindingRequest(frameworkDependency), componentImplementation.name())
             .codeBlock(),
         frameworkDependency.frameworkClass());
   }

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
-import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
+import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
 import static dagger.internal.codegen.TypeNames.providerOf;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -44,7 +44,7 @@ import javax.lang.model.element.Element;
 final class DependencyMethodProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentRequirementFields componentRequirementFields;
   private final CompilerOptions compilerOptions;
   private final BindingGraph graph;
@@ -52,12 +52,12 @@ final class DependencyMethodProviderCreationExpression
 
   DependencyMethodProviderCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentRequirementFields componentRequirementFields,
       CompilerOptions compilerOptions,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.graph = checkNotNull(graph);
@@ -88,7 +88,7 @@ final class DependencyMethodProviderCreationExpression
     if (binding.nullableType().isPresent()) {
       getMethod.addAnnotation(ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));
     }
-    generatedComponentModel.addType(
+    componentImplementation.addType(
         COMPONENT_PROVISION_FACTORY,
         classBuilder(factoryClassName())
             .addSuperinterface(providerOf(keyType))
@@ -105,7 +105,7 @@ final class DependencyMethodProviderCreationExpression
         "new $T($L)",
         factoryClassName(),
         componentRequirementFields.getExpressionDuringInitialization(
-            dependency(), generatedComponentModel.name()));
+            dependency(), componentImplementation.name()));
   }
 
   private ClassName factoryClassName() {
@@ -113,7 +113,7 @@ final class DependencyMethodProviderCreationExpression
         ClassName.get(dependency().typeElement()).toString().replace('.', '_')
             + "_"
             + binding.bindingElement().get().getSimpleName();
-    return generatedComponentModel.name().nestedClass(factoryName);
+    return componentImplementation.name().nestedClass(factoryName);
   }
 
   private ComponentRequirement dependency() {

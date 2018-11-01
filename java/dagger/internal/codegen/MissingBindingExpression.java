@@ -23,30 +23,30 @@ import java.util.Optional;
 /**
  * A {@link ModifiableAbstractMethodBindingExpression} for a binding that is missing when generating
  * the abstract base class implementation of a subcomponent. The (unimplemented) method is added to
- * the {@link GeneratedComponentModel} when the dependency expression is requested. The method is
+ * the {@link ComponentImplementation} when the dependency expression is requested. The method is
  * overridden when generating the implementation of an ancestor component.
  */
 final class MissingBindingExpression extends ModifiableAbstractMethodBindingExpression {
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final BindingRequest request;
 
   MissingBindingExpression(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     super(
-        generatedComponentModel,
+        componentImplementation,
         ModifiableBindingType.MISSING,
         request,
         matchingModifiableBindingMethod,
         matchingComponentMethod);
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.request = request;
   }
 
   @Override
   String chooseMethodName() {
-    return generatedComponentModel.getUniqueMethodName(request);
+    return componentImplementation.getUniqueMethodName(request);
   }
 }

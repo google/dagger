@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.MEMBERS_INJECTION_METHOD;
+import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.MEMBERS_INJECTION_METHOD;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
@@ -41,19 +41,19 @@ import javax.lang.model.type.TypeMirror;
 /** Manages the member injection methods for a component. */
 final class MembersInjectionMethods {
   private final Map<Key, MethodSpec> membersInjectionMethods = new LinkedHashMap<>();
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions bindingExpressions;
   private final BindingGraph graph;
   private final DaggerElements elements;
   private final DaggerTypes types;
 
   MembersInjectionMethods(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions bindingExpressions,
       BindingGraph graph,
       DaggerElements elements,
       DaggerTypes types) {
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.bindingExpressions = checkNotNull(bindingExpressions);
     this.graph = checkNotNull(graph);
     this.elements = checkNotNull(elements);
@@ -74,14 +74,14 @@ final class MembersInjectionMethods {
     Binding binding = resolvedBindings.binding();
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =
-        isTypeAccessibleFrom(keyType, generatedComponentModel.name().packageName())
+        isTypeAccessibleFrom(keyType, componentImplementation.name().packageName())
             ? keyType
             : elements.getTypeElement(Object.class).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
     Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
     // simple names Foo.Builder -> injectFooBuilder
-    String methodName = generatedComponentModel.getUniqueMethodName("inject" + bindingTypeName);
+    String methodName = componentImplementation.getUniqueMethodName("inject" + bindingTypeName);
     ParameterSpec parameter = ParameterSpec.builder(membersInjectedTypeName, "instance").build();
     MethodSpec.Builder methodBuilder =
         methodBuilder(methodName)
@@ -97,18 +97,18 @@ final class MembersInjectionMethods {
     methodBuilder.addCode(
         InjectionSiteMethod.invokeAll(
             injectionSites(binding),
-            generatedComponentModel.name(),
+            componentImplementation.name(),
             instance,
             membersInjectedType,
             types,
             request ->
                 bindingExpressions
-                    .getDependencyArgumentExpression(request, generatedComponentModel.name())
+                    .getDependencyArgumentExpression(request, componentImplementation.name())
                     .codeBlock()));
     methodBuilder.addStatement("return $L", instance);
 
     MethodSpec method = methodBuilder.build();
-    generatedComponentModel.addMethod(MEMBERS_INJECTION_METHOD, method);
+    componentImplementation.addMethod(MEMBERS_INJECTION_METHOD, method);
     return method;
   }
 

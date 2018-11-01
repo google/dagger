@@ -51,10 +51,10 @@ final class StaticSwitchingProviders extends SwitchingProviders {
   private final DaggerTypes types;
   private final ClassName owningComponent;
 
-  StaticSwitchingProviders(GeneratedComponentModel generatedComponentModel, DaggerTypes types) {
-    super(generatedComponentModel, types);
+  StaticSwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
+    super(componentImplementation, types);
     this.types = types;
-    this.owningComponent = generatedComponentModel.name();
+    this.owningComponent = componentImplementation.name();
   }
 
   /**

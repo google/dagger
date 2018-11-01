@@ -26,9 +26,9 @@ import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.ABSENT_OPTIONAL_FIELD;
-import static dagger.internal.codegen.GeneratedComponentModel.MethodSpecKind.ABSENT_OPTIONAL_METHOD;
-import static dagger.internal.codegen.GeneratedComponentModel.TypeSpecKind.PRESENT_FACTORY;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.ABSENT_OPTIONAL_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.ABSENT_OPTIONAL_METHOD;
+import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.PRESENT_FACTORY;
 import static dagger.internal.codegen.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.TypeNames.PROVIDER;
 import static dagger.internal.codegen.TypeNames.abstractProducerOf;
@@ -69,10 +69,10 @@ import javax.inject.Provider;
 /** The nested class and static methods required by the component to implement optional bindings. */
 // TODO(dpb): Name members simply if a component uses only one of Guava or JDK Optional.
 final class OptionalFactories {
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
 
-  OptionalFactories(GeneratedComponentModel generatedComponentModel) {
-    this.generatedComponentModel = generatedComponentModel;
+  OptionalFactories(ComponentImplementation componentImplementation) {
+    this.componentImplementation = componentImplementation;
   }
 
   /**
@@ -115,7 +115,7 @@ final class OptionalFactories {
             optionalKind,
             kind -> {
               MethodSpec method = absentOptionalProviderMethod(kind);
-              generatedComponentModel.addMethod(ABSENT_OPTIONAL_METHOD, method);
+              componentImplementation.addMethod(ABSENT_OPTIONAL_METHOD, method);
               return method;
             }));
   }
@@ -144,7 +144,7 @@ final class OptionalFactories {
                 optionalKind,
                 kind -> {
                   FieldSpec field = absentOptionalProviderField(kind);
-                  generatedComponentModel.addField(ABSENT_OPTIONAL_FIELD, field);
+                  componentImplementation.addField(ABSENT_OPTIONAL_FIELD, field);
                   return field;
                 }))
         .addCode("return provider;")
@@ -293,7 +293,7 @@ final class OptionalFactories {
             PresentFactorySpec.of(binding),
             spec -> {
               TypeSpec type = presentOptionalFactoryClass(spec);
-              generatedComponentModel.addType(PRESENT_FACTORY, type);
+              componentImplementation.addType(PRESENT_FACTORY, type);
               return type;
             }),
         delegateFactory);

@@ -55,7 +55,7 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
 
   @Override
   Expression getDependencyExpressionForComponentMethod(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     Expression expression =
         componentBindingExpressions.getDependencyExpressionForComponentMethod(
             frameworkRequest, componentMethod, component);

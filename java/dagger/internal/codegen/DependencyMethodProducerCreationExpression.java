@@ -40,17 +40,17 @@ import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreati
 final class DependencyMethodProducerCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final ContributionBinding binding;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentRequirementFields componentRequirementFields;
   private final BindingGraph graph;
 
   DependencyMethodProducerCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentRequirementFields componentRequirementFields,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.graph = checkNotNull(graph);
   }
@@ -67,7 +67,7 @@ final class DependencyMethodProducerCreationExpression
                 ClassName.get(dependency.typeElement()), dependency.variableName(), PRIVATE, FINAL)
             .initializer(
                 componentRequirementFields.getExpressionDuringInitialization(
-                    dependency, generatedComponentModel.name()))
+                    dependency, componentImplementation.name()))
             .build();
     // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
     TypeName keyType = TypeName.get(binding.key().type());

@@ -50,12 +50,12 @@ final class MapBindingExpression extends MultibindingExpression {
 
   MapBindingExpression(
       ResolvedBindings resolvedBindings,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings, generatedComponentModel);
+    super(resolvedBindings, componentImplementation);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);

@@ -31,20 +31,20 @@ import javax.lang.model.type.TypeMirror;
 /** A factory creation expression for a multibound map. */
 final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpression {
 
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final BindingGraph graph;
   private final ContributionBinding binding;
   private final DaggerElements elements;
 
   MapFactoryCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       BindingGraph graph,
       DaggerElements elements) {
-    super(binding, generatedComponentModel, componentBindingExpressions);
+    super(binding, componentImplementation, componentBindingExpressions);
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.graph = checkNotNull(graph);
     this.elements = checkNotNull(elements);
   }
@@ -75,7 +75,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
           graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
       builder.add(
           ".put($L, $L)",
-          getMapKeyExpression(contributionBinding, generatedComponentModel.name(), elements),
+          getMapKeyExpression(contributionBinding, componentImplementation.name(), elements),
           multibindingDependencyExpression(frameworkDependency));
     }
     builder.add(".build()");

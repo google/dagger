@@ -778,15 +778,16 @@ final class BindingGraphFactory {
         return;
       }
 
-      /* If the binding was previously resolved in a supercomponent, then we may be able to avoid
-       * resolving it here and just depend on the supercomponent resolution.
+      /*
+       * If the binding was previously resolved in an ancestor component, then we may be able to
+       * avoid resolving it here and just depend on the ancestor component resolution.
        *
        * 1. If it depends transitively on multibinding contributions or optional bindings with
        *    bindings from this subcomponent, then we have to resolve it in this subcomponent so
        *    that it sees the local bindings.
        *
        * 2. If there are any explicit bindings in this component, they may conflict with those in
-       *    the supercomponent, so resolve them here so that conflicts can be caught.
+       *    the ancestor component, so resolve them here so that conflicts can be caught.
        */
       if (getPreviouslyResolvedBindings(key).isPresent()) {
         /* Resolve in the parent in case there are multibinding contributions or conflicts in some

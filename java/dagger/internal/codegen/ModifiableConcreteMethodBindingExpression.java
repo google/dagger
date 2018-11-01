@@ -36,7 +36,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   private final BindingRequest request;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingMethodImplementation methodImplementation;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final boolean bindingFinalized;
   private Optional<String> methodName;
 
@@ -45,15 +45,15 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       BindingRequest request,
       ModifiableBindingType modifiableBindingType,
       BindingMethodImplementation methodImplementation,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       boolean bindingFinalized) {
-    super(methodImplementation, generatedComponentModel, matchingModifiableBindingMethod);
+    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod);
     this.binding = resolvedBindings.contributionBinding();
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.bindingFinalized = bindingFinalized;
     this.methodName =
         matchingModifiableBindingMethod.map(modifiableMethod -> modifiableMethod.methodSpec().name);
@@ -61,10 +61,10 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
 
   @Override
   protected void addMethod() {
-    // Add the modifiable binding method to the component model if we haven't already.
+    // Add the modifiable binding method to the component if we haven't already.
     if (!methodName.isPresent()) {
-      methodName = Optional.of(generatedComponentModel.getUniqueMethodName(request, binding));
-      generatedComponentModel.addModifiableBindingMethod(
+      methodName = Optional.of(componentImplementation.getUniqueMethodName(request, binding));
+      componentImplementation.addModifiableBindingMethod(
           modifiableBindingType,
           request,
           methodBuilder(methodName.get())

@@ -26,9 +26,6 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Supplier;
@@ -61,11 +58,11 @@ import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
-/** The model of the component being generated. */
-final class GeneratedComponentModel {
-  /** A type of field that this component model can generate. */
-  // TODO(user, dpb): Move component requirements to top? The order should be component
-  // requirements, framework fields, private method fields, ... etc
+/** The implementation of a component type. */
+final class ComponentImplementation {
+  /** A type of field that this component can contain. */
+  // TODO(user, dpb): Move component requirements and reference managers to top? The order should
+  // be component requirements, reference managers, framework fields, private method fields, ... etc
   enum FieldSpecKind {
 
     /**
@@ -84,7 +81,7 @@ final class GeneratedComponentModel {
     ABSENT_OPTIONAL_FIELD
   }
 
-  /** A type of method that this component model can generate. */
+  /** A type of method that this component can contain. */
   // TODO(user, dpb): Change the oder to constructor, initialize, component, then private
   // (including MIM and AOM—why treat those separately?).
   enum MethodSpecKind {
@@ -124,7 +121,7 @@ final class GeneratedComponentModel {
     ;
   }
 
-  /** A type of nested class that this component model can generate. */
+  /** A type of nested class that this component can contain. */
   enum TypeSpecKind {
     /** A factory class for a present optional binding. */
     PRESENT_FACTORY,
@@ -143,8 +140,8 @@ final class GeneratedComponentModel {
   private final ClassName name;
   private final NestingKind nestingKind;
   private final boolean isAbstract;
-  private final Optional<GeneratedComponentModel> supermodel;
-  private final Map<TypeElement, GeneratedComponentModel> subcomponentModels = new HashMap<>();
+  private final Optional<ComponentImplementation> superclassImplementation;
+  private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
@@ -163,11 +160,11 @@ final class GeneratedComponentModel {
       HashMultimap.create();
   private ImmutableList<ParameterSpec> constructorParameters;
 
-  private GeneratedComponentModel(
+  ComponentImplementation(
       ComponentDescriptor componentDescriptor,
       ClassName name,
       NestingKind nestingKind,
-      Optional<GeneratedComponentModel> supermodel,
+      Optional<ComponentImplementation> superclassImplementation,
       SubcomponentNames subcomponentNames,
       Modifier... modifiers) {
     checkName(name, nestingKind);
@@ -175,11 +172,26 @@ final class GeneratedComponentModel {
     this.name = name;
     this.nestingKind = nestingKind;
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
-    this.supermodel = supermodel;
+    this.superclassImplementation = superclassImplementation;
     this.component = classBuilder(name).addModifiers(modifiers);
     this.subcomponentNames = subcomponentNames;
   }
 
+  ComponentImplementation(
+      ComponentImplementation parent,
+      ComponentDescriptor componentDescriptor,
+      Optional<ComponentImplementation> superclassImplementation,
+      Modifier... modifiers) {
+    this(
+        componentDescriptor,
+        parent.getSubcomponentName(componentDescriptor),
+        NestingKind.MEMBER,
+        superclassImplementation,
+        parent.subcomponentNames,
+        modifiers);
+  }
+
+  // TODO(dpb): Just determine the nesting kind from the name.
   private static void checkName(ClassName name, NestingKind nestingKind) {
     switch (nestingKind) {
       case TOP_LEVEL:
@@ -195,52 +207,6 @@ final class GeneratedComponentModel {
         throw new IllegalArgumentException(
             "nestingKind must be TOP_LEVEL or MEMBER: " + nestingKind);
     }
-  }
-
-  /** Creates a model for a root component or top-level abstract subcomponent. */
-  static GeneratedComponentModel create(ClassName name, BindingGraph graph, KeyFactory keyFactory) {
-    return new GeneratedComponentModel(
-        graph.componentDescriptor(),
-        name,
-        NestingKind.TOP_LEVEL,
-        Optional.empty(), // supermodel
-        new SubcomponentNames(graph, keyFactory),
-        PUBLIC,
-        graph.componentDescriptor().kind().isTopLevel() ? FINAL : ABSTRACT);
-  }
-
-  /**
-   * Create a model for a subcomponent. This is for concrete subcomponents implementations when not
-   * generating ahead-of-time subcomponents.
-   */
-  static GeneratedComponentModel forSubcomponent(
-      ComponentDescriptor componentDescriptor, GeneratedComponentModel parentModel) {
-    return new GeneratedComponentModel(
-        componentDescriptor,
-        parentModel.getSubcomponentName(componentDescriptor),
-        NestingKind.MEMBER,
-        Optional.empty(), // supermodel
-        parentModel.subcomponentNames,
-        PRIVATE,
-        FINAL);
-  }
-
-  /**
-   * Create a model for an inner implementation of a subcomponent. This is applicable when
-   * generating ahead-of-time subcomponents.
-   */
-  static GeneratedComponentModel forSubcomponent(
-      ComponentDescriptor componentDescriptor,
-      GeneratedComponentModel parentModel,
-      GeneratedComponentModel supermodel) {
-    return new GeneratedComponentModel(
-        componentDescriptor,
-        parentModel.getSubcomponentName(componentDescriptor),
-        NestingKind.MEMBER,
-        Optional.of(supermodel),
-        parentModel.subcomponentNames,
-        PUBLIC,
-        parentModel.isAbstract() ? ABSTRACT : FINAL);
   }
 
   /** Returns the descriptor for the component being generated. */
@@ -263,12 +229,12 @@ final class GeneratedComponentModel {
     return isAbstract;
   }
 
-  /** Returns the model of this model's superclass. */
-  Optional<GeneratedComponentModel> supermodel() {
-    return supermodel;
+  /** Returns the superclass implementation. */
+  Optional<ComponentImplementation> superclassImplementation() {
+    return superclassImplementation;
   }
 
-  /** Returns the arguments to the modeled class's constructor. */
+  /** Returns the constructor parameters. */
   ImmutableList<ParameterSpec> constructorParameters() {
     return constructorParameters;
   }
@@ -284,7 +250,7 @@ final class GeneratedComponentModel {
   }
 
   /** Returns the name of the nested implementation class for a child component. */
-  private ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
+  ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
     checkArgument(
         componentDescriptor.subcomponents().contains(childDescriptor),
         "%s is not a child of %s",
@@ -298,9 +264,9 @@ final class GeneratedComponentModel {
     return subcomponentNames.get(key);
   }
 
-  /** Returns the model of the child subcomponent. */
-  Optional<GeneratedComponentModel> subcomponentModel(ComponentDescriptor subcomponent) {
-    return Optional.ofNullable(subcomponentModels.get(subcomponent.componentDefinitionType()));
+  /** Returns the child implementation. */
+  Optional<ComponentImplementation> childImplementation(ComponentDescriptor child) {
+    return Optional.ofNullable(childImplementations.get(child.componentDefinitionType()));
   }
 
   /** Returns {@code true} if {@code type} is accessible from the generated component. */
@@ -316,8 +282,8 @@ final class GeneratedComponentModel {
   /** Adds the given super class to the subcomponent. */
   void addSuperclass(ClassName className) {
     checkState(
-        supermodel.isPresent(),
-        "Setting the supertype for model [%s] as a class when model has no supermodel.",
+        superclassImplementation.isPresent(),
+        "Setting the superclass for component [%s] when there is no superclass implementation.",
         name);
     component.superclass(className);
   }
@@ -387,11 +353,10 @@ final class GeneratedComponentModel {
     typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
-  /** Adds the type generated from the given subcomponent model. */
-  void addSubcomponent(
-      ComponentDescriptor subcomponent, GeneratedComponentModel subcomponentModel) {
-    subcomponentModels.put(subcomponent.componentDefinitionType(), subcomponentModel);
-    addType(TypeSpecKind.SUBCOMPONENT, subcomponentModel.generate().build());
+  /** Adds the type generated from the given child implementation. */
+  void addChild(ComponentDescriptor child, ComponentImplementation childImplementation) {
+    childImplementations.put(child.componentDefinitionType(), childImplementation);
+    addType(TypeSpecKind.SUBCOMPONENT, childImplementation.generate().build());
   }
 
   /** Adds a {@link Supplier} for the SwitchingProvider for the component. */
@@ -478,9 +443,9 @@ final class GeneratedComponentModel {
   ImmutableList<ModifiableBindingMethod> getModifiableBindingMethods() {
     ImmutableList.Builder<ModifiableBindingMethod> modifiableBindingMethodsBuilder =
         ImmutableList.builder();
-    if (supermodel.isPresent()) {
+    if (superclassImplementation.isPresent()) {
       ImmutableList<ModifiableBindingMethod> superclassModifiableBindingMethods =
-          supermodel.get().getModifiableBindingMethods();
+          superclassImplementation.get().getModifiableBindingMethods();
       superclassModifiableBindingMethods.stream()
           .filter(method -> !modifiableBindingMethods.finalized(method))
           .forEach(modifiableBindingMethodsBuilder::add);
@@ -495,8 +460,8 @@ final class GeneratedComponentModel {
    */
   Optional<ModifiableBindingMethod> getModifiableBindingMethod(BindingRequest request) {
     Optional<ModifiableBindingMethod> method = modifiableBindingMethods.getMethod(request);
-    if (!method.isPresent() && supermodel.isPresent()) {
-      return supermodel.get().getModifiableBindingMethod(request);
+    if (!method.isPresent() && superclassImplementation.isPresent()) {
+      return superclassImplementation.get().getModifiableBindingMethod(request);
     }
     return method;
   }
@@ -530,7 +495,9 @@ final class GeneratedComponentModel {
    * a multibinding.
    */
   ImmutableSet<DependencyRequest> superclassContributionsMade(Key key) {
-    return supermodel.map(s -> s.getAllMultibindingContributions(key)).orElse(ImmutableSet.of());
+    return superclassImplementation
+        .map(s -> s.getAllMultibindingContributions(key))
+        .orElse(ImmutableSet.of());
   }
 
   /**

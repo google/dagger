@@ -39,7 +39,7 @@ abstract class BindingExpression {
    * #getDependencyExpression}.
    */
   Expression getDependencyExpressionForComponentMethod(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     return getDependencyExpression(component.name());
   }
 
@@ -54,7 +54,7 @@ abstract class BindingExpression {
    * @param component the component that will contain the implemented method
    */
   CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     // By default, just delegate to #getDependencyExpression().
     return CodeBlock.of(
         "return $L;",
@@ -63,10 +63,10 @@ abstract class BindingExpression {
 
   /**
    * Returns an expression for the implementation of a modifiable binding method for the given
-   * component model.
+   * component.
    */
   CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, GeneratedComponentModel component) {
+      ModifiableBindingMethod modifiableBindingMethod, ComponentImplementation component) {
     return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
   }
 }

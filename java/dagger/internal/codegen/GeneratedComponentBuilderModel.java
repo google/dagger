@@ -76,12 +76,12 @@ final class GeneratedComponentBuilderModel {
   }
 
   static Optional<GeneratedComponentBuilderModel> create(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       BindingGraph graph,
       Elements elements,
       Types types) {
     return hasBuilder(graph.componentDescriptor())
-        ? Optional.of(new Creator(generatedComponentModel, graph, elements, types).create())
+        ? Optional.of(new Creator(componentImplementation, graph, elements, types).create())
         : Optional.empty();
   }
 
@@ -95,28 +95,28 @@ final class GeneratedComponentBuilderModel {
             + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
     private final BindingGraph graph;
     private final TypeSpec.Builder builder;
-    private final GeneratedComponentModel generatedComponentModel;
+    private final ComponentImplementation componentImplementation;
     private final Elements elements;
     private final Types types;
 
     Creator(
-        GeneratedComponentModel generatedComponentModel,
+        ComponentImplementation componentImplementation,
         BindingGraph graph,
         Elements elements,
         Types types) {
-      this.generatedComponentModel = generatedComponentModel;
-      this.builder = classBuilder(generatedComponentModel.getBuilderName());
+      this.componentImplementation = componentImplementation;
+      this.builder = classBuilder(componentImplementation.getBuilderName());
       this.graph = graph;
       this.elements = elements;
       this.types = types;
     }
 
     GeneratedComponentBuilderModel create() {
-      if (!generatedComponentModel.isNested()) {
+      if (!componentImplementation.isNested()) {
         builder.addModifiers(STATIC);
       }
       if (builderSpec().isPresent()) {
-        if (generatedComponentModel.isAbstract()) {
+        if (componentImplementation.isAbstract()) {
           builder.addModifiers(PUBLIC);
         } else {
           builder.addModifiers(PRIVATE);
@@ -128,7 +128,7 @@ final class GeneratedComponentBuilderModel {
 
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields(graph);
 
-      if (generatedComponentModel.isAbstract()) {
+      if (componentImplementation.isAbstract()) {
         builder.addModifiers(ABSTRACT);
       } else {
         builder.addModifiers(FINAL);
@@ -142,14 +142,15 @@ final class GeneratedComponentBuilderModel {
           .addMethods(builderMethods(builderFields));
 
       return new GeneratedComponentBuilderModel(
-          builder.build(), generatedComponentModel.getBuilderName(), builderFields);
+          builder.build(), componentImplementation.getBuilderName(), builderFields);
     }
 
     /** Set the superclass being extended or interface being implemented for this builder. */
     private void setSupertype() {
-      if (generatedComponentModel.supermodel().isPresent()) {
+      if (componentImplementation.superclassImplementation().isPresent()) {
         // If there's a superclass, extend the Builder defined there.
-        builder.superclass(generatedComponentModel.supermodel().get().getBuilderName());
+        builder.superclass(
+            componentImplementation.superclassImplementation().get().getBuilderName());
       } else {
         addSupertype(builder, builderSpec().get().builderDefinitionType());
       }
@@ -210,7 +211,7 @@ final class GeneratedComponentBuilderModel {
                 throw new AssertionError(requirement);
             }
           });
-      buildMethod.addStatement("return new $T(this)", generatedComponentModel.name());
+      buildMethod.addStatement("return new $T(this)", componentImplementation.name());
       return buildMethod.build();
     }
 
@@ -272,7 +273,7 @@ final class GeneratedComponentBuilderModel {
           String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)
-                  .returns(generatedComponentModel.getBuilderName())
+                  .returns(componentImplementation.getBuilderName())
                   .addModifiers(PUBLIC)
                   .addParameter(
                       TypeName.get(componentRequirement.type()), componentRequirementName);
@@ -305,7 +306,7 @@ final class GeneratedComponentBuilderModel {
       // Otherwise we use the generated builder name and take advantage of covariant returns
       // (so that we don't have to worry about setter methods that return type variables).
       if (!returnType.getKind().equals(VOID)) {
-        builderMethod.returns(generatedComponentModel.getBuilderName());
+        builderMethod.returns(componentImplementation.getBuilderName());
       }
       return builderMethod;
     }

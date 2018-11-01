@@ -32,23 +32,23 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ComponentMethodBindingExpression extends MethodBindingExpression {
   private final BindingMethodImplementation methodImplementation;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentMethodDescriptor componentMethod;
 
   ComponentMethodBindingExpression(
       BindingMethodImplementation methodImplementation,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentMethodDescriptor componentMethod,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
-    super(methodImplementation, generatedComponentModel, matchingModifiableBindingMethod);
+    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod);
     this.methodImplementation = checkNotNull(methodImplementation);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentMethod = checkNotNull(componentMethod);
   }
 
   @Override
   protected CodeBlock getComponentMethodImplementation(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     // There could be several methods on the component for the same request key and kind.
     // Only one should use the BindingMethodImplementation; the others can delegate that one. So
     // use methodImplementation.body() only if componentMethod equals the method for this instance.
@@ -58,7 +58,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
     // for the parent and the child. Only the parent's should use the BindingMethodImplementation;
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
-    return componentMethod.equals(this.componentMethod) && component.equals(generatedComponentModel)
+    return componentMethod.equals(this.componentMethod) && component.equals(componentImplementation)
         ? methodImplementation.body()
         : super.getComponentMethodImplementation(componentMethod, component);
   }

@@ -28,29 +28,29 @@ import java.util.Optional;
  * overridden when generating the concrete implementation of an ancestor component.
  */
 final class GeneratedInstanceBindingExpression extends ModifiableAbstractMethodBindingExpression {
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ContributionBinding binding;
   private final BindingRequest request;
 
   GeneratedInstanceBindingExpression(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
     super(
-        generatedComponentModel,
+        componentImplementation,
         ModifiableBindingType.GENERATED_INSTANCE,
         request,
         matchingModifiableBindingMethod,
         matchingComponentMethod);
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.binding = resolvedBindings.contributionBinding();
     this.request = request;
   }
 
   @Override
   String chooseMethodName() {
-    return generatedComponentModel.getUniqueMethodName(request, binding);
+    return componentImplementation.getUniqueMethodName(request, binding);
   }
 }

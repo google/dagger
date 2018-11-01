@@ -29,23 +29,23 @@ import java.util.Optional;
 /**
  * A {@link BindingExpression} that invokes a method that encapsulates a binding that cannot be
  * satisfied when generating the abstract base class implementation of a subcomponent. The
- * (unimplemented) method is added to the {@link GeneratedComponentModel} when the dependency
+ * (unimplemented) method is added to the {@link ComponentImplementation} when the dependency
  * expression is requested. The method is overridden when generating the implementation of an
  * ancestor component.
  */
 abstract class ModifiableAbstractMethodBindingExpression extends BindingExpression {
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingRequest request;
   private Optional<String> methodName;
 
   ModifiableAbstractMethodBindingExpression(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ModifiableBindingType modifiableBindingType,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod) {
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.modifiableBindingType = modifiableBindingType;
     this.request = request;
     this.methodName =
@@ -79,7 +79,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
     if (!methodName.isPresent()) {
       // Only add the method once in case of repeated references to the missing binding.
       methodName = Optional.of(chooseMethodName());
-      generatedComponentModel.addModifiableBindingMethod(
+      componentImplementation.addModifiableBindingMethod(
           modifiableBindingType,
           request,
           MethodSpec.methodBuilder(methodName.get())

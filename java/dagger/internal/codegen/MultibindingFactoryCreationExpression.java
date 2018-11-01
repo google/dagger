@@ -24,16 +24,16 @@ import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreati
 /** An abstract factory creation expression for multibindings. */
 abstract class MultibindingFactoryCreationExpression
     implements FrameworkInstanceCreationExpression {
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ContributionBinding binding;
 
   MultibindingFactoryCreationExpression(
       ContributionBinding binding,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
 
@@ -43,7 +43,7 @@ abstract class MultibindingFactoryCreationExpression
     CodeBlock expression =
         componentBindingExpressions
             .getDependencyExpression(
-                BindingRequest.bindingRequest(frameworkDependency), generatedComponentModel.name())
+                BindingRequest.bindingRequest(frameworkDependency), componentImplementation.name())
             .codeBlock();
     return useRawType()
         ? CodeBlocks.cast(expression, frameworkDependency.frameworkClass())
@@ -62,7 +62,7 @@ abstract class MultibindingFactoryCreationExpression
    * component, and therefore a raw type must be used.
    */
   protected final boolean useRawType() {
-    return !generatedComponentModel.isTypeAccessible(binding.key().type());
+    return !componentImplementation.isTypeAccessible(binding.key().type());
   }
 
   @Override

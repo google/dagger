@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
@@ -34,7 +34,7 @@ import dagger.internal.MemoizedSentinel;
  */
 final class DoubleCheckedMethodImplementation extends BindingMethodImplementation {
 
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ContributionBinding binding;
   private final Supplier<String> fieldName = Suppliers.memoize(this::createField);
 
@@ -43,9 +43,9 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
       BindingRequest request,
       BindingExpression bindingExpression,
       DaggerTypes types,
-      GeneratedComponentModel generatedComponentModel) {
-    super(resolvedBindings, request, bindingExpression, generatedComponentModel.name(), types);
-    this.generatedComponentModel = generatedComponentModel;
+      ComponentImplementation componentImplementation) {
+    super(resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
+    this.componentImplementation = componentImplementation;
     this.binding = resolvedBindings.contributionBinding();
   }
 
@@ -68,8 +68,8 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
   }
 
   private String createField() {
-    String name = generatedComponentModel.getUniqueFieldName(BindingVariableNamer.name(binding));
-    generatedComponentModel.addField(
+    String name = componentImplementation.getUniqueFieldName(BindingVariableNamer.name(binding));
+    componentImplementation.addField(
         PRIVATE_METHOD_SCOPED_FIELD,
         FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)
             .initializer("new $T()", MemoizedSentinel.class)

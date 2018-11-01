@@ -57,7 +57,7 @@ final class ComponentBindingExpressions {
 
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ComponentRequirementFields componentRequirementFields;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
@@ -71,7 +71,7 @@ final class ComponentBindingExpressions {
 
   ComponentBindingExpressions(
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentRequirementFields componentRequirementFields,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -80,9 +80,9 @@ final class ComponentBindingExpressions {
     this(
         Optional.empty(),
         graph,
-        generatedComponentModel,
+        componentImplementation,
         componentRequirementFields,
-        new StaticSwitchingProviders(generatedComponentModel, types),
+        new StaticSwitchingProviders(componentImplementation, types),
         optionalFactories,
         types,
         elements,
@@ -92,7 +92,7 @@ final class ComponentBindingExpressions {
   private ComponentBindingExpressions(
       Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentRequirementFields componentRequirementFields,
       StaticSwitchingProviders staticSwitchingProviders,
       OptionalFactories optionalFactories,
@@ -101,23 +101,23 @@ final class ComponentBindingExpressions {
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
-    this.generatedComponentModel = generatedComponentModel;
+    this.componentImplementation = componentImplementation;
     this.componentRequirementFields = checkNotNull(componentRequirementFields);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
-        new MembersInjectionMethods(generatedComponentModel, this, graph, elements, types);
+        new MembersInjectionMethods(componentImplementation, this, graph, elements, types);
     this.innerSwitchingProviders =
-        new InnerSwitchingProviders(generatedComponentModel, this, types);
+        new InnerSwitchingProviders(componentImplementation, this, types);
     this.staticSwitchingProviders = staticSwitchingProviders;
     this.modifiableBindingExpressions =
         new ModifiableBindingExpressions(
             parent.map(cbe -> cbe.modifiableBindingExpressions),
             this,
             graph,
-            generatedComponentModel,
+            componentImplementation,
             compilerOptions);
   }
 
@@ -126,12 +126,12 @@ final class ComponentBindingExpressions {
    */
   ComponentBindingExpressions forChildComponent(
       BindingGraph childGraph,
-      GeneratedComponentModel childComponentModel,
+      ComponentImplementation childComponentImplementation,
       ComponentRequirementFields childComponentRequirementFields) {
     return new ComponentBindingExpressions(
         Optional.of(this),
         childGraph,
-        childComponentModel,
+        childComponentImplementation,
         childComponentRequirementFields,
         staticSwitchingProviders,
         optionalFactories,
@@ -165,9 +165,9 @@ final class ComponentBindingExpressions {
   Expression getDependencyExpressionForComponentMethod(
       BindingRequest request,
       ComponentMethodDescriptor componentMethod,
-      GeneratedComponentModel componentModel) {
+      ComponentImplementation componentImplementation) {
     return getBindingExpression(request)
-        .getDependencyExpressionForComponentMethod(componentMethod, componentModel);
+        .getDependencyExpressionForComponentMethod(componentMethod, componentImplementation);
   }
 
   /**
@@ -185,14 +185,12 @@ final class ComponentBindingExpressions {
       arguments.add(
           componentRequirementFields.getExpressionDuringInitialization(
               ComponentRequirement.forModule(binding.contributingModule().get().asType()),
-              generatedComponentModel.name()));
+              componentImplementation.name()));
     }
 
     binding.frameworkDependencies().stream()
         .map(BindingRequest::bindingRequest)
-        .map(
-            request ->
-                getDependencyExpression(request, generatedComponentModel.name()))
+        .map(request -> getDependencyExpression(request, componentImplementation.name()))
         .map(Expression::codeBlock)
         .forEach(arguments::add);
 
@@ -235,7 +233,7 @@ final class ComponentBindingExpressions {
             types)
         .addCode(
             getBindingExpression(request)
-                .getComponentMethodImplementation(componentMethod, generatedComponentModel))
+                .getComponentMethodImplementation(componentMethod, componentImplementation))
         .build();
   }
 
@@ -298,7 +296,7 @@ final class ComponentBindingExpressions {
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
-                generatedComponentModel, resolvedBindings, frameworkInstanceCreationExpression);
+                componentImplementation, resolvedBindings, frameworkInstanceCreationExpression);
 
     switch (resolvedBindings.bindingType()) {
       case PROVISION:
@@ -306,7 +304,7 @@ final class ComponentBindingExpressions {
             resolvedBindings, frameworkInstanceSupplier, types, elements);
       case PRODUCTION:
         return new ProducerNodeInstanceBindingExpression(
-            resolvedBindings, frameworkInstanceSupplier, types, elements, generatedComponentModel);
+            resolvedBindings, frameworkInstanceSupplier, types, elements, componentImplementation);
       default:
         throw new AssertionError("invalid binding type: " + resolvedBindings.bindingType());
     }
@@ -345,11 +343,11 @@ final class ComponentBindingExpressions {
 
       case COMPONENT_PROVISION:
         return new DependencyMethodProviderCreationExpression(
-            binding, generatedComponentModel, componentRequirementFields, compilerOptions, graph);
+            binding, componentImplementation, componentRequirementFields, compilerOptions, graph);
 
       case SUBCOMPONENT_BUILDER:
         return new SubcomponentBuilderProviderCreationExpression(
-            binding.key().type(), generatedComponentModel.getSubcomponentName(binding.key()));
+            binding.key().type(), componentImplementation.getSubcomponentName(binding.key()));
 
       case INJECTION:
       case PROVISION:
@@ -359,25 +357,25 @@ final class ComponentBindingExpressions {
 
       case COMPONENT_PRODUCTION:
         return new DependencyMethodProducerCreationExpression(
-            binding, generatedComponentModel, componentRequirementFields, graph);
+            binding, componentImplementation, componentRequirementFields, graph);
 
       case PRODUCTION:
         return new ProducerCreationExpression(binding, this);
 
       case MULTIBOUND_SET:
-        return new SetFactoryCreationExpression(binding, generatedComponentModel, this, graph);
+        return new SetFactoryCreationExpression(binding, componentImplementation, this, graph);
 
       case MULTIBOUND_MAP:
         return new MapFactoryCreationExpression(
-            binding, generatedComponentModel, this, graph, elements);
+            binding, componentImplementation, this, graph, elements);
 
       case DELEGATE:
         return new DelegatingFrameworkInstanceCreationExpression(
-            binding, generatedComponentModel, this);
+            binding, componentImplementation, this);
 
       case OPTIONAL:
         return new OptionalFactoryInstanceCreationExpression(
-            optionalFactories, binding, generatedComponentModel, this);
+            optionalFactories, binding, componentImplementation, this);
 
       case MEMBERS_INJECTOR:
         return new MembersInjectorProviderCreationExpression((ProvisionBinding) binding, this);
@@ -393,7 +391,7 @@ final class ComponentBindingExpressions {
         binding.nullableType().isPresent(),
         () ->
             componentRequirementFields.getExpressionDuringInitialization(
-                componentRequirement, generatedComponentModel.name()));
+                componentRequirement, componentImplementation.name()));
   }
 
   /** Returns a binding expression for a provision binding. */
@@ -484,13 +482,13 @@ final class ComponentBindingExpressions {
     return new ProducerNodeInstanceBindingExpression(
         resolvedBindings,
         new FrameworkFieldInitializer(
-            generatedComponentModel,
+            componentImplementation,
             resolvedBindings,
             new ProducerFromProviderCreationExpression(
-                resolvedBindings.contributionBinding(), generatedComponentModel, this)),
+                resolvedBindings.contributionBinding(), componentImplementation, this)),
         types,
         elements,
-        generatedComponentModel);
+        componentImplementation);
   }
 
   /**
@@ -535,7 +533,7 @@ final class ComponentBindingExpressions {
       case COMPONENT:
         return Optional.of(
             new ComponentInstanceBindingExpression(
-                resolvedBindings, generatedComponentModel.name()));
+                resolvedBindings, componentImplementation.name()));
 
       case COMPONENT_DEPENDENCY:
         return Optional.of(
@@ -553,17 +551,17 @@ final class ComponentBindingExpressions {
         return Optional.of(
             new SubcomponentBuilderBindingExpression(
                 resolvedBindings,
-                generatedComponentModel.getSubcomponentName(resolvedBindings.key())));
+                componentImplementation.getSubcomponentName(resolvedBindings.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(
             new SetBindingExpression(
-                resolvedBindings, generatedComponentModel, graph, this, types, elements));
+                resolvedBindings, componentImplementation, graph, this, types, elements));
 
       case MULTIBOUND_MAP:
         return Optional.of(
             new MapBindingExpression(
-                resolvedBindings, generatedComponentModel, graph, this, types, elements));
+                resolvedBindings, componentImplementation, graph, this, types, elements));
 
       case OPTIONAL:
         return Optional.of(new OptionalBindingExpression(resolvedBindings, this, types));
@@ -645,7 +643,7 @@ final class ComponentBindingExpressions {
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().findMatchingComponentMethod(request);
     Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
-        generatedComponentModel.getModifiableBindingMethod(request);
+        componentImplementation.getModifiableBindingMethod(request);
 
     Optional<BindingExpression> modifiableBindingExpression =
         modifiableBindingExpressions.maybeWrapInModifiableMethodBindingExpression(
@@ -663,7 +661,7 @@ final class ComponentBindingExpressions {
             componentMethod ->
                 new ComponentMethodBindingExpression(
                     methodImplementation,
-                    generatedComponentModel,
+                    componentImplementation,
                     componentMethod,
                     matchingModifiableBindingMethod))
         .orElseGet(
@@ -672,7 +670,7 @@ final class ComponentBindingExpressions {
                     resolvedBindings,
                     request,
                     methodImplementation,
-                    generatedComponentModel,
+                    componentImplementation,
                     matchingModifiableBindingMethod));
   }
 
@@ -683,18 +681,18 @@ final class ComponentBindingExpressions {
     if (compilerOptions.fastInit()) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
         return new SingleCheckedMethodImplementation(
-            resolvedBindings, request, bindingExpression, types, generatedComponentModel);
+            resolvedBindings, request, bindingExpression, types, componentImplementation);
       } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(resolvedBindings)) {
         return resolvedBindings.scope().get().isReusable()
             ? new SingleCheckedMethodImplementation(
-                resolvedBindings, request, bindingExpression, types, generatedComponentModel)
+                resolvedBindings, request, bindingExpression, types, componentImplementation)
             : new DoubleCheckedMethodImplementation(
-                resolvedBindings, request, bindingExpression, types, generatedComponentModel);
+                resolvedBindings, request, bindingExpression, types, componentImplementation);
       }
     }
 
     return new BindingMethodImplementation(
-        resolvedBindings, request, bindingExpression, generatedComponentModel.name(), types);
+        resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
   }
 
   /**

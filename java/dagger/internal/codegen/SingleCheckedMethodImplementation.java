@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
@@ -35,7 +35,7 @@ import java.util.Optional;
  */
 final class SingleCheckedMethodImplementation extends BindingMethodImplementation {
 
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ResolvedBindings resolvedBindings;
   private final ContributionBinding binding;
   private final BindingRequest request;
@@ -46,9 +46,9 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
       BindingRequest request,
       BindingExpression bindingExpression,
       DaggerTypes types,
-      GeneratedComponentModel generatedComponentModel) {
-    super(resolvedBindings, request, bindingExpression, generatedComponentModel.name(), types);
-    this.generatedComponentModel = generatedComponentModel;
+      ComponentImplementation componentImplementation) {
+    super(resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
+    this.componentImplementation = componentImplementation;
     this.resolvedBindings = resolvedBindings;
     this.binding = resolvedBindings.contributionBinding();
     this.request = request;
@@ -77,7 +77,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
 
   private FieldSpec createField() {
     String name =
-        generatedComponentModel.getUniqueFieldName(
+        componentImplementation.getUniqueFieldName(
             request.isRequestKind(RequestKind.INSTANCE)
                 ? BindingVariableNamer.name(binding)
                 : FrameworkField.forResolvedBindings(resolvedBindings, Optional.empty()).name());
@@ -88,7 +88,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
     }
 
     FieldSpec field = builder.build();
-    generatedComponentModel.addField(PRIVATE_METHOD_SCOPED_FIELD, field);
+    componentImplementation.addField(PRIVATE_METHOD_SCOPED_FIELD, field);
     return field;
   }
 

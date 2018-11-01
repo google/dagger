@@ -28,15 +28,15 @@ import java.util.Optional;
 abstract class MethodBindingExpression extends BindingExpression {
 
   private final BindingMethodImplementation methodImplementation;
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final Optional<ModifiableBindingMethod> matchingModifiableBindingMethod;
 
   protected MethodBindingExpression(
       BindingMethodImplementation methodImplementation,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
     this.methodImplementation = checkNotNull(methodImplementation);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.matchingModifiableBindingMethod = checkNotNull(matchingModifiableBindingMethod);
   }
 
@@ -45,14 +45,14 @@ abstract class MethodBindingExpression extends BindingExpression {
     addMethod();
     return Expression.create(
         methodImplementation.returnType(),
-        requestingClass.equals(generatedComponentModel.name())
+        requestingClass.equals(componentImplementation.name())
             ? CodeBlock.of("$N()", methodName())
-            : CodeBlock.of("$T.this.$N()", generatedComponentModel.name(), methodName()));
+            : CodeBlock.of("$T.this.$N()", componentImplementation.name(), methodName()));
   }
 
   @Override
   final CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, GeneratedComponentModel component) {
+      ModifiableBindingMethod modifiableBindingMethod, ComponentImplementation component) {
     // A matching modifiable binding method means that we have previously created the binding method
     // and we are now implementing it. If there is no matching method we need to first create the
     // method. We create the method by deferring to getDependencyExpression (defined above) via a

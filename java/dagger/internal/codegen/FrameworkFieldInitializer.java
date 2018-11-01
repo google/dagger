@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.RAWTYPES;
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.FRAMEWORK_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.ClassName;
@@ -71,17 +71,17 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     }
   }
 
-  private final GeneratedComponentModel generatedComponentModel;
+  private final ComponentImplementation componentImplementation;
   private final ResolvedBindings resolvedBindings;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   FrameworkFieldInitializer(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ResolvedBindings resolvedBindings,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.resolvedBindings = checkNotNull(resolvedBindings);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
@@ -93,7 +93,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   @Override
   public final MemberSelect memberSelect() {
     initializeField();
-    return MemberSelect.localField(generatedComponentModel.name(), checkNotNull(fieldSpec).name);
+    return MemberSelect.localField(componentImplementation.name(), checkNotNull(fieldSpec).name);
   }
 
   /** Adds the field and its initialization code to the component. */
@@ -117,7 +117,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         } else {
           codeBuilder.add(initCode);
         }
-        generatedComponentModel.addInitialization(codeBuilder.build());
+        componentImplementation.addInitialization(codeBuilder.build());
 
         fieldInitializationState = InitializationState.INITIALIZED;
         break;
@@ -125,7 +125,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
         fieldInitializationState = InitializationState.DELEGATED;
-        generatedComponentModel.addInitialization(
+        componentImplementation.addInitialization(
             CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), DelegateFactory.class));
         break;
 
@@ -146,7 +146,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !generatedComponentModel.isTypeAccessible(resolvedBindings.key().type());
+    boolean useRawType = !componentImplementation.isTypeAccessible(resolvedBindings.key().type());
     FrameworkField contributionBindingField =
         FrameworkField.forResolvedBindings(
             resolvedBindings, frameworkInstanceCreationExpression.alternativeFrameworkClass());
@@ -165,14 +165,13 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
     FieldSpec.Builder contributionField =
         FieldSpec.builder(
-            fieldType,
-            generatedComponentModel.getUniqueFieldName(contributionBindingField.name()));
+            fieldType, componentImplementation.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
     if (useRawType && !specificType().isPresent()) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
     fieldSpec = contributionField.build();
-    generatedComponentModel.addField(FRAMEWORK_FIELD, fieldSpec);
+    componentImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
   }

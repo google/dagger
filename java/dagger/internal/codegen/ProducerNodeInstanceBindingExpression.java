@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.GeneratedComponentModel.FieldSpecKind.FRAMEWORK_FIELD;
+import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.ClassName;
@@ -32,9 +32,8 @@ import javax.lang.model.type.TypeMirror;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
-
-  /** Model for the component defining this binding. */
-  private final GeneratedComponentModel generatedComponentModel;
+  /** The component defining this binding. */
+  private final ComponentImplementation componentImplementation;
 
   private final Key key;
   private final TypeMirror type;
@@ -44,9 +43,9 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       DaggerElements elements,
-      GeneratedComponentModel generatedComponentModel) {
+      ComponentImplementation componentImplementation) {
     super(resolvedBindings, frameworkInstanceSupplier, types, elements);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.key = resolvedBindings.key();
     this.type = types.wrapType(resolvedBindings.key().type(), Producer.class);
   }
@@ -59,13 +58,13 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression result = super.getDependencyExpression(requestingClass);
-    generatedComponentModel.addCancellableProducerKey(key);
+    componentImplementation.addCancellableProducerKey(key);
     return result;
   }
 
   @Override
   Expression getDependencyExpressionForComponentMethod(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     if (component.componentDescriptor().kind().isProducer()) {
       return Expression.create(type, "$N", createField(componentMethod, component));
     } else {
@@ -79,7 +78,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   }
 
   private FieldSpec createField(
-      ComponentMethodDescriptor componentMethod, GeneratedComponentModel component) {
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     // TODO(cgdecker): Use a FrameworkFieldInitializer for this?
     // Though I don't think we need the once-only behavior of that, since I think
     // getComponentMethodImplementation will only be called once anyway

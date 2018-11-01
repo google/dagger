@@ -42,12 +42,12 @@ final class SetBindingExpression extends MultibindingExpression {
 
   SetBindingExpression(
       ResolvedBindings resolvedBindings,
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings, generatedComponentModel);
+    super(resolvedBindings, componentImplementation);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;

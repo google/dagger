@@ -39,10 +39,10 @@ final class InnerSwitchingProviders extends SwitchingProviders {
   private final DaggerTypes types;
 
   InnerSwitchingProviders(
-      GeneratedComponentModel generatedComponentModel,
+      ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    super(generatedComponentModel, types);
+    super(componentImplementation, types);
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
   }

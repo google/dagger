@@ -57,6 +57,7 @@ import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
+import dagger.producers.internal.ProductionExecutorModule;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -521,7 +522,7 @@ abstract class ComponentDescriptor {
               && (parentKind.get().equals(Kind.COMPONENT)
                   || parentKind.get().equals(Kind.SUBCOMPONENT)))) {
         modulesBuilder.add(descriptorForMonitoringModule(componentDefinitionType));
-        modulesBuilder.add(descriptorForProductionExecutorModule(componentDefinitionType));
+        modulesBuilder.add(descriptorForProductionExecutorModule());
       }
       ImmutableSet<ModuleDescriptor> modules = modulesBuilder.build();
       ImmutableSet<ModuleDescriptor> transitiveModules = transitiveModules(modules);
@@ -732,20 +733,10 @@ abstract class ComponentDescriptor {
       return moduleDescriptorFactory.create(monitoringModule);
     }
 
-    /**
-     * Returns a descriptor for a generated module that handles the producer executor for production
-     * components. This module is generated in the {@link ProductionExecutorModuleProcessingStep}.
-     *
-     * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
-     *     processor to retry in a later processing round.
-     */
-    // TODO(beder): Replace this with a single class when the producers client library exists.
-    private ModuleDescriptor descriptorForProductionExecutorModule(
-        TypeElement componentDefinitionType) {
-      ClassName productionExecutorModuleName =
-          SourceFiles.generatedProductionExecutorModuleName(componentDefinitionType);
+    /** Returns a descriptor {@link ProductionExecutorModule}. */
+    private ModuleDescriptor descriptorForProductionExecutorModule() {
       TypeElement productionExecutorModule =
-          elements.checkTypePresent(productionExecutorModuleName.toString());
+          elements.getTypeElement(ProductionExecutorModule.class);
       return moduleDescriptorFactory.create(productionExecutorModule);
     }
 

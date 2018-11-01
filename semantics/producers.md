@@ -45,8 +45,8 @@ better to only produce immutable value types.
 
 [Executor]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html
 [Future]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html
-[ListenableFuture]: https://google.github.io/guava/releases/23.6-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html
-[FluentFuture]: https://google.github.io/guava/releases/23.6-jre/api/docs/com/google/common/util/concurrent/FluentFuture.html
+[ListenableFuture]: https://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/util/concurrent/ListenableFuture.html
+[FluentFuture]: https://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/util/concurrent/FluentFuture.html
 
 Dagger Producers introduces new annotations as follows.
 

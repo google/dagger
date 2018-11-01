@@ -95,7 +95,7 @@ Dagger will forward the values to the `initOptions()` method.
 [`java_plugin`]: https://docs.bazel.build/versions/master/be/java.html#java_plugin
 [`Messager`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Messager.html
 [missing binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.MissingBindingNode.html
-[`Network`]: http://google.github.io/guava/releases/25.0-jre/api/docs/com/google/common/graph/Network.html
+[`Network`]: http://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/graph/Network.html
 [reach out]: https://github.com/google/dagger/issues/new
 [`ServiceLoader`]: https://docs.oracle.com/javase/9/docs/api/java/util/ServiceLoader.html
 [SPI]: https://en.wikipedia.org/wiki/Service_provider_interface

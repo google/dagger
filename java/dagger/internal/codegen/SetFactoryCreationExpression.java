@@ -17,19 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 
 import com.squareup.javapoet.CodeBlock;
-import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.producers.Produced;
 
 /** A factory creation expression for a multibound set. */
-// TODO(dpb): Resolve with MapFactoryCreationExpression.
-final class SetFactoryCreationExpression implements FrameworkInstanceCreationExpression {
+final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpression {
 
-  private final GeneratedComponentModel generatedComponentModel;
-  private final ComponentBindingExpressions componentBindingExpressions;
   private final BindingGraph graph;
   private final ContributionBinding binding;
 
@@ -38,17 +33,15 @@ final class SetFactoryCreationExpression implements FrameworkInstanceCreationExp
       GeneratedComponentModel generatedComponentModel,
       ComponentBindingExpressions componentBindingExpressions,
       BindingGraph graph) {
+    super(binding, generatedComponentModel, componentBindingExpressions);
     this.binding = checkNotNull(binding);
-    this.generatedComponentModel = checkNotNull(generatedComponentModel);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.graph = checkNotNull(graph);
   }
 
   @Override
   public CodeBlock creationExpression() {
     CodeBlock.Builder builder = CodeBlock.builder().add("$T.", setFactoryClassName(binding));
-    boolean useRawType = !generatedComponentModel.isTypeAccessible(binding.key().type());
-    if (!useRawType) {
+    if (!useRawType()) {
       SetType setType = SetType.from(binding.key());
       builder.add(
           "<$T>",
@@ -77,23 +70,11 @@ final class SetFactoryCreationExpression implements FrameworkInstanceCreationExp
           throw new AssertionError(frameworkDependency + " is not a set multibinding");
       }
 
-      CodeBlock argument =
-          componentBindingExpressions
-              .getDependencyExpression(
-                  bindingRequest(frameworkDependency), generatedComponentModel.name())
-              .codeBlock();
       builderMethodCalls.add(
-          ".$L($L)",
-          methodName,
-          useRawType ? CodeBlocks.cast(argument, frameworkDependency.frameworkClass()) : argument);
+          ".$L($L)", methodName, multibindingDependencyExpression(frameworkDependency));
     }
     builder.add("builder($L, $L)", individualProviders, setProviders);
     builder.add(builderMethodCalls.build());
     return builder.add(".build()").build();
-  }
-
-  @Override
-  public boolean useInnerSwitchingProvider() {
-    return !binding.dependencies().isEmpty();
   }
 }

@@ -279,6 +279,7 @@ java_library(
         "MonitoringModuleGenerator.java",
         "MonitoringModuleProcessingStep.java",
         "MultibindingExpression.java",
+        "MultibindingFactoryCreationExpression.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
         "OptionalFactoryInstanceCreationExpression.java",

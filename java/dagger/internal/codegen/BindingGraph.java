@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -29,7 +28,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Traverser;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Optional;
@@ -81,18 +79,6 @@ abstract class BindingGraph {
 
   abstract ImmutableSet<BindingGraph> subgraphs();
 
-  /** Returns the resolved bindings for the dependencies of {@code binding}. */
-  ImmutableSet<ResolvedBindings> resolvedDependencies(ContributionBinding binding) {
-    return binding
-        .dependencies()
-        .stream()
-        .map(DependencyRequest::key)
-        .map(
-            key ->
-                contributionBindings()
-                    .getOrDefault(key, ResolvedBindings.noBindings(key, componentDescriptor())))
-        .collect(toImmutableSet());
-  }
   /**
    * The type that defines the component for this graph.
    *

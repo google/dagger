@@ -285,6 +285,7 @@ java_library(
         "OptionalFactoryInstanceCreationExpression.java",
         "PrivateMethodBindingExpression.java",
         "ProducerCreationExpression.java",
+        "ProducerEntryPointView.java",
         "ProducerFactoryGenerator.java",
         "ProducerFromProviderCreationExpression.java",
         "ProducerNodeInstanceBindingExpression.java",

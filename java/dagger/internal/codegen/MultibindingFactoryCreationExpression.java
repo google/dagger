@@ -17,9 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.model.Key;
+import java.util.Optional;
 
 /** An abstract factory creation expression for multibindings. */
 abstract class MultibindingFactoryCreationExpression
@@ -48,6 +53,25 @@ abstract class MultibindingFactoryCreationExpression
     return useRawType()
         ? CodeBlocks.cast(expression, frameworkDependency.frameworkClass())
         : expression;
+  }
+
+  protected final ImmutableSet<FrameworkDependency> frameworkDependenciesToImplement() {
+    ImmutableSet<Key> alreadyImplementedKeys =
+        componentImplementation.superclassContributionsMade(bindingRequest()).stream()
+            .map(dependency -> dependency.key())
+            .collect(toImmutableSet());
+    return binding.frameworkDependencies().stream()
+        .filter(frameworkDependency -> !alreadyImplementedKeys.contains(frameworkDependency.key()))
+        .collect(toImmutableSet());
+  }
+
+  protected Optional<CodeBlock> superContributions() {
+    if (frameworkDependenciesToImplement().size() == binding.frameworkDependencies().size()) {
+      return Optional.empty();
+    }
+    ModifiableBindingMethod superMethod =
+        componentImplementation.getModifiableBindingMethod(bindingRequest()).get();
+    return Optional.of(CodeBlock.of("super.$N()", superMethod.methodSpec().name));
   }
 
   /** The binding request for this framework instance. */

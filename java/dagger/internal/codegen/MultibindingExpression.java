@@ -43,7 +43,7 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression expression = buildDependencyExpression(requestingClass);
-    componentImplementation.registerImplementedMultibinding(binding);
+    componentImplementation.registerImplementedMultibinding(binding, bindingRequest());
     return expression;
   }
 
@@ -62,8 +62,7 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
    */
   protected SetView<DependencyRequest> getNewContributions(
       ImmutableSet<DependencyRequest> dependencies) {
-    return Sets.difference(
-        dependencies, componentImplementation.superclassContributionsMade(binding.key()));
+    return Sets.difference(dependencies, superclassContributions());
   }
 
   /**
@@ -74,16 +73,21 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
   protected Optional<CodeBlock> superMethodCall() {
     if (componentImplementation.superclassImplementation().isPresent()) {
       Optional<ModifiableBindingMethod> method =
-          componentImplementation.getModifiableBindingMethod(
-              bindingRequest(binding.key(), RequestKind.INSTANCE));
+          componentImplementation.getModifiableBindingMethod(bindingRequest());
       if (method.isPresent()) {
-        ImmutableSet<DependencyRequest> superclassContributions =
-            componentImplementation.superclassContributionsMade(binding.key());
-        if (!superclassContributions.isEmpty()) {
+        if (!superclassContributions().isEmpty()) {
           return Optional.of(CodeBlock.of("super.$L()", method.get().methodSpec().name));
         }
       }
     }
     return Optional.empty();
+  }
+
+  private BindingRequest bindingRequest() {
+    return BindingRequest.bindingRequest(binding.key(), RequestKind.INSTANCE);
+  }
+
+  private ImmutableSet<DependencyRequest> superclassContributions() {
+    return componentImplementation.superclassContributionsMade(bindingRequest());
   }
 }

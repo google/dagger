@@ -50,7 +50,7 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
   }
 
   @Override
-  CodeBlock body() {
+  CodeBlock implementation(Supplier<CodeBlock> simpleBindingExpression) {
     String fieldExpression = fieldName.get().equals("local") ? "this.local" : fieldName.get();
     return CodeBlock.builder()
         .addStatement("$T local = $L", TypeName.OBJECT, fieldExpression)
@@ -58,7 +58,7 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
         .beginControlFlow("synchronized (local)")
         .addStatement("local = $L", fieldExpression)
         .beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class)
-        .addStatement("local = $L", simpleBindingExpression())
+        .addStatement("local = $L", simpleBindingExpression.get())
         .addStatement("$1L = $2T.reentrantCheck($1L, local)", fieldExpression, DoubleCheck.class)
         .endControlFlow()
         .endControlFlow()

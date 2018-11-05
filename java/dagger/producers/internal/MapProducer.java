@@ -37,10 +37,10 @@ import javax.inject.Provider;
  * {@code Map<K, V>} which is populated by calls to the delegate {@link Producer#get} methods.
  */
 public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
-  private final ImmutableMap<K, Producer<V>> mapOfProducers;
+  private final ImmutableMap<K, Producer<V>> contributingMap;
 
-  private MapProducer(ImmutableMap<K, Producer<V>> mapOfProducers) {
-    this.mapOfProducers = mapOfProducers;
+  private MapProducer(ImmutableMap<K, Producer<V>> contributingMap) {
+    this.contributingMap = contributingMap;
   }
 
   /** Returns a new {@link Builder}. */
@@ -72,6 +72,14 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
       return this;
     }
 
+    // TODO(b/118630627): make this accept MapProducer<K, V>, and change all framework fields to be
+    // of that type so we don't need an unsafe cast
+    /** Adds contributions from a super-implementation of a component into this builder. */
+    public Builder<K, V> putAll(Producer<Map<K, V>> mapProducer) {
+      mapBuilder.putAll(((MapProducer<K, V>) mapProducer).contributingMap);
+      return this;
+    }
+
     /** Returns a new {@link MapProducer}. */
     public MapProducer<K, V> build() {
       return new MapProducer<>(mapBuilder.build());
@@ -81,7 +89,7 @@ public final class MapProducer<K, V> extends AbstractProducer<Map<K, V>> {
   @Override
   protected ListenableFuture<Map<K, V>> compute() {
     final List<ListenableFuture<Map.Entry<K, V>>> listOfEntries = new ArrayList<>();
-    for (final Entry<K, Producer<V>> entry : mapOfProducers.entrySet()) {
+    for (final Entry<K, Producer<V>> entry : contributingMap.entrySet()) {
       listOfEntries.add(
           Futures.transform(entry.getValue().get(), new Function<V, Entry<K, V>>() {
             @Override

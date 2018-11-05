@@ -70,7 +70,10 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
     ImmutableList<FrameworkDependency> frameworkDependencies = binding.frameworkDependencies();
     builder.add("builder($L)", frameworkDependencies.size());
 
-    for (FrameworkDependency frameworkDependency : frameworkDependencies) {
+    superContributions()
+        .ifPresent(superContributions -> builder.add(".putAll($L)", superContributions));
+
+    for (FrameworkDependency frameworkDependency : frameworkDependenciesToImplement()) {
       ContributionBinding contributionBinding =
           graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
       builder.add(
@@ -79,6 +82,8 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
           multibindingDependencyExpression(frameworkDependency));
     }
     builder.add(".build()");
+
+    componentImplementation.registerImplementedMultibinding(binding, bindingRequest());
 
     return builder.build();
   }

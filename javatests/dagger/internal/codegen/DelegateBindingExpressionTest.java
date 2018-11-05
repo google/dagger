@@ -925,9 +925,9 @@ public class DelegateBindingExpressionTest {
                     "}")
                 .addLinesIn(
                     FAST_INIT_MODE,
-                    "  private volatile Provider<Object> bindStringProvider;",
-                    "  private volatile Object object = new MemoizedSentinel();",
                     "  private volatile String string;",
+                    "  private volatile Object object = new MemoizedSentinel();",
+                    "  private volatile Provider<Object> bindStringProvider;",
                     "",
                     "  private String getString() {",
                     "    Object local = string;",

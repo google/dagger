@@ -118,7 +118,8 @@ final class ComponentBindingExpressions {
             this,
             graph,
             componentImplementation,
-            compilerOptions);
+            compilerOptions,
+            types);
   }
 
   /**
@@ -281,8 +282,7 @@ final class ComponentBindingExpressions {
    * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings
    * or a {@link dagger.producers.Producer} for production bindings.
    */
-  private FrameworkInstanceBindingExpression frameworkInstanceBindingExpression(
-      ResolvedBindings resolvedBindings) {
+  private BindingExpression frameworkInstanceBindingExpression(ResolvedBindings resolvedBindings) {
     // TODO(user): Consider merging the static factory creation logic into CreationExpressions?
     Optional<MemberSelect> staticMethod =
         useStaticFactoryCreation(resolvedBindings.contributionBinding())
@@ -663,7 +663,8 @@ final class ComponentBindingExpressions {
                     methodImplementation,
                     componentImplementation,
                     componentMethod,
-                    matchingModifiableBindingMethod))
+                    matchingModifiableBindingMethod,
+                    types))
         .orElseGet(
             () ->
                 new PrivateMethodBindingExpression(
@@ -671,7 +672,8 @@ final class ComponentBindingExpressions {
                     request,
                     methodImplementation,
                     componentImplementation,
-                    matchingModifiableBindingMethod));
+                    matchingModifiableBindingMethod,
+                    types));
   }
 
   private BindingMethodImplementation methodImplementation(

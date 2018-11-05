@@ -26,7 +26,6 @@ import dagger.model.Key;
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
   /** The component defining this binding. */
   private final ComponentImplementation componentImplementation;
-
   private final Key key;
   private final ProducerEntryPointView producerEntryPointView;
 

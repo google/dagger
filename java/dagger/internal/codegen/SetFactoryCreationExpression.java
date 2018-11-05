@@ -21,10 +21,12 @@ import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.producers.Produced;
+import java.util.Optional;
 
 /** A factory creation expression for a multibound set. */
 final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpression {
 
+  private final ComponentImplementation componentImplementation;
   private final BindingGraph graph;
   private final ContributionBinding binding;
 
@@ -35,6 +37,7 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
       BindingGraph graph) {
     super(binding, componentImplementation, componentBindingExpressions);
     this.binding = checkNotNull(binding);
+    this.componentImplementation = checkNotNull(componentImplementation);
     this.graph = checkNotNull(graph);
   }
 
@@ -49,32 +52,49 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
               ? setType.unwrappedElementType(Produced.class)
               : setType.elementType());
     }
+
     int individualProviders = 0;
     int setProviders = 0;
     CodeBlock.Builder builderMethodCalls = CodeBlock.builder();
-    for (FrameworkDependency frameworkDependency : binding.frameworkDependencies()) {
+    String methodNameSuffix =
+        binding.bindingType().equals(BindingType.PROVISION) ? "Provider" : "Producer";
+
+    Optional<CodeBlock> superContributions = superContributions();
+    if (superContributions.isPresent()) {
+      // TODO(b/117833324): consider decomposing the Provider<Set<Provider>> and adding the
+      // individual contributions separately from the collection contributions
+      builderMethodCalls.add(".addCollection$N($L)", methodNameSuffix, superContributions.get());
+      setProviders++;
+    }
+
+    for (FrameworkDependency frameworkDependency : frameworkDependenciesToImplement()) {
       ContributionType contributionType =
           graph.contributionBindings().get(frameworkDependency.key()).contributionType();
-      String methodName;
-      String methodNameSuffix = frameworkDependency.frameworkClass().getSimpleName();
+      String methodNamePrefix;
       switch (contributionType) {
         case SET:
           individualProviders++;
-          methodName = "add" + methodNameSuffix;
+          methodNamePrefix = "add";
           break;
         case SET_VALUES:
           setProviders++;
-          methodName = "addCollection" + methodNameSuffix;
+          methodNamePrefix = "addCollection";
           break;
         default:
           throw new AssertionError(frameworkDependency + " is not a set multibinding");
       }
 
       builderMethodCalls.add(
-          ".$L($L)", methodName, multibindingDependencyExpression(frameworkDependency));
+          ".$N$N($L)",
+          methodNamePrefix,
+          methodNameSuffix,
+          multibindingDependencyExpression(frameworkDependency));
     }
     builder.add("builder($L, $L)", individualProviders, setProviders);
     builder.add(builderMethodCalls.build());
+
+    componentImplementation.registerImplementedMultibinding(binding, bindingRequest());
+
     return builder.add(".build()").build();
   }
 }

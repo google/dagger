@@ -83,6 +83,13 @@ public final class MapFactory<K, V> implements Factory<Map<K, V>> {
       return this;
     }
 
+    // TODO(b/118630627): make this accept MapFactory<K, V>, and change all framework fields to be
+    // of that type so we don't need an unsafe cast
+    public Builder<K, V> putAll(Provider<Map<K, V>> mapFactory) {
+      map.putAll(((MapFactory<K, V>) mapFactory).contributingMap);
+      return this;
+    }
+
     /** Returns a new {@link MapProviderFactory}. */
     public MapFactory<K, V> build() {
       return new MapFactory<>(map);

@@ -75,6 +75,14 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
       return this;
     }
 
+    // TODO(b/118630627): make this accept MapOfProducerProducer<K, V>, and change all framework
+    // fields to be of that type so we don't need an unsafe cast
+    /** Adds contributions from a super-implementation of a component into this builder. */
+    public Builder<K, V> putAll(Producer<Map<K, Producer<V>>> mapProducerProducer) {
+      mapBuilder.putAll(((MapOfProducerProducer<K, V>) mapProducerProducer).contributingMap);
+      return this;
+    }
+
     /** Returns a new {@link MapOfProducerProducer}. */
     public MapOfProducerProducer<K, V> build() {
       return new MapOfProducerProducer<>(mapBuilder.build());

@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
 
@@ -30,14 +31,17 @@ abstract class MethodBindingExpression extends BindingExpression {
   private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private final Optional<ModifiableBindingMethod> matchingModifiableBindingMethod;
+  private final ProducerEntryPointView producerEntryPointView;
 
   protected MethodBindingExpression(
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
-      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      DaggerTypes types) {
     this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.matchingModifiableBindingMethod = checkNotNull(matchingModifiableBindingMethod);
+    this.producerEntryPointView = new ProducerEntryPointView(types);
   }
 
   @Override
@@ -63,6 +67,15 @@ abstract class MethodBindingExpression extends BindingExpression {
       return methodImplementation.body();
     }
     return super.getModifiableBindingMethodImplementation(modifiableBindingMethod, component);
+  }
+
+  @Override
+  Expression getDependencyExpressionForComponentMethod(ComponentMethodDescriptor componentMethod,
+      ComponentImplementation component) {
+    return producerEntryPointView
+        .getProducerEntryPointField(this, componentMethod, component)
+        .orElseGet(
+            () -> super.getDependencyExpressionForComponentMethod(componentMethod, component));
   }
 
   /** Adds the method to the component (if necessary) the first time it's called. */

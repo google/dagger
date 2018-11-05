@@ -55,7 +55,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
   }
 
   @Override
-  CodeBlock body() {
+  CodeBlock implementation(Supplier<CodeBlock> simpleBindingExpression) {
     String fieldExpression = field.get().name.equals("local") ? "this.local" : field.get().name;
 
     CodeBlock.Builder builder = CodeBlock.builder()
@@ -68,7 +68,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
     }
 
     return builder
-        .addStatement("local = $L", simpleBindingExpression())
+        .addStatement("local = $L", simpleBindingExpression.get())
         .addStatement("$N = ($T) local", fieldExpression, returnType())
         .endControlFlow()
         .addStatement("return ($T) local", returnType())

@@ -47,8 +47,9 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
-      boolean bindingFinalized) {
-    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod);
+      boolean bindingFinalized,
+      DaggerTypes types) {
+    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod, types);
     this.binding = resolvedBindings.contributionBinding();
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);

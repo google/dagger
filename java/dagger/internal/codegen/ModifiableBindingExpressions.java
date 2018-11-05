@@ -38,18 +38,21 @@ final class ModifiableBindingExpressions {
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
   private final CompilerOptions compilerOptions;
+  private final DaggerTypes types;
 
   ModifiableBindingExpressions(
       Optional<ModifiableBindingExpressions> parent,
       ComponentBindingExpressions bindingExpressions,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      DaggerTypes types) {
     this.parent = parent;
     this.bindingExpressions = bindingExpressions;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.compilerOptions = compilerOptions;
+    this.types = types;
   }
 
   /**
@@ -258,8 +261,7 @@ final class ModifiableBindingExpressions {
         return ModifiableBindingType.OPTIONAL;
       }
 
-      if (resolvedBindings.bindingType().equals(BindingType.PROVISION)
-          && binding.isSyntheticMultibinding()) {
+      if (binding.isSyntheticMultibinding()) {
         return ModifiableBindingType.MULTIBINDING;
       }
 
@@ -299,8 +301,45 @@ final class ModifiableBindingExpressions {
    * Returns true if the current binding graph can, and should, modify a binding by overriding a
    * modifiable binding method.
    */
+  // TODO(b/72748365): should this be called shouldModifyRequest() or shouldModifyBindingRequest()?
   private boolean shouldModifyBinding(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
+    if (request.requestKind().isPresent()) {
+      switch (request.requestKind().get()) {
+        case FUTURE:
+          // Futures are always requested by a Producer.get() call, so if the binding is modifiable,
+          // the producer will be wrapped in a modifiable method and the future can refer to that
+          // method; even if the producer binding is modified, getModifiableProducer().get() will
+          // never need to be modified. Furthermore, because cancellation is treated by wrapped
+          // producers, and those producers point to the modifiable producer wrapper methods, we
+          // never need or want to change the access of these wrapped producers for entry
+          // methods
+          return false;
+
+        case LAZY:
+        case PROVIDER_OF_LAZY:
+          // Lazy and ProviderOfLazy are always created from a Provider, and therefore this request
+          // never needs to be modifiable. It will refer (via DoubleCheck.lazy() or
+          // ProviderOfLazy.create()) to the modifiable method and not the framework instance.
+          return false;
+
+        case MEMBERS_INJECTION:
+        case PRODUCED:
+          // MEMBERS_INJECTION has a completely different code path for binding expressions, and
+          // PRODUCED requests are only requestable in @Produces methods, which are hidden from
+          // generated components inside Producer factories
+          throw new AssertionError(request);
+
+        case INSTANCE:
+        case PROVIDER:
+        case PRODUCER:
+          // These may be modifiable, so run through the regular logic. They're spelled out
+          // explicitly so that ErrorProne will detect if a new enum value is created and missing
+          // from this list.
+          break;
+      }
+    }
+
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
@@ -322,7 +361,7 @@ final class ModifiableBindingExpressions {
       case MULTIBINDING:
         // Only modify a multibinding if there are new contributions.
         return !componentImplementation
-            .superclassContributionsMade(request.key())
+            .superclassContributionsMade(request)
             .containsAll(resolvedBindings.contributionBinding().dependencies());
       case INJECTION:
         return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
@@ -385,7 +424,8 @@ final class ModifiableBindingExpressions {
               methodImplementation,
               componentImplementation,
               matchingModifiableBindingMethod,
-              newModifiableBindingWillBeFinalized(modifiableBindingType, request)));
+              newModifiableBindingWillBeFinalized(modifiableBindingType, request),
+              types));
     }
     return Optional.empty();
   }

@@ -39,8 +39,9 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
       ComponentMethodDescriptor componentMethod,
-      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
-    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod);
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      DaggerTypes types) {
+    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod, types);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.componentMethod = checkNotNull(componentMethod);
@@ -59,7 +60,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
     return componentMethod.equals(this.componentMethod) && component.equals(componentImplementation)
-        ? methodImplementation.body()
+        ? methodImplementation.bodyForComponentMethod(componentMethod, component)
         : super.getComponentMethodImplementation(componentMethod, component);
   }
 

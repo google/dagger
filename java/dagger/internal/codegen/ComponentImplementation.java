@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -156,7 +157,9 @@ final class ComponentImplementation {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
-  private final SetMultimap<Key, DependencyRequest> contributionsByMultibinding =
+  // TODO(b/117833324): can this just be a Set instead of a SetMultimap? The values should be
+  // implicit
+  private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
   private ImmutableList<ParameterSpec> constructorParameters;
 
@@ -481,12 +484,13 @@ final class ComponentImplementation {
    * to know whether a contribution has been made by a superclass implementation. This is only
    * relevant for ahead-of-time subcomponents.
    */
-  void registerImplementedMultibinding(ContributionBinding multibinding) {
+  void registerImplementedMultibinding(
+      ContributionBinding multibinding, BindingRequest bindingRequest) {
     checkArgument(multibinding.isSyntheticMultibinding());
     // We register a multibinding as implemented each time we request the multibinding expression,
     // so only modify the set of contributions once.
-    if (!contributionsByMultibinding.containsKey(multibinding.key())) {
-      contributionsByMultibinding.putAll(multibinding.key(), multibinding.dependencies());
+    if (!multibindingContributionsMade.containsKey(bindingRequest)) {
+      multibindingContributionsMade.putAll(bindingRequest, multibinding.dependencies());
     }
   }
 
@@ -494,9 +498,9 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all superclass implementations of
    * a multibinding.
    */
-  ImmutableSet<DependencyRequest> superclassContributionsMade(Key key) {
+  ImmutableSet<DependencyRequest> superclassContributionsMade(BindingRequest bindingRequest) {
     return superclassImplementation
-        .map(s -> s.getAllMultibindingContributions(key))
+        .map(s -> s.getAllMultibindingContributions(bindingRequest))
         .orElse(ImmutableSet.of());
   }
 
@@ -504,11 +508,11 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all implementations of a
    * multibinding.
    */
-  private ImmutableSet<DependencyRequest> getAllMultibindingContributions(Key key) {
-    ImmutableSet.Builder<DependencyRequest> contributionsBuilder = ImmutableSet.builder();
-    if (contributionsByMultibinding.containsKey(key)) {
-      contributionsBuilder.addAll(contributionsByMultibinding.get(key));
-    }
-    return contributionsBuilder.addAll(superclassContributionsMade(key)).build();
+  private ImmutableSet<DependencyRequest> getAllMultibindingContributions(
+      BindingRequest bindingRequest) {
+    return ImmutableSet.copyOf(
+        Sets.union(
+            multibindingContributionsMade.get(bindingRequest),
+            superclassContributionsMade(bindingRequest)));
   }
 }

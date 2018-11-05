@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -2090,6 +2091,298 @@ public final class AheadOfTimeSubcomponentsTest {
   }
 
   @Test
+  public void setMultibinding_requestedAsInstanceInLeaf_requestedAsFrameworkInstanceFromAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile, "Multibound", "MissingInLeaf_WillDependOnFrameworkInstance");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Set<Multibound> instance();",
+            "  MissingInLeaf_WillDependOnFrameworkInstance willDependOnFrameworkInstance();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class LeafModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Multibound contribution() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Set<Multibound> instance() {",
+            "    return ImmutableSet.<Multibound>of(",
+            "        LeafModule_ContributionFactory.proxyContribution());",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Set;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static MissingInLeaf_WillDependOnFrameworkInstance providedInAncestor(",
+            "      Provider<Set<Multibound>> frameworkInstance) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Multibinds Set<Multibound> multibinds();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.SetFactory;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Set<Multibound>> setOfMultiboundProvider;",
+            "",
+            "    protected LeafImpl() { ",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() { ",
+            "      this.setOfMultiboundProvider =",
+            "          SetFactory.<Multibound>builder(1, 0)",
+            "              .addProvider(LeafModule_ContributionFactory.create())",
+            "              .build();",
+            "    }",
+            "",
+            "    public Provider<Set<Multibound>> getSetOfMultiboundProvider() {",
+            "      return setOfMultiboundProvider;",
+            "    }",
+            "",
+            "    @Override",
+            "    public final MissingInLeaf_WillDependOnFrameworkInstance ",
+            "        willDependOnFrameworkInstance() {",
+            "      return AncestorModule_ProvidedInAncestorFactory.proxyProvidedInAncestor(",
+            "          getSetOfMultiboundProvider());",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void setMultibindings_contributionsInLeafAndAncestor_frameworkInstances() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Provider<Set<InEachSubcomponent>> contributionsInEachSubcomponent();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class LeafModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InEachSubcomponent provideInLeaf() {",
+            "    return new InEachSubcomponent();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static InEachSubcomponent provideAnotherInLeaf() {",
+            "    return new InEachSubcomponent();",
+            "  }",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.internal.SetFactory;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  private Provider<Set<InEachSubcomponent>> setOfInEachSubcomponentProvider;",
+            "",
+            "  protected DaggerLeaf() {",
+            "    initialize();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.setOfInEachSubcomponentProvider =",
+            "        SetFactory.<InEachSubcomponent>builder(2, 0)",
+            "            .addProvider(LeafModule_ProvideInLeafFactory.create())",
+            "            .addProvider(LeafModule_ProvideAnotherInLeafFactory.create())",
+            "            .build();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Provider<Set<InEachSubcomponent>> contributionsInEachSubcomponent() {",
+            "    return setOfInEachSubcomponentProvider;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @ElementsIntoSet",
+            "  static Set<InEachSubcomponent> provideInAncestor() {",
+            "    return ImmutableSet.of(new InEachSubcomponent(), new InEachSubcomponent());",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.SetFactory;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Set<InEachSubcomponent>> setOfInEachSubcomponentProvider;",
+            "",
+            "    protected LeafImpl() {",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() {",
+            "    this.setOfInEachSubcomponentProvider =",
+            "        SetFactory.<InEachSubcomponent>builder(0, 2)",
+            "            .addCollectionProvider(super.contributionsInEachSubcomponent())",
+            "            .addCollectionProvider(AncestorModule_ProvideInAncestorFactory.create())",
+            "            .build();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Provider<Set<InEachSubcomponent>> contributionsInEachSubcomponent() {",
+            "      return setOfInEachSubcomponentProvider;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
   public void mapMultibindings_contributionsInLeaf() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
     createAncillaryClasses(filesToCompile, "InLeaf");
@@ -2358,6 +2651,158 @@ public final class AheadOfTimeSubcomponentsTest {
             "              AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor())",
             "          .putAll(super.contributionsInEachSubcomponent())",
             "          .build();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void mapMultibindings_contributionsInLeafAndAncestor_frameworkInstance() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Provider<Map<String, InEachSubcomponent>> contributionsInEachSubcomponent();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "class LeafModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"leafmodule\")",
+            "  static InEachSubcomponent provideInLeaf() {",
+            "    return new InEachSubcomponent();",
+            "  }",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.internal.MapFactory;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  private Provider<Map<String, InEachSubcomponent>> ",
+            "    mapOfStringAndInEachSubcomponentProvider;",
+            "",
+            "  protected DaggerLeaf() {",
+            "    initialize();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.mapOfStringAndInEachSubcomponentProvider =",
+            "        MapFactory.<String, InEachSubcomponent>builder(1)",
+            "            .put(\"leafmodule\", LeafModule_ProvideInLeafFactory.create())",
+            "            .build();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Provider<Map<String, InEachSubcomponent>> ",
+            "      contributionsInEachSubcomponent() {",
+            "    return mapOfStringAndInEachSubcomponentProvider;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"ancestormodule\")",
+            "  static InEachSubcomponent provideInAncestor() {",
+            "    return new InEachSubcomponent();",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.MapFactory;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Map<String, InEachSubcomponent>> ",
+            "      mapOfStringAndInEachSubcomponentProvider;",
+            "",
+            "    protected LeafImpl() { ",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() { ",
+            "      this.mapOfStringAndInEachSubcomponentProvider =",
+            "          MapFactory.<String, InEachSubcomponent>builder(2)",
+            "              .putAll(super.contributionsInEachSubcomponent())",
+            "              .put(\"ancestormodule\",",
+            "                  AncestorModule_ProvideInAncestorFactory.create())",
+            "              .build();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Provider<Map<String, InEachSubcomponent>> ",
+            "        contributionsInEachSubcomponent() {",
+            "      return mapOfStringAndInEachSubcomponentProvider;",
             "    }",
             "  }",
             "}");
@@ -2649,6 +3094,624 @@ public final class AheadOfTimeSubcomponentsTest {
             "  }",
             "}");
     compilation = compileWithoutGuava(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void mapMultibinding_requestedAsInstanceInLeaf_requestedAsFrameworkInstanceFromAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(
+        filesToCompile, "Multibound", "MissingInLeaf_WillDependOnFrameworkInstance");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Map<Integer, Multibound> instance();",
+            "  MissingInLeaf_WillDependOnFrameworkInstance willDependOnFrameworkInstance();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntKey;",
+            "import dagger.multibindings.IntoMap;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "class LeafModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @IntKey(111)",
+            "  static Multibound contribution() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Map<Integer, Multibound> instance() {",
+            "    return ImmutableMap.<Integer, Multibound>of(",
+            "        111, LeafModule_ContributionFactory.proxyContribution());",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static MissingInLeaf_WillDependOnFrameworkInstance providedInAncestor(",
+            "      Provider<Map<Integer, Multibound>> frameworkInstance) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Multibinds Map<Integer, Multibound> multibinds();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.MapFactory;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Map<Integer, Multibound>> mapOfIntegerAndMultiboundProvider;",
+            "",
+            "    protected LeafImpl() { ",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() { ",
+            "      this.mapOfIntegerAndMultiboundProvider =",
+            "          MapFactory.<Integer, Multibound>builder(1)",
+            "              .put(111, LeafModule_ContributionFactory.create())",
+            "              .build();",
+            "    }",
+            "",
+            "    public Provider<Map<Integer, Multibound>> ",
+            "        getMapOfIntegerAndMultiboundProvider() {",
+            "      return mapOfIntegerAndMultiboundProvider;",
+            "    }",
+            "",
+            "    @Override",
+            "    public final MissingInLeaf_WillDependOnFrameworkInstance ",
+            "        willDependOnFrameworkInstance() {",
+            "      return AncestorModule_ProvidedInAncestorFactory.proxyProvidedInAncestor(",
+            "          getMapOfIntegerAndMultiboundProvider());",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void emptyMultibinds_set() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "Multibound");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Multibinds",
+            "  Set<Multibound> set();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Set<Multibound> set();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Set<Multibound> set() {",
+            "    return ImmutableSet.<Multibound>of();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Multibound fromAncestor() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public Set<Multibound> set() {",
+            "      return ImmutableSet.<Multibound>of(",
+            "          AncestorModule_FromAncestorFactory.proxyFromAncestor());",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void emptyMultibinds_set_frameworkInstance() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "Multibound");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Multibinds",
+            "  Set<Multibound> set();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Provider<Set<Multibound>> set();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.internal.SetFactory;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Provider<Set<Multibound>> set() {",
+            "    return SetFactory.<Multibound>empty();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Multibound fromAncestor() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.SetFactory;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Set<Multibound>> setOfMultiboundProvider;",
+            "",
+            "    protected LeafImpl() {",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() {",
+            "      this.setOfMultiboundProvider =",
+            "          SetFactory.<Multibound>builder(1, 0)",
+            "              .addProvider(AncestorModule_FromAncestorFactory.create())",
+            "              .build();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Provider<Set<Multibound>> set() {",
+            "      return setOfMultiboundProvider;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void emptyMultibinds_map() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "Multibound");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Multibinds",
+            "  Map<Integer, Multibound> map();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Map<Integer, Multibound> map();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Map<Integer, Multibound> map() {",
+            "    return ImmutableMap.<Integer, Multibound>of();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @IntKey(111)",
+            "  static Multibound fromAncestor() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableMap;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public Map<Integer, Multibound> map() {",
+            "      return ImmutableMap.<Integer, Multibound>of(",
+            "          111, AncestorModule_FromAncestorFactory.proxyFromAncestor());",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
+  @Test
+  public void emptyMultibinds_map_frameworkInstance() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "Multibound");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Multibinds",
+            "  Map<Integer, Multibound> map();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Provider<Map<Integer, Multibound>> map();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.internal.MapFactory;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Provider<Map<Integer, Multibound>> map() {",
+            "    return MapFactory.<Integer, Multibound>emptyMapProvider();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @IntKey(111)",
+            "  static Multibound fromAncestor() {",
+            "    return new Multibound();",
+            "  }",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import dagger.internal.MapFactory;",
+            "import java.util.Map;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    private Provider<Map<Integer, Multibound>> mapOfIntegerAndMultiboundProvider;",
+            "",
+            "    protected LeafImpl() {",
+            "      super();",
+            "      initialize();",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize() {",
+            "      this.mapOfIntegerAndMultiboundProvider =",
+            "          MapFactory.<Integer, Multibound>builder(1)",
+            "              .put(111, AncestorModule_FromAncestorFactory.create())",
+            "              .build();",
+            "    }",
+            "",
+            "    @Override",
+            "    public Provider<Map<Integer, Multibound>> map() {",
+            "      return mapOfIntegerAndMultiboundProvider;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerAncestor")
@@ -3229,9 +4292,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "    this.setOfResponseProducer =",
             // TODO(b/72748365): This initialization should be encapsulated in a method to be
             // modified.
-            "        SetProducer.<Response>builder(1, 0).addProducer(responseProducer).build();",
+            "        SetProducer.<Response>builder(1, 0)",
+            "            .addProducer(responseProducer).build();",
             "    this.responsesEntryPoint =",
-            "        Producers.entryPointViewOf(setOfResponseProducer, this);",
+            "        Producers.entryPointViewOf(getSetOfResponseProducer(), this);",
             "  }",
             "",
             "  @Override",
@@ -3246,9 +4310,13 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  public abstract Producer<ResponseDependency> getResponseDependencyProducer();",
             "",
+            "  public Producer<Set<Response>> getSetOfResponseProducer() {",
+            "    return setOfResponseProducer;",
+            "  }",
+            "",
             "  @Override",
             "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
-            "    Producers.cancel(setOfResponseProducer, mayInterruptIfRunning);",
+            "    Producers.cancel(getSetOfResponseProducer(), mayInterruptIfRunning);",
             "    Producers.cancel(responseProducer, mayInterruptIfRunning);",
             "  }",
             "",
@@ -3288,7 +4356,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "import dagger.producers.ProductionComponent;",
             "",
             "@ProductionComponent(",
-            "    modules = {ResponseDependencyProducerModule.class, ExecutorModule.class})",
+            "  modules = {",
+            "      ExecutorModule.class,",
+            "      ResponseDependencyProducerModule.class,",
+            "      RootMultibindingModule.class,",
+            "  })",
             "interface Root {",
             "  Leaf.Builder leaf();",
             "}"),
@@ -3307,6 +4379,22 @@ public final class AheadOfTimeSubcomponentsTest {
             "  static ListenableFuture<ResponseDependency> responseDependency() {",
             "    return Futures.immediateFuture(new ResponseDependency());",
             "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.RootMultibindingModule",
+            "package test;",
+            "",
+            "import dagger.multibindings.IntoSet;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "final class RootMultibindingModule {",
+            "  @Produces",
+            "  @IntoSet",
+            "  static Response response() {",
+            "    return new Response();",
+            "  }",
             "}"));
     JavaFileObject generatedRoot =
         JavaFileObjects.forSourceLines(
@@ -3319,7 +4407,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "import dagger.producers.Producer;",
             "import dagger.producers.internal.CancellationListener;",
             "import dagger.producers.internal.Producers;",
+            "import dagger.producers.internal.SetProducer;",
             "import dagger.producers.monitoring.ProductionComponentMonitor;",
+            "import java.util.Set;",
             "import java.util.concurrent.Executor;",
             IMPORT_GENERATED_ANNOTATION,
             "import javax.inject.Provider;",
@@ -3336,6 +4426,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  private ResponseDependencyProducerModule_ResponseDependencyFactory",
             "      responseDependencyProducer;",
+            "",
+            "  private RootMultibindingModule_ResponseFactory responseProducer;",
             "",
             "  private DaggerRoot(Builder builder) {",
             "    initialize(builder);",
@@ -3364,6 +4456,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "    this.responseDependencyProducer =",
             "        ResponseDependencyProducerModule_ResponseDependencyFactory.create(",
             "            productionImplementationExecutorProvider, monitorProvider);",
+            "    this.responseProducer =",
+            "        RootMultibindingModule_ResponseFactory.create(",
+            "            productionImplementationExecutorProvider, monitorProvider);",
             "  }",
             "",
             "  @Override",
@@ -3373,6 +4468,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
+            "    Producers.cancel(responseProducer, mayInterruptIfRunning);",
             "    Producers.cancel(responseDependencyProducer, mayInterruptIfRunning);",
             "  }",
             "",
@@ -3388,6 +4484,12 @@ public final class AheadOfTimeSubcomponentsTest {
             "      return new DaggerRoot(this);",
             "    }",
             "",
+            // TODO(b/72748365): define a builder so these methods can be omitted
+            "    public Builder executorModule(ExecutorModule executorModule) {",
+            "      this.executorModule = Preconditions.checkNotNull(executorModule);",
+            "      return this;",
+            "    }",
+            "",
             "    @Deprecated",
             "    public Builder responseDependencyProducerModule(",
             "        ResponseDependencyProducerModule responseDependencyProducerModule) {",
@@ -3395,8 +4497,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "      return this;",
             "    }",
             "",
-            "    public Builder executorModule(ExecutorModule executorModule) {",
-            "      this.executorModule = Preconditions.checkNotNull(executorModule);",
+            "    @Deprecated",
+            "    public Builder rootMultibindingModule(",
+            "        RootMultibindingModule rootMultibindingModule) {",
+            "      Preconditions.checkNotNull(rootMultibindingModule);",
             "      return this;",
             "    }",
             "  }",
@@ -3409,8 +4513,20 @@ public final class AheadOfTimeSubcomponentsTest {
             "  }",
             "",
             "  public final class LeafImpl extends DaggerLeaf implements CancellationListener {",
+            "    private Producer<Set<Response>> setOfResponseProducer;",
+            "",
             "    private LeafImpl(LeafBuilder builder) {",
             "      super(builder);",
+            "      initialize(builder);",
+            "    }",
+            "",
+            "    @SuppressWarnings(\"unchecked\")",
+            "    private void initialize(final LeafBuilder builder) {",
+            "      this.setOfResponseProducer =",
+            "          SetProducer.<Response>builder(1, 1)",
+            "              .addCollectionProducer(super.getSetOfResponseProducer())",
+            "              .addProducer(DaggerRoot.this.responseProducer)",
+            "              .build());",
             "    }",
             "",
             "    @Override",
@@ -3428,6 +4544,19 @@ public final class AheadOfTimeSubcomponentsTest {
             "    public Producer<ResponseDependency> getResponseDependencyProducer() {",
             "      return DaggerRoot.this.responseDependencyProducer;",
             "    }",
+            "",
+            "    @Override",
+            "    public Producer<Set<Response>> getSetOfResponseProducer() {",
+            "      return setOfResponseProducer;",
+            "    }",
+            "",
+            "    @Override",
+            "    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
+            "      super.onProducerFutureCancelled(mayInterruptIfRunning);",
+            // TODO(b/72748365): This call should ideally be omitted since the same key has already
+            // been canceled in the super invocation
+            "      Producers.cancel(getSetOfResponseProducer(), mayInterruptIfRunning);",
+            "    }",
             "  }",
             "}");
     compilation = compile(filesToCompile.build());
@@ -3435,6 +4564,108 @@ public final class AheadOfTimeSubcomponentsTest {
     assertThat(compilation)
         .generatedSourceFile("test.DaggerRoot")
         .hasSourceEquivalentTo(generatedRoot);
+  }
+
+  @Ignore // TODO(b/72748365): see if we can get this to work.
+  @Test
+  public void lazyOfModifiableBinding() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Lazy;",
+            "import dagger.Subcomponent;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  Lazy<MissingInLeaf> lazy();",
+            "  Provider<Lazy<MissingInLeaf>> providerOfLazy();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.Lazy;",
+            "import dagger.internal.DoubleCheck;",
+            "import dagger.internal.ProviderOfLazy;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  public abstract Provider<MissingInLeaf> missingInLeafProvider();",
+            "",
+            "  @Override",
+            "  public final Lazy<MissingInLeaf> lazy() {",
+            "    return DoubleCheck.lazy(missingInLeafProvider());",
+            "  }",
+            "",
+            "  @Override",
+            "  public final Provider<Lazy<MissingInLeaf>> providerOfLazy() {",
+            "    return ProviderOfLazy.create(missingInLeafProvider());",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class AncestorModule {",
+            "  @Provides",
+            "  static MissingInLeaf satisfiedInAncestor() { return new MissingInLeaf(); }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  public abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() { super(); }",
+            "",
+            "    @Override",
+            "    public abstract Provider<MissingInLeaf> missingInLeafProvider() {",
+            "      return AncestorModule_SatisfiedInAncestorFactory.create();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
   }
 
   private void createAncillaryClasses(

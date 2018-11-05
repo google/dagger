@@ -68,6 +68,13 @@ public final class MapProviderFactory<K, V>
       return this;
     }
 
+    // TODO(b/118630627): make this accept MapProviderFactory<K, V>, and change all framework fields
+    // to be of that type so we don't need an unsafe cast
+    public Builder<K, V> putAll(Provider<Map<K, Provider<V>>> mapProviderFactory) {
+      map.putAll(((MapProviderFactory<K, V>) mapProviderFactory).contributingMap);
+      return this;
+    }
+
     /** Returns a new {@link MapProviderFactory}. */
     public MapProviderFactory<K, V> build() {
       return new MapProviderFactory<>(map);

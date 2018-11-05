@@ -43,8 +43,9 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
       BindingRequest request,
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
-      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
-    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod);
+      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
+      DaggerTypes types) {
+    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod, types);
     this.binding = resolvedBindings.contributionBinding();
     this.request = checkNotNull(request);
     this.methodImplementation = checkNotNull(methodImplementation);

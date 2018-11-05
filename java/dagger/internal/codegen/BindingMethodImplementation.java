@@ -19,8 +19,10 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
+import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -45,19 +47,30 @@ class BindingMethodImplementation {
     this.types = checkNotNull(types);
   }
 
+  /** The method's body. */
+  final CodeBlock body() {
+    return implementation(bindingExpression.getDependencyExpression(componentName)::codeBlock);
+  }
+
+  /** The method's body if this method is a component method. */
+  final CodeBlock bodyForComponentMethod(
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
+    return implementation(
+        bindingExpression
+            .getDependencyExpressionForComponentMethod(componentMethod, component)::codeBlock);
+  }
+
   /**
    * Returns the method body, which contains zero or more statements (including semicolons).
    *
    * <p>If the implementation has a non-void return type, the body will also include the {@code
    * return} statement.
+   *
+   * @param simpleBindingExpression the expression to retrieve an instance of this binding without
+   *     the wrapping method.
    */
-  CodeBlock body() {
-    return CodeBlock.of("return $L;", simpleBindingExpression());
-  }
-
-  /** Returns the code for the binding expression. */
-  protected final CodeBlock simpleBindingExpression() {
-    return bindingExpression.getDependencyExpression(componentName).codeBlock();
+  CodeBlock implementation(Supplier<CodeBlock> simpleBindingExpression) {
+    return CodeBlock.of("return $L;", simpleBindingExpression.get());
   }
 
   /** Returns the return type for the dependency request. */

@@ -39,7 +39,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
@@ -625,13 +624,13 @@ final class BindingGraphFactory {
 
     /** Returns the resolver lineage from parent to child. */
     private ImmutableList<Resolver> getResolverLineage() {
-      List<Resolver> resolverList = Lists.newArrayList();
+      ImmutableList.Builder<Resolver> resolverList = ImmutableList.builder();
       for (Optional<Resolver> currentResolver = Optional.of(this);
           currentResolver.isPresent();
           currentResolver = currentResolver.get().parentResolver) {
         resolverList.add(currentResolver.get());
       }
-      return ImmutableList.copyOf(Lists.reverse(resolverList));
+      return resolverList.build().reverse();
     }
 
     /**

@@ -17,9 +17,9 @@
 package dagger.example.android.simple;
 
 import android.util.Log;
+import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.android.DaggerApplication;
-import dagger.android.support.AndroidSupportInjectionModule;
 import javax.inject.Inject;
 
 /**
@@ -30,8 +30,7 @@ public class SimpleApplication extends DaggerApplication {
   private static final String TAG = SimpleApplication.class.getSimpleName();
 
   @dagger.Component(
-    modules = {AndroidSupportInjectionModule.class, MainActivity.Module.class, BuildModule.class}
-  )
+      modules = {AndroidInjectionModule.class, MainActivity.Module.class, BuildModule.class})
   /* @ApplicationScoped and/or @Singleton */
   interface Component extends AndroidInjector<SimpleApplication> {
     @dagger.Component.Builder

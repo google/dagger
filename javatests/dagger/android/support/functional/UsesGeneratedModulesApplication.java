@@ -21,9 +21,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
-import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.DaggerApplication;
 import dagger.multibindings.IntoSet;
 import java.lang.annotation.Retention;
@@ -37,7 +37,7 @@ public final class UsesGeneratedModulesApplication extends DaggerApplication {
     return DaggerUsesGeneratedModulesApplication_ApplicationComponent.create();
   }
 
-  @Component(modules = {ApplicationModule.class, AndroidSupportInjectionModule.class})
+  @Component(modules = {ApplicationModule.class, AndroidInjectionModule.class})
   interface ApplicationComponent extends AndroidInjector<UsesGeneratedModulesApplication> {}
 
   @Module

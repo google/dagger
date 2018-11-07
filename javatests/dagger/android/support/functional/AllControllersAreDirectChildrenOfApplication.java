@@ -21,8 +21,8 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
+import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
-import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.DaggerApplication;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.BroadcastReceiverSubcomponent.BroadcastReceiverModule;
 import dagger.android.support.functional.AllControllersAreDirectChildrenOfApplication.ApplicationComponent.ContentProviderSubcomponent.ContentProviderModule;
@@ -40,9 +40,7 @@ public final class AllControllersAreDirectChildrenOfApplication extends DaggerAp
     return DaggerAllControllersAreDirectChildrenOfApplication_ApplicationComponent.create();
   }
 
-  @Component(
-    modules = {ApplicationComponent.ApplicationModule.class, AndroidSupportInjectionModule.class}
-  )
+  @Component(modules = {ApplicationComponent.ApplicationModule.class, AndroidInjectionModule.class})
   interface ApplicationComponent
       extends AndroidInjector<AllControllersAreDirectChildrenOfApplication> {
     @Module(

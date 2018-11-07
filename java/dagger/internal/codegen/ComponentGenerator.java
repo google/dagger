@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.SourceFiles.classFileName;
 
 import com.squareup.javapoet.ClassName;
@@ -32,27 +33,16 @@ import javax.lang.model.element.TypeElement;
  * Generates the implementation of the abstract types annotated with {@link Component}.
  */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
-  private final DaggerTypes types;
-  private final DaggerElements elements;
-  private final KeyFactory keyFactory;
-  private final CompilerOptions compilerOptions;
-  private final BindingGraphFactory bindingGraphFactory;
+  private final ComponentImplementationFactory componentImplementationFactory;
 
   @Inject
   ComponentGenerator(
       Filer filer,
       DaggerElements elements,
       SourceVersion sourceVersion,
-      DaggerTypes types,
-      KeyFactory keyFactory,
-      CompilerOptions compilerOptions,
-      BindingGraphFactory bindingGraphFactory) {
+      ComponentImplementationFactory componentImplementationFactory) {
     super(filer, elements, sourceVersion);
-    this.types = types;
-    this.elements = elements;
-    this.keyFactory = keyFactory;
-    this.compilerOptions = compilerOptions;
-    this.bindingGraphFactory = bindingGraphFactory;
+    this.componentImplementationFactory = componentImplementationFactory;
   }
 
   @Override
@@ -71,16 +61,10 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph input) {
+  Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
-        ComponentImplementationBuilder.createComponentImplementation(
-            types,
-            elements,
-            keyFactory,
-            compilerOptions,
-            componentName,
-            input,
-            bindingGraphFactory);
+        componentImplementationFactory.createComponentImplementation(bindingGraph);
+    verify(componentImplementation.name().equals(componentName));
     return Optional.of(componentImplementation.generate());
   }
 }

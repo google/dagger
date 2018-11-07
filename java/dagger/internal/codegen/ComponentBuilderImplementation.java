@@ -48,23 +48,23 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/** Models the generated code for a component builder. */
-final class GeneratedComponentBuilderModel {
-  private final TypeSpec typeSpec;
+/** The implementation of a component builder type. */
+final class ComponentBuilderImplementation {
+  private final TypeSpec componentBuilderClass;
   private final ClassName name;
   private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
-  private GeneratedComponentBuilderModel(
-      TypeSpec typeSpec,
+  private ComponentBuilderImplementation(
+      TypeSpec componentBuilderClass,
       ClassName name,
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
-    this.typeSpec = typeSpec;
+    this.componentBuilderClass = componentBuilderClass;
     this.name = name;
     this.builderFields = builderFields;
   }
 
-  TypeSpec typeSpec() {
-    return typeSpec;
+  TypeSpec componentBuilderClass() {
+    return componentBuilderClass;
   }
 
   ClassName name() {
@@ -75,29 +75,25 @@ final class GeneratedComponentBuilderModel {
     return builderFields;
   }
 
-  static Optional<GeneratedComponentBuilderModel> create(
+  static Optional<ComponentBuilderImplementation> create(
       ComponentImplementation componentImplementation,
       BindingGraph graph,
       Elements elements,
       Types types) {
-    return hasBuilder(graph.componentDescriptor())
+    return graph.componentDescriptor().hasBuilder()
         ? Optional.of(new Creator(componentImplementation, graph, elements, types).create())
         : Optional.empty();
   }
 
-  private static boolean hasBuilder(ComponentDescriptor component) {
-    return component.kind().isTopLevel() || component.builderSpec().isPresent();
-  }
-
   private static final class Creator {
-    private static final String NOOP_BUILDER_METHOD_JAVADOC =
+    static final String NOOP_BUILDER_METHOD_JAVADOC =
         "This module is declared, but an instance is not used in the component. This method is a "
             + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
-    private final BindingGraph graph;
-    private final TypeSpec.Builder builder;
-    private final ComponentImplementation componentImplementation;
-    private final Elements elements;
-    private final Types types;
+    final BindingGraph graph;
+    final TypeSpec.Builder componentBuilderClass;
+    final ComponentImplementation componentImplementation;
+    final Elements elements;
+    final Types types;
 
     Creator(
         ComponentImplementation componentImplementation,
@@ -105,54 +101,57 @@ final class GeneratedComponentBuilderModel {
         Elements elements,
         Types types) {
       this.componentImplementation = componentImplementation;
-      this.builder = classBuilder(componentImplementation.getBuilderName());
+      this.componentBuilderClass = classBuilder(componentImplementation.getBuilderName());
       this.graph = graph;
       this.elements = elements;
       this.types = types;
     }
 
-    GeneratedComponentBuilderModel create() {
+    ComponentBuilderImplementation create() {
       if (!componentImplementation.isNested()) {
-        builder.addModifiers(STATIC);
+        componentBuilderClass.addModifiers(STATIC);
       }
       if (builderSpec().isPresent()) {
         if (componentImplementation.isAbstract()) {
-          builder.addModifiers(PUBLIC);
+          componentBuilderClass.addModifiers(PUBLIC);
         } else {
-          builder.addModifiers(PRIVATE);
+          componentBuilderClass.addModifiers(PRIVATE);
         }
         setSupertype();
       } else {
-        builder.addModifiers(PUBLIC).addMethod(constructorBuilder().addModifiers(PRIVATE).build());
+        componentBuilderClass
+            .addModifiers(PUBLIC)
+            .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
       }
 
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields(graph);
 
       if (componentImplementation.isAbstract()) {
-        builder.addModifiers(ABSTRACT);
+        componentBuilderClass.addModifiers(ABSTRACT);
       } else {
-        builder.addModifiers(FINAL);
-        builder.addMethod(buildMethod(builderFields)); // Can only instantiate concrete classes.
+        componentBuilderClass.addModifiers(FINAL);
+        // Can only instantiate concrete classes.
+        componentBuilderClass.addMethod(buildMethod(builderFields));
       }
 
-      builder
+      componentBuilderClass
           .addFields(builderFields.values())
           // TODO(ronshapiro): this should be switched with buildMethod(), but that currently breaks
           // compile-testing tests that rely on the order of the methods
           .addMethods(builderMethods(builderFields));
 
-      return new GeneratedComponentBuilderModel(
-          builder.build(), componentImplementation.getBuilderName(), builderFields);
+      return new ComponentBuilderImplementation(
+          componentBuilderClass.build(), componentImplementation.getBuilderName(), builderFields);
     }
 
     /** Set the superclass being extended or interface being implemented for this builder. */
-    private void setSupertype() {
+    void setSupertype() {
       if (componentImplementation.superclassImplementation().isPresent()) {
         // If there's a superclass, extend the Builder defined there.
-        builder.superclass(
+        componentBuilderClass.superclass(
             componentImplementation.superclassImplementation().get().getBuilderName());
       } else {
-        addSupertype(builder, builderSpec().get().builderDefinitionType());
+        addSupertype(componentBuilderClass, builderSpec().get().builderDefinitionType());
       }
     }
 
@@ -160,7 +159,7 @@ final class GeneratedComponentBuilderModel {
      * Computes fields for each of the {@linkplain BindingGraph#componentRequirements component
      * requirements}. Regardless of builder spec, there is always one field per requirement.
      */
-    private static ImmutableMap<ComponentRequirement, FieldSpec> builderFields(BindingGraph graph) {
+    static ImmutableMap<ComponentRequirement, FieldSpec> builderFields(BindingGraph graph) {
       UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap.Builder<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.builder();
       for (ComponentRequirement componentRequirement : graph.componentRequirements()) {
@@ -172,7 +171,7 @@ final class GeneratedComponentBuilderModel {
       return builderFields.build();
     }
 
-    private MethodSpec buildMethod(ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
+    MethodSpec buildMethod(ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       MethodSpec.Builder buildMethod;
       if (builderSpec().isPresent()) {
         ExecutableElement specBuildMethod = builderSpec().get().buildMethod();
@@ -219,7 +218,7 @@ final class GeneratedComponentBuilderModel {
      * Computes the methods that set each of parameters on the builder. If the {@link BuilderSpec}
      * is present, it will tailor the methods to match the spec.
      */
-    private ImmutableSet<MethodSpec> builderMethods(
+    ImmutableSet<MethodSpec> builderMethods(
         ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
       ImmutableSet<ComponentRequirement> componentRequirements = graph.componentRequirements();
       ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
@@ -296,7 +295,7 @@ final class GeneratedComponentBuilderModel {
       return methods.build();
     }
 
-    private MethodSpec.Builder addBuilderMethodFromSpec(ExecutableElement method) {
+    MethodSpec.Builder addBuilderMethodFromSpec(ExecutableElement method) {
       TypeMirror returnType = method.getReturnType();
       MethodSpec.Builder builderMethod =
           methodBuilder(method.getSimpleName().toString())
@@ -311,14 +310,14 @@ final class GeneratedComponentBuilderModel {
       return builderMethod;
     }
 
-    private static void addBuilderMethodReturnStatementForSpec(
+    static void addBuilderMethodReturnStatementForSpec(
         ExecutableElement specMethod, MethodSpec.Builder builderMethod) {
       if (!specMethod.getReturnType().getKind().equals(VOID)) {
         builderMethod.addStatement("return this");
       }
     }
 
-    private Optional<BuilderSpec> builderSpec() {
+    Optional<BuilderSpec> builderSpec() {
       return graph.componentDescriptor().builderSpec();
     }
   }

@@ -353,6 +353,14 @@ abstract class ComponentDescriptor {
   abstract Optional<BuilderSpec> builderSpec();
 
   /**
+   * Returns {@code true} for components that have a builder, either because the user {@linkplain
+   * #builderSpec() specified one} or because it's a top-level component.
+   */
+  boolean hasBuilder() {
+    return kind().isTopLevel() || builderSpec().isPresent();
+  }
+
+  /**
    * Returns the {@link CancellationPolicy} for this component, or an empty optional if either the
    * component is not a production component or no {@code CancellationPolicy} annotation is present.
    */

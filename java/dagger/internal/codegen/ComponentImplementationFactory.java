@@ -106,12 +106,12 @@ final class ComponentImplementationFactory {
     ComponentImplementation componentImplementation =
         topLevelImplementation(componentName(bindingGraph.componentType()), bindingGraph);
     OptionalFactories optionalFactories = new OptionalFactories(componentImplementation);
-    Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel =
-        GeneratedComponentBuilderModel.create(
+    Optional<ComponentBuilderImplementation> componentBuilderImplementation =
+        ComponentBuilderImplementation.create(
             componentImplementation, bindingGraph, elements, types);
     ComponentRequirementFields componentRequirementFields =
         new ComponentRequirementFields(
-            bindingGraph, componentImplementation, generatedComponentBuilderModel);
+            bindingGraph, componentImplementation, componentBuilderImplementation);
     ComponentBindingExpressions bindingExpressions =
         new ComponentBindingExpressions(
             bindingGraph,
@@ -134,7 +134,7 @@ final class ComponentImplementationFactory {
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              generatedComponentBuilderModel)
+              componentBuilderImplementation)
           .build();
     } else {
       return new RootComponentImplementationBuilder(
@@ -143,7 +143,7 @@ final class ComponentImplementationFactory {
               optionalFactories,
               bindingExpressions,
               componentRequirementFields,
-              generatedComponentBuilderModel)
+              componentBuilderImplementation.get())
           .build();
     }
   }
@@ -166,7 +166,7 @@ final class ComponentImplementationFactory {
     final ComponentRequirementFields componentRequirementFields;
     final ComponentImplementation componentImplementation;
     final OptionalFactories optionalFactories;
-    final Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel;
+    final Optional<ComponentBuilderImplementation> componentBuilderImplementation;
     boolean done;
 
     ComponentImplementationBuilder(
@@ -175,13 +175,13 @@ final class ComponentImplementationFactory {
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
+        Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
       this.graph = graph;
       this.componentImplementation = componentImplementation;
       this.optionalFactories = optionalFactories;
       this.bindingExpressions = bindingExpressions;
       this.componentRequirementFields = componentRequirementFields;
-      this.generatedComponentBuilderModel = generatedComponentBuilderModel;
+      this.componentBuilderImplementation = componentBuilderImplementation;
     }
 
     /**
@@ -195,8 +195,8 @@ final class ComponentImplementationFactory {
           "ComponentImplementationBuilder has already built the ComponentImplementation for [%s].",
           componentImplementation.name());
       setSupertype();
-      generatedComponentBuilderModel
-          .map(GeneratedComponentBuilderModel::typeSpec)
+      componentBuilderImplementation
+          .map(ComponentBuilderImplementation::componentBuilderClass)
           .ifPresent(this::addBuilderClass);
 
       getLocalAndInheritedMethods(
@@ -384,11 +384,11 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents()
               ? abstractInnerSubcomponent(childGraph.componentDescriptor())
               : concreteSubcomponent(childGraph.componentDescriptor());
-      Optional<GeneratedComponentBuilderModel> childBuilderModel =
-          GeneratedComponentBuilderModel.create(childImplementation, childGraph, elements, types);
+      Optional<ComponentBuilderImplementation> childBuilderImplementation =
+          ComponentBuilderImplementation.create(childImplementation, childGraph, elements, types);
       ComponentRequirementFields childComponentRequirementFields =
           componentRequirementFields.forChildComponent(
-              childGraph, childImplementation, childBuilderModel);
+              childGraph, childImplementation, childBuilderImplementation);
       ComponentBindingExpressions childBindingExpressions =
           bindingExpressions.forChildComponent(
               childGraph, childImplementation, childComponentRequirementFields);
@@ -399,7 +399,7 @@ final class ComponentImplementationFactory {
               optionalFactories,
               childBindingExpressions,
               childComponentRequirementFields,
-              childBuilderModel)
+              childBuilderImplementation)
           .build();
     }
 
@@ -477,9 +477,9 @@ final class ComponentImplementationFactory {
 
     /** Returns the list of {@link ParameterSpec}s for the constructor. */
     final ImmutableList<ParameterSpec> constructorParameters() {
-      if (generatedComponentBuilderModel.isPresent()) {
+      if (componentBuilderImplementation.isPresent()) {
         return ImmutableList.of(
-            ParameterSpec.builder(generatedComponentBuilderModel.get().name(), "builder").build());
+            ParameterSpec.builder(componentBuilderImplementation.get().name(), "builder").build());
       } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
         // If we're generating an abstract inner subcomponent, then we are not implementing module
         // instance bindings and have no need for factory method parameters.
@@ -499,25 +499,28 @@ final class ComponentImplementationFactory {
 
   /** Builds a root component implementation. */
   private final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
+    private final ClassName componentBuilderClassName;
+
     RootComponentImplementationBuilder(
         BindingGraph graph,
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
+        ComponentBuilderImplementation componentBuilderImplementation) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          generatedComponentBuilderModel);
+          Optional.of(componentBuilderImplementation));
+      this.componentBuilderClassName = componentBuilderImplementation.name();
     }
 
     @Override
     void addBuilderClass(TypeSpec builder) {
-      super.componentImplementation.addType(COMPONENT_BUILDER, builder);
+      componentImplementation.addType(COMPONENT_BUILDER, builder);
     }
 
     @Override
@@ -528,16 +531,16 @@ final class ComponentImplementationFactory {
           methodBuilder("builder")
               .addModifiers(PUBLIC, STATIC)
               .returns(
-                  builderSpec().isPresent()
-                      ? ClassName.get(builderSpec().get().builderDefinitionType())
-                      : super.generatedComponentBuilderModel.get().name())
-              .addStatement("return new $T()", super.generatedComponentBuilderModel.get().name())
+                  builderSpec()
+                      .map(builderSpec -> ClassName.get(builderSpec.builderDefinitionType()))
+                      .orElse(componentBuilderClassName))
+              .addStatement("return new $T()", componentBuilderClassName)
               .build();
-      super.componentImplementation.addMethod(BUILDER_METHOD, builderFactoryMethod);
+      componentImplementation.addMethod(BUILDER_METHOD, builderFactoryMethod);
       if (canInstantiateAllRequirements()) {
         CharSequence buildMethodName =
             builderSpec().isPresent() ? builderSpec().get().buildMethod().getSimpleName() : "build";
-        super.componentImplementation.addMethod(
+        componentImplementation.addMethod(
             BUILDER_METHOD,
             methodBuilder("create")
                 .returns(ClassName.get(super.graph.componentType()))
@@ -548,13 +551,13 @@ final class ComponentImplementationFactory {
     }
 
     Optional<ComponentDescriptor.BuilderSpec> builderSpec() {
-      return super.graph.componentDescriptor().builderSpec();
+      return graph.componentDescriptor().builderSpec();
     }
 
     /** {@code true} if all of the graph's required dependencies can be automatically constructed */
     boolean canInstantiateAllRequirements() {
       return !Iterables.any(
-          super.graph.componentRequirements(),
+          graph.componentRequirements(),
           dependency -> dependency.requiresAPassedInstance(elements, types));
     }
   }
@@ -575,14 +578,14 @@ final class ComponentImplementationFactory {
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
         ComponentRequirementFields componentRequirementFields,
-        Optional<GeneratedComponentBuilderModel> builder) {
+        Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
           componentRequirementFields,
-          builder);
+          componentBuilderImplementation);
       this.parent = parent;
     }
 
@@ -602,7 +605,7 @@ final class ComponentImplementationFactory {
       if (!componentImplementation.isAbstract()) {
         // Use the parent's factory method to create this subcomponent if the
         // subcomponent was not added via {@link dagger.Module#subcomponents()}.
-        super.graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
+        graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
       }
     }
 
@@ -617,7 +620,7 @@ final class ComponentImplementationFactory {
                   .addStatement(
                       "return new $T($L)",
                       componentImplementation.name(),
-                      getFactoryMethodParameterSpecs(super.graph).stream()
+                      getFactoryMethodParameterSpecs(graph).stream()
                           .map(param -> CodeBlock.of("$N", param))
                           .collect(toParametersCodeBlock()))
                   .build());

@@ -47,33 +47,33 @@ final class ComponentRequirementFields {
       new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel;
+  private final Optional<ComponentBuilderImplementation> componentBuilderImplementation;
 
   private ComponentRequirementFields(
       Optional<ComponentRequirementFields> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
+      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.generatedComponentBuilderModel = generatedComponentBuilderModel;
+    this.componentBuilderImplementation = componentBuilderImplementation;
   }
 
   ComponentRequirementFields(
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
-    this(Optional.empty(), graph, componentImplementation, generatedComponentBuilderModel);
+      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
+    this(Optional.empty(), graph, componentImplementation, componentBuilderImplementation);
   }
 
   /** Returns a new object representing the fields available from a child component of this one. */
   ComponentRequirementFields forChildComponent(
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      Optional<GeneratedComponentBuilderModel> generatedComponentBuilderModel) {
+      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
     return new ComponentRequirementFields(
-        Optional.of(this), graph, componentImplementation, generatedComponentBuilderModel);
+        Optional.of(this), graph, componentImplementation, componentBuilderImplementation);
   }
 
   /**
@@ -110,9 +110,9 @@ final class ComponentRequirementFields {
 
   /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
   private ComponentRequirementField create(ComponentRequirement requirement) {
-    if (generatedComponentBuilderModel.isPresent()) {
+    if (componentBuilderImplementation.isPresent()) {
       FieldSpec builderField =
-          generatedComponentBuilderModel.get().builderFields().get(requirement);
+          componentBuilderImplementation.get().builderFields().get(requirement);
       return new BuilderField(requirement, componentImplementation, builderField);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {

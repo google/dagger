@@ -157,30 +157,6 @@ public final class ContributesAndroidInjectorTest {
   }
 
   @Test
-  public void notAFrameworkType() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.TestModule",
-            "package test;",
-            "",
-            "import dagger.Module;",
-            "import dagger.android.ContributesAndroidInjector;",
-            "",
-            "@Module",
-            "abstract class TestModule {",
-            "  @ContributesAndroidInjector",
-            "  abstract android.content.Intent intent();",
-            "}");
-
-    Compilation compilation = compile(module);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("is not a framework type")
-        .inFile(module)
-        .onLineContaining("intent()");
-  }
-
-  @Test
   public void moduleIsntModule() {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(

@@ -54,15 +54,8 @@ public final class DispatchingAndroidInjector<T> implements AndroidInjector<T> {
   @Inject
   DispatchingAndroidInjector(
       Map<Class<?>, Provider<AndroidInjector.Factory<?>>> injectorFactoriesWithClassKeys,
-      Map<String, Provider<AndroidInjector.Factory<?>>> injectorFactoriesWithStringKeys,
-      Map<Class<? extends T>, Provider<AndroidInjector.Factory<? extends T>>>
-          boundedInjectorFactoriesWithClassKeys,
-      Map<String, Provider<AndroidInjector.Factory<? extends T>>>
-          boundedInjectorFactoriesWithStringKeys) {
-    this.injectorFactories =
-        secondaryMerge(
-            merge(injectorFactoriesWithClassKeys, injectorFactoriesWithStringKeys),
-            merge(boundedInjectorFactoriesWithClassKeys, boundedInjectorFactoriesWithStringKeys));
+      Map<String, Provider<AndroidInjector.Factory<?>>> injectorFactoriesWithStringKeys) {
+    this.injectorFactories = merge(injectorFactoriesWithClassKeys, injectorFactoriesWithStringKeys);
   }
 
   /**
@@ -93,26 +86,6 @@ public final class DispatchingAndroidInjector<T> implements AndroidInjector<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     Map<String, Provider<AndroidInjector.Factory<?>>> safeCast = (Map) merged;
     return Collections.unmodifiableMap(safeCast);
-  }
-
-  /**
-   * Merges the results of {@link #merge(Map, Map)} calls into one map.
-   *
-   * <p>An SPI plugin verifies the logical uniqueness of the keysets of these two (merged) maps so
-   * we're assured there's no overlap.
-   */
-  private static <K, V> Map<K, V> secondaryMerge(Map<K, V> firstMap, Map<K, V> secondMap) {
-    if (firstMap.isEmpty()) {
-      return secondMap;
-    }
-    if (secondMap.isEmpty()) {
-      return firstMap;
-    }
-
-    Map<K, V> merged = newLinkedHashMapWithExpectedSize(firstMap.size() + secondMap.size());
-    merged.putAll(firstMap);
-    merged.putAll(secondMap);
-    return merged;
   }
 
   /**

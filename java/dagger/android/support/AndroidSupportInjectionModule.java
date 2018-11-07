@@ -16,29 +16,16 @@
 
 package dagger.android.support;
 
-import android.support.v4.app.Fragment;
 import dagger.Module;
 import dagger.android.AndroidInjectionModule;
-import dagger.android.AndroidInjector;
 import dagger.internal.Beta;
-import dagger.multibindings.Multibinds;
-import java.util.Map;
 
 /**
- * Configures bindings to ensure the usability of {@code dagger.android} and {@code
- * dagger.android.support} framework classes. This module should be installed in the root-most
- * component which will use these types.
+ * This module no longer provides any value beyond what is provided in {@link
+ * AndroidInjectionModule} and is just an alias. It will be removed in a future release.
  */
 @Beta
 @Module(includes = AndroidInjectionModule.class)
 public abstract class AndroidSupportInjectionModule {
-  @Multibinds
-  abstract Map<Class<? extends Fragment>, AndroidInjector.Factory<? extends Fragment>>
-      supportFragmentInjectorFactories();
-
-  @Multibinds
-  abstract Map<String, AndroidInjector.Factory<? extends Fragment>>
-      supportFragmentInjectorFactoriesWithStringKeys();
-
   private AndroidSupportInjectionModule() {}
 }

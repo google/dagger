@@ -20,7 +20,6 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.getAnnotationMirror;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.android.processor.AndroidMapKeys.frameworkTypesByMapKey;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
@@ -33,9 +32,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
-import java.lang.annotation.Annotation;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
@@ -122,22 +119,11 @@ abstract class AndroidInjectorDescriptor {
       builder.enclosingModule(ClassName.get(enclosingElement));
 
       TypeMirror injectedType = method.getReturnType();
-      Optional<? extends Class<? extends Annotation>> maybeMapKeyAnnotation =
-          frameworkTypesByMapKey(elements)
-              .entrySet()
-              .stream()
-              .filter(entry -> types.isAssignable(injectedType, entry.getValue()))
-              .map(Map.Entry::getKey)
-              .findFirst();
-      if (maybeMapKeyAnnotation.isPresent()) {
-        if (MoreTypes.asDeclared(injectedType).getTypeArguments().isEmpty()) {
-          builder.injectedType(ClassName.get(MoreTypes.asTypeElement(injectedType)));
-        } else {
-          reporter.reportError(
-              "@ContributesAndroidInjector methods cannot return parameterized types");
-        }
+      if (MoreTypes.asDeclared(injectedType).getTypeArguments().isEmpty()) {
+        builder.injectedType(ClassName.get(MoreTypes.asTypeElement(injectedType)));
       } else {
-        reporter.reportError(String.format("%s is not a framework type", injectedType));
+        reporter.reportError(
+            "@ContributesAndroidInjector methods cannot return parameterized types");
       }
 
       AnnotationMirror annotation =

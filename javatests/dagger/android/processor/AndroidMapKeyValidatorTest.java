@@ -50,14 +50,6 @@ public class AndroidMapKeyValidatorTest {
           "import android.app.Activity;",
           "",
           "public class BarActivity extends Activity {}");
-  private static final JavaFileObject BAZ_FRAGMENT =
-      JavaFileObjects.forSourceLines(
-          "test.BazFragment",
-          "package test;",
-          "",
-          "import android.app.Fragment;",
-          "",
-          "public class BazFragment extends Fragment {}");
 
   private static JavaFileObject moduleWithMethod(String... lines) {
     return JavaFileObjects.forSourceLines(
@@ -149,85 +141,6 @@ public class AndroidMapKeyValidatorTest {
   }
 
   @Test
-  public void mapKeyDoesntMatchCoreType() {
-    JavaFileObject module =
-        moduleWithMethod(
-            "@Binds",
-            "@IntoMap",
-            "@FragmentKey(BazFragment.class)",
-            "abstract AndroidInjector.Factory<? extends Activity> bindWrongFrameworkType(",
-            "    FooActivity.Builder builder);");
-    Compilation compilation = compile(module, FOO_ACTIVITY, BAZ_FRAGMENT);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "should bind dagger.android.AndroidInjector.Factory<? extends android.app.Fragment>, "
-                + "not dagger.android.AndroidInjector.Factory<? extends android.app.Activity>");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.FooActivity.Builder does not implement AndroidInjector<test.BazFragment>")
-        .inFile(module)
-        .onLine(LINES_BEFORE_METHOD + 3);
-  }
-
-  @Test
-  public void mapKeyDoesntMatchCoreType_AndroidInjectionKey() {
-    JavaFileObject module =
-        moduleWithMethod(
-            "@Binds",
-            "@IntoMap",
-            "@AndroidInjectionKey(\"test.BazFragment\")",
-            "abstract AndroidInjector.Factory<? extends Activity> bindWrongFrameworkType(",
-            "    FooActivity.Builder builder);");
-    Compilation compilation = compile(module, FOO_ACTIVITY, BAZ_FRAGMENT);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "should bind dagger.android.AndroidInjector.Factory<?>, not "
-                + "dagger.android.AndroidInjector.Factory<? extends android.app.Activity>");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.FooActivity.Builder does not implement AndroidInjector<test.BazFragment>")
-        .inFile(module)
-        .onLine(LINES_BEFORE_METHOD + 3);
-  }
-
-  @Test
-  public void mapKeyDoesntMatchCoreType_supportFragments() {
-    JavaFileObject supportFragment =
-        JavaFileObjects.forSourceLines(
-            "test.SupportFragment",
-            "package test;",
-            "",
-            "import android.support.v4.app.Fragment;",
-            "import dagger.android.AndroidInjector;",
-            "",
-            "public class SupportFragment extends Fragment {",
-            "  interface Factory extends AndroidInjector.Factory<SupportFragment> {}",
-            "}");
-
-    JavaFileObject module =
-        moduleWithMethod(
-            "@Binds",
-            "@IntoMap",
-            "@dagger.android.FragmentKey(BazFragment.class)",
-            "abstract AndroidInjector.Factory<? extends android.support.v4.app.Fragment> ",
-            "    bindWrongFrameworkType(SupportFragment.Factory factory);");
-    Compilation compilation = compile(module, BAZ_FRAGMENT, supportFragment);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "should bind dagger.android.AndroidInjector.Factory<? extends android.app.Fragment>, "
-                + "not dagger.android.AndroidInjector.Factory<? extends "
-                + "android.support.v4.app.Fragment>");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.SupportFragment.Factory does not implement AndroidInjector<test.BazFragment>")
-        .inFile(module)
-        .onLine(LINES_BEFORE_METHOD + 3);
-  }
-
-  @Test
   public void bindsToConcreteTypeInsteadOfWildcard() {
     JavaFileObject module =
         moduleWithMethod(
@@ -265,19 +178,6 @@ public class AndroidMapKeyValidatorTest {
         moduleWithMethod(
             "@Binds",
             "@IntoMap",
-            "@ActivityKey(FooActivity.class)",
-            "abstract AndroidInjector.Factory<? extends Activity> bindCorrectType(",
-            "    FooActivity.Builder builder);");
-    Compilation compilation = compile(module, FOO_ACTIVITY);
-    assertThat(compilation).succeededWithoutWarnings();
-  }
-
-  @Test
-  public void bindsCorrectType_unbounded() {
-    JavaFileObject module =
-        moduleWithMethod(
-            "@Binds",
-            "@IntoMap",
             "@ClassKey(FooActivity.class)",
             "abstract AndroidInjector.Factory<?> bindCorrectType(FooActivity.Builder builder);");
     Compilation compilation = compile(module, FOO_ACTIVITY);
@@ -291,8 +191,7 @@ public class AndroidMapKeyValidatorTest {
             "@Binds",
             "@IntoMap",
             "@AndroidInjectionKey(\"test.FooActivity\")",
-            "abstract AndroidInjector.Factory<? extends Activity> bindCorrectType(",
-            "    FooActivity.Builder builder);");
+            "abstract AndroidInjector.Factory<?> bindCorrectType(FooActivity.Builder builder);");
     Compilation compilation = compile(module, FOO_ACTIVITY);
     assertThat(compilation).succeededWithoutWarnings();
   }

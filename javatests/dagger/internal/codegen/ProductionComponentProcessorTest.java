@@ -583,4 +583,137 @@ public class ProductionComponentProcessorTest {
         .inFile(component)
         .onLine(36);
   }
+
+  @Test
+  public void productionScope_provides() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.producers.ProductionScope;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class TestModule {",
+            "  @Provides",
+            "  @ProductionScope",
+            "  static int i() {",
+            "    return 1;",
+            "  }",
+            "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent(modules = TestModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionSubcomponent;",
+            "",
+            "@ProductionSubcomponent(modules = TestModule.class)",
+            "interface Child {",
+            "  int i();",
+            "}");
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(module, parent, child);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .containsElementsIn(
+            new JavaFileBuilder(compilerMode, "test.DaggerRoot")
+                .addLines(
+                    "package test;",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerParent implements Parent, CancellationListener {",
+                    "  private final class ChildImpl implements Child, CancellationListener {",
+                    "    @Override",
+                    "    public int i() {")
+                .addLinesIn(
+                    CompilerMode.DEFAULT_MODE, //
+                    "      return DaggerParent.this.iProvider.get();")
+                .addLinesIn(
+                    CompilerMode.FAST_INIT_MODE, //
+                    "      return DaggerParent.this.getInteger();")
+                .addLines(
+                    "    }", //
+                    "  }", //
+                    "}")
+                .build());
+  }
+
+  @Test
+  public void productionScope_injectConstructor() {
+    JavaFileObject productionScoped =
+        JavaFileObjects.forSourceLines(
+            "test.ProductionScoped",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionScope;",
+            "import javax.inject.Inject;",
+            "",
+            "@ProductionScope",
+            "class ProductionScoped {",
+            "  @Inject ProductionScoped() {}",
+            "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionSubcomponent;",
+            "",
+            "@ProductionSubcomponent",
+            "interface Child {",
+            "  ProductionScoped productionScoped();",
+            "}");
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(productionScoped, parent, child);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerParent")
+        .containsElementsIn(
+            new JavaFileBuilder(compilerMode, "test.DaggerRoot")
+                .addLines(
+                    "package test;",
+                    GENERATED_ANNOTATION,
+                    "public final class DaggerParent implements Parent, CancellationListener {",
+                    "  private final class ChildImpl implements Child, CancellationListener {",
+                    "    @Override",
+                    "    public ProductionScoped productionScoped() {")
+                .addLinesIn(
+                    CompilerMode.DEFAULT_MODE, //
+                    "      return DaggerParent.this.productionScopedProvider.get();")
+                .addLinesIn(
+                    CompilerMode.FAST_INIT_MODE, //
+                    "      return DaggerParent.this.getProductionScoped();")
+                .addLines(
+                    "    }", //
+                    "  }", //
+                    "}")
+                .build());
+  }
 }

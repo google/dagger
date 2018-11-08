@@ -28,6 +28,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.DELEGATE;
+import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.OPTIONAL;
 import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
 import static java.util.function.Predicate.isEqual;
@@ -523,6 +524,23 @@ final class BindingGraphFactory {
     }
 
     private Optional<Resolver> getOwningResolver(ContributionBinding binding) {
+      // TODO(ronshapiro): extract the different pieces of this method into their own methods
+      if (binding.scope().isPresent() && binding.scope().get().isProductionScope()) {
+        for (Resolver requestResolver : getResolverLineage()) {
+          // Resolve @Inject @ProductionScope bindings at the highest production component.
+          if (binding.kind().equals(INJECTION)
+              && requestResolver.componentDescriptor.kind().isProducer()) {
+            return Optional.of(requestResolver);
+          }
+
+          // Resolve explicit @ProductionScope bindings at the highest component that installs
+          // the binding.
+          if (requestResolver.containsExplicitBinding(binding)) {
+            return Optional.of(requestResolver);
+          }
+        }
+      }
+
       if (binding.scope().isPresent() && binding.scope().get().isReusable()) {
         for (Resolver requestResolver : getResolverLineage().reverse()) {
           // If a @Reusable binding was resolved in an ancestor, use that component.
@@ -537,9 +555,7 @@ final class BindingGraphFactory {
       }
 
       for (Resolver requestResolver : getResolverLineage().reverse()) {
-        if (requestResolver.explicitBindingsSet.contains(binding)
-            || resolverContainsDelegateDeclarationForBinding(requestResolver, binding)
-            || requestResolver.subcomponentDeclarations.containsKey(binding.key())) {
+        if (requestResolver.containsExplicitBinding(binding)) {
           return Optional.of(requestResolver);
         }
       }
@@ -555,6 +571,12 @@ final class BindingGraphFactory {
         }
       }
       return Optional.empty();
+    }
+
+    private boolean containsExplicitBinding(ContributionBinding binding) {
+      return explicitBindingsSet.contains(binding)
+          || resolverContainsDelegateDeclarationForBinding(this, binding)
+          || subcomponentDeclarations.containsKey(binding.key());
     }
 
     /**

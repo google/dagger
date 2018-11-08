@@ -17,8 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Multimaps.filterKeys;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -28,13 +30,16 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.BindingNode;
 import dagger.model.Key;
+import dagger.producers.Producer;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.lang.model.type.DeclaredType;
 
 /**
@@ -44,10 +49,13 @@ import javax.lang.model.type.DeclaredType;
 final class MapMultibindingValidator implements BindingGraphPlugin {
 
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
+  private final KeyFactory keyFactory;
 
   @Inject
-  MapMultibindingValidator(BindingDeclarationFormatter bindingDeclarationFormatter) {
+  MapMultibindingValidator(
+      BindingDeclarationFormatter bindingDeclarationFormatter, KeyFactory keyFactory) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
+    this.keyFactory = keyFactory;
   }
 
   @Override
@@ -57,14 +65,61 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    for (BindingNode node : bindingGraph.bindingNodes()) {
-      if (node.binding().kind().equals(MULTIBOUND_MAP)) {
-        ImmutableSet<ContributionBinding> contributions =
-            mapBindingContributions(node, bindingGraph);
-        checkForDuplicateMapKeys(node, contributions, diagnosticReporter);
-        checkForInconsistentMapKeyAnnotationTypes(node, contributions, diagnosticReporter);
-      }
-    }
+    mapMultibindings(bindingGraph)
+        .forEach(
+            binding -> {
+              ImmutableSet<ContributionBinding> contributions =
+                  mapBindingContributions(binding, bindingGraph);
+              checkForDuplicateMapKeys(binding, contributions, diagnosticReporter);
+              checkForInconsistentMapKeyAnnotationTypes(binding, contributions, diagnosticReporter);
+            });
+  }
+
+  /**
+   * Returns the map multibindings in the binding graph. If a graph contains bindings for more than
+   * one of the following for the same {@code K} and {@code V}, then only the first one found will
+   * be returned so we don't report the same map contribution problem more than once.
+   *
+   * <ol>
+   *   <li>{@code Map<K, V>}
+   *   <li>{@code Map<K, Provider<V>>}
+   *   <li>{@code Map<K, Producer<V>>}
+   * </ol>
+   */
+  private ImmutableSet<BindingNode> mapMultibindings(BindingGraph bindingGraph) {
+    ImmutableSetMultimap<Key, BindingNode> mapMultibindings =
+        bindingGraph.bindingNodes().stream()
+            .filter(node -> node.binding().kind().equals(MULTIBOUND_MAP))
+            .collect(toImmutableSetMultimap(BindingNode::key, node -> node));
+
+    // Mutlbindings for Map<K, V>
+    SetMultimap<Key, BindingNode> plainValueMapMultibindings =
+        filterKeys(mapMultibindings, key -> !MapType.from(key).valuesAreFrameworkType());
+
+    // Multibindings for Map<K, Provider<V>> where Map<K, V> isn't in plainValueMapMultibindings
+    SetMultimap<Key, BindingNode> providerValueMapMultibindings =
+        filterKeys(
+            mapMultibindings,
+            key ->
+                MapType.from(key).valuesAreTypeOf(Provider.class)
+                    && !plainValueMapMultibindings.containsKey(keyFactory.unwrapMapValueType(key)));
+
+    // Multibindings for Map<K, Producer<V>> where Map<K, V> isn't in plainValueMapMultibindings and
+    // Map<K, Provider<V>> isn't in providerValueMapMultibindings
+    SetMultimap<Key, BindingNode> producerValueMapMultibindings =
+        filterKeys(
+            mapMultibindings,
+            key ->
+                MapType.from(key).valuesAreTypeOf(Producer.class)
+                    && !plainValueMapMultibindings.containsKey(keyFactory.unwrapMapValueType(key))
+                    && !providerValueMapMultibindings.containsKey(
+                        keyFactory.rewrapMapKey(key, Producer.class, Provider.class).get()));
+
+    return new ImmutableSet.Builder<BindingNode>()
+        .addAll(plainValueMapMultibindings.values())
+        .addAll(providerValueMapMultibindings.values())
+        .addAll(producerValueMapMultibindings.values())
+        .build();
   }
 
   private ImmutableSet<ContributionBinding> mapBindingContributions(

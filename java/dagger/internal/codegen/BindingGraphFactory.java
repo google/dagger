@@ -686,9 +686,13 @@ final class BindingGraphFactory {
     private ImmutableSet<ContributionBinding> getLocalExplicitBindings(Key key) {
       return new ImmutableSet.Builder<ContributionBinding>()
           .addAll(explicitBindings.get(key))
+          // @Binds @IntoMap declarations have key Map<K, V>, unlike @Provides @IntoMap or @Produces
+          // @IntoMap, which have Map<K, Provider/Producer<V>> keys. So unwrap the key's type's
+          // value type if it's a Map<K, Provider/Producer<V>> before looking in
+          // delegateDeclarations. createDelegateBindings() will create bindings with the properly
+          // wrapped key type.
           .addAll(
-              createDelegateBindings(
-                  delegateDeclarations.get(keyFactory.convertToDelegateKey(key))))
+              createDelegateBindings(delegateDeclarations.get(keyFactory.unwrapMapValueType(key))))
           .build();
     }
 
@@ -714,11 +718,14 @@ final class BindingGraphFactory {
       if (!MapType.isMap(key)
           || MapType.from(key).isRawType()
           || MapType.from(key).valuesAreFrameworkType()) {
-        // There are no @Binds @IntoMap delegate declarations for Map<K, V> requests. All
-        // @IntoMap requests must be for Map<K, Framework<V>>.
+        // @Binds @IntoMap declarations have key Map<K, V>, unlike @Provides @IntoMap or @Produces
+        // @IntoMap, which have Map<K, Provider/Producer<V>> keys. So unwrap the key's type's
+        // value type if it's a Map<K, Provider/Producer<V>> before looking in
+        // delegateMultibindingDeclarations. createDelegateBindings() will create bindings with the
+        // properly wrapped key type.
         multibindings.addAll(
             createDelegateBindings(
-                delegateMultibindingDeclarations.get(keyFactory.convertToDelegateKey(key))));
+                delegateMultibindingDeclarations.get(keyFactory.unwrapMapValueType(key))));
       }
       return multibindings.build();
     }

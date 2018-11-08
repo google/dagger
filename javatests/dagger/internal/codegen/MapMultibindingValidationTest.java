@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -50,25 +51,97 @@ public class MapMultibindingValidationTest {
             "    return \"one again\";",
             "  }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "import java.util.Map;",
-            "import javax.inject.Provider;",
-            "",
-            "@Component(modules = {MapModule.class})",
-            "interface TestComponent {",
-            "  Map<String, Object> objects();",
-            "}");
 
-    Compilation compilation = daggerCompiler().compile(module, componentFile);
+    // If they're all there, report only Map<K, V>.
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                component(
+                    "Map<String, Object> objects();",
+                    "Map<String, Provider<Object>> objectProviders();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("The same map key is bound more than once");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,java.lang.Object>");
     assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
     assertThat(compilation).hadErrorContaining("provideObjectForAKeyAgain()");
+    assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, V> and Map<K, Provider<V>>, report only Map<K, V>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                component(
+                    "Map<String, Object> objects();",
+                    "Map<String, Provider<Object>> objectProviders();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,java.lang.Object>");
+    assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, V> and Map<K, Producer<V>>, report only Map<K, V>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                component(
+                    "Map<String, Object> objects();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,java.lang.Object>");
+    assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, Provider<V>> and Map<K, Producer<V>>, report only Map<K, Provider<V>>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                component(
+                    "Map<String, Provider<Object>> objectProviders();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation = daggerCompiler().compile(module, component("Map<String, Object> objects();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,java.lang.Object>");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .compile(module, component("Map<String, Provider<Object>> objectProviders();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .compile(
+                module, component("Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,dagger.producers.Producer<java.lang.Object>>");
     assertThat(compilation).hadErrorCount(1);
   }
 
@@ -105,26 +178,127 @@ public class MapMultibindingValidationTest {
             "public @interface StringKeyTwo {",
             "  String value();",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.Component;",
-            "import java.util.Map;",
-            "",
-            "@Component(modules = {MapModule.class})",
-            "interface TestComponent {",
-            "  Map<String, Object> objects();",
-            "}");
-    
+
+    // If they're all there, report only Map<K, V>.
     Compilation compilation =
         daggerCompiler()
-            .compile(module, stringKeyTwoFile, componentFile);
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component(
+                    "Map<String, Object> objects();",
+                    "Map<String, Provider<Object>> objectProviders();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("uses more than one @MapKey annotation type");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,java.lang.Object>"
+                + " uses more than one @MapKey annotation type");
     assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
     assertThat(compilation).hadErrorContaining("provideObjectForBKey()");
     assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, V> and Map<K, Provider<V>>, report only Map<K, V>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component(
+                    "Map<String, Object> objects();",
+                    "Map<String, Provider<Object>> objectProviders();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,java.lang.Object>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, V> and Map<K, Producer<V>>, report only Map<K, V>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component(
+                    "Map<String, Object> objects();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,java.lang.Object>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+
+    // If there's Map<K, Provider<V>> and Map<K, Producer<V>>, report only Map<K, Provider<V>>.
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component(
+                    "Map<String, Provider<Object>> objectProviders();",
+                    "Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .compile(module, stringKeyTwoFile, component("Map<String, Object> objects();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,java.lang.Object>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component("Map<String, Provider<Object>> objectProviders();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .compile(
+                module,
+                stringKeyTwoFile,
+                component("Producer<Map<String, Producer<Object>>> objectProducers();"));
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,dagger.producers.Producer<java.lang.Object>>"
+                + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorCount(1);
+  }
+
+  private static JavaFileObject component(String... entryPoints) {
+    return JavaFileObjects.forSourceLines(
+        "test.TestComponent",
+        ImmutableList.<String>builder()
+            .add(
+                "package test;",
+                "",
+                "import dagger.Component;",
+                "import dagger.producers.Producer;",
+                "import java.util.Map;",
+                "import javax.inject.Provider;",
+                "",
+                "@Component(modules = {MapModule.class})",
+                "interface TestComponent {")
+            .add(entryPoints)
+            .add("}")
+            .build());
   }
 }

@@ -71,22 +71,16 @@ final class ComponentHierarchyValidator {
         componentDescriptor.subcomponentsByFactoryMethod().entrySet()) {
       ComponentMethodDescriptor subcomponentMethodDescriptor = subcomponentEntry.getKey();
       ComponentDescriptor subcomponentDescriptor = subcomponentEntry.getValue();
-      // validate the way that we create subcomponents
-      for (VariableElement factoryMethodParameter :
-          subcomponentMethodDescriptor.methodElement().getParameters()) {
-        TypeElement moduleType = MoreTypes.asTypeElement(factoryMethodParameter.asType());
-        TypeElement originatingComponent = existingModuleToOwners.get(moduleType);
-        if (originatingComponent != null) {
-          /* Factory method tries to pass a module that is already present in the parent.
-           * This is an error. */
-          report.addError(
-              String.format(
-                  "%s is present in %s. A subcomponent cannot use an instance of a "
-                      + "module that differs from its parent.",
-                  moduleType.getSimpleName(), originatingComponent.getQualifiedName()),
-              factoryMethodParameter);
-        }
+
+      if (subcomponentDescriptor.hasBuilder()) {
+        report.addError(
+            "Components may not have factory methods for subcomponents that define a builder.",
+            subcomponentMethodDescriptor.methodElement());
+      } else {
+        validateFactoryMethodParameters(
+            report, subcomponentMethodDescriptor, existingModuleToOwners);
       }
+
       validateSubcomponentMethods(
           report,
           subcomponentDescriptor,
@@ -99,6 +93,27 @@ final class ComponentHierarchyValidator {
                           existingModuleToOwners.keySet()),
                       constant(subcomponentDescriptor.componentDefinitionType())))
               .build());
+    }
+  }
+
+  private void validateFactoryMethodParameters(
+      ValidationReport.Builder<?> report,
+      ComponentMethodDescriptor subcomponentMethodDescriptor,
+      ImmutableMap<TypeElement, TypeElement> existingModuleToOwners) {
+    for (VariableElement factoryMethodParameter :
+        subcomponentMethodDescriptor.methodElement().getParameters()) {
+      TypeElement moduleType = MoreTypes.asTypeElement(factoryMethodParameter.asType());
+      TypeElement originatingComponent = existingModuleToOwners.get(moduleType);
+      if (originatingComponent != null) {
+        /* Factory method tries to pass a module that is already present in the parent.
+         * This is an error. */
+        report.addError(
+            String.format(
+                "%s is present in %s. A subcomponent cannot use an instance of a "
+                    + "module that differs from its parent.",
+                moduleType.getSimpleName(), originatingComponent.getQualifiedName()),
+            factoryMethodParameter);
+      }
     }
   }
 

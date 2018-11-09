@@ -123,4 +123,52 @@ public class ComponentHierarchyValidationTest {
         daggerCompiler().compile(component, subcomponent, parentModule, childModule);
     assertThat(compilation).succeeded();
   }
+
+  @Test
+  public void factoryMethodForSubcomponentWithBuilder_isNotAllowed() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module(subcomponents = Sub.class)",
+            "class TestModule {",
+            "}");
+
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Sub {",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Sub build();",
+            "  }",
+            "}");
+
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface C {",
+            "  Sub newSub();",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(module, component, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "Components may not have factory methods for subcomponents that define a builder.");
+  }
 }

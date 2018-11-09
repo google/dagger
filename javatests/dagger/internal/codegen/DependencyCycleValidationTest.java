@@ -413,7 +413,7 @@ public class DependencyCycleValidationTest {
             "interface Child {",
             "  String entry();",
             "",
-            "  Grandchild grandchild();",
+            "  Grandchild.Builder grandchild();",
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",

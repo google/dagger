@@ -127,7 +127,7 @@ java_library(
         "BindingNode.java",
         "BindingRequest.java",
         "BindingType.java",
-        "BindingVariableNamer.java",  # needed by FrameworkField
+        "BindingVariableNamer.java",  # needs KeyVariableNamer
         "BindsTypeChecker.java",
         "ChildFactoryMethodEdgeImpl.java",
         "ComponentDescriptor.java",
@@ -147,6 +147,7 @@ java_library(
         "FrameworkTypeMapper.java",
         "InjectBindingRegistry.java",
         "KeyFactory.java",
+        "KeyVariableNamer.java",  # needs ConfigurationAnnotations, SourceFiles
         "MapKeys.java",
         "MembersInjectionBinding.java",
         "MethodSignature.java",

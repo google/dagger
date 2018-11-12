@@ -24,10 +24,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -397,8 +395,7 @@ final class ComponentImplementation {
 
   /** Returns a new, unique method name for a getter method for the given request. */
   String getUniqueMethodName(BindingRequest request) {
-    return uniqueMethodName(
-        request, simpleVariableName(MoreTypes.asTypeElement(request.key().type())));
+    return uniqueMethodName(request, KeyVariableNamer.name(request.key()));
   }
 
   /**

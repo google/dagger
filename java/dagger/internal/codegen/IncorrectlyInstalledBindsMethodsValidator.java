@@ -31,7 +31,6 @@ import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
 import dagger.Binds;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
@@ -69,27 +68,23 @@ final class IncorrectlyInstalledBindsMethodsValidator implements BindingGraphPlu
         incorrectlyInstalledBindingsCache.entries()) {
       ComponentPath idealComponentPath = entry.getKey();
       ContributionBinding incorrectlyInstalledBinding = entry.getValue();
-      graph
-          .bindingNodes(incorrectlyInstalledBinding.key())
-          .stream()
-          .filter(bindingNode -> bindingNode.binding().equals(incorrectlyInstalledBinding))
-          .forEach(
-              bindingNode -> report(bindingNode, idealComponentPath, graph, diagnosticReporter));
+      graph.bindings(incorrectlyInstalledBinding.key()).stream()
+          .filter(binding -> ((BindingNode) binding).delegate().equals(incorrectlyInstalledBinding))
+          .forEach(binding -> report(binding, idealComponentPath, graph, diagnosticReporter));
     }
   }
 
   private void report(
-      BindingNode incompatiblyInstalledBinding,
+      dagger.model.Binding incompatiblyInstalledBinding,
       ComponentPath idealComponentPath,
       BindingGraph graph,
       DiagnosticReporter diagnosticReporter) {
     // TODO(dpb): consider creating this once per visitGraph()
     ImmutableGraph<Node> dependencyGraph = dependencyGraph(graph).asGraph();
     Set<Node> culpableDependencies =
-        Graphs.reachableNodes(dependencyGraph, incompatiblyInstalledBinding)
-            .stream()
-            .filter(node -> isChild(idealComponentPath, node.componentPath()))
-            .filter(node -> !node.equals(incompatiblyInstalledBinding))
+        Graphs.reachableNodes(dependencyGraph, incompatiblyInstalledBinding).stream()
+            .filter(binding -> isChild(idealComponentPath, binding.componentPath()))
+            .filter(binding -> !binding.equals(incompatiblyInstalledBinding))
             .collect(toCollection(LinkedHashSet::new));
     if (culpableDependencies.isEmpty()) {
       return;
@@ -105,7 +100,8 @@ final class IncorrectlyInstalledBindsMethodsValidator implements BindingGraphPlu
             .append("\n  This is because it depends transitively on:");
 
     while (!culpableDependencies.isEmpty()) {
-      BindingNode culpableDependency = (BindingNode) Iterables.get(culpableDependencies, 0);
+      dagger.model.Binding culpableDependency =
+          (dagger.model.Binding) Iterables.get(culpableDependencies, 0);
       warning
           .append("\n      ")
           .append(culpableDependency)

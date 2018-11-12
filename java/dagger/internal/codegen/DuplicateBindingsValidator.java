@@ -35,7 +35,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.DependencyRequest;
@@ -95,22 +94,22 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
       Set<DependencyEdge> duplicateDependencies,
       BindingGraph bindingGraph,
       DiagnosticReporter diagnosticReporter) {
-    ImmutableSet<BindingNode> duplicateBindings =
+    ImmutableSet<dagger.model.Binding> duplicateBindings =
         duplicateDependencies.stream()
             .map(edge -> bindingGraph.network().incidentNodes(edge).target())
-            .flatMap(instancesOf(BindingNode.class))
+            .flatMap(instancesOf(dagger.model.Binding.class))
             .collect(toImmutableSet());
     diagnosticReporter.reportDependency(
         ERROR,
         Iterables.get(duplicateDependencies, 0),
-        Iterables.any(duplicateBindings, node -> node.binding().kind().isMultibinding())
+        Iterables.any(duplicateBindings, binding -> binding.kind().isMultibinding())
             ? incompatibleBindingsMessage(dependencyRequest, duplicateBindings, bindingGraph)
             : duplicateBindingMessage(dependencyRequest, duplicateBindings, bindingGraph));
   }
 
   private String duplicateBindingMessage(
       DependencyRequest dependencyRequest,
-      ImmutableSet<BindingNode> duplicateBindings,
+      ImmutableSet<dagger.model.Binding> duplicateBindings,
       BindingGraph graph) {
     StringBuilder message =
         new StringBuilder().append(dependencyRequest.key()).append(" is bound multiple times:");
@@ -120,11 +119,11 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
   private String incompatibleBindingsMessage(
       DependencyRequest dependencyRequest,
-      ImmutableSet<BindingNode> duplicateBindings,
+      ImmutableSet<dagger.model.Binding> duplicateBindings,
       BindingGraph graph) {
-    ImmutableSet<BindingNode> multibindings =
+    ImmutableSet<dagger.model.Binding> multibindings =
         duplicateBindings.stream()
-            .filter(node -> node.binding().kind().isMultibinding())
+            .filter(binding -> binding.kind().isMultibinding())
             .collect(toImmutableSet());
     verify(
         multibindings.size() == 1,
@@ -136,11 +135,11 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     messageFormatter.format(
         "%s has incompatible bindings or declarations:\n", dependencyRequest.key());
     message.append(INDENT);
-    BindingNode multibinding = getOnlyElement(multibindings);
+    dagger.model.Binding multibinding = getOnlyElement(multibindings);
     messageFormatter.format("%s bindings and declarations:", multibindingTypeString(multibinding));
     formatDeclarations(message, 2, declarations(graph, multibindings));
 
-    Set<BindingNode> uniqueBindings =
+    Set<dagger.model.Binding> uniqueBindings =
         Sets.filter(duplicateBindings, binding -> !binding.equals(multibinding));
     message.append('\n').append(INDENT).append("Unique bindings and declarations:");
     formatDeclarations(
@@ -161,33 +160,32 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   }
 
   private ImmutableSet<BindingDeclaration> declarations(
-      BindingGraph graph, Set<BindingNode> bindings) {
+      BindingGraph graph, Set<dagger.model.Binding> bindings) {
     return bindings.stream()
-        .flatMap(node -> declarations(graph, node).stream())
+        .flatMap(binding -> declarations(graph, binding).stream())
         .distinct()
         .sorted(BINDING_DECLARATION_COMPARATOR)
         .collect(toImmutableSet());
   }
 
-  private ImmutableSet<BindingDeclaration> declarations(BindingGraph graph, BindingNode node) {
+  private ImmutableSet<BindingDeclaration> declarations(
+      BindingGraph graph, dagger.model.Binding binding) {
     ImmutableSet.Builder<BindingDeclaration> declarations = ImmutableSet.builder();
-    ((BindingNodeImpl) node).associatedDeclarations().forEach(declarations::add);
-    if (node.binding() instanceof BindingDeclaration) {
-      BindingDeclaration declaration = ((BindingDeclaration) node.binding());
-      if (bindingDeclarationFormatter.canFormat(declaration)) {
-        declarations.add(declaration);
-      } else {
-        graph.network().successors(node).stream()
-            .flatMap(instancesOf(BindingNode.class))
-            .flatMap(dependency -> declarations(graph, dependency).stream())
-            .forEach(declarations::add);
-      }
+    BindingNode bindingNode = (BindingNode) binding;
+    bindingNode.associatedDeclarations().forEach(declarations::add);
+    if (bindingDeclarationFormatter.canFormat(bindingNode.delegate())) {
+      declarations.add(bindingNode.delegate());
+    } else {
+      graph.network().successors(binding).stream()
+          .flatMap(instancesOf(dagger.model.Binding.class))
+          .flatMap(dependency -> declarations(graph, dependency).stream())
+          .forEach(declarations::add);
     }
     return declarations.build();
   }
 
-  private String multibindingTypeString(BindingNode multibinding) {
-    switch (multibinding.binding().kind()) {
+  private String multibindingTypeString(dagger.model.Binding multibinding) {
+    switch (multibinding.kind()) {
       case MULTIBOUND_MAP:
         return "Map";
       case MULTIBOUND_SET:

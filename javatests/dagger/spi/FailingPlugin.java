@@ -43,9 +43,11 @@ public final class FailingPlugin implements BindingGraphPlugin {
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     if (options.containsKey("error_on_binding")) {
       String key = options.get("error_on_binding");
-      bindingGraph.bindingNodes().stream()
-          .filter(node -> node.key().toString().equals(key))
-          .forEach(node -> diagnosticReporter.reportBinding(ERROR, node, "Bad Binding: %s", node));
+      bindingGraph.bindings().stream()
+          .filter(binding -> binding.key().toString().equals(key))
+          .forEach(
+              binding ->
+                  diagnosticReporter.reportBinding(ERROR, binding, "Bad Binding: %s", binding));
     }
 
     if (options.containsKey("error_on_component")) {
@@ -58,10 +60,11 @@ public final class FailingPlugin implements BindingGraphPlugin {
 
     if (options.containsKey("error_on_subcomponents")) {
       bindingGraph.componentNodes().stream()
-          .filter(node -> !node.componentPath().atRoot())
+          .filter(componentNode -> !componentNode.componentPath().atRoot())
           .forEach(
-              node ->
-                  diagnosticReporter.reportComponent(ERROR, node, "Bad Subcomponent: %s", node));
+              componentNode ->
+                  diagnosticReporter.reportComponent(
+                      ERROR, componentNode, "Bad Subcomponent: %s", componentNode));
     }
 
     if (options.containsKey("error_on_dependency")) {

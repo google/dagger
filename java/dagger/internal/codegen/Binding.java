@@ -20,6 +20,8 @@ import static com.google.common.base.Suppliers.memoize;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static java.util.stream.Collectors.toSet;
+import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
@@ -30,6 +32,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.Scope;
@@ -39,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
@@ -47,12 +51,34 @@ import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.Types;
 
 /**
- * An abstract type for classes representing a Dagger binding.  Particularly, contains the
- * {@link Element} that generated the binding and the {@link DependencyRequest} instances that are
- * required to satisfy the binding, but leaves the specifics of the <i>mechanism</i> of the binding
- * to the subtypes.
+ * An abstract type for classes representing a Dagger binding. Particularly, contains the {@link
+ * Element} that generated the binding and the {@link DependencyRequest} instances that are required
+ * to satisfy the binding, but leaves the specifics of the <i>mechanism</i> of the binding to the
+ * subtypes.
  */
-abstract class Binding extends BindingDeclaration implements dagger.model.Binding {
+abstract class Binding extends BindingDeclaration {
+
+  /**
+   * Returns {@code true} if using this binding requires an instance of the {@link
+   * #contributingModule()}.
+   */
+  boolean requiresModuleInstance() {
+    if (!bindingElement().isPresent() || !contributingModule().isPresent()) {
+      return false;
+    }
+    Set<Modifier> modifiers = bindingElement().get().getModifiers();
+    return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
+  }
+
+  /**
+   * Returns {@code true} if this binding may provide {@code null} instead of an instance of {@link
+   * #key()}. Nullable bindings cannot be requested from {@linkplain DependencyRequest#isNullable()
+   * non-nullable dependency requests}.
+   */
+  abstract boolean isNullable();
+
+  /** The kind of binding this instance represents. */
+  abstract BindingKind kind();
 
   /** The {@link BindingType} of this binding. */
   abstract BindingType bindingType();
@@ -87,8 +113,7 @@ abstract class Binding extends BindingDeclaration implements dagger.model.Bindin
    * union of {@link #explicitDependencies()} and {@link #implicitDependencies()}. This returns an
    * unmodifiable set.
    */
-  @Override
-  public ImmutableSet<DependencyRequest> dependencies() {
+  ImmutableSet<DependencyRequest> dependencies() {
     return dependencies.get();
   }
 
@@ -236,8 +261,7 @@ abstract class Binding extends BindingDeclaration implements dagger.model.Bindin
    */
   abstract Optional<? extends Binding> unresolved();
 
-  @Override
-  public Optional<Scope> scope() {
+  Optional<Scope> scope() {
     return Optional.empty();
   }
 

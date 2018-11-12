@@ -17,6 +17,7 @@
 package dagger.model;
 
 import com.google.common.collect.ImmutableSet;
+import dagger.model.BindingGraph.MaybeBinding;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -25,11 +26,20 @@ import javax.lang.model.element.TypeElement;
  * The association between a {@link Key} and the way in which instances of the key are provided.
  * Includes any {@linkplain DependencyRequest dependencies} that are needed in order to provide the
  * instances.
+ *
+ * <p>If a binding is owned by more than one component, there is one {@code Binding} for every
+ * owning component.
  */
-public interface Binding {
-  /** The binding's key. */
-  Key key();
+public interface Binding extends MaybeBinding {
+  @Override
+  ComponentPath componentPath();
 
+  /** @deprecated This always returns {@code Optional.of(this)}. */
+  @Override
+  @Deprecated
+  default Optional<Binding> binding() {
+    return Optional.of(this);
+  }
   /**
    * The dependencies of this binding. The order of the dependencies corresponds to the order in
    * which they will be injected when the binding is requested.
@@ -53,6 +63,12 @@ public interface Binding {
    * have no {@link #bindingElement() binding element}.
    */
   Optional<TypeElement> contributingModule();
+
+  /**
+   * Returns {@code true} if using this binding requires an instance of the {@link
+   * #contributingModule()}.
+   */
+  boolean requiresModuleInstance();
 
   /** The scope of this binding if it has one. */
   Optional<Scope> scope();

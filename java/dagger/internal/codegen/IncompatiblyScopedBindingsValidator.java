@@ -25,9 +25,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
-import dagger.model.Binding;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
@@ -54,11 +52,10 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    ImmutableSetMultimap.Builder<ComponentNode, BindingNode> incompatibleBindingNodes =
+    ImmutableSetMultimap.Builder<ComponentNode, dagger.model.Binding> incompatibleBindings =
         ImmutableSetMultimap.builder();
-    for (BindingNode bindingNode : bindingGraph.bindingNodes()) {
-      bindingNode
-          .binding()
+    for (dagger.model.Binding binding : bindingGraph.bindings()) {
+      binding
           .scope()
           .ifPresent(
               scope -> {
@@ -66,23 +63,21 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
                   return;
                 }
                 ComponentNode componentNode =
-                    bindingGraph.componentNode(bindingNode.componentPath()).get();
+                    bindingGraph.componentNode(binding.componentPath()).get();
                 if (!componentNode.scopes().contains(scope)) {
-                  incompatibleBindingNodes.put(componentNode, bindingNode);
+                  incompatibleBindings.put(componentNode, binding);
                 }
               });
     }
-    Multimaps.asMap(incompatibleBindingNodes.build())
+    Multimaps.asMap(incompatibleBindings.build())
         .forEach(
-            (componentNode, bindingNodes) ->
+            (componentNode, bindings) ->
                 diagnosticReporter.reportComponent(
-                    ERROR,
-                    componentNode,
-                    incompatibleBindingScopesError(componentNode, bindingNodes)));
+                    ERROR, componentNode, incompatibleBindingScopesError(componentNode, bindings)));
   }
 
   private String incompatibleBindingScopesError(
-      ComponentNode componentNode, Set<BindingNode> bindingNodes) {
+      ComponentNode componentNode, Set<dagger.model.Binding> bindings) {
     StringBuilder message =
         new StringBuilder(componentNode.componentPath().currentComponent().getQualifiedName());
     if (!componentNode.scopes().isEmpty()) {
@@ -95,10 +90,9 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
       message.append(" (unscoped) may not reference scoped bindings:\n");
     }
     // TODO(ronshapiro): Should we group by scope?
-    for (BindingNode bindingNode : bindingNodes) {
+    for (dagger.model.Binding binding : bindings) {
       message.append(INDENT);
 
-      Binding binding = bindingNode.binding();
       switch (binding.kind()) {
         case DELEGATE:
         case PROVISION:
@@ -116,7 +110,7 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
           break;
 
         default:
-          throw new AssertionError(bindingNode);
+          throw new AssertionError(binding);
       }
 
       message.append("\n");

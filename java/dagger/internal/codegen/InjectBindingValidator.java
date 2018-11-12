@@ -21,7 +21,6 @@ import static dagger.model.BindingKind.INJECTION;
 import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.ValidationReport.Item;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import javax.inject.Inject;
@@ -44,12 +43,13 @@ final class InjectBindingValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    bindingGraph.bindingNodes().stream()
-        .filter(node -> node.binding().kind().equals(INJECTION)) // TODO(dpb): Move to BindingGraph
-        .forEach(node -> validateInjectionBinding(node, diagnosticReporter));
+    bindingGraph.bindings().stream()
+        .filter(binding -> binding.kind().equals(INJECTION)) // TODO(dpb): Move to BindingGraph
+        .forEach(binding -> validateInjectionBinding(binding, diagnosticReporter));
   }
 
-  private void validateInjectionBinding(BindingNode node, DiagnosticReporter diagnosticReporter) {
+  private void validateInjectionBinding(
+      dagger.model.Binding node, DiagnosticReporter diagnosticReporter) {
     ValidationReport<TypeElement> typeReport =
         injectValidator.validateType(MoreTypes.asTypeElement(node.key().type()));
     for (Item item : typeReport.allItems()) {

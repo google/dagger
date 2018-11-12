@@ -29,11 +29,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MissingBindingNode;
+import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraphProxies;
 import dagger.model.DependencyRequest;
@@ -105,13 +104,13 @@ final class BindingGraphConverter {
       network.addNode(currentComponent);
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
-        for (BindingNode node : bindingNodes(resolvedBindings)) {
-          addBindingNode(node);
-          if (node.binding().kind().equals(SUBCOMPONENT_BUILDER)
-              && node.componentPath().equals(currentComponent.componentPath())) {
+        for (BindingNode binding : bindingNodes(resolvedBindings)) {
+          addBinding(binding);
+          if (binding.kind().equals(SUBCOMPONENT_BUILDER)
+              && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
-                node,
-                subcomponentNode(node.key().type(), graph),
+                binding,
+                subcomponentNode(binding.key().type(), graph),
                 new SubcomponentBuilderBindingEdgeImpl(
                     subcomponentDeclaringModules(resolvedBindings)));
           }
@@ -181,11 +180,11 @@ final class BindingGraphConverter {
           .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
-    /** Adds a binding node and edges for all its dependencies. */
-    private void addBindingNode(BindingNode node) {
-      network.addNode(node);
-      for (DependencyRequest dependencyRequest : node.binding().dependencies()) {
-        addDependencyEdges(node, dependencyRequest);
+    /** Adds a binding and all its dependencies. */
+    private void addBinding(BindingNode binding) {
+      network.addNode(binding);
+      for (DependencyRequest dependencyRequest : binding.dependencies()) {
+        addDependencyEdges(binding, dependencyRequest);
       }
     }
 
@@ -205,7 +204,7 @@ final class BindingGraphConverter {
 
     private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
-      return BindingNodeImpl.create(
+      return BindingNode.create(
           componentTreePath()
               .pathFromRootToAncestor(owningComponent.componentDefinitionType())
               .toComponentPath(),
@@ -222,7 +221,7 @@ final class BindingGraphConverter {
           resolvedBindings.subcomponentDeclarations());
     }
 
-    private MissingBindingNode missingBindingNode(ResolvedBindings dependencies) {
+    private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
       return BindingGraphProxies.missingBindingNode(
           componentTreePath()
               .pathFromRootToAncestor(dependencies.owningComponent().componentDefinitionType())

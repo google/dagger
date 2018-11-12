@@ -38,7 +38,6 @@ import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Node;
@@ -186,8 +185,8 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
       return true;
     }
     Node target = graph.network().incidentNodes(edge).target();
-    if (target instanceof BindingNode
-        && ((BindingNode) target).binding().kind().equals(BindingKind.OPTIONAL)) {
+    if (target instanceof dagger.model.Binding
+        && ((dagger.model.Binding) target).kind().equals(BindingKind.OPTIONAL)) {
       /* For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
        * breaks the cycle, so does the optional binding. */
       TypeMirror optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();

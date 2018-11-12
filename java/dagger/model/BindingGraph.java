@@ -44,9 +44,9 @@ import javax.lang.model.element.TypeElement;
  *
  * <h3>Nodes</h3>
  *
- * <p>There is a <b>{@linkplain BindingNode binding node}</b> for each owned binding in the graph.
- * If a binding is owned by more than one component, there is one binding node for that binding for
- * every owning component.
+ * <p>There is a <b>{@link Binding}</b> for each owned binding in the graph. If a binding is owned
+ * by more than one component, there is one binding object for that binding for every owning
+ * component.
  *
  * <p>There is a <b>{@linkplain ComponentNode component node}</b> (without a binding) for each
  * component in the graph.
@@ -54,16 +54,16 @@ import javax.lang.model.element.TypeElement;
  * <h3>Edges</h3>
  *
  * <p>There is a <b>{@linkplain DependencyEdge dependency edge}</b> for each dependency request in
- * the graph. Its target node is the binding node for the binding that satisfies the request. For
- * entry point dependency requests, the source node is the component node for the component for
- * which it is an entry point. For other dependency requests, the source node is the binding node
- * for the binding that contains the request.
+ * the graph. Its target node is the binding for the binding that satisfies the request. For entry
+ * point dependency requests, the source node is the component node for the component for which it
+ * is an entry point. For other dependency requests, the source node is the binding for the binding
+ * that contains the request.
  *
  * <p>There is a <b>subcomponent edge</b> for each parent-child component relationship in the graph.
  * The target node is the component node for the child component. For subcomponents defined by a
  * {@linkplain SubcomponentBuilderBindingEdge subcomponent builder binding} (either a method on the
  * component or a set of {@code @Module.subcomponents} annotation values), the source node is the
- * binding node for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
+ * binding for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
  * ChildFactoryMethodEdge subcomponent factory methods}, the source node is the component node for
  * the parent.
  *
@@ -102,21 +102,21 @@ public final class BindingGraph {
     return network.toString();
   }
 
-  /** Returns the binding nodes. */
-  public ImmutableSet<BindingNode> bindingNodes() {
-    return nodes(BindingNode.class);
+  /** Returns the bindings. */
+  public ImmutableSet<Binding> bindings() {
+    return nodes(Binding.class);
   }
 
-  /** Returns the binding nodes for a key. */
-  public ImmutableSet<BindingNode> bindingNodes(Key key) {
-    return nodeStream(BindingNode.class)
-        .filter(node -> node.key().equals(key))
+  /** Returns the bindings for a key. */
+  public ImmutableSet<Binding> bindings(Key key) {
+    return nodeStream(Binding.class)
+        .filter(binding -> binding.key().equals(key))
         .collect(toImmutableSet());
   }
 
   /** Returns the nodes that represent missing bindings. */
-  public ImmutableSet<MissingBindingNode> missingBindingNodes() {
-    return nodes(MissingBindingNode.class);
+  public ImmutableSet<MissingBinding> missingBindings() {
+    return nodes(MissingBinding.class);
   }
 
   /** Returns the component nodes. */
@@ -156,11 +156,10 @@ public final class BindingGraph {
    * DependencyRequest} will map to a single {@link DependencyEdge}. When conflicting bindings exist
    * for a key, the multimap will have several edges for that {@link DependencyRequest}. Graphs that
    * have no binding for a key will have an edge whose {@linkplain EndpointPair#target() target
-   * node} is a {@link MissingBindingNode}.
+   * node} is a {@link MissingBinding}.
    */
-  public ImmutableSetMultimap<DependencyRequest, DependencyEdge> dependencyEdges(
-      BindingNode bindingNode) {
-    return dependencyEdgeStream(bindingNode)
+  public ImmutableSetMultimap<DependencyRequest, DependencyEdge> dependencyEdges(Binding binding) {
+    return dependencyEdgeStream(binding)
         .collect(toImmutableSetMultimap(DependencyEdge::dependencyRequest, edge -> edge));
   }
 
@@ -191,10 +190,10 @@ public final class BindingGraph {
     return entryPointEdgeStream().collect(toImmutableSet());
   }
 
-  /** Returns the binding nodes or missing binding nodes that directly satisfy entry points. */
-  public ImmutableSet<MaybeBindingNode> entryPointBindingNodes() {
+  /** Returns the binding or missing binding nodes that directly satisfy entry points. */
+  public ImmutableSet<MaybeBinding> entryPointBindings() {
     return entryPointEdgeStream()
-        .map(edge -> (MaybeBindingNode) network.incidentNodes(edge).target())
+        .map(edge -> (MaybeBinding) network.incidentNodes(edge).target())
         .collect(toImmutableSet());
   }
 
@@ -202,15 +201,14 @@ public final class BindingGraph {
    * Returns the edges for entry points that transitively depend on a binding or missing binding for
    * a key. Never returns an empty set.
    */
-  public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
-      MaybeBindingNode bindingNode) {
+  public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(MaybeBinding binding) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
     Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
         inducedSubgraph(
-            dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), bindingNode));
+            dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), binding));
     ImmutableSet<DependencyEdge> entryPointEdges =
         intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()).immutableCopy();
-    verify(!entryPointEdges.isEmpty(), "No entry points depend on binding %s", bindingNode);
+    verify(!entryPointEdges.isEmpty(), "No entry points depend on binding %s", binding);
     return entryPointEdges;
   }
 
@@ -260,10 +258,10 @@ public final class BindingGraph {
    * element), this class does not override {@link #equals(Object)} to use value semantics.
    *
    * <p>For entry points, the source node is the {@link ComponentNode} that contains the entry
-   * point. Otherwise the source node is a {@link BindingNode}.
+   * point. Otherwise the source node is a {@link Binding}.
    *
-   * <p>For dependencies on missing bindings, the target node is a {@link MissingBindingNode}.
-   * Otherwise the target node is a {@link BindingNode}.
+   * <p>For dependencies on missing bindings, the target node is a {@link MissingBinding}. Otherwise
+   * the target node is a {@link Binding}.
    */
   public interface DependencyEdge extends Edge {
     /** The dependency request. */
@@ -285,8 +283,8 @@ public final class BindingGraph {
   /**
    * An edge that represents the link between a parent component and a child subcomponent implied by
    * a subcomponent builder binding. The {@linkplain com.google.common.graph.EndpointPair#source()
-   * source node} of this edge is a {@link BindingNode} for the subcomponent builder {@link Key} and
-   * the {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
+   * source node} of this edge is a {@link Binding} for the subcomponent builder {@link Key} and the
+   * {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
    * ComponentNode} for the child subcomponent.
    */
   public interface SubcomponentBuilderBindingEdge extends Edge {
@@ -298,17 +296,15 @@ public final class BindingGraph {
     ImmutableSet<TypeElement> declaringModules();
   }
 
-  /** A node in the binding graph. Either a {@link BindingNode} or a {@link ComponentNode}. */
+  /** A node in the binding graph. Either a {@link Binding} or a {@link ComponentNode}. */
+  // TODO(dpb): Make all the node/edge types top-level.
   public interface Node {
     /** The component this node belongs to. */
     ComponentPath componentPath();
   }
 
-  /**
-   * A node in the binding graph that is either a {@link BindingNode} or a {@link
-   * MissingBindingNode}.
-   */
-  public interface MaybeBindingNode extends Node {
+  /** A node in the binding graph that is either a {@link Binding} or a {@link MissingBinding}. */
+  public interface MaybeBinding extends Node {
 
     /** The component that owns the binding, or in which the binding is missing. */
     @Override
@@ -318,38 +314,14 @@ public final class BindingGraph {
     Key key();
 
     /** The binding, or empty if missing. */
-    Optional<Binding> maybeBinding();
-  }
-
-  /**
-   * A <b>binding node</b> in the binding graph. If a binding is owned by more than one component,
-   * there is one binding node for that binding for every owning component.
-   */
-  public interface BindingNode extends MaybeBindingNode {
-
-    /** The component that owns the {@link #binding()}. */
-    @Override
-    ComponentPath componentPath();
-
-    /** The binding. */
-    Binding binding();
-
-    @Override
-    default Key key() {
-      return binding().key();
-    }
-
-    @Override
-    default Optional<Binding> maybeBinding() {
-      return Optional.of(binding());
-    }
+    Optional<Binding> binding();
   }
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */
   @AutoValue
-  public abstract static class MissingBindingNode implements MaybeBindingNode {
-    static MissingBindingNode create(ComponentPath component, Key key) {
-      return new AutoValue_BindingGraph_MissingBindingNode(component, key);
+  public abstract static class MissingBinding implements MaybeBinding {
+    static MissingBinding create(ComponentPath component, Key key) {
+      return new AutoValue_BindingGraph_MissingBinding(component, key);
     }
 
     /** The component in which the binding is missing. */
@@ -359,8 +331,10 @@ public final class BindingGraph {
     /** The key for which there is no binding. */
     public abstract Key key();
 
+    /** @deprecated This always returns {@code Optional.empty()}. */
     @Override
-    public final Optional<Binding> maybeBinding() {
+    @Deprecated
+    public final Optional<Binding> binding() {
       return Optional.empty();
     }
 

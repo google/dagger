@@ -23,7 +23,6 @@ import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Node;
 import dagger.spi.BindingGraphPlugin;
@@ -61,8 +60,8 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
 
   private Stream<DependencyEdge> provisionDependenciesOnProductionBindings(
       BindingGraph bindingGraph) {
-    return bindingGraph.bindingNodes().stream()
-        .filter(bindingNode -> bindingNode.binding().isProduction())
+    return bindingGraph.bindings().stream()
+        .filter(binding -> binding.isProduction())
         .flatMap(binding -> incomingDependencies(binding, bindingGraph))
         .filter(edge -> !dependencyCanUseProduction(edge, bindingGraph));
   }
@@ -70,7 +69,7 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
   /** Returns the dependencies on {@code binding}. */
   // TODO(dpb): Move to BindingGraph.
   private Stream<DependencyEdge> incomingDependencies(
-      BindingNode binding, BindingGraph bindingGraph) {
+      dagger.model.Binding binding, BindingGraph bindingGraph) {
     return bindingGraph.network().inEdges(binding).stream()
         .flatMap(instancesOf(DependencyEdge.class));
   }
@@ -78,7 +77,7 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
   private boolean dependencyCanUseProduction(DependencyEdge edge, BindingGraph bindingGraph) {
     return edge.isEntryPoint()
         ? entryPointCanUseProduction(edge.dependencyRequest().kind())
-        : bindingRequestingDependency(edge, bindingGraph).binding().isProduction();
+        : bindingRequestingDependency(edge, bindingGraph).isProduction();
   }
 
   /**
@@ -88,16 +87,16 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
    *     DependencyEdge#isEntryPoint() entry point}.
    */
   // TODO(dpb): Move to BindingGraph.
-  private BindingNode bindingRequestingDependency(
+  private dagger.model.Binding bindingRequestingDependency(
       DependencyEdge dependency, BindingGraph bindingGraph) {
     checkArgument(!dependency.isEntryPoint());
     Node source = bindingGraph.network().incidentNodes(dependency).source();
     verify(
-        source instanceof BindingNode,
-        "expected source of %s to be a binding node, but was: %s",
+        source instanceof dagger.model.Binding,
+        "expected source of %s to be a binding, but was: %s",
         dependency,
         source);
-    return (BindingNode) source;
+    return (dagger.model.Binding) source;
   }
 
   private String entryPointErrorMessage(DependencyEdge entryPoint) {

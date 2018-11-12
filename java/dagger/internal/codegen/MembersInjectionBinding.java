@@ -80,11 +80,6 @@ abstract class MembersInjectionBinding extends Binding {
                 injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
   }
 
-  @Override
-  public final boolean isProduction() {
-    return false;
-  }
-
   @AutoValue
   abstract static class InjectionSite {
     enum Kind {

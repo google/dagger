@@ -124,7 +124,7 @@ java_library(
         "BindingDeclaration.java",
         "BindingFactory.java",
         "BindingGraph.java",
-        "BindingNodeImpl.java",
+        "BindingNode.java",
         "BindingRequest.java",
         "BindingType.java",
         "BindingVariableNamer.java",  # needed by FrameworkField

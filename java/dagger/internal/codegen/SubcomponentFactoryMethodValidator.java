@@ -79,15 +79,12 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         subgraphFactoryMethodParameters(edge, graph);
     ComponentNode child = (ComponentNode) graph.network().incidentNodes(edge).target();
     SetView<TypeElement> modulesOwnedByChild = ownedModules(child, graph);
-    return graph.bindingNodes().stream()
+    return graph.bindings().stream()
         // bindings owned by child
-        .filter(node -> node.componentPath().equals(child.componentPath()))
+        .filter(binding -> binding.componentPath().equals(child.componentPath()))
         // that require a module instance
-        .filter(
-            node ->
-                node.binding() instanceof ContributionBinding
-                    && ((ContributionBinding) node.binding()).requiresModuleInstance())
-        .map(node -> node.binding().contributingModule().get())
+        .filter(binding -> binding.requiresModuleInstance())
+        .map(binding -> binding.contributingModule().get())
         .distinct()
         // module owned by child
         .filter(module -> modulesOwnedByChild.contains(module))

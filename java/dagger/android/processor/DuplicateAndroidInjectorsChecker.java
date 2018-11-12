@@ -32,8 +32,8 @@ import com.google.common.collect.Multimaps;
 import dagger.MapKey;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
+import dagger.model.Binding;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingKind;
 import dagger.model.Key;
 import dagger.spi.BindingGraphPlugin;
@@ -58,31 +58,30 @@ import javax.lang.model.type.TypeMirror;
 public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugin {
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
-    for (BindingNode node : graph.bindingNodes()) {
-      if (isDispatchingAndroidInjector(node)) {
-        validateMapKeyUniqueness(node, graph, diagnosticReporter);
+    for (Binding binding : graph.bindings()) {
+      if (isDispatchingAndroidInjector(binding)) {
+        validateMapKeyUniqueness(binding, graph, diagnosticReporter);
       }
     }
   }
 
-  private boolean isDispatchingAndroidInjector(BindingNode node) {
-    Key key = node.key();
+  private boolean isDispatchingAndroidInjector(Binding binding) {
+    Key key = binding.key();
     return MoreTypes.isTypeOf(DispatchingAndroidInjector.class, key.type())
         && !key.qualifier().isPresent();
   }
 
   private void validateMapKeyUniqueness(
-      BindingNode dispatchingAndroidInjectorNode,
+      Binding dispatchingAndroidInjector,
       BindingGraph graph,
       DiagnosticReporter diagnosticReporter) {
-    ImmutableSet<BindingNode> injectorFactories =
-        injectorMapDependencies(dispatchingAndroidInjectorNode, graph)
+    ImmutableSet<Binding> injectorFactories =
+        injectorMapDependencies(dispatchingAndroidInjector, graph)
             .flatMap(injectorFactoryMap -> dependencies(injectorFactoryMap, graph))
             .collect(collectingAndThen(toList(), ImmutableSet::copyOf));
 
-    ImmutableListMultimap.Builder<String, BindingNode> mapKeyIndex =
-        ImmutableListMultimap.builder();
-    for (BindingNode injectorFactory : injectorFactories) {
+    ImmutableListMultimap.Builder<String, Binding> mapKeyIndex = ImmutableListMultimap.builder();
+    for (Binding injectorFactory : injectorFactories) {
       AnnotationMirror mapKey = mapKey(injectorFactory).get();
       Optional<String> injectedType = injectedTypeFromMapKey(mapKey);
       if (injectedType.isPresent()) {
@@ -93,9 +92,8 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
       }
     }
 
-    Map<String, List<BindingNode>> duplicates =
-        Maps.filterValues(
-            Multimaps.asMap(mapKeyIndex.build()), bindingNodes -> bindingNodes.size() > 1);
+    Map<String, List<Binding>> duplicates =
+        Maps.filterValues(Multimaps.asMap(mapKeyIndex.build()), bindings -> bindings.size() > 1);
     if (!duplicates.isEmpty()) {
       StringBuilder errorMessage =
           new StringBuilder("Multiple injector factories bound for the same type:\n");
@@ -105,29 +103,28 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
             formatter.format("  %s:\n", injectedType);
             duplicateFactories.forEach(duplicate -> formatter.format("    %s\n", duplicate));
           });
-      diagnosticReporter.reportBinding(
-          ERROR, dispatchingAndroidInjectorNode, errorMessage.toString());
+      diagnosticReporter.reportBinding(ERROR, dispatchingAndroidInjector, errorMessage.toString());
     }
   }
 
-  private Stream<BindingNode> dependencies(BindingNode bindingNode, BindingGraph graph) {
-    return graph.network().successors(bindingNode).stream()
+  private Stream<Binding> dependencies(Binding binding, BindingGraph graph) {
+    return graph.network().successors(binding).stream()
         // TODO(ronshapiro): reuse DaggerStreams.instancesOf()?
-        .filter(BindingNode.class::isInstance)
-        .map(BindingNode.class::cast);
+        .filter(Binding.class::isInstance)
+        .map(Binding.class::cast);
   }
 
   /**
-   * Returns a stream of the dependencies of {@code bindingNode} that have a key type of {@code
-   * Map<K, Provider<AndroidInjector.Factory<?>>}.
+   * Returns a stream of the dependencies of {@code binding} that have a key type of {@code Map<K,
+   * Provider<AndroidInjector.Factory<?>>}.
    */
-  private Stream<BindingNode> injectorMapDependencies(BindingNode bindingNode, BindingGraph graph) {
-    return dependencies(bindingNode, graph)
-        .filter(node -> node.binding().kind().equals(BindingKind.MULTIBOUND_MAP))
+  private Stream<Binding> injectorMapDependencies(Binding binding, BindingGraph graph) {
+    return dependencies(binding, graph)
+        .filter(requestedBinding -> requestedBinding.kind().equals(BindingKind.MULTIBOUND_MAP))
         .filter(
-            node -> {
+            requestedBinding -> {
               TypeMirror valueType =
-                  MoreTypes.asDeclared(node.key().type()).getTypeArguments().get(1);
+                  MoreTypes.asDeclared(requestedBinding.key().type()).getTypeArguments().get(1);
               if (!MoreTypes.isTypeOf(Provider.class, valueType)
                   || !valueType.getKind().equals(TypeKind.DECLARED)) {
                 return false;
@@ -137,9 +134,8 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
             });
   }
 
-  private Optional<AnnotationMirror> mapKey(BindingNode bindingNode) {
-    return bindingNode
-        .binding()
+  private Optional<AnnotationMirror> mapKey(Binding binding) {
+    return binding
         .bindingElement()
         .map(bindingElement -> getAnnotatedAnnotations(bindingElement, MapKey.class))
         .flatMap(

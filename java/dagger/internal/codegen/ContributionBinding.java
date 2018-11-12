@@ -23,8 +23,6 @@ import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrateg
 import static dagger.internal.codegen.MapKeys.unwrapValue;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static java.util.Arrays.asList;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
@@ -35,12 +33,10 @@ import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;
-import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -69,18 +65,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
     checkState(mapKeyAnnotation().isPresent());
     AnnotationMirror mapKeyAnnotation = mapKeyAnnotation().get();
     return unwrapValue(mapKeyAnnotation).map(AnnotationValue::getValue).orElse(mapKeyAnnotation);
-  }
-
-  /**
-   * {@code true} if {@link #contributingModule()} is present and this is a nonabstract instance
-   * method.
-   */
-  boolean requiresModuleInstance() {
-    if (!bindingElement().isPresent() || !contributingModule().isPresent()) {
-      return false;
-    }
-    Set<Modifier> modifiers = bindingElement().get().getModifiers();
-    return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
   }
 
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */

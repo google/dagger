@@ -104,11 +104,6 @@ abstract class ProductionBinding extends ContributionBinding {
         .thrownTypes(ImmutableList.<TypeMirror>of());
   }
 
-  @Override
-  public final boolean isProduction() {
-    return true;
-  }
-
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<ProductionBinding, Builder> {

@@ -31,7 +31,7 @@ abstract class BindingDeclaration {
    * The {@link Element} that declares the binding. Absent for bindings without identifying
    * declarations.
    */
-  abstract Optional<? extends Element> bindingElement();
+  abstract Optional<Element> bindingElement();
 
   /**
    * The type enclosing the {@link #bindingElement()}, or {@link Optional#empty()} if {@link

@@ -46,11 +46,7 @@ public interface Binding {
    * contribute a synthetic binding, but since multiple {@code @Multibinds} methods can coexist in
    * the same component (and contribute to one single binding), it has no binding element.
    */
-  // TODO(ronshapiro): examine whether this wildcard+bound have any benefit. In the processor code,
-  // we never actually refer to the overridden bindingElement methods directly in a way which needs
-  // anything more than an Element. Removing the wildcard would allow for simpler user-written code
-  // when the binding element is passed to a method.
-  Optional<? extends Element> bindingElement();
+  Optional<Element> bindingElement();
 
   /**
    * The {@link TypeElement} of the module which contributes this binding. Absent for bindings that

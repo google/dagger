@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -254,6 +255,19 @@ final class ModifiableBindingExpressions {
       ContributionBinding binding = resolvedBindings.contributionBinding();
       if (binding.requiresGeneratedInstance()) {
         return ModifiableBindingType.GENERATED_INSTANCE;
+      }
+
+      if (binding.kind().equals(BindingKind.DELEGATE)
+          && graph
+              .contributionBindings()
+              .get(getOnlyElement(binding.dependencies()).key())
+              .isEmpty()) {
+        // There's not much to do for @Binds bindings if the dependency is missing - at best, if the
+        // dependency is a weaker scope/unscoped, we save only a few lines that implement the
+        // scoping. But it's also possible, if the dependency is the same or stronger scope, that
+        // no extra code is necessary, in which case we'd be overriding a method that just returns
+        // another.
+        return ModifiableBindingType.MISSING;
       }
 
       if (binding.kind().equals(BindingKind.OPTIONAL) && binding.dependencies().isEmpty()) {

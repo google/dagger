@@ -70,6 +70,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private void addNodesForGraph(BindingGraph graph) {
     addDependencyEdges(graph);
     addModuleEdges(graph);
+    addChildComponentEdges(graph);
 
     graph.subgraphs().forEach(this::addNodesForGraph);
   }
@@ -159,6 +160,22 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
         emitEdge(componentNode.get(), "/inject/installsmodule", moduleNode.get());
       } else {
         logger.warning("Missing JVM node for module: " + module.moduleElement());
+      }
+    }
+  }
+
+  private void addChildComponentEdges(BindingGraph graph) {
+    Optional<VName> componentNode = jvmNode(graph.componentType());
+    if (!componentNode.isPresent()) {
+      logger.warning("Missing JVM node for component: " + graph.componentType());
+      return;
+    }
+    for (BindingGraph subgraph : graph.subgraphs()) {
+      Optional<VName> subcomponentNode = jvmNode(subgraph.componentType());
+      if (subcomponentNode.isPresent()) {
+        emitEdge(componentNode.get(), "/inject/childcomponent", subcomponentNode.get());
+      } else {
+        logger.warning("Missing JVM node for subcomponent: " + subgraph.componentType());
       }
     }
   }

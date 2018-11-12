@@ -68,6 +68,13 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   private void addNodesForGraph(BindingGraph graph) {
+    addDependencyEdges(graph);
+    addModuleEdges(graph);
+
+    graph.subgraphs().forEach(this::addNodesForGraph);
+  }
+
+  private void addDependencyEdges(BindingGraph graph) {
     for (ResolvedBindings resolvedBinding : graph.resolvedBindings()) {
       for (Binding binding : resolvedBinding.bindings()) {
         for (DependencyRequest dependency : binding.explicitDependencies()) {
@@ -82,8 +89,6 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
           .dependencyRequest()
           .ifPresent(request -> addEdgesForDependencyRequest(request, request.key(), graph));
     }
-
-    graph.subgraphs().forEach(this::addNodesForGraph);
   }
 
   /**
@@ -126,10 +131,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     Optional<VName> requestElementNode = jvmNode(requestElement);
     Optional<VName> bindingElementNode = jvmNode(bindingElement);
     if (requestElementNode.isPresent() && bindingElementNode.isPresent()) {
-      new EntrySet.Builder(
-              requestElementNode.get(), "/inject/satisfiedby", bindingElementNode.get())
-          .build()
-          .emit(emitter);
+      emitEdge(requestElementNode.get(), "/inject/satisfiedby", bindingElementNode.get());
       // TODO(ronshapiro): emit facts about the component that satisfies the edge
     } else {
       List<String> missingNodes = new ArrayList<>();
@@ -145,8 +147,28 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     }
   }
 
+  private void addModuleEdges(BindingGraph graph) {
+    Optional<VName> componentNode = jvmNode(graph.componentType());
+    if (!componentNode.isPresent()) {
+      logger.warning("Missing JVM node for component: " + graph.componentType());
+      return;
+    }
+    for (ModuleDescriptor module : graph.componentDescriptor().transitiveModules()) {
+      Optional<VName> moduleNode = jvmNode(module.moduleElement());
+      if (moduleNode.isPresent()) {
+        emitEdge(componentNode.get(), "/inject/installsmodule", moduleNode.get());
+      } else {
+        logger.warning("Missing JVM node for module: " + module.moduleElement());
+      }
+    }
+  }
+
   private Optional<VName> jvmNode(Element element) {
     return kytheGraph.getJvmNode((Symbol) element).map(KytheNode::getVName);
+  }
+
+  private void emitEdge(VName source, String edgeName, VName target) {
+    new EntrySet.Builder(source, edgeName, target).build().emit(emitter);
   }
 
   @Override

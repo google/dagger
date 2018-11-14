@@ -56,8 +56,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   private ComponentRequirement componentRequirement() {
     return bindingGraph
         .componentDescriptor()
-        .dependenciesByDependencyMethod()
-        .get(binding.bindingElement().get());
+        .getDependencyThatDefinesMethod(binding.bindingElement().get());
   }
 
   static CodeBlock maybeCheckForNull(

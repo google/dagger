@@ -230,7 +230,7 @@ final class ComponentBindingExpressions {
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
     return MethodSpec.overriding(
             componentMethod.methodElement(),
-            MoreTypes.asDeclared(graph.componentType().asType()),
+            MoreTypes.asDeclared(graph.componentTypeElement().asType()),
             types)
         .addCode(
             getBindingExpression(request)
@@ -641,7 +641,7 @@ final class ComponentBindingExpressions {
     BindingMethodImplementation methodImplementation =
         methodImplementation(resolvedBindings, request, bindingExpression);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        graph.componentDescriptor().findMatchingComponentMethod(request);
+        graph.componentDescriptor().firstMatchingComponentMethod(request);
     Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
         componentImplementation.getModifiableBindingMethod(request);
 

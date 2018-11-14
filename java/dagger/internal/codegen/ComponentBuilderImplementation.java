@@ -183,7 +183,7 @@ final class ComponentBuilderImplementation {
       } else {
         buildMethod = methodBuilder("build");
       }
-      buildMethod.returns(ClassName.get(graph.componentType())).addModifiers(PUBLIC);
+      buildMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
 
       builderFields.forEach(
           (requirement, field) -> {
@@ -267,19 +267,18 @@ final class ComponentBuilderImplementation {
           methods.add(builderMethod.build());
         }
       } else {
-        for (ComponentRequirement componentRequirement :
-            graph.componentDescriptor().availableDependencies()) {
-          String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
+        for (ComponentRequirement requirement :
+            graph.componentDescriptor().dependenciesAndConcreteModules()) {
+          String componentRequirementName = simpleVariableName(requirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)
                   .returns(componentImplementation.getBuilderName())
                   .addModifiers(PUBLIC)
-                  .addParameter(
-                      TypeName.get(componentRequirement.type()), componentRequirementName);
-          if (componentRequirements.contains(componentRequirement)) {
+                  .addParameter(TypeName.get(requirement.type()), componentRequirementName);
+          if (componentRequirements.contains(requirement)) {
             builderMethod.addStatement(
                 "this.$N = $T.checkNotNull($L)",
-                builderFields.get(componentRequirement),
+                builderFields.get(requirement),
                 Preconditions.class,
                 componentRequirementName);
           } else {

@@ -179,7 +179,7 @@ final class ModifiableBindingExpressions {
     Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
         componentImplementation.getModifiableBindingMethod(request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        graph.componentDescriptor().findMatchingComponentMethod(request);
+        graph.componentDescriptor().firstMatchingComponentMethod(request);
     switch (type) {
       case GENERATED_INSTANCE:
         // If the subcomponent is abstract then we need to define an (un-implemented)

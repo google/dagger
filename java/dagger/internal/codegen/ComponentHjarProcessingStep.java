@@ -143,12 +143,12 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
 
     @Override
     ClassName nameGeneratedType(ComponentDescriptor input) {
-      return componentName(input.componentDefinitionType());
+      return componentName(input.typeElement());
     }
 
     @Override
     Element originatingElement(ComponentDescriptor input) {
-      return input.componentDefinitionType();
+      return input.typeElement();
     }
 
     @Override
@@ -158,7 +158,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
           TypeSpec.classBuilder(generatedTypeName)
               .addModifiers(PUBLIC, FINAL)
               .addMethod(privateConstructor());
-      TypeElement componentElement = componentDescriptor.componentDefinitionType();
+      TypeElement componentElement = componentDescriptor.typeElement();
       addSupertype(generatedComponent, componentElement);
 
       TypeName builderMethodReturnType;
@@ -225,9 +225,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
     checkArgument(component.kind().isTopLevel());
     return Stream.concat(
         component.dependencies().stream(),
-        component
-            .transitiveModules()
-            .stream()
+        component.modules().stream()
             .filter(module -> !module.moduleElement().getModifiers().contains(ABSTRACT))
             .map(module -> ComponentRequirement.forModule(module.moduleElement().asType())));
   }
@@ -255,7 +253,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   private MethodSpec builderBuildMethod(ComponentDescriptor component) {
     return MethodSpec.methodBuilder("build")
         .addModifiers(PUBLIC)
-        .returns(ClassName.get(component.componentDefinitionType()))
+        .returns(ClassName.get(component.typeElement()))
         .build();
   }
 
@@ -269,7 +267,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   private MethodSpec createMethod(ComponentDescriptor componentDescriptor) {
     return MethodSpec.methodBuilder("create")
         .addModifiers(PUBLIC, STATIC)
-        .returns(ClassName.get(componentDescriptor.componentDefinitionType()))
+        .returns(ClassName.get(componentDescriptor.typeElement()))
         .build();
   }
 }

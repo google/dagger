@@ -62,8 +62,7 @@ final class SubcomponentNames {
     ImmutableListMultimap<String, ComponentDescriptor> componentDescriptorsBySimpleName =
         Multimaps.index(
             graph.componentDescriptors(),
-            componentDescriptor ->
-                componentDescriptor.componentDefinitionType().getSimpleName().toString());
+            componentDescriptor -> componentDescriptor.typeElement().getSimpleName().toString());
     ImmutableMap<ComponentDescriptor, Namer> componentNamers =
         qualifiedNames(graph.componentDescriptors());
     Map<ComponentDescriptor, String> subcomponentImplSimpleNames = new LinkedHashMap<>();
@@ -125,7 +124,7 @@ final class SubcomponentNames {
       Iterable<ComponentDescriptor> componentDescriptors) {
     ImmutableMap.Builder<ComponentDescriptor, Namer> builder = ImmutableMap.builder();
     for (ComponentDescriptor component : componentDescriptors) {
-      builder.put(component, new Namer(component.componentDefinitionType()));
+      builder.put(component, new Namer(component.typeElement()));
     }
     return builder.build();
   }

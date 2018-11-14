@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.LinkedHashMultiset;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -80,7 +79,7 @@ public class ComponentTreeTraverser {
         rootGraph.componentDescriptor().kind().isTopLevel()
             || compilerOptions.aheadOfTimeSubcomponents(),
         "only top-level graphs can be traversed, not %s",
-        rootGraph.componentDescriptor().componentDefinitionType().getQualifiedName());
+        rootGraph.componentDescriptor().typeElement().getQualifiedName());
     bindingGraphPath.add(rootGraph);
   }
 
@@ -117,15 +116,13 @@ public class ComponentTreeTraverser {
   protected void visitComponent(BindingGraph graph) {
     if (bindingGraphPath.size() > 1) {
       BindingGraph parent = Iterators.get(bindingGraphPath.descendingIterator(), 1);
-      ComponentMethodDescriptor childFactoryMethod =
-          parent
-              .componentDescriptor()
-              .subcomponentsByFactoryMethod()
-              .inverse()
-              .get(graph.componentDescriptor());
-      if (childFactoryMethod != null) {
-        visitSubcomponentFactoryMethod(graph, parent, childFactoryMethod.methodElement());
-      }
+      parent
+          .componentDescriptor()
+          .getFactoryMethodForChildComponent(graph.componentDescriptor())
+          .ifPresent(
+              childFactoryMethod ->
+                  visitSubcomponentFactoryMethod(
+                      graph, parent, childFactoryMethod.methodElement()));
     }
 
     for (DependencyRequest entryPoint : graph.componentDescriptor().entryPoints()) {
@@ -572,7 +569,7 @@ public class ComponentTreeTraverser {
 
     /** Returns the type of the component at the end of the path. */
     public TypeElement currentComponent() {
-      return currentGraph().componentDescriptor().componentDefinitionType();
+      return currentGraph().componentDescriptor().typeElement();
     }
 
     /**
@@ -619,7 +616,7 @@ public class ComponentTreeTraverser {
       ImmutableList.Builder<BindingGraph> path = ImmutableList.builder();
       for (BindingGraph graph : graphsInPath()) {
         path.add(graph);
-        if (graph.componentDescriptor().componentDefinitionType().equals(ancestor)) {
+        if (graph.componentDescriptor().typeElement().equals(ancestor)) {
           return create(path.build());
         }
       }
@@ -636,7 +633,7 @@ public class ComponentTreeTraverser {
      */
     ComponentTreePath childPath(TypeElement subcomponent) {
       for (BindingGraph child : currentGraph().subgraphs()) {
-        if (child.componentType().equals(subcomponent)) {
+        if (child.componentTypeElement().equals(subcomponent)) {
           return create(
               ImmutableList.<BindingGraph>builder().addAll(graphsInPath()).add(child).build());
         }
@@ -644,7 +641,8 @@ public class ComponentTreeTraverser {
       throw new IllegalArgumentException(
           String.format(
               "%s is not a child of %s",
-              subcomponent.getQualifiedName(), currentGraph().componentType().getQualifiedName()));
+              subcomponent.getQualifiedName(),
+              currentGraph().componentTypeElement().getQualifiedName()));
     }
 
     private BindingGraph rootmostGraph(Predicate<? super BindingGraph> predicate) {
@@ -654,14 +652,13 @@ public class ComponentTreeTraverser {
     /** Converts this {@link ComponentTreePath} into a {@link ComponentPath}. */
     ComponentPath toComponentPath() {
       return ComponentPath.create(
-          graphsInPath().stream().map(BindingGraph::componentType).collect(toList()));
+          graphsInPath().stream().map(BindingGraph::componentTypeElement).collect(toList()));
     }
 
     @Override
     public final String toString() {
-      return graphsInPath()
-          .stream()
-          .map(BindingGraph::componentType)
+      return graphsInPath().stream()
+          .map(BindingGraph::componentTypeElement)
           .map(TypeElement::getQualifiedName)
           .collect(joining(" → "));
     }

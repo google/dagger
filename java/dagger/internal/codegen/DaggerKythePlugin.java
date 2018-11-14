@@ -149,12 +149,12 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   private void addModuleEdges(BindingGraph graph) {
-    Optional<VName> componentNode = jvmNode(graph.componentType());
+    Optional<VName> componentNode = jvmNode(graph.componentTypeElement());
     if (!componentNode.isPresent()) {
-      logger.warning("Missing JVM node for component: " + graph.componentType());
+      logger.warning("Missing JVM node for component: " + graph.componentTypeElement());
       return;
     }
-    for (ModuleDescriptor module : graph.componentDescriptor().transitiveModules()) {
+    for (ModuleDescriptor module : graph.componentDescriptor().modules()) {
       Optional<VName> moduleNode = jvmNode(module.moduleElement());
       if (moduleNode.isPresent()) {
         emitEdge(componentNode.get(), "/inject/installsmodule", moduleNode.get());
@@ -165,17 +165,17 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   private void addChildComponentEdges(BindingGraph graph) {
-    Optional<VName> componentNode = jvmNode(graph.componentType());
+    Optional<VName> componentNode = jvmNode(graph.componentTypeElement());
     if (!componentNode.isPresent()) {
-      logger.warning("Missing JVM node for component: " + graph.componentType());
+      logger.warning("Missing JVM node for component: " + graph.componentTypeElement());
       return;
     }
     for (BindingGraph subgraph : graph.subgraphs()) {
-      Optional<VName> subcomponentNode = jvmNode(subgraph.componentType());
+      Optional<VName> subcomponentNode = jvmNode(subgraph.componentTypeElement());
       if (subcomponentNode.isPresent()) {
         emitEdge(componentNode.get(), "/inject/childcomponent", subcomponentNode.get());
       } else {
-        logger.warning("Missing JVM node for subcomponent: " + subgraph.componentType());
+        logger.warning("Missing JVM node for subcomponent: " + subgraph.componentTypeElement());
       }
     }
   }

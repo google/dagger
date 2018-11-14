@@ -106,7 +106,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   private SetView<TypeElement> ownedModules(ComponentNode component, BindingGraph graph) {
     return Sets.difference(
-        ((ComponentNodeImpl) component).componentDescriptor().transitiveModuleTypes(),
+        ((ComponentNodeImpl) component).componentDescriptor().moduleTypes(),
         inheritedModules(component, graph));
   }
 

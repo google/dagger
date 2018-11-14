@@ -253,10 +253,10 @@ final class ComponentImplementation {
   /** Returns the name of the nested implementation class for a child component. */
   ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
     checkArgument(
-        componentDescriptor.subcomponents().contains(childDescriptor),
-        "%s is not a child of %s",
-        childDescriptor.componentDefinitionType(),
-        componentDescriptor.componentDefinitionType());
+        componentDescriptor.childComponents().contains(childDescriptor),
+        "%s is not a child component of %s",
+        childDescriptor.typeElement(),
+        componentDescriptor.typeElement());
     return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
@@ -267,7 +267,7 @@ final class ComponentImplementation {
 
   /** Returns the child implementation. */
   Optional<ComponentImplementation> childImplementation(ComponentDescriptor child) {
-    return Optional.ofNullable(childImplementations.get(child.componentDefinitionType()));
+    return Optional.ofNullable(childImplementations.get(child.typeElement()));
   }
 
   /** Returns {@code true} if {@code type} is accessible from the generated component. */
@@ -356,7 +356,7 @@ final class ComponentImplementation {
 
   /** Adds the type generated from the given child implementation. */
   void addChild(ComponentDescriptor child, ComponentImplementation childImplementation) {
-    childImplementations.put(child.componentDefinitionType(), childImplementation);
+    childImplementations.put(child.typeElement(), childImplementation);
     addType(TypeSpecKind.SUBCOMPONENT, childImplementation.generate().build());
   }
 

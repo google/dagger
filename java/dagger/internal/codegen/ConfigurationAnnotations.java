@@ -166,7 +166,7 @@ final class ConfigurationAnnotations {
    * given seed modules. If a module is malformed and a type listed in {@link Module#includes} is
    * not annotated with {@link Module}, it is ignored.
    *
-   * @deprecated Use {@link ComponentDescriptor#transitiveModules}.
+   * @deprecated Use {@link ComponentDescriptor#modules()}.
    */
   @Deprecated
   static ImmutableSet<TypeElement> getTransitiveModules(

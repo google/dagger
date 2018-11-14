@@ -46,7 +46,6 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -111,8 +110,7 @@ final class BindingGraphFactory {
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
 
     // binding for the component itself
-    explicitBindingsBuilder.add(
-        bindingFactory.componentBinding(componentDescriptor.componentDefinitionType()));
+    explicitBindingsBuilder.add(bindingFactory.componentBinding(componentDescriptor.typeElement()));
 
     // Collect Component dependencies.
     for (ComponentRequirement dependency : componentDescriptor.dependencies()) {
@@ -138,22 +136,24 @@ final class BindingGraphFactory {
       }
     }
 
-    for (Map.Entry<ComponentMethodDescriptor, ComponentDescriptor> componentMethodAndSubcomponent :
-        componentDescriptor.subcomponentsByBuilderMethod().entrySet()) {
-      ComponentMethodDescriptor componentMethod = componentMethodAndSubcomponent.getKey();
-      ComponentDescriptor subcomponentDescriptor = componentMethodAndSubcomponent.getValue();
-      if (!componentDescriptor.subcomponentsFromModules().contains(subcomponentDescriptor)) {
-        explicitBindingsBuilder.add(
-            bindingFactory.subcomponentBuilderBinding(
-                componentMethod.methodElement(), componentDescriptor.componentDefinitionType()));
-      }
-    }
+    componentDescriptor
+        .childComponentsDeclaredByBuilderEntryPoints()
+        .forEach(
+            (builderEntryPoint, childComponent) -> {
+              if (!componentDescriptor
+                  .childComponentsDeclaredByModules()
+                  .contains(childComponent)) {
+                explicitBindingsBuilder.add(
+                    bindingFactory.subcomponentBuilderBinding(
+                        builderEntryPoint.methodElement(), componentDescriptor.typeElement()));
+              }
+            });
 
     ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations = ImmutableSet.builder();
     ImmutableSet.Builder<SubcomponentDeclaration> subcomponentDeclarations = ImmutableSet.builder();
 
     // Collect transitive module bindings and multibinding declarations.
-    for (ModuleDescriptor moduleDescriptor : componentDescriptor.transitiveModules()) {
+    for (ModuleDescriptor moduleDescriptor : componentDescriptor.modules()) {
       explicitBindingsBuilder.addAll(moduleDescriptor.bindings());
       multibindingDeclarations.addAll(moduleDescriptor.multibindingDeclarations());
       subcomponentDeclarations.addAll(moduleDescriptor.subcomponentDeclarations());
@@ -254,20 +254,18 @@ final class BindingGraphFactory {
       this.explicitMultibindings = multibindingContributionsByMultibindingKey(explicitBindingsSet);
       this.delegateMultibindingDeclarations =
           multibindingContributionsByMultibindingKey(delegateDeclarations.values());
-      subcomponentsToResolve.addAll(componentDescriptor.subcomponentsFromEntryPoints());
+      subcomponentsToResolve.addAll(
+          componentDescriptor.childComponentsDeclaredByFactoryMethods().values());
+      subcomponentsToResolve.addAll(
+          componentDescriptor.childComponentsDeclaredByBuilderEntryPoints().values());
     }
 
     /** Returns the optional factory method for this component. */
     Optional<ExecutableElement> getFactoryMethod() {
       return parentResolver
-          .map(
-              parent -> {
-                return parent
-                    .componentDescriptor
-                    .subcomponentsByFactoryMethod()
-                    .inverse()
-                    .get(componentDescriptor);
-              })
+          .flatMap(
+              parent ->
+                  parent.componentDescriptor.getFactoryMethodForChildComponent(componentDescriptor))
           .map(method -> method.methodElement());
     }
 
@@ -359,7 +357,7 @@ final class BindingGraphFactory {
 
       TypeElement builderType = MoreTypes.asTypeElement(subcomponentBuilderBinding.key().type());
       owningResolver.subcomponentsToResolve.add(
-          owningResolver.componentDescriptor.subcomponentsByBuilderType().get(builderType));
+          owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }
 
     private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
@@ -633,15 +631,14 @@ final class BindingGraphFactory {
     private ComponentPath componentPath(Resolver destination) {
       ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
       for (Resolver resolver : getResolverLineage()) {
-        path.add(resolver.componentDescriptor.componentDefinitionType());
+        path.add(resolver.componentDescriptor.typeElement());
         if (resolver == destination) {
           return ComponentPath.create(path.build());
         }
       }
       throw new AssertionError(
           String.format(
-              "%s not found in %s",
-              destination.componentDescriptor.componentDefinitionType(), path.build()));
+              "%s not found in %s", destination.componentDescriptor.typeElement(), path.build()));
     }
 
     /** Returns the resolver lineage from parent to child. */
@@ -887,14 +884,13 @@ final class BindingGraphFactory {
       return parentResolver.isPresent()
           ? Sets.union(
                   parentResolver.get().getInheritedModules(),
-                  parentResolver.get().componentDescriptor.transitiveModules())
+                  parentResolver.get().componentDescriptor.modules())
               .immutableCopy()
           : ImmutableSet.<ModuleDescriptor>of();
     }
 
     ImmutableSet<ModuleDescriptor> getOwnedModules() {
-      return Sets.difference(componentDescriptor.transitiveModules(), getInheritedModules())
-          .immutableCopy();
+      return Sets.difference(componentDescriptor.modules(), getInheritedModules()).immutableCopy();
     }
 
     private final class LocalDependencyChecker {

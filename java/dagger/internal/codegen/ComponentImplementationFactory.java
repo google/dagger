@@ -104,7 +104,7 @@ final class ComponentImplementationFactory {
    */
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
-        topLevelImplementation(componentName(bindingGraph.componentType()), bindingGraph);
+        topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
     OptionalFactories optionalFactories = new OptionalFactories(componentImplementation);
     Optional<ComponentBuilderImplementation> componentBuilderImplementation =
         ComponentBuilderImplementation.create(
@@ -126,7 +126,7 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'componentImplementation()' on %s when not generating ahead-of-time "
               + "subcomponents.",
-          bindingGraph.componentDescriptor().componentDefinitionType());
+          bindingGraph.componentDescriptor().typeElement());
       return new SubcomponentImplementationBuilder(
               Optional.empty(), /* parent */
               bindingGraph,
@@ -199,8 +199,7 @@ final class ComponentImplementationFactory {
           .map(ComponentBuilderImplementation::componentBuilderClass)
           .ifPresent(this::addBuilderClass);
 
-      getLocalAndInheritedMethods(
-              graph.componentDescriptor().componentDefinitionType(), types, elements)
+      getLocalAndInheritedMethods(graph.componentDescriptor().typeElement(), types, elements)
           .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
 
       addFactoryMethods();
@@ -222,7 +221,7 @@ final class ComponentImplementationFactory {
         componentImplementation.addSuperclass(
             componentImplementation.superclassImplementation().get().name());
       } else {
-        componentImplementation.addSupertype(graph.componentType());
+        componentImplementation.addSupertype(graph.componentTypeElement());
       }
     }
 
@@ -342,7 +341,7 @@ final class ComponentImplementationFactory {
 
     final MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
       return MethodSignature.forComponentMethod(
-          method, MoreTypes.asDeclared(graph.componentType().asType()), types);
+          method, MoreTypes.asDeclared(graph.componentTypeElement().asType()), types);
     }
 
     final void addChildComponents() {
@@ -366,7 +365,7 @@ final class ComponentImplementationFactory {
             childSuperclassImplementation.isPresent(),
             "Cannot find abstract implementation of %s within %s while generating implemention "
                 + "within %s",
-            child.componentDefinitionType(),
+            child.typeElement(),
             superclassImplementation.name(),
             componentImplementation.name());
         return childSuperclassImplementation.get();
@@ -543,7 +542,7 @@ final class ComponentImplementationFactory {
         componentImplementation.addMethod(
             BUILDER_METHOD,
             methodBuilder("create")
-                .returns(ClassName.get(super.graph.componentType()))
+                .returns(ClassName.get(super.graph.componentTypeElement()))
                 .addModifiers(PUBLIC, STATIC)
                 .addStatement("return new Builder().$L()", buildMethodName)
                 .build());
@@ -627,7 +626,7 @@ final class ComponentImplementationFactory {
     }
 
     DeclaredType parentType() {
-      return asDeclared(parent.get().graph.componentType().asType());
+      return asDeclared(parent.get().graph.componentTypeElement().asType());
     }
 
     @Override

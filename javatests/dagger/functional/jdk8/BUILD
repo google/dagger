@@ -52,5 +52,3 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
-
-# TODO(b/72748365): Add "with aot" tests, once they pass.

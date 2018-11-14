@@ -102,9 +102,6 @@ abstract class CompilerOptions {
 
   abstract boolean aheadOfTimeSubcomponents();
 
-  /** See b/79859714 */
-  abstract boolean floatingBindsMethods();
-
   abstract boolean useGradleIncrementalProcessing();
 
   static Builder builder() {
@@ -158,8 +155,6 @@ abstract class CompilerOptions {
         boolean warnIfInjectionFactoryNotGeneratedUpstream);
 
     Builder aheadOfTimeSubcomponents(boolean aheadOfTimeSubcomponents);
-
-    Builder floatingBindsMethods(boolean enabled);
 
     Builder useGradleIncrementalProcessing(boolean enabled);
 
@@ -221,7 +216,18 @@ abstract class CompilerOptions {
 
     EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS(Builder::aheadOfTimeSubcomponents),
 
-    FLOATING_BINDS_METHODS(Builder::floatingBindsMethods),
+    FLOATING_BINDS_METHODS((builder, ignoredValue) -> {}) {
+     @Override
+      public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
+        if (processingEnvironment.getOptions().containsKey(toString())) {
+          processingEnvironment
+            .getMessager()
+            .printMessage(
+                Diagnostic.Kind.WARNING,
+                toString() + " is no longer a recognized option by Dagger");
+        }
+      }
+    },
 
     USE_GRADLE_INCREMENTAL_PROCESSING(Builder::useGradleIncrementalProcessing) {
       @Override

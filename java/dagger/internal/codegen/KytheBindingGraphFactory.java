@@ -76,7 +76,6 @@ final class KytheBindingGraphFactory {
         .fastInit(false)
         .experimentalAndroidMode2(false)
         .aheadOfTimeSubcomponents(false)
-        .floatingBindsMethods(false)
         .build()
         .validate();
   }
@@ -135,7 +134,6 @@ final class KytheBindingGraphFactory {
         injectBindingRegistry,
         keyFactory,
         bindingFactory,
-        new IncorrectlyInstalledBindsMethodsValidator(compilerOptions),
         compilerOptions);
   }
 

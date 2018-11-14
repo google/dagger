@@ -210,7 +210,6 @@ java_library(
         "DependsOnProductionExecutorValidator.java",
         "DuplicateBindingsValidator.java",
         "IncompatiblyScopedBindingsValidator.java",
-        "IncorrectlyInstalledBindsMethodsValidator.java",
         "InjectBindingValidator.java",
         "MapMultibindingValidator.java",
         "MissingBindingValidator.java",

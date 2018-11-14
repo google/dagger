@@ -46,7 +46,6 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -77,7 +76,6 @@ final class BindingGraphFactory {
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
-  private final IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator;
   private final CompilerOptions compilerOptions;
 
   @Inject
@@ -86,13 +84,11 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
-      IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
-    this.incorrectlyInstalledBindsMethodsValidator = incorrectlyInstalledBindsMethodsValidator;
     this.compilerOptions = compilerOptions;
   }
 
@@ -573,72 +569,18 @@ final class BindingGraphFactory {
 
     private boolean containsExplicitBinding(ContributionBinding binding) {
       return explicitBindingsSet.contains(binding)
-          || resolverContainsDelegateDeclarationForBinding(this, binding)
+          || resolverContainsDelegateDeclarationForBinding(binding)
           || subcomponentDeclarations.containsKey(binding.key());
     }
 
-    /**
-     * Returns true if {@code binding} was installed in a module in this resolver's component. If
-     * {@link CompilerOptions#floatingBindsMethods()} is enabled, calls {@link
-     * #recordFloatingBindsMethod(Resolver, ContributionBinding)} and returns false.
-     */
-    private boolean resolverContainsDelegateDeclarationForBinding(
-        Resolver resolver, ContributionBinding binding) {
-      // TODO(ronshapiro): remove the flag once we feel enough time has passed, and return this
-      // value directly. At that point, this can be remove the resolver parameter and become a
-      // method invoked on a particular resolver
-      boolean resolverContainsDeclaration =
-          binding.kind().equals(DELEGATE)
-              && resolver
-                  .delegateDeclarations
-                  .get(binding.key())
-                  .stream()
-                  .anyMatch(
-                      declaration ->
-                          declaration.contributingModule().equals(binding.contributingModule())
-                              && declaration.bindingElement().equals(binding.bindingElement()));
-      if (resolverContainsDeclaration && compilerOptions.floatingBindsMethods()) {
-        recordFloatingBindsMethod(resolver, binding);
-        return false;
-      }
-      return resolverContainsDeclaration;
-    }
-
-    /**
-     * Records binds methods that are resolved in the wrong component due to b/79859714. These will
-     * be reported later on in {@link IncorrectlyInstalledBindsMethodsValidator}.
-     */
-    private void recordFloatingBindsMethod(Resolver idealResolver, ContributionBinding binding) {
-      Resolver actualResolver = this;
-      if (binding.scope().isPresent()) {
-        for (Resolver requestResolver : getResolverLineage().reverse()) {
-          if (requestResolver.componentDescriptor.scopes().contains(binding.scope().get())) {
-            actualResolver = requestResolver;
-            break;
-          }
-        }
-      }
-      if (actualResolver != idealResolver) {
-        incorrectlyInstalledBindsMethodsValidator.recordBinding(
-            componentPath(idealResolver), binding);
-      }
-    }
-
-    /**
-     * Constructs a {@link ComponentPath} from the root component of this resolver to a {@code
-     * destination}.
-     */
-    private ComponentPath componentPath(Resolver destination) {
-      ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
-      for (Resolver resolver : getResolverLineage()) {
-        path.add(resolver.componentDescriptor.typeElement());
-        if (resolver == destination) {
-          return ComponentPath.create(path.build());
-        }
-      }
-      throw new AssertionError(
-          String.format(
-              "%s not found in %s", destination.componentDescriptor.typeElement(), path.build()));
+    /** Returns true if {@code binding} was installed in a module in this resolver's component. */
+    private boolean resolverContainsDelegateDeclarationForBinding(ContributionBinding binding) {
+      return binding.kind().equals(DELEGATE)
+          && delegateDeclarations.get(binding.key()).stream()
+              .anyMatch(
+                  declaration ->
+                      declaration.contributingModule().equals(binding.contributingModule())
+                          && declaration.bindingElement().equals(binding.bindingElement()));
     }
 
     /** Returns the resolver lineage from parent to child. */

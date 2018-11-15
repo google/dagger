@@ -79,7 +79,7 @@ public class ComponentTreeTraverser {
         rootGraph.componentDescriptor().kind().isTopLevel()
             || compilerOptions.aheadOfTimeSubcomponents(),
         "only top-level graphs can be traversed, not %s",
-        rootGraph.componentDescriptor().typeElement().getQualifiedName());
+        rootGraph.componentTypeElement().getQualifiedName());
     bindingGraphPath.add(rootGraph);
   }
 
@@ -569,7 +569,7 @@ public class ComponentTreeTraverser {
 
     /** Returns the type of the component at the end of the path. */
     public TypeElement currentComponent() {
-      return currentGraph().componentDescriptor().typeElement();
+      return currentGraph().componentTypeElement();
     }
 
     /**
@@ -616,7 +616,7 @@ public class ComponentTreeTraverser {
       ImmutableList.Builder<BindingGraph> path = ImmutableList.builder();
       for (BindingGraph graph : graphsInPath()) {
         path.add(graph);
-        if (graph.componentDescriptor().typeElement().equals(ancestor)) {
+        if (graph.componentTypeElement().equals(ancestor)) {
           return create(path.build());
         }
       }

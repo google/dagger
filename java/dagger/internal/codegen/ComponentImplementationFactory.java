@@ -126,7 +126,7 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'componentImplementation()' on %s when not generating ahead-of-time "
               + "subcomponents.",
-          bindingGraph.componentDescriptor().typeElement());
+          bindingGraph.componentTypeElement());
       return new SubcomponentImplementationBuilder(
               Optional.empty(), /* parent */
               bindingGraph,
@@ -199,7 +199,7 @@ final class ComponentImplementationFactory {
           .map(ComponentBuilderImplementation::componentBuilderClass)
           .ifPresent(this::addBuilderClass);
 
-      getLocalAndInheritedMethods(graph.componentDescriptor().typeElement(), types, elements)
+      getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
           .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
 
       addFactoryMethods();

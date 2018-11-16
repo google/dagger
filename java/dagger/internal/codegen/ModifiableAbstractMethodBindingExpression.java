@@ -22,9 +22,11 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A {@link BindingExpression} that invokes a method that encapsulates a binding that cannot be
@@ -37,6 +39,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   private final ComponentImplementation componentImplementation;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingRequest request;
+  private final TypeMirror returnType;
   private Optional<String> methodName;
 
   ModifiableAbstractMethodBindingExpression(
@@ -44,10 +47,12 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
       ModifiableBindingType modifiableBindingType,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      DaggerTypes types) {
     this.componentImplementation = componentImplementation;
     this.modifiableBindingType = modifiableBindingType;
     this.request = request;
+    this.returnType = returnType(request, matchingComponentMethod, types);
     this.methodName =
         initializeMethodName(matchingComponentMethod, matchingModifiableBindingMethod);
   }
@@ -72,7 +77,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   @Override
   final Expression getDependencyExpression(ClassName requestingClass) {
     addUnimplementedMethod();
-    return Expression.create(request.key().type(), CodeBlock.of("$L()", methodName.get()));
+    return Expression.create(returnType, CodeBlock.of("$L()", methodName.get()));
   }
 
   private void addUnimplementedMethod() {
@@ -84,9 +89,36 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
           request,
           MethodSpec.methodBuilder(methodName.get())
               .addModifiers(PUBLIC, ABSTRACT)
-              .returns(request.typeName())
+              .returns(TypeName.get(returnType))
               .build(),
           false /* finalized */);
+    }
+  }
+
+  /**
+   * The return type of this abstract method expression:
+   *
+   * <ul>
+   *   <li>If there's a {@code matchingComponentMethod}, use its return type.
+   *   <li>Otherwise, use the {@linkplain DaggerTypes#publiclyAccessibleType(TypeMirror) publicly
+   *       accessible type} of the request. We can't use the {@linkplain
+   *       Accessibility#isTypeAccessibleFrom(TypeMirror, String) type accessible from the current
+   *       implementation's package} because a subclass implementation may be in a different package
+   *       from which the request type is not accessible.
+   * </ul>
+   */
+  private static TypeMirror returnType(
+      BindingRequest bindingRequest,
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      DaggerTypes types) {
+    if (matchingComponentMethod.isPresent()) {
+      TypeMirror returnType =
+          matchingComponentMethod.get().dependencyRequest().get().requestElement().get().asType();
+      return returnType.getKind().isPrimitive()
+          ? returnType
+          : bindingRequest.requestedType(bindingRequest.key().type(), types);
+    } else {
+      return bindingRequest.publiclyAccessibleRequestType(types);
     }
   }
 

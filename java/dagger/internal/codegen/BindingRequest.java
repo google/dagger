@@ -16,14 +16,16 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.RequestKinds.requestTypeName;
+import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
-import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.ClassName;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Optional;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A request for a binding, which may be in the form of a request for a dependency to pass to a
@@ -32,7 +34,6 @@ import java.util.Optional;
  */
 @AutoValue
 abstract class BindingRequest {
-
   /** Creates a {@link BindingRequest} for the given {@link DependencyRequest}. */
   static BindingRequest bindingRequest(DependencyRequest dependencyRequest) {
     return bindingRequest(dependencyRequest.key(), dependencyRequest.kind());
@@ -83,13 +84,30 @@ abstract class BindingRequest {
     return requestKind.equals(requestKind().orElse(null));
   }
 
-  /** Returns the type name for the requested type. */
-  final TypeName typeName() {
-    TypeName keyTypeName = TypeName.get(key().type());
+  /**
+   * Returns the {@link Accessibility#isTypePubliclyAccessible(TypeMirror)} publicly accessible
+   * type} of this request.
+   */
+  final TypeMirror publiclyAccessibleRequestType(DaggerTypes types) {
+    return types.publiclyAccessibleType(requestedType(key().type(), types));
+  }
+
+  /**
+   * Returns the {@link DaggerTypes#accessibleType(TypeMirror, ClassName) accessible type} of
+   * instances created by a {@code binding} for this request. This may differ from the accessible
+   * type of the key for multibindings.
+   */
+  final TypeMirror accessibleType(
+      ContributionBinding binding, ClassName requestingClass, DaggerTypes types) {
+    checkArgument(binding.key().equals(key()));
+    return types.accessibleType(requestedType(binding.contributedType(), types), requestingClass);
+  }
+
+  final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {
     if (requestKind().isPresent()) {
-      return requestTypeName(requestKind().get(), keyTypeName);
+      return requestType(requestKind().get(), contributedType, types);
     }
-    return frameworkType().get().frameworkClassOf(keyTypeName);
+    return types.wrapType(contributedType, frameworkType().get().frameworkClass());
   }
 
   /** Returns a name that can be used for the kind of request this is. */

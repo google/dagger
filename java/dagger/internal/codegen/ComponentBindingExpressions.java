@@ -582,6 +582,7 @@ final class ComponentBindingExpressions {
                 this,
                 membersInjectionMethods,
                 componentRequirementFields,
+                types,
                 elements));
 
       case MEMBERS_INJECTOR:

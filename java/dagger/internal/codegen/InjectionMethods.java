@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
@@ -174,16 +175,32 @@ final class InjectionMethods {
      * requires the use of an injection method.
      */
     static boolean requiresInjectionMethod(
-        ProvisionBinding binding, CompilerOptions compilerOptions, String callingPackage) {
+        ProvisionBinding binding,
+        ImmutableList<Expression> arguments,
+        CompilerOptions compilerOptions,
+        String callingPackage,
+        DaggerTypes types) {
       ExecutableElement method = MoreElements.asExecutable(binding.bindingElement().get());
       return !binding.injectionSites().isEmpty()
           || binding.shouldCheckForNull(compilerOptions)
           || !isElementAccessibleFrom(method, callingPackage)
-          || method
-          .getParameters()
-          .stream()
-          .map(VariableElement::asType)
-          .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
+          || !areParametersAssignable(method, arguments, types)
+          // This check should be removable once we drop support for -source 7
+          || method.getParameters().stream()
+              .map(VariableElement::asType)
+              .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
+    }
+
+    private static boolean areParametersAssignable(
+        ExecutableElement element, ImmutableList<Expression> arguments, DaggerTypes types) {
+      List<? extends VariableElement> parameters = element.getParameters();
+      checkArgument(parameters.size() == arguments.size());
+      for (int i = 0; i < parameters.size(); i++) {
+        if (!types.isAssignable(arguments.get(i).type(), parameters.get(i).asType())) {
+          return false;
+        }
+      }
+      return true;
     }
 
     /**

@@ -37,13 +37,15 @@ final class GeneratedInstanceBindingExpression extends ModifiableAbstractMethodB
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      DaggerTypes types) {
     super(
         componentImplementation,
         ModifiableBindingType.GENERATED_INSTANCE,
         request,
         matchingModifiableBindingMethod,
-        matchingComponentMethod);
+        matchingComponentMethod,
+        types);
     this.componentImplementation = componentImplementation;
     this.binding = resolvedBindings.contributionBinding();
     this.request = request;

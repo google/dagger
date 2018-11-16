@@ -190,7 +190,8 @@ final class ModifiableBindingExpressions {
               resolvedBindings,
               request,
               matchingModifiableBindingMethod,
-              matchingComponentMethod);
+              matchingComponentMethod,
+              types);
         }
         // Otherwise return a concrete implementation.
         return bindingExpressions.wrapInMethod(
@@ -205,7 +206,8 @@ final class ModifiableBindingExpressions {
               componentImplementation,
               request,
               matchingModifiableBindingMethod,
-              matchingComponentMethod);
+              matchingComponentMethod,
+              types);
         }
         // Otherwise we assume that it is valid to have a missing binding as it is part of a
         // dependency chain that has been passively pruned.

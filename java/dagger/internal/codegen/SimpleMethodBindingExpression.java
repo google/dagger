@@ -24,6 +24,8 @@ import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresI
 import static dagger.internal.codegen.TypeNames.rawTypeName;
 
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -31,6 +33,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import dagger.model.DependencyRequest;
 import java.util.Optional;
+import java.util.function.Function;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
@@ -46,6 +49,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ComponentBindingExpressions componentBindingExpressions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementFields componentRequirementFields;
+  private final DaggerTypes types;
   private final DaggerElements elements;
 
   SimpleMethodBindingExpression(
@@ -54,6 +58,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementFields componentRequirementFields,
+      DaggerTypes types,
       DaggerElements elements) {
     super(resolvedBindings);
     this.compilerOptions = compilerOptions;
@@ -65,23 +70,36 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.componentBindingExpressions = componentBindingExpressions;
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementFields = componentRequirementFields;
+    this.types = types;
     this.elements = elements;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    return requiresInjectionMethod(provisionBinding, compilerOptions, requestingClass.packageName())
-        ? invokeInjectionMethod(requestingClass)
-        : invokeMethod(requestingClass);
+    ImmutableMap<DependencyRequest, Expression> arguments =
+        ImmutableMap.copyOf(
+            Maps.asMap(
+                provisionBinding.dependencies(),
+                request -> dependencyArgument(request, requestingClass)));
+    Function<DependencyRequest, CodeBlock> argumentsFunction =
+        request -> arguments.get(request).codeBlock();
+    return requiresInjectionMethod(
+            provisionBinding,
+            arguments.values().asList(),
+            compilerOptions,
+            requestingClass.packageName(),
+            types)
+        ? invokeInjectionMethod(argumentsFunction, requestingClass)
+        : invokeMethod(argumentsFunction, requestingClass);
   }
 
-  private Expression invokeMethod(ClassName requestingClass) {
+  private Expression invokeMethod(
+      Function<DependencyRequest, CodeBlock> argumentsFunction,
+      ClassName requestingClass) {
     // TODO(dpb): align this with the contents of InlineMethods.create
     CodeBlock arguments =
-        provisionBinding
-            .dependencies()
-            .stream()
-            .map(request -> dependencyArgument(request, requestingClass))
+        provisionBinding.dependencies().stream()
+            .map(argumentsFunction)
             .collect(toParametersCodeBlock());
     ExecutableElement method = asExecutable(provisionBinding.bindingElement().get());
     CodeBlock invocation;
@@ -113,20 +131,19 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     return rawTypeName(typeName);
   }
 
-  private Expression invokeInjectionMethod(ClassName requestingClass) {
+  private Expression invokeInjectionMethod(
+      Function<DependencyRequest, CodeBlock> argumentsFunction, ClassName requestingClass) {
     return injectMembers(
         ProvisionMethod.invoke(
             provisionBinding,
-            request -> dependencyArgument(request, requestingClass),
+            argumentsFunction,
             requestingClass,
             moduleReference(requestingClass),
             compilerOptions));
   }
 
-  private CodeBlock dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    return componentBindingExpressions
-        .getDependencyArgumentExpression(dependency, requestingClass)
-        .codeBlock();
+  private Expression dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
+    return componentBindingExpressions.getDependencyArgumentExpression(dependency, requestingClass);
   }
 
   private Expression injectMembers(CodeBlock instance) {

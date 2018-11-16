@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -144,12 +145,44 @@ final class DaggerTypes implements Types {
     }
   }
 
-  /** Returns a {@link TypeMirror} for the binding that is accessible to the component. */
-  protected final TypeMirror accessibleType(TypeMirror type, ClassName requestingClass) {
-    if (Accessibility.isTypeAccessibleFrom(type, requestingClass.packageName())) {
+  /**
+   * Returns a publicly accessible type based on {@code type}:
+   *
+   * <ul>
+   *   <li>If {@code type} is publicly accessible, returns it.
+   *   <li>If not, but {@code type}'s raw type is publicly accessible, returns the raw type.
+   *   <li>Otherwise returns {@link Object}.
+   * </ul>
+   */
+  protected TypeMirror publiclyAccessibleType(TypeMirror type) {
+    return accessibleType(
+        type, Accessibility::isTypePubliclyAccessible, Accessibility::isRawTypePubliclyAccessible);
+  }
+
+  /**
+   * Returns an accessible type in {@code requestingClass}'s package based on {@code type}:
+   *
+   * <ul>
+   *   <li>If {@code type} is accessible from the package, returns it.
+   *   <li>If not, but {@code type}'s raw type is accessible from the package, returns the raw type.
+   *   <li>Otherwise returns {@link Object}.
+   * </ul>
+   */
+  protected TypeMirror accessibleType(TypeMirror type, ClassName requestingClass) {
+    return accessibleType(
+        type,
+        t -> Accessibility.isTypeAccessibleFrom(t, requestingClass.packageName()),
+        t -> Accessibility.isRawTypeAccessible(t, requestingClass.packageName()));
+  }
+
+  private TypeMirror accessibleType(
+      TypeMirror type,
+      Predicate<TypeMirror> accessibilityPredicate,
+      Predicate<TypeMirror> rawTypeAccessibilityPredicate) {
+    if (accessibilityPredicate.test(type)) {
       return type;
     } else if (type.getKind().equals(TypeKind.DECLARED)
-        && Accessibility.isRawTypeAccessible(type, requestingClass.packageName())) {
+        && rawTypeAccessibilityPredicate.test(type)) {
       return getDeclaredType(MoreTypes.asTypeElement(type));
     } else {
       return elements.getTypeElement(Object.class).asType();

@@ -23,7 +23,6 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.BUILDER_METHOD;
@@ -290,7 +289,7 @@ final class ComponentImplementationFactory {
         for (List<CodeBlock> partition : partitions) {
           String methodName = componentImplementation.getUniqueMethodName("cancelProducers");
           MethodSpec method =
-              methodBuilder(methodName)
+              MethodSpec.methodBuilder(methodName)
                   .addModifiers(PRIVATE)
                   .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING)
                   .addCode(CodeBlocks.concat(partition))
@@ -440,30 +439,15 @@ final class ComponentImplementationFactory {
                   constructor.addStatement(
                       CodeBlock.of(
                           "super($L)",
-                          parameterNames(superclassImplementation.constructorParameters()))));
-
-      Optional<MethodSpec.Builder> configureInitialization =
-          partitions.isEmpty() || !componentImplementation.isAbstract()
-              ? Optional.empty()
-              : Optional.of(configureInitializationMethodBuilder(constructorParameters));
-
-      if (componentImplementation.superConfigureInitializationMethod().isPresent()) {
-        MethodSpec superConfigureInitializationMethod =
-            componentImplementation.superConfigureInitializationMethod().get();
-        CodeBlock superInvocation =
-            CodeBlock.of(
-                "$N($L)",
-                superConfigureInitializationMethod,
-                parameterNames(superConfigureInitializationMethod.parameters));
-        if (configureInitialization.isPresent()) {
-          configureInitialization.get().addStatement("super.$L", superInvocation);
-        } else if (!componentImplementation.isAbstract()) {
-          constructor.addStatement(superInvocation);
-        }
-      }
+                          superclassImplementation.constructorParameters().stream()
+                              .map(param -> CodeBlock.of("$N", param))
+                              .collect(toParametersCodeBlock()))));
 
       ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
-      CodeBlock initializeParametersCodeBlock = parameterNames(constructorParameters);
+      CodeBlock initializeParametersCodeBlock =
+          constructorParameters.stream()
+              .map(param -> CodeBlock.of("$N", param))
+              .collect(toParametersCodeBlock());
 
       for (List<CodeBlock> partition : partitions) {
         String methodName = componentImplementation.getUniqueMethodName("initialize");
@@ -477,47 +461,10 @@ final class ComponentImplementationFactory {
                 .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
                 .addCode(CodeBlocks.concat(partition));
         initializeMethod.addParameters(initializeParameters);
-        configureInitialization
-            .orElse(constructor)
-            .addStatement("$L($L)", methodName, initializeParametersCodeBlock);
+        constructor.addStatement("$L($L)", methodName, initializeParametersCodeBlock);
         componentImplementation.addMethod(INITIALIZE_METHOD, initializeMethod.build());
       }
       componentImplementation.addMethod(CONSTRUCTOR, constructor.build());
-      configureInitialization.ifPresent(
-          method -> componentImplementation.setConfigureInitializationMethod(method.build()));
-    }
-
-    /**
-     * Returns a {@link MethodSpec.Builder} for the {@link
-     * ComponentImplementation#configureInitializationMethod()}.
-     */
-    private MethodSpec.Builder configureInitializationMethodBuilder(
-        ImmutableList<ParameterSpec> initializationMethodParameters) {
-      String methodName = componentImplementation.getUniqueMethodName("configureInitialization");
-      MethodSpec.Builder configureInitialization =
-          methodBuilder(methodName)
-              .addModifiers(PROTECTED)
-              .addParameters(initializationMethodParameters);
-
-      // Checks all super configureInitialization() methods to see if they have the same signature
-      // as this one, and if so, adds as an @Override annotation
-      for (Optional<ComponentImplementation> currentSuperImplementation =
-              componentImplementation.superclassImplementation();
-          currentSuperImplementation.isPresent();
-          currentSuperImplementation =
-              currentSuperImplementation.get().superclassImplementation()) {
-        Optional<MethodSpec> superConfigureInitializationMethod =
-            currentSuperImplementation.get().configureInitializationMethod();
-        if (superConfigureInitializationMethod
-            .filter(superMethod -> superMethod.name.equals(methodName))
-            .filter(superMethod -> superMethod.parameters.equals(initializationMethodParameters))
-            .isPresent()) {
-          configureInitialization.addAnnotation(Override.class);
-          break;
-        }
-      }
-
-      return configureInitialization;
     }
 
     /** Returns the list of {@link ParameterSpec}s for the initialize methods. */

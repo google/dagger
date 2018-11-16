@@ -46,10 +46,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
-/**
- * Validates the correctness of {@link dagger.MapKey}s in {@code dagger.android} and {@code
- * dagger.android.support} methods.
- */
+/** Validates the correctness of {@link MapKey}s used with {@code dagger.android}. */
 final class AndroidMapKeyValidator implements ProcessingStep {
   private final Elements elements;
   private final Types types;

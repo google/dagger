@@ -26,6 +26,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.DelegateFactory;
+import dagger.producers.internal.DelegateProducer;
 import java.util.Optional;
 
 /**
@@ -106,7 +107,22 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();
         CodeBlock initCode = CodeBlock.of("this.$N = $L;", getOrCreateField(), fieldInitialization);
 
-        if (fieldInitializationState == InitializationState.DELEGATED) {
+        if (isReplacingSuperclassFrameworkInstance()) {
+          // TODO(ronshapiro): can we have DELEGATED share this branch? If we allow the FieldSpec
+          // to be modified in the ComponentImplementation, we can give it the same initializer to a
+          // delegate factory
+          CodeBlock delegateFactoryVariable = CodeBlock.of("$NDelegate", fieldSpec);
+          // TODO(ronshapiro): Use a type parameter here. Or even better, can a static method that
+          // accepts the delegate factory and the delegated instance infer the type parameters?
+          // And then we also don't need a cast.
+          codeBuilder
+              .add("$1T $2L = ($1T) $3N;", delegateType(), delegateFactoryVariable, fieldSpec)
+              .add(
+                  "$L.$N($L);",
+                  delegateFactoryVariable,
+                  setDelegateMethodName(),
+                  fieldInitialization);
+        } else if (fieldInitializationState == InitializationState.DELEGATED) {
           // If we were recursively invoked, set the delegate factory as part of our initialization
           CodeBlock delegateFactoryVariable = CodeBlock.of("$NDelegate", fieldSpec);
           codeBuilder
@@ -152,13 +168,16 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
             resolvedBindings, frameworkInstanceCreationExpression.alternativeFrameworkClass());
 
     TypeName fieldType;
-    if (!fieldInitializationState.equals(InitializationState.DELEGATED)
+    boolean rawTypeUsed = false;
+    if (!isReplacingSuperclassFrameworkInstance()
+        && !fieldInitializationState.equals(InitializationState.DELEGATED)
         && specificType().isPresent()) {
       // For some larger components, this causes javac to compile much faster by getting the
       // field type to exactly match the type of the expression being assigned to it.
       fieldType = specificType().get();
     } else if (useRawType) {
       fieldType = contributionBindingField.type().rawType;
+      rawTypeUsed = true;
     } else {
       fieldType = contributionBindingField.type();
     }
@@ -167,13 +186,56 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         FieldSpec.builder(
             fieldType, componentImplementation.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
-    if (useRawType && !specificType().isPresent()) {
+    if (rawTypeUsed) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
+
+    if (isReplacingSuperclassFrameworkInstance()) {
+      // If a binding is modified in a subclass, the framework instance will be replaced in the
+      // subclass implementation. The superclass framework instance initialization will run first,
+      // however, and may refer to the modifiable binding method returning this type's modified
+      // framework instance before it is initialized, so we use a delegate factory as a placeholder
+      // until it has properly been initialized.
+      contributionField.initializer("new $T<>()", delegateType());
+    }
+
     fieldSpec = contributionField.build();
     componentImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
+  }
+
+  /**
+   * Returns true if this framework field is replacing a superclass's implementation of the
+   * framework field.
+   */
+  private boolean isReplacingSuperclassFrameworkInstance() {
+    return componentImplementation
+        .superclassImplementation()
+        .flatMap(
+            superclassImplementation ->
+                // TODO(b/117833324): can we constrain this further?
+                superclassImplementation.getModifiableBindingMethod(
+                    BindingRequest.bindingRequest(
+                        resolvedBindings.key(),
+                        FrameworkType.forBindingType(resolvedBindings.bindingType()))))
+        .isPresent();
+  }
+
+  private Class<?> delegateType() {
+    return isProvider() ? DelegateFactory.class : DelegateProducer.class;
+  }
+
+  private String setDelegateMethodName() {
+    return isProvider() ? "setDelegatedProvider" : "setDelegatedProducer";
+  }
+
+  private boolean isProvider() {
+    return resolvedBindings.bindingType().equals(BindingType.PROVISION)
+        && frameworkInstanceCreationExpression
+            .alternativeFrameworkClass()
+            .map(TypeNames.PROVIDER::equals)
+            .orElse(true);
   }
 
   /** Returns the type of the instance when it is a specific factory type. */

@@ -62,7 +62,9 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
     Optional<CodeBlock> superContributions = superContributions();
     if (superContributions.isPresent()) {
       // TODO(b/117833324): consider decomposing the Provider<Set<Provider>> and adding the
-      // individual contributions separately from the collection contributions
+      // individual contributions separately from the collection contributions. Though this may
+      // actually not be doable/desirable if the super provider instance is a DelegateFactory or
+      // another internal type that is not SetFactory
       builderMethodCalls.add(".addCollection$N($L)", methodNameSuffix, superContributions.get());
       setProviders++;
     }

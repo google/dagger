@@ -87,6 +87,13 @@ final class ComponentImplementation {
     /** The component constructor. */
     CONSTRUCTOR,
 
+    /**
+     * In ahead-of-time subcomponents, this method coordinates the invocation of {@link
+     * #INITIALIZE_METHOD initialization methods} instead of constructors.
+     */
+    // TODO(b/117833324): try to merge this with other initialize() methods so it looks more natural
+    CONFIGURE_INITIALIZATION_METHOD,
+
     /** A builder method for the component. (Only used by the root component.) */
     BUILDER_METHOD,
 
@@ -160,6 +167,7 @@ final class ComponentImplementation {
   private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
   private ImmutableList<ParameterSpec> constructorParameters;
+  private Optional<MethodSpec> configureInitializationMethod = Optional.empty();
 
   ComponentImplementation(
       ComponentDescriptor componentDescriptor,
@@ -238,6 +246,42 @@ final class ComponentImplementation {
   /** Returns the constructor parameters. */
   ImmutableList<ParameterSpec> constructorParameters() {
     return constructorParameters;
+  }
+
+  /**
+   * Returns the {@link #configureInitializationMethod()} of the nearest supertype that defines one,
+   * if any.
+   *
+   * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
+   */
+  Optional<MethodSpec> superConfigureInitializationMethod() {
+    for (Optional<ComponentImplementation> currentSuper = superclassImplementation;
+        currentSuper.isPresent();
+        currentSuper = currentSuper.get().superclassImplementation) {
+      if (currentSuper.get().configureInitializationMethod.isPresent()) {
+        return currentSuper.get().configureInitializationMethod;
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the {@link MethodSpecKind#CONFIGURE_INITIALIZATION_METHOD} of this implementation if
+   * there is one.
+   *
+   * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
+   */
+  Optional<MethodSpec> configureInitializationMethod() {
+    return configureInitializationMethod;
+  }
+
+  /**
+   * Set's this component implementation's {@code configureInitialization()} method and {@linkplain
+   * #addMethod(MethodSpecKind, MethodSpec) adds the method}.
+   */
+  void setConfigureInitializationMethod(MethodSpec method) {
+    configureInitializationMethod = Optional.of(method);
+    addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method);
   }
 
   /**

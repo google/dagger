@@ -43,16 +43,7 @@ GenJavaTests(
 
 GenJavaTests(
     name = "producers-functional-tests-with-aot",
-    srcs = glob(
-        ["**/*.java"],
-        # TODO(b/72748365): Remove these exclusions
-        exclude = [
-            "subcomponent/*.java",
-            "subcomponent/pruning/ProductionSubcomponentOnlyRequestedBySiblingTest.java",
-            "cancellation/ProducerSubcomponentCancellationTest.java",
-            "cancellation/CancellationPolicyTest.java",
-        ],
-    ),
+    srcs = glob(["**/*.java"]),
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     with_aot = True,
     deps = [

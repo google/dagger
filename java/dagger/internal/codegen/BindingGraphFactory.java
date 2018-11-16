@@ -26,6 +26,7 @@ import static dagger.internal.codegen.ComponentDescriptor.isComponentContributio
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
+import static dagger.internal.codegen.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.INJECTION;
@@ -46,12 +47,14 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
+import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.producers.internal.ProductionExecutorModule;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -77,6 +80,7 @@ final class BindingGraphFactory {
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
   private final CompilerOptions compilerOptions;
+  private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
   @Inject
   BindingGraphFactory(
@@ -84,11 +88,13 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
+      ModuleDescriptor.Factory moduleDescriptorFactory,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
+    this.moduleDescriptorFactory = moduleDescriptorFactory;
     this.compilerOptions = compilerOptions;
   }
 
@@ -149,7 +155,7 @@ final class BindingGraphFactory {
     ImmutableSet.Builder<SubcomponentDeclaration> subcomponentDeclarations = ImmutableSet.builder();
 
     // Collect transitive module bindings and multibinding declarations.
-    for (ModuleDescriptor moduleDescriptor : componentDescriptor.modules()) {
+    for (ModuleDescriptor moduleDescriptor : modules(componentDescriptor, parentResolver)) {
       explicitBindingsBuilder.addAll(moduleDescriptor.bindings());
       multibindingDeclarations.addAll(moduleDescriptor.multibindingDeclarations());
       subcomponentDeclarations.addAll(moduleDescriptor.subcomponentDeclarations());
@@ -205,6 +211,45 @@ final class BindingGraphFactory {
         subgraphs.build(),
         requestResolver.getOwnedModules(),
         requestResolver.getFactoryMethod());
+  }
+
+  /**
+   * Returns all the modules that should be installed in the component. For production components
+   * and production subcomponents that have a parent that is not a production component or
+   * subcomponent, also includes the production monitoring module for the component and the
+   * production executor module.
+   */
+  private ImmutableSet<ModuleDescriptor> modules(
+      ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
+    if (componentDescriptor.kind().equals(Kind.PRODUCTION_COMPONENT)
+        || (componentDescriptor.kind().equals(Kind.PRODUCTION_SUBCOMPONENT)
+            && parentResolver.isPresent()
+            && !parentResolver.get().componentDescriptor.kind().isProducer())) {
+      ImmutableSet.Builder<ModuleDescriptor> modules = new ImmutableSet.Builder<>();
+      modules.addAll(componentDescriptor.modules());
+      modules.add(descriptorForMonitoringModule(componentDescriptor.typeElement()));
+      modules.add(descriptorForProductionExecutorModule());
+      return modules.build();
+    }
+    return componentDescriptor.modules();
+  }
+
+  /**
+   * Returns a descriptor for a generated module that handles monitoring for production components.
+   * This module is generated in the {@link MonitoringModuleProcessingStep}.
+   *
+   * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
+   *     processor to retry in a later processing round.
+   */
+  private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
+    return moduleDescriptorFactory.create(
+        elements.checkTypePresent(
+            generatedMonitoringModuleName(componentDefinitionType).toString()));
+  }
+
+  /** Returns a descriptor {@link ProductionExecutorModule}. */
+  private ModuleDescriptor descriptorForProductionExecutorModule() {
+    return moduleDescriptorFactory.create(elements.getTypeElement(ProductionExecutorModule.class));
   }
 
   /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */

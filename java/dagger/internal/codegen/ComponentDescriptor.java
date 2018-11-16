@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
@@ -48,7 +49,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Lazy;
@@ -59,7 +59,6 @@ import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
-import dagger.producers.internal.ProductionExecutorModule;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -491,11 +490,10 @@ abstract class ComponentDescriptor {
             "%s must be annotated with @Component or @ProductionComponent.",
             componentType);
       }
-      return create(componentType, kind.get(), Optional.empty());
+      return create(componentType, kind.get());
     }
 
-    private ComponentDescriptor create(
-        TypeElement componentDefinitionType, Kind kind, Optional<Kind> parentKind) {
+    private ComponentDescriptor create(TypeElement componentDefinitionType, Kind kind) {
       AnnotationMirror componentMirror =
           getAnnotationMirror(componentDefinitionType, kind.annotationType()).get();
       DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
@@ -519,28 +517,18 @@ abstract class ComponentDescriptor {
         }
       }
 
-      ImmutableSet.Builder<ModuleDescriptor> modulesBuilder = ImmutableSet.builder();
-      for (TypeMirror componentModulesType : getComponentModules(componentMirror)) {
-        modulesBuilder.add(
-            moduleDescriptorFactory.create(MoreTypes.asTypeElement(componentModulesType)));
-      }
-      if (kind.equals(Kind.PRODUCTION_COMPONENT)
-          || (kind.equals(Kind.PRODUCTION_SUBCOMPONENT)
-              && parentKind.isPresent()
-              && (parentKind.get().equals(Kind.COMPONENT)
-                  || parentKind.get().equals(Kind.SUBCOMPONENT)))) {
-        modulesBuilder.add(descriptorForMonitoringModule(componentDefinitionType));
-        modulesBuilder.add(descriptorForProductionExecutorModule());
-      }
-      ImmutableSet<ModuleDescriptor> modules = modulesBuilder.build();
+      ImmutableSet<ModuleDescriptor> modules =
+          getComponentModules(componentMirror).stream()
+              .map(moduleType -> moduleDescriptorFactory.create(asTypeElement(moduleType)))
+              .collect(toImmutableSet());
+
       ImmutableSet<ModuleDescriptor> transitiveModules = transitiveModules(modules);
       ImmutableSet.Builder<ComponentDescriptor> subcomponentsFromModules = ImmutableSet.builder();
       for (ModuleDescriptor module : transitiveModules) {
         for (SubcomponentDeclaration subcomponentDeclaration : module.subcomponentDeclarations()) {
           TypeElement subcomponent = subcomponentDeclaration.subcomponentType();
           subcomponentsFromModules.add(
-              create(
-                  subcomponent, Kind.forAnnotatedElement(subcomponent).get(), Optional.of(kind)));
+              create(subcomponent, Kind.forAnnotatedElement(subcomponent).get()));
         }
       }
       ImmutableSet<ExecutableElement> unimplementedMethods =
@@ -566,8 +554,7 @@ abstract class ComponentDescriptor {
                 componentMethodDescriptor,
                 create(
                     MoreElements.asType(MoreTypes.asElement(resolvedMethod.getReturnType())),
-                    componentMethodDescriptor.kind().componentKind(),
-                    Optional.of(kind)));
+                    componentMethodDescriptor.kind().componentKind()));
             break;
           case SUBCOMPONENT_BUILDER:
           case PRODUCTION_SUBCOMPONENT_BUILDER:
@@ -576,8 +563,7 @@ abstract class ComponentDescriptor {
                 create(
                     MoreElements.asType(
                         MoreTypes.asElement(resolvedMethod.getReturnType()).getEnclosingElement()),
-                    componentMethodDescriptor.kind().componentKind(),
-                    Optional.of(kind)));
+                    componentMethodDescriptor.kind().componentKind()));
             break;
           default: // nothing special to do for other methods.
         }
@@ -684,7 +670,7 @@ abstract class ComponentDescriptor {
       if (!builderType.isPresent()) {
         return Optional.empty();
       }
-      TypeElement element = MoreTypes.asTypeElement(builderType.get());
+      TypeElement element = asTypeElement(builderType.get());
       ImmutableSet<ExecutableElement> methods = elements.getUnimplementedMethods(element);
       ImmutableSet.Builder<BuilderRequirementMethod> requirementMethods = ImmutableSet.builder();
       ExecutableElement buildMethod = null;
@@ -721,30 +707,9 @@ abstract class ComponentDescriptor {
       }
 
       TypeMirror type = getOnlyElement(resolvedType.getParameterTypes());
-      return ConfigurationAnnotations.getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()
+      return ConfigurationAnnotations.getModuleAnnotation(asTypeElement(type)).isPresent()
           ? ComponentRequirement.forModule(type)
           : ComponentRequirement.forDependency(type);
-    }
-
-    /**
-     * Returns a descriptor for a generated module that handles monitoring for production
-     * components. This module is generated in the {@link MonitoringModuleProcessingStep}.
-     *
-     * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
-     *     processor to retry in a later processing round.
-     */
-    private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
-      ClassName monitoringModuleName =
-          SourceFiles.generatedMonitoringModuleName(componentDefinitionType);
-      TypeElement monitoringModule = elements.checkTypePresent(monitoringModuleName.toString());
-      return moduleDescriptorFactory.create(monitoringModule);
-    }
-
-    /** Returns a descriptor {@link ProductionExecutorModule}. */
-    private ModuleDescriptor descriptorForProductionExecutorModule() {
-      TypeElement productionExecutorModule =
-          elements.getTypeElement(ProductionExecutorModule.class);
-      return moduleDescriptorFactory.create(productionExecutorModule);
     }
 
     private ImmutableSet<ModuleDescriptor> transitiveModules(

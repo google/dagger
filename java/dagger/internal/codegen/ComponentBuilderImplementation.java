@@ -24,6 +24,7 @@ import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -113,7 +114,11 @@ final class ComponentBuilderImplementation {
       }
       if (builderSpec().isPresent()) {
         if (componentImplementation.isAbstract()) {
-          componentBuilderClass.addModifiers(PUBLIC);
+          // The component builder class of a top-level component implementation in ahead-of-tim
+          // subcomponents mode must be public, not protected, because the builder's subclass will
+          // be a sibling of the component subclass implementation, not nested.
+          componentBuilderClass.addModifiers(
+              componentImplementation.isNested() ? PROTECTED : PUBLIC);
         } else {
           componentBuilderClass.addModifiers(PRIVATE);
         }

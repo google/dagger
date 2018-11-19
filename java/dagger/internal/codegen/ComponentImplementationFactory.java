@@ -409,7 +409,7 @@ final class ComponentImplementationFactory {
           componentImplementation,
           child,
           Optional.of(getChildSuperclassImplementation(child)),
-          PUBLIC,
+          PROTECTED,
           componentImplementation.isAbstract() ? ABSTRACT : FINAL);
     }
 

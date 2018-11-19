@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -88,7 +88,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
           modifiableBindingType,
           request,
           MethodSpec.methodBuilder(methodName.get())
-              .addModifiers(PUBLIC, ABSTRACT)
+              .addModifiers(PROTECTED, ABSTRACT)
               .returns(TypeName.get(returnType))
               .build(),
           false /* finalized */);

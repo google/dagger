@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.common.collect.ImmutableSet;
@@ -91,7 +92,7 @@ final class ModifiableBindingExpressions {
           ModifiableBindingMethod.implement(
               modifiableBindingMethod,
               MethodSpec.methodBuilder(baseMethod.name)
-                  .addModifiers(PUBLIC)
+                  .addModifiers(baseMethod.modifiers.contains(PUBLIC) ? PUBLIC : PROTECTED)
                   .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())
                   .returns(baseMethod.returnType)
                   .addAnnotation(Override.class)

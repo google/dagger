@@ -688,14 +688,14 @@ final class ComponentImplementationFactory {
         // Since we're overriding a subcomponent implementation we add to its implementation given
         // an expanded binding graph.
 
-        // Override modifiable binding methods.
-        for (ModifiableBindingMethod modifiableBindingMethod :
-            componentImplementation.getModifiableBindingMethods()) {
+        ComponentImplementation superclassImplementation =
+            componentImplementation.superclassImplementation().get();
+        for (ModifiableBindingMethod superclassModifiableBindingMethod :
+            superclassImplementation.getModifiableBindingMethods()) {
           bindingExpressions
               .modifiableBindingExpressions()
-              .getModifiableBindingMethod(modifiableBindingMethod)
-              .ifPresent(
-                  method -> componentImplementation.addImplementedModifiableBindingMethod(method));
+              .reimplementedModifiableBindingMethod(superclassModifiableBindingMethod)
+              .ifPresent(componentImplementation::addImplementedModifiableBindingMethod);
         }
       } else {
         super.addInterfaceMethods();

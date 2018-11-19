@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -80,9 +81,12 @@ final class ModifiableBindingExpressions {
    * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
    * or should not be modified by the current binding graph.
    */
-  Optional<ModifiableBindingMethod> getModifiableBindingMethod(
+  Optional<ModifiableBindingMethod> reimplementedModifiableBindingMethod(
       ModifiableBindingMethod modifiableBindingMethod) {
-    if (shouldModifyKnownBinding(modifiableBindingMethod)) {
+    checkState(componentImplementation.superclassImplementation().isPresent());
+    if (modifiableBindingTypeChanged(modifiableBindingMethod)
+        || shouldModifyImplementation(
+            modifiableBindingMethod.type(), modifiableBindingMethod.request())) {
       MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
       boolean markMethodFinal =
           knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
@@ -123,7 +127,7 @@ final class ModifiableBindingExpressions {
     }
     return modifiableBindingWillBeFinalized(
         newModifiableBindingType,
-        shouldModifyBinding(newModifiableBindingType, modifiableBindingMethod.request()));
+        shouldModifyImplementation(newModifiableBindingType, modifiableBindingMethod.request()));
   }
 
   /**
@@ -134,7 +138,7 @@ final class ModifiableBindingExpressions {
   private boolean newModifiableBindingWillBeFinalized(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
     return modifiableBindingWillBeFinalized(
-        modifiableBindingType, shouldModifyBinding(modifiableBindingType, request));
+        modifiableBindingType, shouldModifyImplementation(modifiableBindingType, request));
   }
 
   /**
@@ -300,26 +304,21 @@ final class ModifiableBindingExpressions {
   }
 
   /**
-   * Returns true if the current binding graph can, and should, modify a binding by overriding a
-   * modifiable binding method.
+   * Returns true if the modifiable binding type of a {@code modifiableBindingMethod}'s request is
+   * different in this implementation from what it was in the super implementation.
    */
-  private boolean shouldModifyKnownBinding(ModifiableBindingMethod modifiableBindingMethod) {
+  private boolean modifiableBindingTypeChanged(ModifiableBindingMethod modifiableBindingMethod) {
+    checkState(componentImplementation.superclassImplementation().isPresent());
     ModifiableBindingType newModifiableBindingType =
         getModifiableBindingType(modifiableBindingMethod.request());
-    if (!newModifiableBindingType.equals(modifiableBindingMethod.type())) {
-      // It is possible that a binding can change types, in which case we should always modify the
-      // binding.
-      return true;
-    }
-    return shouldModifyBinding(modifiableBindingMethod.type(), modifiableBindingMethod.request());
+    return !newModifiableBindingType.equals(modifiableBindingMethod.type());
   }
 
   /**
    * Returns true if the current binding graph can, and should, modify a binding by overriding a
    * modifiable binding method.
    */
-  // TODO(b/72748365): should this be called shouldModifyRequest() or shouldModifyBindingRequest()?
-  private boolean shouldModifyBinding(
+  private boolean shouldModifyImplementation(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
     if (request.requestKind().isPresent()) {
       switch (request.requestKind().get()) {

@@ -119,7 +119,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Component(
       modules = {
         ProcessingEnvironmentModule.class,
-        BindingGraphPluginsModule.class,
+        SpiModule.class,
         BindingGraphValidationModule.class,
         BindingMethodValidatorsModule.class,
         ProcessingStepsModule.class,

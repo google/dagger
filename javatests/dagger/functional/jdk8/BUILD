@@ -35,20 +35,3 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
-
-GenJavaTests(
-    name = "jdk8_tests_with_aot",
-    srcs = glob(["**/*.java"]),
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
-        "@google_bazel_common//third_party/java/guava",
-        "@google_bazel_common//third_party/java/junit",
-        "@google_bazel_common//third_party/java/truth:truth8",
-    ],
-    with_aot = True,
-    deps = [
-        "//:dagger_with_compiler",
-        "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/jsr305_annotations",
-    ],
-)

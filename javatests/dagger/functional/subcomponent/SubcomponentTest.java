@@ -86,7 +86,7 @@ public class SubcomponentTest {
 
   @Test
   public void unscopedProviders() {
-    assume().that(System.getProperty("dagger.mode")).isNotEqualTo("FastInit");
+    assume().that(System.getProperty("dagger.mode")).doesNotContain("FastInit");
     assertThat(parentGetters.getUnscopedTypeProvider())
         .isSameAs(childComponent.getUnscopedTypeProvider());
     assertThat(parentGetters.getUnscopedTypeProvider())

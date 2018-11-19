@@ -200,14 +200,13 @@ final class ComponentBuilderImplementation {
                     .endControlFlow();
                 break;
               case THROW:
-                buildMethod
-                    .beginControlFlow("if ($N == null)", field)
-                    .addStatement(
-                        "throw new $T($T.class.getCanonicalName() + $S)",
-                        IllegalStateException.class,
-                        TypeNames.rawTypeName(field.type),
-                        " must be set")
-                    .endControlFlow();
+                // TODO(cgdecker,ronshapiro): ideally this should use the key instead of a class for
+                // @BindsInstance requirements, but that's not easily proguardable.
+                buildMethod.addStatement(
+                    "$T.checkBuilderRequirement($N, $T.class)",
+                    Preconditions.class,
+                    field,
+                    TypeNames.rawTypeName(field.type));
                 break;
               case ALLOW:
                 break;

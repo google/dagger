@@ -78,33 +78,40 @@ public class DuplicateBindingsValidationTest {
   }
 
   @Test public void duplicateExplicitBindings_TwoProvidesMethods() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "final class Outer {",
-        "  interface A {}",
-        "",
-        "  @Module",
-        "  static class Module1 {",
-        "    @Provides A provideA1() { return new A() {}; }",
-        "  }",
-        "",
-        "  @Module",
-        "  static class Module2 {",
-        "    @Provides String provideString() { return \"\"; }",
-        "    @Provides A provideA2(String s) { return new A() {}; }",
-        "  }",
-        "",
-        "  @Component(modules = { Module1.class, Module2.class})",
-        "  interface TestComponent {",
-        "    A getA();",
-        "  }",
-        "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "final class Outer {",
+            "  interface A {}",
+            "",
+            "  static class B {",
+            "    @Inject B(A a) {}",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module1 {",
+            "    @Provides A provideA1() { return new A() {}; }",
+            "  }",
+            "",
+            "  @Module",
+            "  static class Module2 {",
+            "    @Provides String provideString() { return \"\"; }",
+            "    @Provides A provideA2(String s) { return new A() {}; }",
+            "  }",
+            "",
+            "  @Component(modules = { Module1.class, Module2.class})",
+            "  interface TestComponent {",
+            "    A getA();",
+            "    B getB();",
+            "  }",
+            "}");
 
     Compilation compilation = daggerCompiler().compile(component);
     assertThat(compilation).failed();
@@ -116,6 +123,8 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
+    // The duplicate bindngs are also requested from B, but we don't want to report them again.
+    assertThat(compilation).hadErrorCount(1);
   }
 
   @Test
@@ -753,5 +762,73 @@ public class DuplicateBindingsValidationTest {
                     + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
         .inFile(parentConflictsWithChild)
         .onLine(9);
+  }
+
+  @Test
+  public void reportedInParentAndChild() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Child.Builder childBuilder();",
+            "  String duplicated();",
+            "}");
+    JavaFileObject parentModule =
+        JavaFileObjects.forSourceLines(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Optional;",
+            "",
+            "@Module",
+            "interface ParentModule {",
+            "  @Provides static String one(Optional<Object> optional) { return \"one\"; }",
+            "  @Provides static String two() { return \"two\"; }",
+            "  @BindsOptionalOf Object optional();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  String duplicated();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Child build();",
+            "  }",
+            "}");
+    JavaFileObject childModule =
+        JavaFileObjects.forSourceLines(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Optional;",
+            "",
+            "@Module",
+            "interface ChildModule {",
+            "  @Provides static Object object() { return \"object\"; }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(parent, parentModule, child, childModule);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("java.lang.String is bound multiple times")
+        .inFile(parent)
+        .onLineContaining("interface Parent");
+    assertThat(compilation).hadErrorCount(1);
   }
 }

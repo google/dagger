@@ -18,29 +18,34 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.common.collect.Maps.filterValues;
+import static com.google.common.collect.Maps.transformValues;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
-import static dagger.internal.codegen.DuplicateBindingsValidator.SourceAndRequest.indexEdgesBySourceAndRequest;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Optionals.emptiesLast;
 import static java.util.Comparator.comparing;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import dagger.model.Binding;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -65,6 +70,27 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
                   comparing((Element element) -> element.getSimpleName().toString())
                       .thenComparing((Element element) -> element.asType().toString())));
 
+  /**
+   * An {@link Equivalence} between {@link Binding}s that ignores the {@link
+   * Binding#componentPath()}. (All other properties are essentially derived from the {@link
+   * Binding#bindingElement()} and {@link Binding#contributingModule()}, so only those two are
+   * compared.)
+   */
+  // TODO(dpb): Move to dagger.model?
+  private static final Equivalence<Binding> IGNORING_COMPONENT_PATH =
+      new Equivalence<Binding>() {
+        @Override
+        protected boolean doEquivalent(Binding a, Binding b) {
+          return a.bindingElement().equals(b.bindingElement())
+              && a.contributingModule().equals(b.contributingModule());
+        }
+
+        @Override
+        protected int doHash(Binding binding) {
+          return Objects.hash(binding.bindingElement(), binding.contributingModule());
+        }
+      };
+
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
@@ -79,61 +105,74 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    Multimaps.asMap(indexEdgesBySourceAndRequest(bindingGraph))
+    // If two unrelated subcomponents have the same duplicate bindings only because they install the
+    // same two modules, then fixing the error in one subcomponent will uncover the second
+    // subcomponent to fix.
+    // TODO(ronshapiro): Explore ways to address such underreporting without overreporting.
+    Set<ImmutableSet<Equivalence.Wrapper<Binding>>> reportedDuplicateBindingSets = new HashSet<>();
+    duplicateBindings(bindingGraph)
         .forEach(
-            (sourceAndRequest, dependencyEdges) -> {
-              if (dependencyEdges.size() > 1) {
-                reportDuplicateBindings(
-                    sourceAndRequest.request(), dependencyEdges, bindingGraph, diagnosticReporter);
+            (sourceAndRequest, resolvedBindings) -> {
+              // Only report each set of duplicate bindings once, ignoring the installed component.
+              if (reportedDuplicateBindingSets.add(
+                  equivalentSetIgnoringComponentPath(resolvedBindings))) {
+                reportDuplicateBindings(resolvedBindings, bindingGraph, diagnosticReporter);
               }
             });
   }
 
+  /**
+   * Returns duplicate bindings for each dependency request, counting the same dependency request
+   * separately when coming from separate source nodes.
+   */
+  private Map<SourceAndRequest, ImmutableSet<Binding>> duplicateBindings(
+      BindingGraph bindingGraph) {
+    ImmutableSetMultimap<SourceAndRequest, Binding> bindingsByDependencyRequest =
+        bindingGraph.dependencyEdges().stream()
+            .filter(edge -> bindingGraph.network().incidentNodes(edge).target() instanceof Binding)
+            .collect(
+                toImmutableSetMultimap(
+                    edge ->
+                        SourceAndRequest.create(
+                            bindingGraph.network().incidentNodes(edge).source(),
+                            edge.dependencyRequest()),
+                    edge -> ((Binding) bindingGraph.network().incidentNodes(edge).target())));
+    return transformValues(
+        filterValues(bindingsByDependencyRequest.asMap(), bindings -> bindings.size() > 1),
+        ImmutableSet::copyOf);
+  }
+
   private void reportDuplicateBindings(
-      DependencyRequest dependencyRequest,
-      Set<DependencyEdge> duplicateDependencies,
+      ImmutableSet<Binding> duplicateBindings,
       BindingGraph bindingGraph,
       DiagnosticReporter diagnosticReporter) {
-    ImmutableSet<dagger.model.Binding> duplicateBindings =
-        duplicateDependencies.stream()
-            .map(edge -> bindingGraph.network().incidentNodes(edge).target())
-            .flatMap(instancesOf(dagger.model.Binding.class))
-            .collect(toImmutableSet());
-    diagnosticReporter.reportDependency(
+    Binding oneBinding = duplicateBindings.asList().get(0);
+    diagnosticReporter.reportBinding(
         ERROR,
-        Iterables.get(duplicateDependencies, 0),
+        oneBinding,
         Iterables.any(duplicateBindings, binding -> binding.kind().isMultibinding())
-            ? incompatibleBindingsMessage(dependencyRequest, duplicateBindings, bindingGraph)
-            : duplicateBindingMessage(dependencyRequest, duplicateBindings, bindingGraph));
+            ? incompatibleBindingsMessage(oneBinding.key(), duplicateBindings, bindingGraph)
+            : duplicateBindingMessage(oneBinding.key(), duplicateBindings, bindingGraph));
   }
 
   private String duplicateBindingMessage(
-      DependencyRequest dependencyRequest,
-      ImmutableSet<dagger.model.Binding> duplicateBindings,
-      BindingGraph graph) {
-    StringBuilder message =
-        new StringBuilder().append(dependencyRequest.key()).append(" is bound multiple times:");
+      Key key, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
+    StringBuilder message = new StringBuilder().append(key).append(" is bound multiple times:");
     formatDeclarations(message, 1, declarations(graph, duplicateBindings));
     return message.toString();
   }
 
   private String incompatibleBindingsMessage(
-      DependencyRequest dependencyRequest,
-      ImmutableSet<dagger.model.Binding> duplicateBindings,
-      BindingGraph graph) {
+      Key key, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
     ImmutableSet<dagger.model.Binding> multibindings =
         duplicateBindings.stream()
             .filter(binding -> binding.kind().isMultibinding())
             .collect(toImmutableSet());
     verify(
-        multibindings.size() == 1,
-        "expected only one multibinding for %s: %s",
-        dependencyRequest,
-        multibindings);
+        multibindings.size() == 1, "expected only one multibinding for %s: %s", key, multibindings);
     StringBuilder message = new StringBuilder();
     java.util.Formatter messageFormatter = new java.util.Formatter(message);
-    messageFormatter.format(
-        "%s has incompatible bindings or declarations:\n", dependencyRequest.key());
+    messageFormatter.format("%s has incompatible bindings or declarations:\n", key);
     message.append(INDENT);
     dagger.model.Binding multibinding = getOnlyElement(multibindings);
     messageFormatter.format("%s bindings and declarations:", multibindingTypeString(multibinding));
@@ -195,24 +234,17 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     }
   }
 
+  private static ImmutableSet<Equivalence.Wrapper<Binding>> equivalentSetIgnoringComponentPath(
+      ImmutableSet<Binding> resolvedBindings) {
+    return resolvedBindings.stream().map(IGNORING_COMPONENT_PATH::wrap).collect(toImmutableSet());
+  }
+
   @AutoValue
   abstract static class SourceAndRequest {
 
     abstract Node source();
 
     abstract DependencyRequest request();
-
-    static ImmutableSetMultimap<SourceAndRequest, DependencyEdge> indexEdgesBySourceAndRequest(
-        BindingGraph bindingGraph) {
-      return bindingGraph.dependencyEdges().stream()
-          .collect(
-              toImmutableSetMultimap(
-                  edge ->
-                      create(
-                          bindingGraph.network().incidentNodes(edge).source(),
-                          edge.dependencyRequest()),
-                  edge -> edge));
-    }
 
     static SourceAndRequest create(Node source, DependencyRequest request) {
       return new AutoValue_DuplicateBindingsValidator_SourceAndRequest(source, request);

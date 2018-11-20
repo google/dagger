@@ -85,4 +85,5 @@ public interface Binding extends MaybeBinding {
 
   /** The kind of binding this instance represents. */
   BindingKind kind();
+
 }

@@ -73,7 +73,7 @@ final class ComponentImplementation {
     /** A field required by the component, e.g. module instances. */
     COMPONENT_REQUIREMENT_FIELD,
 
-    /** A framework field for type T, e.g. Provider<T>. */
+    /** A framework field for type T, e.g. {@code Provider<T>}. */
     FRAMEWORK_FIELD,
 
     /** A static field that always returns an absent {@code Optional} value for the binding. */

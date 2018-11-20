@@ -165,7 +165,7 @@ abstract class CompilerOptions {
   /** An option that can be set into {@link CompilerOptions}. */
   private interface Option {
 
-    /** Sets the appropriate property on a {@link CompilerOptions,Builder}. */
+    /** Sets the appropriate property on a {@link CompilerOptions.Builder}. */
     void set(Builder builder, ProcessingEnvironment processingEnvironment);
 
     /**

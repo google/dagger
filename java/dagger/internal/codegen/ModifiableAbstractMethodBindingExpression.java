@@ -77,7 +77,11 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   @Override
   final Expression getDependencyExpression(ClassName requestingClass) {
     addUnimplementedMethod();
-    return Expression.create(returnType, CodeBlock.of("$L()", methodName.get()));
+    return Expression.create(
+        returnType,
+        componentImplementation.name().equals(requestingClass)
+            ? CodeBlock.of("$N()", methodName.get())
+            : CodeBlock.of("$T.this.$N()", componentImplementation.name(), methodName.get()));
   }
 
   private void addUnimplementedMethod() {

@@ -199,10 +199,8 @@ final class ModifiableBindingExpressions {
               types);
         }
         // Otherwise return a concrete implementation.
-        return bindingExpressions.wrapInMethod(
-            resolvedBindings,
-            request,
-            bindingExpressions.createBindingExpression(resolvedBindings, request));
+        return bindingExpressions.createBindingExpression(resolvedBindings, request);
+
       case MISSING:
         // If we need an expression for a missing binding and the current implementation is
         // abstract, then we need an (un-implemented) MissingBindingExpression.
@@ -221,6 +219,7 @@ final class ModifiableBindingExpressions {
         // graph used to generate a given implementation then we can compare a implementation's
         // graph with its superclass implementation's graph to detect pruned dependency branches.
         return new PrunedConcreteMethodBindingExpression();
+
       case OPTIONAL:
       case MULTIBINDING:
       case INJECTION:

@@ -239,7 +239,7 @@ final class ModifiableBindingExpressions {
    * The reason why a binding may need to be modified across implementations of a subcomponent, if
    * at all.
    */
-  private ModifiableBindingType getModifiableBindingType(BindingRequest request) {
+  ModifiableBindingType getModifiableBindingType(BindingRequest request) {
     if (!compilerOptions.aheadOfTimeSubcomponents()) {
       return ModifiableBindingType.NONE;
     }
@@ -417,48 +417,22 @@ final class ModifiableBindingExpressions {
   }
 
   /**
-   * Returns a binding expression that invokes a method whose implementation is the given binding
-   * expression. It will only return such an expression if the binding represents a modifiable
-   * binding that should be wrapped in a method. We wrap expressions in this way so we can modify
-   * the binding when generating a subcomponent subclass by overriding the method.
+   * Wraps a modifiable binding expression in a method that can be overridden in a subclass
+   * implementation.
    */
-  Optional<BindingExpression> maybeWrapInModifiableMethodBindingExpression(
-      ResolvedBindings resolvedBindings,
+  BindingExpression wrapInModifiableMethodBindingExpression(
+      ContributionBinding binding,
       BindingRequest request,
-      BindingMethodImplementation methodImplementation,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod,
-      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod) {
+      BindingMethodImplementation methodImplementation) {
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
-    if (shouldUseAModifiableConcreteMethodBindingExpression(
-        modifiableBindingType, matchingComponentMethod)) {
-      return Optional.of(
-          new ModifiableConcreteMethodBindingExpression(
-              resolvedBindings,
-              request,
-              modifiableBindingType,
-              methodImplementation,
-              componentImplementation,
-              matchingModifiableBindingMethod,
-              newModifiableBindingWillBeFinalized(modifiableBindingType, request),
-              types));
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * Returns true if we should wrap a binding expression using a {@link
-   * ModifiableConcreteMethodBindingExpression}. If we're generating the abstract base class of a
-   * subcomponent and the binding matches a component method, even if it is modifiable, then it
-   * should be "wrapped" by a {@link ComponentMethodBindingExpression}. If it isn't a base class
-   * then modifiable methods should be handled by a {@link
-   * ModifiableConcreteMethodBindingExpression}. When generating an inner subcomponent it doesn't
-   * matter whether the binding matches a component method: All modifiable bindings should be
-   * handled by a {@link ModifiableConcreteMethodBindingExpression}.
-   */
-  private boolean shouldUseAModifiableConcreteMethodBindingExpression(
-      ModifiableBindingType type, Optional<ComponentMethodDescriptor> matchingComponentMethod) {
-    return type.isModifiable()
-        && (componentImplementation.superclassImplementation().isPresent()
-            || !matchingComponentMethod.isPresent());
+    checkState(modifiableBindingType.isModifiable());
+    return new ModifiableConcreteMethodBindingExpression(
+        binding,
+        request,
+        modifiableBindingType,
+        methodImplementation,
+        componentImplementation,
+        newModifiableBindingWillBeFinalized(modifiableBindingType, request),
+        types);
   }
 }

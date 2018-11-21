@@ -23,7 +23,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.squareup.javapoet.TypeName;
-import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
 
 /**
@@ -38,43 +37,47 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private final boolean bindingCannotBeModified;
-  private Optional<String> methodName;
+  private Optional<String> methodName = Optional.empty();
 
   ModifiableConcreteMethodBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       BindingRequest request,
       ModifiableBindingType modifiableBindingType,
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
-      Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       boolean bindingCannotBeModified,
       DaggerTypes types) {
-    super(methodImplementation, componentImplementation, matchingModifiableBindingMethod, types);
-    this.binding = resolvedBindings.contributionBinding();
+    super(request, methodImplementation, componentImplementation, types);
+    this.binding = checkNotNull(binding);
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.bindingCannotBeModified = bindingCannotBeModified;
-    this.methodName =
-        matchingModifiableBindingMethod.map(modifiableMethod -> modifiableMethod.methodSpec().name);
   }
 
   @Override
   protected void addMethod() {
-    // Add the modifiable binding method to the component if we haven't already.
-    if (!methodName.isPresent()) {
-      methodName = Optional.of(componentImplementation.getUniqueMethodName(request, binding));
-      componentImplementation.addModifiableBindingMethod(
-          modifiableBindingType,
-          request,
-          methodBuilder(methodName.get())
-              .addModifiers(bindingCannotBeModified ? PRIVATE : PROTECTED)
-              .returns(TypeName.get(methodImplementation.returnType()))
-              .addCode(methodImplementation.body())
-              .build(),
-          bindingCannotBeModified);
+    if (methodName.isPresent()) {
+      return;
     }
+
+    if (supertypeModifiableBindingMethod().isPresent()) {
+      methodName = supertypeModifiableBindingMethod().map(method -> method.methodSpec().name);
+      return;
+    }
+
+    // Add the modifiable binding method to the component if we haven't already.
+    methodName = Optional.of(componentImplementation.getUniqueMethodName(request, binding));
+    componentImplementation.addModifiableBindingMethod(
+        modifiableBindingType,
+        request,
+        methodBuilder(methodName.get())
+            .addModifiers(bindingCannotBeModified ? PRIVATE : PROTECTED)
+            .returns(TypeName.get(methodImplementation.returnType()))
+            .addCode(methodImplementation.body())
+            .build(),
+        bindingCannotBeModified);
   }
 
   @Override

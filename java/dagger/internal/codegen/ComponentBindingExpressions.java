@@ -39,7 +39,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import java.util.HashMap;
@@ -639,44 +638,30 @@ final class ComponentBindingExpressions {
       return bindingExpression;
     }
 
+    ContributionBinding binding = resolvedBindings.contributionBinding();
     BindingMethodImplementation methodImplementation =
         methodImplementation(resolvedBindings, request, bindingExpression);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
-    Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
-        componentImplementation.getModifiableBindingMethod(request);
 
-    Optional<BindingExpression> modifiableBindingExpression =
-        modifiableBindingExpressions.maybeWrapInModifiableMethodBindingExpression(
-            resolvedBindings,
-            request,
-            methodImplementation,
-            matchingComponentMethod,
-            matchingModifiableBindingMethod);
-    if (modifiableBindingExpression.isPresent()) {
-      return modifiableBindingExpression.get();
+    if (modifiableBindingExpressions.getModifiableBindingType(request).isModifiable()
+        && (componentImplementation.superclassImplementation().isPresent()
+            || !matchingComponentMethod.isPresent())) {
+      return modifiableBindingExpressions.wrapInModifiableMethodBindingExpression(
+          binding, request, methodImplementation);
+    } else if (matchingComponentMethod.isPresent()) {
+      ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
+      return new ComponentMethodBindingExpression(
+          request, methodImplementation, componentImplementation, componentMethod, types);
+    } else {
+      return new PrivateMethodBindingExpression(
+          binding, request, methodImplementation, componentImplementation, types);
     }
-
-    return matchingComponentMethod
-        .<BindingExpression>map(
-            componentMethod ->
-                new ComponentMethodBindingExpression(
-                    methodImplementation,
-                    componentImplementation,
-                    componentMethod,
-                    matchingModifiableBindingMethod,
-                    types))
-        .orElseGet(
-            () ->
-                new PrivateMethodBindingExpression(
-                    resolvedBindings,
-                    request,
-                    methodImplementation,
-                    componentImplementation,
-                    matchingModifiableBindingMethod,
-                    types));
   }
 
+  // TODO(ronshapiro): pass ContributionBinding directly instead of ResolvedBindings. The
+  // ResolvedBindings type is only needed in one case, and it seems like it could be removed. The
+  // rest seem could all use a ContributionBinding directly
   private BindingMethodImplementation methodImplementation(
       ResolvedBindings resolvedBindings,
       BindingRequest request,

@@ -186,14 +186,14 @@ public abstract class BindingGraph {
    * Returns the edges for entry points that transitively depend on a binding or missing binding for
    * a key. Never returns an empty set.
    */
-  public final ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBindingNode(
+  public final ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBinding(
       MaybeBinding binding) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
-    Network<Node, DependencyEdge> subgraphDependingOnBindingNode =
+    Network<Node, DependencyEdge> subgraphDependingOnBinding =
         inducedSubgraph(
             dependencyGraph, reachableNodes(transpose(dependencyGraph).asGraph(), binding));
     ImmutableSet<DependencyEdge> entryPointEdges =
-        intersection(entryPointEdges(), subgraphDependingOnBindingNode.edges()).immutableCopy();
+        intersection(entryPointEdges(), subgraphDependingOnBinding.edges()).immutableCopy();
     verify(!entryPointEdges.isEmpty(), "No entry points depend on binding %s", binding);
     return entryPointEdges;
   }

@@ -250,7 +250,7 @@ final class DiagnosticReporterFactory {
       final ImmutableSet<DependencyEdge> entryPoints;
 
       DiagnosticInfo(MaybeBinding binding) {
-        entryPoints = graph.entryPointEdgesDependingOnBindingNode(binding);
+        entryPoints = graph.entryPointEdgesDependingOnBinding(binding);
         requests = requests(binding);
         dependencyTrace = dependencyTrace(binding, entryPoints);
       }
@@ -265,7 +265,7 @@ final class DiagnosticReporterFactory {
         } else {
           // It's not an entry point, so it's part of a binding
           dagger.model.Binding binding = (dagger.model.Binding) source(dependencyEdge);
-          entryPoints = graph.entryPointEdgesDependingOnBindingNode(binding);
+          entryPoints = graph.entryPointEdgesDependingOnBinding(binding);
           dependencyTraceBuilder.addAll(dependencyTrace(binding, entryPoints));
         }
         dependencyTrace = dependencyTraceBuilder.build();

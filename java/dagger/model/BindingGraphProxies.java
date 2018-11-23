@@ -18,7 +18,7 @@ package dagger.model;
 
 import com.google.common.graph.Network;
 import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MissingBindingNode;
+import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
 
 /**
@@ -29,12 +29,12 @@ import dagger.model.BindingGraph.Node;
 public final class BindingGraphProxies {
   /** Creates a new {@link BindingGraph}. */
   public static BindingGraph bindingGraph(Network<Node, Edge> network) {
-    return new BindingGraph(network);
+    return BindingGraph.create(network);
   }
 
-  /** Creates a new {@link MissingBindingNode}. */
-  public static MissingBindingNode missingBindingNode(ComponentPath component, Key key) {
-    return MissingBindingNode.create(component, key);
+  /** Creates a new {@link MissingBinding}. */
+  public static MissingBinding missingBindingNode(ComponentPath component, Key key) {
+    return MissingBinding.create(component, key);
   }
 
   private BindingGraphProxies() {}

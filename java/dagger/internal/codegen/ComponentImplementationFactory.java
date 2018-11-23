@@ -23,6 +23,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.BUILDER_METHOD;
@@ -104,7 +105,7 @@ final class ComponentImplementationFactory {
    */
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
-        topLevelImplementation(componentName(bindingGraph.componentType()), bindingGraph);
+        topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
     OptionalFactories optionalFactories = new OptionalFactories(componentImplementation);
     Optional<ComponentBuilderImplementation> componentBuilderImplementation =
         ComponentBuilderImplementation.create(
@@ -126,7 +127,7 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'componentImplementation()' on %s when not generating ahead-of-time "
               + "subcomponents.",
-          bindingGraph.componentDescriptor().componentDefinitionType());
+          bindingGraph.componentTypeElement());
       return new SubcomponentImplementationBuilder(
               Optional.empty(), /* parent */
               bindingGraph,
@@ -199,8 +200,7 @@ final class ComponentImplementationFactory {
           .map(ComponentBuilderImplementation::componentBuilderClass)
           .ifPresent(this::addBuilderClass);
 
-      getLocalAndInheritedMethods(
-              graph.componentDescriptor().componentDefinitionType(), types, elements)
+      getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
           .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
 
       addFactoryMethods();
@@ -222,7 +222,7 @@ final class ComponentImplementationFactory {
         componentImplementation.addSuperclass(
             componentImplementation.superclassImplementation().get().name());
       } else {
-        componentImplementation.addSupertype(graph.componentType());
+        componentImplementation.addSupertype(graph.componentTypeElement());
       }
     }
 
@@ -290,7 +290,7 @@ final class ComponentImplementationFactory {
         for (List<CodeBlock> partition : partitions) {
           String methodName = componentImplementation.getUniqueMethodName("cancelProducers");
           MethodSpec method =
-              MethodSpec.methodBuilder(methodName)
+              methodBuilder(methodName)
                   .addModifiers(PRIVATE)
                   .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING)
                   .addCode(CodeBlocks.concat(partition))
@@ -342,7 +342,7 @@ final class ComponentImplementationFactory {
 
     final MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
       return MethodSignature.forComponentMethod(
-          method, MoreTypes.asDeclared(graph.componentType().asType()), types);
+          method, MoreTypes.asDeclared(graph.componentTypeElement().asType()), types);
     }
 
     final void addChildComponents() {
@@ -366,7 +366,7 @@ final class ComponentImplementationFactory {
             childSuperclassImplementation.isPresent(),
             "Cannot find abstract implementation of %s within %s while generating implemention "
                 + "within %s",
-            child.componentDefinitionType(),
+            child.typeElement(),
             superclassImplementation.name(),
             componentImplementation.name());
         return childSuperclassImplementation.get();
@@ -409,7 +409,7 @@ final class ComponentImplementationFactory {
           componentImplementation,
           child,
           Optional.of(getChildSuperclassImplementation(child)),
-          PUBLIC,
+          PROTECTED,
           componentImplementation.isAbstract() ? ABSTRACT : FINAL);
     }
 
@@ -440,15 +440,30 @@ final class ComponentImplementationFactory {
                   constructor.addStatement(
                       CodeBlock.of(
                           "super($L)",
-                          superclassImplementation.constructorParameters().stream()
-                              .map(param -> CodeBlock.of("$N", param))
-                              .collect(toParametersCodeBlock()))));
+                          parameterNames(superclassImplementation.constructorParameters()))));
+
+      Optional<MethodSpec.Builder> configureInitialization =
+          partitions.isEmpty() || !componentImplementation.isAbstract()
+              ? Optional.empty()
+              : Optional.of(configureInitializationMethodBuilder(constructorParameters));
+
+      if (componentImplementation.superConfigureInitializationMethod().isPresent()) {
+        MethodSpec superConfigureInitializationMethod =
+            componentImplementation.superConfigureInitializationMethod().get();
+        CodeBlock superInvocation =
+            CodeBlock.of(
+                "$N($L)",
+                superConfigureInitializationMethod,
+                parameterNames(superConfigureInitializationMethod.parameters));
+        if (configureInitialization.isPresent()) {
+          configureInitialization.get().addStatement("super.$L", superInvocation);
+        } else if (!componentImplementation.isAbstract()) {
+          constructor.addStatement(superInvocation);
+        }
+      }
 
       ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
-      CodeBlock initializeParametersCodeBlock =
-          constructorParameters.stream()
-              .map(param -> CodeBlock.of("$N", param))
-              .collect(toParametersCodeBlock());
+      CodeBlock initializeParametersCodeBlock = parameterNames(constructorParameters);
 
       for (List<CodeBlock> partition : partitions) {
         String methodName = componentImplementation.getUniqueMethodName("initialize");
@@ -462,10 +477,47 @@ final class ComponentImplementationFactory {
                 .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
                 .addCode(CodeBlocks.concat(partition));
         initializeMethod.addParameters(initializeParameters);
-        constructor.addStatement("$L($L)", methodName, initializeParametersCodeBlock);
+        configureInitialization
+            .orElse(constructor)
+            .addStatement("$L($L)", methodName, initializeParametersCodeBlock);
         componentImplementation.addMethod(INITIALIZE_METHOD, initializeMethod.build());
       }
       componentImplementation.addMethod(CONSTRUCTOR, constructor.build());
+      configureInitialization.ifPresent(
+          method -> componentImplementation.setConfigureInitializationMethod(method.build()));
+    }
+
+    /**
+     * Returns a {@link MethodSpec.Builder} for the {@link
+     * ComponentImplementation#configureInitializationMethod()}.
+     */
+    private MethodSpec.Builder configureInitializationMethodBuilder(
+        ImmutableList<ParameterSpec> initializationMethodParameters) {
+      String methodName = componentImplementation.getUniqueMethodName("configureInitialization");
+      MethodSpec.Builder configureInitialization =
+          methodBuilder(methodName)
+              .addModifiers(PROTECTED)
+              .addParameters(initializationMethodParameters);
+
+      // Checks all super configureInitialization() methods to see if they have the same signature
+      // as this one, and if so, adds as an @Override annotation
+      for (Optional<ComponentImplementation> currentSuperImplementation =
+              componentImplementation.superclassImplementation();
+          currentSuperImplementation.isPresent();
+          currentSuperImplementation =
+              currentSuperImplementation.get().superclassImplementation()) {
+        Optional<MethodSpec> superConfigureInitializationMethod =
+            currentSuperImplementation.get().configureInitializationMethod();
+        if (superConfigureInitializationMethod
+            .filter(superMethod -> superMethod.name.equals(methodName))
+            .filter(superMethod -> superMethod.parameters.equals(initializationMethodParameters))
+            .isPresent()) {
+          configureInitialization.addAnnotation(Override.class);
+          break;
+        }
+      }
+
+      return configureInitialization;
     }
 
     /** Returns the list of {@link ParameterSpec}s for the initialize methods. */
@@ -543,7 +595,7 @@ final class ComponentImplementationFactory {
         componentImplementation.addMethod(
             BUILDER_METHOD,
             methodBuilder("create")
-                .returns(ClassName.get(super.graph.componentType()))
+                .returns(ClassName.get(super.graph.componentTypeElement()))
                 .addModifiers(PUBLIC, STATIC)
                 .addStatement("return new Builder().$L()", buildMethodName)
                 .build());
@@ -627,7 +679,7 @@ final class ComponentImplementationFactory {
     }
 
     DeclaredType parentType() {
-      return asDeclared(parent.get().graph.componentType().asType());
+      return asDeclared(parent.get().graph.componentTypeElement().asType());
     }
 
     @Override
@@ -636,14 +688,14 @@ final class ComponentImplementationFactory {
         // Since we're overriding a subcomponent implementation we add to its implementation given
         // an expanded binding graph.
 
-        // Override modifiable binding methods.
-        for (ModifiableBindingMethod modifiableBindingMethod :
-            componentImplementation.getModifiableBindingMethods()) {
+        ComponentImplementation superclassImplementation =
+            componentImplementation.superclassImplementation().get();
+        for (ModifiableBindingMethod superclassModifiableBindingMethod :
+            superclassImplementation.getModifiableBindingMethods()) {
           bindingExpressions
               .modifiableBindingExpressions()
-              .getModifiableBindingMethod(modifiableBindingMethod)
-              .ifPresent(
-                  method -> componentImplementation.addImplementedModifiableBindingMethod(method));
+              .reimplementedModifiableBindingMethod(superclassModifiableBindingMethod)
+              .ifPresent(componentImplementation::addImplementedModifiableBindingMethod);
         }
       } else {
         super.addInterfaceMethods();

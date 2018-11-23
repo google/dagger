@@ -43,7 +43,7 @@ public class LongCycleTest {
    */
   @Test
   public void longCycleHasMoreThanOneInitializeMethod() throws NoSuchMethodException {
-    assume().that(System.getProperty("dagger.mode")).isNotEqualTo("FastInit");
+    assume().that(System.getProperty("dagger.mode")).doesNotContain("FastInit");
     DaggerLongCycle_LongCycleComponent.class
         .getDeclaredMethod("initialize2", DaggerLongCycle_LongCycleComponent.Builder.class);
   }

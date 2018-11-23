@@ -24,10 +24,9 @@ import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.MissingBindingNode;
+import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
 import dagger.model.Key;
 import dagger.spi.BindingGraphPlugin;
@@ -56,21 +55,18 @@ final class MissingBindingValidator implements BindingGraphPlugin {
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
     graph
-        .missingBindingNodes()
-        .forEach(node -> reportMissingBinding(node, graph, diagnosticReporter));
+        .missingBindings()
+        .forEach(missingBinding -> reportMissingBinding(missingBinding, graph, diagnosticReporter));
   }
 
   private void reportMissingBinding(
-      MissingBindingNode missingBindingNode,
-      BindingGraph graph,
-      DiagnosticReporter diagnosticReporter) {
+      MissingBinding missingBinding, BindingGraph graph, DiagnosticReporter diagnosticReporter) {
     diagnosticReporter.reportBinding(
-        ERROR, missingBindingNode, missingBindingErrorMessage(missingBindingNode, graph));
+        ERROR, missingBinding, missingBindingErrorMessage(missingBinding, graph));
   }
 
-  private String missingBindingErrorMessage(
-      MissingBindingNode missingBindingNode, BindingGraph graph) {
-    Key key = missingBindingNode.key();
+  private String missingBindingErrorMessage(MissingBinding missingBinding, BindingGraph graph) {
+    Key key = missingBinding.key();
     StringBuilder errorMessage = new StringBuilder();
     // Wildcards should have already been checked by DependencyRequestValidator.
     verify(!key.type().getKind().equals(TypeKind.WILDCARD), "unexpected wildcard request: %s", key);
@@ -80,7 +76,7 @@ final class MissingBindingValidator implements BindingGraphPlugin {
       errorMessage.append("an @Inject constructor or ");
     }
     errorMessage.append("an @Provides-"); // TODO(dpb): s/an/a
-    if (allIncomingDependenciesCanUseProduction(missingBindingNode, graph)) {
+    if (allIncomingDependenciesCanUseProduction(missingBinding, graph)) {
       errorMessage.append(" or @Produces-");
     }
     errorMessage.append("annotated method.");
@@ -88,8 +84,8 @@ final class MissingBindingValidator implements BindingGraphPlugin {
       errorMessage.append(
           " This type supports members injection but cannot be implicitly provided.");
     }
-    graph.bindingNodes(key).stream()
-        .map(bindingNode -> bindingNode.componentPath().currentComponent())
+    graph.bindings(key).stream()
+        .map(binding -> binding.componentPath().currentComponent())
         .distinct()
         .forEach(
             component ->
@@ -100,8 +96,8 @@ final class MissingBindingValidator implements BindingGraphPlugin {
   }
 
   private boolean allIncomingDependenciesCanUseProduction(
-      MissingBindingNode missingBindingNode, BindingGraph graph) {
-    return graph.network().inEdges(missingBindingNode).stream()
+      MissingBinding missingBinding, BindingGraph graph) {
+    return graph.network().inEdges(missingBinding).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .allMatch(edge -> dependencyCanBeProduction(edge, graph));
   }
@@ -111,10 +107,11 @@ final class MissingBindingValidator implements BindingGraphPlugin {
     if (source instanceof ComponentNode) {
       return entryPointCanUseProduction(edge.dependencyRequest().kind());
     }
-    if (source instanceof BindingNode) {
-      return ((BindingNode) source).binding().isProduction();
+    if (source instanceof dagger.model.Binding) {
+      return ((dagger.model.Binding) source).isProduction();
     }
-    throw new IllegalArgumentException("expected a BindingNode or ComponentNode: " + source);
+    throw new IllegalArgumentException(
+        "expected a dagger.model.Binding or ComponentNode: " + source);
   }
 
   private boolean typeHasInjectionSites(Key key) {

@@ -48,13 +48,11 @@ final class ComponentHierarchyValidator {
 
   ValidationReport<TypeElement> validate(ComponentDescriptor componentDescriptor) {
     ValidationReport.Builder<TypeElement> report =
-        ValidationReport.about(componentDescriptor.componentDefinitionType());
+        ValidationReport.about(componentDescriptor.typeElement());
     validateSubcomponentMethods(
         report,
         componentDescriptor,
-        Maps.toMap(
-            componentDescriptor.transitiveModuleTypes(),
-            constant(componentDescriptor.componentDefinitionType())));
+        Maps.toMap(componentDescriptor.moduleTypes(), constant(componentDescriptor.typeElement())));
 
     if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
       validateScopeHierarchy(
@@ -67,38 +65,51 @@ final class ComponentHierarchyValidator {
       ValidationReport.Builder<?> report,
       ComponentDescriptor componentDescriptor,
       ImmutableMap<TypeElement, TypeElement> existingModuleToOwners) {
-    for (Map.Entry<ComponentMethodDescriptor, ComponentDescriptor> subcomponentEntry :
-        componentDescriptor.subcomponentsByFactoryMethod().entrySet()) {
-      ComponentMethodDescriptor subcomponentMethodDescriptor = subcomponentEntry.getKey();
-      ComponentDescriptor subcomponentDescriptor = subcomponentEntry.getValue();
-      // validate the way that we create subcomponents
-      for (VariableElement factoryMethodParameter :
-          subcomponentMethodDescriptor.methodElement().getParameters()) {
-        TypeElement moduleType = MoreTypes.asTypeElement(factoryMethodParameter.asType());
-        TypeElement originatingComponent = existingModuleToOwners.get(moduleType);
-        if (originatingComponent != null) {
-          /* Factory method tries to pass a module that is already present in the parent.
-           * This is an error. */
-          report.addError(
-              String.format(
-                  "%s is present in %s. A subcomponent cannot use an instance of a "
-                      + "module that differs from its parent.",
-                  moduleType.getSimpleName(), originatingComponent.getQualifiedName()),
-              factoryMethodParameter);
-        }
+    componentDescriptor
+        .childComponentsDeclaredByFactoryMethods()
+        .forEach(
+            (method, childComponent) -> {
+              if (childComponent.hasBuilder()) {
+                report.addError(
+                    "Components may not have factory methods for subcomponents that define a "
+                        + "builder.",
+                    method.methodElement());
+              } else {
+                validateFactoryMethodParameters(report, method, existingModuleToOwners);
+              }
+
+              validateSubcomponentMethods(
+                  report,
+                  childComponent,
+                  new ImmutableMap.Builder<TypeElement, TypeElement>()
+                      .putAll(existingModuleToOwners)
+                      .putAll(
+                          Maps.toMap(
+                              Sets.difference(
+                                  childComponent.moduleTypes(), existingModuleToOwners.keySet()),
+                              constant(childComponent.typeElement())))
+                      .build());
+            });
+  }
+
+  private void validateFactoryMethodParameters(
+      ValidationReport.Builder<?> report,
+      ComponentMethodDescriptor subcomponentMethodDescriptor,
+      ImmutableMap<TypeElement, TypeElement> existingModuleToOwners) {
+    for (VariableElement factoryMethodParameter :
+        subcomponentMethodDescriptor.methodElement().getParameters()) {
+      TypeElement moduleType = MoreTypes.asTypeElement(factoryMethodParameter.asType());
+      TypeElement originatingComponent = existingModuleToOwners.get(moduleType);
+      if (originatingComponent != null) {
+        /* Factory method tries to pass a module that is already present in the parent.
+         * This is an error. */
+        report.addError(
+            String.format(
+                "%s is present in %s. A subcomponent cannot use an instance of a "
+                    + "module that differs from its parent.",
+                moduleType.getSimpleName(), originatingComponent.getQualifiedName()),
+            factoryMethodParameter);
       }
-      validateSubcomponentMethods(
-          report,
-          subcomponentDescriptor,
-          new ImmutableMap.Builder<TypeElement, TypeElement>()
-              .putAll(existingModuleToOwners)
-              .putAll(
-                  Maps.toMap(
-                      Sets.difference(
-                          subcomponentDescriptor.transitiveModuleTypes(),
-                          existingModuleToOwners.keySet()),
-                      constant(subcomponentDescriptor.componentDefinitionType())))
-              .build());
     }
   }
 
@@ -111,8 +122,8 @@ final class ComponentHierarchyValidator {
       SetMultimap<ComponentDescriptor, Scope> scopesByComponent) {
     scopesByComponent.putAll(subject, subject.scopes());
 
-    for (ComponentDescriptor child : subject.subcomponents()) {
-      validateScopeHierarchy(report, child, scopesByComponent);
+    for (ComponentDescriptor childComponent : subject.childComponents()) {
+      validateScopeHierarchy(report, childComponent, scopesByComponent);
     }
 
     scopesByComponent.removeAll(subject);
@@ -127,19 +138,20 @@ final class ComponentHierarchyValidator {
     if (!overlappingScopes.isEmpty()) {
       StringBuilder error =
           new StringBuilder()
-              .append(subject.componentDefinitionType().getQualifiedName())
+              .append(subject.typeElement().getQualifiedName())
               .append(" has conflicting scopes:");
       for (Map.Entry<ComponentDescriptor, Scope> entry : overlappingScopes.entries()) {
         Scope scope = entry.getValue();
-        error.append("\n  ")
-            .append(entry.getKey().componentDefinitionType().getQualifiedName())
+        error
+            .append("\n  ")
+            .append(entry.getKey().typeElement().getQualifiedName())
             .append(" also has ")
             .append(getReadableSource(scope));
       }
       report.addItem(
           error.toString(),
           compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-          subject.componentDefinitionType());
+          subject.typeElement());
     }
   }
 }

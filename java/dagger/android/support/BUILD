@@ -64,14 +64,6 @@ pom_file(
     targets = [":support"],
 )
 
-# b/37741866 and https://github.com/google/dagger/issues/715
-pom_file(
-    name = "jarimpl-pom",
-    artifact_id = "dagger-android-support-jarimpl",
-    artifact_name = "Dagger Android Support",
-    targets = [":support"],
-)
-
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(

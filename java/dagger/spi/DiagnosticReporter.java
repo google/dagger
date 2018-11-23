@@ -21,7 +21,7 @@ import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.MaybeBindingNode;
+import dagger.model.BindingGraph.MaybeBinding;
 import javax.tools.Diagnostic;
 
 /**
@@ -53,7 +53,7 @@ public interface DiagnosticReporter {
    * Reports a diagnostic for a binding or missing binding. Includes information about how the
    * binding is reachable from entry points.
    */
-  void reportBinding(Diagnostic.Kind diagnosticKind, MaybeBindingNode bindingNode, String message);
+  void reportBinding(Diagnostic.Kind diagnosticKind, MaybeBinding binding, String message);
 
   /**
    * Reports a diagnostic for a binding or missing binding. Includes information about how the
@@ -62,7 +62,7 @@ public interface DiagnosticReporter {
   @FormatMethod
   void reportBinding(
       Diagnostic.Kind diagnosticKind,
-      MaybeBindingNode bindingNode,
+      MaybeBinding binding,
       String messageFormat,
       Object firstArg,
       Object... moreArgs);

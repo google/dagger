@@ -37,7 +37,7 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 abstract class MembersInjectionBinding extends Binding {
   @Override
-  public Optional<TypeElement> bindingElement() {
+  public final Optional<Element> bindingElement() {
     return Optional.of(membersInjectedType());
   }
 
@@ -78,11 +78,6 @@ abstract class MembersInjectionBinding extends Binding {
         .anyMatch(
             injectionSite ->
                 injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
-  }
-
-  @Override
-  public final boolean isProduction() {
-    return false;
   }
 
   @AutoValue

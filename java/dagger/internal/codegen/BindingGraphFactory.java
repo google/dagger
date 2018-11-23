@@ -26,6 +26,7 @@ import static dagger.internal.codegen.ComponentDescriptor.isComponentContributio
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
+import static dagger.internal.codegen.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.INJECTION;
@@ -46,14 +47,14 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.model.ComponentPath;
+import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.producers.internal.ProductionExecutorModule;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -78,8 +79,8 @@ final class BindingGraphFactory {
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
-  private final IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator;
   private final CompilerOptions compilerOptions;
+  private final ModuleDescriptor.Factory moduleDescriptorFactory;
 
   @Inject
   BindingGraphFactory(
@@ -87,13 +88,13 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
-      IncorrectlyInstalledBindsMethodsValidator incorrectlyInstalledBindsMethodsValidator,
+      ModuleDescriptor.Factory moduleDescriptorFactory,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
-    this.incorrectlyInstalledBindsMethodsValidator = incorrectlyInstalledBindsMethodsValidator;
+    this.moduleDescriptorFactory = moduleDescriptorFactory;
     this.compilerOptions = compilerOptions;
   }
 
@@ -111,8 +112,7 @@ final class BindingGraphFactory {
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
 
     // binding for the component itself
-    explicitBindingsBuilder.add(
-        bindingFactory.componentBinding(componentDescriptor.componentDefinitionType()));
+    explicitBindingsBuilder.add(bindingFactory.componentBinding(componentDescriptor.typeElement()));
 
     // Collect Component dependencies.
     for (ComponentRequirement dependency : componentDescriptor.dependencies()) {
@@ -138,22 +138,24 @@ final class BindingGraphFactory {
       }
     }
 
-    for (Map.Entry<ComponentMethodDescriptor, ComponentDescriptor> componentMethodAndSubcomponent :
-        componentDescriptor.subcomponentsByBuilderMethod().entrySet()) {
-      ComponentMethodDescriptor componentMethod = componentMethodAndSubcomponent.getKey();
-      ComponentDescriptor subcomponentDescriptor = componentMethodAndSubcomponent.getValue();
-      if (!componentDescriptor.subcomponentsFromModules().contains(subcomponentDescriptor)) {
-        explicitBindingsBuilder.add(
-            bindingFactory.subcomponentBuilderBinding(
-                componentMethod.methodElement(), componentDescriptor.componentDefinitionType()));
-      }
-    }
+    componentDescriptor
+        .childComponentsDeclaredByBuilderEntryPoints()
+        .forEach(
+            (builderEntryPoint, childComponent) -> {
+              if (!componentDescriptor
+                  .childComponentsDeclaredByModules()
+                  .contains(childComponent)) {
+                explicitBindingsBuilder.add(
+                    bindingFactory.subcomponentBuilderBinding(
+                        builderEntryPoint.methodElement(), componentDescriptor.typeElement()));
+              }
+            });
 
     ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations = ImmutableSet.builder();
     ImmutableSet.Builder<SubcomponentDeclaration> subcomponentDeclarations = ImmutableSet.builder();
 
     // Collect transitive module bindings and multibinding declarations.
-    for (ModuleDescriptor moduleDescriptor : componentDescriptor.transitiveModules()) {
+    for (ModuleDescriptor moduleDescriptor : modules(componentDescriptor, parentResolver)) {
       explicitBindingsBuilder.addAll(moduleDescriptor.bindings());
       multibindingDeclarations.addAll(moduleDescriptor.multibindingDeclarations());
       subcomponentDeclarations.addAll(moduleDescriptor.subcomponentDeclarations());
@@ -211,6 +213,45 @@ final class BindingGraphFactory {
         requestResolver.getFactoryMethod());
   }
 
+  /**
+   * Returns all the modules that should be installed in the component. For production components
+   * and production subcomponents that have a parent that is not a production component or
+   * subcomponent, also includes the production monitoring module for the component and the
+   * production executor module.
+   */
+  private ImmutableSet<ModuleDescriptor> modules(
+      ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
+    if (componentDescriptor.kind().equals(Kind.PRODUCTION_COMPONENT)
+        || (componentDescriptor.kind().equals(Kind.PRODUCTION_SUBCOMPONENT)
+            && parentResolver.isPresent()
+            && !parentResolver.get().componentDescriptor.kind().isProducer())) {
+      ImmutableSet.Builder<ModuleDescriptor> modules = new ImmutableSet.Builder<>();
+      modules.addAll(componentDescriptor.modules());
+      modules.add(descriptorForMonitoringModule(componentDescriptor.typeElement()));
+      modules.add(descriptorForProductionExecutorModule());
+      return modules.build();
+    }
+    return componentDescriptor.modules();
+  }
+
+  /**
+   * Returns a descriptor for a generated module that handles monitoring for production components.
+   * This module is generated in the {@link MonitoringModuleProcessingStep}.
+   *
+   * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
+   *     processor to retry in a later processing round.
+   */
+  private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
+    return moduleDescriptorFactory.create(
+        elements.checkTypePresent(
+            generatedMonitoringModuleName(componentDefinitionType).toString()));
+  }
+
+  /** Returns a descriptor {@link ProductionExecutorModule}. */
+  private ModuleDescriptor descriptorForProductionExecutorModule() {
+    return moduleDescriptorFactory.create(elements.getTypeElement(ProductionExecutorModule.class));
+  }
+
   /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */
   private static <T extends BindingDeclaration>
       ImmutableSetMultimap<Key, T> indexBindingDeclarationsByKey(Iterable<T> declarations) {
@@ -254,20 +295,18 @@ final class BindingGraphFactory {
       this.explicitMultibindings = multibindingContributionsByMultibindingKey(explicitBindingsSet);
       this.delegateMultibindingDeclarations =
           multibindingContributionsByMultibindingKey(delegateDeclarations.values());
-      subcomponentsToResolve.addAll(componentDescriptor.subcomponentsFromEntryPoints());
+      subcomponentsToResolve.addAll(
+          componentDescriptor.childComponentsDeclaredByFactoryMethods().values());
+      subcomponentsToResolve.addAll(
+          componentDescriptor.childComponentsDeclaredByBuilderEntryPoints().values());
     }
 
     /** Returns the optional factory method for this component. */
     Optional<ExecutableElement> getFactoryMethod() {
       return parentResolver
-          .map(
-              parent -> {
-                return parent
-                    .componentDescriptor
-                    .subcomponentsByFactoryMethod()
-                    .inverse()
-                    .get(componentDescriptor);
-              })
+          .flatMap(
+              parent ->
+                  parent.componentDescriptor.getFactoryMethodForChildComponent(componentDescriptor))
           .map(method -> method.methodElement());
     }
 
@@ -359,7 +398,7 @@ final class BindingGraphFactory {
 
       TypeElement builderType = MoreTypes.asTypeElement(subcomponentBuilderBinding.key().type());
       owningResolver.subcomponentsToResolve.add(
-          owningResolver.componentDescriptor.subcomponentsByBuilderType().get(builderType));
+          owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }
 
     private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
@@ -575,73 +614,18 @@ final class BindingGraphFactory {
 
     private boolean containsExplicitBinding(ContributionBinding binding) {
       return explicitBindingsSet.contains(binding)
-          || resolverContainsDelegateDeclarationForBinding(this, binding)
+          || resolverContainsDelegateDeclarationForBinding(binding)
           || subcomponentDeclarations.containsKey(binding.key());
     }
 
-    /**
-     * Returns true if {@code binding} was installed in a module in this resolver's component. If
-     * {@link CompilerOptions#floatingBindsMethods()} is enabled, calls {@link
-     * #recordFloatingBindsMethod(Resolver, ContributionBinding)} and returns false.
-     */
-    private boolean resolverContainsDelegateDeclarationForBinding(
-        Resolver resolver, ContributionBinding binding) {
-      // TODO(ronshapiro): remove the flag once we feel enough time has passed, and return this
-      // value directly. At that point, this can be remove the resolver parameter and become a
-      // method invoked on a particular resolver
-      boolean resolverContainsDeclaration =
-          binding.kind().equals(DELEGATE)
-              && resolver
-                  .delegateDeclarations
-                  .get(binding.key())
-                  .stream()
-                  .anyMatch(
-                      declaration ->
-                          declaration.contributingModule().equals(binding.contributingModule())
-                              && declaration.bindingElement().equals(binding.bindingElement()));
-      if (resolverContainsDeclaration && compilerOptions.floatingBindsMethods()) {
-        recordFloatingBindsMethod(resolver, binding);
-        return false;
-      }
-      return resolverContainsDeclaration;
-    }
-
-    /**
-     * Records binds methods that are resolved in the wrong component due to b/79859714. These will
-     * be reported later on in {@link IncorrectlyInstalledBindsMethodsValidator}.
-     */
-    private void recordFloatingBindsMethod(Resolver idealResolver, ContributionBinding binding) {
-      Resolver actualResolver = this;
-      if (binding.scope().isPresent()) {
-        for (Resolver requestResolver : getResolverLineage().reverse()) {
-          if (requestResolver.componentDescriptor.scopes().contains(binding.scope().get())) {
-            actualResolver = requestResolver;
-            break;
-          }
-        }
-      }
-      if (actualResolver != idealResolver) {
-        incorrectlyInstalledBindsMethodsValidator.recordBinding(
-            componentPath(idealResolver), binding);
-      }
-    }
-
-    /**
-     * Constructs a {@link ComponentPath} from the root component of this resolver to a {@code
-     * destination}.
-     */
-    private ComponentPath componentPath(Resolver destination) {
-      ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
-      for (Resolver resolver : getResolverLineage()) {
-        path.add(resolver.componentDescriptor.componentDefinitionType());
-        if (resolver == destination) {
-          return ComponentPath.create(path.build());
-        }
-      }
-      throw new AssertionError(
-          String.format(
-              "%s not found in %s",
-              destination.componentDescriptor.componentDefinitionType(), path.build()));
+    /** Returns true if {@code binding} was installed in a module in this resolver's component. */
+    private boolean resolverContainsDelegateDeclarationForBinding(ContributionBinding binding) {
+      return binding.kind().equals(DELEGATE)
+          && delegateDeclarations.get(binding.key()).stream()
+              .anyMatch(
+                  declaration ->
+                      declaration.contributingModule().equals(binding.contributingModule())
+                          && declaration.bindingElement().equals(binding.bindingElement()));
     }
 
     /** Returns the resolver lineage from parent to child. */
@@ -887,14 +871,13 @@ final class BindingGraphFactory {
       return parentResolver.isPresent()
           ? Sets.union(
                   parentResolver.get().getInheritedModules(),
-                  parentResolver.get().componentDescriptor.transitiveModules())
+                  parentResolver.get().componentDescriptor.modules())
               .immutableCopy()
           : ImmutableSet.<ModuleDescriptor>of();
     }
 
     ImmutableSet<ModuleDescriptor> getOwnedModules() {
-      return Sets.difference(componentDescriptor.transitiveModules(), getInheritedModules())
-          .immutableCopy();
+      return Sets.difference(componentDescriptor.modules(), getInheritedModules()).immutableCopy();
     }
 
     private final class LocalDependencyChecker {

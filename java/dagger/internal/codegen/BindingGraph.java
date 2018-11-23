@@ -82,19 +82,19 @@ abstract class BindingGraph {
   /**
    * The type that defines the component for this graph.
    *
-   * @see ComponentDescriptor#componentDefinitionType()
+   * @see ComponentDescriptor#typeElement()
    */
-  TypeElement componentType() {
-    return componentDescriptor().componentDefinitionType();
+  TypeElement componentTypeElement() {
+    return componentDescriptor().typeElement();
   }
 
   /**
    * Returns the set of modules that are owned by this graph regardless of whether or not any of
    * their bindings are used in this graph. For graphs representing top-level {@link
-   * dagger.Component components}, this set will be the same as
-   * {@linkplain ComponentDescriptor#transitiveModules the component's transitive modules}. For
-   * {@linkplain Subcomponent subcomponents}, this set will be the transitive modules that are not
-   * owned by any of their ancestors.
+   * dagger.Component components}, this set will be the same as {@linkplain
+   * ComponentDescriptor#modules() the component's transitive modules}. For {@linkplain Subcomponent
+   * subcomponents}, this set will be the transitive modules that are not owned by any of their
+   * ancestors.
    */
   abstract ImmutableSet<ModuleDescriptor> ownedModules();
 

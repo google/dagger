@@ -47,7 +47,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
 
   @Override
   ClassName nameGeneratedType(BindingGraph input) {
-    return componentName(input.componentType());
+    return componentName(input.componentTypeElement());
   }
 
   static ClassName componentName(TypeElement componentDefinitionType) {
@@ -57,7 +57,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
 
   @Override
   Element originatingElement(BindingGraph input) {
-    return input.componentType();
+    return input.componentTypeElement();
   }
 
   @Override

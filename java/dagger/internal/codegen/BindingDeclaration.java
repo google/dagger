@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import dagger.model.BindingKind;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Element;
@@ -28,10 +29,20 @@ abstract class BindingDeclaration {
   abstract Key key();
 
   /**
-   * The {@link Element} that declares the binding. Absent for bindings without identifying
-   * declarations.
+   * The {@link Element} that declares this binding. Absent for {@linkplain BindingKind binding
+   * kinds} that are not always declared by exactly one element.
+   *
+   * <p>For example, consider {@link BindingKind#MULTIBOUND_SET}. A component with many
+   * {@code @IntoSet} bindings for the same key will have a synthetic binding that depends on all
+   * contributions, but with no identifiying binding element. A {@code @Multibinds} method will also
+   * contribute a synthetic binding, but since multiple {@code @Multibinds} methods can coexist in
+   * the same component (and contribute to one single binding), it has no binding element.
    */
-  abstract Optional<? extends Element> bindingElement();
+  // TODO(ronshapiro): examine whether this wildcard+bound have any benefit.
+  // We never actually refer to the overridden bindingElement methods directly in a way which needs
+  // anything more than an Element. Removing the wildcard would allow for simpler user-written code
+  // when the binding element is passed to a method.
+  abstract Optional<Element> bindingElement();
 
   /**
    * The type enclosing the {@link #bindingElement()}, or {@link Optional#empty()} if {@link

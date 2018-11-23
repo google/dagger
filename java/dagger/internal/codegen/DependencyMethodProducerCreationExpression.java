@@ -58,10 +58,7 @@ final class DependencyMethodProducerCreationExpression
   @Override
   public CodeBlock creationExpression() {
     ComponentRequirement dependency =
-        graph
-            .componentDescriptor()
-            .dependenciesByDependencyMethod()
-            .get(binding.bindingElement().get());
+        graph.componentDescriptor().getDependencyThatDefinesMethod(binding.bindingElement().get());
     FieldSpec dependencyField =
         FieldSpec.builder(
                 ClassName.get(dependency.typeElement()), dependency.variableName(), PRIVATE, FINAL)

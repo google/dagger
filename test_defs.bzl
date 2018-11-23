@@ -18,15 +18,8 @@
 BUILD_VARIANTS = {
     "FastInit": ["-Adagger.fastInit=enabled"],
     "ExperimentalAndroidMode2": ["-Adagger.experimentalAndroidMode2=enabled"],
-}
-
-# TODO(b/72748365): Revert cl/215561379 and cl/217211240 when all functional tests are passing for
-# AOT.
-AOT_BUILD_VARIANTS = {
-    "": [
-        "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
-    ],
-    "FastInit": [
+    "AheadOfTimeSubcomponents": ["-Adagger.experimentalAheadOfTimeSubcomponents=enabled"],
+    "FastInitAndAheadOfTimeSubcomponents": [
         "-Adagger.fastInit=enabled",
         "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
     ],
@@ -43,15 +36,13 @@ def GenJavaTests(
         javacopts = None,
         lib_javacopts = None,
         test_javacopts = None,
-        functional = True,
-        with_aot = False):
+        functional = True):
     _GenTests(
         native.java_library,
         native.java_test,
         name,
         srcs,
         deps,
-        with_aot,
         test_only_deps,
         plugins,
         javacopts,
@@ -69,8 +60,7 @@ def GenRobolectricTests(
         javacopts = None,
         lib_javacopts = None,
         test_javacopts = None,
-        manifest_values = None,
-        with_aot = False):
+        manifest_values = None):
     # TODO(ronshapiro): enable these with these instructions:
     # https://docs.bazel.build/versions/master/be/android.html#android_local_test_examples
     # We probably want to import all of Robolectric's dependencies into bazel-common because there
@@ -83,7 +73,6 @@ def _GenTests(
         name,
         srcs,
         deps,
-        with_aot,
         test_only_deps = None,
         plugins = None,
         javacopts = None,
@@ -91,24 +80,22 @@ def _GenTests(
         test_javacopts = None,
         functional = True,
         test_kwargs = {}):
-    if not with_aot:
-        _gen_tests(
-            library_rule_type,
-            test_rule_type,
-            name,
-            srcs,
-            deps,
-            test_only_deps,
-            plugins,
-            javacopts,
-            lib_javacopts,
-            test_javacopts,
-            test_kwargs = test_kwargs,
-        )
+    _gen_tests(
+        library_rule_type,
+        test_rule_type,
+        name,
+        srcs,
+        deps,
+        test_only_deps,
+        plugins,
+        javacopts,
+        lib_javacopts,
+        test_javacopts,
+        test_kwargs = test_kwargs,
+    )
 
     if functional:
-        build_variants = AOT_BUILD_VARIANTS if with_aot else BUILD_VARIANTS
-        for (variant_name, extra_javacopts) in build_variants.items():
+        for (variant_name, extra_javacopts) in BUILD_VARIANTS.items():
             variant_javacopts = (javacopts or []) + extra_javacopts
             _gen_tests(
                 library_rule_type,
@@ -123,7 +110,6 @@ def _GenTests(
                 test_javacopts,
                 variant_name,
                 test_kwargs = test_kwargs,
-                with_aot = with_aot,
             )
 
 def _gen_tests(
@@ -138,9 +124,8 @@ def _gen_tests(
         lib_javacopts,
         test_javacopts,
         variant_name = None,
-        test_kwargs = {},
-        with_aot = None):
-    if variant_name and len(variant_name):
+        test_kwargs = {}):
+    if variant_name:
         suffix = "_" + variant_name
         tags = [variant_name]
 
@@ -184,12 +169,8 @@ def _gen_tests(
         if package_name.find("javatests/") != -1:
             prefix_path = "javatests/"
         test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
-        test_rule_name = test_name
-        if with_aot:
-            test_rule_name += "_with_aot"
-        test_rule_name += suffix
         test_rule_type(
-            name = test_rule_name,
+            name = test_name + suffix,
             srcs = [test_file],
             javacopts = (javacopts or []) + (test_javacopts or []),
             jvm_flags = jvm_flags,

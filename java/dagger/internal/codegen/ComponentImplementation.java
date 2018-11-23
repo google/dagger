@@ -24,10 +24,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -88,6 +86,13 @@ final class ComponentImplementation {
   enum MethodSpecKind {
     /** The component constructor. */
     CONSTRUCTOR,
+
+    /**
+     * In ahead-of-time subcomponents, this method coordinates the invocation of {@link
+     * #INITIALIZE_METHOD initialization methods} instead of constructors.
+     */
+    // TODO(b/117833324): try to merge this with other initialize() methods so it looks more natural
+    CONFIGURE_INITIALIZATION_METHOD,
 
     /** A builder method for the component. (Only used by the root component.) */
     BUILDER_METHOD,
@@ -162,6 +167,7 @@ final class ComponentImplementation {
   private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
   private ImmutableList<ParameterSpec> constructorParameters;
+  private Optional<MethodSpec> configureInitializationMethod = Optional.empty();
 
   ComponentImplementation(
       ComponentDescriptor componentDescriptor,
@@ -243,6 +249,42 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the {@link #configureInitializationMethod()} of the nearest supertype that defines one,
+   * if any.
+   *
+   * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
+   */
+  Optional<MethodSpec> superConfigureInitializationMethod() {
+    for (Optional<ComponentImplementation> currentSuper = superclassImplementation;
+        currentSuper.isPresent();
+        currentSuper = currentSuper.get().superclassImplementation) {
+      if (currentSuper.get().configureInitializationMethod.isPresent()) {
+        return currentSuper.get().configureInitializationMethod;
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the {@link MethodSpecKind#CONFIGURE_INITIALIZATION_METHOD} of this implementation if
+   * there is one.
+   *
+   * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
+   */
+  Optional<MethodSpec> configureInitializationMethod() {
+    return configureInitializationMethod;
+  }
+
+  /**
+   * Set's this component implementation's {@code configureInitialization()} method and {@linkplain
+   * #addMethod(MethodSpecKind, MethodSpec) adds the method}.
+   */
+  void setConfigureInitializationMethod(MethodSpec method) {
+    configureInitializationMethod = Optional.of(method);
+    addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method);
+  }
+
+  /**
    * Returns the name of the builder class for this component. It will be a sibling of this
    * generated class unless this is a top-level component, in which case it will be nested.
    */
@@ -255,10 +297,10 @@ final class ComponentImplementation {
   /** Returns the name of the nested implementation class for a child component. */
   ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
     checkArgument(
-        componentDescriptor.subcomponents().contains(childDescriptor),
-        "%s is not a child of %s",
-        childDescriptor.componentDefinitionType(),
-        componentDescriptor.componentDefinitionType());
+        componentDescriptor.childComponents().contains(childDescriptor),
+        "%s is not a child component of %s",
+        childDescriptor.typeElement(),
+        componentDescriptor.typeElement());
     return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
@@ -269,7 +311,7 @@ final class ComponentImplementation {
 
   /** Returns the child implementation. */
   Optional<ComponentImplementation> childImplementation(ComponentDescriptor child) {
-    return Optional.ofNullable(childImplementations.get(child.componentDefinitionType()));
+    return Optional.ofNullable(childImplementations.get(child.typeElement()));
   }
 
   /** Returns {@code true} if {@code type} is accessible from the generated component. */
@@ -358,7 +400,7 @@ final class ComponentImplementation {
 
   /** Adds the type generated from the given child implementation. */
   void addChild(ComponentDescriptor child, ComponentImplementation childImplementation) {
-    childImplementations.put(child.componentDefinitionType(), childImplementation);
+    childImplementations.put(child.typeElement(), childImplementation);
     addType(TypeSpecKind.SUBCOMPONENT, childImplementation.generate().build());
   }
 
@@ -397,8 +439,7 @@ final class ComponentImplementation {
 
   /** Returns a new, unique method name for a getter method for the given request. */
   String getUniqueMethodName(BindingRequest request) {
-    return uniqueMethodName(
-        request, simpleVariableName(MoreTypes.asTypeElement(request.key().type())));
+    return uniqueMethodName(request, KeyVariableNamer.name(request.key()));
   }
 
   /**

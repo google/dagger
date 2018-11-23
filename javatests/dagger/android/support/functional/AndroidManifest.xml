@@ -16,6 +16,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="dagger.android.support.functional">
 
+  <uses-sdk android:minSdkVersion="1" android:targetSdkVersion="26" />
+
   <application android:theme="@style/Theme.AppCompat"
       android:name=".UsesGeneratedModulesApplication">
     <activity android:name="dagger.android.support.functional.ParentOfFragmentActivity"/>

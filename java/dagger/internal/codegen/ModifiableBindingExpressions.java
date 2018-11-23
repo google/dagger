@@ -16,8 +16,11 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.common.collect.ImmutableSet;
@@ -78,9 +81,12 @@ final class ModifiableBindingExpressions {
    * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
    * or should not be modified by the current binding graph.
    */
-  Optional<ModifiableBindingMethod> getModifiableBindingMethod(
+  Optional<ModifiableBindingMethod> reimplementedModifiableBindingMethod(
       ModifiableBindingMethod modifiableBindingMethod) {
-    if (shouldModifyKnownBinding(modifiableBindingMethod)) {
+    checkState(componentImplementation.superclassImplementation().isPresent());
+    if (modifiableBindingTypeChanged(modifiableBindingMethod)
+        || shouldModifyImplementation(
+            modifiableBindingMethod.type(), modifiableBindingMethod.request())) {
       MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
       boolean markMethodFinal =
           knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
@@ -90,7 +96,7 @@ final class ModifiableBindingExpressions {
           ModifiableBindingMethod.implement(
               modifiableBindingMethod,
               MethodSpec.methodBuilder(baseMethod.name)
-                  .addModifiers(PUBLIC)
+                  .addModifiers(baseMethod.modifiers.contains(PUBLIC) ? PUBLIC : PROTECTED)
                   .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())
                   .returns(baseMethod.returnType)
                   .addAnnotation(Override.class)
@@ -121,7 +127,7 @@ final class ModifiableBindingExpressions {
     }
     return modifiableBindingWillBeFinalized(
         newModifiableBindingType,
-        shouldModifyBinding(newModifiableBindingType, modifiableBindingMethod.request()));
+        shouldModifyImplementation(newModifiableBindingType, modifiableBindingMethod.request()));
   }
 
   /**
@@ -132,7 +138,7 @@ final class ModifiableBindingExpressions {
   private boolean newModifiableBindingWillBeFinalized(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
     return modifiableBindingWillBeFinalized(
-        modifiableBindingType, shouldModifyBinding(modifiableBindingType, request));
+        modifiableBindingType, shouldModifyImplementation(modifiableBindingType, request));
   }
 
   /**
@@ -178,7 +184,7 @@ final class ModifiableBindingExpressions {
     Optional<ModifiableBindingMethod> matchingModifiableBindingMethod =
         componentImplementation.getModifiableBindingMethod(request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        graph.componentDescriptor().findMatchingComponentMethod(request);
+        graph.componentDescriptor().firstMatchingComponentMethod(request);
     switch (type) {
       case GENERATED_INSTANCE:
         // If the subcomponent is abstract then we need to define an (un-implemented)
@@ -189,7 +195,8 @@ final class ModifiableBindingExpressions {
               resolvedBindings,
               request,
               matchingModifiableBindingMethod,
-              matchingComponentMethod);
+              matchingComponentMethod,
+              types);
         }
         // Otherwise return a concrete implementation.
         return bindingExpressions.wrapInMethod(
@@ -204,7 +211,8 @@ final class ModifiableBindingExpressions {
               componentImplementation,
               request,
               matchingModifiableBindingMethod,
-              matchingComponentMethod);
+              matchingComponentMethod,
+              types);
         }
         // Otherwise we assume that it is valid to have a missing binding as it is part of a
         // dependency chain that has been passively pruned.
@@ -256,6 +264,19 @@ final class ModifiableBindingExpressions {
         return ModifiableBindingType.GENERATED_INSTANCE;
       }
 
+      if (binding.kind().equals(BindingKind.DELEGATE)
+          && graph
+              .contributionBindings()
+              .get(getOnlyElement(binding.dependencies()).key())
+              .isEmpty()) {
+        // There's not much to do for @Binds bindings if the dependency is missing - at best, if the
+        // dependency is a weaker scope/unscoped, we save only a few lines that implement the
+        // scoping. But it's also possible, if the dependency is the same or stronger scope, that
+        // no extra code is necessary, in which case we'd be overriding a method that just returns
+        // another.
+        return ModifiableBindingType.MISSING;
+      }
+
       if (binding.kind().equals(BindingKind.OPTIONAL) && binding.dependencies().isEmpty()) {
         // only empty optional bindings can be modified
         return ModifiableBindingType.OPTIONAL;
@@ -283,26 +304,21 @@ final class ModifiableBindingExpressions {
   }
 
   /**
-   * Returns true if the current binding graph can, and should, modify a binding by overriding a
-   * modifiable binding method.
+   * Returns true if the modifiable binding type of a {@code modifiableBindingMethod}'s request is
+   * different in this implementation from what it was in the super implementation.
    */
-  private boolean shouldModifyKnownBinding(ModifiableBindingMethod modifiableBindingMethod) {
+  private boolean modifiableBindingTypeChanged(ModifiableBindingMethod modifiableBindingMethod) {
+    checkState(componentImplementation.superclassImplementation().isPresent());
     ModifiableBindingType newModifiableBindingType =
         getModifiableBindingType(modifiableBindingMethod.request());
-    if (!newModifiableBindingType.equals(modifiableBindingMethod.type())) {
-      // It is possible that a binding can change types, in which case we should always modify the
-      // binding.
-      return true;
-    }
-    return shouldModifyBinding(modifiableBindingMethod.type(), modifiableBindingMethod.request());
+    return !newModifiableBindingType.equals(modifiableBindingMethod.type());
   }
 
   /**
    * Returns true if the current binding graph can, and should, modify a binding by overriding a
    * modifiable binding method.
    */
-  // TODO(b/72748365): should this be called shouldModifyRequest() or shouldModifyBindingRequest()?
-  private boolean shouldModifyBinding(
+  private boolean shouldModifyImplementation(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
     if (request.requestKind().isPresent()) {
       switch (request.requestKind().get()) {

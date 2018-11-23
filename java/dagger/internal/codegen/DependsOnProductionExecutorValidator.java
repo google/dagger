@@ -20,7 +20,6 @@ import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.Key;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
@@ -54,17 +53,17 @@ final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
     Key productionImplementationExecutorKey = keyFactory.forProductionImplementationExecutor();
     Key productionExecutorKey = keyFactory.forProductionExecutor();
 
-    bindingGraph.bindingNodes(productionExecutorKey).stream()
+    bindingGraph.bindings(productionExecutorKey).stream()
         .flatMap(
             productionExecutorBinding ->
                 bindingGraph.network().predecessors(productionExecutorBinding).stream())
-        .flatMap(instancesOf(BindingNode.class))
+        .flatMap(instancesOf(dagger.model.Binding.class))
         .filter(binding -> !binding.key().equals(productionImplementationExecutorKey))
         .forEach(binding -> reportError(diagnosticReporter, binding));
   }
 
-  private void reportError(DiagnosticReporter diagnosticReporter, BindingNode bindingNode) {
+  private void reportError(DiagnosticReporter diagnosticReporter, dagger.model.Binding binding) {
     diagnosticReporter.reportBinding(
-        ERROR, bindingNode, "%s may not depend on the production executor", bindingNode.key());
+        ERROR, binding, "%s may not depend on the production executor", binding.key());
   }
 }

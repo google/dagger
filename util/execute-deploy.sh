@@ -85,13 +85,6 @@ deploy_library \
   java/dagger/android/support/support-javadoc.jar \
   java/dagger/android/support/pom.xml
 
-# b/37741866 and https://github.com/google/dagger/issues/715
-deploy_library \
-  java/dagger/android/support/libsupport.jar \
-  java/dagger/android/support/libsupport-src.jar \
-  java/dagger/android/support/support-javadoc.jar \
-  java/dagger/android/support/jarimpl-pom.xml
-
 deploy_library \
   shaded_android_processor.jar \
   java/dagger/android/processor/libprocessor-src.jar \

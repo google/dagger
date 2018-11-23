@@ -117,7 +117,7 @@ final class DependencyMethodProviderCreationExpression
   }
 
   private ComponentRequirement dependency() {
-    return graph.componentDescriptor().dependenciesByDependencyMethod().get(provisionMethod());
+    return graph.componentDescriptor().getDependencyThatDefinesMethod(provisionMethod());
   }
 
   private Element provisionMethod() {

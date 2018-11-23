@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
@@ -79,14 +78,6 @@ class BindingMethodImplementation {
         && binding.contributedPrimitiveType().isPresent()) {
       return binding.contributedPrimitiveType().get();
     }
-    return types.accessibleType(requestedType(), componentName);
-  }
-
-  private TypeMirror requestedType() {
-    if (request.requestKind().isPresent()) {
-      return requestType(request.requestKind().get(), binding.contributedType(), types);
-    }
-    return types.wrapType(
-        binding.contributedType(), request.frameworkType().get().frameworkClass());
+    return request.accessibleType(binding, componentName, types);
   }
 }

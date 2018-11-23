@@ -46,12 +46,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Table;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.BindingNode;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MaybeBindingNode;
+import dagger.model.BindingGraph.MaybeBinding;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.spi.BindingGraphPlugin;
@@ -119,7 +118,7 @@ final class DiagnosticReporterFactory {
                 transform(types.supertypes(component.asType()), type -> asTypeElement(type)));
 
     /** The shortest path (value) from an entry point (column) to a binding (row). */
-    private final Table<MaybeBindingNode, DependencyEdge, ImmutableList<Node>> shortestPaths =
+    private final Table<MaybeBinding, DependencyEdge, ImmutableList<Node>> shortestPaths =
         HashBasedTable.create();
 
     private final BindingGraph graph;
@@ -162,18 +161,18 @@ final class DiagnosticReporterFactory {
     // TODO(ronshapiro): should this also include the binding element?
     @Override
     public void reportBinding(
-        Diagnostic.Kind diagnosticKind, MaybeBindingNode bindingNode, String message) {
-      printMessage(diagnosticKind, message + new DiagnosticInfo(bindingNode), rootComponent);
+        Diagnostic.Kind diagnosticKind, MaybeBinding binding, String message) {
+      printMessage(diagnosticKind, message + new DiagnosticInfo(binding), rootComponent);
     }
 
     @Override
     public void reportBinding(
         Diagnostic.Kind diagnosticKind,
-        MaybeBindingNode bindingNode,
+        MaybeBinding binding,
         String messageFormat,
         Object firstArg,
         Object... moreArgs) {
-      reportBinding(diagnosticKind, bindingNode, formatMessage(messageFormat, firstArg, moreArgs));
+      reportBinding(diagnosticKind, binding, formatMessage(messageFormat, firstArg, moreArgs));
     }
 
     @Override
@@ -250,10 +249,10 @@ final class DiagnosticReporterFactory {
       final ImmutableSet<DependencyEdge> requests;
       final ImmutableSet<DependencyEdge> entryPoints;
 
-      DiagnosticInfo(MaybeBindingNode bindingNode) {
-        entryPoints = graph.entryPointEdgesDependingOnBindingNode(bindingNode);
-        requests = requests(bindingNode);
-        dependencyTrace = dependencyTrace(bindingNode, entryPoints);
+      DiagnosticInfo(MaybeBinding binding) {
+        entryPoints = graph.entryPointEdgesDependingOnBindingNode(binding);
+        requests = requests(binding);
+        dependencyTrace = dependencyTrace(binding, entryPoints);
       }
 
       DiagnosticInfo(DependencyEdge dependencyEdge) {
@@ -265,9 +264,9 @@ final class DiagnosticReporterFactory {
           entryPoints = ImmutableSet.of(dependencyEdge);
         } else {
           // It's not an entry point, so it's part of a binding
-          BindingNode bindingNode = (BindingNode) source(dependencyEdge);
-          entryPoints = graph.entryPointEdgesDependingOnBindingNode(bindingNode);
-          dependencyTraceBuilder.addAll(dependencyTrace(bindingNode, entryPoints));
+          dagger.model.Binding binding = (dagger.model.Binding) source(dependencyEdge);
+          entryPoints = graph.entryPointEdgesDependingOnBindingNode(binding);
+          dependencyTraceBuilder.addAll(dependencyTrace(binding, entryPoints));
         }
         dependencyTrace = dependencyTraceBuilder.build();
       }
@@ -330,13 +329,13 @@ final class DiagnosticReporterFactory {
       }
 
       /**
-       * Returns the dependency trace from one of the {@code entryPoints} to {@code bindingNode} to
+       * Returns the dependency trace from one of the {@code entryPoints} to {@code binding} to
        * {@code message} as a list <i>ending with</i> the entry point.
        */
       // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
       // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
       ImmutableList<DependencyEdge> dependencyTrace(
-          MaybeBindingNode bindingNode, ImmutableSet<DependencyEdge> entryPoints) {
+          MaybeBinding binding, ImmutableSet<DependencyEdge> entryPoints) {
         // Show the full dependency trace for one entry point.
         DependencyEdge entryPointForTrace =
             min(
@@ -344,7 +343,7 @@ final class DiagnosticReporterFactory {
                 // prefer entry points in components closest to the root
                 rootComponentFirst()
                     // then prefer entry points with a short dependency path to the error
-                    .thenComparing(shortestDependencyPathFirst(bindingNode))
+                    .thenComparing(shortestDependencyPathFirst(binding))
                     // then prefer entry points declared in the component to those declared in a
                     // supertype
                     .thenComparing(nearestComponentSupertypeFirst())
@@ -352,12 +351,12 @@ final class DiagnosticReporterFactory {
                     .thenComparing(requestElementDeclarationOrder()));
 
         ImmutableList<Node> shortestBindingPath =
-            shortestPathFromEntryPoint(entryPointForTrace, bindingNode);
+            shortestPathFromEntryPoint(entryPointForTrace, binding);
         verify(
             !shortestBindingPath.isEmpty(),
             "no dependency path from %s to %s in %s",
             entryPointForTrace,
-            bindingNode,
+            binding,
             graph);
 
         ImmutableList.Builder<DependencyEdge> dependencyTrace = ImmutableList.builder();
@@ -374,9 +373,9 @@ final class DiagnosticReporterFactory {
         return dependencyTrace.build().reverse();
       }
 
-      /** Returns all the nonsynthetic dependency requests for a binding node. */
-      ImmutableSet<DependencyEdge> requests(MaybeBindingNode bindingNode) {
-        return graph.network().inEdges(bindingNode).stream()
+      /** Returns all the nonsynthetic dependency requests for a binding. */
+      ImmutableSet<DependencyEdge> requests(MaybeBinding binding) {
+        return graph.network().inEdges(binding).stream()
             .flatMap(instancesOf(DependencyEdge.class))
             .filter(edge -> edge.dependencyRequest().requestElement().isPresent())
             .sorted(requestEnclosingTypeName().thenComparing(requestElementDeclarationOrder()))
@@ -393,26 +392,25 @@ final class DiagnosticReporterFactory {
 
       /**
        * Returns a comparator that puts entry points whose shortest dependency path to {@code
-       * bindingNode} is shortest first.
+       * binding} is shortest first.
        */
-      Comparator<DependencyEdge> shortestDependencyPathFirst(MaybeBindingNode bindingNode) {
-        return comparing(entryPoint -> shortestPathFromEntryPoint(entryPoint, bindingNode).size());
+      Comparator<DependencyEdge> shortestDependencyPathFirst(MaybeBinding binding) {
+        return comparing(entryPoint -> shortestPathFromEntryPoint(entryPoint, binding).size());
       }
 
       ImmutableList<Node> shortestPathFromEntryPoint(
-          DependencyEdge entryPoint, MaybeBindingNode bindingNode) {
+          DependencyEdge entryPoint, MaybeBinding binding) {
         return shortestPaths
-            .row(bindingNode)
+            .row(binding)
             .computeIfAbsent(
                 entryPoint,
                 ep ->
                     shortestPath(
                         node ->
                             filter(
-                                graph.network().successors(node),
-                                MaybeBindingNode.class::isInstance),
+                                graph.network().successors(node), MaybeBinding.class::isInstance),
                         graph.network().incidentNodes(ep).target(),
-                        bindingNode));
+                        binding));
       }
 
       /**

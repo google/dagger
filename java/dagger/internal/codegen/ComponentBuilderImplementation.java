@@ -24,6 +24,7 @@ import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -113,7 +114,11 @@ final class ComponentBuilderImplementation {
       }
       if (builderSpec().isPresent()) {
         if (componentImplementation.isAbstract()) {
-          componentBuilderClass.addModifiers(PUBLIC);
+          // The component builder class of a top-level component implementation in ahead-of-tim
+          // subcomponents mode must be public, not protected, because the builder's subclass will
+          // be a sibling of the component subclass implementation, not nested.
+          componentBuilderClass.addModifiers(
+              componentImplementation.isNested() ? PROTECTED : PUBLIC);
         } else {
           componentBuilderClass.addModifiers(PRIVATE);
         }
@@ -183,7 +188,7 @@ final class ComponentBuilderImplementation {
       } else {
         buildMethod = methodBuilder("build");
       }
-      buildMethod.returns(ClassName.get(graph.componentType())).addModifiers(PUBLIC);
+      buildMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
 
       builderFields.forEach(
           (requirement, field) -> {
@@ -195,14 +200,13 @@ final class ComponentBuilderImplementation {
                     .endControlFlow();
                 break;
               case THROW:
-                buildMethod
-                    .beginControlFlow("if ($N == null)", field)
-                    .addStatement(
-                        "throw new $T($T.class.getCanonicalName() + $S)",
-                        IllegalStateException.class,
-                        TypeNames.rawTypeName(field.type),
-                        " must be set")
-                    .endControlFlow();
+                // TODO(cgdecker,ronshapiro): ideally this should use the key instead of a class for
+                // @BindsInstance requirements, but that's not easily proguardable.
+                buildMethod.addStatement(
+                    "$T.checkBuilderRequirement($N, $T.class)",
+                    Preconditions.class,
+                    field,
+                    TypeNames.rawTypeName(field.type));
                 break;
               case ALLOW:
                 break;
@@ -267,19 +271,18 @@ final class ComponentBuilderImplementation {
           methods.add(builderMethod.build());
         }
       } else {
-        for (ComponentRequirement componentRequirement :
-            graph.componentDescriptor().availableDependencies()) {
-          String componentRequirementName = simpleVariableName(componentRequirement.typeElement());
+        for (ComponentRequirement requirement :
+            graph.componentDescriptor().dependenciesAndConcreteModules()) {
+          String componentRequirementName = simpleVariableName(requirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)
                   .returns(componentImplementation.getBuilderName())
                   .addModifiers(PUBLIC)
-                  .addParameter(
-                      TypeName.get(componentRequirement.type()), componentRequirementName);
-          if (componentRequirements.contains(componentRequirement)) {
+                  .addParameter(TypeName.get(requirement.type()), componentRequirementName);
+          if (componentRequirements.contains(requirement)) {
             builderMethod.addStatement(
                 "this.$N = $T.checkNotNull($L)",
-                builderFields.get(componentRequirement),
+                builderFields.get(requirement),
                 Preconditions.class,
                 componentRequirementName);
           } else {

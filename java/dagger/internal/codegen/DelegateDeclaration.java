@@ -31,6 +31,7 @@ import dagger.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
@@ -41,9 +42,6 @@ import javax.lang.model.util.Types;
  */
 @AutoValue
 abstract class DelegateDeclaration extends BindingDeclaration implements HasContributionType {
-  @Override
-  abstract Optional<ExecutableElement> bindingElement();
-
   abstract DependencyRequest delegateRequest();
 
   abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
@@ -73,8 +71,8 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
       return new AutoValue_DelegateDeclaration(
           ContributionType.fromBindingMethod(bindsMethod),
           keyFactory.forBindsMethod(bindsMethod, contributingModule),
+          Optional.<Element>of(bindsMethod),
           Optional.of(contributingModule),
-          Optional.of(bindsMethod),
           delegateRequest,
           wrapOptionalInEquivalence(getMapKey(bindsMethod)));
     }

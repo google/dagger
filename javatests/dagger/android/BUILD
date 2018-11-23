@@ -33,18 +33,3 @@ GenRobolectricTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
-
-GenRobolectricTests(
-    name = "android_tests_with_aot",
-    srcs = glob(["*.java"]),
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
-    manifest_values = {"minSdkVersion": "17"},
-    with_aot = True,
-    deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/android",
-        "@google_bazel_common//third_party/java/guava",
-        "@google_bazel_common//third_party/java/junit",
-        "@google_bazel_common//third_party/java/truth",
-    ],
-)

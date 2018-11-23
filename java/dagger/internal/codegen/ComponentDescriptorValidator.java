@@ -112,7 +112,7 @@ final class ComponentDescriptorValidator {
     /** Returns a report that contains all validation messages found during traversal. */
     ValidationReport<TypeElement> buildReport() {
       ValidationReport.Builder<TypeElement> report =
-          ValidationReport.about(rootComponent.componentDefinitionType());
+          ValidationReport.about(rootComponent.typeElement());
       reports.values().forEach(subreport -> report.addSubreport(subreport.build()));
       return report.build();
     }
@@ -120,9 +120,7 @@ final class ComponentDescriptorValidator {
     /** Returns the report builder for a (sub)component. */
     private ValidationReport.Builder<TypeElement> report(ComponentDescriptor component) {
       return reentrantComputeIfAbsent(
-          reports,
-          component,
-          descriptor -> ValidationReport.about(descriptor.componentDefinitionType()));
+          reports, component, descriptor -> ValidationReport.about(descriptor.typeElement()));
     }
 
     void visitComponent(ComponentDescriptor component) {
@@ -130,13 +128,12 @@ final class ComponentDescriptorValidator {
       validateComponentDependencyHierarchy(component);
       validateModules(component);
       validateBuilders(component);
-      component.subcomponents().forEach(this::visitComponent);
+      component.childComponents().forEach(this::visitComponent);
     }
 
     /** Validates that component dependencies do not form a cycle. */
     private void validateComponentDependencyHierarchy(ComponentDescriptor component) {
-      validateComponentDependencyHierarchy(
-          component, component.componentDefinitionType(), new ArrayDeque<>());
+      validateComponentDependencyHierarchy(component, component.typeElement(), new ArrayDeque<>());
     }
 
     /** Recursive method to validate that component dependencies do not form a cycle. */
@@ -145,7 +142,7 @@ final class ComponentDescriptorValidator {
       if (dependencyStack.contains(dependency)) {
         // Current component has already appeared in the component chain.
         StringBuilder message = new StringBuilder();
-        message.append(component.componentDefinitionType().getQualifiedName());
+        message.append(component.typeElement().getQualifiedName());
         message.append(" contains a cycle in its component dependencies:\n");
         dependencyStack.push(dependency);
         appendIndentedComponentsList(message, dependencyStack);
@@ -154,8 +151,8 @@ final class ComponentDescriptorValidator {
             .addItem(
                 message.toString(),
                 compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                component.componentDefinitionType(),
-                getComponentAnnotation(component.componentDefinitionType()).get());
+                component.typeElement(),
+                getComponentAnnotation(component.typeElement()).get());
       } else {
         Optional<AnnotationMirror> componentAnnotation = getComponentAnnotation(dependency);
         if (componentAnnotation.isPresent()) {
@@ -201,8 +198,8 @@ final class ComponentDescriptorValidator {
                 .addItem(
                     message.toString(),
                     compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                    component.componentDefinitionType(),
-                    component.componentAnnotation());
+                    component.typeElement(),
+                    component.annotation());
           }
         } else if (scopedDependencies.size() > 1) {
           // Scoped components may depend on at most one scoped component.
@@ -211,20 +208,17 @@ final class ComponentDescriptorValidator {
             message.append(getReadableSource(scope)).append(' ');
           }
           message
-              .append(component.componentDefinitionType().getQualifiedName())
+              .append(component.typeElement().getQualifiedName())
               .append(" depends on more than one scoped component:\n");
           appendIndentedComponentsList(message, scopedDependencies);
           report(component)
-              .addError(
-                  message.toString(),
-                  component.componentDefinitionType(),
-                  component.componentAnnotation());
+              .addError(message.toString(), component.typeElement(), component.annotation());
         } else {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
             validateDependencyScopeHierarchy(
                 component,
-                component.componentDefinitionType(),
+                component.typeElement(),
                 new ArrayDeque<ImmutableSet<Scope>>(),
                 new ArrayDeque<TypeElement>());
           }
@@ -233,20 +227,17 @@ final class ComponentDescriptorValidator {
         // Scopeless components may not depend on scoped components.
         if (!scopedDependencies.isEmpty()) {
           StringBuilder message =
-              new StringBuilder(component.componentDefinitionType().getQualifiedName())
+              new StringBuilder(component.typeElement().getQualifiedName())
                   .append(" (unscoped) cannot depend on scoped components:\n");
           appendIndentedComponentsList(message, scopedDependencies);
           report(component)
-              .addError(
-                  message.toString(),
-                  component.componentDefinitionType(),
-                  component.componentAnnotation());
+              .addError(message.toString(), component.typeElement(), component.annotation());
         }
       }
     }
 
     private void validateModules(ComponentDescriptor component) {
-      for (ModuleDescriptor module : component.transitiveModules()) {
+      for (ModuleDescriptor module : component.modules()) {
         if (module.moduleElement().getModifiers().contains(Modifier.ABSTRACT)) {
           for (ContributionBinding binding : module.bindings()) {
             if (binding.requiresModuleInstance()) {
@@ -283,11 +274,7 @@ final class ComponentDescriptorValidator {
         return;
       }
 
-      Set<ComponentRequirement> availableDependencies = component.availableDependencies();
-      Set<ComponentRequirement> requiredDependencies =
-          Sets.filter(
-              availableDependencies,
-              input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
+      Set<ComponentRequirement> requirements = component.dependenciesAndConcreteModules();
       final BuilderSpec spec = componentDesc.builderSpec().get();
       ImmutableSet<BuilderRequirementMethod> declaredSetters =
           spec.requirementMethods()
@@ -301,8 +288,7 @@ final class ComponentDescriptorValidator {
               .collect(toImmutableSet());
 
       ComponentBuilderMessages msgs = ErrorMessages.builderMsgsFor(component.kind());
-      Set<ComponentRequirement> extraSetters =
-          Sets.difference(declaredRequirements, availableDependencies);
+      Set<ComponentRequirement> extraSetters = Sets.difference(declaredRequirements, requirements);
       if (!extraSetters.isEmpty()) {
         List<ExecutableElement> excessMethods =
             declaredSetters
@@ -321,8 +307,11 @@ final class ComponentDescriptorValidator {
             .addError(String.format(msgs.extraSetters(), formatted), spec.builderDefinitionType());
       }
 
+      Set<ComponentRequirement> mustBePassed =
+          Sets.filter(
+              requirements, input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
       Set<ComponentRequirement> missingSetters =
-          Sets.difference(requiredDependencies, declaredRequirements);
+          Sets.difference(mustBePassed, declaredRequirements);
       if (!missingSetters.isEmpty()) {
         report(component)
             .addError(
@@ -372,7 +361,7 @@ final class ComponentDescriptorValidator {
         scopedDependencyStack.push(dependency);
         // Current scope has already appeared in the component chain.
         StringBuilder message = new StringBuilder();
-        message.append(component.componentDefinitionType().getQualifiedName());
+        message.append(component.typeElement().getQualifiedName());
         message.append(" depends on scoped components in a non-hierarchical scope ordering:\n");
         appendIndentedComponentsList(message, scopedDependencyStack);
         if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
@@ -380,8 +369,8 @@ final class ComponentDescriptorValidator {
               .addItem(
                   message.toString(),
                   compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                  component.componentDefinitionType(),
-                  getComponentAnnotation(component.componentDefinitionType()).get());
+                  component.typeElement(),
+                  getComponentAnnotation(component.typeElement()).get());
         }
         scopedDependencyStack.pop();
       } else {

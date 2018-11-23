@@ -34,13 +34,15 @@ final class MissingBindingExpression extends ModifiableAbstractMethodBindingExpr
       ComponentImplementation componentImplementation,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod) {
+      Optional<ComponentMethodDescriptor> matchingComponentMethod,
+      DaggerTypes types) {
     super(
         componentImplementation,
         ModifiableBindingType.MISSING,
         request,
         matchingModifiableBindingMethod,
-        matchingComponentMethod);
+        matchingComponentMethod,
+        types);
     this.componentImplementation = componentImplementation;
     this.request = request;
   }

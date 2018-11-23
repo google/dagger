@@ -63,6 +63,7 @@ final class KytheBindingGraphFactory {
   }
 
   /** Creates the {@link CompilerOptions} for use during {@link BindingGraph} construction. */
+  // TODO(dpb): Use Dagger to inject this!
   static CompilerOptions createCompilerOptions() {
     return CompilerOptions.builder()
         .usesProducers(true)
@@ -76,11 +77,11 @@ final class KytheBindingGraphFactory {
         .fastInit(false)
         .experimentalAndroidMode2(false)
         .aheadOfTimeSubcomponents(false)
-        .floatingBindsMethods(false)
         .build()
         .validate();
   }
 
+  // TODO(dpb): Use Dagger to inject this!
   private static ComponentDescriptor.Factory createComponentDescriptorFactory(
       DaggerElements elements, DaggerTypes types, CompilerOptions compilerOptions) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
@@ -109,6 +110,7 @@ final class KytheBindingGraphFactory {
         elements, types, dependencyRequestFactory, moduleDescriptorFactory, compilerOptions);
   }
 
+  // TODO(dpb): Use Dagger to inject this!
   private static BindingGraphFactory createBindingGraphFactory(
       DaggerTypes types, DaggerElements elements, CompilerOptions compilerOptions) {
     KeyFactory keyFactory = new KeyFactory(types, elements);
@@ -135,7 +137,14 @@ final class KytheBindingGraphFactory {
         injectBindingRegistry,
         keyFactory,
         bindingFactory,
-        new IncorrectlyInstalledBindsMethodsValidator(compilerOptions),
+        new ModuleDescriptor.Factory(
+            elements,
+            bindingFactory,
+            new MultibindingDeclaration.Factory(types, keyFactory),
+            new DelegateDeclaration.Factory(
+                types, keyFactory, new DependencyRequestFactory(keyFactory, types)),
+            new SubcomponentDeclaration.Factory(keyFactory),
+            new OptionalBindingDeclaration.Factory(keyFactory)),
         compilerOptions);
   }
 

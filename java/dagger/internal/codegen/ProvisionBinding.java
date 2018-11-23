@@ -97,11 +97,6 @@ abstract class ProvisionBinding extends ContributionBinding {
         && compilerOptions.doCheckForNulls();
   }
 
-  @Override
-  public final boolean isProduction() {
-    return false;
-  }
-
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<ProvisionBinding, Builder> {

@@ -24,16 +24,15 @@ import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Singleton;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/** Contains the bindings for {@link BindingGraphPlugins}. */
+/** Contains the bindings for {@link BindingGraphPlugins} from external SPI providers. */
 @Module
-abstract class BindingGraphPluginsModule {
-  private BindingGraphPluginsModule() {}
+abstract class SpiModule {
+  private SpiModule() {}
 
   @Provides
   @Singleton
@@ -45,26 +44,12 @@ abstract class BindingGraphPluginsModule {
       @ProcessingOptions Map<String, String> processingOptions,
       DiagnosticReporterFactory diagnosticReporterFactory) {
     return new BindingGraphPlugins(
-        testingPlugins.orElseGet(BindingGraphPluginsModule::loadPlugins),
+        testingPlugins.orElseGet(SpiModule::loadPlugins),
         filer,
         types,
         elements,
         processingOptions,
         diagnosticReporterFactory);
-  }
-
-  @Provides
-  @Singleton
-  @Validation
-  static BindingGraphPlugins validationPlugins(
-      @Validation Set<BindingGraphPlugin> validationPlugins,
-      Filer filer,
-      Types types,
-      Elements elements,
-      @ProcessingOptions Map<String, String> processingOptions,
-      DiagnosticReporterFactory diagnosticReporterFactory) {
-    return new BindingGraphPlugins(
-        validationPlugins, filer, types, elements, processingOptions, diagnosticReporterFactory);
   }
 
   private static ImmutableSet<BindingGraphPlugin> loadPlugins() {

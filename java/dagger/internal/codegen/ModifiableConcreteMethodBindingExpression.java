@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
@@ -37,7 +37,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   private final ModifiableBindingType modifiableBindingType;
   private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
-  private final boolean bindingFinalized;
+  private final boolean bindingCannotBeModified;
   private Optional<String> methodName;
 
   ModifiableConcreteMethodBindingExpression(
@@ -47,7 +47,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
-      boolean bindingFinalized,
+      boolean bindingCannotBeModified,
       DaggerTypes types) {
     super(methodImplementation, componentImplementation, matchingModifiableBindingMethod, types);
     this.binding = resolvedBindings.contributionBinding();
@@ -55,7 +55,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
-    this.bindingFinalized = bindingFinalized;
+    this.bindingCannotBeModified = bindingCannotBeModified;
     this.methodName =
         matchingModifiableBindingMethod.map(modifiableMethod -> modifiableMethod.methodSpec().name);
   }
@@ -69,11 +69,11 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
           modifiableBindingType,
           request,
           methodBuilder(methodName.get())
-              .addModifiers(bindingFinalized ? PRIVATE : PUBLIC)
+              .addModifiers(bindingCannotBeModified ? PRIVATE : PROTECTED)
               .returns(TypeName.get(methodImplementation.returnType()))
               .addCode(methodImplementation.body())
               .build(),
-          bindingFinalized);
+          bindingCannotBeModified);
     }
   }
 

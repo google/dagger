@@ -18,8 +18,15 @@ package dagger.internal.codegen;
 
 import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
 import dagger.multibindings.IntoSet;
 import dagger.spi.BindingGraphPlugin;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.processing.Filer;
+import javax.inject.Singleton;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /** Binds the set of {@link BindingGraphPlugin}s used to implement Dagger validation. */
 @Module
@@ -75,4 +82,18 @@ interface BindingGraphValidationModule {
   @IntoSet
   @Validation
   BindingGraphPlugin subcomponentFactoryMethod(SubcomponentFactoryMethodValidator validation);
+
+  @Provides
+  @Singleton
+  @Validation
+  static BindingGraphPlugins validationPlugins(
+      @Validation Set<BindingGraphPlugin> validationPlugins,
+      Filer filer,
+      Types types,
+      Elements elements,
+      @ProcessingOptions Map<String, String> processingOptions,
+      DiagnosticReporterFactory diagnosticReporterFactory) {
+    return new BindingGraphPlugins(
+        validationPlugins, filer, types, elements, processingOptions, diagnosticReporterFactory);
+  }
 }

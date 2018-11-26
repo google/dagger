@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
@@ -54,10 +53,7 @@ final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
     Key productionExecutorKey = keyFactory.forProductionExecutor();
 
     bindingGraph.bindings(productionExecutorKey).stream()
-        .flatMap(
-            productionExecutorBinding ->
-                bindingGraph.network().predecessors(productionExecutorBinding).stream())
-        .flatMap(instancesOf(dagger.model.Binding.class))
+        .flatMap(productionExecutor -> bindingGraph.requestingBindings(productionExecutor).stream())
         .filter(binding -> !binding.key().equals(productionImplementationExecutorKey))
         .forEach(binding -> reportError(diagnosticReporter, binding));
   }

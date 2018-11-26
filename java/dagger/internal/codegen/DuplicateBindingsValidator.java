@@ -20,7 +20,6 @@ import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.transformValues;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.Formatter.INDENT;
@@ -215,9 +214,8 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     if (bindingDeclarationFormatter.canFormat(bindingNode.delegate())) {
       declarations.add(bindingNode.delegate());
     } else {
-      graph.network().successors(binding).stream()
-          .flatMap(instancesOf(dagger.model.Binding.class))
-          .flatMap(dependency -> declarations(graph, dependency).stream())
+      graph.requestedBindings(binding).stream()
+          .flatMap(requestedBinding -> declarations(graph, requestedBinding).stream())
           .forEach(declarations::add);
     }
     return declarations.build();

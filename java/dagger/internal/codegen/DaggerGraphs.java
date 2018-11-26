@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Graph;
 import com.google.common.graph.SuccessorsFunction;
-import dagger.model.BindingGraph.Node;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** Utility methods for {@link com.google.common.graph} types. */
-final class DaggerGraphs {
+public final class DaggerGraphs {
   /**
    * Returns a shortest path from {@code nodeU} to {@code nodeV} in {@code graph} as a list of the
    * nodes visited in sequence, including both {@code nodeU} and {@code nodeV}. (Note that there may
@@ -44,7 +43,7 @@ final class DaggerGraphs {
    * @throws IllegalArgumentException if {@code nodeU} or {@code nodeV} is not present in {@code
    *     graph}
    */
-  static <N> ImmutableList<N> shortestPath(SuccessorsFunction<N> graph, N nodeU, N nodeV) {
+  public static <N> ImmutableList<N> shortestPath(SuccessorsFunction<N> graph, N nodeU, N nodeV) {
     if (nodeU.equals(nodeV)) {
       return ImmutableList.of(nodeU);
     }
@@ -91,7 +90,7 @@ final class DaggerGraphs {
   }
 
   /** Returns the nodes in a graph that are not reachable from a node. */
-  static ImmutableSet<Node> unreachableNodes(Graph<Node> graph, Node node) {
+  public static <N> ImmutableSet<N> unreachableNodes(Graph<N> graph, N node) {
     return ImmutableSet.copyOf(difference(graph.nodes(), reachableNodes(graph, node)));
   }
 

@@ -53,15 +53,19 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    ":shared-with-spi",
+    ":jdk-and-guava-extras",
     "@google_bazel_common//third_party/java/guava",
 ]
 
-# Code that is shared with the dagger.model and dagger.spi packages. This code is merged into both
+# Extra features for the JDK and Guava. This code is merged into both
 # the dagger-compiler and dagger-spi artifacts that are sent to Maven
 java_library(
-    name = "shared-with-spi",
-    srcs = ["DaggerStreams.java"],
+    name = "jdk-and-guava-extras",
+    srcs = [
+        "DaggerGraphs.java",
+        "DaggerStreams.java",
+        "Optionals.java",
+    ],
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = [
@@ -79,7 +83,6 @@ java_library(
         "CompilerOptions.java",
         "ContributionType.java",
         "DaggerElements.java",
-        "DaggerGraphs.java",
         "DaggerStatistics.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
@@ -95,7 +98,6 @@ java_library(
         "MoreAnnotationValues.java",
         "MultibindingAnnotations.java",
         "OptionalType.java",
-        "Optionals.java",
         "RequestKinds.java",
         "Scopes.java",
         "SetType.java",

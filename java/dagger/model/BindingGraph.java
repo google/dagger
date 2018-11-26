@@ -198,6 +198,37 @@ public abstract class BindingGraph {
     return entryPointEdges;
   }
 
+  /** Returns the bindings that directly request a given binding as a dependency. */
+  public final ImmutableSet<Binding> requestingBindings(MaybeBinding binding) {
+    return network().predecessors(binding).stream()
+        .flatMap(instancesOf(Binding.class))
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns the bindings that a given binding directly request as a dependency. Does not include
+   * any {@link MissingBinding}s.
+   *
+   * @see #requestedMaybeMissingBindings(Binding)
+   */
+  public final ImmutableSet<Binding> requestedBindings(Binding binding) {
+    return network().successors(binding).stream()
+        .flatMap(instancesOf(Binding.class))
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns the bindings or missing bindings that a given binding directly requests as a
+   * dependency.
+   *
+   * @see #requestedBindings(Binding)
+   */
+  public final ImmutableSet<MaybeBinding> requestedMaybeMissingBindings(Binding binding) {
+    return network().successors(binding).stream()
+        .flatMap(instancesOf(MaybeBinding.class))
+        .collect(toImmutableSet());
+  }
+
   // TODO(dpb): Make public. Cache.
   private ImmutableNetwork<Node, DependencyEdge> dependencyGraph() {
     MutableNetwork<Node, DependencyEdge> dependencyGraph =

@@ -29,7 +29,7 @@ java_library(
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//java/dagger/internal/codegen:shared-with-spi",
+        "//java/dagger/internal/codegen:jdk-and-guava-extras",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/checker_framework:annotations",

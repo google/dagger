@@ -59,8 +59,8 @@ jarjar_library(
         "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
         "//java/dagger/internal/codegen:binding_graph_validation",
+        "//java/dagger/internal/codegen:jdk-and-guava-extras",
         "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen:shared-with-spi",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
         "//java/dagger/model:internal-proxies",
@@ -76,8 +76,8 @@ jarjar_library(
         "//java/dagger/internal/codegen:libbase-src.jar",
         "//java/dagger/internal/codegen:libbinding-src.jar",
         "//java/dagger/internal/codegen:libbinding_graph_validation-src.jar",
+        "//java/dagger/internal/codegen:libjdk-and-guava-extras-src.jar",
         "//java/dagger/internal/codegen:libprocessor-src.jar",
-        "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
         "//java/dagger/errorprone:liberrorprone-src.jar",
@@ -87,7 +87,7 @@ jarjar_library(
 jarjar_library(
     name = "shaded_spi",
     jars = [
-        "//java/dagger/internal/codegen:shared-with-spi",
+        "//java/dagger/internal/codegen:jdk-and-guava-extras",
         "//java/dagger/model",
         "//java/dagger/spi",
         "@com_google_auto_auto_common//jar",
@@ -98,7 +98,7 @@ jarjar_library(
 jarjar_library(
     name = "shaded_spi_src",
     jars = [
-        "//java/dagger/internal/codegen:libshared-with-spi-src.jar",
+        "//java/dagger/internal/codegen:libjdk-and-guava-extras-src.jar",
         "//java/dagger/model:libmodel-src.jar",
         "//java/dagger/spi:libspi-src.jar",
     ],

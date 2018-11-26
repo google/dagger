@@ -39,7 +39,7 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/codegen:shared-with-spi",
+        "//java/dagger/internal/codegen:jdk-and-guava-extras",
         "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",

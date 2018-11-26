@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Multimaps.filterKeys;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.Formatter.INDENT;
@@ -124,8 +123,8 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
   private ImmutableSet<ContributionBinding> mapBindingContributions(
       dagger.model.Binding binding, BindingGraph bindingGraph) {
     checkArgument(binding.kind().equals(MULTIBOUND_MAP));
-    return bindingGraph.network().successors(binding).stream()
-        .flatMap(instancesOf(BindingNode.class))
+    return bindingGraph.requestedBindings(binding).stream()
+        .map(b -> (BindingNode) b)
         .map(b -> (ContributionBinding) b.delegate())
         .collect(toImmutableSet());
   }

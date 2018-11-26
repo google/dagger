@@ -564,7 +564,8 @@ final class BindingGraphFactory {
 
     private Optional<Resolver> getOwningResolver(ContributionBinding binding) {
       // TODO(ronshapiro): extract the different pieces of this method into their own methods
-      if (binding.scope().isPresent() && binding.scope().get().isProductionScope()) {
+      if ((binding.scope().isPresent() && binding.scope().get().isProductionScope())
+          || binding.bindingType().equals(BindingType.PRODUCTION)) {
         for (Resolver requestResolver : getResolverLineage()) {
           // Resolve @Inject @ProductionScope bindings at the highest production component.
           if (binding.kind().equals(INJECTION)
@@ -572,8 +573,8 @@ final class BindingGraphFactory {
             return Optional.of(requestResolver);
           }
 
-          // Resolve explicit @ProductionScope bindings at the highest component that installs
-          // the binding.
+          // Resolve explicit @Produces and @ProductionScope bindings at the highest component that
+          // installs the binding.
           if (requestResolver.containsExplicitBinding(binding)) {
             return Optional.of(requestResolver);
           }

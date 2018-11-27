@@ -430,17 +430,11 @@ final class ComponentImplementationFactory {
       ImmutableList<ParameterSpec> constructorParameters = constructorParameters();
       MethodSpec.Builder constructor =
           constructorBuilder()
-              .addModifiers(componentImplementation.isAbstract() ? PROTECTED : PRIVATE)
-              .addParameters(constructorParameters);
-      componentImplementation.setConstructorParameters(constructorParameters);
-      componentImplementation
-          .superclassImplementation()
-          .ifPresent(
-              superclassImplementation ->
-                  constructor.addStatement(
-                      CodeBlock.of(
-                          "super($L)",
-                          parameterNames(superclassImplementation.constructorParameters()))));
+              .addModifiers(componentImplementation.isAbstract() ? PROTECTED : PRIVATE);
+
+      if (!componentImplementation.isAbstract()) {
+        constructor.addParameters(constructorParameters);
+      }
 
       Optional<MethodSpec.Builder> configureInitialization =
           partitions.isEmpty() || !componentImplementation.isAbstract()

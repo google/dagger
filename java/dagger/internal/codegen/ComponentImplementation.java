@@ -38,7 +38,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
@@ -166,7 +165,6 @@ final class ComponentImplementation {
   // implicit
   private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
-  private ImmutableList<ParameterSpec> constructorParameters;
   private Optional<MethodSpec> configureInitializationMethod = Optional.empty();
 
   ComponentImplementation(
@@ -241,11 +239,6 @@ final class ComponentImplementation {
   /** Returns the superclass implementation. */
   Optional<ComponentImplementation> superclassImplementation() {
     return superclassImplementation;
-  }
-
-  /** Returns the constructor parameters. */
-  ImmutableList<ParameterSpec> constructorParameters() {
-    return constructorParameters;
   }
 
   /**
@@ -420,11 +413,6 @@ final class ComponentImplementation {
    */
   void addCancellableProducerKey(Key key) {
     cancellableProducerKeys.add(key);
-  }
-
-  /** Records the constructor parameters for an instance of this component. */
-  void setConstructorParameters(ImmutableList<ParameterSpec> parameters) {
-    constructorParameters = parameters;
   }
 
   /** Returns a new, unique field name for the component based on the given name. */

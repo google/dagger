@@ -298,7 +298,7 @@ final class ModifiableBindingExpressions {
         return ModifiableBindingType.INJECTION;
       }
 
-      // TODO(b/72748365): Check whether we need to modify a module instance binding if we are
+      // TODO(b/117833324): Check whether we need to modify a module instance binding if we are
       // correctly installing the new module instance. In other words, if there is a subcomponent
       // builder should we consider a module instance binding modifiable?
       if (binding.requiresModuleInstance()) {
@@ -375,7 +375,7 @@ final class ModifiableBindingExpressions {
       case GENERATED_INSTANCE:
         return !componentImplementation.isAbstract();
       case MISSING:
-        // TODO(b/72748365): investigate beder@'s comment about having intermediate component
+        // TODO(b/117833324): investigate beder@'s comment about having intermediate component
         // ancestors satisfy missing bindings of their children with their own missing binding
         // methods so that we can minimize the cases where we need to reach into doubly-nested
         // descendant component implementations.

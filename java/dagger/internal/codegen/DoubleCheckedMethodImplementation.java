@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -39,14 +40,14 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
   private final Supplier<String> fieldName = Suppliers.memoize(this::createField);
 
   DoubleCheckedMethodImplementation(
-      ResolvedBindings resolvedBindings,
+      ComponentImplementation component,
+      ContributionBinding binding,
       BindingRequest request,
       BindingExpression bindingExpression,
-      DaggerTypes types,
-      ComponentImplementation componentImplementation) {
-    super(resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
-    this.componentImplementation = componentImplementation;
-    this.binding = resolvedBindings.contributionBinding();
+      DaggerTypes types) {
+    super(component, binding, request, bindingExpression, types);
+    this.componentImplementation = checkNotNull(component);
+    this.binding = checkNotNull(binding);
   }
 
   @Override

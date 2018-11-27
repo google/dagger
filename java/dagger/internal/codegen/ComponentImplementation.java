@@ -498,6 +498,15 @@ final class ComponentImplementation {
     return method;
   }
 
+  /**
+   * Returns the {@link ModifiableBindingMethod} of a supertype for this method's {@code request},
+   * if one exists.
+   */
+  Optional<ModifiableBindingMethod> supertypeModifiableBindingMethod(BindingRequest request) {
+    return superclassImplementation()
+        .flatMap(superImplementation -> superImplementation.getModifiableBindingMethod(request));
+  }
+
   /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */
   TypeSpec.Builder generate() {
     fieldSpecsMap.asMap().values().forEach(component::addFields);

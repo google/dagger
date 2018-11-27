@@ -115,15 +115,14 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
       BindingRequest bindingRequest,
       Optional<ComponentMethodDescriptor> matchingComponentMethod,
       DaggerTypes types) {
+    TypeMirror requestedType = bindingRequest.requestedType(bindingRequest.key().type(), types);
     if (matchingComponentMethod.isPresent()) {
       TypeMirror returnType =
           matchingComponentMethod.get().dependencyRequest().get().requestElement().get().asType();
-      return returnType.getKind().isPrimitive()
-          ? returnType
-          : bindingRequest.requestedType(bindingRequest.key().type(), types);
-    } else {
-      return bindingRequest.publiclyAccessibleRequestType(types);
+      return returnType.getKind().isPrimitive() ? returnType : requestedType;
     }
+
+    return types.publiclyAccessibleType(requestedType);
   }
 
   /** Returns a unique 'getter' method name for the current component. */

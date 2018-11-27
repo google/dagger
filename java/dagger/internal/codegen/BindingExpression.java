@@ -20,6 +20,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import javax.lang.model.type.TypeMirror;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
 // TODO(user): Rename this to RequestExpression?
@@ -66,7 +67,41 @@ abstract class BindingExpression {
    * component.
    */
   CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, ComponentImplementation component) {
-    return CodeBlock.of("return $L;", getDependencyExpression(component.name()).codeBlock());
+      ModifiableBindingMethod modifiableBindingMethod,
+      ComponentImplementation component,
+      DaggerTypes types) {
+    Expression dependencyExpression = getDependencyExpression(component.name());
+    BindingRequest request = modifiableBindingMethod.request();
+    TypeMirror requestedType = request.requestedType(request.key().type(), types);
+
+    // It's possible to have a case where a modifiable component method delegates to another
+    // binding method from an enclosing class that is not itself a component method. In that case,
+    // the enclosing class's method may return a publicly accessible type, but the nested class will
+    // have a return type that is defined by the component method. In that case, a downcast is
+    // necessary so that the return statement is valid.
+    //
+    // E.g.:
+    //
+    // public class DaggerAncestor implements Ancestor {
+    //   protected Object packagePrivateModifiable() { ... }
+    //
+    //   protected class LeafImpl extends DaggerLeaf {
+    //     @Override
+    //     public final PackagePrivateModifiable componentMethod() {
+    //       return (PackagePrivateModifiable) DaggerAncestor.this.packagePrivateModifiable();
+    //     }
+    //   }
+    // }
+    //
+    // DaggerAncestor.packagePrivateModifiable returns Object even though the actual instance's type
+    // is PackagePrivateModifiable. So a cast is necessary.
+    //
+    // This isn't necessary for getComponentMethodImplementation() because that's only used for
+    // non-modifiable bindings
+    if (!types.isAssignable(dependencyExpression.type(), requestedType)) {
+      dependencyExpression = dependencyExpression.castTo(requestedType);
+    }
+
+    return CodeBlock.of("return $L;", dependencyExpression.codeBlock());
   }
 }

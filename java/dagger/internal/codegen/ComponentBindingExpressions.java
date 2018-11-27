@@ -660,27 +660,27 @@ final class ComponentBindingExpressions {
   }
 
   // TODO(ronshapiro): pass ContributionBinding directly instead of ResolvedBindings. The
-  // ResolvedBindings type is only needed in one case, and it seems like it could be removed. The
-  // rest seem could all use a ContributionBinding directly
+  // ResolvedBindings type is only needed in one case, and it seems like it could be removed.
   private BindingMethodImplementation methodImplementation(
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       BindingExpression bindingExpression) {
+    ContributionBinding binding = resolvedBindings.contributionBinding();
     if (compilerOptions.fastInit()) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
         return new SingleCheckedMethodImplementation(
-            resolvedBindings, request, bindingExpression, types, componentImplementation);
+            componentImplementation, resolvedBindings, request, bindingExpression, types);
       } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(resolvedBindings)) {
         return resolvedBindings.scope().get().isReusable()
             ? new SingleCheckedMethodImplementation(
-                resolvedBindings, request, bindingExpression, types, componentImplementation)
+                componentImplementation, resolvedBindings, request, bindingExpression, types)
             : new DoubleCheckedMethodImplementation(
-                resolvedBindings, request, bindingExpression, types, componentImplementation);
+                componentImplementation, binding, request, bindingExpression, types);
       }
     }
 
     return new BindingMethodImplementation(
-        resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
+        componentImplementation, binding, request, bindingExpression, types);
   }
 
   /**

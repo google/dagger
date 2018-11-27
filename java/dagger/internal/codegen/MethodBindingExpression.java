@@ -55,7 +55,9 @@ abstract class MethodBindingExpression extends BindingExpression {
 
   @Override
   final CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, ComponentImplementation component) {
+      ModifiableBindingMethod modifiableBindingMethod,
+      ComponentImplementation component,
+      DaggerTypes types) {
     // A matching modifiable binding method means that we have previously created the binding method
     // and we are now implementing it. If there is no matching method we need to first create the
     // method. We create the method by deferring to getDependencyExpression (defined above) via a
@@ -65,17 +67,12 @@ abstract class MethodBindingExpression extends BindingExpression {
           supertypeModifiableBindingMethod().get().fulfillsSameRequestAs(modifiableBindingMethod));
       return methodImplementation.body();
     }
-    return super.getModifiableBindingMethodImplementation(modifiableBindingMethod, component);
+    return super.getModifiableBindingMethodImplementation(
+        modifiableBindingMethod, component, types);
   }
 
-  /**
-   * Returns the {@link ModifiableBindingMethod} of a supertype for this method's {@link #request},
-   * if one exists.
-   */
   protected final Optional<ModifiableBindingMethod> supertypeModifiableBindingMethod() {
-    return componentImplementation
-        .superclassImplementation()
-        .flatMap(superImplementation -> superImplementation.getModifiableBindingMethod(request));
+    return componentImplementation.supertypeModifiableBindingMethod(request);
   }
 
   @Override

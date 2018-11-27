@@ -19,44 +19,43 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Supplier;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.RequestKind;
+import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 
 /** Defines a method body and return type for a given {@link BindingExpression}. */
 class BindingMethodImplementation {
+  private final ComponentImplementation component;
   private final ContributionBinding binding;
   private final BindingRequest request;
   private final BindingExpression bindingExpression;
-  private final ClassName componentName;
   private final DaggerTypes types;
 
   BindingMethodImplementation(
-      ResolvedBindings resolvedBindings,
+      ComponentImplementation component,
+      ContributionBinding binding,
       BindingRequest request,
       BindingExpression bindingExpression,
-      ClassName componentName,
       DaggerTypes types) {
-    this.binding = resolvedBindings.contributionBinding();
-    this.request = checkNotNull(request);
+    this.component = component;
+    this.binding = binding;
+    this.request = request;
     this.bindingExpression = checkNotNull(bindingExpression);
-    this.componentName = checkNotNull(componentName);
-    this.types = checkNotNull(types);
+    this.types = types;
   }
 
   /** The method's body. */
   final CodeBlock body() {
-    return implementation(bindingExpression.getDependencyExpression(componentName)::codeBlock);
+    return implementation(bindingExpression.getDependencyExpression(component.name())::codeBlock);
   }
 
   /** The method's body if this method is a component method. */
-  final CodeBlock bodyForComponentMethod(
-      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
+  final CodeBlock bodyForComponentMethod(ComponentMethodDescriptor componentMethod) {
     return implementation(
-        bindingExpression
-            .getDependencyExpressionForComponentMethod(componentMethod, component)::codeBlock);
+        bindingExpression.getDependencyExpressionForComponentMethod(componentMethod, component)
+            ::codeBlock);
   }
 
   /**
@@ -78,6 +77,33 @@ class BindingMethodImplementation {
         && binding.contributedPrimitiveType().isPresent()) {
       return binding.contributedPrimitiveType().get();
     }
-    return request.accessibleType(binding, componentName, types);
+
+    TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
+
+    if (matchingComponentMethod().isPresent()) {
+      // Component methods are part of the user-defined API, and thus we must use the user-defined
+      // type. If the return type of the method is a primitive, use that since the key type is 
+      // always boxed. We still use the requestedType if the return type is not a primitive, as
+      // opposed to componentMethodReturnType, since that will have all type variables from
+      // component supertypes resolved.
+      TypeMirror componentMethodReturnType =
+          matchingComponentMethod().get().methodElement().getReturnType();
+      return componentMethodReturnType.getKind().isPrimitive()
+          ? componentMethodReturnType
+          : requestedType;
+    }
+
+    // If the component is abstract, this method may be overridden by another implementation in a
+    // different package for which requestedType is inaccessible. In order to make that method
+    // overridable, we use the publicly accessible type. If the type is final, we don't need to 
+    // worry about this, and instead just need to check accessibility of the file we're about to
+    // write
+    return component.isAbstract()
+        ? types.publiclyAccessibleType(requestedType)
+        : types.accessibleType(requestedType, component.name());
+  }
+
+  private Optional<ComponentMethodDescriptor> matchingComponentMethod() {
+    return component.componentDescriptor().firstMatchingComponentMethod(request);
   }
 }

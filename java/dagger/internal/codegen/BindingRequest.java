@@ -16,11 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
-import com.squareup.javapoet.ClassName;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -90,17 +88,6 @@ abstract class BindingRequest {
    */
   final TypeMirror publiclyAccessibleRequestType(DaggerTypes types) {
     return types.publiclyAccessibleType(requestedType(key().type(), types));
-  }
-
-  /**
-   * Returns the {@link DaggerTypes#accessibleType(TypeMirror, ClassName) accessible type} of
-   * instances created by a {@code binding} for this request. This may differ from the accessible
-   * type of the key for multibindings.
-   */
-  final TypeMirror accessibleType(
-      ContributionBinding binding, ClassName requestingClass, DaggerTypes types) {
-    checkArgument(binding.key().equals(key()));
-    return types.accessibleType(requestedType(binding.contributedType(), types), requestingClass);
   }
 
   final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {

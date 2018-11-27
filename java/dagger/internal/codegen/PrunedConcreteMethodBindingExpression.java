@@ -43,7 +43,9 @@ final class PrunedConcreteMethodBindingExpression extends BindingExpression {
 
   @Override
   CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod, ComponentImplementation component) {
+      ModifiableBindingMethod modifiableBindingMethod,
+      ComponentImplementation component,
+      DaggerTypes types) {
     return METHOD_IMPLEMENTATION;
   }
 

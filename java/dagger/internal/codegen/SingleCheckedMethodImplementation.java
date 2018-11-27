@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -42,16 +43,16 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
   private final Supplier<FieldSpec> field = Suppliers.memoize(this::createField);
 
   SingleCheckedMethodImplementation(
+      ComponentImplementation component,
       ResolvedBindings resolvedBindings,
       BindingRequest request,
       BindingExpression bindingExpression,
-      DaggerTypes types,
-      ComponentImplementation componentImplementation) {
-    super(resolvedBindings, request, bindingExpression, componentImplementation.name(), types);
-    this.componentImplementation = componentImplementation;
+      DaggerTypes types) {
+    super(component, resolvedBindings.contributionBinding(), request, bindingExpression, types);
+    this.componentImplementation = checkNotNull(component);
     this.resolvedBindings = resolvedBindings;
     this.binding = resolvedBindings.contributionBinding();
-    this.request = request;
+    this.request = checkNotNull(request);
   }
 
   @Override

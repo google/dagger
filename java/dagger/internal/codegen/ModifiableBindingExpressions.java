@@ -105,7 +105,7 @@ final class ModifiableBindingExpressions {
                       bindingExpressions
                           .getBindingExpression(modifiableBindingMethod.request())
                           .getModifiableBindingMethodImplementation(
-                              modifiableBindingMethod, componentImplementation))
+                              modifiableBindingMethod, componentImplementation, types))
                   .build(),
               markMethodFinal));
     }

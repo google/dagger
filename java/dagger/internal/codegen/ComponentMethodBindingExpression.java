@@ -58,7 +58,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
     return componentMethod.equals(this.componentMethod) && component.equals(componentImplementation)
-        ? methodImplementation.bodyForComponentMethod(componentMethod, component)
+        ? methodImplementation.bodyForComponentMethod(componentMethod)
         : super.getComponentMethodImplementation(componentMethod, component);
   }
 

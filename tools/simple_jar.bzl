@@ -25,7 +25,14 @@ def simple_jar(name, srcs):
         outs = ["%s.jar" % name],
         cmd = """
         OUT="$$(pwd)/$@"
-        cd {package_name}
+        if [[ -e "{package_name}" ]]; then
+          cd "{package_name}"
+        elif [[ -e "external/{package_name}" ]]; then
+          cd "external/{package_name}"
+        else
+          echo "Cannot find {package_name} directory"
+          exit 1
+        fi
         zip "$$OUT" -r * &> /dev/null
         """.format(package_name = native.package_name()),
     )

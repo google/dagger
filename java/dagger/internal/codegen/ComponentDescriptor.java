@@ -451,7 +451,6 @@ abstract class ComponentDescriptor {
     abstract TypeElement builderDefinitionType();
     abstract ImmutableSet<BuilderRequirementMethod> requirementMethods();
     abstract ExecutableElement buildMethod();
-    abstract TypeMirror componentType();
   }
 
   static final class Factory {
@@ -688,10 +687,7 @@ abstract class ComponentDescriptor {
       verify(buildMethod != null); // validation should have ensured this.
       return Optional.of(
           new AutoValue_ComponentDescriptor_BuilderSpec(
-              element,
-              requirementMethods.build(),
-              buildMethod,
-              element.getEnclosingElement().asType()));
+              element, requirementMethods.build(), buildMethod));
     }
 
     private ComponentRequirement requirementForBuilderMethod(

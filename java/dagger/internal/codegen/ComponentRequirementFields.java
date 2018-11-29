@@ -119,10 +119,10 @@ final class ComponentRequirementFields {
       ParameterSpec factoryParameter =
           ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
       return new ComponentParameterField(requirement, componentImplementation, factoryParameter);
-    } else if (graph.componentRequirements().contains(requirement)) {
+    } else if (requirement.kind().equals(ComponentRequirement.Kind.MODULE)) {
       return new ComponentInstantiableField(requirement, componentImplementation);
     } else {
-      throw new AssertionError();
+      throw new AssertionError("cannot create field for " + requirement);
     }
   }
 

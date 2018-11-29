@@ -568,9 +568,8 @@ abstract class ComponentDescriptor {
         }
       }
 
-      ImmutableList<DeclaredType> enclosedBuilders = kind.builderAnnotationType() == null
-          ? ImmutableList.<DeclaredType>of()
-          : enclosedBuilders(componentDefinitionType, kind.builderAnnotationType());
+      ImmutableList<DeclaredType> enclosedBuilders =
+          enclosedBuilders(componentDefinitionType, kind.builderAnnotationType());
       Optional<DeclaredType> builderType =
           Optional.ofNullable(getOnlyElement(enclosedBuilders, null));
       Optional<BuilderSpec> builderSpec = createBuilderSpec(builderType);

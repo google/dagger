@@ -27,22 +27,17 @@ import static dagger.internal.codegen.GeneratedLines.NPE_FROM_COMPONENT_METHOD;
 import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.MembersInjector;
-import java.io.IOException;
-import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
@@ -2578,39 +2573,6 @@ public class ComponentProcessorTest {
               return roundEnv.errorRaised();
             }
           });
-    }
-  }
-
-  /**
-   * A simple {@link Processor} that generates one source file.
-   */
-  private static final class GeneratingProcessor extends AbstractProcessor {
-    private final String generatedClassName;
-    private final String generatedSource;
-    private boolean processed;
-
-    GeneratingProcessor(String generatedClassName, String... source) {
-      this.generatedClassName = generatedClassName;
-      this.generatedSource = Joiner.on("\n").join(source);
-    }
-
-    @Override
-    public Set<String> getSupportedAnnotationTypes() {
-      return ImmutableSet.of("*");
-    }
-
-    @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-      if (!processed) {
-        processed = true;
-        try (Writer writer =
-                processingEnv.getFiler().createSourceFile(generatedClassName).openWriter()) {
-          writer.append(generatedSource);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-      return false;
     }
   }
 }

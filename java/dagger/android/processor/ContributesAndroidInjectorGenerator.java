@@ -91,10 +91,15 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
   @Override
   public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet.Builder<Element> deferredElements = ImmutableSet.builder();
     for (ExecutableElement method : methodsIn(elementsByAnnotation.values())) {
-      validator.createIfValid(method).ifPresent(this::generate);
+      try {
+        validator.createIfValid(method).ifPresent(this::generate);
+      } catch (TypeNotPresentException e) {
+        deferredElements.add(method);
+      }
     }
-    return ImmutableSet.of();
+    return deferredElements.build();
   }
 
   private void generate(AndroidInjectorDescriptor descriptor) {

@@ -18,12 +18,10 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
 import static javax.lang.model.element.ElementKind.ANNOTATION_TYPE;
-import static javax.lang.model.util.ElementFilter.typesIn;
 
-import com.google.auto.common.BasicAnnotationProcessor;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import dagger.MapKey;
 import java.lang.annotation.Annotation;
 import java.util.Set;
@@ -39,7 +37,7 @@ import javax.lang.model.util.Types;
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  */
-public class MapKeyProcessingStep implements BasicAnnotationProcessor.ProcessingStep {
+public class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final Types types;
   private final MapKeyValidator mapKeyValidator;
@@ -53,6 +51,7 @@ public class MapKeyProcessingStep implements BasicAnnotationProcessor.Processing
       MapKeyValidator mapKeyValidator,
       AnnotationCreatorGenerator annotationCreatorGenerator,
       UnwrappedMapKeyGenerator unwrappedMapKeyGenerator) {
+    super(MoreElements::asType);
     this.messager = messager;
     this.types = types;
     this.mapKeyValidator = mapKeyValidator;
@@ -66,22 +65,19 @@ public class MapKeyProcessingStep implements BasicAnnotationProcessor.Processing
   }
 
   @Override
-  public Set<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    for (TypeElement mapKeyAnnotationType : typesIn(elementsByAnnotation.get(MapKey.class))) {
-      ValidationReport<Element> mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
-      mapKeyReport.printMessagesTo(messager);
+  protected void process(
+      TypeElement mapKeyAnnotationType, ImmutableSet<Class<? extends Annotation>> annotations) {
+    ValidationReport<Element> mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
+    mapKeyReport.printMessagesTo(messager);
 
-      if (mapKeyReport.isClean()) {
-        MapKey mapkey = mapKeyAnnotationType.getAnnotation(MapKey.class);
-        if (!mapkey.unwrapValue()) {
-          annotationCreatorGenerator.generate(mapKeyAnnotationType, messager);
-        } else if (unwrappedValueKind(mapKeyAnnotationType).equals(ANNOTATION_TYPE)) {
-          unwrappedMapKeyGenerator.generate(mapKeyAnnotationType, messager);
-        }
+    if (mapKeyReport.isClean()) {
+      MapKey mapkey = mapKeyAnnotationType.getAnnotation(MapKey.class);
+      if (!mapkey.unwrapValue()) {
+        annotationCreatorGenerator.generate(mapKeyAnnotationType, messager);
+      } else if (unwrappedValueKind(mapKeyAnnotationType).equals(ANNOTATION_TYPE)) {
+        unwrappedMapKeyGenerator.generate(mapKeyAnnotationType, messager);
       }
     }
-    return ImmutableSet.of();
   }
 
   private ElementKind unwrappedValueKind(TypeElement mapKeyAnnotationType) {

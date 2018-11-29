@@ -69,11 +69,18 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   @Override
   public Set<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet.Builder<Element> deferredElements = ImmutableSet.builder();
     elementsByAnnotation
         .entries()
         .forEach(
-            entry -> validateMethod(entry.getKey(), MoreElements.asExecutable(entry.getValue())));
-    return ImmutableSet.of();
+            entry -> {
+              try {
+                validateMethod(entry.getKey(), MoreElements.asExecutable(entry.getValue()));
+              } catch (TypeNotPresentException e) {
+                deferredElements.add(entry.getValue());
+              }
+            });
+    return deferredElements.build();
   }
 
   private void validateMethod(Class<? extends Annotation> annotation, ExecutableElement method) {

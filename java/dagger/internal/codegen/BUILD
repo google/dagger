@@ -105,6 +105,7 @@ java_library(
         "SimpleTypeAnnotationValue.java",
         "SourceFileGenerationException.java",  # Used in :writing and :processor
         "SourceFileGenerator.java",  # Needed by InjectBindingRegistry in :binding and also :writing
+        "TypeCheckingProcessingStep.java",
         "TypeNames.java",
         "TypeSpecs.java",
         "UniqueNameSet.java",

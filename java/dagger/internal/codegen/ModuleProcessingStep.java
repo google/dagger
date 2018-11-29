@@ -21,6 +21,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -43,7 +44,7 @@ import javax.lang.model.element.TypeElement;
  * A {@link ProcessingStep} that validates module classes and generates factories for binding
  * methods.
  */
-final class ModuleProcessingStep implements ProcessingStep {
+final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final ModuleValidator moduleValidator;
   private final BindingFactory bindingFactory;
@@ -62,6 +63,7 @@ final class ModuleProcessingStep implements ProcessingStep {
       SourceFileGenerator<ProductionBinding> producerFactoryGenerator,
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
       Factory delegateDeclarationFactory) {
+    super(MoreElements::asType);
     this.messager = messager;
     this.moduleValidator = moduleValidator;
     this.bindingFactory = bindingFactory;
@@ -77,19 +79,19 @@ final class ModuleProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public Set<Element> process(
+  public ImmutableSet<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     List<TypeElement> modules = typesIn(elementsByAnnotation.values());
     moduleValidator.addKnownModules(modules);
-    for (TypeElement module : modules) {
-      if (processedModuleElements.add(module)) {
-        processModule(module);
-      }
-    }
-    return ImmutableSet.of();
+    return super.process(elementsByAnnotation);
   }
 
-  private void processModule(TypeElement module) {
+  @Override
+  protected void process(
+      TypeElement module, ImmutableSet<Class<? extends Annotation>> annotations) {
+    if (processedModuleElements.contains(module)) {
+      return;
+    }
     ValidationReport<TypeElement> report = moduleValidator.validate(module);
     report.printMessagesTo(messager);
     if (report.isClean()) {
@@ -103,6 +105,7 @@ final class ModuleProcessingStep implements ProcessingStep {
         }
       }
     }
+    processedModuleElements.add(module);
   }
 
   private <B extends ContributionBinding> void generate(

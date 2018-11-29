@@ -17,20 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 
 /** A step that validates all binding methods that were not validated while processing modules. */
-final class BindingMethodProcessingStep implements ProcessingStep {
+final class BindingMethodProcessingStep extends TypeCheckingProcessingStep<ExecutableElement> {
 
   private final Messager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
@@ -38,6 +35,7 @@ final class BindingMethodProcessingStep implements ProcessingStep {
   @Inject
   BindingMethodProcessingStep(
       Messager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
+    super(MoreElements::asExecutable);
     this.messager = messager;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
   }
@@ -48,18 +46,15 @@ final class BindingMethodProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public Set<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    for (ExecutableElement method : methodsIn(elementsByAnnotation.values())) {
-      checkArgument(
-          anyBindingMethodValidator.isBindingMethod(method),
-          "%s is not annotated with any of %s",
-          method,
-          annotations());
-      if (!anyBindingMethodValidator.wasAlreadyValidated(method)) {
-        anyBindingMethodValidator.validate(method).printMessagesTo(messager);
-      }
+  protected void process(
+      ExecutableElement method, ImmutableSet<Class<? extends Annotation>> annotations) {
+    checkArgument(
+        anyBindingMethodValidator.isBindingMethod(method),
+        "%s is not annotated with any of %s",
+        method,
+        annotations());
+    if (!anyBindingMethodValidator.wasAlreadyValidated(method)) {
+      anyBindingMethodValidator.validate(method).printMessagesTo(messager);
     }
-    return ImmutableSet.of();
   }
 }

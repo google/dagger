@@ -16,29 +16,28 @@
 
 package dagger.internal.codegen;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 
 /**
- * A processing step that is responsible for generating a special module for a
- * {@link ProductionComponent} or {@link ProductionSubcomponent}.
+ * A processing step that is responsible for generating a special module for a {@link
+ * ProductionComponent} or {@link ProductionSubcomponent}.
  */
-final class MonitoringModuleProcessingStep implements ProcessingStep {
+final class MonitoringModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final MonitoringModuleGenerator monitoringModuleGenerator;
 
   @Inject
   MonitoringModuleProcessingStep(
       Messager messager, MonitoringModuleGenerator monitoringModuleGenerator) {
+    super(MoreElements::asType);
     this.messager = messager;
     this.monitoringModuleGenerator = monitoringModuleGenerator;
   }
@@ -49,11 +48,8 @@ final class MonitoringModuleProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public Set<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    for (Element element : elementsByAnnotation.values()) {
+  protected void process(
+      TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
       monitoringModuleGenerator.generate(MoreElements.asType(element), messager);
-    }
-    return ImmutableSet.of();
   }
 }

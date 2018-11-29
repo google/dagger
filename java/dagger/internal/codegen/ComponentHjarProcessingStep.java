@@ -22,7 +22,6 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
-import static dagger.internal.codegen.ComponentProcessingStep.getElementsFromAnnotations;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -31,11 +30,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -74,7 +71,7 @@ import javax.lang.model.util.Types;
  * <p>The components emitted by this processing step include all of the API elements exposed by the
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
-final class ComponentHjarProcessingStep implements ProcessingStep {
+final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Elements elements;
   private final SourceVersion sourceVersion;
   private final Types types;
@@ -92,6 +89,7 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
       Messager messager,
       ComponentValidator componentValidator,
       Factory componentDescriptorFactory) {
+    super(MoreElements::asType);
     this.elements = elements;
     this.sourceVersion = sourceVersion;
     this.types = types;
@@ -107,33 +105,19 @@ final class ComponentHjarProcessingStep implements ProcessingStep {
   }
 
   @Override
-  public ImmutableSet<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
-
-    ImmutableSet<Element> componentElements =
-        getElementsFromAnnotations(
-            elementsByAnnotation, Component.class, ProductionComponent.class);
-
-    for (Element element : componentElements) {
-      TypeElement componentTypeElement = MoreElements.asType(element);
-      try {
-        // TODO(ronshapiro): component validation might not be necessary. We should measure it and
-        // figure out if it's worth seeing if removing it will still work. We could potentially
-        // add a new catch clause for any exception that's not TypeNotPresentException and ignore
-        // the component entirely in that case.
-        ComponentValidationReport validationReport =
-            componentValidator.validate(componentTypeElement, ImmutableSet.of(), ImmutableSet.of());
-        validationReport.report().printMessagesTo(messager);
-        if (validationReport.report().isClean()) {
-          new EmptyComponentGenerator(filer, elements, sourceVersion)
-              .generate(componentDescriptorFactory.forComponent(componentTypeElement), messager);
-        }
-      } catch (TypeNotPresentException e) {
-        rejectedElements.add(componentTypeElement);
-      }
+  protected void process(
+      TypeElement componentTypeElement, ImmutableSet<Class<? extends Annotation>> annotations) {
+    // TODO(ronshapiro): component validation might not be necessary. We should measure it and
+    // figure out if it's worth seeing if removing it will still work. We could potentially add a
+    // new catch clause for any exception that's not TypeNotPresentException and ignore the
+    // component entirely in that case.
+    ComponentValidationReport validationReport =
+        componentValidator.validate(componentTypeElement, ImmutableSet.of(), ImmutableSet.of());
+    validationReport.report().printMessagesTo(messager);
+    if (validationReport.report().isClean()) {
+      new EmptyComponentGenerator(filer, elements, sourceVersion)
+          .generate(componentDescriptorFactory.forComponent(componentTypeElement), messager);
     }
-    return rejectedElements.build();
   }
 
   private final class EmptyComponentGenerator extends SourceFileGenerator<ComponentDescriptor> {

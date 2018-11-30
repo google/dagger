@@ -16,6 +16,8 @@
 
 package dagger.producers.internal;
 
+import static dagger.internal.Preconditions.checkNotNull;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.DoubleCheck;
 import dagger.producers.Producer;
@@ -33,14 +35,26 @@ public final class DelegateProducer<T> implements CancellableProducer<T> {
     return delegate.get();
   }
 
+  // TODO(ronshapiro): remove this once we can reasonably expect generated code is no longer using
+  // this method
+  @Deprecated
   public void setDelegatedProducer(Producer<T> delegate) {
-    if (delegate == null) {
-      throw new IllegalArgumentException();
-    }
-    if (this.delegate != null) {
+    setDelegate(this, delegate);
+  }
+
+  /**
+   * Sets {@code delegateProducer}'s delegate producer to {@code delegate}.
+   *
+   * <p>{@code delegateProducer} must be an instance of {@link DelegateProducer}, otherwise this
+   * method will throw a {@link ClassCastException}.
+   */
+  public static <T> void setDelegate(Producer<T> delegateProducer, Producer<T> delegate) {
+    checkNotNull(delegate);
+    DelegateProducer<T> asDelegateProducer = (DelegateProducer<T>) delegateProducer;
+    if (asDelegateProducer.delegate != null) {
       throw new IllegalStateException();
     }
-    this.delegate = (CancellableProducer<T>) (CancellableProducer) delegate;
+    asDelegateProducer.delegate = (CancellableProducer<T>) delegate;
   }
 
   @Override

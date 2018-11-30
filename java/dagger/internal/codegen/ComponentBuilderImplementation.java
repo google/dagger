@@ -44,6 +44,7 @@ import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -81,6 +82,15 @@ final class ComponentBuilderImplementation {
       BindingGraph graph,
       Elements elements,
       Types types) {
+    if (componentImplementation.superclassImplementation().isPresent()
+        && componentImplementation.isAbstract()) {
+      // The component builder in ahead-of-time mode is generated with the base subcomponent
+      // implementation, with the exception of the build method since that requires invoking the
+      // constructor of a subclass component implementation. Intermediate component implementations,
+      // because they still can't invoke the eventual constructor and have no additional extensions
+      // to the builder, can ignore generating a builder implementation.
+      return Optional.empty();
+    }
     return graph.componentDescriptor().hasBuilder()
         ? Optional.of(new Creator(componentImplementation, graph, elements, types).create())
         : Optional.empty();
@@ -129,21 +139,22 @@ final class ComponentBuilderImplementation {
             .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
       }
 
-      ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields(graph);
+      ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields();
 
       if (componentImplementation.isAbstract()) {
         componentBuilderClass.addModifiers(ABSTRACT);
       } else {
         componentBuilderClass.addModifiers(FINAL);
-        // Can only instantiate concrete classes.
         componentBuilderClass.addMethod(buildMethod(builderFields));
       }
 
-      componentBuilderClass
-          .addFields(builderFields.values())
-          // TODO(ronshapiro): this should be switched with buildMethod(), but that currently breaks
-          // compile-testing tests that rely on the order of the methods
-          .addMethods(builderMethods(builderFields));
+      if (!componentImplementation.baseImplementation().isPresent()) {
+        componentBuilderClass.addFields(builderFields.values());
+      }
+
+      // TODO(ronshapiro): this should be switched with buildMethod(), but that currently breaks
+      // compile-testing tests that rely on the order of the methods
+      componentBuilderClass.addMethods(builderMethods(builderFields));
 
       return new ComponentBuilderImplementation(
           componentBuilderClass.build(), componentImplementation.getBuilderName(), builderFields);
@@ -151,27 +162,33 @@ final class ComponentBuilderImplementation {
 
     /** Set the superclass being extended or interface being implemented for this builder. */
     void setSupertype() {
-      if (componentImplementation.superclassImplementation().isPresent()) {
+      if (componentImplementation.baseImplementation().isPresent()) {
         // If there's a superclass, extend the Builder defined there.
         componentBuilderClass.superclass(
-            componentImplementation.superclassImplementation().get().getBuilderName());
+            componentImplementation.baseImplementation().get().getBuilderName());
       } else {
         addSupertype(componentBuilderClass, builderSpec().get().builderDefinitionType());
       }
     }
 
     /**
-     * Computes fields for each of the {@linkplain BindingGraph#componentRequirements component
-     * requirements}. Regardless of builder spec, there is always one field per requirement.
+     * Computes fields for each of the {@link ComponentRequirement}s}. Regardless of builder spec,
+     * there is always one field per requirement.
+     *
+     * <p>If the base implementation's builder is being generated in ahead-of-time-subcomponents
+     * mode, this uses {@link BindingGraph#possiblyNecessaryRequirements()} since Dagger doesn't
+     * know what modules may end up being unused. Otherwise, we use the {@link
+     * BindingGraph#componentRequirements() necessary component requirements}.
      */
-    static ImmutableMap<ComponentRequirement, FieldSpec> builderFields(BindingGraph graph) {
+    ImmutableMap<ComponentRequirement, FieldSpec> builderFields() {
       UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap.Builder<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.builder();
-      for (ComponentRequirement componentRequirement : graph.componentRequirements()) {
+      Modifier modifier = componentImplementation.isAbstract() ? PUBLIC : PRIVATE;
+      for (ComponentRequirement componentRequirement : componentRequirements()) {
         String name = fieldNames.getUniqueName(componentRequirement.variableName());
         builderFields.put(
             componentRequirement,
-            FieldSpec.builder(TypeName.get(componentRequirement.type()), name, PRIVATE).build());
+            FieldSpec.builder(TypeName.get(componentRequirement.type()), name, modifier).build());
       }
       return builderFields.build();
     }
@@ -224,9 +241,21 @@ final class ComponentBuilderImplementation {
      */
     ImmutableSet<MethodSpec> builderMethods(
         ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
-      ImmutableSet<ComponentRequirement> componentRequirements = graph.componentRequirements();
+      ImmutableSet<ComponentRequirement> componentRequirements = componentRequirements();
       ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
+      // TODO(ronshapiro): extract two separate methods: builderMethodsForBuilderSpec and
+      // builderMethodsForGeneratedTopLevelComponentBuilder()
       if (builderSpec().isPresent()) {
+        // In ahead-of-time subcomponents mode, all builder methods are defined at the base
+        // implementation. The only case where a method needs to be overridden is for a repeated
+        // module, which is unknown at the point when a base implementation is generated. We do this
+        // at the root for simplicity (and as an aside, repeated modules are never used in google
+        // as of 11/28/18, and thus the additional cost of including these methods at the root is
+        // negligible).
+        boolean hasBaseBuilderImplementation =
+            !componentImplementation.isAbstract()
+                && componentImplementation.baseImplementation().isPresent();
+
         UniqueNameSet parameterNames = new UniqueNameSet();
         for (BuilderRequirementMethod requirementMethod :
             builderSpec().get().requirementMethods()) {
@@ -244,7 +273,11 @@ final class ComponentBuilderImplementation {
                   : TypeName.get(builderRequirement.type());
 
           builderMethod.addParameter(argType, parameterName);
+
           if (componentRequirements.contains(builderRequirement)) {
+            if (hasBaseBuilderImplementation) {
+              continue;
+            }
             // required type
             builderMethod.addStatement(
                 "this.$N = $L",
@@ -256,6 +289,9 @@ final class ComponentBuilderImplementation {
                     : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
             addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
           } else if (graph.ownedModuleTypes().contains(builderRequirement.typeElement())) {
+            if (hasBaseBuilderImplementation) {
+              continue;
+            }
             // owned, but not required
             builderMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
             addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
@@ -268,6 +304,7 @@ final class ComponentBuilderImplementation {
                 "%s cannot be set because it is inherited from the enclosing component",
                 TypeNames.rawTypeName(TypeName.get(builderRequirement.type())));
           }
+
           methods.add(builderMethod.build());
         }
       } else {
@@ -296,6 +333,13 @@ final class ComponentBuilderImplementation {
         }
       }
       return methods.build();
+    }
+
+    private ImmutableSet<ComponentRequirement> componentRequirements() {
+      return !componentImplementation.superclassImplementation().isPresent()
+              && componentImplementation.isAbstract()
+          ? graph.possiblyNecessaryRequirements()
+          : graph.componentRequirements();
     }
 
     MethodSpec.Builder addBuilderMethodFromSpec(ExecutableElement method) {

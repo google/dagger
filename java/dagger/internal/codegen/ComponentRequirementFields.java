@@ -47,33 +47,26 @@ final class ComponentRequirementFields {
       new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final Optional<ComponentBuilderImplementation> componentBuilderImplementation;
 
   private ComponentRequirementFields(
       Optional<ComponentRequirementFields> parent,
       BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
+      ComponentImplementation componentImplementation) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.componentBuilderImplementation = componentBuilderImplementation;
   }
 
+  // TODO(ronshapiro): give ComponentImplementation a graph() method
   ComponentRequirementFields(
-      BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
-    this(Optional.empty(), graph, componentImplementation, componentBuilderImplementation);
+      BindingGraph graph, ComponentImplementation componentImplementation) {
+    this(Optional.empty(), graph, componentImplementation);
   }
 
   /** Returns a new object representing the fields available from a child component of this one. */
   ComponentRequirementFields forChildComponent(
-      BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
-    return new ComponentRequirementFields(
-        Optional.of(this), graph, componentImplementation, componentBuilderImplementation);
+      BindingGraph graph, ComponentImplementation componentImplementation) {
+    return new ComponentRequirementFields(Optional.of(this), graph, componentImplementation);
   }
 
   /**
@@ -110,9 +103,12 @@ final class ComponentRequirementFields {
 
   /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
   private ComponentRequirementField create(ComponentRequirement requirement) {
-    if (componentBuilderImplementation.isPresent()) {
-      FieldSpec builderField =
-          componentBuilderImplementation.get().builderFields().get(requirement);
+    Optional<ComponentBuilderImplementation> builderImplementation =
+        Optionals.firstPresent(
+            componentImplementation.baseImplementation().flatMap(c -> c.builderImplementation()),
+            componentImplementation.builderImplementation());
+    if (builderImplementation.isPresent()) {
+      FieldSpec builderField = builderImplementation.get().builderFields().get(requirement);
       return new BuilderField(requirement, componentImplementation, builderField);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {
@@ -122,7 +118,8 @@ final class ComponentRequirementFields {
     } else if (requirement.kind().equals(ComponentRequirement.Kind.MODULE)) {
       return new ComponentInstantiableField(requirement, componentImplementation);
     } else {
-      throw new AssertionError("cannot create field for " + requirement);
+      throw new AssertionError(
+          String.format("Can't create %s in %s", requirement, componentImplementation.name()));
     }
   }
 

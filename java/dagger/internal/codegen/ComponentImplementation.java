@@ -146,6 +146,7 @@ final class ComponentImplementation {
   private final NestingKind nestingKind;
   private final boolean isAbstract;
   private final Optional<ComponentImplementation> superclassImplementation;
+  private Optional<ComponentBuilderImplementation> builderImplementation;
   private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
@@ -242,6 +243,16 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the base implementation of this component in ahead-of-time subcomponents mode. If this
+   * is the base implementation, this returns {@link Optional#empty()}.
+   */
+  Optional<ComponentImplementation> baseImplementation() {
+    return superclassImplementation.isPresent()
+        ? Optional.of(Optionals.rootmostValue(this, c -> c.superclassImplementation))
+        : Optional.empty();
+  }
+
+  /**
    * Returns the {@link #configureInitializationMethod()} of the nearest supertype that defines one,
    * if any.
    *
@@ -275,6 +286,17 @@ final class ComponentImplementation {
   void setConfigureInitializationMethod(MethodSpec method) {
     configureInitializationMethod = Optional.of(method);
     addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method);
+  }
+
+  void setBuilderImplementation(Optional<ComponentBuilderImplementation> builderImplementation) {
+    checkState(
+        this.builderImplementation == null, "setBuilderImplementation has already been called");
+    this.builderImplementation = builderImplementation;
+  }
+
+  Optional<ComponentBuilderImplementation> builderImplementation() {
+    checkState(builderImplementation != null, "setBuilderImplementation has not been called yet");
+    return builderImplementation;
   }
 
   /**

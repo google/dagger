@@ -21,6 +21,7 @@ import static com.google.common.collect.Lists.asList;
 
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.function.Function;
 
 /** Utilities for {@link Optional}s. */
 final class Optionals {
@@ -46,6 +47,21 @@ final class Optionals {
         .filter(Optional::isPresent)
         .findFirst()
         .orElse(Optional.empty());
+  }
+
+  /**
+   * Walks a chain of present optionals as defined by successive calls to {@code nextFunction},
+   * returning the value of the final optional that is present. The first optional in the chain is
+   * the result of {@code nextFunction(start)}.
+   */
+  static <T> T rootmostValue(T start, Function<T, Optional<T>> nextFunction) {
+    T current = start;
+    for (Optional<T> next = nextFunction.apply(start);
+        next.isPresent();
+        next = nextFunction.apply(current)) {
+      current = next.get();
+    }
+    return current;
   }
 
   private Optionals() {}

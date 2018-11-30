@@ -110,9 +110,9 @@ final class ComponentImplementationFactory {
     Optional<ComponentBuilderImplementation> componentBuilderImplementation =
         ComponentBuilderImplementation.create(
             componentImplementation, bindingGraph, elements, types);
+    componentImplementation.setBuilderImplementation(componentBuilderImplementation);
     ComponentRequirementFields componentRequirementFields =
-        new ComponentRequirementFields(
-            bindingGraph, componentImplementation, componentBuilderImplementation);
+        new ComponentRequirementFields(bindingGraph, componentImplementation);
     ComponentBindingExpressions bindingExpressions =
         new ComponentBindingExpressions(
             bindingGraph,
@@ -134,8 +134,7 @@ final class ComponentImplementationFactory {
               componentImplementation,
               optionalFactories,
               bindingExpressions,
-              componentRequirementFields,
-              componentBuilderImplementation)
+              componentRequirementFields)
           .build();
     } else {
       return new RootComponentImplementationBuilder(
@@ -143,8 +142,7 @@ final class ComponentImplementationFactory {
               componentImplementation,
               optionalFactories,
               bindingExpressions,
-              componentRequirementFields,
-              componentBuilderImplementation.get())
+              componentRequirementFields)
           .build();
     }
   }
@@ -167,7 +165,6 @@ final class ComponentImplementationFactory {
     final ComponentRequirementFields componentRequirementFields;
     final ComponentImplementation componentImplementation;
     final OptionalFactories optionalFactories;
-    final Optional<ComponentBuilderImplementation> componentBuilderImplementation;
     boolean done;
 
     ComponentImplementationBuilder(
@@ -175,14 +172,12 @@ final class ComponentImplementationFactory {
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
+        ComponentRequirementFields componentRequirementFields) {
       this.graph = graph;
       this.componentImplementation = componentImplementation;
       this.optionalFactories = optionalFactories;
       this.bindingExpressions = bindingExpressions;
       this.componentRequirementFields = componentRequirementFields;
-      this.componentBuilderImplementation = componentBuilderImplementation;
     }
 
     /**
@@ -196,7 +191,8 @@ final class ComponentImplementationFactory {
           "ComponentImplementationBuilder has already built the ComponentImplementation for [%s].",
           componentImplementation.name());
       setSupertype();
-      componentBuilderImplementation
+      componentImplementation
+          .builderImplementation()
           .map(ComponentBuilderImplementation::componentBuilderClass)
           .ifPresent(this::addBuilderClass);
 
@@ -386,9 +382,9 @@ final class ComponentImplementationFactory {
               : concreteSubcomponent(childGraph.componentDescriptor());
       Optional<ComponentBuilderImplementation> childBuilderImplementation =
           ComponentBuilderImplementation.create(childImplementation, childGraph, elements, types);
+      childImplementation.setBuilderImplementation(childBuilderImplementation);
       ComponentRequirementFields childComponentRequirementFields =
-          componentRequirementFields.forChildComponent(
-              childGraph, childImplementation, childBuilderImplementation);
+          componentRequirementFields.forChildComponent(childGraph, childImplementation);
       ComponentBindingExpressions childBindingExpressions =
           bindingExpressions.forChildComponent(
               childGraph, childImplementation, childComponentRequirementFields);
@@ -398,8 +394,7 @@ final class ComponentImplementationFactory {
               childImplementation,
               optionalFactories,
               childBindingExpressions,
-              childComponentRequirementFields,
-              childBuilderImplementation)
+              childComponentRequirementFields)
           .build();
     }
 
@@ -523,9 +518,21 @@ final class ComponentImplementationFactory {
 
     /** Returns the list of {@link ParameterSpec}s for the constructor. */
     final ImmutableList<ParameterSpec> constructorParameters() {
-      if (componentBuilderImplementation.isPresent()) {
+      Optional<ClassName> componentBuilderName;
+      if (componentImplementation.builderImplementation().isPresent()) {
+        componentBuilderName =
+            componentImplementation.builderImplementation().map(builder -> builder.name());
+      } else {
+        componentBuilderName =
+            componentImplementation
+                .baseImplementation()
+                .filter(component -> component.componentDescriptor().hasBuilder())
+                .map(ComponentImplementation::getBuilderName);
+      }
+
+      if (componentBuilderName.isPresent()) {
         return ImmutableList.of(
-            ParameterSpec.builder(componentBuilderImplementation.get().name(), "builder").build());
+            ParameterSpec.builder(componentBuilderName.get(), "builder").build());
       } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
         // If we're generating an abstract inner subcomponent, then we are not implementing module
         // instance bindings and have no need for factory method parameters.
@@ -545,23 +552,21 @@ final class ComponentImplementationFactory {
 
   /** Builds a root component implementation. */
   private final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
-    private final ClassName componentBuilderClassName;
+    private final ClassName componentBuilderName;
 
     RootComponentImplementationBuilder(
         BindingGraph graph,
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields,
-        ComponentBuilderImplementation componentBuilderImplementation) {
+        ComponentRequirementFields componentRequirementFields) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
-          componentRequirementFields,
-          Optional.of(componentBuilderImplementation));
-      this.componentBuilderClassName = componentBuilderImplementation.name();
+          componentRequirementFields);
+      this.componentBuilderName = componentImplementation.builderImplementation().get().name();
     }
 
     @Override
@@ -579,8 +584,8 @@ final class ComponentImplementationFactory {
               .returns(
                   builderSpec()
                       .map(builderSpec -> ClassName.get(builderSpec.builderDefinitionType()))
-                      .orElse(componentBuilderClassName))
-              .addStatement("return new $T()", componentBuilderClassName)
+                      .orElse(componentBuilderName))
+              .addStatement("return new $T()", componentBuilderName)
               .build();
       componentImplementation.addMethod(BUILDER_METHOD, builderFactoryMethod);
       if (canInstantiateAllRequirements()) {
@@ -623,15 +628,13 @@ final class ComponentImplementationFactory {
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields,
-        Optional<ComponentBuilderImplementation> componentBuilderImplementation) {
+        ComponentRequirementFields componentRequirementFields) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
-          componentRequirementFields,
-          componentBuilderImplementation);
+          componentRequirementFields);
       this.parent = parent;
     }
 

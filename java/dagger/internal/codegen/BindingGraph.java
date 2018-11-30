@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -150,10 +151,47 @@ abstract class BindingGraph {
    */
   @Memoized
   ImmutableSet<ComponentRequirement> componentRequirements() {
+    return componentRequirements(
+        StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
+            .flatMap(graph -> graph.contributionBindings().values().stream())
+            .flatMap(bindings -> bindings.contributionBindings().stream())
+        .collect(toImmutableSet()));
+  }
+
+  /**
+   * The types for which the component may need instances, depending on how it is resolved in a
+   * parent component.
+   *
+   * <ul>
+   *   <li>{@linkplain #ownedModules() Owned modules} with concrete instance bindings. If the module
+   *       is never used in the fully resolved binding graph, the instance will not be required
+   *       unless a component builder requests it.
+   *   <li>Bound instances (always required)
+   * </ul>
+   */
+  @Memoized
+  ImmutableSet<ComponentRequirement> possiblyNecessaryRequirements() {
+    checkState(!componentDescriptor().kind().isTopLevel());
+    return componentRequirements(
+        StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
+            .flatMap(graph -> graph.ownedModules().stream())
+            .flatMap(module -> module.bindings().stream())
+            .collect(toImmutableSet()));
+  }
+
+  /**
+   * The types for which the component needs instances.
+   *
+   * <ul>
+   *   <li>component dependencies
+   *   <li>The modules of {@code bindings} that require a module instance
+   *   <li>bound instances
+   * </ul>
+   */
+  private ImmutableSet<ComponentRequirement> componentRequirements(
+      ImmutableSet<ContributionBinding> bindings) {
     ImmutableSet.Builder<ComponentRequirement> requirements = ImmutableSet.builder();
-    StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
-        .flatMap(graph -> graph.contributionBindings().values().stream())
-        .flatMap(bindings -> bindings.contributionBindings().stream())
+    bindings.stream()
         .filter(ContributionBinding::requiresModuleInstance)
         .map(ContributionBinding::contributingModule)
         .flatMap(presentValues())

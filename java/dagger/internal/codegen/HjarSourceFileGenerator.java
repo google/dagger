@@ -22,10 +22,12 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import java.util.Optional;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 
 /**
  * A source file generator that only writes the relevant code necessary for Bazel to create a
@@ -77,12 +79,14 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
         .map(this::skeletonMethod)
         .forEach(skeleton::addMethod);
 
+    completeType.fieldSpecs.stream()
+        .filter(field -> !field.modifiers.contains(PRIVATE))
+        .map(this::skeletonField)
+        .forEach(skeleton::addField);
+
     completeType.typeSpecs.stream()
         .map(type -> skeletonType(type).build())
         .forEach(skeleton::addType);
-
-    // Dagger has no fields that are exposed in its APIs, but if we add some, we need to implement
-    // skeleton fields here.
 
     return skeleton;
   }
@@ -106,6 +110,14 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
         .addParameters(completeMethod.parameters)
         .addExceptions(completeMethod.exceptions)
         .varargs(completeMethod.varargs)
+        .build();
+  }
+
+  private FieldSpec skeletonField(FieldSpec completeField) {
+    return FieldSpec.builder(
+            completeField.type,
+            completeField.name,
+            completeField.modifiers.toArray(new Modifier[0]))
         .build();
   }
 }

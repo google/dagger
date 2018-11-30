@@ -107,10 +107,29 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();
         CodeBlock initCode = CodeBlock.of("this.$N = $L;", getOrCreateField(), fieldInitialization);
 
-        if (isReplacingSuperclassFrameworkInstance()
-            || fieldInitializationState == InitializationState.DELEGATED) {
-          codeBuilder.add(
-              "$T.setDelegate($N, $L);", delegateType(), fieldSpec, fieldInitialization);
+        if (isReplacingSuperclassFrameworkInstance()) {
+          // TODO(ronshapiro): can we have DELEGATED share this branch? If we allow the FieldSpec
+          // to be modified in the ComponentImplementation, we can give it the same initializer to a
+          // delegate factory
+          CodeBlock delegateFactoryVariable = CodeBlock.of("$NDelegate", fieldSpec);
+          // TODO(ronshapiro): Use a type parameter here. Or even better, can a static method that
+          // accepts the delegate factory and the delegated instance infer the type parameters?
+          // And then we also don't need a cast.
+          codeBuilder
+              .add("$1T $2L = ($1T) $3N;", delegateType(), delegateFactoryVariable, fieldSpec)
+              .add(
+                  "$L.$N($L);",
+                  delegateFactoryVariable,
+                  setDelegateMethodName(),
+                  fieldInitialization);
+        } else if (fieldInitializationState == InitializationState.DELEGATED) {
+          // If we were recursively invoked, set the delegate factory as part of our initialization
+          CodeBlock delegateFactoryVariable = CodeBlock.of("$NDelegate", fieldSpec);
+          codeBuilder
+              .add(
+                  "$1T $2L = ($1T) $3N;", DelegateFactory.class, delegateFactoryVariable, fieldSpec)
+              .add(initCode)
+              .add("$L.setDelegatedProvider($N);", delegateFactoryVariable, fieldSpec);
         } else {
           codeBuilder.add(initCode);
         }
@@ -123,7 +142,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         // We were recursively invoked, so create a delegate factory instead
         fieldInitializationState = InitializationState.DELEGATED;
         componentImplementation.addInitialization(
-            CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), delegateType()));
+            CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), DelegateFactory.class));
         break;
 
       case DELEGATED:
@@ -205,6 +224,10 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
   private Class<?> delegateType() {
     return isProvider() ? DelegateFactory.class : DelegateProducer.class;
+  }
+
+  private String setDelegateMethodName() {
+    return isProvider() ? "setDelegatedProvider" : "setDelegatedProducer";
   }
 
   private boolean isProvider() {

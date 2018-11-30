@@ -104,6 +104,7 @@ final class BindingGraphConverter {
       network.addNode(currentComponent);
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
+        ImmutableSet<TypeElement> declaringModules = subcomponentDeclaringModules(resolvedBindings);
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
           addBinding(binding);
           if (binding.kind().equals(SUBCOMPONENT_BUILDER)
@@ -111,8 +112,7 @@ final class BindingGraphConverter {
             network.addEdge(
                 binding,
                 subcomponentNode(binding.key().type(), graph),
-                new SubcomponentBuilderBindingEdgeImpl(
-                    subcomponentDeclaringModules(resolvedBindings)));
+                new SubcomponentBuilderBindingEdgeImpl(declaringModules));
           }
         }
       }

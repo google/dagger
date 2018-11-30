@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -4737,7 +4736,6 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedAncestor);
   }
 
-  @Ignore // TODO(b/72748365): see if we can get this to work.
   @Test
   public void lazyOfModifiableBinding() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
@@ -4771,17 +4769,17 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
             "",
-            "  protected abstract Provider<MissingInLeaf> missingInLeafProvider();",
-            "",
             "  @Override",
-            "  public final Lazy<MissingInLeaf> lazy() {",
-            "    return DoubleCheck.lazy(missingInLeafProvider());",
+            "  public Lazy<MissingInLeaf> lazy() {",
+            "    return DoubleCheck.lazy(getMissingInLeafProvider());",
             "  }",
             "",
             "  @Override",
-            "  public final Provider<Lazy<MissingInLeaf>> providerOfLazy() {",
-            "    return ProviderOfLazy.create(missingInLeafProvider());",
+            "  public Provider<Lazy<MissingInLeaf>> providerOfLazy() {",
+            "    return ProviderOfLazy.create(getMissingInLeafProvider());",
             "  }",
+            "",
+            "  protected abstract Provider getMissingInLeafProvider();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -4818,6 +4816,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "package test;",
             "",
             IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
             "",
             GENERATED_ANNOTATION,
             "public abstract class DaggerAncestor implements Ancestor {",
@@ -4827,7 +4826,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    protected LeafImpl() {}",
             "",
             "    @Override",
-            "    protected abstract Provider<MissingInLeaf> missingInLeafProvider() {",
+            "    protected final Provider getMissingInLeafProvider() {",
             "      return AncestorModule_SatisfiedInAncestorFactory.create();",
             "    }",
             "  }",

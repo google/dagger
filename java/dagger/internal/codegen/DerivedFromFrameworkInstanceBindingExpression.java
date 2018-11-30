@@ -21,6 +21,7 @@ import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 
 /** A binding expression that depends on a framework instance. */
@@ -33,12 +34,12 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   private final DaggerTypes types;
 
   DerivedFromFrameworkInstanceBindingExpression(
-      ResolvedBindings resolvedBindings,
+      Key key,
       FrameworkType frameworkType,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    this.frameworkRequest = bindingRequest(resolvedBindings.key(), frameworkType);
+    this.frameworkRequest = bindingRequest(key, frameworkType);
     this.requestKind = checkNotNull(requestKind);
     this.frameworkType = checkNotNull(frameworkType);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);

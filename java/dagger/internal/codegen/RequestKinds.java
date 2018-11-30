@@ -184,5 +184,19 @@ final class RequestKinds {
     throw new AssertionError();
   }
 
+  /**
+   * Returns true if {@code requestKind} is always derived from a {@link RequestKind#PROVIDER}
+   * instance.
+   */
+  static boolean isDerivedFromProvider(RequestKind requestKind) {
+    switch (requestKind) {
+      case LAZY:
+      case PROVIDER_OF_LAZY:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   private RequestKinds() {}
 }

@@ -259,6 +259,10 @@ final class ModifiableBindingExpressions {
       return ModifiableBindingType.NONE;
     }
 
+    if (request.requestKind().filter(RequestKinds::isDerivedFromProvider).isPresent()) {
+      return ModifiableBindingType.NONE;
+    }
+
     if (resolvedInThisComponent(request)) {
       ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
       if (resolvedBindings.contributionBindings().isEmpty()) {

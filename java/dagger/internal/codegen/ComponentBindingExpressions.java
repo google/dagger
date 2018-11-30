@@ -26,6 +26,7 @@ import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
+import static dagger.internal.codegen.RequestKinds.isDerivedFromProvider;
 import static dagger.internal.codegen.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
@@ -49,7 +50,6 @@ import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
 final class ComponentBindingExpressions {
-
   // TODO(dpb,ronshapiro): refactor this and ComponentRequirementFields into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
   // parents? If so, maybe make BindingExpression.Factory create it.
@@ -250,6 +250,17 @@ final class ComponentBindingExpressions {
         expression = Optional.of(createBindingExpression(resolvedBindings, request));
       }
     }
+    if (!expression.isPresent()
+        && compilerOptions.aheadOfTimeSubcomponents()
+        && request.requestKind().isPresent()
+        && isDerivedFromProvider(request.requestKind().get())) {
+      RequestKind requestKind = request.requestKind().get();
+      expression =
+          Optional.of(
+              new DerivedFromFrameworkInstanceBindingExpression(
+                  request.key(), FrameworkType.PROVIDER, requestKind, this, types));
+    }
+
     if (expression.isPresent()) {
       expressions.put(request, expression.get());
       return expression.get();
@@ -415,7 +426,7 @@ final class ComponentBindingExpressions {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromFrameworkInstanceBindingExpression(
-            resolvedBindings, FrameworkType.PROVIDER, requestKind, this, types);
+            resolvedBindings.key(), FrameworkType.PROVIDER, requestKind, this, types);
 
       case PRODUCER:
         return producerFromProviderBindingExpression(resolvedBindings);
@@ -437,8 +448,9 @@ final class ComponentBindingExpressions {
       return frameworkInstanceBindingExpression(resolvedBindings);
     } else {
       // If no FrameworkType is present, a RequestKind is guaranteed to be present.
+      RequestKind requestKind = request.requestKind().get();
       return new DerivedFromFrameworkInstanceBindingExpression(
-          resolvedBindings, FrameworkType.PRODUCER_NODE, request.requestKind().get(), this, types);
+          resolvedBindings.key(), FrameworkType.PRODUCER_NODE, requestKind, this, types);
     }
   }
 
@@ -514,7 +526,7 @@ final class ComponentBindingExpressions {
           : directInstanceExpression;
     }
     return new DerivedFromFrameworkInstanceBindingExpression(
-        resolvedBindings, FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
+        resolvedBindings.key(), FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
   }
 
   /**

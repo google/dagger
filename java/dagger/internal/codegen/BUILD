@@ -42,7 +42,7 @@ CODEGEN_SHARED_DEPS = [
     "@google_bazel_common//third_party/java/error_prone:annotations",
     "@google_bazel_common//third_party/java/google_java_format",
     "@google_bazel_common//third_party/java/javapoet",
-    "@local_jdk//:lib/tools.jar",
+    "@bazel_tools//tools/jdk:langtools-neverlink",
     "@google_bazel_common//third_party/java/jsr250_annotations",
     "@google_bazel_common//third_party/java/jsr330_inject",
     "//java/dagger:core",

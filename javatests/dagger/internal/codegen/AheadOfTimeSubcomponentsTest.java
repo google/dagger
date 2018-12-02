@@ -4545,14 +4545,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    protected Producer getSetOfResponseProducer() {",
             "      return setOfResponseProducer;",
             "    }",
-            "",
-            "    @Override",
-            "    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {",
-            "      super.onProducerFutureCancelled(mayInterruptIfRunning);",
-            // TODO(b/72748365): This call should ideally be omitted since the same key has already
-            // been canceled in the super invocation
-            "      Producers.cancel(getSetOfResponseProducer(), mayInterruptIfRunning);",
-            "    }",
             "  }",
             "}");
     compilation = compile(filesToCompile.build());

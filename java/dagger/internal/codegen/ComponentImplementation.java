@@ -46,6 +46,7 @@ import dagger.model.RequestKind;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -487,7 +488,16 @@ final class ComponentImplementation {
    * listener method.
    */
   ImmutableList<Key> getCancellableProducerKeys() {
-    return ImmutableList.copyOf(cancellableProducerKeys);
+    Optional<ComponentImplementation> currentSuperImplementation = superclassImplementation;
+    Set<Key> cancelledKeysFromSuperclass = new HashSet<>();
+    while (currentSuperImplementation.isPresent()) {
+      cancelledKeysFromSuperclass.addAll(
+          currentSuperImplementation.get().cancellableProducerKeys);
+      currentSuperImplementation = currentSuperImplementation.get().superclassImplementation;
+    }
+    return Sets.difference(cancellableProducerKeys, cancelledKeysFromSuperclass)
+        .immutableCopy()
+        .asList();
   }
 
   /**

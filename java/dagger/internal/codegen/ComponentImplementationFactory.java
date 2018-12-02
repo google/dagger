@@ -271,12 +271,6 @@ final class ComponentImplementationFactory {
       }
 
       ImmutableList<CodeBlock> cancellationStatements = cancellationStatements();
-      if (cancellationStatements.isEmpty()
-          && componentImplementation.superclassImplementation().isPresent()) {
-        // Partial child implementations that have no new cancellations don't need to override
-        // the method just to call super().
-        return;
-      }
 
       if (cancellationStatements.size() < STATEMENTS_PER_METHOD) {
         methodBuilder.addCode(CodeBlocks.concat(cancellationStatements)).build();
@@ -296,12 +290,21 @@ final class ComponentImplementationFactory {
         }
       }
 
-      addCancelParentStatement(methodBuilder);
+      Optional<CodeBlock> cancelParentStatement = cancelParentStatement();
+      cancelParentStatement.ifPresent(methodBuilder::addCode);
+
+      if (cancellationStatements.isEmpty()
+          && !cancelParentStatement.isPresent()
+          && componentImplementation.superclassImplementation().isPresent()) {
+        // Partial child implementations that have no new cancellations don't need to override
+        // the method just to call super().
+        return;
+      }
 
       componentImplementation.addMethod(CANCELLATION_LISTENER_METHOD, methodBuilder.build());
     }
 
-    final ImmutableList<CodeBlock> cancellationStatements() {
+    private ImmutableList<CodeBlock> cancellationStatements() {
       // Reversing should order cancellations starting from entry points and going down to leaves
       // rather than the other way around. This shouldn't really matter but seems *slightly*
       // preferable because:
@@ -330,10 +333,11 @@ final class ComponentImplementationFactory {
       return cancellationStatements.build();
     }
 
-    void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
-      // Does nothing by default. Overridden in subclass(es) to add a statement if and only if the
+    Optional<CodeBlock> cancelParentStatement() {
+      // Returns empty by default. Overridden in subclass(es) to add a statement if and only if the
       // component being generated is a concrete subcomponent implementation with a parent that
       // allows cancellation to propagate to it from subcomponents.
+      return Optional.empty();
     }
 
     final MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
@@ -700,14 +704,18 @@ final class ComponentImplementationFactory {
     }
 
     @Override
-    void addCancelParentStatement(MethodSpec.Builder methodBuilder) {
-      if (shouldPropagateCancellationToParent()) {
-        methodBuilder.addStatement(
-            "$T.this.$L($L)",
-            parent.get().componentImplementation.name(),
-            CANCELLATION_LISTENER_METHOD_NAME,
-            MAY_INTERRUPT_IF_RUNNING);
+    Optional<CodeBlock> cancelParentStatement() {
+      if (!shouldPropagateCancellationToParent()){
+        return Optional.empty();
       }
+      return Optional.of(
+          CodeBlock.builder()
+              .addStatement(
+                  "$T.this.$N($N)",
+                  parent.get().componentImplementation.name(),
+                  CANCELLATION_LISTENER_METHOD_NAME,
+                  MAY_INTERRUPT_IF_RUNNING)
+              .build());
     }
 
     boolean shouldPropagateCancellationToParent() {

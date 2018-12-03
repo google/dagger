@@ -103,6 +103,16 @@ enum ModifiableBindingType {
    * {@code @Produces} methods as modifiable.
    */
   PRODUCTION,
+
+  /**
+   * A {@link dagger.Binds} method whose dependency is {@link #MISSING}.
+   *
+   * <p>There's not much to do for @Binds bindings if the dependency is missing - at best, if the
+   * dependency is a weaker scope/unscoped, we save only a few lines that implement the scoping. But
+   * it's also possible, if the dependency is the same or stronger scope, that no extra code is
+   * necessary, in which case we'd be overriding a method that just returns another.
+   */
+  BINDS_METHOD_WITH_MISSING_DEPENDENCY,
   ;
 
   private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =

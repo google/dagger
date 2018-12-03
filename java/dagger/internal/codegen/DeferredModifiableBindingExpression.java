@@ -15,40 +15,49 @@
  */
 
 package dagger.internal.codegen;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
 
 /**
- * An {@link ModifiableAbstractMethodBindingExpression} for a binding that requires an instance of a
- * generated type. This expression is used in abstract implementations of a subcomponent when there
- * are no concrete definitions of generated types available. The (unimplemented) method is added to
- * the {@code GeneratedComponentModel} when this dependency expression is requested. The method is
- * overridden when generating the concrete implementation of an ancestor component.
+ * A {@link ModifiableAbstractMethodBindingExpression} for a binding that exists but is not ready to
+ * be expressed in this compilation unit and should be deferred until a future compilation.
+ * Generates a method that will be implemented in the future compilation.
+ *
+ * <p>A deferred modifiable binding expression is used when:
+ *
+ * <ul>
+ *   <li>The generated code for a binding requires an instance of a type that is generated in the
+ *       root component compilation unit.
+ *   <li>A {@linkplain ModifiableBindingType#BINDS_METHOD_WITH_MISSING_DEPENDENCY {@code @Binds}
+ *       method's dependency is missing} in a subcomponent.
+ * </ul>
  */
-final class GeneratedInstanceBindingExpression extends ModifiableAbstractMethodBindingExpression {
+final class DeferredModifiableBindingExpression extends ModifiableAbstractMethodBindingExpression {
   private final ComponentImplementation componentImplementation;
   private final ContributionBinding binding;
   private final BindingRequest request;
 
-  GeneratedInstanceBindingExpression(
+  DeferredModifiableBindingExpression(
       ComponentImplementation componentImplementation,
-      ResolvedBindings resolvedBindings,
+      ModifiableBindingType modifiableBindingType,
+      ContributionBinding binding,
       BindingRequest request,
       Optional<ModifiableBindingMethod> matchingModifiableBindingMethod,
       Optional<ComponentMethodDescriptor> matchingComponentMethod,
       DaggerTypes types) {
     super(
         componentImplementation,
-        ModifiableBindingType.GENERATED_INSTANCE,
+        modifiableBindingType,
         request,
         matchingModifiableBindingMethod,
         matchingComponentMethod,
         types);
-    this.componentImplementation = componentImplementation;
-    this.binding = resolvedBindings.contributionBinding();
-    this.request = request;
+    this.componentImplementation = checkNotNull(componentImplementation);
+    this.binding = checkNotNull(binding);
+    this.request = checkNotNull(request);
   }
 
   @Override

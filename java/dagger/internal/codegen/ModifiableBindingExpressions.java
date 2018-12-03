@@ -28,6 +28,7 @@ import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.BindingKind;
+import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import java.util.Optional;
 
@@ -150,6 +151,7 @@ final class ModifiableBindingExpressions {
       ModifiableBindingType modifiableBindingType, boolean modifyingBinding) {
     switch (modifiableBindingType) {
       case MISSING:
+      case BINDS_METHOD_WITH_MISSING_DEPENDENCY:
       case GENERATED_INSTANCE:
       case OPTIONAL:
       case INJECTION:
@@ -196,11 +198,12 @@ final class ModifiableBindingExpressions {
     switch (type) {
       case GENERATED_INSTANCE:
         // If the subcomponent is abstract then we need to define an (un-implemented)
-        // GeneratedInstanceBindingExpression.
+        // DeferredModifiableBindingExpression.
         if (componentImplementation.isAbstract()) {
-          return new GeneratedInstanceBindingExpression(
+          return new DeferredModifiableBindingExpression(
               componentImplementation,
-              resolvedBindings,
+              type,
+              resolvedBindings.contributionBinding(),
               request,
               matchingModifiableBindingMethod,
               matchingComponentMethod,
@@ -227,6 +230,17 @@ final class ModifiableBindingExpressions {
         // graph used to generate a given implementation then we can compare a implementation's
         // graph with its superclass implementation's graph to detect pruned dependency branches.
         return new PrunedConcreteMethodBindingExpression();
+
+      case BINDS_METHOD_WITH_MISSING_DEPENDENCY:
+        checkState(componentImplementation.isAbstract());
+        return new DeferredModifiableBindingExpression(
+            componentImplementation,
+            type,
+            resolvedBindings.contributionBinding(),
+            request,
+            matchingModifiableBindingMethod,
+            matchingComponentMethod,
+            types);
 
       case OPTIONAL:
       case MULTIBINDING:
@@ -281,12 +295,7 @@ final class ModifiableBindingExpressions {
               .contributionBindings()
               .get(getOnlyElement(binding.dependencies()).key())
               .isEmpty()) {
-        // There's not much to do for @Binds bindings if the dependency is missing - at best, if the
-        // dependency is a weaker scope/unscoped, we save only a few lines that implement the
-        // scoping. But it's also possible, if the dependency is the same or stronger scope, that
-        // no extra code is necessary, in which case we'd be overriding a method that just returns
-        // another.
-        return ModifiableBindingType.MISSING;
+        return ModifiableBindingType.BINDS_METHOD_WITH_MISSING_DEPENDENCY;
       }
 
       if (binding.kind().equals(BindingKind.OPTIONAL) && binding.dependencies().isEmpty()) {
@@ -378,6 +387,7 @@ final class ModifiableBindingExpressions {
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
         return !componentImplementation.isAbstract();
+
       case MISSING:
         // TODO(b/117833324): investigate beder@'s comment about having intermediate component
         // ancestors satisfy missing bindings of their children with their own missing binding
@@ -389,16 +399,25 @@ final class ModifiableBindingExpressions {
         // implementation is concrete then it is assumed to be part of a dependency that would have
         // been passively pruned when implementing the full component hierarchy.
         return resolvableBinding(request) || !componentImplementation.isAbstract();
+
+      case BINDS_METHOD_WITH_MISSING_DEPENDENCY:
+        DependencyRequest dependency =
+            getOnlyElement(resolvedBindings.contributionBinding().dependencies());
+        return !graph.contributionBindings().get(dependency.key()).isEmpty();
+
       case OPTIONAL:
         // Only override optional binding methods if we have a non-empty binding.
         return !resolvedBindings.contributionBinding().dependencies().isEmpty();
+
       case MULTIBINDING:
         // Only modify a multibinding if there are new contributions.
         return !componentImplementation
             .superclassContributionsMade(request)
             .containsAll(resolvedBindings.contributionBinding().dependencies());
+
       case INJECTION:
         return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
+
       case MODULE_INSTANCE:
         // At the moment we have no way of detecting whether a new module instance is installed and
         // the implementation has changed, so we implement the binding once in the base
@@ -406,11 +425,13 @@ final class ModifiableBindingExpressions {
         // component.
         return !componentImplementation.superclassImplementation().isPresent()
             || !componentImplementation.isAbstract();
+
       case PRODUCTION:
         // TODO(b/117833324): Profile this to see if this check is slow
         return !resolvedBindings
             .owningComponent()
             .equals(componentImplementation.componentDescriptor());
+
       default:
         throw new IllegalStateException(
             String.format(

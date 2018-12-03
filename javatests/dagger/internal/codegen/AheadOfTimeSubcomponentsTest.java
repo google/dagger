@@ -5676,6 +5676,263 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedRoot);
   }
 
+  @Test
+  public void bindsWithMissingDependency() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Binds;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Binds Object missingBindsDependency(MissingInLeaf missing);",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Object bindsWithMissingDependencyInLeaf();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.MissingInLeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface MissingInLeafModule {",
+            "  @Provides",
+            "  static MissingInLeaf boundInRoot() {",
+            "    return new MissingInLeaf();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = MissingInLeafModule.class)",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  private DaggerRoot(Builder builder) {}",
+            "",
+            "  public static Builder builder() {",
+            "    return new Builder();",
+            "  }",
+            "",
+            "  public static Root create() {",
+            "    return new Builder().build();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Leaf leaf() {",
+            "    return new LeafImpl();",
+            "  }",
+            "",
+            "  public static final class Builder {",
+            "    private Builder() {}",
+            "",
+            "    public Root build() {",
+            "      return new DaggerRoot(this);",
+            "    }",
+            "  }",
+            "",
+            "  protected final class LeafImpl extends DaggerLeaf {",
+            "    private LeafImpl() {}",
+            "",
+            "    @Override",
+            "    public Object bindsWithMissingDependencyInLeaf() {",
+            "      return MissingInLeafModule_BoundInRootFactory.proxyBoundInRoot();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .hasSourceEquivalentTo(generatedRoot);
+  }
+
+  @Test
+  public void bindsWithMissingDependency_pruned() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Binds;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Binds Object missingBindsDependency(MissingInLeaf missing);",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.DependsOnBindsWithMissingDep",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class DependsOnBindsWithMissingDep {",
+            "  @Inject DependsOnBindsWithMissingDep(Object bindsWithMissingDep) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  DependsOnBindsWithMissingDep DependsOnBindsWithMissingDep();",
+            "}"));
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public DependsOnBindsWithMissingDep DependsOnBindsWithMissingDep() {",
+            "    return new DependsOnBindsWithMissingDep(getObject());",
+            "  }",
+            "",
+            "  protected abstract Object getObject();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PrunesInjectConstructorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface PrunesInjectConstructorModule {",
+            "  @Provides",
+            "  static DependsOnBindsWithMissingDep pruneInjectConstructor() {",
+            "    return new DependsOnBindsWithMissingDep(new Object());",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = PrunesInjectConstructorModule.class)",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  private DaggerRoot(Builder builder) {}",
+            "",
+            "  public static Builder builder() {",
+            "    return new Builder();",
+            "  }",
+            "",
+            "  public static Root create() {",
+            "    return new Builder().build();",
+            "  }",
+            "",
+            "  @Override",
+            "  public Leaf leaf() {",
+            "    return new LeafImpl();",
+            "  }",
+            "",
+            "  public static final class Builder {",
+            "    private Builder() {}",
+            "",
+            "    public Root build() {",
+            "      return new DaggerRoot(this);",
+            "    }",
+            "  }",
+            "",
+            "  protected final class LeafImpl extends DaggerLeaf {",
+            "    private LeafImpl() {}",
+            "",
+            "    @Override",
+            "    protected Object getObject() {",
+            "      throw new UnsupportedOperationException(",
+            "          \"This binding is not part of the final binding graph. The key was \"",
+            "              + \"requested by a binding that was believed to possibly be part of \"",
+            "              + \"the graph, but is no longer requested.\");",
+            "    }",
+            "",
+            "    @Override",
+            "    public DependsOnBindsWithMissingDep DependsOnBindsWithMissingDep() {",
+            "      return PrunesInjectConstructorModule_PruneInjectConstructorFactory",
+            "          .proxyPruneInjectConstructor();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .hasSourceEquivalentTo(generatedRoot);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

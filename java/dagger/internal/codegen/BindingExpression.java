@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
@@ -98,7 +100,11 @@ abstract class BindingExpression {
     //
     // This isn't necessary for getComponentMethodImplementation() because that's only used for
     // non-modifiable bindings
-    if (!types.isAssignable(dependencyExpression.type(), requestedType)) {
+    if (!types.isAssignable(dependencyExpression.type(), requestedType)
+        // TODO(ronshapiro): perhaps instead of needing to compute the requested type and then check
+        // for assignablility, ModifiableBindingMethod should have a TypeMirror property for the
+        // return type
+        && isTypeAccessibleFrom(requestedType, component.name().packageName())) {
       dependencyExpression = dependencyExpression.castTo(requestedType);
     }
 

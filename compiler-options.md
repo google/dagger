@@ -51,6 +51,22 @@ we can enable this broadly.
 
 
 
+## Module binding validation {#module-binding-validation}
+
+By default, Dagger validates modules only for syntax problems, like having the
+wrong annotations on a binding method. But problems among the bindings in a
+module don't get reported until the module is installed in a root component _and
+the bindings are used in that component._ If you pass
+`-Adagger.moduleBindingValidation=ERROR` or
+`-Adagger.moduleBindingValidation=WARNING` to javac, then each module will be
+checked as if it were a component in which every one of its bindings (and those
+of the modules it includes) is used. Any binding graph errors, such as duplicate
+bindings, will be reported at the module, even if no component uses those
+bindings.
+
+If module binding validation is turned on, [SPI](spi.md) implementations will
+see a `BindingGraph` representing the bindings for each module as well.
+
 <!-- References -->
 
 [`@Component`]: https://google.github.io/dagger/api/latest/dagger/Component.html

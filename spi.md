@@ -18,25 +18,33 @@ write a plugin that
 The opportunities are endless, which is why the SPI is open for anyone to use!
 
 > Note: The APIs for implementing an SPI plugin are experimental and are free to
-change. All changes will be documented in our [GitHub releases
-page](https://github.com/google/dagger/releases).We encourage you to [reach
-out] when you find rough edges so we can make the APIs easier to use.
+> change.All changes will be documented in our [GitHub releases].
+> We encourage you to [reach out] when you find rough edges so we can make the
+> APIs easier to use.
 
 ## Declaring your SPI plugin
 
 SPI plugins are classes that implement [`BindingGraphPlugin`] and are loaded
-using Java's [`ServiceLoader`] (easily done by using [`@AutoService`]. Your
-`BindingGraphPlugin` should be available alongside Dagger on the annotation
-processor path during compilation so that it can be loaded. In Bazel that is done
-with a [`java_plugin`]; in Gradle declare a dependency with
+using Java's [`ServiceLoader`], which is easily done by using [`@AutoService`].
+Your `BindingGraphPlugin` should be available alongside Dagger on the annotation
+processor path during compilation so that it can be loaded. In
+Bazel that is
+done with a [`java_plugin`]; in Gradle declare a dependency with
 `annotationProcessor` scope.
+
+<!-- TODO(dpb): Give an example of using java_plugin, calling out the fact
+     that there's no processor_class. -->
 
 When Dagger detects an SPI plugin on the classpath, it will call its
 [`visitGraph(BindingGraph, DiagnosticReporter)`][`visitGraph()`] method for each
-valid `@Component` that Dagger compiles. The `BindingGraph` is implemented as a
-[`Network`] that has nodes for [components][component nodes], [bindings][binding
-nodes], and [missing bindings][missing binding nodes]. Edges in the graph
-represent [dependencies][dependency edges] as well as parent-child component
+valid `@Component` that Dagger compiles. If [module binding validation] is
+turned on, Dagger will also call [`visitGraph()`] for each module that has no
+errors. In that case, the `BindingGraph` may contain `MissingBinding` nodes.
+
+The `BindingGraph` is implemented as a [`Network`] that has nodes for
+[components][component nodes], [bindings][binding nodes], and
+[missing bindings][missing binding nodes]. Edges in the graph represent
+[dependencies][dependency edges] as well as parent-child component
 relationships. For more, please refer to the [javadoc][BindingGraph javadoc].
 
 ## Adding Errors and Warnings
@@ -82,19 +90,21 @@ SPI plugins may declare a set of supported command line options with the
 Dagger will forward the values to the `initOptions()` method.
 
 [`@AutoService`]: https://github.com/google/auto/tree/master/service
-[binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.BindingNode.html
+[binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/Binding.html
 [`BindingGraph.initElements()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initElements-javax.lang.model.util.Elements-
 [`BindingGraph.initFiler()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initFiler-javax.annotation.processing.Filer-
 [`BindingGraph.initTypes()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initTypes-javax.lang.model.util.Types-
 [BindingGraph javadoc]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.html
 [`BindingGraphPlugin`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html
 [component nodes]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.ComponentNode.html
-[dependency edges]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.DependencyEdge.html
+[dependency edges]: https://google.github.io/dagger/api/latest/dagger/model/DependencyEdge.html
 [`DiagnosticReporter`]: https://google.github.io/dagger/api/latest/dagger/spi/DiagnosticReporter.html
 [`Filer`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Filer.html
+[GitHub releases]: https://github.com/google/dagger/releases
 [`java_plugin`]: https://docs.bazel.build/versions/master/be/java.html#java_plugin
 [`Messager`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Messager.html
-[missing binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.MissingBindingNode.html
+[missing binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/MissingBinding.html
+[module binding validation]: compiler-options.md#module-binding-validation
 [`Network`]: http://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/graph/Network.html
 [reach out]: https://github.com/google/dagger/issues/new
 [`ServiceLoader`]: https://docs.oracle.com/javase/9/docs/api/java/util/ServiceLoader.html

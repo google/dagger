@@ -46,7 +46,7 @@ env:
     - secure: LTzrlqcSNeZTOV52D3ibY9RBdxY4Yu8dUOYhAonrWLE+eDTzuoyCzcPw8pEcYVNUi1rG6Q7v3QBDTnBztsPoCbcN5tEGjw5cQEbfEzSTkWaNCFjncWn36cLwx9lgbF+5Db/L0mYJ36unDKUpKVC8AgOtxQibfv/ffugfxxj8ohY=
     - secure: PEdRiHTy+xVFPnlBwOhr7RVW/QIFSgd4hO0LESRBeF7KGIjxTZWtKPjnYrysZFm6tozMk6WBVJO6avOss0v7L64nemwpCnSspNYBa6pRGPgQ3rv/wgdPSzqDDmABmpPC18EHbUtF94KVdRX3Cr4kmwKQyD+YUKNRCY11Txt+xfo=
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
-    - BAZEL_VERSION="0.16.1"
+    - BAZEL_VERSION="0.19.2"
 
 after_success:
   - util/generate-latest-docs.sh

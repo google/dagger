@@ -1,6 +1,0 @@
-# Include debug info in the compiled jars
-build --javacopt=-g
-
-# Disable The Guava Beta Checker.
-# TODO(ronshapiro): explore how much work it would be to reenable this
-build  --javacopt="-Xep:BetaApi:OFF"

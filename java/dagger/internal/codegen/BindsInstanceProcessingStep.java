@@ -45,6 +45,7 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<Execu
 
   private static final ImmutableSet<Class<? extends Annotation>> COMPONENT_ANNOTATIONS =
       Stream.of(ComponentDescriptor.Kind.values())
+          .filter(kind -> !kind.isForModuleValidation())
           .map(ComponentDescriptor.Kind::annotationType)
           .collect(toImmutableSet());
   private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =

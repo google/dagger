@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
@@ -34,6 +35,7 @@ import static dagger.internal.codegen.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
+import static java.util.EnumSet.allOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -48,20 +50,20 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Lazy;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.model.DependencyRequest;
+import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
+import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,7 +80,14 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
 /**
- * The logical representation of a {@link Component} or {@link ProductionComponent} definition.
+ * A component declaration.
+ *
+ * <p>Represents one type annotated with {@code @Component}, {@code Subcomponent},
+ * {@code @ProductionComponent}, or {@code @ProductionSubcomponent}.
+ *
+ * <p>When validating bindings installed in modules, a {@link ComponentDescriptor} can also
+ * represent a synthetic component for the module, where there is an entry point for each binding in
+ * the module.
  */
 @AutoValue
 abstract class ComponentDescriptor {
@@ -87,10 +96,23 @@ abstract class ComponentDescriptor {
     SUBCOMPONENT(Subcomponent.class, Subcomponent.Builder.class, false),
     PRODUCTION_COMPONENT(ProductionComponent.class, ProductionComponent.Builder.class, true),
     PRODUCTION_SUBCOMPONENT(
-        ProductionSubcomponent.class, ProductionSubcomponent.Builder.class, false);
+        ProductionSubcomponent.class, ProductionSubcomponent.Builder.class, false),
+
+    /**
+     * This descriptor was generated from a {@link Module} instead of a component type in order to
+     * validate the module's bindings.
+     */
+    MODULE(Module.class, Optional.empty(), true),
+
+    /**
+     * This descriptor was generated from a {@link ProducerModule} instead of a component type in
+     * order to validate the module's bindings.
+     */
+    PRODUCER_MODULE(ProducerModule.class, Optional.empty(), true),
+    ;
 
     private final Class<? extends Annotation> annotationType;
-    private final Class<? extends Annotation> builderType;
+    private final Optional<Class<? extends Annotation>> builderType;
     private final boolean isTopLevel;
 
     /**
@@ -122,7 +144,9 @@ abstract class ComponentDescriptor {
     static Optional<Kind> forAnnotatedBuilderElement(TypeElement element) {
       Set<Kind> kinds = EnumSet.noneOf(Kind.class);
       for (Kind kind : values()) {
-        if (isAnnotationPresent(element, kind.builderAnnotationType())) {
+        if (kind.builderAnnotationType()
+            .filter(builderAnnotation -> isAnnotationPresent(element, builderAnnotation))
+            .isPresent()) {
           kinds.add(kind);
         }
       }
@@ -135,6 +159,13 @@ abstract class ComponentDescriptor {
         Class<? extends Annotation> annotationType,
         Class<? extends Annotation> builderType,
         boolean isTopLevel) {
+      this(annotationType, Optional.of(builderType), isTopLevel);
+    }
+
+    Kind(
+        Class<? extends Annotation> annotationType,
+        Optional<Class<? extends Annotation>> builderType,
+        boolean isTopLevel) {
       this.annotationType = annotationType;
       this.builderType = builderType;
       this.isTopLevel = isTopLevel;
@@ -144,52 +175,65 @@ abstract class ComponentDescriptor {
       return annotationType;
     }
 
-    Class<? extends Annotation> builderAnnotationType() {
+    /**
+     * Returns the {@code @Builder} annotation type for this kind of component, or empty if the
+     * descriptor is {@linkplain #isForModuleValidation() for a module} in order to validate its
+     * bindings.
+     */
+    Optional<Class<? extends Annotation>> builderAnnotationType() {
       return builderType;
     }
 
     ImmutableSet<ModuleDescriptor.Kind> moduleKinds() {
-      switch (this) {
-        case COMPONENT:
-        case SUBCOMPONENT:
-          return Sets.immutableEnumSet(ModuleDescriptor.Kind.MODULE);
-        case PRODUCTION_COMPONENT:
-        case PRODUCTION_SUBCOMPONENT:
-          return Sets.immutableEnumSet(
-              ModuleDescriptor.Kind.MODULE, ModuleDescriptor.Kind.PRODUCER_MODULE);
-        default:
-          throw new AssertionError(this);
-      }
+      return isProducer()
+          ? immutableEnumSet(allOf(ModuleDescriptor.Kind.class))
+          : immutableEnumSet(ModuleDescriptor.Kind.MODULE);
     }
 
     ImmutableSet<Kind> subcomponentKinds() {
-      switch (this) {
-        case COMPONENT:
-        case SUBCOMPONENT:
-          return ImmutableSet.of(SUBCOMPONENT, PRODUCTION_SUBCOMPONENT);
-        case PRODUCTION_COMPONENT:
-        case PRODUCTION_SUBCOMPONENT:
-          return ImmutableSet.of(PRODUCTION_SUBCOMPONENT);
-        default:
-          throw new AssertionError();
-      }
+      return isProducer()
+          ? immutableEnumSet(PRODUCTION_SUBCOMPONENT)
+          : immutableEnumSet(SUBCOMPONENT, PRODUCTION_SUBCOMPONENT);
     }
 
+    /**
+     * Returns {@code true} if the descriptor is for a top-level (not a child) component or is for
+     * {@linkplain #isForModuleValidation() module-validation}.
+     */
     boolean isTopLevel() {
       return isTopLevel;
     }
 
+    /** Returns {@code true} if the descriptor is for a production component or module. */
     boolean isProducer() {
       switch (this) {
         case COMPONENT:
         case SUBCOMPONENT:
+        case MODULE:
           return false;
+
         case PRODUCTION_COMPONENT:
         case PRODUCTION_SUBCOMPONENT:
+        case PRODUCER_MODULE:
           return true;
-        default:
-          throw new AssertionError();
       }
+      throw new AssertionError(this);
+    }
+
+    /** Returns {@code true} if the descriptor is for a module in order to validate its bindings. */
+    boolean isForModuleValidation() {
+      switch (this) {
+        case MODULE:
+        case PRODUCER_MODULE:
+          return true;
+
+        case COMPONENT:
+        case SUBCOMPONENT:
+        case PRODUCTION_COMPONENT:
+        case PRODUCTION_SUBCOMPONENT:
+          return false;
+      }
+      throw new AssertionError(this);
     }
   }
 
@@ -339,12 +383,39 @@ abstract class ComponentDescriptor {
         .collect(toImmutableSet());
   }
 
-  /** The entry point dependency requests on the component type. */
+  /**
+   * The entry points.
+   *
+   * <p>For descriptors that are generated from a module in order to validate the module's bindings,
+   * these will be requests for every key for every binding declared in the module (erasing
+   * multibinding contribution identifiers so that we get the multibinding key).
+   *
+   * <p>In order not to trigger a validation error if the requested binding is nullable, each
+   * request will be nullable.
+   *
+   * <p>In order not to trigger a validation error if the requested binding is a production binding,
+   * each request will be for a {@link com.google.common.util.concurrent.ListenableFuture} of the
+   * key type.
+   */
   final ImmutableSet<DependencyRequest> entryPoints() {
-    return entryPointMethods()
-        .stream()
-        .map(method -> method.dependencyRequest().get())
-        .collect(toImmutableSet());
+    if (kind().isForModuleValidation()) {
+      return modules().stream()
+          .flatMap(module -> module.allBindingKeys().stream())
+          .map(key -> key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build())
+          .map(
+              key ->
+                  DependencyRequest.builder()
+                      .key(key)
+                      // TODO(dpb): Futures only in ProducerModules, instances elsewhere?
+                      .kind(RequestKind.FUTURE)
+                      .isNullable(true)
+                      .build())
+          .collect(toImmutableSet());
+    } else {
+      return entryPointMethods().stream()
+          .map(method -> method.dependencyRequest().get())
+          .collect(toImmutableSet());
+    }
   }
 
   // TODO(gak): Consider making this non-optional and revising the
@@ -475,31 +546,31 @@ abstract class ComponentDescriptor {
     }
 
     /**
-     * Returns a component descriptor for a type annotated with either {@link Component @Component}
-     * or {@link ProductionComponent @ProductionComponent}. This is also compatible with {@link
-     * Subcomponent @Subcomponent} or {@link ProductionSubcomponent @ProductionSubcomponent} when
-     * generating ahead-of-time subcomponents.
+     * Returns a component descriptor for a type.
+     *
+     * <p>The type must be annotated with a top-level component annotation unless ahead-of-time
+     * subcomponents are being generated or we are creating a descriptor for a module in order to
+     * validate its bindings.
      */
-    ComponentDescriptor forComponent(TypeElement componentType) {
-      Optional<Kind> kind = Kind.forAnnotatedElement(componentType);
+    ComponentDescriptor forTypeElement(TypeElement typeElement) {
+      Optional<Kind> kind = Kind.forAnnotatedElement(typeElement);
       checkArgument(
-          kind.isPresent(), "%s must have a component or subcomponent annotation", componentType);
+          kind.isPresent(),
+          "%s must have a component or subcomponent or module annotation",
+          typeElement);
       if (!compilerOptions.aheadOfTimeSubcomponents()) {
-        checkArgument(kind.get().isTopLevel(),
-            "%s must be annotated with @Component or @ProductionComponent.",
-            componentType);
+        checkArgument(kind.get().isTopLevel(), "%s must be a top-level component.", typeElement);
       }
-      return create(componentType, kind.get());
+      return create(typeElement, kind.get());
     }
 
-    private ComponentDescriptor create(TypeElement componentDefinitionType, Kind kind) {
-      AnnotationMirror componentMirror =
-          getAnnotationMirror(componentDefinitionType, kind.annotationType()).get();
-      DeclaredType declaredComponentType = MoreTypes.asDeclared(componentDefinitionType.asType());
+    private ComponentDescriptor create(TypeElement typeElement, Kind kind) {
+      AnnotationMirror componentAnnotation =
+          getAnnotationMirror(typeElement, kind.annotationType()).get();
+      DeclaredType declaredComponentType = MoreTypes.asDeclared(typeElement.asType());
       ImmutableSet<ComponentRequirement> componentDependencies =
-          kind.isTopLevel()
-              ? getComponentDependencies(componentMirror)
-                  .stream()
+          kind.isTopLevel() && !kind.isForModuleValidation()
+              ? getComponentDependencies(componentAnnotation).stream()
                   .map(ComponentRequirement::forDependency)
                   .collect(toImmutableSet())
               : ImmutableSet.of();
@@ -516,12 +587,16 @@ abstract class ComponentDescriptor {
         }
       }
 
-      ImmutableSet<ModuleDescriptor> modules =
-          getComponentModules(componentMirror).stream()
-              .map(moduleType -> moduleDescriptorFactory.create(asTypeElement(moduleType)))
-              .collect(toImmutableSet());
+      ImmutableSet<TypeElement> modules =
+          kind.isForModuleValidation()
+              ? ImmutableSet.of(typeElement)
+              : getComponentModules(componentAnnotation).stream()
+                  .map(MoreTypes::asTypeElement)
+                  .collect(toImmutableSet());
 
-      ImmutableSet<ModuleDescriptor> transitiveModules = transitiveModules(modules);
+      ImmutableSet<ModuleDescriptor> transitiveModules =
+          moduleDescriptorFactory.transitiveModules(modules);
+
       ImmutableSet.Builder<ComponentDescriptor> subcomponentsFromModules = ImmutableSet.builder();
       for (ModuleDescriptor module : transitiveModules) {
         for (SubcomponentDeclaration subcomponentDeclaration : module.subcomponentDeclarations()) {
@@ -530,51 +605,57 @@ abstract class ComponentDescriptor {
               create(subcomponent, Kind.forAnnotatedElement(subcomponent).get()));
         }
       }
-      ImmutableSet<ExecutableElement> unimplementedMethods =
-          elements.getUnimplementedMethods(componentDefinitionType);
 
       ImmutableSet.Builder<ComponentMethodDescriptor> componentMethodsBuilder =
           ImmutableSet.builder();
-
       ImmutableBiMap.Builder<ComponentMethodDescriptor, ComponentDescriptor>
           subcomponentsByFactoryMethod = ImmutableBiMap.builder();
       ImmutableBiMap.Builder<ComponentMethodDescriptor, ComponentDescriptor>
           subcomponentsByBuilderMethod = ImmutableBiMap.builder();
-      for (ExecutableElement componentMethod : unimplementedMethods) {
-        ExecutableType resolvedMethod =
-            MoreTypes.asExecutable(types.asMemberOf(declaredComponentType, componentMethod));
-        ComponentMethodDescriptor componentMethodDescriptor =
-            getDescriptorForComponentMethod(componentDefinitionType, kind, componentMethod);
-        componentMethodsBuilder.add(componentMethodDescriptor);
-        switch (componentMethodDescriptor.kind()) {
-          case SUBCOMPONENT:
-          case PRODUCTION_SUBCOMPONENT:
-            subcomponentsByFactoryMethod.put(
-                componentMethodDescriptor,
-                create(
-                    MoreElements.asType(MoreTypes.asElement(resolvedMethod.getReturnType())),
-                    componentMethodDescriptor.kind().componentKind()));
-            break;
-          case SUBCOMPONENT_BUILDER:
-          case PRODUCTION_SUBCOMPONENT_BUILDER:
-            subcomponentsByBuilderMethod.put(
-                componentMethodDescriptor,
-                create(
-                    MoreElements.asType(
-                        MoreTypes.asElement(resolvedMethod.getReturnType()).getEnclosingElement()),
-                    componentMethodDescriptor.kind().componentKind()));
-            break;
-          default: // nothing special to do for other methods.
+      if (!kind.isForModuleValidation()) {
+        ImmutableSet<ExecutableElement> unimplementedMethods =
+            elements.getUnimplementedMethods(typeElement);
+        for (ExecutableElement componentMethod : unimplementedMethods) {
+          ExecutableType resolvedMethod =
+              MoreTypes.asExecutable(types.asMemberOf(declaredComponentType, componentMethod));
+          ComponentMethodDescriptor componentMethodDescriptor =
+              getDescriptorForComponentMethod(typeElement, kind, componentMethod);
+          componentMethodsBuilder.add(componentMethodDescriptor);
+          switch (componentMethodDescriptor.kind()) {
+            case SUBCOMPONENT:
+            case PRODUCTION_SUBCOMPONENT:
+              subcomponentsByFactoryMethod.put(
+                  componentMethodDescriptor,
+                  create(
+                      MoreElements.asType(MoreTypes.asElement(resolvedMethod.getReturnType())),
+                      componentMethodDescriptor.kind().componentKind()));
+              break;
+
+            case SUBCOMPONENT_BUILDER:
+            case PRODUCTION_SUBCOMPONENT_BUILDER:
+              subcomponentsByBuilderMethod.put(
+                  componentMethodDescriptor,
+                  create(
+                      MoreElements.asType(
+                          MoreTypes.asElement(resolvedMethod.getReturnType())
+                              .getEnclosingElement()),
+                      componentMethodDescriptor.kind().componentKind()));
+              break;
+
+            default: // nothing special to do for other methods.
+          }
         }
       }
 
       ImmutableList<DeclaredType> enclosedBuilders =
-          enclosedBuilders(componentDefinitionType, kind.builderAnnotationType());
+          kind.builderAnnotationType()
+              .map(builderAnnotationType -> enclosedBuilders(typeElement, builderAnnotationType))
+              .orElse(ImmutableList.of());
       Optional<DeclaredType> builderType =
           Optional.ofNullable(getOnlyElement(enclosedBuilders, null));
       Optional<BuilderSpec> builderSpec = createBuilderSpec(builderType);
 
-      ImmutableSet<Scope> scopes = scopesOf(componentDefinitionType);
+      ImmutableSet<Scope> scopes = scopesOf(typeElement);
       if (kind.isProducer()) {
         scopes =
             ImmutableSet.<Scope>builder().addAll(scopes).add(productionScope(elements)).build();
@@ -582,8 +663,8 @@ abstract class ComponentDescriptor {
 
       return new AutoValue_ComponentDescriptor(
           kind,
-          componentMirror,
-          componentDefinitionType,
+          componentAnnotation,
+          typeElement,
           componentDependencies,
           transitiveModules,
           dependenciesByDependencyMethod.build(),
@@ -705,24 +786,6 @@ abstract class ComponentDescriptor {
       return ConfigurationAnnotations.getModuleAnnotation(asTypeElement(type)).isPresent()
           ? ComponentRequirement.forModule(type)
           : ComponentRequirement.forDependency(type);
-    }
-
-    private ImmutableSet<ModuleDescriptor> transitiveModules(
-        Iterable<ModuleDescriptor> topLevelModules) {
-      Set<ModuleDescriptor> transitiveModules = new LinkedHashSet<>();
-      for (ModuleDescriptor module : topLevelModules) {
-        addTransitiveModules(transitiveModules, module);
-      }
-      return ImmutableSet.copyOf(transitiveModules);
-    }
-
-    private void addTransitiveModules(
-        Set<ModuleDescriptor> transitiveModules, ModuleDescriptor module) {
-      if (transitiveModules.add(module)) {
-        for (TypeElement includedModule : module.includedModules()) {
-          addTransitiveModules(transitiveModules, moduleDescriptorFactory.create(includedModule));
-        }
-      }
     }
   }
 

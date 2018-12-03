@@ -387,4 +387,33 @@ public class NullableBindingValidationTest {
     Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
     assertThat(compilation).succeeded();
   }
+
+  @Test
+  public void moduleValidation() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides @Nullable static String nullableString() { return null; }",
+            "  @Binds abstract Object object(String string);",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(module, NULLABLE);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            nullableToNonNullable(
+                "java.lang.String",
+                "@Provides @test.Nullable String test.TestModule.nullableString()"));
+  }
 }

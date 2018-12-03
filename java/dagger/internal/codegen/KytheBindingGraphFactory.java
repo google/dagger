@@ -57,7 +57,8 @@ final class KytheBindingGraphFactory {
   Optional<BindingGraph> create(TypeElement type) {
     if (MoreElements.isAnnotationPresent(type, Component.class)
         || MoreElements.isAnnotationPresent(type, ProductionComponent.class)) {
-      return Optional.of(bindingGraphFactory.create(componentDescriptorFactory.forComponent(type)));
+      return Optional.of(
+          bindingGraphFactory.create(componentDescriptorFactory.forTypeElement(type)));
     }
     return Optional.empty();
   }
@@ -77,6 +78,8 @@ final class KytheBindingGraphFactory {
         .fastInit(false)
         .experimentalAndroidMode2(false)
         .aheadOfTimeSubcomponents(false)
+        .moduleBindingValidationType(ValidationType.NONE)
+        .moduleHasDifferentScopesDiagnosticKind(Diagnostic.Kind.NOTE)
         .build()
         .validate();
   }

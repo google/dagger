@@ -68,7 +68,7 @@ class BuilderValidator {
     Element componentElement = subject.getEnclosingElement();
     ErrorMessages.ComponentBuilderMessages msgs = ErrorMessages.builderMsgsFor(componentKind);
     Class<? extends Annotation> componentAnnotation = componentKind.annotationType();
-    Class<? extends Annotation> builderAnnotation = componentKind.builderAnnotationType();
+    Class<? extends Annotation> builderAnnotation = componentKind.builderAnnotationType().get();
     checkArgument(subject.getAnnotation(builderAnnotation) != null);
 
     if (!isAnnotationPresent(componentElement, componentAnnotation)) {

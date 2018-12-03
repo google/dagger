@@ -70,7 +70,8 @@ final class BindingGraphConverter {
     unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
         .forEach(traverser.network::removeNode);
 
-    return BindingGraphProxies.bindingGraph(traverser.network);
+    return BindingGraphProxies.bindingGraph(
+        traverser.network, rootGraph.componentDescriptor().kind().isForModuleValidation());
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.

@@ -96,4 +96,26 @@ interface BindingGraphValidationModule {
     return new BindingGraphPlugins(
         validationPlugins, filer, types, elements, processingOptions, diagnosticReporterFactory);
   }
+
+  @Provides
+  @Singleton
+  @ModuleValidation
+  static BindingGraphPlugins moduleValidationPlugins(
+      @Validation Set<BindingGraphPlugin> validationPlugins,
+      Filer filer,
+      Types types,
+      Elements elements,
+      @ProcessingOptions Map<String, String> processingOptions,
+      DiagnosticReporterFactory diagnosticReporterFactory,
+      CompilerOptions compilerOptions) {
+    return new BindingGraphPlugins(
+        validationPlugins,
+        filer,
+        types,
+        elements,
+        processingOptions,
+        diagnosticReporterFactory
+            .treatingErrorsAs(compilerOptions.moduleBindingValidationType())
+            .withoutPrintingEntryPoints());
+  }
 }

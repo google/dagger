@@ -133,7 +133,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       if (!isClean(validationReport)) {
         return;
       }
-      ComponentDescriptor componentDescriptor = componentDescriptorFactory.forComponent(element);
+      ComponentDescriptor componentDescriptor = componentDescriptorFactory.forTypeElement(element);
       ValidationReport<TypeElement> componentDescriptorReport =
           componentDescriptorValidator.validate(componentDescriptor);
       componentDescriptorReport.printMessagesTo(messager);
@@ -151,7 +151,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       if (!subcomponentIsClean(element)) {
         return;
       }
-      ComponentDescriptor componentDescriptor = componentDescriptorFactory.forComponent(element);
+      ComponentDescriptor componentDescriptor = componentDescriptorFactory.forTypeElement(element);
       BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
       // TODO(b/72748365): Do subgraph validation.
       generateComponent(bindingGraph);

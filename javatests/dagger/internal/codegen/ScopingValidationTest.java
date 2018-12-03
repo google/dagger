@@ -237,7 +237,48 @@ public class ScopingValidationTest {
                 "    @test.PerTest class test.ScopedType",
                 "    @Provides @test.PerTest String test.ScopedModule.string()",
                 "    @Provides @test.Per(test.MyComponent.class) boolean "
-                    + "test.ScopedModule.bool()"));
+                    + "test.ScopedModule.bool()"))
+        .inFile(componentFile)
+        .onLineContaining("interface MyComponent");
+
+    compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
+    // The @Inject binding for ScopedType should not appear here, but the @Singleton binding should.
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ScopedModule contains bindings with different scopes:",
+                "    @Provides @test.PerTest String test.ScopedModule.string()",
+                "    @Provides @Singleton float test.ScopedModule.floatingPoint()",
+                "    @Provides @test.Per(test.MyComponent.class) boolean "
+                    + "test.ScopedModule.bool()"))
+        .inFile(moduleFile)
+        .onLineContaining("class ScopedModule");
+  }
+
+  @Test
+  public void moduleBindingValidationDoesNotReportForOneScope() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(
+                JavaFileObjects.forSourceLines(
+                    "test.TestModule",
+                    "package test;",
+                    "",
+                    "import dagger.Module;",
+                    "import dagger.Provides;",
+                    "import javax.inject.Singleton;",
+                    "",
+                    "@Module",
+                    "interface TestModule {",
+                    "  @Provides @Singleton static Object object() { return \"object\"; }",
+                    "  @Provides @Singleton static String string() { return \"string\"; }",
+                    "  @Provides static int integer() { return 4; }",
+                    "}"));
+    assertThat(compilation).succeededWithoutWarnings();
   }
 
   @Test

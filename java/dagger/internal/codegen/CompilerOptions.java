@@ -25,6 +25,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.FeatureStatus.ENABLED;
 import static dagger.internal.codegen.ValidationType.ERROR;
+import static dagger.internal.codegen.ValidationType.NONE;
 import static dagger.internal.codegen.ValidationType.WARNING;
 import static java.util.EnumSet.allOf;
 
@@ -104,6 +105,10 @@ abstract class CompilerOptions {
 
   abstract boolean useGradleIncrementalProcessing();
 
+  abstract ValidationType moduleBindingValidationType();
+
+  abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
+
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder()
         .headerCompilation(false)
@@ -157,6 +162,10 @@ abstract class CompilerOptions {
     Builder aheadOfTimeSubcomponents(boolean aheadOfTimeSubcomponents);
 
     Builder useGradleIncrementalProcessing(boolean enabled);
+
+    Builder moduleBindingValidationType(ValidationType validationType);
+
+    Builder moduleHasDifferentScopesDiagnosticKind(Diagnostic.Kind kind);
 
     @CheckReturnValue
     CompilerOptions build();
@@ -296,6 +305,16 @@ abstract class CompilerOptions {
     PRIVATE_MEMBER_VALIDATION(kindSetter(Builder::privateMemberValidationKind), ERROR, WARNING),
 
     STATIC_MEMBER_VALIDATION(kindSetter(Builder::staticMemberValidationKind), ERROR, WARNING),
+
+    /** Whether to validate partial binding graphs associated with modules. */
+    MODULE_BINDING_VALIDATION(Builder::moduleBindingValidationType, NONE, ERROR, WARNING),
+
+    /**
+     * How to report conflicting scoped bindings when validating partial binding graphs associated
+     * with modules.
+     */
+    MODULE_HAS_DIFFERENT_SCOPES_VALIDATION(
+        kindSetter(Builder::moduleHasDifferentScopesDiagnosticKind), ERROR, WARNING),
     ;
 
     static BiConsumer<Builder, ValidationType> kindSetter(
@@ -304,20 +323,21 @@ abstract class CompilerOptions {
           setter.accept(builder, validationType.diagnosticKind().get());
     }
 
+    final ValidationType defaultType;
     final ImmutableSet<ValidationType> validTypes;
     final BiConsumer<Builder, ValidationType> setter;
 
     Validation(BiConsumer<Builder, ValidationType> setter) {
-      this.setter = setter;
-      this.validTypes = immutableEnumSet(allOf(ValidationType.class));
+      this(setter, ERROR, WARNING, NONE);
     }
 
     Validation(
         BiConsumer<Builder, ValidationType> setter,
-        ValidationType validType,
+        ValidationType defaultType,
         ValidationType... moreValidTypes) {
       this.setter = setter;
-      this.validTypes = immutableEnumSet(validType, moreValidTypes);
+      this.defaultType = defaultType;
+      this.validTypes = immutableEnumSet(defaultType, moreValidTypes);
     }
 
     @Override
@@ -326,7 +346,7 @@ abstract class CompilerOptions {
     }
 
     ValidationType validationType(ProcessingEnvironment processingEnvironment) {
-      return CompilerOptions.valueOf(processingEnvironment, toString(), ERROR, validTypes);
+      return CompilerOptions.valueOf(processingEnvironment, toString(), defaultType, validTypes);
     }
 
     @Override

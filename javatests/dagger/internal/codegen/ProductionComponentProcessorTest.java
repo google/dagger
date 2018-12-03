@@ -158,10 +158,23 @@ public class ProductionComponentProcessorTest {
             "}");
     Compilation compilation =
         daggerCompiler()
-            .withOptions(compilerMode.javacopts())
             .compile(moduleFile, producerModuleFile, componentFile);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("may not depend on the production executor");
+    assertThat(compilation)
+        .hadErrorContaining("java.lang.String may not depend on the production executor")
+        .inFile(componentFile)
+        .onLineContaining("interface SimpleComponent");
+
+    compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(producerModuleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("java.lang.String may not depend on the production executor")
+        .inFile(producerModuleFile)
+        .onLineContaining("class SimpleModule");
+    // TODO(dpb): Report at the binding if enclosed in the module.
   }
 
   @Test

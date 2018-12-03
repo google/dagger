@@ -30,34 +30,43 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class DependencyCycleValidationTest {
   @Test public void cyclicDependency() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "final class Outer {",
-        "  static class A {",
-        "    @Inject A(C cParam) {}",
-        "  }",
-        "",
-        "  static class B {",
-        "    @Inject B(A aParam) {}",
-        "  }",
-        "",
-        "  static class C {",
-        "    @Inject C(B bParam) {}",
-        "  }",
-        "",
-        "  @Component()",
-        "  interface CComponent {",
-        "    C getC();",
-        "  }",
-        "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Component;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "final class Outer {",
+            "  static class A {",
+            "    @Inject A(C cParam) {}",
+            "  }",
+            "",
+            "  static class B {",
+            "    @Inject B(A aParam) {}",
+            "  }",
+            "",
+            "  static class C {",
+            "    @Inject C(B bParam) {}",
+            "  }",
+            "",
+            "  @Module",
+            "  interface MModule {",
+            "    @Binds Object object(C c);",
+            "  }",
+            "",
+            "  @Component()",
+            "  interface CComponent {",
+            "    C getC();",
+            "  }",
+            "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions("-Adagger.moduleBindingValidation=ERROR").compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -73,6 +82,21 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
         .onLineContaining("interface CComponent");
+
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "Found a dependency cycle:",
+                "    test.Outer.C is injected at",
+                "        test.Outer.A(cParam)",
+                "    test.Outer.A is injected at",
+                "        test.Outer.B(aParam)",
+                "    test.Outer.B is injected at",
+                "        test.Outer.C(bParam)",
+                "It is requested at:",
+                "    test.Outer.MModule.object(c)"))
+        .inFile(component)
+        .onLineContaining("interface MModule");
   }
 
   @Test public void cyclicDependencyNotIncludingEntryPoint() {

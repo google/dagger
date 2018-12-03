@@ -111,8 +111,11 @@ final class BindingGraphFactory {
     ImmutableSet.Builder<DelegateDeclaration> delegatesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
 
-    // binding for the component itself
-    explicitBindingsBuilder.add(bindingFactory.componentBinding(componentDescriptor.typeElement()));
+    if (!componentDescriptor.kind().isForModuleValidation()) {
+      // binding for the component itself
+      explicitBindingsBuilder.add(
+          bindingFactory.componentBinding(componentDescriptor.typeElement()));
+    }
 
     // Collect Component dependencies.
     for (ComponentRequirement dependency : componentDescriptor.dependencies()) {

@@ -30,6 +30,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotati
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
+import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.element.ElementKind.CLASS;
@@ -40,7 +41,6 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -52,6 +52,7 @@ import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.Kind;
+import dagger.internal.codegen.ErrorMessages.SubcomponentBuilderMessages;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.producers.CancellationPolicy;
@@ -144,7 +145,10 @@ final class ComponentValidator {
     }
 
     ImmutableList<DeclaredType> builders =
-        enclosedBuilders(subject, componentKind.builderAnnotationType());
+        componentKind
+            .builderAnnotationType()
+            .map(builderAnnotationType -> enclosedBuilders(subject, builderAnnotationType))
+            .orElse(ImmutableList.of());
     if (builders.size() > 1) {
       report.addError(
           String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
@@ -180,15 +184,16 @@ final class ComponentValidator {
               Optional<AnnotationMirror> subcomponentAnnotation =
                   checkForAnnotations(
                       returnType,
-                      FluentIterable.from(componentKind.subcomponentKinds())
-                          .transform(Kind::annotationType)
-                          .toSet());
+                      componentKind.subcomponentKinds().stream()
+                          .map(Kind::annotationType)
+                          .collect(toImmutableSet()));
               Optional<AnnotationMirror> subcomponentBuilderAnnotation =
                   checkForAnnotations(
                       returnType,
-                      FluentIterable.from(componentKind.subcomponentKinds())
-                          .transform(Kind::builderAnnotationType)
-                          .toSet());
+                      componentKind.subcomponentKinds().stream()
+                          .map(kind -> kind.builderAnnotationType())
+                          .flatMap(presentValues())
+                          .collect(toImmutableSet()));
               if (subcomponentAnnotation.isPresent()) {
                 referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
                 validateSubcomponentMethod(
@@ -245,8 +250,7 @@ final class ComponentValidator {
             (subcomponent, methods) ->
                 report.addError(
                     String.format(
-                        ErrorMessages.SubcomponentBuilderMessages.INSTANCE
-                            .moreThanOneRefToSubcomponent(),
+                        SubcomponentBuilderMessages.INSTANCE.moreThanOneRefToSubcomponent(),
                         subcomponent,
                         methods),
                     subject));
@@ -440,8 +444,7 @@ final class ComponentValidator {
       Set<? extends Element> validatedSubcomponentBuilders) {
 
     if (!parameters.isEmpty()) {
-      report.addError(
-          ErrorMessages.SubcomponentBuilderMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
+      report.addError(SubcomponentBuilderMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
     }
 
     // If we haven't already validated the subcomponent builder itself, validate it now.

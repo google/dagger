@@ -116,7 +116,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     validationReport.report().printMessagesTo(messager);
     if (validationReport.report().isClean()) {
       new EmptyComponentGenerator(filer, elements, sourceVersion)
-          .generate(componentDescriptorFactory.forComponent(componentTypeElement), messager);
+          .generate(componentDescriptorFactory.forTypeElement(componentTypeElement), messager);
     }
   }
 

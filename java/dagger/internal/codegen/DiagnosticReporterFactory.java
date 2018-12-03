@@ -19,11 +19,11 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.asList;
-import static com.google.common.collect.Sets.filter;
 import static dagger.internal.codegen.DaggerElements.DECLARATION_ORDER;
 import static dagger.internal.codegen.DaggerElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.DaggerElements.elementEncloses;
@@ -34,6 +34,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static java.util.Collections.min;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.cache.CacheBuilder;
@@ -72,14 +73,41 @@ final class DiagnosticReporterFactory {
   private final DaggerTypes types;
   private final Messager messager;
   private final DependencyRequestFormatter dependencyRequestFormatter;
+  private final ValidationType validationType;
+  private final boolean printingEntryPoints;
 
   @Inject
   DiagnosticReporterFactory(
       DaggerTypes types, Messager messager, DependencyRequestFormatter dependencyRequestFormatter) {
+    this(types, messager, dependencyRequestFormatter, ValidationType.ERROR, true);
+  }
+
+  private DiagnosticReporterFactory(
+      DaggerTypes types,
+      Messager messager,
+      DependencyRequestFormatter dependencyRequestFormatter,
+      ValidationType validationType,
+      boolean printingEntryPoints) {
     this.types = types;
     this.messager = messager;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
+    this.validationType = validationType;
+    this.printingEntryPoints = printingEntryPoints;
+  }
 
+  /** Returns a factory that treats all reported errors as some other kind instead. */
+  DiagnosticReporterFactory treatingErrorsAs(ValidationType validationType) {
+    if (validationType.equals(this.validationType)) {
+      return this;
+    }
+    return new DiagnosticReporterFactory(
+        types, messager, dependencyRequestFormatter, validationType, printingEntryPoints);
+  }
+
+  /** Returns a factory that does not print dependency traces from entry points to the error. */
+  DiagnosticReporterFactory withoutPrintingEntryPoints() {
+    return new DiagnosticReporterFactory(
+        types, messager, dependencyRequestFormatter, validationType, false);
   }
 
   /** Creates a reporter for a binding graph and a plugin. */
@@ -143,6 +171,7 @@ final class DiagnosticReporterFactory {
         Diagnostic.Kind diagnosticKind, ComponentNode componentNode, String messageFormat) {
       StringBuilder message = new StringBuilder(messageFormat);
       appendComponentPathUnlessAtRoot(message, componentNode);
+      // TODO(dpb): Report at the component node component.
       printMessage(diagnosticKind, message, rootComponent);
     }
 
@@ -221,15 +250,23 @@ final class DiagnosticReporterFactory {
 
     void printMessage(
         Diagnostic.Kind diagnosticKind, CharSequence message, Element elementToReport) {
+      if (diagnosticKind.equals(ERROR)) {
+        if (!validationType.diagnosticKind().isPresent()) {
+          return;
+        }
+        diagnosticKind = validationType.diagnosticKind().get();
+      }
       reportedDiagnosticKinds.add(diagnosticKind);
       StringBuilder fullMessage = new StringBuilder();
       appendBracketPrefix(fullMessage, plugin);
+
       // TODO(ronshapiro): should we create a HashSet out of elementEncloses() so we don't
       // need to do an O(n) contains() each time?
       if (!elementEncloses(rootComponent, elementToReport)) {
         appendBracketPrefix(fullMessage, elementToString(elementToReport));
         elementToReport = rootComponent;
       }
+
       messager.printMessage(diagnosticKind, fullMessage.append(message), elementToReport);
     }
 
@@ -274,30 +311,44 @@ final class DiagnosticReporterFactory {
       @Override
       public String toString() {
         StringBuilder message =
-            new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */);
+            printingEntryPoints
+                ? new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */)
+                : new StringBuilder();
 
-        // Print the dependency trace.
-        dependencyTrace.forEach(
-            edge -> dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
-        appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
+        // Print the dependency trace if we're printing entry points
+        if (printingEntryPoints) {
+          dependencyTrace.forEach(
+              edge ->
+                  dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
+          appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
+        }
 
-        // List any other dependency requests.
-        ImmutableSet<Element> otherRequests =
+        // Print any dependency requests that aren't shown as part of the dependency trace.
+        ImmutableSet<Element> requestsToPrint =
             requests.stream()
-                .filter(request -> !request.isEntryPoint()) // skip entry points, listed below
-                // skip the request from the dependency trace above
-                .filter(request -> !request.equals(dependencyTrace.get(0)))
+                .filter(
+                    // if printing entry points, skip them and the request at the head of the
+                    // dependency trace here.
+                    printingEntryPoints
+                        ? request ->
+                            !request.isEntryPoint() && !request.equals(dependencyTrace.get(0))
+                        : request -> true)
+                .filter(request -> request.dependencyRequest().requestElement().isPresent())
                 .map(request -> request.dependencyRequest().requestElement().get())
                 .collect(toImmutableSet());
-        if (!otherRequests.isEmpty()) {
-          message.append("\nIt is also requested at:");
-          for (Element otherRequest : otherRequests) {
-            message.append("\n    ").append(elementToString(otherRequest));
+        if (!requestsToPrint.isEmpty()) {
+          message
+              .append("\nIt is")
+              .append(printingEntryPoints ? " also " : " ")
+              .append("requested at:");
+          for (Element request : requestsToPrint) {
+            message.append("\n    ").append(elementToString(request));
           }
         }
 
-        // List the remaining entry points, showing which component they're in.
-        if (entryPoints.size() > 1) {
+        // Print the remaining entry points, showing which component they're in, if we're printing
+        // entry points.
+        if (printingEntryPoints && entryPoints.size() > 1) {
           message.append("\nThe following other entry points also depend on it:");
           entryPoints.stream()
               .filter(entryPoint -> !entryPoint.equals(getLast(dependencyTrace)))

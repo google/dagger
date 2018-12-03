@@ -110,39 +110,40 @@ public class ProductionGraphValidationTest {
   }
 
   @Test public void provisionDependsOnProduction() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestClass",
-        "package test;",
-        "",
-        "import com.google.common.util.concurrent.ListenableFuture;",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import dagger.producers.ProducerModule;",
-        "import dagger.producers.Produces;",
-        "import dagger.producers.ProductionComponent;",
-        "",
-        "final class TestClass {",
-        "  interface A {}",
-        "  interface B {}",
-        "",
-        "  @Module",
-        "  final class AModule {",
-        "    @Provides A a(B b) {",
-        "      return null;",
-        "    }",
-        "  }",
-        "",
-        "  @ProducerModule",
-        "  final class BModule {",
-        "    @Produces ListenableFuture<B> b() {",
-        "      return null;",
-        "    }",
-        "  }",
-        "",
-        "  @ProductionComponent(modules = {ExecutorModule.class, AModule.class, BModule.class})",
-        "  interface AComponent {",
-        "    ListenableFuture<A> getA();",
-        "  }",
-        "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestClass",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.Provides;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "final class TestClass {",
+            "  interface A {}",
+            "  interface B {}",
+            "",
+            "  @ProducerModule(includes = BModule.class)",
+            "  final class AModule {",
+            "    @Provides A a(B b) {",
+            "      return null;",
+            "    }",
+            "  }",
+            "",
+            "  @ProducerModule",
+            "  final class BModule {",
+            "    @Produces ListenableFuture<B> b() {",
+            "      return null;",
+            "    }",
+            "  }",
+            "",
+            "  @ProductionComponent(modules = {ExecutorModule.class, AModule.class})",
+            "  interface AComponent {",
+            "    ListenableFuture<A> getA();",
+            "  }",
+            "}");
 
     Compilation compilation = daggerCompiler().compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
@@ -150,6 +151,16 @@ public class ProductionGraphValidationTest {
         .hadErrorContaining("test.TestClass.A is a provision, which cannot depend on a production.")
         .inFile(component)
         .onLineContaining("interface AComponent");
+
+    compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(EXECUTOR_MODULE, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("test.TestClass.A is a provision, which cannot depend on a production.")
+        .inFile(component)
+        .onLineContaining("class AModule");
   }
 
   @Test public void provisionEntryPointDependsOnProduction() {

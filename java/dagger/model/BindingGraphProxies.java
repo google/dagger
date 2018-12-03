@@ -28,8 +28,9 @@ import dagger.model.BindingGraph.Node;
  */
 public final class BindingGraphProxies {
   /** Creates a new {@link BindingGraph}. */
-  public static BindingGraph bindingGraph(Network<Node, Edge> network) {
-    return BindingGraph.create(network);
+  public static BindingGraph bindingGraph(
+      Network<Node, Edge> network, boolean isModuleBindingGraph) {
+    return BindingGraph.create(network, isModuleBindingGraph);
   }
 
   /** Creates a new {@link MissingBinding}. */

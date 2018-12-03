@@ -52,6 +52,7 @@ import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.model.BindingGraph;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionSubcomponent;
@@ -111,6 +112,11 @@ final class ModuleValidator {
   private final DaggerElements elements;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
+  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final BindingGraphFactory bindingGraphFactory;
+  private final BindingGraphConverter bindingGraphConverter;
+  private final BindingGraphPlugins moduleValidationPlugins;
+  private final CompilerOptions compilerOptions;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
 
@@ -119,11 +125,21 @@ final class ModuleValidator {
       Types types,
       DaggerElements elements,
       AnyBindingMethodValidator anyBindingMethodValidator,
-      MethodSignatureFormatter methodSignatureFormatter) {
+      MethodSignatureFormatter methodSignatureFormatter,
+      ComponentDescriptor.Factory componentDescriptorFactory,
+      BindingGraphFactory bindingGraphFactory,
+      BindingGraphConverter bindingGraphConverter,
+      @ModuleValidation BindingGraphPlugins moduleValidationPlugins,
+      CompilerOptions compilerOptions) {
     this.types = types;
     this.elements = elements;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
+    this.componentDescriptorFactory = componentDescriptorFactory;
+    this.bindingGraphFactory = bindingGraphFactory;
+    this.bindingGraphConverter = bindingGraphConverter;
+    this.moduleValidationPlugins = moduleValidationPlugins;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -217,6 +233,11 @@ final class ModuleValidator {
     validateReferencedSubcomponents(module, moduleKind, builder);
     validateNoScopeAnnotationsOnModuleElement(module, moduleKind, builder);
     validateSelfCycles(module, builder);
+
+    if (builder.build().isClean()
+        && !compilerOptions.moduleBindingValidationType().equals(ValidationType.NONE)) {
+      validateModuleBindings(module, builder);
+    }
 
     return builder.build();
   }
@@ -568,6 +589,19 @@ final class ModuleValidator {
               }
             },
             null);
+  }
+
+  private void validateModuleBindings(
+      TypeElement module, ValidationReport.Builder<TypeElement> report) {
+    BindingGraph bindingGraph =
+        bindingGraphConverter.convert(
+            bindingGraphFactory.create(componentDescriptorFactory.forTypeElement(module)));
+    if (moduleValidationPlugins.pluginsReportErrors(bindingGraph)) {
+      // Since the plugins use a DiagnosticReporter to report errors, the ValdiationReport won't
+      // have any Items for them. We have to tell the ValidationReport that some errors were
+      // reported for the subject.
+      report.markDirty();
+    }
   }
 
   private static String formatListForErrorMessage(List<?> things) {

@@ -54,6 +54,9 @@ final class MissingBindingValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
+    if (graph.isModuleBindingGraph()) {
+      return; // Don't report missing bindings when validating a module.
+    }
     graph
         .missingBindings()
         .forEach(missingBinding -> reportMissingBinding(missingBinding, graph, diagnosticReporter));

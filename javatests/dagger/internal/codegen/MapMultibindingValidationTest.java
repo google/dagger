@@ -70,6 +70,19 @@ public class MapMultibindingValidationTest {
     assertThat(compilation).hadErrorContaining("provideObjectForAKeyAgain()");
     assertThat(compilation).hadErrorCount(1);
 
+    compilation =
+        daggerCompiler().withOptions("-Adagger.moduleBindingValidation=ERROR").compile(module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "The same map key is bound more than once for "
+                + "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>")
+        .inFile(module)
+        .onLineContaining("class MapModule");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKeyAgain()");
+    assertThat(compilation).hadErrorCount(1);
+
     // If there's Map<K, V> and Map<K, Provider<V>>, report only Map<K, V>.
     compilation =
         daggerCompiler()
@@ -194,6 +207,21 @@ public class MapMultibindingValidationTest {
         .hadErrorContaining(
             "java.util.Map<java.lang.String,java.lang.Object>"
                 + " uses more than one @MapKey annotation type");
+    assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
+    assertThat(compilation).hadErrorContaining("provideObjectForBKey()");
+    assertThat(compilation).hadErrorCount(1);
+
+    compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(module, stringKeyTwoFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.util.Map<java.lang.String,javax.inject.Provider<java.lang.Object>>"
+                + " uses more than one @MapKey annotation type")
+        .inFile(module)
+        .onLineContaining("class MapModule");
     assertThat(compilation).hadErrorContaining("provideObjectForAKey()");
     assertThat(compilation).hadErrorContaining("provideObjectForBKey()");
     assertThat(compilation).hadErrorCount(1);

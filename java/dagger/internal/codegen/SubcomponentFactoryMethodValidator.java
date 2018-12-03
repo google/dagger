@@ -61,6 +61,10 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
+    if (bindingGraph.isModuleBindingGraph()) {
+      // We don't know all the modules that might be owned by the child until we know the root.
+      return;
+    }
     bindingGraph.network().edges().stream()
         .flatMap(instancesOf(ChildFactoryMethodEdge.class))
         .forEach(

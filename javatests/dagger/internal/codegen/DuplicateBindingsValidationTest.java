@@ -17,20 +17,36 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.message;
+import static org.junit.Assume.assumeFalse;
 
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class DuplicateBindingsValidationTest {
+
+  @Parameters(name = "moduleBindingValidation={0}")
+  public static ImmutableList<Object[]> parameters() {
+    return ImmutableList.copyOf(new Object[][] {{false}, {true}});
+  }
+
+  private final boolean moduleBindingValidation;
+
+  public DuplicateBindingsValidationTest(boolean moduleBindingValidation) {
+    this.moduleBindingValidation = moduleBindingValidation;
+  }
+
   @Test public void duplicateExplicitBindings_ProvidesAndComponentProvision() {
+    assumeFalse(moduleBindingValidation);
+
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
         "",
@@ -65,7 +81,8 @@ public class DuplicateBindingsValidationTest {
         "  }",
         "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -106,6 +123,9 @@ public class DuplicateBindingsValidationTest {
             "    @Provides A provideA2(String s) { return new A() {}; }",
             "  }",
             "",
+            "  @Module(includes = { Module1.class, Module2.class})",
+            "  abstract static class Module3 {}",
+            "",
             "  @Component(modules = { Module1.class, Module2.class})",
             "  interface TestComponent {",
             "    A getA();",
@@ -113,7 +133,8 @@ public class DuplicateBindingsValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -123,8 +144,20 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
+
+    if (moduleBindingValidation) {
+      assertThat(compilation)
+          .hadErrorContaining(
+              message(
+                  "test.Outer.A is bound multiple times:",
+                  "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
+                  "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
+          .inFile(component)
+          .onLineContaining("class Module3");
+    }
+
     // The duplicate bindngs are also requested from B, but we don't want to report them again.
-    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation).hadErrorCount(moduleBindingValidation ? 2 : 1);
   }
 
   @Test
@@ -157,13 +190,17 @@ public class DuplicateBindingsValidationTest {
             "    @Binds abstract A bindA2(B b);",
             "  }",
             "",
+            "  @Module(includes = { Module1.class, Module2.class})",
+            "  abstract static class Module3 {}",
+            "",
             "  @Component(modules = { Module1.class, Module2.class})",
             "  interface TestComponent {",
             "    A getA();",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -173,6 +210,17 @@ public class DuplicateBindingsValidationTest {
                 "    @Binds test.Outer.A test.Outer.Module2.bindA2(test.Outer.B)"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
+
+    if (moduleBindingValidation) {
+      assertThat(compilation)
+          .hadErrorContaining(
+              message(
+                  "test.Outer.A is bound multiple times:",
+                  "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
+                  "    @Binds test.Outer.A test.Outer.Module2.bindA2(test.Outer.B)"))
+          .inFile(component)
+          .onLineContaining("class Module3");
+    }
   }
 
   @Test
@@ -210,13 +258,17 @@ public class DuplicateBindingsValidationTest {
             "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
             "  }",
             "",
+            "  @Module(includes = { TestModule1.class, TestModule2.class})",
+            "  abstract static class TestModule3 {}",
+            "",
             "  @Component(modules = { TestModule1.class, TestModule2.class })",
             "  interface TestComponent {",
             "    Set<String> getStringSet();",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -231,7 +283,8 @@ public class DuplicateBindingsValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
-        .onLineContaining("interface TestComponent");
+        .onLineContaining(
+            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -274,13 +327,17 @@ public class DuplicateBindingsValidationTest {
             "    }",
             "  }",
             "",
+            "  @Module(includes = { TestModule1.class, TestModule2.class})",
+            "  abstract static class TestModule3 {}",
+            "",
             "  @Component(modules = { TestModule1.class, TestModule2.class })",
             "  interface TestComponent {",
             "    Map<String, String> getStringMap();",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -298,7 +355,8 @@ public class DuplicateBindingsValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
         .inFile(component)
-        .onLineContaining("interface TestComponent");
+        .onLineContaining(
+            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -326,13 +384,17 @@ public class DuplicateBindingsValidationTest {
             "    @Provides Set<String> stringSet() { return new HashSet<String>(); }",
             "  }",
             "",
+            "  @Module(includes = { TestModule1.class, TestModule2.class})",
+            "  abstract static class TestModule3 {}",
+            "",
             "  @Component(modules = { TestModule1.class, TestModule2.class })",
             "  interface TestComponent {",
             "    Set<String> getStringSet();",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -344,7 +406,8 @@ public class DuplicateBindingsValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
-        .onLineContaining("interface TestComponent");
+        .onLineContaining(
+            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -374,13 +437,17 @@ public class DuplicateBindingsValidationTest {
             "    }",
             "  }",
             "",
+            "  @Module(includes = { TestModule1.class, TestModule2.class})",
+            "  abstract static class TestModule3 {}",
+            "",
             "  @Component(modules = { TestModule1.class, TestModule2.class })",
             "  interface TestComponent {",
             "    Map<String, String> getStringMap();",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -393,7 +460,8 @@ public class DuplicateBindingsValidationTest {
                 "    Unique bindings and declarations:",
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
         .inFile(component)
-        .onLineContaining("interface TestComponent");
+        .onLineContaining(
+            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test public void duplicateBindings_TruncateAfterLimit() {
@@ -470,6 +538,22 @@ public class DuplicateBindingsValidationTest {
             "    @Provides A provideA() { return new A() {}; }",
             "  }",
             "",
+            "  @Module(includes = {",
+            "    Module01.class,",
+            "    Module02.class,",
+            "    Module03.class,",
+            "    Module04.class,",
+            "    Module05.class,",
+            "    Module06.class,",
+            "    Module07.class,",
+            "    Module08.class,",
+            "    Module09.class,",
+            "    Module10.class,",
+            "    Module11.class,",
+            "    Module12.class",
+            "  })",
+            "  abstract static class Modules {}",
+            "",
             "  @Component(modules = {",
             "    Module01.class,",
             "    Module02.class,",
@@ -489,7 +573,8 @@ public class DuplicateBindingsValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
+    Compilation compilation =
+        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -507,7 +592,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module10.provideA()",
                 "    and 2 others"))
         .inFile(component)
-        .onLineContaining("interface TestComponent");
+        .onLineContaining(moduleBindingValidation ? "class Modules" : "interface TestComponent");
   }
 
   @Test
@@ -525,9 +610,9 @@ public class DuplicateBindingsValidationTest {
             "interface A {",
             "  Object conflict();",
             "",
-            "  B b();",
+            "  B.Builder b();",
             "",
-            "  @Module",
+            "  @Module(subcomponents = B.class)",
             "  static class AModule {",
             "    @Provides static Object abConflict() {",
             "      return \"a\";",
@@ -547,6 +632,11 @@ public class DuplicateBindingsValidationTest {
             "interface B {",
             "  Object conflict();",
             "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    B build();",
+            "  }",
+            "",
             "  @Module",
             "  static class BModule {",
             "    @Provides static Object abConflict() {",
@@ -555,7 +645,10 @@ public class DuplicateBindingsValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(aComponent, bComponent);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(moduleBindingValidationOption())
+            .compile(aComponent, bComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -564,7 +657,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides Object test.A.AModule.abConflict()",
                 "    @Provides Object test.B.BModule.abConflict()"))
         .inFile(aComponent)
-        .onLineContaining("interface A {");
+        .onLineContaining(moduleBindingValidation ? "class AModule" : "interface A {");
   }
 
   @Test
@@ -582,9 +675,9 @@ public class DuplicateBindingsValidationTest {
             "interface A {",
             "  Object conflict();",
             "",
-            "  B b();",
+            "  B.Builder b();",
             "",
-            "  @Module",
+            "  @Module(subcomponents = B.class)",
             "  static class AModule {",
             "    @Provides static Object acConflict() {",
             "      return \"a\";",
@@ -600,7 +693,12 @@ public class DuplicateBindingsValidationTest {
             "",
             "@Subcomponent",
             "interface B {",
-            "  C c();",
+            "  C.Builder c();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    B build();",
+            "  }",
             "}");
     JavaFileObject cComponent =
         JavaFileObjects.forSourceLines(
@@ -615,6 +713,11 @@ public class DuplicateBindingsValidationTest {
             "interface C {",
             "  Object conflict();",
             "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    C build();",
+            "  }",
+            "",
             "  @Module",
             "  static class CModule {",
             "    @Provides static Object acConflict() {",
@@ -623,7 +726,10 @@ public class DuplicateBindingsValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(aComponent, bComponent, cComponent);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(moduleBindingValidationOption())
+            .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -632,7 +738,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides Object test.A.AModule.acConflict()",
                 "    @Provides Object test.C.CModule.acConflict()"))
         .inFile(aComponent)
-        .onLineContaining("interface A {");
+        .onLineContaining(moduleBindingValidation ? "class AModule" : "interface A {");
   }
 
   @Test
@@ -661,9 +767,9 @@ public class DuplicateBindingsValidationTest {
             "interface B {",
             "  Object conflict();",
             "",
-            "  C c();",
+            "  C.Builder c();",
             "",
-            "  @Module",
+            "  @Module(subcomponents = C.class)",
             "  static class BModule {",
             "    @Provides static Object bcConflict() {",
             "      return \"b\";",
@@ -683,6 +789,11 @@ public class DuplicateBindingsValidationTest {
             "interface C {",
             "  Object conflict();",
             "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    C build();",
+            "  }",
+            "",
             "  @Module",
             "  static class CModule {",
             "    @Provides static Object bcConflict() {",
@@ -691,7 +802,10 @@ public class DuplicateBindingsValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(aComponent, bComponent, cComponent);
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(moduleBindingValidationOption())
+            .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -699,8 +813,8 @@ public class DuplicateBindingsValidationTest {
                 "java.lang.Object is bound multiple times:",
                 "    @Provides Object test.B.BModule.bcConflict()",
                 "    @Provides Object test.C.CModule.bcConflict()"))
-        .inFile(aComponent)
-        .onLineContaining("interface A {");
+        .inFile(moduleBindingValidation ? bComponent : aComponent)
+        .onLineContaining(moduleBindingValidation ? "class BModule" : "interface A {");
   }
 
   @Test
@@ -717,9 +831,9 @@ public class DuplicateBindingsValidationTest {
             "",
             "@Component(modules = ParentConflictsWithChild.ParentModule.class)",
             "interface ParentConflictsWithChild {",
-            "  Child child();",
+            "  Child.Builder child();",
             "",
-            "  @Module",
+            "  @Module(subcomponents = Child.class)",
             "  static class ParentModule {",
             "    @Provides @Nullable static Object nullableParentChildConflict() {",
             "      return \"parent\";",
@@ -739,6 +853,11 @@ public class DuplicateBindingsValidationTest {
             "interface Child {",
             "  Object parentChildConflictThatViolatesNullability();",
             "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    Child build();",
+            "  }",
+            "",
             "  @Module",
             "  static class ChildModule {",
             "    @Provides static Object nonNullableParentChildConflict() {",
@@ -748,9 +867,8 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        javac()
-            .withOptions("-Adagger.nullableValidation=WARNING")
-            .withProcessors(new ComponentProcessor())
+        daggerCompiler()
+            .withOptions("-Adagger.nullableValidation=WARNING", moduleBindingValidationOption())
             .compile(parentConflictsWithChild, child);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -761,7 +879,12 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides @javax.annotation.Nullable Object"
                     + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
         .inFile(parentConflictsWithChild)
-        .onLine(9);
+        .onLineContaining(
+            moduleBindingValidation ? "class ParentModule" : "interface ParentConflictsWithChild");
+  }
+
+  private String moduleBindingValidationOption() {
+    return "-Adagger.moduleBindingValidation=" + (moduleBindingValidation ? "ERROR" : "NONE");
   }
 
   @Test

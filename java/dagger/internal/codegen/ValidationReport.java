@@ -67,8 +67,20 @@ abstract class ValidationReport<T extends Element> {
     return ImmutableSet.copyOf(SUBREPORTS.depthFirstPreOrder(this));
   }
 
-  /** Returns {@code true} if there are no errors in this report or any subreports. */
+  /**
+   * {@code true} if {@link #isClean()} should return {@code false} even if there are no error items
+   * in this report.
+   */
+  abstract boolean markedDirty();
+
+  /**
+   * Returns {@code true} if there are no errors in this report or any subreports and {@link
+   * #markedDirty()} is {@code false}.
+   */
   boolean isClean() {
+    if (markedDirty()) {
+      return false;
+    }
     for (Item item : items()) {
       switch (item.kind()) {
         case ERROR:
@@ -150,6 +162,7 @@ abstract class ValidationReport<T extends Element> {
     private final T subject;
     private final ImmutableSet.Builder<Item> items = ImmutableSet.builder();
     private final ImmutableSet.Builder<ValidationReport<?>> subreports = ImmutableSet.builder();
+    private boolean markedDirty;
 
     private Builder(T subject) {
       this.subject = subject;
@@ -253,6 +266,14 @@ abstract class ValidationReport<T extends Element> {
       return this;
     }
 
+    /**
+     * If called, then {@link #isClean()} will return {@code false} even if there are no error items
+     * in the report.
+     */
+    void markDirty() {
+      this.markedDirty = true;
+    }
+
     Builder<T> addSubreport(ValidationReport<?> subreport) {
       subreports.add(subreport);
       return this;
@@ -260,7 +281,8 @@ abstract class ValidationReport<T extends Element> {
 
     @CheckReturnValue
     ValidationReport<T> build() {
-      return new AutoValue_ValidationReport<>(subject, items.build(), subreports.build());
+      return new AutoValue_ValidationReport<>(
+          subject, items.build(), subreports.build(), markedDirty);
     }
   }
 }

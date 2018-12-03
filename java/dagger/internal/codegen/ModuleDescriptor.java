@@ -22,6 +22,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
@@ -37,20 +38,24 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.graph.Traverser;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.Provides;
+import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -79,6 +84,19 @@ abstract class ModuleDescriptor {
   abstract ImmutableSet<OptionalBindingDeclaration> optionalDeclarations();
 
   abstract Kind kind();
+
+  /** Returns the keys of all bindings declared by this module. */
+  ImmutableSet<Key> allBindingKeys() {
+    return Stream.of(
+            bindings(),
+            delegateDeclarations(),
+            multibindingDeclarations(),
+            optionalDeclarations(),
+            subcomponentDeclarations())
+        .flatMap(Collection::stream)
+        .map(BindingDeclaration::key)
+        .collect(toImmutableSet());
+  }
 
   enum Kind {
     MODULE(Module.class, Provides.class),
@@ -198,6 +216,14 @@ abstract class ModuleDescriptor {
           delegates.build(),
           optionalDeclarations.build(),
           Kind.forAnnotatedElement(moduleElement).get());
+    }
+
+    /** Returns all the modules transitively included by given modules, including the arguments. */
+    ImmutableSet<ModuleDescriptor> transitiveModules(Iterable<TypeElement> modules) {
+      return ImmutableSet.copyOf(
+          Traverser.forGraph(
+                  (ModuleDescriptor module) -> transform(module.includedModules(), this::create))
+              .depthFirstPreOrder(transform(modules, this::create)));
     }
 
     @CanIgnoreReturnValue

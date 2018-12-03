@@ -51,7 +51,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
-import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.internal.codegen.ErrorMessages.SubcomponentBuilderMessages;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -126,8 +125,7 @@ final class ComponentValidator {
       Set<? extends Element> validatedSubcomponentBuilders) {
     ValidationReport.Builder<TypeElement> report = ValidationReport.about(subject);
 
-    ComponentDescriptor.Kind componentKind =
-        ComponentDescriptor.Kind.forAnnotatedElement(subject).get();
+    ComponentKind componentKind = ComponentKind.forAnnotatedElement(subject).get();
 
     if (isAnnotationPresent(subject, CancellationPolicy.class) && !componentKind.isProducer()) {
       report.addError(
@@ -140,14 +138,14 @@ final class ComponentValidator {
       report.addError(
           String.format(
               "@%s may only be applied to an interface or abstract class",
-              componentKind.annotationType().getSimpleName()),
+              componentKind.annotation().getSimpleName()),
           subject);
     }
 
     ImmutableList<DeclaredType> builders =
         componentKind
-            .builderAnnotationType()
-            .map(builderAnnotationType -> enclosedBuilders(subject, builderAnnotationType))
+            .builderAnnotation()
+            .map(builderAnnotation -> enclosedBuilders(subject, builderAnnotation))
             .orElse(ImmutableList.of());
     if (builders.size() > 1) {
       report.addError(
@@ -184,23 +182,21 @@ final class ComponentValidator {
               Optional<AnnotationMirror> subcomponentAnnotation =
                   checkForAnnotations(
                       returnType,
-                      componentKind.subcomponentKinds().stream()
-                          .map(Kind::annotationType)
+                      componentKind.legalSubcomponentKinds().stream()
+                          .map(ComponentKind::annotation)
                           .collect(toImmutableSet()));
               Optional<AnnotationMirror> subcomponentBuilderAnnotation =
                   checkForAnnotations(
                       returnType,
-                      componentKind.subcomponentKinds().stream()
-                          .map(kind -> kind.builderAnnotationType())
+                      componentKind.legalSubcomponentKinds().stream()
+                          .map(ComponentKind::builderAnnotation)
                           .flatMap(presentValues())
                           .collect(toImmutableSet()));
               if (subcomponentAnnotation.isPresent()) {
                 referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
                 validateSubcomponentMethod(
                     report,
-                    ComponentDescriptor.Kind.forAnnotatedElement(
-                            MoreTypes.asTypeElement(returnType))
-                        .get(),
+                    ComponentKind.forAnnotatedElement(MoreTypes.asTypeElement(returnType)).get(),
                     method,
                     parameters,
                     parameterTypes,
@@ -256,13 +252,13 @@ final class ComponentValidator {
                     subject));
 
     AnnotationMirror componentMirror =
-        getAnnotationMirror(subject, componentKind.annotationType()).get();
+        getAnnotationMirror(subject, componentKind.annotation()).get();
     if (componentKind.isTopLevel()) {
       validateComponentDependencies(report, getComponentDependencies(componentMirror));
     }
     report.addSubreport(
         moduleValidator.validateReferencedModules(
-            subject, componentMirror, componentKind.moduleKinds(), new HashSet<>()));
+            subject, componentMirror, componentKind.legalModuleKinds(), new HashSet<>()));
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.
@@ -324,7 +320,7 @@ final class ComponentValidator {
   private DependencyRequest dependencyRequest(ExecutableElement method, TypeElement component) {
     ExecutableType methodType =
         asExecutable(types.asMemberOf(asDeclared(component.asType()), method));
-    return ComponentDescriptor.Kind.forAnnotatedElement(component).get().isProducer()
+    return ComponentKind.forAnnotatedElement(component).get().isProducer()
         ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
         : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
   }
@@ -367,7 +363,7 @@ final class ComponentValidator {
 
   private void validateSubcomponentMethod(
       final ValidationReport.Builder<TypeElement> report,
-      final ComponentDescriptor.Kind subcomponentKind,
+      final ComponentKind subcomponentKind,
       ExecutableElement method,
       List<? extends VariableElement> parameters,
       List<? extends TypeMirror> parameterTypes,
@@ -398,8 +394,8 @@ final class ComponentValidator {
 
                 @Override
                 public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
-                  for (ModuleDescriptor.Kind moduleKind : subcomponentKind.moduleKinds()) {
-                    if (isAnnotationPresent(t.asElement(), moduleKind.moduleAnnotation())) {
+                  for (ModuleKind moduleKind : subcomponentKind.legalModuleKinds()) {
+                    if (isAnnotationPresent(t.asElement(), moduleKind.annotation())) {
                       return Optional.of(MoreTypes.asTypeElement(t));
                     }
                   }

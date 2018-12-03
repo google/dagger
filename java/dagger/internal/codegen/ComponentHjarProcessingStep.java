@@ -22,6 +22,8 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
+import static dagger.internal.codegen.ComponentKind.annotationsFor;
+import static dagger.internal.codegen.ComponentKind.topLevelComponentKinds;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -39,10 +41,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
-import dagger.Component;
 import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
-import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
@@ -101,7 +101,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return ImmutableSet.of(Component.class, ProductionComponent.class);
+    return annotationsFor(topLevelComponentKinds());
   }
 
   @Override

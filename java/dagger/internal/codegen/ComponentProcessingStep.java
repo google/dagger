@@ -16,6 +16,13 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.ComponentKind.allComponentAndBuilderAnnotations;
+import static dagger.internal.codegen.ComponentKind.annotationsFor;
+import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
+import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
+import static dagger.internal.codegen.ComponentKind.topLevelComponentKinds;
+import static java.util.Collections.disjoint;
+
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicates;
@@ -23,11 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
-import dagger.Component;
-import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
-import dagger.producers.ProductionComponent;
-import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
@@ -88,33 +91,24 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return ImmutableSet.of(
-        Component.class,
-        Component.Builder.class,
-        ProductionComponent.class,
-        ProductionComponent.Builder.class,
-        Subcomponent.class,
-        Subcomponent.Builder.class,
-        ProductionSubcomponent.class,
-        ProductionSubcomponent.Builder.class);
+    return allComponentAndBuilderAnnotations();
   }
 
   @Override
   public ImmutableSet<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     subcomponentElements =
-        getElementsFromAnnotations(
-            elementsByAnnotation, Subcomponent.class, ProductionSubcomponent.class);
+        getElementsFromAnnotations(elementsByAnnotation, annotationsFor(subcomponentKinds()));
     subcomponentBuilderElements =
         getElementsFromAnnotations(
-            elementsByAnnotation, Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+            elementsByAnnotation, builderAnnotationsFor(subcomponentKinds()));
 
     ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
 
     builderReportsByComponent =
         processBuilders(
             getElementsFromAnnotations(
-                elementsByAnnotation, Component.Builder.class, ProductionComponent.Builder.class),
+                elementsByAnnotation, builderAnnotationsFor(topLevelComponentKinds())),
             rejectedElements);
     builderReportsBySubcomponent = processBuilders(subcomponentBuilderElements, rejectedElements);
     reportsBySubcomponent =
@@ -126,7 +120,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   @Override
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
-    if (annotations.contains(Component.class) || annotations.contains(ProductionComponent.class)) {
+    if (!disjoint(annotations, annotationsFor(topLevelComponentKinds()))) {
       ComponentValidationReport validationReport =
           componentValidator.validate(element, subcomponentElements, subcomponentBuilderElements);
       validationReport.report().printMessagesTo(messager);
@@ -146,8 +140,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       }
     }
     if (compilerOptions.aheadOfTimeSubcomponents()
-        && (annotations.contains(Subcomponent.class)
-            || annotations.contains(ProductionSubcomponent.class))) {
+        && !disjoint(annotations, annotationsFor(subcomponentKinds()))) {
       if (!subcomponentIsClean(element)) {
         return;
       }
@@ -170,10 +163,9 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   static ImmutableSet<Element> getElementsFromAnnotations(
       final SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation,
-      Class<? extends Annotation>... annotations) {
+      Set<Class<? extends Annotation>> annotations) {
     return ImmutableSet.copyOf(
-        Multimaps.filterKeys(elementsByAnnotation, Predicates.in(ImmutableSet.copyOf(annotations)))
-            .values());
+        Multimaps.filterKeys(elementsByAnnotation, Predicates.in(annotations)).values());
   }
 
   private ImmutableMap<Element, ValidationReport<TypeElement>> processBuilders(

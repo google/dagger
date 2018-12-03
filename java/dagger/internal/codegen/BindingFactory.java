@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.Binding.hasNonDefaultTypeParameters;
-import static dagger.internal.codegen.ComponentDescriptor.Kind.PRODUCTION_COMPONENT;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.ContributionBinding.bindingKindForMultibindingKey;
@@ -300,7 +299,7 @@ final class BindingFactory {
     checkArgument(dependencyMethod.getKind().equals(METHOD));
     checkArgument(dependencyMethod.getParameters().isEmpty());
     ContributionBinding.Builder<?, ?> builder;
-    if (componentDescriptor.kind().equals(PRODUCTION_COMPONENT)
+    if (componentDescriptor.kind().isProducer()
         && isComponentProductionMethod(elements, dependencyMethod)) {
       builder =
           ProductionBinding.builder()

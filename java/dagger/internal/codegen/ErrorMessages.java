@@ -27,7 +27,7 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ErrorMessages {
 
-  static ComponentBuilderMessages builderMsgsFor(ComponentDescriptor.Kind kind) {
+  static ComponentBuilderMessages builderMsgsFor(ComponentKind kind) {
     switch(kind) {
       case COMPONENT:
         return ComponentBuilderMessages.INSTANCE;

@@ -102,12 +102,12 @@ final class ConfigurationAnnotations {
    */
   static ImmutableList<AnnotationValue> getModules(
       TypeElement annotatedType, AnnotationMirror annotation) {
-    if (ComponentDescriptor.Kind.forAnnotatedElement(annotatedType)
+    if (ComponentKind.forAnnotatedElement(annotatedType)
         .filter(kind -> !kind.isForModuleValidation())
         .isPresent()) {
       return asAnnotationValues(getAnnotationValue(annotation, MODULES_ATTRIBUTE));
     }
-    if (ModuleDescriptor.Kind.forAnnotatedElement(annotatedType).isPresent()) {
+    if (ModuleKind.forAnnotatedElement(annotatedType).isPresent()) {
       return asAnnotationValues(getAnnotationValue(annotation, INCLUDES_ATTRIBUTE));
     }
     throw new IllegalArgumentException(String.format("unsupported annotation: %s", annotation));

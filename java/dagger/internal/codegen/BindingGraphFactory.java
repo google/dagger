@@ -47,7 +47,6 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.Kind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -224,17 +223,22 @@ final class BindingGraphFactory {
    */
   private ImmutableSet<ModuleDescriptor> modules(
       ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
-    if (componentDescriptor.kind().equals(Kind.PRODUCTION_COMPONENT)
-        || (componentDescriptor.kind().equals(Kind.PRODUCTION_SUBCOMPONENT)
-            && parentResolver.isPresent()
-            && !parentResolver.get().componentDescriptor.kind().isProducer())) {
-      ImmutableSet.Builder<ModuleDescriptor> modules = new ImmutableSet.Builder<>();
-      modules.addAll(componentDescriptor.modules());
-      modules.add(descriptorForMonitoringModule(componentDescriptor.typeElement()));
-      modules.add(descriptorForProductionExecutorModule());
-      return modules.build();
-    }
-    return componentDescriptor.modules();
+    return shouldIncludeImplicitProductionModules(componentDescriptor, parentResolver)
+        ? new ImmutableSet.Builder<ModuleDescriptor>()
+            .addAll(componentDescriptor.modules())
+            .add(descriptorForMonitoringModule(componentDescriptor.typeElement()))
+            .add(descriptorForProductionExecutorModule())
+            .build()
+        : componentDescriptor.modules();
+  }
+
+  private boolean shouldIncludeImplicitProductionModules(
+      ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
+    ComponentKind kind = componentDescriptor.kind();
+    return kind.isProducer()
+        && ((kind.isTopLevel() && !kind.isForModuleValidation())
+            || (parentResolver.isPresent()
+                && !parentResolver.get().componentDescriptor.kind().isProducer()));
   }
 
   /**

@@ -30,7 +30,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsInstance;
 import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -62,16 +61,13 @@ class BuilderValidator {
   public ValidationReport<TypeElement> validate(TypeElement subject) {
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(subject);
 
-    ComponentDescriptor.Kind componentKind =
-        ComponentDescriptor.Kind.forAnnotatedBuilderElement(subject).get();
+    ComponentKind componentKind = ComponentKind.forAnnotatedBuilderElement(subject).get();
 
     Element componentElement = subject.getEnclosingElement();
     ErrorMessages.ComponentBuilderMessages msgs = ErrorMessages.builderMsgsFor(componentKind);
-    Class<? extends Annotation> componentAnnotation = componentKind.annotationType();
-    Class<? extends Annotation> builderAnnotation = componentKind.builderAnnotationType().get();
-    checkArgument(subject.getAnnotation(builderAnnotation) != null);
+    checkArgument(isAnnotationPresent(subject, componentKind.builderAnnotation().get()));
 
-    if (!isAnnotationPresent(componentElement, componentAnnotation)) {
+    if (!isAnnotationPresent(componentElement, componentKind.annotation())) {
       builder.addError(msgs.mustBeInComponent(), subject);
     }
 

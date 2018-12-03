@@ -22,6 +22,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotati
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
+import static java.util.Arrays.stream;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreElements;
@@ -29,7 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.BindsInstance;
 import java.lang.annotation.Annotation;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -44,14 +44,13 @@ import javax.lang.model.element.VariableElement;
 final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<ExecutableElement> {
 
   private static final ImmutableSet<Class<? extends Annotation>> COMPONENT_ANNOTATIONS =
-      Stream.of(ComponentDescriptor.Kind.values())
+      stream(ComponentKind.values())
           .filter(kind -> !kind.isForModuleValidation())
-          .map(ComponentDescriptor.Kind::annotationType)
+          .map(ComponentKind::annotation)
           .collect(toImmutableSet());
+
   private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
-      Stream.of(ModuleDescriptor.Kind.values())
-          .map(ModuleDescriptor.Kind::moduleAnnotation)
-          .collect(toImmutableSet());
+      stream(ModuleKind.values()).map(ModuleKind::annotation).collect(toImmutableSet());
 
   private final Messager messager;
 

@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Sets.immutableEnumSet;
@@ -476,6 +477,22 @@ abstract class ComponentDescriptor {
         DependencyRequest dependencyRequestForBuilder,
         ExecutableElement methodElement) {
       return create(kind, Optional.of(dependencyRequestForBuilder), methodElement);
+    }
+
+    /**
+     * Returns the return type of {@link #methodElement()} as resolved in the {@link
+     * ComponentDescriptor#typeElement() component type}. If there are no type variables in the
+     * return type, this is the equivalent of {@code methodElement().getReturnType()}.
+     */
+    TypeMirror resolvedReturnType(DaggerTypes types) {
+      checkState(dependencyRequest().isPresent());
+
+      TypeMirror returnType = methodElement().getReturnType();
+      if (returnType.getKind().isPrimitive() || returnType.getKind().equals(VOID)) {
+        return returnType;
+      }
+      return BindingRequest.bindingRequest(dependencyRequest().get())
+          .requestedType(dependencyRequest().get().key().type(), types);
     }
   }
 

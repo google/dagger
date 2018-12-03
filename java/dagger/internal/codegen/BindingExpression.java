@@ -73,8 +73,6 @@ abstract class BindingExpression {
       ComponentImplementation component,
       DaggerTypes types) {
     Expression dependencyExpression = getDependencyExpression(component.name());
-    BindingRequest request = modifiableBindingMethod.request();
-    TypeMirror requestedType = request.requestedType(request.key().type(), types);
 
     // It's possible to have a case where a modifiable component method delegates to another
     // binding method from an enclosing class that is not itself a component method. In that case,
@@ -100,12 +98,10 @@ abstract class BindingExpression {
     //
     // This isn't necessary for getComponentMethodImplementation() because that's only used for
     // non-modifiable bindings
-    if (!types.isAssignable(dependencyExpression.type(), requestedType)
-        // TODO(ronshapiro): perhaps instead of needing to compute the requested type and then check
-        // for assignablility, ModifiableBindingMethod should have a TypeMirror property for the
-        // return type
-        && isTypeAccessibleFrom(requestedType, component.name().packageName())) {
-      dependencyExpression = dependencyExpression.castTo(requestedType);
+    TypeMirror returnType = modifiableBindingMethod.returnType();
+    if (!types.isAssignable(dependencyExpression.type(), returnType)
+       && isTypeAccessibleFrom(returnType, component.name().packageName())) {
+      dependencyExpression = dependencyExpression.castTo(returnType);
     }
 
     return CodeBlock.of("return $L;", dependencyExpression.codeBlock());

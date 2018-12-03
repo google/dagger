@@ -72,6 +72,7 @@ final class ModifiableBindingExpressions {
       componentImplementation.registerModifiableBindingMethod(
           modifiableBindingType,
           request,
+          componentMethod.resolvedReturnType(types),
           method,
           newModifiableBindingWillBeFinalized(modifiableBindingType, request));
     }

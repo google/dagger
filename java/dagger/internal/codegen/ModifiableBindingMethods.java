@@ -20,7 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
+import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -28,6 +30,7 @@ import com.squareup.javapoet.MethodSpec;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A registry for those methods which each wrap a binding whose definition may be modified across
@@ -44,12 +47,17 @@ final class ModifiableBindingMethods {
 
   /** Register a method encapsulating a modifiable binding. */
   void addMethod(
-      ModifiableBindingType type, BindingRequest request, MethodSpec method, boolean finalized) {
+      ModifiableBindingType type,
+      BindingRequest request,
+      TypeMirror returnType,
+      MethodSpec method,
+      boolean finalized) {
     checkArgument(type.isModifiable());
     if (finalized) {
       finalizedMethods.add(request);
     }
-    methods.put(request, ModifiableBindingMethod.create(type, request, method, finalized));
+    methods.put(
+        request, ModifiableBindingMethod.create(type, request, returnType, method, finalized));
   }
 
   /** Returns all {@link ModifiableBindingMethod}s that have not been marked as finalized. */
@@ -88,22 +96,33 @@ final class ModifiableBindingMethods {
     private static ModifiableBindingMethod create(
         ModifiableBindingType type,
         BindingRequest request,
+        TypeMirror returnType,
         MethodSpec methodSpec,
         boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          type, request, methodSpec, finalized);
+          type, request, MoreTypes.equivalence().wrap(returnType), methodSpec, finalized);
     }
 
     /** Create a {@ModifiableBindingMethod} representing an implementation of an existing method. */
     static ModifiableBindingMethod implement(
         ModifiableBindingMethod unimplementedMethod, MethodSpec methodSpec, boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          unimplementedMethod.type(), unimplementedMethod.request(), methodSpec, finalized);
+          unimplementedMethod.type(),
+          unimplementedMethod.request(),
+          unimplementedMethod.returnTypeWrapper(),
+          methodSpec,
+          finalized);
     }
 
     abstract ModifiableBindingType type();
 
     abstract BindingRequest request();
+
+    final TypeMirror returnType() {
+      return returnTypeWrapper().get();
+    }
+
+    abstract Equivalence.Wrapper<TypeMirror> returnTypeWrapper();
 
     abstract MethodSpec methodSpec();
 

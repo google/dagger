@@ -379,9 +379,10 @@ final class ComponentImplementation {
   void addModifiableBindingMethod(
       ModifiableBindingType type,
       BindingRequest request,
+      TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, methodSpec, finalized);
+    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
@@ -393,9 +394,10 @@ final class ComponentImplementation {
   void registerModifiableBindingMethod(
       ModifiableBindingType type,
       BindingRequest request,
+      TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, methodSpec, finalized);
+    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */

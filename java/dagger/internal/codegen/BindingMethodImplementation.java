@@ -78,19 +78,10 @@ class BindingMethodImplementation {
       return binding.contributedPrimitiveType().get();
     }
 
-    TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
-
     if (matchingComponentMethod().isPresent()) {
       // Component methods are part of the user-defined API, and thus we must use the user-defined
-      // type. If the return type of the method is a primitive, use that since the key type is 
-      // always boxed. We still use the requestedType if the return type is not a primitive, as
-      // opposed to componentMethodReturnType, since that will have all type variables from
-      // component supertypes resolved.
-      TypeMirror componentMethodReturnType =
-          matchingComponentMethod().get().methodElement().getReturnType();
-      return componentMethodReturnType.getKind().isPrimitive()
-          ? componentMethodReturnType
-          : requestedType;
+      // type.
+      return matchingComponentMethod().get().resolvedReturnType(types);
     }
 
     // If the component is abstract, this method may be overridden by another implementation in a
@@ -98,6 +89,7 @@ class BindingMethodImplementation {
     // overridable, we use the publicly accessible type. If the type is final, we don't need to 
     // worry about this, and instead just need to check accessibility of the file we're about to
     // write
+    TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
     return component.isAbstract()
         ? types.publiclyAccessibleType(requestedType)
         : types.accessibleType(requestedType, component.name());

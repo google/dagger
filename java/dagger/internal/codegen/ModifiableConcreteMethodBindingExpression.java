@@ -72,6 +72,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
     componentImplementation.addModifiableBindingMethod(
         modifiableBindingType,
         request,
+        methodImplementation.returnType(),
         methodBuilder(methodName.get())
             .addModifiers(bindingCannotBeModified ? PRIVATE : PROTECTED)
             .returns(TypeName.get(methodImplementation.returnType()))

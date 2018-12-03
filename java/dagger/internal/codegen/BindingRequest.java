@@ -82,14 +82,6 @@ abstract class BindingRequest {
     return requestKind.equals(requestKind().orElse(null));
   }
 
-  /**
-   * Returns the {@link Accessibility#isTypePubliclyAccessible(TypeMirror)} publicly accessible
-   * type} of this request.
-   */
-  final TypeMirror publiclyAccessibleRequestType(DaggerTypes types) {
-    return types.publiclyAccessibleType(requestedType(key().type(), types));
-  }
-
   final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {
     if (requestKind().isPresent()) {
       return requestType(requestKind().get(), contributedType, types);

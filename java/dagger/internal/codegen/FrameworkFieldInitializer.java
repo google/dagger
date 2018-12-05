@@ -218,7 +218,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
                 superclassImplementation.getModifiableBindingMethod(
                     BindingRequest.bindingRequest(
                         resolvedBindings.key(),
-                        FrameworkType.forBindingType(resolvedBindings.bindingType()))))
+                        isProvider() ? FrameworkType.PROVIDER : FrameworkType.PRODUCER_NODE)))
         .isPresent();
   }
 

@@ -87,9 +87,24 @@ final class ModifiableBindingExpressions {
   Optional<ModifiableBindingMethod> reimplementedModifiableBindingMethod(
       ModifiableBindingMethod modifiableBindingMethod) {
     checkState(componentImplementation.superclassImplementation().isPresent());
-    if (modifiableBindingTypeChanged(modifiableBindingMethod)
+    ModifiableBindingType newModifiableBindingType =
+        getModifiableBindingType(modifiableBindingMethod.request());
+    ModifiableBindingType oldModifiableBindingType = modifiableBindingMethod.type();
+    boolean modifiableBindingTypeChanged =
+        !newModifiableBindingType.equals(oldModifiableBindingType);
+    if (modifiableBindingTypeChanged
+        && !newModifiableBindingType.hasBaseClassImplementation()
+        && (oldModifiableBindingType.hasBaseClassImplementation()
+            || componentImplementation.isAbstract())) {
+      // We don't want to override one abstract method with another one. However, If the component
+      // is not abstract (such as a transition from GENERATED_INSTANCE -> MISSING), we must provide
+      // an implementation like normal.
+      return Optional.empty();
+    }
+
+    if (modifiableBindingTypeChanged
         || shouldModifyImplementation(
-            modifiableBindingMethod.type(), modifiableBindingMethod.request())) {
+            newModifiableBindingType, modifiableBindingMethod.request())) {
       MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
       boolean markMethodFinal =
           knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
@@ -329,17 +344,6 @@ final class ModifiableBindingExpressions {
     }
 
     return ModifiableBindingType.NONE;
-  }
-
-  /**
-   * Returns true if the modifiable binding type of a {@code modifiableBindingMethod}'s request is
-   * different in this implementation from what it was in the super implementation.
-   */
-  private boolean modifiableBindingTypeChanged(ModifiableBindingMethod modifiableBindingMethod) {
-    checkState(componentImplementation.superclassImplementation().isPresent());
-    ModifiableBindingType newModifiableBindingType =
-        getModifiableBindingType(modifiableBindingMethod.request());
-    return !newModifiableBindingType.equals(modifiableBindingMethod.type());
   }
 
   /**

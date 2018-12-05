@@ -116,6 +116,7 @@ final class ModuleValidator {
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphPlugins moduleValidationPlugins;
+  private final BindingGraphPlugins spiPlugins;
   private final CompilerOptions compilerOptions;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
@@ -130,6 +131,7 @@ final class ModuleValidator {
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
       @ModuleValidation BindingGraphPlugins moduleValidationPlugins,
+      BindingGraphPlugins spiPlugins,
       CompilerOptions compilerOptions) {
     this.types = types;
     this.elements = elements;
@@ -139,6 +141,7 @@ final class ModuleValidator {
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphConverter = bindingGraphConverter;
     this.moduleValidationPlugins = moduleValidationPlugins;
+    this.spiPlugins = spiPlugins;
     this.compilerOptions = compilerOptions;
   }
 
@@ -592,7 +595,8 @@ final class ModuleValidator {
     BindingGraph bindingGraph =
         bindingGraphConverter.convert(
             bindingGraphFactory.create(componentDescriptorFactory.forTypeElement(module)));
-    if (moduleValidationPlugins.pluginsReportErrors(bindingGraph)) {
+    if (moduleValidationPlugins.pluginsReportErrors(bindingGraph)
+        || spiPlugins.pluginsReportErrors(bindingGraph)) {
       // Since the plugins use a DiagnosticReporter to report errors, the ValdiationReport won't
       // have any Items for them. We have to tell the ValidationReport that some errors were
       // reported for the subject.

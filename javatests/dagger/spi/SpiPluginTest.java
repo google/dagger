@@ -32,6 +32,39 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class SpiPluginTest {
   @Test
+  public void moduleBinding() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static int provideInt() {",
+            "    return 0;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        javac()
+            .withProcessors(new ComponentProcessor())
+            .withOptions(
+                "-Aerror_on_binding=java.lang.Integer",
+                "-Adagger.moduleBindingValidation=ERROR")
+            .compile(module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message("[FailingPlugin] Bad Binding: @Provides int test.TestModule.provideInt()"))
+        .inFile(module)
+        .onLineContaining("interface TestModule");
+  }
+
+  @Test
   public void dependencyTraceAtBinding() {
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(

@@ -33,6 +33,12 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class AheadOfTimeSubcomponentsTest {
+  private static final String PRUNED_METHOD_BODY =
+      "throw new UnsupportedOperationException(\"This binding is not part of the final binding "
+          + "graph. The key was requested by a binding that was believed to possibly be part of "
+          + "the graph, but is no longer requested. If this exception is thrown, it is the result "
+          + "of a Dagger bug.\");";
+
   @Test
   public void missingBindings_fromComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
@@ -958,10 +964,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    @Override",
             "    protected Object getPrunedSubcomponentBuilder() {",
-            "      throw new UnsupportedOperationException(",
-            "          \"This binding is not part of the final binding graph. The key was \"",
-            "              + \"requested by a binding that was believed to possibly be part of \"",
-            "              + \"the graph, but is no longer requested.\");",
+            "      " + PRUNED_METHOD_BODY,
             "    }",
             "",
             "    @Override",
@@ -4361,10 +4364,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    @Override",
             "    protected Object getPrunedDependency() {",
-            "      throw new UnsupportedOperationException(",
-            "          \"This binding is not part of the final binding graph. The key was \"",
-            "              + \"requested by a binding that was believed to possibly be part of \"",
-            "              + \"the graph, but is no longer requested.\");",
+            "      " + PRUNED_METHOD_BODY,
             "    }",
             "",
             "    @Override",
@@ -6395,10 +6395,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    @Override",
             "    protected Object getObject() {",
-            "      throw new UnsupportedOperationException(",
-            "          \"This binding is not part of the final binding graph. The key was \"",
-            "              + \"requested by a binding that was believed to possibly be part of \"",
-            "              + \"the graph, but is no longer requested.\");",
+            "      " + PRUNED_METHOD_BODY,
             "    }",
             "",
             "    @Override",

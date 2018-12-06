@@ -230,7 +230,7 @@ class X {
   X() { ... }
 }
 
-class BarImpl {
+class BarImpl implements Bar {
   @Inject
   BarImpl(@Blue Y y, int v) { ... }
 }

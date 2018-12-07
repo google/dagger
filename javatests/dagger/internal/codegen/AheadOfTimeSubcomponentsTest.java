@@ -6733,6 +6733,153 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedLeaf);
   }
 
+  @Test
+  public void modifiableBindingMethods_namesDedupedAcrossImplementations() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "foo.Thing",
+            "package foo;",
+            "", // force multi-line format
+            "public interface Thing extends CharSequence {}"),
+        JavaFileObjects.forSourceLines(
+            "bar.Thing",
+            "package bar;",
+            "", // force multi-line format
+            "public interface Thing extends Runnable {}"),
+        JavaFileObjects.forSourceLines(
+            "test.WillInduceSetOfRunnable",
+            "package test;",
+            "", // force multi-line format
+            "class WillInduceSetOfRunnable {}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Provides",
+            "  static CharSequence depOnFooThing(foo.Thing thing) {",
+            "    return thing.toString();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Runnable depOnBarThing(bar.Thing thing) {",
+            "    return () -> {};",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  CharSequence inducesFoo();",
+            "  WillInduceSetOfRunnable willInduceSetOfRunnable();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import foo.Thing;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public CharSequence inducesFoo() {",
+            "    return LeafModule_DepOnFooThingFactory.proxyDepOnFooThing(getThing());",
+            "  }",
+            "",
+            "  protected abstract Thing getThing();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static WillInduceSetOfRunnable induce(Set<Runnable> set) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Multibinds Set<Runnable> runnables();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import bar.Thing;",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  protected abstract class LeafImpl extends DaggerLeaf {",
+            "    protected LeafImpl() {}",
+            "",
+            "    private Runnable getRunnable() {",
+            "      return LeafModule_DepOnBarThingFactory.proxyDepOnBarThing(getThing2());",
+            "    }",
+            "",
+            "    protected abstract Thing getThing2();",
+            "",
+            "    protected Set<Runnable> getSetOfRunnable() {",
+            "      return ImmutableSet.<Runnable>of(getRunnable());",
+            "    }",
+            "",
+            "    @Override",
+            "    public final WillInduceSetOfRunnable willInduceSetOfRunnable() {",
+            "      return AncestorModule_InduceFactory.proxyInduce(getSetOfRunnable());",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

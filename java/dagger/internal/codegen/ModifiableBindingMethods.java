@@ -70,6 +70,11 @@ final class ModifiableBindingMethods {
     return Optional.ofNullable(methods.get(request));
   }
 
+  /** Returns all of the {@link ModifiableBindingMethod}s. */
+  ImmutableList<ModifiableBindingMethod> allMethods() {
+    return ImmutableList.copyOf(methods.values());
+  }
+
   /**
    * Mark the {@link ModifiableBindingMethod} as having been implemented, thus modifying the
    * binding.

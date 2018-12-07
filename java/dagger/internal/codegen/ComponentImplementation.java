@@ -521,6 +521,18 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the names of every modifiable binding method of this implementation and any superclass
+   * implementations.
+   */
+  ImmutableSet<String> getAllModifiableBindingMethodNames() {
+    ImmutableSet.Builder<String> names = ImmutableSet.builder();
+    modifiableBindingMethods.allMethods().forEach(method -> names.add(method.methodSpec().name));
+    superclassImplementation.ifPresent(
+        superclass -> names.addAll(superclass.getAllModifiableBindingMethodNames()));
+    return names.build();
+  }
+
+  /**
    * Returns the {@link ModifiableBindingMethod} for this subcomponent for the given binding, if it
    * exists.
    */

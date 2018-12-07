@@ -198,6 +198,14 @@ final class ComponentImplementationFactory {
 
       getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
           .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
+      componentImplementation
+          .superclassImplementation()
+          .ifPresent(
+              superclassImplementation -> {
+                superclassImplementation
+                    .getAllModifiableBindingMethodNames()
+                    .forEach(componentImplementation::claimMethodName);
+              });
 
       addFactoryMethods();
       addInterfaceMethods();

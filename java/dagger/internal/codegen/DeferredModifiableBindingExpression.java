@@ -15,11 +15,13 @@
  */
 
 package dagger.internal.codegen;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A {@link ModifiableAbstractMethodBindingExpression} for a binding that exists but is not ready to
@@ -63,5 +65,10 @@ final class DeferredModifiableBindingExpression extends ModifiableAbstractMethod
   @Override
   String chooseMethodName() {
     return componentImplementation.getUniqueMethodName(request, binding);
+  }
+
+  @Override
+  protected TypeMirror contributedType() {
+    return binding.contributedType();
   }
 }

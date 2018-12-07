@@ -39,7 +39,8 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   private final ComponentImplementation componentImplementation;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingRequest request;
-  private final TypeMirror returnType;
+  private final Optional<ComponentMethodDescriptor> matchingComponentMethod;
+  private final DaggerTypes types;
   private Optional<String> methodName;
 
   ModifiableAbstractMethodBindingExpression(
@@ -52,7 +53,8 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
     this.componentImplementation = componentImplementation;
     this.modifiableBindingType = modifiableBindingType;
     this.request = request;
-    this.returnType = returnType(request, matchingComponentMethod, types);
+    this.matchingComponentMethod = matchingComponentMethod;
+    this.types = types;
     this.methodName =
         initializeMethodName(matchingComponentMethod, matchingModifiableBindingMethod);
   }
@@ -78,7 +80,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
   final Expression getDependencyExpression(ClassName requestingClass) {
     addUnimplementedMethod();
     return Expression.create(
-        returnType,
+        returnType(),
         componentImplementation.name().equals(requestingClass)
             ? CodeBlock.of("$N()", methodName.get())
             : CodeBlock.of("$T.this.$N()", componentImplementation.name(), methodName.get()));
@@ -88,6 +90,7 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
     if (!methodName.isPresent()) {
       // Only add the method once in case of repeated references to the missing binding.
       methodName = Optional.of(chooseMethodName());
+      TypeMirror returnType = returnType();
       componentImplementation.addModifiableBindingMethod(
           modifiableBindingType,
           request,
@@ -112,17 +115,20 @@ abstract class ModifiableAbstractMethodBindingExpression extends BindingExpressi
    *       from which the request type is not accessible.
    * </ul>
    */
-  private static TypeMirror returnType(
-      BindingRequest bindingRequest,
-      Optional<ComponentMethodDescriptor> matchingComponentMethod,
-      DaggerTypes types) {
+  private TypeMirror returnType() {
     if (matchingComponentMethod.isPresent()) {
       return matchingComponentMethod.get().resolvedReturnType(types);
     }
 
-    TypeMirror requestedType = bindingRequest.requestedType(bindingRequest.key().type(), types);
+    TypeMirror requestedType = request.requestedType(contributedType(), types);
     return types.publiclyAccessibleType(requestedType);
   }
+
+  /**
+   * The {@link ContributionBinding#contributedType() type contributed} by the binding of this
+   * expression. For missing bindings, this will be the key type.
+   */
+  protected abstract TypeMirror contributedType();
 
   /** Returns a unique 'getter' method name for the current component. */
   abstract String chooseMethodName();

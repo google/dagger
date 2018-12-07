@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import java.util.Optional;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * A {@link ModifiableAbstractMethodBindingExpression} for a binding that is missing when generating
@@ -50,5 +51,10 @@ final class MissingBindingExpression extends ModifiableAbstractMethodBindingExpr
   @Override
   String chooseMethodName() {
     return componentImplementation.getUniqueMethodName(request);
+  }
+
+  @Override
+  protected TypeMirror contributedType() {
+    return request.key().type();
   }
 }

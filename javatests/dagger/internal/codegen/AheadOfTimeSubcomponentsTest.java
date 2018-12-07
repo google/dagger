@@ -6670,6 +6670,69 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedRoot);
   }
 
+  @Test
+  public void bindsMissingDep_Multibindings() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Binds",
+            "  @IntoSet",
+            "  CharSequence bindsMultibindingWithMissingDep(String string);",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Set;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Set<CharSequence> set();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public Set<CharSequence> set() {",
+            "    return ImmutableSet.<CharSequence>of(getCharSequence());",
+            "  }",
+            "",
+            // The expected output here is subtle: the Key of
+            // LeafModule.bindsMultibindingWithMissingDep() is Set<CharSequence>, but the binding
+            // method should only be returning an individual CharSequence. Otherwise the
+            // ImmutableSet factory method above will fail.
+            // TODO(b/117833324): It would be great to get this method name to match the binding
+            // element name
+            "  protected abstract CharSequence getCharSequence();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

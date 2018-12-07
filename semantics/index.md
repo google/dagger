@@ -729,7 +729,7 @@ final class DModule {
 and binding `D` as an instance:
 
 ```java
-@Component(dependencies = D.class, modules = {DModule.class, ...})
+@Component(modules = {DModule.class, ...})
 interface C {
   ...
 

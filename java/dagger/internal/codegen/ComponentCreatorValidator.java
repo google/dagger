@@ -29,7 +29,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsInstance;
-import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
+import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -44,16 +44,14 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 
-/**
- * Validates {@link dagger.Component.Builder} annotations.
- */
-class BuilderValidator {
+/** Validates {@link dagger.Component.Builder} annotations. */
+class ComponentCreatorValidator {
 
   private final DaggerElements elements;
   private final Types types;
 
   @Inject
-  BuilderValidator(DaggerElements elements, Types types) {
+  ComponentCreatorValidator(DaggerElements elements, Types types) {
     this.elements = elements;
     this.types = types;
   }
@@ -64,7 +62,7 @@ class BuilderValidator {
     ComponentKind componentKind = ComponentKind.forAnnotatedBuilderElement(subject).get();
 
     Element componentElement = subject.getEnclosingElement();
-    ErrorMessages.ComponentBuilderMessages msgs = ErrorMessages.builderMsgsFor(componentKind);
+    ErrorMessages.ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(componentKind);
     checkArgument(isAnnotationPresent(subject, componentKind.builderAnnotation().get()));
 
     if (!isAnnotationPresent(componentElement, componentKind.annotation())) {
@@ -103,7 +101,7 @@ class BuilderValidator {
       builder.addError(msgs.mustBeAbstract(), subject);
     }
 
-    ExecutableElement buildMethod = null;
+    ExecutableElement factoryMethod = null;
     for (ExecutableElement method : elements.getUnimplementedMethods(subject)) {
       ExecutableType resolvedMethodType =
           MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
@@ -111,21 +109,21 @@ class BuilderValidator {
       switch (method.getParameters().size()) {
         case 0: // If this is potentially a build() method, validate it returns the correct type.
           if (types.isSubtype(componentElement.asType(), returnType)) {
-            validateBuildMethodReturnType(
+            validateFactoryMethodReturnType(
                 builder,
                 // since types.isSubtype() passed, componentElement cannot be a PackageElement
                 MoreElements.asType(componentElement),
                 msgs,
                 method,
                 returnType);
-            if (buildMethod != null) {
+            if (factoryMethod != null) {
               // If we found more than one build-like method, fail.
               error(
                   builder,
                   method,
                   msgs.twoBuildMethods(),
                   msgs.inheritedTwoBuildMethods(),
-                  buildMethod);
+                  factoryMethod);
             }
           } else {
             error(
@@ -134,8 +132,8 @@ class BuilderValidator {
                 msgs.buildMustReturnComponentType(),
                 msgs.inheritedBuildMustReturnComponentType());
           }
-          // We set the buildMethod regardless of the return type to reduce error spam.
-          buildMethod = method;
+          // We set the factoryMethod regardless of the return type to reduce error spam.
+          factoryMethod = method;
           break;
 
         case 1: // If this correctly had one parameter, make sure the return types are valid.
@@ -171,7 +169,7 @@ class BuilderValidator {
       }
     }
 
-    if (buildMethod == null) {
+    if (factoryMethod == null) {
       builder.addError(msgs.missingBuildMethod(), subject);
     }
 
@@ -182,10 +180,10 @@ class BuilderValidator {
     return builder.build();
   }
 
-  private void validateBuildMethodReturnType(
+  private void validateFactoryMethodReturnType(
       ValidationReport.Builder<TypeElement> builder,
       TypeElement componentElement,
-      ComponentBuilderMessages msgs,
+      ComponentCreatorMessages msgs,
       ExecutableElement method,
       TypeMirror returnType) {
     if (types.isSameType(componentElement.asType(), returnType)) {

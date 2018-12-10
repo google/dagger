@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
-import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.SourceFiles.generatedMonitoringModuleName;
@@ -46,7 +45,6 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -130,15 +128,17 @@ final class BindingGraphFactory {
       }
     }
 
-    // Collect bindings on the builder.
-    if (componentDescriptor.builderSpec().isPresent()) {
-      for (BuilderRequirementMethod method :
-          componentDescriptor.builderSpec().get().requirementMethods()) {
-        if (method.requirement().kind().equals(BOUND_INSTANCE)) {
-          explicitBindingsBuilder.add(bindingFactory.boundInstanceBinding(method));
-        }
-      }
-    }
+    // Collect bindings on the creator.
+    componentDescriptor
+        .creatorDescriptor()
+        .ifPresent(
+            creatorDescriptor ->
+                creatorDescriptor.boundInstanceRequirements().stream()
+                    .map(
+                        requirement ->
+                            bindingFactory.boundInstanceBinding(
+                                requirement, creatorDescriptor.elementForRequirement(requirement)))
+                    .forEach(explicitBindingsBuilder::add));
 
     componentDescriptor
         .childComponentsDeclaredByBuilderEntryPoints()
@@ -148,7 +148,7 @@ final class BindingGraphFactory {
                   .childComponentsDeclaredByModules()
                   .contains(childComponent)) {
                 explicitBindingsBuilder.add(
-                    bindingFactory.subcomponentBuilderBinding(
+                    bindingFactory.subcomponentCreatorBinding(
                         builderEntryPoint.methodElement(), componentDescriptor.typeElement()));
               }
             });
@@ -399,11 +399,11 @@ final class BindingGraphFactory {
      * ComponentDescriptor subcomponent} to a queue in the owning component's resolver. The queue
      * will be used to detect which subcomponents need to be resolved.
      */
-    private void addSubcomponentToOwningResolver(ProvisionBinding subcomponentBuilderBinding) {
-      checkArgument(subcomponentBuilderBinding.kind().equals(SUBCOMPONENT_BUILDER));
-      Resolver owningResolver = getOwningResolver(subcomponentBuilderBinding).get();
+    private void addSubcomponentToOwningResolver(ProvisionBinding subcomponentCreatorBinding) {
+      checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_BUILDER));
+      Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
-      TypeElement builderType = MoreTypes.asTypeElement(subcomponentBuilderBinding.key().type());
+      TypeElement builderType = MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type());
       owningResolver.subcomponentsToResolve.add(
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }
@@ -448,7 +448,7 @@ final class BindingGraphFactory {
         ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations) {
       return subcomponentDeclarations.isEmpty()
           ? Optional.empty()
-          : Optional.of(bindingFactory.subcomponentBuilderBinding(subcomponentDeclarations));
+          : Optional.of(bindingFactory.subcomponentCreatorBinding(subcomponentDeclarations));
     }
 
     /**

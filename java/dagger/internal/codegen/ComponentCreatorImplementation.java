@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -31,7 +32,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -40,8 +40,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -50,23 +48,23 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-/** The implementation of a component builder type. */
-final class ComponentBuilderImplementation {
-  private final TypeSpec componentBuilderClass;
+/** The implementation of a component creator type. */
+final class ComponentCreatorImplementation {
+  private final TypeSpec componentCreatorClass;
   private final ClassName name;
   private final ImmutableMap<ComponentRequirement, FieldSpec> builderFields;
 
-  private ComponentBuilderImplementation(
-      TypeSpec componentBuilderClass,
+  private ComponentCreatorImplementation(
+      TypeSpec componentCreatorClass,
       ClassName name,
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
-    this.componentBuilderClass = componentBuilderClass;
+    this.componentCreatorClass = componentCreatorClass;
     this.name = name;
     this.builderFields = builderFields;
   }
 
-  TypeSpec componentBuilderClass() {
-    return componentBuilderClass;
+  TypeSpec componentCreatorClass() {
+    return componentCreatorClass;
   }
 
   ClassName name() {
@@ -77,7 +75,7 @@ final class ComponentBuilderImplementation {
     return builderFields;
   }
 
-  static Optional<ComponentBuilderImplementation> create(
+  static Optional<ComponentCreatorImplementation> create(
       ComponentImplementation componentImplementation,
       BindingGraph graph,
       Elements elements,
@@ -91,50 +89,58 @@ final class ComponentBuilderImplementation {
       // to the builder, can ignore generating a builder implementation.
       return Optional.empty();
     }
-    return graph.componentDescriptor().hasBuilder()
-        ? Optional.of(new Creator(componentImplementation, graph, elements, types).create())
+    return graph.componentDescriptor().hasCreator()
+        ? Optional.of(
+            new CreatorImplementationFactory(componentImplementation, graph, elements, types)
+                .create())
         : Optional.empty();
   }
 
-  private static final class Creator {
+  /** Factory for creating a {@link ComponentCreatorImplementation} instance. */
+  private static final class CreatorImplementationFactory {
+    // TODO(cgdecker): Possibly extract this to another top-level type,
+    // ComponentCreatorImplementationFactory, to match the separation between
+    // ComponentImplementation and ComponentImplementationFactory
+
     static final String NOOP_BUILDER_METHOD_JAVADOC =
         "This module is declared, but an instance is not used in the component. This method is a "
             + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
+
     final BindingGraph graph;
-    final TypeSpec.Builder componentBuilderClass;
+    final TypeSpec.Builder componentCreatorClass;
     final ComponentImplementation componentImplementation;
     final Elements elements;
     final Types types;
 
-    Creator(
+    CreatorImplementationFactory(
         ComponentImplementation componentImplementation,
         BindingGraph graph,
         Elements elements,
         Types types) {
       this.componentImplementation = componentImplementation;
-      this.componentBuilderClass = classBuilder(componentImplementation.getBuilderName());
+      this.componentCreatorClass = classBuilder(componentImplementation.getCreatorName());
       this.graph = graph;
       this.elements = elements;
       this.types = types;
     }
 
-    ComponentBuilderImplementation create() {
+    ComponentCreatorImplementation create() {
       if (!componentImplementation.isNested()) {
-        componentBuilderClass.addModifiers(STATIC);
+        componentCreatorClass.addModifiers(STATIC);
       }
-      if (builderSpec().isPresent()) {
+      if (creatorDescriptor().isPresent()) {
         if (componentImplementation.isAbstract()) {
-          // The component builder class of a top-level component implementation in ahead-of-tim
-          // subcomponents mode must be public, not protected, because the builder's subclass will
+          // The component creator class of a top-level component implementation in ahead-of-time
+          // subcomponents mode must be public, not protected, because the creator's subclass will
           // be a sibling of the component subclass implementation, not nested.
-          componentBuilderClass.addModifiers(
+          componentCreatorClass.addModifiers(
               componentImplementation.isNested() ? PROTECTED : PUBLIC);
         } else {
-          componentBuilderClass.addModifiers(PRIVATE);
+          componentCreatorClass.addModifiers(PRIVATE);
         }
         setSupertype();
       } else {
-        componentBuilderClass
+        componentCreatorClass
             .addModifiers(PUBLIC)
             .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
       }
@@ -142,40 +148,40 @@ final class ComponentBuilderImplementation {
       ImmutableMap<ComponentRequirement, FieldSpec> builderFields = builderFields();
 
       if (componentImplementation.isAbstract()) {
-        componentBuilderClass.addModifiers(ABSTRACT);
+        componentCreatorClass.addModifiers(ABSTRACT);
       } else {
-        componentBuilderClass.addModifiers(FINAL);
-        componentBuilderClass.addMethod(buildMethod(builderFields));
+        componentCreatorClass.addModifiers(FINAL);
+        componentCreatorClass.addMethod(factoryMethod(builderFields));
       }
 
       if (!componentImplementation.baseImplementation().isPresent()) {
-        componentBuilderClass.addFields(builderFields.values());
+        componentCreatorClass.addFields(builderFields.values());
       }
 
-      // TODO(ronshapiro): this should be switched with buildMethod(), but that currently breaks
+      // TODO(ronshapiro): this should be switched with factoryMethod(), but that currently breaks
       // compile-testing tests that rely on the order of the methods
-      componentBuilderClass.addMethods(builderMethods(builderFields));
+      componentCreatorClass.addMethods(builderMethods(builderFields));
 
-      return new ComponentBuilderImplementation(
-          componentBuilderClass.build(), componentImplementation.getBuilderName(), builderFields);
+      return new ComponentCreatorImplementation(
+          componentCreatorClass.build(), componentImplementation.getCreatorName(), builderFields);
     }
 
-    /** Set the superclass being extended or interface being implemented for this builder. */
+    /** Set the superclass being extended or interface being implemented for this creator. */
     void setSupertype() {
       if (componentImplementation.baseImplementation().isPresent()) {
-        // If there's a superclass, extend the Builder defined there.
-        componentBuilderClass.superclass(
-            componentImplementation.baseImplementation().get().getBuilderName());
+        // If there's a superclass, extend the creator defined there.
+        componentCreatorClass.superclass(
+            componentImplementation.baseImplementation().get().getCreatorName());
       } else {
-        addSupertype(componentBuilderClass, builderSpec().get().builderDefinitionType());
+        addSupertype(componentCreatorClass, creatorDescriptor().get().typeElement());
       }
     }
 
     /**
-     * Computes fields for each of the {@link ComponentRequirement}s}. Regardless of builder spec,
+     * Computes fields for each of the {@link ComponentRequirement}s}. Regardless of creator spec,
      * there is always one field per requirement.
      *
-     * <p>If the base implementation's builder is being generated in ahead-of-time-subcomponents
+     * <p>If the base implementation's creator is being generated in ahead-of-time-subcomponents
      * mode, this uses {@link BindingGraph#possiblyNecessaryRequirements()} since Dagger doesn't
      * know what modules may end up being unused. Otherwise, we use the {@link
      * BindingGraph#componentRequirements() necessary component requirements}.
@@ -193,25 +199,26 @@ final class ComponentBuilderImplementation {
       return builderFields.build();
     }
 
-    MethodSpec buildMethod(ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
-      MethodSpec.Builder buildMethod;
-      if (builderSpec().isPresent()) {
-        ExecutableElement specBuildMethod = builderSpec().get().buildMethod();
-        // Note: we don't use the specBuildMethod.getReturnType() as the return type
+    MethodSpec factoryMethod(ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
+      MethodSpec.Builder factoryMethod;
+      if (creatorDescriptor().isPresent()) {
+        ExecutableElement factoryMethodElement = creatorDescriptor().get().factoryMethod();
+        // Note: we don't use the factoryMethodElement.getReturnType() as the return type
         // because it might be a type variable.  We make use of covariant returns to allow
         // us to return the component type, which will always be valid.
-        buildMethod =
-            methodBuilder(specBuildMethod.getSimpleName().toString()).addAnnotation(Override.class);
+        factoryMethod =
+            methodBuilder(factoryMethodElement.getSimpleName().toString())
+                .addAnnotation(Override.class);
       } else {
-        buildMethod = methodBuilder("build");
+        factoryMethod = methodBuilder("build");
       }
-      buildMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
+      factoryMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
 
       builderFields.forEach(
           (requirement, field) -> {
             switch (requirement.nullPolicy(elements, types)) {
               case NEW:
-                buildMethod
+                factoryMethod
                     .beginControlFlow("if ($N == null)", field)
                     .addStatement("this.$N = new $T()", field, field.type)
                     .endControlFlow();
@@ -219,7 +226,7 @@ final class ComponentBuilderImplementation {
               case THROW:
                 // TODO(cgdecker,ronshapiro): ideally this should use the key instead of a class for
                 // @BindsInstance requirements, but that's not easily proguardable.
-                buildMethod.addStatement(
+                factoryMethod.addStatement(
                     "$T.checkBuilderRequirement($N, $T.class)",
                     Preconditions.class,
                     field,
@@ -231,13 +238,13 @@ final class ComponentBuilderImplementation {
                 throw new AssertionError(requirement);
             }
           });
-      buildMethod.addStatement("return new $T(this)", componentImplementation.name());
-      return buildMethod.build();
+      factoryMethod.addStatement("return new $T(this)", componentImplementation.name());
+      return factoryMethod.build();
     }
 
     /**
-     * Computes the methods that set each of parameters on the builder. If the {@link BuilderSpec}
-     * is present, it will tailor the methods to match the spec.
+     * Computes the methods that set each of parameters on the builder. If the {@link
+     * ComponentCreatorDescriptor} is present, it will tailor the methods to match the descriptor.
      */
     ImmutableSet<MethodSpec> builderMethods(
         ImmutableMap<ComponentRequirement, FieldSpec> builderFields) {
@@ -245,24 +252,23 @@ final class ComponentBuilderImplementation {
       ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
       // TODO(ronshapiro): extract two separate methods: builderMethodsForBuilderSpec and
       // builderMethodsForGeneratedTopLevelComponentBuilder()
-      if (builderSpec().isPresent()) {
+      if (creatorDescriptor().isPresent()) {
         // In ahead-of-time subcomponents mode, all builder methods are defined at the base
         // implementation. The only case where a method needs to be overridden is for a repeated
         // module, which is unknown at the point when a base implementation is generated. We do this
         // at the root for simplicity (and as an aside, repeated modules are never used in google
         // as of 11/28/18, and thus the additional cost of including these methods at the root is
         // negligible).
-        boolean hasBaseBuilderImplementation =
+        boolean hasBaseCreatorImplementation =
             !componentImplementation.isAbstract()
                 && componentImplementation.baseImplementation().isPresent();
 
         UniqueNameSet parameterNames = new UniqueNameSet();
-        for (BuilderRequirementMethod requirementMethod :
-            builderSpec().get().requirementMethods()) {
-          ComponentRequirement builderRequirement = requirementMethod.requirement();
-          ExecutableElement specMethod = requirementMethod.method();
-          MethodSpec.Builder builderMethod = addBuilderMethodFromSpec(specMethod);
-          VariableElement parameterElement = Iterables.getOnlyElement(specMethod.getParameters());
+        ComponentCreatorDescriptor creatorDescriptor = creatorDescriptor().get();
+        for (ComponentRequirement requirement : creatorDescriptor.requirements()) {
+          ExecutableElement method = creatorDescriptor.elementForRequirement(requirement);
+          MethodSpec.Builder builderMethod = addBuilderMethodFromSpec(method);
+          VariableElement parameterElement = getOnlyElement(method.getParameters());
           String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
 
           TypeName argType =
@@ -270,31 +276,31 @@ final class ComponentBuilderImplementation {
                   // Primitives need to use the original (unresolved) type to avoid boxing.
                   ? TypeName.get(parameterElement.asType())
                   // Otherwise we use the full resolved type.
-                  : TypeName.get(builderRequirement.type());
+                  : TypeName.get(requirement.type());
 
           builderMethod.addParameter(argType, parameterName);
 
-          if (componentRequirements.contains(builderRequirement)) {
-            if (hasBaseBuilderImplementation) {
+          if (componentRequirements.contains(requirement)) {
+            if (hasBaseCreatorImplementation) {
               continue;
             }
             // required type
             builderMethod.addStatement(
                 "this.$N = $L",
-                builderFields.get(builderRequirement),
-                builderRequirement
+                builderFields.get(requirement),
+                requirement
                         .nullPolicy(elements, types)
                         .equals(ComponentRequirement.NullPolicy.ALLOW)
                     ? parameterName
                     : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
-            addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
-          } else if (graph.ownedModuleTypes().contains(builderRequirement.typeElement())) {
-            if (hasBaseBuilderImplementation) {
+            addBuilderMethodReturnStatementForSpec(method, builderMethod);
+          } else if (graph.ownedModuleTypes().contains(requirement.typeElement())) {
+            if (hasBaseCreatorImplementation) {
               continue;
             }
             // owned, but not required
             builderMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
-            addBuilderMethodReturnStatementForSpec(specMethod, builderMethod);
+            addBuilderMethodReturnStatementForSpec(method, builderMethod);
           } else {
             // neither owned nor required, so it must be an inherited module
             builderMethod.addStatement(
@@ -302,7 +308,7 @@ final class ComponentBuilderImplementation {
                 UnsupportedOperationException.class,
                 String.class,
                 "%s cannot be set because it is inherited from the enclosing component",
-                TypeNames.rawTypeName(TypeName.get(builderRequirement.type())));
+                TypeNames.rawTypeName(TypeName.get(requirement.type())));
           }
 
           methods.add(builderMethod.build());
@@ -313,7 +319,7 @@ final class ComponentBuilderImplementation {
           String componentRequirementName = simpleVariableName(requirement.typeElement());
           MethodSpec.Builder builderMethod =
               methodBuilder(componentRequirementName)
-                  .returns(componentImplementation.getBuilderName())
+                  .returns(componentImplementation.getCreatorName())
                   .addModifiers(PUBLIC)
                   .addParameter(TypeName.get(requirement.type()), componentRequirementName);
           if (componentRequirements.contains(requirement)) {
@@ -352,7 +358,7 @@ final class ComponentBuilderImplementation {
       // Otherwise we use the generated builder name and take advantage of covariant returns
       // (so that we don't have to worry about setter methods that return type variables).
       if (!returnType.getKind().equals(VOID)) {
-        builderMethod.returns(componentImplementation.getBuilderName());
+        builderMethod.returns(componentImplementation.getCreatorName());
       }
       return builderMethod;
     }
@@ -364,8 +370,8 @@ final class ComponentBuilderImplementation {
       }
     }
 
-    Optional<BuilderSpec> builderSpec() {
-      return graph.componentDescriptor().builderSpec();
+    Optional<ComponentCreatorDescriptor> creatorDescriptor() {
+      return graph.componentDescriptor().creatorDescriptor();
     }
   }
 }

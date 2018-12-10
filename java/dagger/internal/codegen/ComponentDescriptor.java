@@ -17,17 +17,15 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
+import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
-import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
+import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -49,7 +47,6 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Lazy;
 import dagger.Module;
@@ -71,7 +68,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 
 /**
  * A component declaration.
@@ -191,10 +187,10 @@ abstract class ComponentDescriptor {
           Suppliers.memoize(
               () ->
                   childComponents().stream()
-                      .filter(child -> child.builderSpec().isPresent())
+                      .filter(child -> child.creatorDescriptor().isPresent())
                       .collect(
                           toImmutableMap(
-                              child -> child.builderSpec().get().builderDefinitionType(),
+                              child -> child.creatorDescriptor().get().typeElement(),
                               child -> child)));
 
   /** Returns the child component with the given builder type. */
@@ -269,14 +265,16 @@ abstract class ComponentDescriptor {
 
   // TODO(gak): Consider making this non-optional and revising the
   // interaction between the spec & generation
-  abstract Optional<BuilderSpec> builderSpec();
+  /** Returns a descriptor for the creator type for this component type, if the user defined one. */
+  abstract Optional<ComponentCreatorDescriptor> creatorDescriptor();
 
   /**
-   * Returns {@code true} for components that have a builder, either because the user {@linkplain
-   * #builderSpec() specified one} or because it's a top-level component.
+   * Returns {@code true} for components that have a creator, either because the user {@linkplain
+   * #creatorDescriptor() specified one} or because it's a top-level component with an implicit
+   * builder.
    */
-  final boolean hasBuilder() {
-    return kind().isTopLevel() || builderSpec().isPresent();
+  final boolean hasCreator() {
+    return kind().isTopLevel() || creatorDescriptor().isPresent();
   }
 
   /**
@@ -320,7 +318,7 @@ abstract class ComponentDescriptor {
       return create(kind, Optional.empty(), methodElement);
     }
 
-    static ComponentMethodDescriptor forSubcomponentBuilder(
+    static ComponentMethodDescriptor forSubcomponentCreator(
         ComponentMethodKind kind,
         DependencyRequest dependencyRequestForBuilder,
         ExecutableElement methodElement) {
@@ -353,10 +351,6 @@ abstract class ComponentDescriptor {
     PRODUCTION_SUBCOMPONENT,
     PRODUCTION_SUBCOMPONENT_BUILDER;
 
-    boolean isSubcomponentKind() {
-      return this == SUBCOMPONENT || this == PRODUCTION_SUBCOMPONENT;
-    }
-
     /**
      * Returns the component kind associated with this component method, if it exists. Otherwise,
      * throws.
@@ -375,23 +369,9 @@ abstract class ComponentDescriptor {
     }
   }
 
-  @AutoValue
-  abstract static class BuilderRequirementMethod {
-    abstract ExecutableElement method();
-
-    abstract ComponentRequirement requirement();
-  }
-
-  @AutoValue
-  abstract static class BuilderSpec {
-    abstract TypeElement builderDefinitionType();
-    abstract ImmutableSet<BuilderRequirementMethod> requirementMethods();
-    abstract ExecutableElement buildMethod();
-  }
-
   static final class Factory {
     private final DaggerElements elements;
-    private final Types types;
+    private final DaggerTypes types;
     private final DependencyRequestFactory dependencyRequestFactory;
     private final ModuleDescriptor.Factory moduleDescriptorFactory;
     private final CompilerOptions compilerOptions;
@@ -399,7 +379,7 @@ abstract class ComponentDescriptor {
     @Inject
     Factory(
         DaggerElements elements,
-        Types types,
+        DaggerTypes types,
         DependencyRequestFactory dependencyRequestFactory,
         ModuleDescriptor.Factory moduleDescriptorFactory,
         CompilerOptions compilerOptions) {
@@ -512,13 +492,16 @@ abstract class ComponentDescriptor {
         }
       }
 
-      ImmutableList<DeclaredType> enclosedBuilders =
+      ImmutableList<DeclaredType> enclosedCreators =
           kind.builderAnnotation()
-              .map(builderAnnotation -> enclosedBuilders(typeElement, builderAnnotation))
+              .map(builderAnnotation -> enclosedAnnotatedTypes(typeElement, builderAnnotation))
               .orElse(ImmutableList.of());
-      Optional<DeclaredType> builderType =
-          Optional.ofNullable(getOnlyElement(enclosedBuilders, null));
-      Optional<BuilderSpec> builderSpec = createBuilderSpec(builderType);
+      Optional<ComponentCreatorDescriptor> creatorDescriptor =
+          enclosedCreators.isEmpty()
+              ? Optional.empty()
+              : Optional.of(
+                  ComponentCreatorDescriptor.create(
+                      getOnlyElement(enclosedCreators), elements, types, dependencyRequestFactory));
 
       ImmutableSet<Scope> scopes = scopesOf(typeElement);
       if (kind.isProducer()) {
@@ -538,7 +521,7 @@ abstract class ComponentDescriptor {
           subcomponentsByFactoryMethod.build(),
           subcomponentsByBuilderMethod.build(),
           componentMethodsBuilder.build(),
-          builderSpec);
+          creatorDescriptor);
     }
 
     private ComponentMethodDescriptor getDescriptorForComponentMethod(
@@ -564,11 +547,11 @@ abstract class ComponentDescriptor {
                     ? ComponentMethodKind.SUBCOMPONENT
                     : ComponentMethodKind.PRODUCTION_SUBCOMPONENT,
                 componentMethod);
-          } else if (isSubcomponentBuilder(returnTypeElement)) {
+          } else if (isSubcomponentCreator(returnTypeElement)) {
             DependencyRequest dependencyRequest =
                 dependencyRequestFactory.forComponentProvisionMethod(
                     componentMethod, resolvedComponentMethod);
-            return ComponentMethodDescriptor.forSubcomponentBuilder(
+            return ComponentMethodDescriptor.forSubcomponentCreator(
                 isAnnotationPresent(returnTypeElement, Subcomponent.Builder.class)
                     ? ComponentMethodKind.SUBCOMPONENT_BUILDER
                     : ComponentMethodKind.PRODUCTION_SUBCOMPONENT_BUILDER,
@@ -610,49 +593,6 @@ abstract class ComponentDescriptor {
       }
 
       throw new IllegalArgumentException("not a valid component method: " + componentMethod);
-    }
-
-    private Optional<BuilderSpec> createBuilderSpec(Optional<DeclaredType> builderType) {
-      if (!builderType.isPresent()) {
-        return Optional.empty();
-      }
-      TypeElement element = asTypeElement(builderType.get());
-      ImmutableSet<ExecutableElement> methods = elements.getUnimplementedMethods(element);
-      ImmutableSet.Builder<BuilderRequirementMethod> requirementMethods = ImmutableSet.builder();
-      ExecutableElement buildMethod = null;
-      for (ExecutableElement method : methods) {
-        if (method.getParameters().isEmpty()) {
-          buildMethod = method;
-        } else {
-          ExecutableType resolved =
-              MoreTypes.asExecutable(types.asMemberOf(builderType.get(), method));
-          requirementMethods.add(
-              new AutoValue_ComponentDescriptor_BuilderRequirementMethod(
-                  method, requirementForBuilderMethod(method, resolved)));
-        }
-      }
-      verify(buildMethod != null); // validation should have ensured this.
-      return Optional.of(
-          new AutoValue_ComponentDescriptor_BuilderSpec(
-              element, requirementMethods.build(), buildMethod));
-    }
-
-    private ComponentRequirement requirementForBuilderMethod(
-        ExecutableElement method, ExecutableType resolvedType) {
-      checkArgument(method.getParameters().size() == 1);
-      if (isAnnotationPresent(method, BindsInstance.class)) {
-        DependencyRequest request =
-            dependencyRequestFactory.forRequiredResolvedVariable(
-                getOnlyElement(method.getParameters()),
-                getOnlyElement(resolvedType.getParameterTypes()));
-        return ComponentRequirement.forBoundInstance(
-            request.key(), request.isNullable(), method.getSimpleName().toString());
-      }
-
-      TypeMirror type = getOnlyElement(resolvedType.getParameterTypes());
-      return ConfigurationAnnotations.getModuleAnnotation(asTypeElement(type)).isPresent()
-          ? ComponentRequirement.forModule(type)
-          : ComponentRequirement.forDependency(type);
     }
   }
 

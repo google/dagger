@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
-import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
+import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -71,8 +71,8 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
             new AutoValue_SubcomponentDeclaration(
                 Optional.of(subcomponentAttribute),
                 Optional.of(module),
-                keyFactory.forSubcomponentBuilder(
-                    getSubcomponentBuilder(subcomponent).get().asType()),
+                keyFactory.forSubcomponentCreator(
+                    getSubcomponentCreator(subcomponent).get().asType()),
                 subcomponent,
                 moduleAnnotation));
       }

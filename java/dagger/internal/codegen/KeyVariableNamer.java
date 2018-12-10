@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentBuilder;
+import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
 import static dagger.internal.codegen.SourceFiles.protectAgainstKeywords;
 
 import dagger.model.DependencyRequest;
@@ -43,7 +43,7 @@ final class KeyVariableNamer {
         @Override
         public Void visitDeclared(DeclaredType declaredType, StringBuilder builder) {
           Element element = declaredType.asElement();
-          if (isSubcomponentBuilder(element)) {
+          if (isSubcomponentCreator(element)) {
             // Most Subcomponent builders are named "Builder", so add their associated
             // Subcomponent type so that they're not all "builderProvider{N}"
             builder.append(element.getEnclosingElement().getSimpleName());

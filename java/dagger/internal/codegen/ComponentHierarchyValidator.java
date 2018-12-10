@@ -69,7 +69,7 @@ final class ComponentHierarchyValidator {
         .childComponentsDeclaredByFactoryMethods()
         .forEach(
             (method, childComponent) -> {
-              if (childComponent.hasBuilder()) {
+              if (childComponent.hasCreator()) {
                 report.addError(
                     "Components may not have factory methods for subcomponents that define a "
                         + "builder.",

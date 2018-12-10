@@ -146,9 +146,9 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       addSupertype(generatedComponent, componentElement);
 
       TypeName builderMethodReturnType;
-      if (componentDescriptor.builderSpec().isPresent()) {
+      if (componentDescriptor.creatorDescriptor().isPresent()) {
         builderMethodReturnType =
-            ClassName.get(componentDescriptor.builderSpec().get().builderDefinitionType());
+            ClassName.get(componentDescriptor.creatorDescriptor().get().typeElement());
       } else {
         TypeSpec.Builder builder =
             TypeSpec.classBuilder("Builder")
@@ -203,7 +203,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
 
   /**
    * Returns the {@link ComponentRequirement}s for a component that does not have a {@link
-   * ComponentDescriptor#builderSpec()}.
+   * ComponentDescriptor#creatorDescriptor()}.
    */
   private Stream<ComponentRequirement> componentRequirements(ComponentDescriptor component) {
     checkArgument(component.kind().isTopLevel());
@@ -215,10 +215,9 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   }
 
   private boolean hasBindsInstanceMethods(ComponentDescriptor componentDescriptor) {
-    return componentDescriptor.builderSpec().isPresent()
+    return componentDescriptor.creatorDescriptor().isPresent()
         && methodsIn(
-                elements.getAllMembers(
-                    componentDescriptor.builderSpec().get().builderDefinitionType()))
+                elements.getAllMembers(componentDescriptor.creatorDescriptor().get().typeElement()))
             .stream()
             .anyMatch(method -> isAnnotationPresent(method, BindsInstance.class));
   }

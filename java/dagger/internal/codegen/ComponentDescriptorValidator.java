@@ -16,39 +16,40 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Scopes.getReadableSource;
 import static dagger.internal.codegen.Scopes.scopesOf;
 import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Equivalence;
+import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.Component;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
-import dagger.internal.codegen.ComponentDescriptor.BuilderSpec;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
-import dagger.internal.codegen.ErrorMessages.ComponentBuilderMessages;
+import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
 import dagger.model.Scope;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -127,7 +128,7 @@ final class ComponentDescriptorValidator {
       validateDependencyScopes(component);
       validateComponentDependencyHierarchy(component);
       validateModules(component);
-      validateBuilders(component);
+      validateCreators(component);
       component.childComponents().forEach(this::visitComponent);
     }
 
@@ -217,10 +218,7 @@ final class ComponentDescriptorValidator {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
             validateDependencyScopeHierarchy(
-                component,
-                component.typeElement(),
-                new ArrayDeque<ImmutableSet<Scope>>(),
-                new ArrayDeque<TypeElement>());
+                component, component.typeElement(), new ArrayDeque<>(), new ArrayDeque<>());
           }
         }
       } else {
@@ -267,79 +265,84 @@ final class ComponentDescriptorValidator {
           module.moduleElement(), methodAnnotations);
     }
 
-    private void validateBuilders(ComponentDescriptor component) {
-      ComponentDescriptor componentDesc = component;
-      if (!componentDesc.builderSpec().isPresent()) {
+    private void validateCreators(ComponentDescriptor component) {
+      if (!component.creatorDescriptor().isPresent()) {
         // If no builder, nothing to validate.
         return;
       }
 
-      Set<ComponentRequirement> requirements = component.dependenciesAndConcreteModules();
-      final BuilderSpec spec = componentDesc.builderSpec().get();
-      ImmutableSet<BuilderRequirementMethod> declaredSetters =
-          spec.requirementMethods()
-              .stream()
-              .filter(method -> !method.requirement().kind().equals(BOUND_INSTANCE))
-              .collect(toImmutableSet());
-      ImmutableSet<ComponentRequirement> declaredRequirements =
-          declaredSetters
-              .stream()
-              .map(BuilderRequirementMethod::requirement)
-              .collect(toImmutableSet());
+      ComponentCreatorDescriptor creator = component.creatorDescriptor().get();
+      ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(component.kind());
 
-      ComponentBuilderMessages msgs = ErrorMessages.builderMsgsFor(component.kind());
-      Set<ComponentRequirement> extraSetters = Sets.difference(declaredRequirements, requirements);
-      if (!extraSetters.isEmpty()) {
-        List<ExecutableElement> excessMethods =
-            declaredSetters
-                .stream()
-                .filter(method -> extraSetters.contains(method.requirement()))
-                .map(BuilderRequirementMethod::method)
-                .collect(toList());
-        Optional<DeclaredType> container =
-            Optional.of(MoreTypes.asDeclared(spec.builderDefinitionType().asType()));
+      // Requirements for modules and dependencies that the creator can set
+      Set<ComponentRequirement> creatorModuleAndDependencyRequirements =
+          creator.moduleAndDependencyRequirements();
+      // Modules and dependencies the component requires
+      Set<ComponentRequirement> componentModuleAndDependencyRequirements =
+          component.dependenciesAndConcreteModules();
+
+      // Requirements that the creator can set that don't match any requirements that the component
+      // actually has.
+      Set<ComponentRequirement> inapplicableRequirementsOnCreator =
+          Sets.difference(
+              creatorModuleAndDependencyRequirements, componentModuleAndDependencyRequirements);
+
+      if (!inapplicableRequirementsOnCreator.isEmpty()) {
+        Collection<ExecutableElement> excessElements =
+            Multimaps.filterKeys(
+                    creator.requirementElements(), in(inapplicableRequirementsOnCreator))
+                .values();
+        Optional<DeclaredType> container = Optional.of(asDeclared(creator.typeElement().asType()));
         String formatted =
-            excessMethods
-                .stream()
+            excessElements.stream()
                 .map(method -> methodSignatureFormatter.format(method, container))
                 .collect(joining(", ", "[", "]"));
         report(component)
-            .addError(String.format(msgs.extraSetters(), formatted), spec.builderDefinitionType());
+            .addError(String.format(msgs.extraSetters(), formatted), creator.typeElement());
       }
 
+      // Component requirements that the creator must be able to set
       Set<ComponentRequirement> mustBePassed =
           Sets.filter(
-              requirements, input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
-      Set<ComponentRequirement> missingSetters =
-          Sets.difference(mustBePassed, declaredRequirements);
-      if (!missingSetters.isEmpty()) {
+              componentModuleAndDependencyRequirements,
+              input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
+      // Component requirements that the creator must be able to set, but can't
+      Set<ComponentRequirement> missingRequirements =
+          Sets.difference(mustBePassed, creatorModuleAndDependencyRequirements);
+
+      if (!missingRequirements.isEmpty()) {
         report(component)
             .addError(
                 String.format(
                     msgs.missingSetters(),
-                    missingSetters.stream().map(ComponentRequirement::type).collect(toList())),
-                spec.builderDefinitionType());
+                    missingRequirements.stream().map(ComponentRequirement::type).collect(toList())),
+                creator.typeElement());
       }
 
       // Validate that declared builder requirements (modules, dependencies) have unique types.
-      Map<Equivalence.Wrapper<TypeMirror>, List<ExecutableElement>> declaredRequirementsByType =
-          spec.requirementMethods()
+      ImmutableSetMultimap<Wrapper<TypeMirror>, ExecutableElement> declaredRequirementsByType =
+          Multimaps.filterKeys(
+                  creator.requirementElements(), in(creatorModuleAndDependencyRequirements))
+              .entries()
               .stream()
-              .filter(method -> !method.requirement().kind().equals(BOUND_INSTANCE))
               .collect(
-                  groupingBy(
-                      method -> method.requirement().wrappedType(),
-                      mapping(method -> method.method(), toList())));
-      for (Map.Entry<Equivalence.Wrapper<TypeMirror>, List<ExecutableElement>> entry :
-          declaredRequirementsByType.entrySet()) {
-        if (entry.getValue().size() > 1) {
-          TypeMirror type = entry.getKey().get();
-          report(component)
-              .addError(
-                  String.format(msgs.manyMethodsForType(), type, entry.getValue()),
-                  spec.builderDefinitionType());
-        }
-      }
+                  toImmutableSetMultimap(entry -> entry.getKey().wrappedType(), Entry::getValue));
+      declaredRequirementsByType
+          .asMap()
+          .forEach(
+              (typeWrapper, elementsForType) -> {
+                if (elementsForType.size() > 1) {
+                  TypeMirror type = typeWrapper.get();
+                  report(component)
+                      .addError(
+                          String.format(msgs.manyMethodsForType(), type, elementsForType),
+                          creator.typeElement());
+                }
+              });
+
+      // TODO(cgdecker): Duplicate binding validation should handle the case of multiple elements
+      // that set the same bound-instance Key, but validating that here would make it fail faster
+      // for subcomponents.
     }
 
     /**

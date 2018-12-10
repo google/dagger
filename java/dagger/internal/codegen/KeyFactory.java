@@ -110,16 +110,16 @@ final class KeyFactory {
     return forMethod(componentMethod, keyType);
   }
 
-  Key forSubcomponentBuilderMethod(
-      ExecutableElement subcomponentBuilderMethod, DeclaredType declaredContainer) {
-    checkArgument(subcomponentBuilderMethod.getKind().equals(METHOD));
+  Key forSubcomponentCreatorMethod(
+      ExecutableElement subcomponentCreatorMethod, DeclaredType declaredContainer) {
+    checkArgument(subcomponentCreatorMethod.getKind().equals(METHOD));
     ExecutableType resolvedMethod =
-        asExecutable(types.asMemberOf(declaredContainer, subcomponentBuilderMethod));
+        asExecutable(types.asMemberOf(declaredContainer, subcomponentCreatorMethod));
     return Key.builder(resolvedMethod.getReturnType()).build();
   }
 
-  Key forSubcomponentBuilder(TypeMirror builderType) {
-    return Key.builder(builderType).build();
+  Key forSubcomponentCreator(TypeMirror creatorType) {
+    return Key.builder(creatorType).build();
   }
 
   Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {

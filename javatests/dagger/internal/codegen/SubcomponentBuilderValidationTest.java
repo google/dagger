@@ -31,8 +31,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SubcomponentBuilderValidationTest {
 
-  private static final ErrorMessages.SubcomponentBuilderMessages MSGS =
-      new ErrorMessages.SubcomponentBuilderMessages();
+  private static final ErrorMessages.SubcomponentCreatorMessages MSGS =
+      new ErrorMessages.SubcomponentCreatorMessages();
 
   @Test
   public void testRefSubcomponentAndSubBuilderFails() {

@@ -27,23 +27,23 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ErrorMessages {
 
-  static ComponentBuilderMessages builderMsgsFor(ComponentKind kind) {
+  static ComponentCreatorMessages creatorMessagesFor(ComponentKind kind) {
     switch(kind) {
       case COMPONENT:
-        return ComponentBuilderMessages.INSTANCE;
+        return ComponentCreatorMessages.INSTANCE;
       case SUBCOMPONENT:
-        return SubcomponentBuilderMessages.INSTANCE;
+        return SubcomponentCreatorMessages.INSTANCE;
       case PRODUCTION_COMPONENT:
-        return ProductionComponentBuilderMessages.INSTANCE;
+        return ProductionComponentCreatorMessages.INSTANCE;
       case PRODUCTION_SUBCOMPONENT:
-        return ProductionSubcomponentBuilderMessages.INSTANCE;
+        return ProductionSubcomponentCreatorMessages.INSTANCE;
       default:
         throw new IllegalStateException(kind.toString());
     }
   }
 
-  static class ComponentBuilderMessages {
-    static final ComponentBuilderMessages INSTANCE = new ComponentBuilderMessages();
+  static class ComponentCreatorMessages {
+    static final ComponentCreatorMessages INSTANCE = new ComponentCreatorMessages();
 
     protected String process(String s) { return s; }
 
@@ -161,7 +161,7 @@ final class ErrorMessages {
 
     final String buildMethodReturnsSupertypeWithMissingMethods(
         TypeElement component,
-        TypeElement componentBuilder,
+        TypeElement componentCreator,
         TypeMirror returnType,
         ExecutableElement buildMethod,
         Set<ExecutableElement> additionalMethods) {
@@ -169,7 +169,7 @@ final class ErrorMessages {
           "%1$s.%2$s() returns %3$s, but %4$s declares additional component method(s): %5$s. In "
               + "order to provide type-safe access to these methods, override %2$s() to return "
               + "%4$s",
-          componentBuilder.getQualifiedName(),
+          componentCreator.getQualifiedName(),
           buildMethod.getSimpleName(),
           returnType,
           component.getQualifiedName(),
@@ -177,9 +177,9 @@ final class ErrorMessages {
     }
   }
 
-  static final class SubcomponentBuilderMessages extends ComponentBuilderMessages {
+  static final class SubcomponentCreatorMessages extends ComponentCreatorMessages {
     @SuppressWarnings("hiding")
-    static final SubcomponentBuilderMessages INSTANCE = new SubcomponentBuilderMessages();
+    static final SubcomponentCreatorMessages INSTANCE = new SubcomponentCreatorMessages();
 
     @Override protected String process(String s) {
       return s.replaceAll("component", "subcomponent").replaceAll("Component", "Subcomponent");
@@ -194,10 +194,10 @@ final class ErrorMessages {
     }
   }
 
-  private static final class ProductionComponentBuilderMessages extends ComponentBuilderMessages {
+  private static final class ProductionComponentCreatorMessages extends ComponentCreatorMessages {
     @SuppressWarnings("hiding")
-    static final ProductionComponentBuilderMessages INSTANCE =
-        new ProductionComponentBuilderMessages();
+    static final ProductionComponentCreatorMessages INSTANCE =
+        new ProductionComponentCreatorMessages();
 
     @Override protected String process(String s) {
       return s.replaceAll("component", "production component")
@@ -205,11 +205,11 @@ final class ErrorMessages {
     }
   }
 
-  private static final class ProductionSubcomponentBuilderMessages
-      extends ComponentBuilderMessages {
+  private static final class ProductionSubcomponentCreatorMessages
+      extends ComponentCreatorMessages {
     @SuppressWarnings("hiding")
-    static final ProductionSubcomponentBuilderMessages INSTANCE =
-        new ProductionSubcomponentBuilderMessages();
+    static final ProductionSubcomponentCreatorMessages INSTANCE =
+        new ProductionSubcomponentCreatorMessages();
 
     @Override
     protected String process(String s) {

@@ -23,7 +23,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Multimaps.asMap;
-import static dagger.internal.codegen.ConfigurationAnnotations.enclosedBuilders;
+import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
@@ -51,7 +51,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
-import dagger.internal.codegen.ErrorMessages.SubcomponentBuilderMessages;
+import dagger.internal.codegen.ErrorMessages.SubcomponentCreatorMessages;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.producers.CancellationPolicy;
@@ -82,7 +82,7 @@ final class ComponentValidator {
   private final DaggerElements elements;
   private final Types types;
   private final ModuleValidator moduleValidator;
-  private final BuilderValidator builderValidator;
+  private final ComponentCreatorValidator creatorValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
@@ -93,7 +93,7 @@ final class ComponentValidator {
       DaggerElements elements,
       Types types,
       ModuleValidator moduleValidator,
-      BuilderValidator builderValidator,
+      ComponentCreatorValidator creatorValidator,
       DependencyRequestValidator dependencyRequestValidator,
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
@@ -101,7 +101,7 @@ final class ComponentValidator {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
-    this.builderValidator = builderValidator;
+    this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.membersInjectionValidator = membersInjectionValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
@@ -122,7 +122,7 @@ final class ComponentValidator {
   public ComponentValidationReport validate(
       final TypeElement subject,
       Set<? extends Element> validatedSubcomponents,
-      Set<? extends Element> validatedSubcomponentBuilders) {
+      Set<? extends Element> validatedSubcomponentCreators) {
     ValidationReport.Builder<TypeElement> report = ValidationReport.about(subject);
 
     ComponentKind componentKind = ComponentKind.forAnnotatedElement(subject).get();
@@ -145,11 +145,11 @@ final class ComponentValidator {
     ImmutableList<DeclaredType> builders =
         componentKind
             .builderAnnotation()
-            .map(builderAnnotation -> enclosedBuilders(subject, builderAnnotation))
+            .map(builderAnnotation -> enclosedAnnotatedTypes(subject, builderAnnotation))
             .orElse(ImmutableList.of());
     if (builders.size() > 1) {
       report.addError(
-          String.format(ErrorMessages.builderMsgsFor(componentKind).moreThanOne(), builders),
+          String.format(ErrorMessages.creatorMessagesFor(componentKind).moreThanOne(), builders),
           subject);
     }
 
@@ -205,8 +205,8 @@ final class ComponentValidator {
               } else if (subcomponentBuilderAnnotation.isPresent()) {
                 referencedSubcomponents.put(
                     MoreTypes.asElement(returnType).getEnclosingElement(), method);
-                validateSubcomponentBuilderMethod(
-                    report, method, parameters, returnType, validatedSubcomponentBuilders);
+                validateSubcomponentCreatorMethod(
+                    report, method, parameters, returnType, validatedSubcomponentCreators);
               } else {
                 // if it's not a subcomponent...
                 switch (parameters.size()) {
@@ -246,7 +246,7 @@ final class ComponentValidator {
             (subcomponent, methods) ->
                 report.addError(
                     String.format(
-                        SubcomponentBuilderMessages.INSTANCE.moreThanOneRefToSubcomponent(),
+                        SubcomponentCreatorMessages.INSTANCE.moreThanOneRefToSubcomponent(),
                         subcomponent,
                         methods),
                     subject));
@@ -270,7 +270,7 @@ final class ComponentValidator {
     for (Element subcomponent :
         Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
       ComponentValidationReport subreport =
-          validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentBuilders);
+          validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentCreators);
       report.addItems(subreport.report().items());
       allSubcomponents.addAll(subreport.referencedSubcomponents());
     }
@@ -432,24 +432,24 @@ final class ComponentValidator {
     }
   }
 
-  private void validateSubcomponentBuilderMethod(
+  private void validateSubcomponentCreatorMethod(
       ValidationReport.Builder<TypeElement> report,
       ExecutableElement method,
       List<? extends VariableElement> parameters,
       TypeMirror returnType,
-      Set<? extends Element> validatedSubcomponentBuilders) {
+      Set<? extends Element> validatedSubcomponentCreators) {
 
     if (!parameters.isEmpty()) {
-      report.addError(SubcomponentBuilderMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
+      report.addError(SubcomponentCreatorMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
     }
 
-    // If we haven't already validated the subcomponent builder itself, validate it now.
-    TypeElement builderElement = MoreTypes.asTypeElement(returnType);
-    if (!validatedSubcomponentBuilders.contains(builderElement)) {
-      // TODO(sameb): The builder validator right now assumes the element is being compiled
+    // If we haven't already validated the subcomponent creator itself, validate it now.
+    TypeElement creatorElement = MoreTypes.asTypeElement(returnType);
+    if (!validatedSubcomponentCreators.contains(creatorElement)) {
+      // TODO(sameb): The creator validator right now assumes the element is being compiled
       // in this pass, which isn't true here.  We should change error messages to spit out
       // this method as the subject and add the original subject to the message output.
-      report.addItems(builderValidator.validate(builderElement).items());
+      report.addItems(creatorValidator.validate(creatorElement).items());
     }
   }
 

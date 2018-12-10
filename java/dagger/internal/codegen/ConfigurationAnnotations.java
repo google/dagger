@@ -19,6 +19,9 @@ package dagger.internal.codegen;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.ComponentKind.annotationsFor;
+import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
+import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
@@ -75,22 +78,21 @@ final class ConfigurationAnnotations {
   }
 
   static boolean isSubcomponent(Element element) {
-    return isAnyAnnotationPresent(element, Subcomponent.class, ProductionSubcomponent.class);
+    return isAnyAnnotationPresent(element, annotationsFor(subcomponentKinds()));
   }
 
-  static Optional<TypeElement> getSubcomponentBuilder(TypeElement subcomponent) {
+  static Optional<TypeElement> getSubcomponentCreator(TypeElement subcomponent) {
     checkArgument(isSubcomponent(subcomponent));
     for (TypeElement nestedType : typesIn(subcomponent.getEnclosedElements())) {
-      if (isSubcomponentBuilder(nestedType)) {
+      if (isSubcomponentCreator(nestedType)) {
         return Optional.of(nestedType);
       }
     }
     return Optional.empty();
   }
 
-  static boolean isSubcomponentBuilder(Element element) {
-    return isAnyAnnotationPresent(
-        element, Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+  static boolean isSubcomponentCreator(Element element) {
+    return isAnyAnnotationPresent(element, builderAnnotationsFor(subcomponentKinds()));
   }
 
   /**
@@ -201,9 +203,9 @@ final class ConfigurationAnnotations {
     return ImmutableSet.copyOf(moduleElements);
   }
 
-  /** Returns the enclosed elements annotated with the given annotation type. */
-  static ImmutableList<DeclaredType> enclosedBuilders(TypeElement typeElement,
-      final Class<? extends Annotation> annotation) {
+  /** Returns the enclosed types annotated with the given annotation. */
+  static ImmutableList<DeclaredType> enclosedAnnotatedTypes(
+      TypeElement typeElement, Class<? extends Annotation> annotation) {
     final ImmutableList.Builder<DeclaredType> builders = ImmutableList.builder();
     for (TypeElement element : typesIn(typeElement.getEnclosedElements())) {
       if (MoreElements.isAnnotationPresent(element, annotation)) {

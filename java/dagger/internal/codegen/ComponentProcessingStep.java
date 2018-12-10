@@ -47,7 +47,7 @@ import javax.lang.model.element.TypeElement;
 final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final ComponentValidator componentValidator;
-  private final BuilderValidator builderValidator;
+  private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorValidator componentDescriptorValidator;
   private final ComponentDescriptor.Factory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
@@ -66,7 +66,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   ComponentProcessingStep(
       Messager messager,
       ComponentValidator componentValidator,
-      BuilderValidator builderValidator,
+      ComponentCreatorValidator creatorValidator,
       ComponentDescriptorValidator componentDescriptorValidator,
       ComponentDescriptor.Factory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
@@ -78,7 +78,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     super(MoreElements::asType);
     this.messager = messager;
     this.componentValidator = componentValidator;
-    this.builderValidator = builderValidator;
+    this.creatorValidator = creatorValidator;
     this.componentDescriptorValidator = componentDescriptorValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
@@ -176,7 +176,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     for (Element element : builderElements) {
       try {
         ValidationReport<TypeElement> report =
-            builderValidator.validate(MoreElements.asType(element));
+            creatorValidator.validate(MoreElements.asType(element));
         report.printMessagesTo(messager);
         reports.put(element.getEnclosingElement(), report);
       } catch (TypeNotPresentException e) {

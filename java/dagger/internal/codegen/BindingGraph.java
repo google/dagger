@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.ComponentRequirement.Kind.BOUND_INSTANCE;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
@@ -28,7 +27,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Traverser;
 import dagger.Subcomponent;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Optional;
@@ -202,16 +200,11 @@ abstract class BindingGraph {
       factoryMethodParameters().keySet().forEach(requirements::add);
     }
     requirements.addAll(componentDescriptor().dependencies());
-    if (componentDescriptor().builderSpec().isPresent()) {
-      componentDescriptor()
-          .builderSpec()
-          .get()
-          .requirementMethods()
-          .stream()
-          .map(BuilderRequirementMethod::requirement)
-          .filter(req -> req.kind().equals(BOUND_INSTANCE))
-          .forEach(requirements::add);
-    }
+    componentDescriptor()
+        .creatorDescriptor()
+        .ifPresent(
+            creatorDescriptor ->
+                creatorDescriptor.boundInstanceRequirements().forEach(requirements::add));
     return requirements.build();
   }
 

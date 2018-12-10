@@ -81,12 +81,14 @@ final class SubcomponentNames {
       KeyFactory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
     ImmutableMap.Builder<Key, String> builder = ImmutableMap.builder();
     subcomponentNames.forEach(
-        (component, name) -> {
-          if (component.builderSpec().isPresent()) {
-            TypeMirror builderType = component.builderSpec().get().builderDefinitionType().asType();
-            builder.put(keyFactory.forSubcomponentBuilder(builderType), name);
-          }
-        });
+        (component, name) ->
+            component
+                .creatorDescriptor()
+                .ifPresent(
+                    creatorDescriptor -> {
+                      TypeMirror creatorType = creatorDescriptor.typeElement().asType();
+                      builder.put(keyFactory.forSubcomponentCreator(creatorType), name);
+                    }));
     return builder.build();
   }
 

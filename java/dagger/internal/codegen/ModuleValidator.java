@@ -27,7 +27,7 @@ import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes
 import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentBuilder;
+import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -301,7 +301,7 @@ final class ModuleValidator {
       TypeElement subcomponentAttribute,
       AnnotationMirror moduleAnnotation,
       ValidationReport.Builder<TypeElement> builder) {
-    if (getSubcomponentBuilder(subcomponentAttribute).isPresent()) {
+    if (getSubcomponentCreator(subcomponentAttribute).isPresent()) {
       return;
     }
     builder.addError(

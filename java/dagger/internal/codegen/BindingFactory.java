@@ -57,7 +57,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
 import dagger.Module;
-import dagger.internal.codegen.ComponentDescriptor.BuilderRequirementMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.ProductionBinding.ProductionKind;
 import dagger.model.DependencyRequest;
@@ -324,14 +323,15 @@ final class BindingFactory {
    * Returns a {@link dagger.model.BindingKind#BOUND_INSTANCE} binding for a
    * {@code @BindsInstance}-annotated builder method.
    */
-  ProvisionBinding boundInstanceBinding(BuilderRequirementMethod bindsInstanceMethod) {
-    checkArgument(bindsInstanceMethod.method().getKind().equals(METHOD));
-    checkArgument(bindsInstanceMethod.method().getParameters().size() == 1);
+  ProvisionBinding boundInstanceBinding(
+      ComponentRequirement requirement, ExecutableElement method) {
+    checkArgument(method.getKind().equals(METHOD));
+    checkArgument(method.getParameters().size() == 1);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(bindsInstanceMethod.method())
-        .key(bindsInstanceMethod.requirement().key().get())
-        .nullableType(getNullableType(getOnlyElement(bindsInstanceMethod.method().getParameters())))
+        .bindingElement(method)
+        .key(requirement.key().get())
+        .nullableType(getNullableType(getOnlyElement(method.getParameters())))
         .kind(BOUND_INSTANCE)
         .build();
   }
@@ -339,21 +339,21 @@ final class BindingFactory {
   /**
    * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared by a component
    * method that returns a subcomponent builder. Use {{@link
-   * #subcomponentBuilderBinding(ImmutableSet)}} for bindings declared using {@link
+   * #subcomponentCreatorBinding(ImmutableSet)}} for bindings declared using {@link
    * Module#subcomponents()}.
    *
    * @param component the component that declares or inherits the method
    */
-  ProvisionBinding subcomponentBuilderBinding(
-      ExecutableElement subcomponentBuilderMethod, TypeElement component) {
-    checkArgument(subcomponentBuilderMethod.getKind().equals(METHOD));
-    checkArgument(subcomponentBuilderMethod.getParameters().isEmpty());
+  ProvisionBinding subcomponentCreatorBinding(
+      ExecutableElement subcomponentCreatorMethod, TypeElement component) {
+    checkArgument(subcomponentCreatorMethod.getKind().equals(METHOD));
+    checkArgument(subcomponentCreatorMethod.getParameters().isEmpty());
     Key key =
-        keyFactory.forSubcomponentBuilderMethod(
-            subcomponentBuilderMethod, asDeclared(component.asType()));
+        keyFactory.forSubcomponentCreatorMethod(
+            subcomponentCreatorMethod, asDeclared(component.asType()));
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(subcomponentBuilderMethod)
+        .bindingElement(subcomponentCreatorMethod)
         .key(key)
         .kind(SUBCOMPONENT_BUILDER)
         .build();
@@ -363,7 +363,7 @@ final class BindingFactory {
    * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared using {@link
    * Module#subcomponents()}.
    */
-  ProvisionBinding subcomponentBuilderBinding(
+  ProvisionBinding subcomponentCreatorBinding(
       ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations) {
     SubcomponentDeclaration subcomponentDeclaration = subcomponentDeclarations.iterator().next();
     return ProvisionBinding.builder()

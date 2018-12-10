@@ -62,6 +62,11 @@ abstract class ComponentRequirement {
   /** The kind of requirement. */
   abstract Kind kind();
 
+  /** Returns true if this is a {@link Kind#BOUND_INSTANCE} requirement. */
+  final boolean isBoundInstance() {
+    return kind().equals(Kind.BOUND_INSTANCE);
+  }
+
   /**
    * The type of the instance the component must have, wrapped so that requirements can be used as
    * value types.

@@ -31,7 +31,7 @@ import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CAN
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CONSTRUCTOR;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.INITIALIZE_METHOD;
-import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_BUILDER;
+import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_CREATOR;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.SUBCOMPONENT;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
@@ -107,10 +107,10 @@ final class ComponentImplementationFactory {
     ComponentImplementation componentImplementation =
         topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
     OptionalFactories optionalFactories = new OptionalFactories(componentImplementation);
-    Optional<ComponentBuilderImplementation> componentBuilderImplementation =
-        ComponentBuilderImplementation.create(
+    Optional<ComponentCreatorImplementation> componentCreatorImplementation =
+        ComponentCreatorImplementation.create(
             componentImplementation, bindingGraph, elements, types);
-    componentImplementation.setBuilderImplementation(componentBuilderImplementation);
+    componentImplementation.setCreatorImplementation(componentCreatorImplementation);
     ComponentRequirementFields componentRequirementFields =
         new ComponentRequirementFields(bindingGraph, componentImplementation);
     ComponentBindingExpressions bindingExpressions =
@@ -192,9 +192,9 @@ final class ComponentImplementationFactory {
           componentImplementation.name());
       setSupertype();
       componentImplementation
-          .builderImplementation()
-          .map(ComponentBuilderImplementation::componentBuilderClass)
-          .ifPresent(this::addBuilderClass);
+          .creatorImplementation()
+          .map(ComponentCreatorImplementation::componentCreatorClass)
+          .ifPresent(this::addCreatorClass);
 
       getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
           .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
@@ -231,10 +231,10 @@ final class ComponentImplementationFactory {
     }
 
     /**
-     * Adds {@code builder} as a nested builder class. Root components and subcomponents will nest
+     * Adds {@code creator} as a nested creator class. Root components and subcomponents will nest
      * this in different classes.
      */
-    abstract void addBuilderClass(TypeSpec builder);
+    abstract void addCreatorClass(TypeSpec creator);
 
     /** Adds component factory methods. */
     abstract void addFactoryMethods();
@@ -392,9 +392,9 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents()
               ? abstractInnerSubcomponent(childGraph.componentDescriptor())
               : concreteSubcomponent(childGraph.componentDescriptor());
-      Optional<ComponentBuilderImplementation> childBuilderImplementation =
-          ComponentBuilderImplementation.create(childImplementation, childGraph, elements, types);
-      childImplementation.setBuilderImplementation(childBuilderImplementation);
+      Optional<ComponentCreatorImplementation> childCreatorImplementation =
+          ComponentCreatorImplementation.create(childImplementation, childGraph, elements, types);
+      childImplementation.setCreatorImplementation(childCreatorImplementation);
       ComponentRequirementFields childComponentRequirementFields =
           componentRequirementFields.forChildComponent(childGraph, childImplementation);
       ComponentBindingExpressions childBindingExpressions =
@@ -530,21 +530,21 @@ final class ComponentImplementationFactory {
 
     /** Returns the list of {@link ParameterSpec}s for the constructor. */
     final ImmutableList<ParameterSpec> constructorParameters() {
-      Optional<ClassName> componentBuilderName;
-      if (componentImplementation.builderImplementation().isPresent()) {
-        componentBuilderName =
-            componentImplementation.builderImplementation().map(builder -> builder.name());
+      Optional<ClassName> componentCreatorName;
+      if (componentImplementation.creatorImplementation().isPresent()) {
+        componentCreatorName =
+            componentImplementation.creatorImplementation().map(creator -> creator.name());
       } else {
-        componentBuilderName =
+        componentCreatorName =
             componentImplementation
                 .baseImplementation()
-                .filter(component -> component.componentDescriptor().hasBuilder())
-                .map(ComponentImplementation::getBuilderName);
+                .filter(component -> component.componentDescriptor().hasCreator())
+                .map(ComponentImplementation::getCreatorName);
       }
 
-      if (componentBuilderName.isPresent()) {
+      if (componentCreatorName.isPresent()) {
         return ImmutableList.of(
-            ParameterSpec.builder(componentBuilderName.get(), "builder").build());
+            ParameterSpec.builder(componentCreatorName.get(), "builder").build());
       } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
         // If we're generating an abstract inner subcomponent, then we are not implementing module
         // instance bindings and have no need for factory method parameters.
@@ -553,18 +553,18 @@ final class ComponentImplementationFactory {
         return getFactoryMethodParameterSpecs(graph);
       } else if (componentImplementation.isAbstract()) {
         // If we're generating an abstract base implementation of a subcomponent it's acceptable to
-        // have neither a builder nor factory method.
+        // have neither a creator nor factory method.
         return ImmutableList.of();
       } else {
         throw new AssertionError(
-            "Expected either a component builder or factory method but found neither.");
+            "Expected either a component creator or factory method but found neither.");
       }
     }
   }
 
   /** Builds a root component implementation. */
   private final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
-    private final ClassName componentBuilderName;
+    private final ClassName componentCreatorName;
 
     RootComponentImplementationBuilder(
         BindingGraph graph,
@@ -578,31 +578,33 @@ final class ComponentImplementationFactory {
           optionalFactories,
           bindingExpressions,
           componentRequirementFields);
-      this.componentBuilderName = componentImplementation.builderImplementation().get().name();
+      this.componentCreatorName = componentImplementation.creatorImplementation().get().name();
     }
 
     @Override
-    void addBuilderClass(TypeSpec builder) {
-      componentImplementation.addType(COMPONENT_BUILDER, builder);
+    void addCreatorClass(TypeSpec creator) {
+      componentImplementation.addType(COMPONENT_CREATOR, creator);
     }
 
     @Override
     void addFactoryMethods() {
       // Only top-level components have the factory builder() method.
-      // Mirror the user's builder API type if they had one.
-      MethodSpec builderFactoryMethod =
+      // Mirror the user's creator API type if they had one.
+      MethodSpec creatorFactoryMethod =
           methodBuilder("builder")
               .addModifiers(PUBLIC, STATIC)
               .returns(
-                  builderSpec()
-                      .map(builderSpec -> ClassName.get(builderSpec.builderDefinitionType()))
-                      .orElse(componentBuilderName))
-              .addStatement("return new $T()", componentBuilderName)
+                  creatorDescriptor()
+                      .map(creatorDescriptor -> ClassName.get(creatorDescriptor.typeElement()))
+                      .orElse(componentCreatorName))
+              .addStatement("return new $T()", componentCreatorName)
               .build();
-      componentImplementation.addMethod(BUILDER_METHOD, builderFactoryMethod);
+      componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
       if (canInstantiateAllRequirements()) {
         CharSequence buildMethodName =
-            builderSpec().isPresent() ? builderSpec().get().buildMethod().getSimpleName() : "build";
+            creatorDescriptor().isPresent()
+                ? creatorDescriptor().get().factoryMethod().getSimpleName()
+                : "build";
         componentImplementation.addMethod(
             BUILDER_METHOD,
             methodBuilder("create")
@@ -613,8 +615,8 @@ final class ComponentImplementationFactory {
       }
     }
 
-    Optional<ComponentDescriptor.BuilderSpec> builderSpec() {
-      return graph.componentDescriptor().builderSpec();
+    private Optional<ComponentCreatorDescriptor> creatorDescriptor() {
+      return graph.componentDescriptor().creatorDescriptor();
     }
 
     /** {@code true} if all of the graph's required dependencies can be automatically constructed */
@@ -651,12 +653,12 @@ final class ComponentImplementationFactory {
     }
 
     @Override
-    void addBuilderClass(TypeSpec builder) {
+    void addCreatorClass(TypeSpec creator) {
       if (parent.isPresent()) {
-        // In an inner implementation of a subcomponent the builder is a peer class.
-        parent.get().componentImplementation.addType(SUBCOMPONENT, builder);
+        // In an inner implementation of a subcomponent the creator is a peer class.
+        parent.get().componentImplementation.addType(SUBCOMPONENT, creator);
       } else {
-        componentImplementation.addType(SUBCOMPONENT, builder);
+        componentImplementation.addType(SUBCOMPONENT, creator);
       }
     }
 

@@ -44,8 +44,8 @@ public class ComponentBuilderTest {
     this.compilerMode = compilerMode;
   }
 
-  private static final ErrorMessages.ComponentBuilderMessages MSGS =
-      ErrorMessages.ComponentBuilderMessages.INSTANCE;
+  private static final ErrorMessages.ComponentCreatorMessages MSGS =
+      ErrorMessages.ComponentCreatorMessages.INSTANCE;
 
   @Test
   public void testEmptyBuilder() {

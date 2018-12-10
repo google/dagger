@@ -58,8 +58,7 @@ final class ComponentRequirementFields {
   }
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
-  ComponentRequirementFields(
-      BindingGraph graph, ComponentImplementation componentImplementation) {
+  ComponentRequirementFields(BindingGraph graph, ComponentImplementation componentImplementation) {
     this(Optional.empty(), graph, componentImplementation);
   }
 
@@ -103,12 +102,12 @@ final class ComponentRequirementFields {
 
   /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
   private ComponentRequirementField create(ComponentRequirement requirement) {
-    Optional<ComponentBuilderImplementation> builderImplementation =
+    Optional<ComponentCreatorImplementation> creatorImplementation =
         Optionals.firstPresent(
-            componentImplementation.baseImplementation().flatMap(c -> c.builderImplementation()),
-            componentImplementation.builderImplementation());
-    if (builderImplementation.isPresent()) {
-      FieldSpec builderField = builderImplementation.get().builderFields().get(requirement);
+            componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()),
+            componentImplementation.creatorImplementation());
+    if (creatorImplementation.isPresent()) {
+      FieldSpec builderField = creatorImplementation.get().builderFields().get(requirement);
       return new BuilderField(requirement, componentImplementation, builderField);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {

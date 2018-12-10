@@ -132,8 +132,8 @@ final class ComponentImplementation {
     /** A factory class for a present optional binding. */
     PRESENT_FACTORY,
 
-    /** A class for the component builder (Only used by the root component.) */
-    COMPONENT_BUILDER,
+    /** A class for the component creator (only used by the root component.) */
+    COMPONENT_CREATOR,
 
     /** A provider class for a component provision. */
     COMPONENT_PROVISION_FACTORY,
@@ -147,7 +147,7 @@ final class ComponentImplementation {
   private final NestingKind nestingKind;
   private final boolean isAbstract;
   private final Optional<ComponentImplementation> superclassImplementation;
-  private Optional<ComponentBuilderImplementation> builderImplementation;
+  private Optional<ComponentCreatorImplementation> creatorImplementation;
   private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
@@ -289,22 +289,22 @@ final class ComponentImplementation {
     addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method);
   }
 
-  void setBuilderImplementation(Optional<ComponentBuilderImplementation> builderImplementation) {
+  void setCreatorImplementation(Optional<ComponentCreatorImplementation> creatorImplementation) {
     checkState(
-        this.builderImplementation == null, "setBuilderImplementation has already been called");
-    this.builderImplementation = builderImplementation;
+        this.creatorImplementation == null, "setCreatorImplementation has already been called");
+    this.creatorImplementation = creatorImplementation;
   }
 
-  Optional<ComponentBuilderImplementation> builderImplementation() {
-    checkState(builderImplementation != null, "setBuilderImplementation has not been called yet");
-    return builderImplementation;
+  Optional<ComponentCreatorImplementation> creatorImplementation() {
+    checkState(creatorImplementation != null, "setCreatorImplementation has not been called yet");
+    return creatorImplementation;
   }
 
   /**
-   * Returns the name of the builder class for this component. It will be a sibling of this
+   * Returns the name of the creator class for this component. It will be a sibling of this
    * generated class unless this is a top-level component, in which case it will be nested.
    */
-  ClassName getBuilderName() {
+  ClassName getCreatorName() {
     return isNested()
         ? name.peerClass(subcomponentNames.get(componentDescriptor) + "Builder")
         : name.nestedClass("Builder");

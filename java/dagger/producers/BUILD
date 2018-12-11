@@ -46,7 +46,7 @@ java_library(
     ],
     deps = [
         "//java/dagger:core",
-        "@google_bazel_common//third_party/java/checker_framework:annotations",
+        "@google_bazel_common//third_party/java/checker_framework_annotations",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",

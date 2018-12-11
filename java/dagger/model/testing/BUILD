@@ -32,7 +32,7 @@ java_library(
         "//java/dagger/internal/codegen:jdk-and-guava-extras",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/checker_framework:annotations",
+        "@google_bazel_common//third_party/java/checker_framework_annotations",
         "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/truth",
     ],

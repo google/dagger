@@ -57,14 +57,24 @@ abstract class ComponentRequirement {
      * An object that is passed to a builder's {@link dagger.BindsInstance @BindsInstance} method.
      */
     BOUND_INSTANCE,
+    ;
+
+    boolean isBoundInstance() {
+      return equals(BOUND_INSTANCE);
+    }
+
+    boolean isModule() {
+      return equals(MODULE);
+    }
   }
 
   /** The kind of requirement. */
   abstract Kind kind();
 
   /** Returns true if this is a {@link Kind#BOUND_INSTANCE} requirement. */
+  // TODO(ronshapiro): consider removing this and inlining the usages
   final boolean isBoundInstance() {
-    return kind().equals(Kind.BOUND_INSTANCE);
+    return kind().isBoundInstance();
   }
 
   /**
@@ -125,7 +135,7 @@ abstract class ComponentRequirement {
    * to be used within a component.
    */
   boolean requiresAPassedInstance(Elements elements, Types types) {
-    if (kind().equals(Kind.BOUND_INSTANCE)) {
+    if (isBoundInstance()) {
       // A user has explicitly defined in their component builder they will provide an instance.
       return true;
     }

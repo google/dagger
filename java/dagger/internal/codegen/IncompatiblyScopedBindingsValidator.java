@@ -69,14 +69,12 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
               scope -> {
                 ComponentNode componentNode =
                     bindingGraph.componentNode(binding.componentPath()).get();
-                if (bindingGraph.isModuleBindingGraph() && componentNode.componentPath().atRoot()) {
-                  // @Inject bindings in the root "component" for module binding graphs will appear
-                  // at the properly scoped ancestor component of the component that installs the
-                  // module, so ignore them here.
-                  if (!binding.kind().equals(INJECTION)) {
-                    incompatibleBindings.put(componentNode, binding);
+                if (!componentNode.scopes().contains(scope)) {
+                  // @Inject bindings in for module binding graphs will appear at the properly
+                  // scoped ancestor component, so ignore them here.
+                  if (binding.kind().equals(INJECTION) && bindingGraph.isModuleBindingGraph()) {
+                    return;
                   }
-                } else if (!componentNode.scopes().contains(scope)) {
                   incompatibleBindings.put(componentNode, binding);
                 }
               });

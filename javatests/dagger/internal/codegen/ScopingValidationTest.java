@@ -262,7 +262,9 @@ public class ScopingValidationTest {
   public void moduleBindingValidationDoesNotReportForOneScope() {
     Compilation compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions(
+                "-Adagger.moduleBindingValidation=ERROR",
+                "-Adagger.moduleHasDifferentScopesValidation=ERROR")
             .compile(
                 JavaFileObjects.forSourceLines(
                     "test.TestModule",
@@ -277,6 +279,106 @@ public class ScopingValidationTest {
                     "  @Provides @Singleton static Object object() { return \"object\"; }",
                     "  @Provides @Singleton static String string() { return \"string\"; }",
                     "  @Provides static int integer() { return 4; }",
+                    "}"));
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void moduleBindingValidationDoesNotReportInjectBindings() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(
+                "-Adagger.moduleBindingValidation=ERROR",
+                "-Adagger.moduleHasDifferentScopesValidation=ERROR")
+            .compile(
+                JavaFileObjects.forSourceLines(
+                    "test.UsedInRootRedScoped",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "@RedScope",
+                    "final class UsedInRootRedScoped {",
+                    "  @Inject UsedInRootRedScoped() {}",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.UsedInRootBlueScoped",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "@BlueScope",
+                    "final class UsedInRootBlueScoped {",
+                    "  @Inject UsedInRootBlueScoped() {}",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.RedScope",
+                    "package test;",
+                    "",
+                    "import javax.inject.Scope;",
+                    "",
+                    "@Scope",
+                    "@interface RedScope {}"),
+                JavaFileObjects.forSourceLines(
+                    "test.BlueScope",
+                    "package test;",
+                    "",
+                    "import javax.inject.Scope;",
+                    "",
+                    "@Scope",
+                    "@interface BlueScope {}"),
+                JavaFileObjects.forSourceLines(
+                    "test.TestModule",
+                    "package test;",
+                    "",
+                    "import dagger.Module;",
+                    "import dagger.Provides;",
+                    "import javax.inject.Singleton;",
+                    "",
+                    "@Module(subcomponents = Child.class)",
+                    "interface TestModule {",
+                    "  @Provides @Singleton",
+                    "  static Object object(",
+                    "      UsedInRootRedScoped usedInRootRedScoped,",
+                    "      UsedInRootBlueScoped usedInRootBlueScoped) {",
+                    "    return \"object\";",
+                    "  }",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.Child",
+                    "package test;",
+                    "",
+                    "import dagger.Subcomponent;",
+                    "",
+                    "@Subcomponent",
+                    "interface Child {",
+                    "  UsedInChildRedScoped usedInChildRedScoped();",
+                    "  UsedInChildBlueScoped usedInChildBlueScoped();",
+                    "",
+                    "  @Subcomponent.Builder",
+                    "  interface Builder {",
+                    "    Child child();",
+                    "  }",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.UsedInChildRedScoped",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "@RedScope",
+                    "final class UsedInChildRedScoped {",
+                    "  @Inject UsedInChildRedScoped() {}",
+                    "}"),
+                JavaFileObjects.forSourceLines(
+                    "test.UsedInChildBlueScoped",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "@BlueScope",
+                    "final class UsedInChildBlueScoped {",
+                    "  @Inject UsedInChildBlueScoped() {}",
                     "}"));
     assertThat(compilation).succeededWithoutWarnings();
   }

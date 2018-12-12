@@ -27,7 +27,7 @@ could be built on top of this (though none have been yet).
 [dependency request]: glossary/dependency_request.md
 [Kythe]: https://kythe.io
 [Language Server Protocol]:  https://microsoft.github.io/language-server-protocol/
-[module]: glossary/module.md
+[modules]: glossary/module.md
 [`@Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
 

@@ -6880,6 +6880,155 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedAncestor);
   }
 
+  /**
+   * This test verifies that Dagger can find the appropriate child subcomponent
+   * super-implementation, even if it is not enclosed in the current component's
+   * super-implementation. This can happen if a subcomponent is installed with a module's {@code
+   * subcomponents} attribute, but the binding is not accessed in a super-implementation. To exhibit
+   * this, we use multibindings that reference the pruned subcomponent, but make the multibinding
+   * also unresolved in the base implementation. An ancestor component defines a binding that
+   * depends on the multibinding, which induces the previously unresolved multibinding
+   * contributions, which itself induces the previously unresolved subcomponent.
+   */
+  @Test
+  public void subcomponentInducedFromAncestor() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "Inducer");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.InducedSubcomponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface InducedSubcomponent {",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    InducedSubcomponent build();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.MaybeLeaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = InducedSubcomponentModule.class)",
+            "interface MaybeLeaf {",
+            "  Inducer inducer();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.MaybeLeaf",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module(subcomponents = InducedSubcomponent.class)",
+            "interface InducedSubcomponentModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Object inducedSet(InducedSubcomponent.Builder builder) {",
+            "    return new Object();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedMaybeLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerMaybeLeaf implements MaybeLeaf {",
+            "  protected DaggerMaybeLeaf() {}",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerMaybeLeaf")
+        .hasSourceEquivalentTo(generatedMaybeLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.Multibinds;",
+            "import java.util.Set;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static Inducer inducer(Set<Object> set) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Multibinds Set<Object> set();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = AncestorModule.class)",
+            "interface Ancestor {",
+            "  MaybeLeaf noLongerLeaf();",
+            "}"));
+
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            "import com.google.common.collect.ImmutableSet;",
+            "import java.util.Set;",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected DaggerAncestor() {}",
+            "",
+            "  protected abstract class MaybeLeafImpl extends DaggerMaybeLeaf {",
+            "    protected MaybeLeafImpl() {}",
+            "",
+            "    private Object getObject() {",
+            "      return InducedSubcomponentModule_InducedSetFactory.proxyInducedSet(",
+            "          getInducedSubcomponentBuilder());",
+            "    }",
+            "",
+            "    protected abstract Object getInducedSubcomponentBuilder();",
+            "",
+            "    protected Set<Object> getSetOfObject() {",
+            "      return ImmutableSet.<Object>of(getObject());",
+            "    }",
+            "",
+            "    @Override",
+            "    public final Inducer inducer() {",
+            "      return AncestorModule_InducerFactory.proxyInducer(getSetOfObject());",
+            "    }",
+            "",
+            "    protected abstract class InducedSubcomponentImpl extends",
+            "        DaggerInducedSubcomponent {",
+            //       ^ Note that this is DaggerInducedSubcomponent, not
+            //         DaggerMaybeLeaf.InducedSubcomponentImpl
+            "      protected InducedSubcomponentImpl() {}",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .hasSourceEquivalentTo(generatedAncestor);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

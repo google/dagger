@@ -363,26 +363,26 @@ final class ComponentImplementationFactory {
     }
 
     final ComponentImplementation getChildSuperclassImplementation(ComponentDescriptor child) {
-      // If the current component has a superclass implementation, that superclass
-      // should contain a reference to the child.
-      if (componentImplementation.superclassImplementation().isPresent()) {
-        ComponentImplementation superclassImplementation =
-            componentImplementation.superclassImplementation().get();
+      // If the current component has superclass implementations, a superclass may contain a
+      // reference to the child. Traverse this component's superimplementation hierarchy looking for
+      // the child's implementation. The child superclass implementation may not be present in the
+      // direct superclass implementations if the subcomponent builder was previously a pruned
+      // binding.
+      Optional<ComponentImplementation> currentSuperclassImplementation =
+          componentImplementation.superclassImplementation();
+      while (currentSuperclassImplementation.isPresent()) {
         Optional<ComponentImplementation> childSuperclassImplementation =
-            superclassImplementation.childImplementation(child);
-        checkState(
-            childSuperclassImplementation.isPresent(),
-            "Cannot find abstract implementation of %s within %s while generating implemention "
-                + "within %s",
-            child.typeElement(),
-            superclassImplementation.name(),
-            componentImplementation.name());
-        return childSuperclassImplementation.get();
+            currentSuperclassImplementation.get().childImplementation(child);
+        if (childSuperclassImplementation.isPresent()) {
+          return childSuperclassImplementation.get();
+        }
+        currentSuperclassImplementation =
+            currentSuperclassImplementation.get().superclassImplementation();
       }
 
-      // Otherwise, the enclosing component is top-level, so we must recreate the implementation
-      // object for the base implementation of the child by truncating the binding graph at the
-      // child.
+      // Otherwise, the superclass implementation is top-level, so we must recreate the
+      // implementation object for the base implementation of the child by truncating the binding
+      // graph at the child.
       BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child);
       return createComponentImplementation(truncatedBindingGraph);
     }

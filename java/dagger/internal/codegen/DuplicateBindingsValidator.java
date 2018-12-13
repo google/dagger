@@ -18,34 +18,32 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.common.collect.Maps.filterValues;
+import static com.google.common.collect.Maps.transformValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Optionals.emptiesLast;
-import static dagger.model.BindingKind.MEMBERS_INJECTION;
 import static java.util.Comparator.comparing;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.Node;
-import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
@@ -111,69 +109,36 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     // subcomponent to fix.
     // TODO(ronshapiro): Explore ways to address such underreporting without overreporting.
     Set<ImmutableSet<Equivalence.Wrapper<Binding>>> reportedDuplicateBindingSets = new HashSet<>();
-    duplicateBindingSets(bindingGraph)
+    duplicateBindings(bindingGraph)
         .forEach(
-            duplicateBindings -> {
+            (sourceAndRequest, resolvedBindings) -> {
               // Only report each set of duplicate bindings once, ignoring the installed component.
-              if (reportedDuplicateBindingSets.add(duplicateBindings)) {
-                reportDuplicateBindings(
-                    duplicateBindings.stream()
-                        .map(Equivalence.Wrapper::get)
-                        .collect(toImmutableSet()),
-                    bindingGraph,
-                    diagnosticReporter);
+              if (reportedDuplicateBindingSets.add(
+                  equivalentSetIgnoringComponentPath(resolvedBindings))) {
+                reportDuplicateBindings(resolvedBindings, bindingGraph, diagnosticReporter);
               }
             });
   }
 
   /**
-   * Returns sets of duplicate bindings. Bindings are duplicates if they bind the same key and are
-   * visible from the same component. Two bindings that differ only in the component that owns them
-   * are not considered to be duplicates, because that means the same binding was "copied" down to a
-   * descendant component because it depends on local multibindings or optional bindings.
+   * Returns duplicate bindings for each dependency request, counting the same dependency request
+   * separately when coming from separate source nodes.
    */
-  private ImmutableSet<ImmutableSet<Equivalence.Wrapper<Binding>>> duplicateBindingSets(
+  private Map<SourceAndRequest, ImmutableSet<Binding>> duplicateBindings(
       BindingGraph bindingGraph) {
-    return groupBindingsByKey(bindingGraph).stream()
-        .flatMap(bindings -> mutuallyVisibleSubsets(bindings).stream())
-        .map(DuplicateBindingsValidator::equivalentSetIgnoringComponentPath)
-        .filter(duplicates -> duplicates.size() > 1)
-        .collect(toImmutableSet());
-  }
-
-  private static ImmutableSet<ImmutableSet<Binding>> groupBindingsByKey(BindingGraph bindingGraph) {
-    return valueSetsForEachKey(
-        bindingGraph.bindings().stream()
-            .filter(binding -> !binding.kind().equals(MEMBERS_INJECTION))
-            .collect(toImmutableSetMultimap(Binding::key, binding -> binding)));
-  }
-
-  /**
-   * Returns the subsets of the input set that contain bindings that are all visible from the same
-   * component. A binding is visible from its component and all its descendants.
-   */
-  private static ImmutableSet<ImmutableSet<Binding>> mutuallyVisibleSubsets(
-      Set<Binding> duplicateBindings) {
-    ImmutableListMultimap<ComponentPath, Binding> bindingsByComponentPath =
-        Multimaps.index(duplicateBindings, Binding::componentPath);
-    ImmutableSetMultimap.Builder<ComponentPath, Binding> mutuallyVisibleBindings =
-        ImmutableSetMultimap.builder();
-    bindingsByComponentPath
-        .asMap()
-        .forEach(
-            (componentPath, bindings) -> {
-              mutuallyVisibleBindings.putAll(componentPath, bindings);
-              for (ComponentPath ancestor = componentPath; !ancestor.atRoot(); ) {
-                ancestor = ancestor.parent();
-                ImmutableList<Binding> bindingsInAncestor = bindingsByComponentPath.get(ancestor);
-                mutuallyVisibleBindings.putAll(componentPath, bindingsInAncestor);
-              }
-            });
-    return valueSetsForEachKey(mutuallyVisibleBindings.build());
-  }
-
-  private static <E> ImmutableSet<ImmutableSet<E>> valueSetsForEachKey(Multimap<?, E> multimap) {
-    return multimap.asMap().values().stream().map(ImmutableSet::copyOf).collect(toImmutableSet());
+    ImmutableSetMultimap<SourceAndRequest, Binding> bindingsByDependencyRequest =
+        bindingGraph.dependencyEdges().stream()
+            .filter(edge -> bindingGraph.network().incidentNodes(edge).target() instanceof Binding)
+            .collect(
+                toImmutableSetMultimap(
+                    edge ->
+                        SourceAndRequest.create(
+                            bindingGraph.network().incidentNodes(edge).source(),
+                            edge.dependencyRequest()),
+                    edge -> ((Binding) bindingGraph.network().incidentNodes(edge).target())));
+    return transformValues(
+        filterValues(bindingsByDependencyRequest.asMap(), bindings -> bindings.size() > 1),
+        ImmutableSet::copyOf);
   }
 
   private void reportDuplicateBindings(

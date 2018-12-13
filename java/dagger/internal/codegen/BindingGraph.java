@@ -23,12 +23,17 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import com.google.common.graph.Traverser;
 import dagger.Subcomponent;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 import javax.lang.model.element.ExecutableElement;
@@ -76,7 +81,7 @@ abstract class BindingGraph {
         .build();
   }
 
-  abstract ImmutableSet<BindingGraph> subgraphs();
+  abstract ImmutableList<BindingGraph> subgraphs();
 
   /**
    * The type that defines the component for this graph.
@@ -226,9 +231,10 @@ abstract class BindingGraph {
       ComponentDescriptor componentDescriptor,
       ImmutableMap<Key, ResolvedBindings> resolvedContributionBindingsMap,
       ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
-      ImmutableSet<BindingGraph> subgraphs,
+      ImmutableList<BindingGraph> subgraphs,
       ImmutableSet<ModuleDescriptor> ownedModules,
       Optional<ExecutableElement> factoryMethod) {
+    checkForDuplicates(subgraphs);
     return new AutoValue_BindingGraph(
         componentDescriptor,
         resolvedContributionBindingsMap,
@@ -236,5 +242,15 @@ abstract class BindingGraph {
         subgraphs,
         ownedModules,
         factoryMethod);
+  }
+
+  private static final void checkForDuplicates(Iterable<BindingGraph> graphs) {
+    Map<TypeElement, Collection<BindingGraph>> duplicateGraphs =
+        Maps.filterValues(
+            Multimaps.index(graphs, graph -> graph.componentDescriptor().typeElement()).asMap(),
+            overlapping -> overlapping.size() > 1);
+    if (!duplicateGraphs.isEmpty()) {
+      throw new IllegalArgumentException("Expected no duplicates: " + duplicateGraphs);
+    }
   }
 }

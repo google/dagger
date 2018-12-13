@@ -188,7 +188,7 @@ final class BindingGraphFactory {
     // done in a queue since resolving one subcomponent might resolve a key for a subcomponent
     // from a parent graph. This is done until no more new subcomponents are resolved.
     Set<ComponentDescriptor> resolvedSubcomponents = new HashSet<>();
-    ImmutableSet.Builder<BindingGraph> subgraphs = ImmutableSet.builder();
+    ImmutableList.Builder<BindingGraph> subgraphs = ImmutableList.builder();
     for (ComponentDescriptor subcomponent :
         Iterables.consumingIterable(requestResolver.subcomponentsToResolve)) {
       if (resolvedSubcomponents.add(subcomponent)) {

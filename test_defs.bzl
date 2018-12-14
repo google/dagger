@@ -60,6 +60,7 @@ def GenRobolectricTests(
         javacopts = None,
         lib_javacopts = None,
         test_javacopts = None,
+        functional = True,
         manifest_values = None):
     # TODO(ronshapiro): enable these with these instructions:
     # https://docs.bazel.build/versions/master/be/android.html#android_local_test_examples
@@ -91,6 +92,7 @@ def _GenTests(
         javacopts,
         lib_javacopts,
         test_javacopts,
+        functional,
         test_kwargs = test_kwargs,
     )
 
@@ -108,6 +110,7 @@ def _GenTests(
                 variant_javacopts,
                 lib_javacopts,
                 test_javacopts,
+                functional,
                 variant_name,
                 test_kwargs = test_kwargs,
             )
@@ -123,6 +126,7 @@ def _gen_tests(
         javacopts,
         lib_javacopts,
         test_javacopts,
+        functional,
         variant_name = None,
         test_kwargs = {}):
     if variant_name:
@@ -161,6 +165,8 @@ def _gen_tests(
             tags = tags,
             deps = deps,
         )
+        if functional:
+            _hjar_test(supporting_files_name, tags)
 
     for test_file in test_files:
         test_name = test_file.replace(".java", "")
@@ -180,3 +186,7 @@ def _gen_tests(
             deps = test_deps,
             **test_kwargs
         )
+
+
+def _hjar_test(name, tags):
+    pass

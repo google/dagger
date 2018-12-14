@@ -23,6 +23,7 @@ load("//:test_defs.bzl", "GenRobolectricTests")
 GenRobolectricTests(
     name = "android-support-tests",
     srcs = glob(["*.java"]),
+    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",

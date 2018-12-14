@@ -28,9 +28,6 @@ GenJavaTests(
     name = "functional_tests",
     srcs = glob(
         ["**/*.java"],
-        exclude = [
-            "HjarTest.java",
-        ],
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     lib_javacopts = SOURCE_7_TARGET_7,

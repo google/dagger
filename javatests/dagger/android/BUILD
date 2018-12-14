@@ -23,6 +23,7 @@ load("//:test_defs.bzl", "GenRobolectricTests")
 GenRobolectricTests(
     name = "android_tests",
     srcs = glob(["*.java"]),
+    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     manifest_values = {"minSdkVersion": "17"},
     deps = [

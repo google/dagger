@@ -43,6 +43,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
 import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
+import dagger.producers.internal.CancellationListener;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.Set;
@@ -188,6 +189,12 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
                   generatedComponent.addMethod(
                       emptyComponentMethod(componentElement, method.methodElement())));
 
+      if (componentDescriptor.kind().isProducer()) {
+        generatedComponent
+            .addSuperinterface(ClassName.get(CancellationListener.class))
+            .addMethod(onProducerFutureCancelledMethod());
+      }
+
       return Optional.of(generatedComponent);
     }
   }
@@ -251,6 +258,13 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     return MethodSpec.methodBuilder("create")
         .addModifiers(PUBLIC, STATIC)
         .returns(ClassName.get(componentDescriptor.typeElement()))
+        .build();
+  }
+
+  private MethodSpec onProducerFutureCancelledMethod() {
+    return MethodSpec.methodBuilder("onProducerFutureCancelled")
+        .addModifiers(PUBLIC)
+        .addParameter(TypeName.BOOLEAN, "mayInterruptIfRunning")
         .build();
   }
 }

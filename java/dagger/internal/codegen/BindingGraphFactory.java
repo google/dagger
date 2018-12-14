@@ -291,7 +291,7 @@ final class BindingGraphFactory {
         ImmutableSetMultimap<Key, SubcomponentDeclaration> subcomponentDeclarations,
         ImmutableSetMultimap<Key, DelegateDeclaration> delegateDeclarations,
         ImmutableSetMultimap<Key, OptionalBindingDeclaration> optionalBindingDeclarations) {
-      this.parentResolver = checkNotNull(parentResolver);
+      this.parentResolver = parentResolver;
       this.componentDescriptor = checkNotNull(componentDescriptor);
       this.explicitBindings = checkNotNull(explicitBindings);
       this.explicitBindingsSet = ImmutableSet.copyOf(explicitBindings.values());
@@ -371,7 +371,9 @@ final class BindingGraphFactory {
 
       // If there are no bindings, add the implicit @Inject-constructed binding if there is one.
       if (bindings.isEmpty()) {
-        injectBindingRegistry.getOrFindProvisionBinding(requestKey).ifPresent(bindings::add);
+        injectBindingRegistry.getOrFindProvisionBinding(requestKey)
+            .filter(binding -> !isIncorrectlyScopedInPartialGraph(binding))
+            .ifPresent(bindings::add);
       }
 
       return ResolvedBindings.forContributionBindings(
@@ -381,6 +383,26 @@ final class BindingGraphFactory {
           multibindingDeclarations,
           subcomponentDeclarations,
           optionalBindingDeclarations);
+    }
+
+    /**
+     * Returns true if this binding graph resolution is for a partial graph and the {@code @Inject}
+     * binding's scope doesn't match any of the components in the current component ancestry. If so,
+     * the binding is not owned by any of the currently known components, and will be owned by a
+     * future ancestor (or, if never owned, will result in an incompatibly scoped binding error at
+     * the root component).
+     */
+    private boolean isIncorrectlyScopedInPartialGraph(ProvisionBinding binding) {
+      checkArgument(binding.kind().equals(INJECTION));
+      Resolver owningResolver = getOwningResolver(binding).orElse(this);
+      ComponentDescriptor owningComponent = owningResolver.componentDescriptor;
+      return !rootComponent().kind().isTopLevel()
+          && binding.scope().isPresent()
+          && !owningComponent.scopes().contains(binding.scope().get());
+    }
+
+    private ComponentDescriptor rootComponent() {
+      return parentResolver.map(Resolver::rootComponent).orElse(componentDescriptor);
     }
 
     /** Returns the resolved members injection bindings for the given {@link Key}. */

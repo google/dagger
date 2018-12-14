@@ -146,8 +146,9 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       }
       ComponentDescriptor componentDescriptor = componentDescriptorFactory.forTypeElement(element);
       BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
-      // TODO(b/72748365): Do subgraph validation.
-      generateComponent(bindingGraph);
+      if (isValid(bindingGraph)) {
+        generateComponent(bindingGraph);
+      }
     }
   }
 

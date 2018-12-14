@@ -90,8 +90,10 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 public abstract class BindingGraph {
 
-  static BindingGraph create(Network<Node, Edge> network, boolean isModuleBindingGraph) {
-    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isModuleBindingGraph);
+  static BindingGraph create(
+      Network<Node, Edge> network, boolean isModuleBindingGraph, boolean isPartialBindingGraph) {
+    return new AutoValue_BindingGraph(
+        ImmutableNetwork.copyOf(network), isModuleBindingGraph, isPartialBindingGraph);
   }
 
   BindingGraph() {}
@@ -110,7 +112,15 @@ public abstract class BindingGraph {
    * @see <a href="https://google.github.io/dagger/compiler-options#module-binding-validation">Module binding
    *     validation</a>
    */
+  // TODO(dpb): Figure out the relationship between this and isPartialBindingGraph(). Maybe this
+  // implies that?
   public abstract boolean isModuleBindingGraph();
+
+  /**
+   * Returns {@code true} if this graph was constructed with a root subcomponent in ahead-of-time
+   * subcomponents mode.
+   */
+  public abstract boolean isPartialBindingGraph();
 
   /** Returns the bindings. */
   public final ImmutableSet<Binding> bindings() {

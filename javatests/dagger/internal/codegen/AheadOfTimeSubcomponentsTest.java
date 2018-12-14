@@ -6979,6 +6979,93 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedAncestor);
   }
 
+  @Test
+  public void rootScopedAtInjectConstructor_effectivelyMissingInSubcomponent() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "ProvidesMethodRootScoped");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "public @interface RootScope {}"),
+        JavaFileObjects.forSourceLines(
+            "test.AtInjectRootScoped",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "@RootScope",
+            "class AtInjectRootScoped {",
+            "  @Inject AtInjectRootScoped() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  AtInjectRootScoped shouldBeEffectivelyMissingInLeaf();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected DaggerLeaf() {}",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@RootScope",
+            "@Component",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            IMPORT_GENERATED_ANNOTATION,
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  protected final class LeafImpl extends DaggerLeaf {",
+            "    @Override",
+            "    public AtInjectRootScoped shouldBeEffectivelyMissingInLeaf() {",
+            "      return DaggerRoot.this.atInjectRootScopedProvider.get();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

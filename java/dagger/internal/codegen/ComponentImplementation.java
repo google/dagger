@@ -29,6 +29,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -154,6 +156,7 @@ final class ComponentImplementation {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
+  private final List<CodeBlock> componentRequirementInitializations = new ArrayList<>();
   private final Set<Key> cancellableProducerKeys = new LinkedHashSet<>();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
@@ -168,6 +171,7 @@ final class ComponentImplementation {
   private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
   private Optional<MethodSpec> configureInitializationMethod = Optional.empty();
+  private final Map<ComponentRequirement, String> modifiableModuleMethods = new LinkedHashMap<>();
 
   ComponentImplementation(
       ComponentDescriptor componentDescriptor,
@@ -406,6 +410,13 @@ final class ComponentImplementation {
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method.methodSpec());
   }
 
+  /** Add's a modifiable module method to this implementation. */
+  void addModifiableModuleMethod(ComponentRequirement module, MethodSpec method) {
+    checkArgument(module.kind().isModule());
+    checkState(modifiableModuleMethods.put(module, method.name) == null);
+    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method);
+  }
+
   /** Adds the given type to the component. */
   void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
     typeSpecsMap.put(typeKind, typeSpec);
@@ -430,6 +441,14 @@ final class ComponentImplementation {
   /** Adds the given code block to the initialize methods of the component. */
   void addInitialization(CodeBlock codeBlock) {
     initializations.add(codeBlock);
+  }
+
+  /**
+   * Adds the given code block that initializes a {@link ComponentRequirement} to the component
+   * implementation.
+   */
+  void addComponentRequirementInitialization(CodeBlock codeBlock) {
+    componentRequirementInitializations.add(codeBlock);
   }
 
   /**
@@ -486,6 +505,19 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the list of {@link CodeBlock}s that initialize {@link ComponentRequirement}s. These
+   * initializations are kept separate from {@link #getInitializations()} because they must be
+   * executed before the initializations of any framework instance initializations in a superclass
+   * implementation that may depend on the instances. We cannot use the same strategy that we use
+   * for framework instances (i.e. wrap in a {@link dagger.internal.DelegateFactory} or {@link
+   * dagger.producers.internal.DelegateProducer} since the types of these initialized fields have no
+   * interface type that we can write a proxy for.
+   */
+  ImmutableList<CodeBlock> getComponentRequirementInitializations() {
+    return ImmutableList.copyOf(componentRequirementInitializations);
+  }
+
+  /**
    * Returns the list of producer {@link Key}s that need cancellation statements in the cancellation
    * listener method.
    */
@@ -521,14 +553,15 @@ final class ComponentImplementation {
   }
 
   /**
-   * Returns the names of every modifiable binding method of this implementation and any superclass
+   * Returns the names of every modifiable method of this implementation and any superclass
    * implementations.
    */
-  ImmutableSet<String> getAllModifiableBindingMethodNames() {
+  ImmutableSet<String> getAllModifiableMethodNames() {
     ImmutableSet.Builder<String> names = ImmutableSet.builder();
     modifiableBindingMethods.allMethods().forEach(method -> names.add(method.methodSpec().name));
+    names.addAll(modifiableModuleMethods.values());
     superclassImplementation.ifPresent(
-        superclass -> names.addAll(superclass.getAllModifiableBindingMethodNames()));
+        superclass -> names.addAll(superclass.getAllModifiableMethodNames()));
     return names.build();
   }
 
@@ -551,6 +584,34 @@ final class ComponentImplementation {
   Optional<ModifiableBindingMethod> supertypeModifiableBindingMethod(BindingRequest request) {
     return superclassImplementation()
         .flatMap(superImplementation -> superImplementation.getModifiableBindingMethod(request));
+  }
+
+  /**
+   * Returns the names of modifiable module methods for this implementation and all inherited
+   * implementations, keyed by the corresponding module's {@link ComponentRequirement}.
+   */
+  ImmutableMap<ComponentRequirement, String> getAllModifiableModuleMethods() {
+    ImmutableMap.Builder<ComponentRequirement, String> methods = ImmutableMap.builder();
+    methods.putAll(modifiableModuleMethods);
+    superclassImplementation.ifPresent(
+        superclass -> methods.putAll(superclass.getAllModifiableModuleMethods()));
+    return methods.build();
+  }
+
+  /**
+   * Returns the name of the modifiable module method for {@code module} that is inherited in this
+   * implementation, or empty if none has been defined.
+   */
+  Optional<String> supertypeModifiableModuleMethodName(ComponentRequirement module) {
+    checkArgument(module.kind().isModule());
+    if (!superclassImplementation.isPresent()) {
+      return Optional.empty();
+    }
+    String methodName = superclassImplementation.get().modifiableModuleMethods.get(module);
+    if (methodName == null) {
+      return superclassImplementation.get().supertypeModifiableModuleMethodName(module);
+    }
+    return Optional.of(methodName);
   }
 
   /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */

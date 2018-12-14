@@ -67,8 +67,35 @@ abstract class MemberSelect {
     @Override
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
-          ? CodeBlock.of("$L", fieldName)
-          : CodeBlock.of("$T.this.$L", owningClass(), fieldName);
+          ? CodeBlock.of("$N", fieldName)
+          : CodeBlock.of("$T.this.$N", owningClass(), fieldName);
+    }
+  }
+
+  /**
+   * Returns a {@link MemberSelect} that accesses the method given by {@code methodName} owned by
+   * {@code owningClass}. In this context "local" refers to the fact that the method is owned by the
+   * type (or an enclosing type) from which the code block will be used. The returned {@link
+   * MemberSelect} will not be valid for accessing the method from a different class (regardless of
+   * accessibility).
+   */
+  static MemberSelect localMethod(ClassName owningClass, String methodName) {
+    return new LocalMethod(owningClass, methodName);
+  }
+
+  private static final class LocalMethod extends MemberSelect {
+    final String methodName;
+
+    LocalMethod(ClassName owningClass, String methodName) {
+      super(owningClass, false);
+      this.methodName = checkNotNull(methodName);
+    }
+
+    @Override
+    CodeBlock getExpressionFor(ClassName usingClass) {
+      return owningClass().equals(usingClass)
+          ? CodeBlock.of("$N()", methodName)
+          : CodeBlock.of("$T.this.$N()", owningClass(), methodName);
     }
   }
 

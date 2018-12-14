@@ -45,7 +45,7 @@ final class DependencyMethodProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
   private final ComponentImplementation componentImplementation;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
   private final BindingGraph graph;
   private final ContributionBinding binding;
@@ -53,12 +53,12 @@ final class DependencyMethodProviderCreationExpression
   DependencyMethodProviderCreationExpression(
       ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
     this.componentImplementation = checkNotNull(componentImplementation);
-    this.componentRequirementFields = checkNotNull(componentRequirementFields);
+    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.graph = checkNotNull(graph);
   }
@@ -104,7 +104,7 @@ final class DependencyMethodProviderCreationExpression
     return CodeBlock.of(
         "new $T($L)",
         factoryClassName(),
-        componentRequirementFields.getExpressionDuringInitialization(
+        componentRequirementExpressions.getExpressionDuringInitialization(
             dependency(), componentImplementation.name()));
   }
 

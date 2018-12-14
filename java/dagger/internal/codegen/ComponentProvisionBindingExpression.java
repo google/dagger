@@ -26,18 +26,18 @@ import dagger.internal.Preconditions;
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph bindingGraph;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
 
   ComponentProvisionBindingExpression(
       ResolvedBindings resolvedBindings,
       BindingGraph bindingGraph,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions) {
     super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.bindingGraph = checkNotNull(bindingGraph);
-    this.componentRequirementFields = checkNotNull(componentRequirementFields);
+    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.compilerOptions = checkNotNull(compilerOptions);
   }
 
@@ -46,7 +46,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
     CodeBlock invocation =
         CodeBlock.of(
             "$L.$L()",
-            componentRequirementFields.getExpression(componentRequirement(), requestingClass),
+            componentRequirementExpressions.getExpression(componentRequirement(), requestingClass),
             binding.bindingElement().get().getSimpleName());
     return Expression.create(
         binding.contributedPrimitiveType().orElse(binding.key().type()),

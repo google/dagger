@@ -41,17 +41,17 @@ final class DependencyMethodProducerCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final ContributionBinding binding;
   private final ComponentImplementation componentImplementation;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
   private final BindingGraph graph;
 
   DependencyMethodProducerCreationExpression(
       ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
     this.componentImplementation = checkNotNull(componentImplementation);
-    this.componentRequirementFields = checkNotNull(componentRequirementFields);
+    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.graph = checkNotNull(graph);
   }
 
@@ -63,7 +63,7 @@ final class DependencyMethodProducerCreationExpression
         FieldSpec.builder(
                 ClassName.get(dependency.typeElement()), dependency.variableName(), PRIVATE, FINAL)
             .initializer(
-                componentRequirementFields.getExpressionDuringInitialization(
+                componentRequirementExpressions.getExpressionDuringInitialization(
                     dependency, componentImplementation.name()))
             .build();
     // TODO(b/70395982): Explore using a private static type instead of an anonymous class.

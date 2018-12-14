@@ -540,7 +540,7 @@ public class SubcomponentValidationTest {
                 "    private ChildModule childModule;",
                 "",
                 "    private ChildComponentImpl() {",
-                "      initialize();",
+                "      this.childModule = new ChildModule();",
                 "    }",
                 "")
             .addLinesIn(
@@ -567,11 +567,6 @@ public class SubcomponentValidationTest {
                 "              DaggerParentComponent.this.getDep1(),",
                 "              DaggerParentComponent.this.getDep2()));")
             .addLines(
-                "    }",
-                "",
-                "    @SuppressWarnings(\"unchecked\")",
-                "    private void initialize() {",
-                "      this.childModule = new ChildModule();",
                 "    }",
                 "",
                 "    @Override",

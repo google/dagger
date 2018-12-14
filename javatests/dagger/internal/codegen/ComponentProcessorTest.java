@@ -510,13 +510,12 @@ public class ComponentProcessorTest {
                 "public final class DaggerTestComponent implements TestComponent {",
                 "  private TestModule testModule;",
                 "",
-                "  private B getB() {",
-                "    return TestModule_BFactory.proxyB(testModule, new C());",
+                "  private DaggerTestComponent(Builder builder) {",
+                "    this.testModule = builder.testModule;",
                 "  }",
                 "",
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
-                "    this.testModule = builder.testModule;",
+                "  private B getB() {",
+                "    return TestModule_BFactory.proxyB(testModule, new C());",
                 "  }",
                 "",
                 "  @Override",
@@ -1208,6 +1207,10 @@ public class ComponentProcessorTest {
                 "  private volatile Provider<A> aProvider;",
                 "  private AComponent aComponent;",
                 "",
+                "  private DaggerBComponent(Builder builder) {",
+                "    this.aComponent = builder.aComponent;",
+                "  }",
+                "",
                 "  private Provider<A> getAProvider() {",
                 "    Object local = aProvider;",
                 "    if (local == null) {",
@@ -1216,17 +1219,13 @@ public class ComponentProcessorTest {
                 "    }",
                 "    return (Provider<A>) local;",
                 "  }")
-            .addLines(
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {")
             .addLinesIn(
                 DEFAULT_MODE,
-                "    this.aProvider = new test_AComponent_a(builder.aComponent);")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    this.aComponent = builder.aComponent;")
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Builder builder) {",
+                "    this.aProvider = new test_AComponent_a(builder.aComponent);",
+                "  }")
             .addLines(
-                "  }",
                 "",
                 "  @Override",
                 "  public B b() {")
@@ -1348,8 +1347,7 @@ public class ComponentProcessorTest {
             "  private TestModule testModule;",
             "  private other.test.TestModule testModule2;",
             "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
+            "  private DaggerTestComponent(Builder builder) {",
             "    this.testModule = builder.testModule;",
             "    this.testModule2 = builder.testModule2;",
             "  }",
@@ -1472,8 +1470,7 @@ public class ComponentProcessorTest {
             "public final class DaggerBComponent implements BComponent {",
             "  private AComponent aComponent;",
             "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize(final Builder builder) {",
+            "  private DaggerBComponent(Builder builder) {",
             "    this.aComponent = builder.aComponent;",
             "  }",
             "",

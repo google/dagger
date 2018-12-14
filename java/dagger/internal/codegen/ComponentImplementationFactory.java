@@ -31,6 +31,7 @@ import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CAN
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CONSTRUCTOR;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.INITIALIZE_METHOD;
+import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.MODIFIABLE_BINDING_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_CREATOR;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.SUBCOMPONENT;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
@@ -52,6 +53,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
@@ -111,13 +113,13 @@ final class ComponentImplementationFactory {
         ComponentCreatorImplementation.create(
             componentImplementation, bindingGraph, elements, types);
     componentImplementation.setCreatorImplementation(componentCreatorImplementation);
-    ComponentRequirementFields componentRequirementFields =
-        new ComponentRequirementFields(bindingGraph, componentImplementation);
+    ComponentRequirementExpressions componentRequirementExpressions =
+        new ComponentRequirementExpressions(bindingGraph, componentImplementation, types, elements);
     ComponentBindingExpressions bindingExpressions =
         new ComponentBindingExpressions(
             bindingGraph,
             componentImplementation,
-            componentRequirementFields,
+            componentRequirementExpressions,
             optionalFactories,
             types,
             elements,
@@ -134,7 +136,7 @@ final class ComponentImplementationFactory {
               componentImplementation,
               optionalFactories,
               bindingExpressions,
-              componentRequirementFields)
+              componentRequirementExpressions)
           .build();
     } else {
       return new RootComponentImplementationBuilder(
@@ -142,7 +144,7 @@ final class ComponentImplementationFactory {
               componentImplementation,
               optionalFactories,
               bindingExpressions,
-              componentRequirementFields)
+              componentRequirementExpressions)
           .build();
     }
   }
@@ -162,7 +164,7 @@ final class ComponentImplementationFactory {
   private abstract class ComponentImplementationBuilder {
     final BindingGraph graph;
     final ComponentBindingExpressions bindingExpressions;
-    final ComponentRequirementFields componentRequirementFields;
+    final ComponentRequirementExpressions componentRequirementExpressions;
     final ComponentImplementation componentImplementation;
     final OptionalFactories optionalFactories;
     boolean done;
@@ -172,12 +174,12 @@ final class ComponentImplementationFactory {
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields) {
+        ComponentRequirementExpressions componentRequirementExpressions) {
       this.graph = graph;
       this.componentImplementation = componentImplementation;
       this.optionalFactories = optionalFactories;
       this.bindingExpressions = bindingExpressions;
-      this.componentRequirementFields = componentRequirementFields;
+      this.componentRequirementExpressions = componentRequirementExpressions;
     }
 
     /**
@@ -203,13 +205,15 @@ final class ComponentImplementationFactory {
           .ifPresent(
               superclassImplementation -> {
                 superclassImplementation
-                    .getAllModifiableBindingMethodNames()
+                    .getAllModifiableMethodNames()
                     .forEach(componentImplementation::claimMethodName);
               });
 
       addFactoryMethods();
       addInterfaceMethods();
       addChildComponents();
+      implementModifiableModuleMethods();
+
       addConstructor();
 
       if (graph.componentDescriptor().kind().isProducer()) {
@@ -348,6 +352,34 @@ final class ComponentImplementationFactory {
       return Optional.empty();
     }
 
+    /**
+     * For final components, reimplements all modifiable module methods that may have been modified.
+     */
+    private void implementModifiableModuleMethods() {
+      if (componentImplementation.isAbstract()) {
+        return;
+      }
+      componentImplementation
+          .getAllModifiableModuleMethods()
+          .forEach(this::implementModifiableModuleMethod);
+    }
+
+    private void implementModifiableModuleMethod(ComponentRequirement module, String methodName) {
+      // TODO(b/117833324): only reimplement methods for modules that were abstract or were repeated
+      // by an ancestor component.
+      componentImplementation.addMethod(
+          MODIFIABLE_BINDING_METHOD,
+          methodBuilder(methodName)
+              .addAnnotation(Override.class)
+              .addModifiers(PROTECTED)
+              .returns(TypeName.get(module.type()))
+              .addStatement(
+                  "return $L",
+                  componentRequirementExpressions.getExpression(
+                      module, componentImplementation.name()))
+              .build());
+    }
+
     final MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
       return MethodSignature.forComponentMethod(
           method, MoreTypes.asDeclared(graph.componentTypeElement().asType()), types);
@@ -395,18 +427,18 @@ final class ComponentImplementationFactory {
       Optional<ComponentCreatorImplementation> childCreatorImplementation =
           ComponentCreatorImplementation.create(childImplementation, childGraph, elements, types);
       childImplementation.setCreatorImplementation(childCreatorImplementation);
-      ComponentRequirementFields childComponentRequirementFields =
-          componentRequirementFields.forChildComponent(childGraph, childImplementation);
+      ComponentRequirementExpressions childComponentRequirementExpressions =
+          componentRequirementExpressions.forChildComponent(childGraph, childImplementation);
       ComponentBindingExpressions childBindingExpressions =
           bindingExpressions.forChildComponent(
-              childGraph, childImplementation, childComponentRequirementFields);
+              childGraph, childImplementation, childComponentRequirementExpressions);
       return new SubcomponentImplementationBuilder(
               Optional.of(this),
               childGraph,
               childImplementation,
               optionalFactories,
               childBindingExpressions,
-              childComponentRequirementFields)
+              childComponentRequirementExpressions)
           .build();
     }
 
@@ -433,6 +465,8 @@ final class ComponentImplementationFactory {
     final void addConstructor() {
       List<List<CodeBlock>> partitions =
           Lists.partition(componentImplementation.getInitializations(), STATEMENTS_PER_METHOD);
+      ImmutableList<CodeBlock> componentRequirementInitializations =
+          componentImplementation.getComponentRequirementInitializations();
 
       ImmutableList<ParameterSpec> constructorParameters = constructorParameters();
       MethodSpec.Builder constructor =
@@ -444,9 +478,14 @@ final class ComponentImplementationFactory {
       }
 
       Optional<MethodSpec.Builder> configureInitialization =
-          partitions.isEmpty() || !componentImplementation.isAbstract()
+          (partitions.isEmpty() && componentRequirementInitializations.isEmpty())
+                  || !componentImplementation.isAbstract()
               ? Optional.empty()
               : Optional.of(configureInitializationMethodBuilder(constructorParameters));
+
+      configureInitialization
+          .orElse(constructor)
+          .addCode(CodeBlocks.concat(componentRequirementInitializations));
 
       if (componentImplementation.superConfigureInitializationMethod().isPresent()) {
         MethodSpec superConfigureInitializationMethod =
@@ -571,13 +610,13 @@ final class ComponentImplementationFactory {
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields) {
+        ComponentRequirementExpressions componentRequirementExpressions) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
-          componentRequirementFields);
+          componentRequirementExpressions);
       this.componentCreatorName = componentImplementation.creatorImplementation().get().name();
     }
 
@@ -642,13 +681,13 @@ final class ComponentImplementationFactory {
         ComponentImplementation componentImplementation,
         OptionalFactories optionalFactories,
         ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementFields componentRequirementFields) {
+        ComponentRequirementExpressions componentRequirementExpressions) {
       super(
           graph,
           componentImplementation,
           optionalFactories,
           bindingExpressions,
-          componentRequirementFields);
+          componentRequirementExpressions);
       this.parent = parent;
     }
 

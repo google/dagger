@@ -16,15 +16,23 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.Preconditions;
@@ -33,75 +41,100 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A central repository of fields used to access any {@link ComponentRequirement} available to a
- * component.
+ * A central repository of expressions used to access any {@link ComponentRequirement} available to
+ * a component.
  */
-final class ComponentRequirementFields {
+final class ComponentRequirementExpressions {
 
   // TODO(dpb,ronshapiro): refactor this and ComponentBindingExpressions into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
-  // parents? If so, maybe make ComponentRequirementField.Factory create it.
+  // parents? If so, maybe make ComponentRequirementExpression.Factory create it.
 
-  private final Optional<ComponentRequirementFields> parent;
-  private final Map<ComponentRequirement, ComponentRequirementField> componentRequirementFields =
-      new HashMap<>();
+  private final Optional<ComponentRequirementExpressions> parent;
+  private final Map<ComponentRequirement, ComponentRequirementExpression>
+      componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
+  private final DaggerTypes types;
+  private final DaggerElements elements;
 
-  private ComponentRequirementFields(
-      Optional<ComponentRequirementFields> parent,
+  private ComponentRequirementExpressions(
+      Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
-      ComponentImplementation componentImplementation) {
+      ComponentImplementation componentImplementation,
+      DaggerTypes types,
+      DaggerElements elements) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
+    this.types = types;
+    this.elements = elements;
   }
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
-  ComponentRequirementFields(BindingGraph graph, ComponentImplementation componentImplementation) {
-    this(Optional.empty(), graph, componentImplementation);
+  ComponentRequirementExpressions(
+      BindingGraph graph,
+      ComponentImplementation componentImplementation,
+      DaggerTypes types,
+      DaggerElements elements) {
+    this(Optional.empty(), graph, componentImplementation, types, elements);
   }
 
-  /** Returns a new object representing the fields available from a child component of this one. */
-  ComponentRequirementFields forChildComponent(
+  /**
+   * Returns a new object representing the expressions available from a child component of this one.
+   */
+  ComponentRequirementExpressions forChildComponent(
       BindingGraph graph, ComponentImplementation componentImplementation) {
-    return new ComponentRequirementFields(Optional.of(this), graph, componentImplementation);
+    return new ComponentRequirementExpressions(
+        Optional.of(this), graph, componentImplementation, types, elements);
   }
 
   /**
    * Returns an expression for the {@code componentRequirement} to be used when implementing a
-   * component method. This may add a field to the component in order to reference the component
-   * requirement outside of the {@code initialize()} methods.
+   * component method. This may add a field or method to the component in order to reference the
+   * component requirement outside of the {@code initialize()} methods.
    */
   CodeBlock getExpression(ComponentRequirement componentRequirement, ClassName requestingClass) {
-    return getField(componentRequirement).getExpression(requestingClass);
+    return getExpression(componentRequirement).getExpression(requestingClass);
   }
 
   /**
    * Returns an expression for the {@code componentRequirement} to be used only within {@code
    * initialize()} methods, where the component builder is available.
    *
-   * <p>When accessing this field from a subcomponent, this may cause a field to be initialized in
-   * the component that owns this {@link ComponentRequirement}.
+   * <p>When accessing this expression from a subcomponent, this may cause a field to be initialized
+   * or a method to be added in the component that owns this {@link ComponentRequirement}.
    */
   CodeBlock getExpressionDuringInitialization(
       ComponentRequirement componentRequirement, ClassName requestingClass) {
-    return getField(componentRequirement).getExpressionDuringInitialization(requestingClass);
+    return getExpression(componentRequirement).getExpressionDuringInitialization(requestingClass);
   }
 
-  ComponentRequirementField getField(ComponentRequirement componentRequirement) {
+  ComponentRequirementExpression getExpression(ComponentRequirement componentRequirement) {
     if (graph.componentRequirements().contains(componentRequirement)) {
-      return componentRequirementFields.computeIfAbsent(componentRequirement, this::create);
+      return componentRequirementExpressions.computeIfAbsent(
+          componentRequirement, this::createMethodOrField);
     }
     if (parent.isPresent()) {
-      return parent.get().getField(componentRequirement);
+      return parent.get().getExpression(componentRequirement);
     }
     throw new IllegalStateException(
-        "no component requirement field found for " + componentRequirement);
+        "no component requirement expression found for " + componentRequirement);
   }
 
-  /** Returns a {@link ComponentRequirementField} for a {@link ComponentRequirement}. */
-  private ComponentRequirementField create(ComponentRequirement requirement) {
+  /**
+   * If {@code requirement} is a module that may be owned by a future ancestor component, returns a
+   * modifiable module method. Otherwise, returns a field for {@code requirement}.
+   */
+  private ComponentRequirementExpression createMethodOrField(ComponentRequirement requirement) {
+    if (componentImplementation.isAbstract() && requirement.kind().isModule()) {
+      return new ModifiableModule(requirement);
+    }
+    return createField(requirement);
+  }
+
+  /** Returns a field for a {@link ComponentRequirement}. */
+  private ComponentRequirementExpression createField(ComponentRequirement requirement) {
     Optional<ComponentCreatorImplementation> creatorImplementation =
         Optionals.firstPresent(
             componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()),
@@ -122,7 +155,7 @@ final class ComponentRequirementFields {
     }
   }
 
-  private abstract static class AbstractField implements ComponentRequirementField {
+  private abstract static class AbstractField implements ComponentRequirementExpression {
     private final ComponentRequirement componentRequirement;
     private final ComponentImplementation componentImplementation;
     private final Supplier<MemberSelect> field = memoize(this::createField);
@@ -139,11 +172,6 @@ final class ComponentRequirementFields {
       return field.get().getExpressionFor(requestingClass);
     }
 
-    @Override
-    public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      return getExpression(requestingClass);
-    }
-
     private MemberSelect createField() {
       // TODO(dpb,ronshapiro): think about whether ComponentImplementation.addField
       // should make a unique name for the field.
@@ -152,7 +180,7 @@ final class ComponentRequirementFields {
       FieldSpec field =
           FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE).build();
       componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      componentImplementation.addInitialization(fieldInitialization(field));
+      componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
       return MemberSelect.localField(componentImplementation.name(), fieldName);
     }
 
@@ -161,8 +189,8 @@ final class ComponentRequirementFields {
   }
 
   /**
-   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that have a corresponding
-   * field on the component builder.
+   * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that have a
+   * corresponding field on the component builder.
    */
   private static final class BuilderField extends AbstractField {
     private final FieldSpec builderField;
@@ -193,8 +221,8 @@ final class ComponentRequirementFields {
   }
 
   /**
-   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that can be instantiated
-   * by the component (i.e. a static class with a no-arg constructor).
+   * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that can be
+   * instantiated by the component (i.e. a static class with a no-arg constructor).
    */
   private static final class ComponentInstantiableField extends AbstractField {
     private ComponentInstantiableField(
@@ -210,7 +238,7 @@ final class ComponentRequirementFields {
   }
 
   /**
-   * A {@link ComponentRequirementField} for {@link ComponentRequirement}s that are passed in
+   * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that are passed in
    * as parameters to a component factory method.
    */
   private static final class ComponentParameterField extends AbstractField {
@@ -228,6 +256,52 @@ final class ComponentRequirementFields {
     CodeBlock fieldInitialization(FieldSpec componentField) {
       return CodeBlock.of(
           "this.$N = $T.checkNotNull($N);", componentField, Preconditions.class, factoryParameter);
+    }
+  }
+
+  private final class ModifiableModule implements ComponentRequirementExpression {
+    private final ComponentRequirement module;
+    private final Supplier<MemberSelect> method = Suppliers.memoize(this::methodSelect);
+
+    private ModifiableModule(ComponentRequirement module) {
+      checkArgument(module.kind().isModule());
+      this.module = module;
+    }
+
+    @Override
+    public CodeBlock getExpression(ClassName requestingClass) {
+      return method.get().getExpressionFor(requestingClass);
+    }
+
+    private MemberSelect methodSelect() {
+      String methodName =
+          componentImplementation
+              .supertypeModifiableModuleMethodName(module)
+              .orElseGet(this::createMethod);
+      return MemberSelect.localMethod(componentImplementation.name(), methodName);
+    }
+
+    private String createMethod() {
+      String methodName =
+          UPPER_CAMEL.to(
+              LOWER_CAMEL,
+              componentImplementation.getUniqueMethodName(
+                  module.typeElement().getSimpleName().toString()));
+      MethodSpec.Builder methodBuilder =
+          methodBuilder(methodName)
+              .addModifiers(PROTECTED)
+              .returns(TypeName.get(module.type()));
+      // TODO(b/117833324): if the module is instantiable, we could provide an implementation here
+      // too. Then, if no ancestor ever repeats the module, there's nothing to do in subclasses.
+      if (graph.componentDescriptor().creatorDescriptor().isPresent()) {
+        methodBuilder.addStatement(
+            "return $L",
+            createField(module).getExpression(componentImplementation.name()));
+      } else {
+        methodBuilder.addModifiers(ABSTRACT);
+      }
+      componentImplementation.addModifiableModuleMethod(module, methodBuilder.build());
+      return methodName;
     }
   }
 }

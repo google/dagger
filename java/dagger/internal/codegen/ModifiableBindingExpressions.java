@@ -181,7 +181,6 @@ final class ModifiableBindingExpressions {
         // scope to allow us to make this distinction.
         return false;
       case MULTIBINDING:
-      case MODULE_INSTANCE:
         return false;
       default:
         throw new IllegalStateException(
@@ -261,7 +260,6 @@ final class ModifiableBindingExpressions {
       case OPTIONAL:
       case MULTIBINDING:
       case INJECTION:
-      case MODULE_INSTANCE:
       case PRODUCTION:
         return bindingExpressions.wrapInMethod(
             resolvedBindings,
@@ -325,13 +323,6 @@ final class ModifiableBindingExpressions {
 
       if (binding.kind().equals(BindingKind.INJECTION)) {
         return ModifiableBindingType.INJECTION;
-      }
-
-      // TODO(b/117833324): Check whether we need to modify a module instance binding if we are
-      // correctly installing the new module instance. In other words, if there is a subcomponent
-      // builder should we consider a module instance binding modifiable?
-      if (binding.requiresModuleInstance()) {
-        return ModifiableBindingType.MODULE_INSTANCE;
       }
 
       if ((binding.scope().map(Scope::isProductionScope).orElse(false)
@@ -422,14 +413,6 @@ final class ModifiableBindingExpressions {
 
       case INJECTION:
         return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
-
-      case MODULE_INSTANCE:
-        // At the moment we have no way of detecting whether a new module instance is installed and
-        // the implementation has changed, so we implement the binding once in the base
-        // implementation of the subcomponent. It will be re-implemented when generating the
-        // component.
-        return !componentImplementation.superclassImplementation().isPresent()
-            || !componentImplementation.isAbstract();
 
       case PRODUCTION:
         // TODO(b/117833324): Profile this to see if this check is slow

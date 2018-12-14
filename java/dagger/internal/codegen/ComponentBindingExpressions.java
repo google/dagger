@@ -50,14 +50,14 @@ import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
 final class ComponentBindingExpressions {
-  // TODO(dpb,ronshapiro): refactor this and ComponentRequirementFields into a
+  // TODO(dpb,ronshapiro): refactor this and ComponentRequirementExpressions into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
   // parents? If so, maybe make BindingExpression.Factory create it.
 
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
   private final DaggerElements elements;
@@ -71,7 +71,7 @@ final class ComponentBindingExpressions {
   ComponentBindingExpressions(
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       OptionalFactories optionalFactories,
       DaggerTypes types,
       DaggerElements elements,
@@ -80,7 +80,7 @@ final class ComponentBindingExpressions {
         Optional.empty(),
         graph,
         componentImplementation,
-        componentRequirementFields,
+        componentRequirementExpressions,
         new StaticSwitchingProviders(componentImplementation, types),
         optionalFactories,
         types,
@@ -92,7 +92,7 @@ final class ComponentBindingExpressions {
       Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       StaticSwitchingProviders staticSwitchingProviders,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -101,7 +101,7 @@ final class ComponentBindingExpressions {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.componentRequirementFields = checkNotNull(componentRequirementFields);
+    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
@@ -127,12 +127,12 @@ final class ComponentBindingExpressions {
   ComponentBindingExpressions forChildComponent(
       BindingGraph childGraph,
       ComponentImplementation childComponentImplementation,
-      ComponentRequirementFields childComponentRequirementFields) {
+      ComponentRequirementExpressions childComponentRequirementExpressions) {
     return new ComponentBindingExpressions(
         Optional.of(this),
         childGraph,
         childComponentImplementation,
-        childComponentRequirementFields,
+        childComponentRequirementExpressions,
         staticSwitchingProviders,
         optionalFactories,
         types,
@@ -183,7 +183,7 @@ final class ComponentBindingExpressions {
 
     if (binding.requiresModuleInstance()) {
       arguments.add(
-          componentRequirementFields.getExpressionDuringInitialization(
+          componentRequirementExpressions.getExpressionDuringInitialization(
               ComponentRequirement.forModule(binding.contributingModule().get().asType()),
               componentImplementation.name()));
     }
@@ -353,7 +353,11 @@ final class ComponentBindingExpressions {
 
       case COMPONENT_PROVISION:
         return new DependencyMethodProviderCreationExpression(
-            binding, componentImplementation, componentRequirementFields, compilerOptions, graph);
+            binding,
+            componentImplementation,
+            componentRequirementExpressions,
+            compilerOptions,
+            graph);
 
       case SUBCOMPONENT_BUILDER:
         return new SubcomponentBuilderProviderCreationExpression(
@@ -367,7 +371,7 @@ final class ComponentBindingExpressions {
 
       case COMPONENT_PRODUCTION:
         return new DependencyMethodProducerCreationExpression(
-            binding, componentImplementation, componentRequirementFields, graph);
+            binding, componentImplementation, componentRequirementExpressions, graph);
 
       case PRODUCTION:
         return new ProducerCreationExpression(binding, this);
@@ -400,7 +404,7 @@ final class ComponentBindingExpressions {
     return new InstanceFactoryCreationExpression(
         binding.nullableType().isPresent(),
         () ->
-            componentRequirementFields.getExpressionDuringInitialization(
+            componentRequirementExpressions.getExpressionDuringInitialization(
                 componentRequirement, componentImplementation.name()));
   }
 
@@ -551,12 +555,12 @@ final class ComponentBindingExpressions {
             new ComponentRequirementBindingExpression(
                 resolvedBindings,
                 ComponentRequirement.forDependency(resolvedBindings.key().type()),
-                componentRequirementFields));
+                componentRequirementExpressions));
 
       case COMPONENT_PROVISION:
         return Optional.of(
             new ComponentProvisionBindingExpression(
-                resolvedBindings, graph, componentRequirementFields, compilerOptions));
+                resolvedBindings, graph, componentRequirementExpressions, compilerOptions));
 
       case SUBCOMPONENT_BUILDER:
         return Optional.of(
@@ -582,7 +586,7 @@ final class ComponentBindingExpressions {
             new ComponentRequirementBindingExpression(
                 resolvedBindings,
                 ComponentRequirement.forBoundInstance(resolvedBindings.contributionBinding()),
-                componentRequirementFields));
+                componentRequirementExpressions));
 
       case INJECTION:
       case PROVISION:
@@ -592,7 +596,7 @@ final class ComponentBindingExpressions {
                 compilerOptions,
                 this,
                 membersInjectionMethods,
-                componentRequirementFields,
+                componentRequirementExpressions,
                 types,
                 elements));
 

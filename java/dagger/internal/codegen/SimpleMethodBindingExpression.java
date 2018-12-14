@@ -48,7 +48,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ProvisionBinding provisionBinding;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final MembersInjectionMethods membersInjectionMethods;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
   private final DaggerTypes types;
   private final DaggerElements elements;
 
@@ -57,7 +57,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       CompilerOptions compilerOptions,
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
-      ComponentRequirementFields componentRequirementFields,
+      ComponentRequirementExpressions componentRequirementExpressions,
       DaggerTypes types,
       DaggerElements elements) {
     super(resolvedBindings);
@@ -69,7 +69,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     checkArgument(provisionBinding.bindingElement().isPresent());
     this.componentBindingExpressions = componentBindingExpressions;
     this.membersInjectionMethods = membersInjectionMethods;
-    this.componentRequirementFields = componentRequirementFields;
+    this.componentRequirementExpressions = componentRequirementExpressions;
     this.types = types;
     this.elements = elements;
   }
@@ -172,9 +172,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             .contributingModule()
             .map(Element::asType)
             .map(ComponentRequirement::forModule)
-            .map(
-                requirement ->
-                    componentRequirementFields.getExpression(requirement, requestingClass))
+            .map(module -> componentRequirementExpressions.getExpression(module, requestingClass))
         : Optional.empty();
   }
 

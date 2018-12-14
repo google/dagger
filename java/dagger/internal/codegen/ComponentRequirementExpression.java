@@ -25,11 +25,11 @@ import com.squareup.javapoet.CodeBlock;
  * {@link dagger.model.Key}. See {@link ComponentRequirementBindingExpression} for binding
  * expressions that are themselves a component requirement.
  */
-interface ComponentRequirementField {
+interface ComponentRequirementExpression {
   /**
    * Returns an expression for the {@link ComponentRequirement} to be used when implementing a
-   * component method. This may add a field to the component in order to reference the component
-   * requirement outside of the {@code initialize()} methods.
+   * component method. This may add a field or method to the component in order to reference the
+   * component requirement outside of the {@code initialize()} methods.
    */
   CodeBlock getExpression(ClassName requestingClass);
 
@@ -37,8 +37,10 @@ interface ComponentRequirementField {
    * Returns an expression for the {@link ComponentRequirement} to be used only within {@code
    * initialize()} methods, where the component builder is available.
    *
-   * <p>When accessing this field from a subcomponent, this may cause a field to be initialized in
-   * the component that owns this {@link ComponentRequirement}.
+   * <p>When accessing this expression from a subcomponent, this may cause a field to be initialized
+   * or a method to be added in the component that owns this {@link ComponentRequirement}.
    */
-  CodeBlock getExpressionDuringInitialization(ClassName requestingClass);
+  default CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
+    return getExpression(requestingClass);
+  }
 }

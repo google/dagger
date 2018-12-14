@@ -25,21 +25,21 @@ import com.squareup.javapoet.ClassName;
  */
 final class ComponentRequirementBindingExpression extends SimpleInvocationBindingExpression {
   private final ComponentRequirement componentRequirement;
-  private final ComponentRequirementFields componentRequirementFields;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
 
   ComponentRequirementBindingExpression(
       ResolvedBindings resolvedBindings,
       ComponentRequirement componentRequirement,
-      ComponentRequirementFields componentRequirementFields) {
+      ComponentRequirementExpressions componentRequirementExpressions) {
     super(resolvedBindings);
     this.componentRequirement = componentRequirement;
-    this.componentRequirementFields = componentRequirementFields;
+    this.componentRequirementExpressions = componentRequirementExpressions;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         componentRequirement.type(),
-        componentRequirementFields.getExpression(componentRequirement, requestingClass));
+        componentRequirementExpressions.getExpression(componentRequirement, requestingClass));
   }
 }

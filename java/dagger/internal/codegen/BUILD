@@ -24,8 +24,8 @@ load("//tools:simple_jar.bzl", "simple_jar")
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
 KYTHE_SRCS = [
-    "KytheBindingGraphFactory.java",
     "DaggerKythePlugin.java",
+    "JavacPluginModule.java",
 ]
 
 CODEGEN_SRCS = glob(
@@ -337,6 +337,7 @@ java_library(
         "ComponentProcessingStep.java",
         "ComponentProcessor.java",
         "InjectBindingRegistryImpl.java",
+        "InjectBindingRegistryModule.java",
         "InjectProcessingStep.java",
         "MapKeyProcessingStep.java",
         "ModuleProcessingStep.java",
@@ -382,7 +383,6 @@ java_library(
         ":binding",
         ":kythe_plugin",
         ":processor",
-        ":validation",
         "//java/dagger:core",
         "//java/dagger/model",
         "//java/dagger/producers",

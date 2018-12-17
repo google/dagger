@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import dagger.Binds;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
@@ -118,12 +117,13 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Singleton
   @Component(
       modules = {
-        ProcessingEnvironmentModule.class,
-        SpiModule.class,
         BindingGraphValidationModule.class,
         BindingMethodValidatorsModule.class,
+        InjectBindingRegistryModule.class,
+        ProcessingEnvironmentModule.class,
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
+        SpiModule.class,
         SystemComponentsModule.class
       })
   interface ProcessorComponent {
@@ -176,9 +176,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
               : componentProcessingStep,
           bindingMethodProcessingStep);
     }
-
-    @Binds
-    InjectBindingRegistry injectBindingRegistry(InjectBindingRegistryImpl impl);
   }
 
   @Override

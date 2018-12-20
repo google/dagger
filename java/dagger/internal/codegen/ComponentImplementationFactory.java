@@ -114,7 +114,8 @@ final class ComponentImplementationFactory {
             componentImplementation, bindingGraph, elements, types);
     componentImplementation.setCreatorImplementation(componentCreatorImplementation);
     ComponentRequirementExpressions componentRequirementExpressions =
-        new ComponentRequirementExpressions(bindingGraph, componentImplementation, types, elements);
+        new ComponentRequirementExpressions(
+            bindingGraph, componentImplementation, types, elements, compilerOptions);
     ComponentBindingExpressions bindingExpressions =
         new ComponentBindingExpressions(
             bindingGraph,
@@ -374,9 +375,9 @@ final class ComponentImplementationFactory {
               .addModifiers(PROTECTED)
               .returns(TypeName.get(module.type()))
               .addStatement(
-                  "return $L",
-                  componentRequirementExpressions.getExpression(
-                      module, componentImplementation.name()))
+                  componentRequirementExpressions
+                      .getExpression(module)
+                      .getModifiableModuleMethodExpression(componentImplementation.name()))
               .build());
     }
 

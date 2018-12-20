@@ -43,4 +43,12 @@ interface ComponentRequirementExpression {
   default CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
     return getExpression(requestingClass);
   }
+
+  /**
+   * Returns the expression for the {@link ComponentRequirement} to be used when reimplementing a
+   * modifiable module method.
+   */
+  default CodeBlock getModifiableModuleMethodExpression(ClassName requestingClass) {
+    return CodeBlock.of("return $L", getExpression(requestingClass));
+  }
 }

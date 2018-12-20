@@ -57,18 +57,21 @@ final class ComponentRequirementExpressions {
   private final ComponentImplementation componentImplementation;
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final CompilerOptions compilerOptions;
 
   private ComponentRequirementExpressions(
       Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       DaggerTypes types,
-      DaggerElements elements) {
+      DaggerElements elements,
+      CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.types = types;
     this.elements = elements;
+    this.compilerOptions = compilerOptions;
   }
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
@@ -76,8 +79,9 @@ final class ComponentRequirementExpressions {
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       DaggerTypes types,
-      DaggerElements elements) {
-    this(Optional.empty(), graph, componentImplementation, types, elements);
+      DaggerElements elements,
+      CompilerOptions compilerOptions) {
+    this(Optional.empty(), graph, componentImplementation, types, elements, compilerOptions);
   }
 
   /**
@@ -86,7 +90,7 @@ final class ComponentRequirementExpressions {
   ComponentRequirementExpressions forChildComponent(
       BindingGraph graph, ComponentImplementation componentImplementation) {
     return new ComponentRequirementExpressions(
-        Optional.of(this), graph, componentImplementation, types, elements);
+        Optional.of(this), graph, componentImplementation, types, elements, compilerOptions);
   }
 
   /**
@@ -118,6 +122,11 @@ final class ComponentRequirementExpressions {
     if (parent.isPresent()) {
       return parent.get().getExpression(componentRequirement);
     }
+
+    if (componentRequirement.kind().isModule() && compilerOptions.aheadOfTimeSubcomponents()) {
+      return new PrunedModifiableModule(componentRequirement);
+    }
+
     throw new IllegalStateException(
         "no component requirement expression found for " + componentRequirement);
   }
@@ -302,6 +311,29 @@ final class ComponentRequirementExpressions {
       }
       componentImplementation.addModifiableModuleMethod(module, methodBuilder.build());
       return methodName;
+    }
+  }
+
+  private static final class PrunedModifiableModule implements ComponentRequirementExpression {
+    private final ComponentRequirement module;
+
+    private PrunedModifiableModule(ComponentRequirement module) {
+      checkArgument(module.kind().isModule());
+      this.module = module;
+    }
+
+    @Override
+    public CodeBlock getExpression(ClassName requestingClass) {
+      throw new UnsupportedOperationException(module + " is pruned - it cannot be requested");
+    }
+
+    @Override
+    public CodeBlock getModifiableModuleMethodExpression(ClassName requestingClass) {
+      return CodeBlock.of(
+          "throw new UnsupportedOperationException($T.class + $S)",
+          module.typeElement(),
+          " has been pruned from the final resolved binding graph. If this exception is thrown, "
+              + "it is a cause of a Dagger bug - please report it!");
     }
   }
 }

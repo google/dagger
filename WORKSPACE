@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 http_archive(
     name = "google_bazel_common",
     strip_prefix = "bazel-common-1c225e62390566a9e88916471948ddd56e5f111c",

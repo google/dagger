@@ -27,8 +27,8 @@ def simple_jar(name, srcs):
         OUT="$$(pwd)/$@"
         if [[ -e "{package_name}" ]]; then
           cd "{package_name}"
-        elif [[ -e "external/dagger/{package_name}" ]]; then
-          cd "external/dagger/{package_name}"
+        elif [[ -e "external/com_github_google_dagger/{package_name}" ]]; then
+          cd "external/com_github_google_dagger/{package_name}"
         else
           echo "Cannot find {package_name} directory"
           exit 1

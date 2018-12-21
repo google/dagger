@@ -267,6 +267,7 @@ java_library(
         "HjarSourceFileGenerator.java",
         "ImmediateFutureBindingExpression.java",
         "InaccessibleMapKeyProxyGenerator.java",
+        "InjectionMethod.java",
         "InjectionMethods.java",
         "InjectionOrProvisionProviderCreationExpression.java",
         "InnerSwitchingProviders.java",

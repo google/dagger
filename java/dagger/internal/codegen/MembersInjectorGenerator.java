@@ -57,20 +57,20 @@ import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
  */
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
-  private final Types types;
+  private final DaggerTypes types;
+  private final DaggerElements elements;
 
   @Inject
   MembersInjectorGenerator(
-      Filer filer, Elements elements, SourceVersion sourceVersion, Types types) {
+      Filer filer, DaggerElements elements, DaggerTypes types, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
     this.types = types;
+    this.elements = elements;
   }
 
   @Override
@@ -180,7 +180,8 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
             CodeBlock.of("instance"),
             binding.key().type(),
             types,
-            frameworkFieldUsages(binding.dependencies(), dependencyFields)::get));
+            frameworkFieldUsages(binding.dependencies(), dependencyFields)::get,
+            elements));
 
     if (usesRawFrameworkTypes) {
       injectMembersBuilder.addAnnotation(suppressWarnings(UNCHECKED));
@@ -189,7 +190,8 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
 
     for (InjectionSite injectionSite : binding.injectionSites()) {
       if (injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())) {
-        injectorTypeBuilder.addMethod(InjectionSiteMethod.create(injectionSite));
+        injectorTypeBuilder.addMethod(
+            InjectionSiteMethod.create(injectionSite, elements).toMethodSpec());
       }
     }
 

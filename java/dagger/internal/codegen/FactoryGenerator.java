@@ -62,26 +62,26 @@ import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
  * {@link Inject} constructors.
  */
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
-  private final Types types;
+  private final DaggerTypes types;
+  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
 
   @Inject
   FactoryGenerator(
       Filer filer,
-      Elements elements,
       SourceVersion sourceVersion,
-      Types types,
+      DaggerTypes types,
+      DaggerElements elements,
       CompilerOptions compilerOptions) {
     super(filer, elements, sourceVersion);
     this.types = types;
+    this.elements = elements;
     this.compilerOptions = compilerOptions;
   }
 
@@ -119,7 +119,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     factoryBuilder.addMethod(provideInstanceMethod(binding));
     addCreateMethod(binding, factoryBuilder);
 
-    factoryBuilder.addMethod(ProvisionMethod.create(binding, compilerOptions));
+    factoryBuilder.addMethod(
+        ProvisionMethod.create(binding, compilerOptions, elements).toMethodSpec());
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return factoryBuilder;
@@ -261,7 +262,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
               binding.requiresModuleInstance()
                   ? Optional.of(CodeBlock.of("module"))
                   : Optional.empty(),
-              compilerOptions));
+              compilerOptions,
+              elements));
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");
       provideInstanceMethod
@@ -273,7 +275,8 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
                   instance,
                   binding.key().type(),
                   types,
-                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get))
+                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
+                  elements))
           .addStatement("return $L", instance);
     } else {
       provideInstanceMethod.addStatement(

@@ -104,7 +104,8 @@ final class MembersInjectionMethods {
             request ->
                 bindingExpressions
                     .getDependencyArgumentExpression(request, componentImplementation.name())
-                    .codeBlock()));
+                    .codeBlock(),
+            elements));
     methodBuilder.addStatement("return $L", instance);
 
     MethodSpec method = methodBuilder.build();

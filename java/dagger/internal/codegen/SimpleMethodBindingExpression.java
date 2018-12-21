@@ -139,7 +139,8 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             argumentsFunction,
             requestingClass,
             moduleReference(requestingClass),
-            compilerOptions));
+            compilerOptions,
+            elements));
   }
 
   private Expression dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {

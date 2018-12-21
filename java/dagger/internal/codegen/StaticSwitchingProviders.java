@@ -36,6 +36,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.model.Key;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -47,11 +48,14 @@ import javax.lang.model.type.TypeMirror;
  * in the root component. Ideally, each component would get its own {@code SwitchingProvider}, but
  * since the subcomponents are inner classes they cannot contain static classes.
  */
+@PerGeneratedFile
 final class StaticSwitchingProviders extends SwitchingProviders {
   private final DaggerTypes types;
   private final ClassName owningComponent;
 
-  StaticSwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
+  @Inject
+  StaticSwitchingProviders(
+      @TopLevel ComponentImplementation componentImplementation, DaggerTypes types) {
     super(componentImplementation, types);
     this.types = types;
     this.owningComponent = componentImplementation.name();

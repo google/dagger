@@ -39,11 +39,13 @@ import dagger.internal.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /**
  * A central repository of expressions used to access any {@link ComponentRequirement} available to
  * a component.
  */
+@PerComponentImplementation
 final class ComponentRequirementExpressions {
 
   // TODO(dpb,ronshapiro): refactor this and ComponentBindingExpressions into a
@@ -55,42 +57,19 @@ final class ComponentRequirementExpressions {
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final DaggerTypes types;
-  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
 
-  private ComponentRequirementExpressions(
-      Optional<ComponentRequirementExpressions> parent,
+  // TODO(ronshapiro): give ComponentImplementation a graph() method
+  @Inject
+  ComponentRequirementExpressions(
+      @ParentComponent Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      DaggerTypes types,
-      DaggerElements elements,
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.types = types;
-    this.elements = elements;
     this.compilerOptions = compilerOptions;
-  }
-
-  // TODO(ronshapiro): give ComponentImplementation a graph() method
-  ComponentRequirementExpressions(
-      BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      DaggerTypes types,
-      DaggerElements elements,
-      CompilerOptions compilerOptions) {
-    this(Optional.empty(), graph, componentImplementation, types, elements, compilerOptions);
-  }
-
-  /**
-   * Returns a new object representing the expressions available from a child component of this one.
-   */
-  ComponentRequirementExpressions forChildComponent(
-      BindingGraph graph, ComponentImplementation componentImplementation) {
-    return new ComponentRequirementExpressions(
-        Optional.of(this), graph, componentImplementation, types, elements, compilerOptions);
   }
 
   /**

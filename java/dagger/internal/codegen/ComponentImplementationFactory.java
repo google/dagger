@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -79,24 +80,18 @@ final class ComponentImplementationFactory {
 
   private static final String CANCELLATION_LISTENER_METHOD_NAME = "onProducerFutureCancelled";
 
-  private final DaggerTypes types;
-  private final DaggerElements elements;
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
-  private final BindingGraphFactory bindingGraphFactory;
+  private final TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder;
 
   @Inject
   ComponentImplementationFactory(
-      DaggerTypes types,
-      DaggerElements elements,
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
-      BindingGraphFactory bindingGraphFactory) {
-    this.types = types;
-    this.elements = elements;
+      TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder) {
     this.keyFactory = keyFactory;
     this.compilerOptions = compilerOptions;
-    this.bindingGraphFactory = bindingGraphFactory;
+    this.topLevelImplementationComponentBuilder = topLevelImplementationComponentBuilder;
   }
 
   /**
@@ -108,45 +103,28 @@ final class ComponentImplementationFactory {
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
         topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
-    OptionalFactories optionalFactories = new OptionalFactories(componentImplementation);
-    Optional<ComponentCreatorImplementation> componentCreatorImplementation =
-        ComponentCreatorImplementation.create(
-            componentImplementation, bindingGraph, elements, types);
-    componentImplementation.setCreatorImplementation(componentCreatorImplementation);
-    ComponentRequirementExpressions componentRequirementExpressions =
-        new ComponentRequirementExpressions(
-            bindingGraph, componentImplementation, types, elements, compilerOptions);
-    ComponentBindingExpressions bindingExpressions =
-        new ComponentBindingExpressions(
-            bindingGraph,
-            componentImplementation,
-            componentRequirementExpressions,
-            optionalFactories,
-            types,
-            elements,
-            compilerOptions);
+    // TODO(dpb): explore using optional bindings for the "parent" bindings
+    CurrentImplementationSubcomponent currentImplementationSubcomponent =
+        topLevelImplementationComponentBuilder
+            .topLevelComponent(componentImplementation)
+            .build()
+            .currentImplementationSubcomponentBuilder()
+            .componentImplementation(componentImplementation)
+            .bindingGraph(bindingGraph)
+            .parentBuilder(Optional.empty())
+            .parentBindingExpressions(Optional.empty())
+            .parentRequirementExpressions(Optional.empty())
+            .build();
+
     if (componentImplementation.isAbstract()) {
       checkState(
           compilerOptions.aheadOfTimeSubcomponents(),
           "Calling 'componentImplementation()' on %s when not generating ahead-of-time "
               + "subcomponents.",
           bindingGraph.componentTypeElement());
-      return new SubcomponentImplementationBuilder(
-              Optional.empty(), /* parent */
-              bindingGraph,
-              componentImplementation,
-              optionalFactories,
-              bindingExpressions,
-              componentRequirementExpressions)
-          .build();
+      return currentImplementationSubcomponent.subcomponentBuilder().build();
     } else {
-      return new RootComponentImplementationBuilder(
-              bindingGraph,
-              componentImplementation,
-              optionalFactories,
-              bindingExpressions,
-              componentRequirementExpressions)
-          .build();
+      return currentImplementationSubcomponent.rootComponentBuilder().build();
     }
   }
 
@@ -162,26 +140,20 @@ final class ComponentImplementationFactory {
         graph.componentDescriptor().kind().isTopLevel() ? FINAL : ABSTRACT);
   }
 
-  private abstract class ComponentImplementationBuilder {
-    final BindingGraph graph;
-    final ComponentBindingExpressions bindingExpressions;
-    final ComponentRequirementExpressions componentRequirementExpressions;
-    final ComponentImplementation componentImplementation;
-    final OptionalFactories optionalFactories;
+  abstract static class ComponentImplementationBuilder {
+    // TODO(ronshapiro): replace this with composition instead of inheritance so we don't have 
+    // non-final fields
+    @Inject BindingGraph graph;
+    @Inject ComponentBindingExpressions bindingExpressions;
+    @Inject ComponentRequirementExpressions componentRequirementExpressions;
+    @Inject ComponentImplementation componentImplementation;
+    @Inject BindingGraphFactory bindingGraphFactory;
+    @Inject DaggerTypes types;
+    @Inject DaggerElements elements;
+    @Inject CompilerOptions compilerOptions;
+    @Inject ComponentImplementationFactory componentImplementationFactory;
+    @Inject TopLevelImplementationComponent topLevelImplementationComponent;
     boolean done;
-
-    ComponentImplementationBuilder(
-        BindingGraph graph,
-        ComponentImplementation componentImplementation,
-        OptionalFactories optionalFactories,
-        ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementExpressions componentRequirementExpressions) {
-      this.graph = graph;
-      this.componentImplementation = componentImplementation;
-      this.optionalFactories = optionalFactories;
-      this.bindingExpressions = bindingExpressions;
-      this.componentRequirementExpressions = componentRequirementExpressions;
-    }
 
     /**
      * Returns a {@link ComponentImplementation} for this component. This is only intended to be
@@ -417,7 +389,7 @@ final class ComponentImplementationFactory {
       // implementation object for the base implementation of the child by truncating the binding
       // graph at the child.
       BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child);
-      return createComponentImplementation(truncatedBindingGraph);
+      return componentImplementationFactory.createComponentImplementation(truncatedBindingGraph);
     }
 
     final ComponentImplementation buildChildImplementation(BindingGraph childGraph) {
@@ -425,22 +397,16 @@ final class ComponentImplementationFactory {
           compilerOptions.aheadOfTimeSubcomponents()
               ? abstractInnerSubcomponent(childGraph.componentDescriptor())
               : concreteSubcomponent(childGraph.componentDescriptor());
-      Optional<ComponentCreatorImplementation> childCreatorImplementation =
-          ComponentCreatorImplementation.create(childImplementation, childGraph, elements, types);
-      childImplementation.setCreatorImplementation(childCreatorImplementation);
-      ComponentRequirementExpressions childComponentRequirementExpressions =
-          componentRequirementExpressions.forChildComponent(childGraph, childImplementation);
-      ComponentBindingExpressions childBindingExpressions =
-          bindingExpressions.forChildComponent(
-              childGraph, childImplementation, childComponentRequirementExpressions);
-      return new SubcomponentImplementationBuilder(
-              Optional.of(this),
-              childGraph,
-              childImplementation,
-              optionalFactories,
-              childBindingExpressions,
-              childComponentRequirementExpressions)
-          .build();
+      return topLevelImplementationComponent
+            .currentImplementationSubcomponentBuilder()
+            .componentImplementation(childImplementation)
+            .bindingGraph(childGraph)
+            .parentBuilder(Optional.of(this))
+            .parentBindingExpressions(Optional.of(bindingExpressions))
+            .parentRequirementExpressions(Optional.of(componentRequirementExpressions))
+            .build()
+            .subcomponentBuilder()
+            .build();
     }
 
     /** Creates an inner abstract subcomponent implementation. */
@@ -603,21 +569,14 @@ final class ComponentImplementationFactory {
   }
 
   /** Builds a root component implementation. */
-  private final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
+  // TODO(ronshapiro): rename this as TopLevelComponentImplementationBuilder, since it may not
+  // always be a root component
+  static final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
     private final ClassName componentCreatorName;
 
-    RootComponentImplementationBuilder(
-        BindingGraph graph,
-        ComponentImplementation componentImplementation,
-        OptionalFactories optionalFactories,
-        ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementExpressions componentRequirementExpressions) {
-      super(
-          graph,
-          componentImplementation,
-          optionalFactories,
-          bindingExpressions,
-          componentRequirementExpressions);
+    @Inject
+    RootComponentImplementationBuilder(ComponentImplementation componentImplementation) {
+      checkArgument(!componentImplementation.superclassImplementation().isPresent());
       this.componentCreatorName = componentImplementation.creatorImplementation().get().name();
     }
 
@@ -673,22 +632,12 @@ final class ComponentImplementationFactory {
    * implementation that extends an abstract base implementation. Otherwise it represents a private,
    * inner, concrete, final implementation of a subcomponent which extends a user defined type.
    */
-  private final class SubcomponentImplementationBuilder extends ComponentImplementationBuilder {
+  static final class SubcomponentImplementationBuilder extends ComponentImplementationBuilder {
     final Optional<ComponentImplementationBuilder> parent;
 
+    @Inject
     SubcomponentImplementationBuilder(
-        Optional<ComponentImplementationBuilder> parent,
-        BindingGraph graph,
-        ComponentImplementation componentImplementation,
-        OptionalFactories optionalFactories,
-        ComponentBindingExpressions bindingExpressions,
-        ComponentRequirementExpressions componentRequirementExpressions) {
-      super(
-          graph,
-          componentImplementation,
-          optionalFactories,
-          bindingExpressions,
-          componentRequirementExpressions);
+        @ParentComponent Optional<ComponentImplementationBuilder> parent) {
       this.parent = parent;
     }
 

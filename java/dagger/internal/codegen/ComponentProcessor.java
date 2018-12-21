@@ -124,7 +124,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
         SpiModule.class,
-        SystemComponentsModule.class
+        SystemComponentsModule.class,
+        TopLevelImplementationComponent.InstallationModule.class,
       })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);

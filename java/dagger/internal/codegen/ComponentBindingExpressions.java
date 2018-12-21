@@ -45,10 +45,12 @@ import dagger.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
+@PerComponentImplementation
 final class ComponentBindingExpressions {
   // TODO(dpb,ronshapiro): refactor this and ComponentRequirementExpressions into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
@@ -68,28 +70,8 @@ final class ComponentBindingExpressions {
   private final ModifiableBindingExpressions modifiableBindingExpressions;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
 
-  ComponentBindingExpressions(
-      BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      ComponentRequirementExpressions componentRequirementExpressions,
-      OptionalFactories optionalFactories,
-      DaggerTypes types,
-      DaggerElements elements,
-      CompilerOptions compilerOptions) {
-    this(
-        Optional.empty(),
-        graph,
-        componentImplementation,
-        componentRequirementExpressions,
-        new StaticSwitchingProviders(componentImplementation, types),
-        optionalFactories,
-        types,
-        elements,
-        compilerOptions);
-  }
-
-  private ComponentBindingExpressions(
-      Optional<ComponentBindingExpressions> parent,
+  @Inject ComponentBindingExpressions(
+      @ParentComponent Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
@@ -119,25 +101,6 @@ final class ComponentBindingExpressions {
             componentImplementation,
             compilerOptions,
             types);
-  }
-
-  /**
-   * Returns a new object representing the bindings available from a child component of this one.
-   */
-  ComponentBindingExpressions forChildComponent(
-      BindingGraph childGraph,
-      ComponentImplementation childComponentImplementation,
-      ComponentRequirementExpressions childComponentRequirementExpressions) {
-    return new ComponentBindingExpressions(
-        Optional.of(this),
-        childGraph,
-        childComponentImplementation,
-        childComponentRequirementExpressions,
-        staticSwitchingProviders,
-        optionalFactories,
-        types,
-        elements,
-        compilerOptions);
   }
 
   /* Returns the {@link ModifiableBindingExpressions} for this component. */

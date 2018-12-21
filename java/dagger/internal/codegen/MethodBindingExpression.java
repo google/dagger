@@ -45,6 +45,17 @@ abstract class MethodBindingExpression extends BindingExpression {
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
+    if (request.frameworkType().isPresent()) {
+      // Initializing a framework instance that participates in a cycle requires that the underlying
+      // FrameworkInstanceBindingExpression is invoked in order for a cycle to be detected properly.
+      // When a MethodBindingExpression wraps a FrameworkInstanceBindingExpression, the wrapped
+      // expression will only be invoked once to implement the method body. This is a hack to work
+      // around that weirdness - methodImplementation.body() will invoke the framework instance
+      // initialization again in case the field is not fully initialized.
+      // TODO(b/121196706): use a less hacky approach to fix this bug
+      Object unused = methodImplementation.body();
+    }
+    
     addMethod();
     return Expression.create(
         methodImplementation.returnType(),

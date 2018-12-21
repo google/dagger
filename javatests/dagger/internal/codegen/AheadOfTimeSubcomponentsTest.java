@@ -7187,6 +7187,85 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generatedRoot);
   }
 
+  @Test
+  public void modifiableCycles() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class A {",
+            "  @Inject A(B b) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
+            "class B {",
+            "  @Inject B(Provider<A> a) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  Provider<A> frameworkInstanceCycle();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import dagger.internal.DelegateFactory;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  private Provider<A> aProvider;",
+            "  private B_Factory bProvider;",
+            "",
+            "  protected DaggerLeaf() {}",
+            "",
+            "  protected void configureInitialization() {",
+            "    initialize();",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.aProvider = new DelegateFactory<>();",
+            "    this.bProvider = B_Factory.create(frameworkInstanceCycle());",
+            "    DelegateFactory.setDelegate(aProvider, A_Factory.create(getBProvider()));",
+            "  }",
+            "",
+            "  @Override",
+            "  public Provider<A> frameworkInstanceCycle() {",
+            "    return aProvider;",
+            "  }",
+            "",
+            "  protected Provider getBProvider() {",
+            "    return bProvider;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .hasSourceEquivalentTo(generatedLeaf);
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

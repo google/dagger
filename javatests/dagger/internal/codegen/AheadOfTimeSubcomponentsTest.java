@@ -7266,6 +7266,147 @@ public final class AheadOfTimeSubcomponentsTest {
         .hasSourceEquivalentTo(generatedLeaf);
   }
 
+  /**
+   * This tests a regression case where the component builder in the base implementation used one
+   * set of disambiguated names from all of the {@link
+   * BindingGraph#possiblyNecessaryRequirements()}, and the final implementation used a different
+   * set of disambiguated names from the resolved {@link BindingGraph#componentRequirements()}. This
+   * resulted in generated output that didn't compile, as the builder implementation attempted to
+   * use the new names in validation, which didn't line up with the old names.
+   */
+  @Test
+  public void componentBuilderFields_consistencyAcrossImplementations() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "a.Mod",
+            "package a;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "public class Mod {",
+            "  @Provides",
+            "  @Named(\"a\")",
+            "  int i() { return 0; }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "b.Mod",
+            "package b;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "public class Mod {",
+            "  @Provides",
+            "  @Named(\"b\")",
+            "  int i() { return 0; }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "c.Mod",
+            "package c;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "public class Mod {",
+            "  @Provides",
+            "  @Named(\"c\")",
+            "  int i() { return 0; }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.HasUnusedModuleLeaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import javax.inject.Named;",
+            "",
+            "@Subcomponent(modules = {a.Mod.class, b.Mod.class, c.Mod.class})",
+            "interface HasUnusedModuleLeaf {",
+            "  @Named(\"a\") int a();",
+            // b omitted intentionally
+            "  @Named(\"c\") int c();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    HasUnusedModuleLeaf build();",
+            "  }",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import a.Mod;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerHasUnusedModuleLeaf implements HasUnusedModuleLeaf {",
+            "  public abstract static class Builder implements HasUnusedModuleLeaf.Builder {",
+            "    public Mod mod;",
+            "",
+            "    public b.Mod mod2;",
+            "",
+            "    public c.Mod mod3;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerHasUnusedModuleLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Root {",
+            "  HasUnusedModuleLeaf.Builder leaf();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            "import a.Mod;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  private final class HasUnusedModuleLeafBuilder",
+            "      extends DaggerHasUnusedModuleLeaf.Builder {",
+            "    @Override",
+            "    public HasUnusedModuleLeaf build() {",
+            "      if (mod == null) {",
+            "        this.mod = new Mod();",
+            "      }",
+            // Before this regression was fixed, `mod3` was instead `mod2`, since the `b.Mod` was
+            // pruned from the graph and did not need validation.
+            "      if (mod3 == null) {",
+            "        this.mod3 = new c.Mod();",
+            "      }",
+            "      return new HasUnusedModuleLeafImpl(this);",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+
+  }
+
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {

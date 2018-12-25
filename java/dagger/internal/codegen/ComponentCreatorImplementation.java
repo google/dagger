@@ -32,6 +32,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -187,6 +188,16 @@ final class ComponentCreatorImplementation {
      * BindingGraph#componentRequirements() necessary component requirements}.
      */
     ImmutableMap<ComponentRequirement, FieldSpec> builderFields() {
+      if (componentImplementation.baseImplementation().isPresent()) {
+        // If there's a base implementation, retain the same names of the builder fields, but filter
+        // for currently used component requirements
+        ComponentCreatorImplementation baseCreatorImplementation =
+            componentImplementation.baseImplementation().get().creatorImplementation().get();
+        return ImmutableMap.copyOf(
+            Maps.filterKeys(
+                baseCreatorImplementation.builderFields, componentRequirements()::contains));
+      }
+
       UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap.Builder<ComponentRequirement, FieldSpec> builderFields = ImmutableMap.builder();
       Modifier modifier = componentImplementation.isAbstract() ? PUBLIC : PRIVATE;

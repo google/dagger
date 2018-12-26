@@ -126,7 +126,7 @@ abstract class CompilerOptions {
   CompilerOptions validate() {
     checkState(
         !(fastInit() && experimentalAndroidMode2()),
-        "fastInit/experimentalAndroidMode and experimentalAndroidMode2 cannot be used together.");
+        "fastInit and experimentalAndroidMode2 cannot be used together.");
     return this;
   }
 
@@ -200,16 +200,14 @@ abstract class CompilerOptions {
       }
     },
 
-    FAST_INIT(Builder::fastInit) {
+    FAST_INIT(Builder::fastInit),
+
+    EXPERIMENTAL_ANDROID_MODE((builder, ignoredValue) -> {}) {
       @Override
-      boolean isEnabled(ProcessingEnvironment processingEnvironment) {
-        return super.isEnabled(processingEnvironment)
-            || EXPERIMENTAL_ANDROID_MODE.isEnabled(processingEnvironment);
+      public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
+        noLongerRecognizedWarning(processingEnvironment);
       }
     },
-
-    // TODO(user): Remove once all usages are migrated to FAST_INIT.
-    EXPERIMENTAL_ANDROID_MODE((builder, enabled) -> {}),
 
     EXPERIMENTAL_ANDROID_MODE2(Builder::experimentalAndroidMode2),
 
@@ -226,15 +224,9 @@ abstract class CompilerOptions {
     EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS(Builder::aheadOfTimeSubcomponents),
 
     FLOATING_BINDS_METHODS((builder, ignoredValue) -> {}) {
-     @Override
+      @Override
       public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
-        if (processingEnvironment.getOptions().containsKey(toString())) {
-          processingEnvironment
-            .getMessager()
-            .printMessage(
-                Diagnostic.Kind.WARNING,
-                toString() + " is no longer a recognized option by Dagger");
-        }
+        noLongerRecognizedWarning(processingEnvironment);
       }
     },
 
@@ -293,6 +285,17 @@ abstract class CompilerOptions {
     public String toString() {
       return optionName(name());
     }
+
+    void noLongerRecognizedWarning(ProcessingEnvironment processingEnvironment) {
+      if (processingEnvironment.getOptions().containsKey(toString())) {
+          processingEnvironment
+            .getMessager()
+            .printMessage(
+                Diagnostic.Kind.WARNING,
+                toString() + " is no longer a recognized option by Dagger");
+      }
+    }
+
   }
 
   /** The diagnostic kind or validation type for a kind of validation. */

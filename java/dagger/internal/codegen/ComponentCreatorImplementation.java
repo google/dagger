@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.ModuleProxies.newModuleInstance;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -46,8 +48,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /** The implementation of a component creator type. */
 final class ComponentCreatorImplementation {
@@ -79,8 +79,8 @@ final class ComponentCreatorImplementation {
   static Optional<ComponentCreatorImplementation> create(
       ComponentImplementation componentImplementation,
       BindingGraph graph,
-      Elements elements,
-      Types types) {
+      DaggerElements elements,
+      DaggerTypes types) {
     if (componentImplementation.superclassImplementation().isPresent()
         && componentImplementation.isAbstract()) {
       // The component builder in ahead-of-time mode is generated with the base subcomponent
@@ -110,14 +110,14 @@ final class ComponentCreatorImplementation {
     final BindingGraph graph;
     final TypeSpec.Builder componentCreatorClass;
     final ComponentImplementation componentImplementation;
-    final Elements elements;
-    final Types types;
+    final DaggerElements elements;
+    final DaggerTypes types;
 
     CreatorImplementationFactory(
         ComponentImplementation componentImplementation,
         BindingGraph graph,
-        Elements elements,
-        Types types) {
+        DaggerElements elements,
+        DaggerTypes types) {
       this.componentImplementation = componentImplementation;
       this.componentCreatorClass = classBuilder(componentImplementation.getCreatorName());
       this.graph = graph;
@@ -229,9 +229,14 @@ final class ComponentCreatorImplementation {
           (requirement, field) -> {
             switch (requirement.nullPolicy(elements, types)) {
               case NEW:
+                checkState(requirement.kind().isModule());
                 factoryMethod
                     .beginControlFlow("if ($N == null)", field)
-                    .addStatement("this.$N = new $T()", field, field.type)
+                    .addStatement(
+                        "this.$N = $L",
+                        field,
+                        newModuleInstance(
+                            requirement.typeElement(), componentImplementation.name(), elements))
                     .endControlFlow();
                 break;
               case THROW:

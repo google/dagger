@@ -22,6 +22,7 @@ import dagger.internal.codegen.SourceFileGeneratorsModule.ComponentModule;
 import dagger.internal.codegen.SourceFileGeneratorsModule.MembersInjectionModule;
 import dagger.internal.codegen.SourceFileGeneratorsModule.ProductionModule;
 import dagger.internal.codegen.SourceFileGeneratorsModule.ProvisionModule;
+import javax.lang.model.element.TypeElement;
 
 @Module(
     includes = {
@@ -53,4 +54,14 @@ interface SourceFileGeneratorsModule {
 
   @Module
   class ComponentModule extends GeneratorModule<BindingGraph, ComponentGenerator> {}
+
+  // the abstract module is not available because we're using a qualifier
+  @Provides
+  @ModuleGenerator
+  static SourceFileGenerator<TypeElement> generator(
+      ModuleConstructorProxyGenerator generator, CompilerOptions compilerOptions) {
+    return compilerOptions.headerCompilation()
+        ? HjarSourceFileGenerator.wrap(generator)
+        : generator;
+  }
 }

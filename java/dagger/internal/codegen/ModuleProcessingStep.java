@@ -50,6 +50,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
   private final BindingFactory bindingFactory;
   private final SourceFileGenerator<ProvisionBinding> factoryGenerator;
   private final SourceFileGenerator<ProductionBinding> producerFactoryGenerator;
+  private final SourceFileGenerator<TypeElement> moduleConstructorProxyGenerator;
   private final InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator;
   private final DelegateDeclaration.Factory delegateDeclarationFactory;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
@@ -61,6 +62,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
       BindingFactory bindingFactory,
       SourceFileGenerator<ProvisionBinding> factoryGenerator,
       SourceFileGenerator<ProductionBinding> producerFactoryGenerator,
+      @ModuleGenerator SourceFileGenerator<TypeElement> moduleConstructorProxyGenerator,
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
       Factory delegateDeclarationFactory) {
     super(MoreElements::asType);
@@ -69,6 +71,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
     this.bindingFactory = bindingFactory;
     this.factoryGenerator = factoryGenerator;
     this.producerFactoryGenerator = producerFactoryGenerator;
+    this.moduleConstructorProxyGenerator = moduleConstructorProxyGenerator;
     this.inaccessibleMapKeyProxyGenerator = inaccessibleMapKeyProxyGenerator;
     this.delegateDeclarationFactory = delegateDeclarationFactory;
   }
@@ -104,6 +107,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
           inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
         }
       }
+      moduleConstructorProxyGenerator.generate(module, messager);
     }
     processedModuleElements.add(module);
   }

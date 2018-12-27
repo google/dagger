@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
+import static dagger.internal.codegen.ModuleProxies.newModuleInstance;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.lang.model.element.TypeElement;
 
 /**
  * A central repository of expressions used to access any {@link ComponentRequirement} available to
@@ -58,6 +60,7 @@ final class ComponentRequirementExpressions {
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
   private final CompilerOptions compilerOptions;
+  private final DaggerElements elements;
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
   @Inject
@@ -65,11 +68,13 @@ final class ComponentRequirementExpressions {
       @ParentComponent Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      DaggerElements elements) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.compilerOptions = compilerOptions;
+    this.elements = elements;
   }
 
   /**
@@ -136,7 +141,7 @@ final class ComponentRequirementExpressions {
           ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
       return new ComponentParameterField(requirement, componentImplementation, factoryParameter);
     } else if (requirement.kind().isModule()) {
-      return new ComponentInstantiableField(requirement, componentImplementation);
+      return new InstantiableModuleField(requirement, componentImplementation);
     } else {
       throw new AssertionError(
           String.format("Can't create %s in %s", requirement, componentImplementation.name()));
@@ -212,16 +217,24 @@ final class ComponentRequirementExpressions {
    * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that can be
    * instantiated by the component (i.e. a static class with a no-arg constructor).
    */
-  private static final class ComponentInstantiableField extends AbstractField {
-    private ComponentInstantiableField(
-        ComponentRequirement componentRequirement,
-        ComponentImplementation componentImplementation) {
-      super(componentRequirement, componentImplementation);
+  private final class InstantiableModuleField extends AbstractField {
+    private final TypeElement moduleElement;
+    private final ComponentImplementation componentImplementation;
+
+    private InstantiableModuleField(
+        ComponentRequirement module, ComponentImplementation componentImplementation) {
+      super(module, componentImplementation);
+      checkArgument(module.kind().isModule());
+      this.moduleElement = module.typeElement();
+      this.componentImplementation = componentImplementation;
     }
 
     @Override
     CodeBlock fieldInitialization(FieldSpec componentField) {
-      return CodeBlock.of("this.$N = new $T();", componentField, componentField.type);
+      return CodeBlock.of(
+          "this.$N = $L;",
+          componentField,
+          newModuleInstance(moduleElement, componentImplementation.name(), elements));
     }
   }
 

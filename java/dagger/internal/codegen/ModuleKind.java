@@ -69,6 +69,10 @@ enum ModuleKind {
     return kinds.stream().findAny();
   }
 
+  static void checkIsModule(TypeElement moduleElement) {
+    checkArgument(forAnnotatedElement(moduleElement).isPresent());
+  }
+
   private final Class<? extends Annotation> moduleAnnotation;
   private final Class<? extends Annotation> methodAnnotation;
 

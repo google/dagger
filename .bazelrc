@@ -6,3 +6,7 @@ build --host_javacopt=-g
 # TODO(ronshapiro): explore how much work it would be to reenable this
 build --javacopt="-Xep:BetaApi:OFF"
 build --host_javacopt="-Xep:BetaApi:OFF"
+
+# Legacy flags
+build --incompatible_package_name_is_a_function=false
+build --incompatible_disable_depset_in_cc_user_flags=false

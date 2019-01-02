@@ -253,7 +253,7 @@ final class ComponentValidator {
 
     AnnotationMirror componentMirror =
         getAnnotationMirror(subject, componentKind.annotation()).get();
-    if (componentKind.isTopLevel()) {
+    if (componentKind.isRoot()) {
       validateComponentDependencies(report, getComponentDependencies(componentMirror));
     }
     report.addSubreport(

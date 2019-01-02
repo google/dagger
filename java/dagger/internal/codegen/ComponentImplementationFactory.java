@@ -137,7 +137,7 @@ final class ComponentImplementationFactory {
         Optional.empty(), // superclassImplementation
         new SubcomponentNames(graph, keyFactory),
         PUBLIC,
-        graph.componentDescriptor().kind().isTopLevel() ? FINAL : ABSTRACT);
+        graph.componentDescriptor().kind().isRoot() ? FINAL : ABSTRACT);
   }
 
   abstract static class ComponentImplementationBuilder {

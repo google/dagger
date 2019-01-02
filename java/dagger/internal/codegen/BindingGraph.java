@@ -174,7 +174,7 @@ abstract class BindingGraph {
    */
   @Memoized
   ImmutableSet<ComponentRequirement> possiblyNecessaryRequirements() {
-    checkState(!componentDescriptor().kind().isTopLevel());
+    checkState(!componentDescriptor().kind().isRoot());
     return componentRequirements(
         StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
             .flatMap(graph -> graph.ownedModules().stream())

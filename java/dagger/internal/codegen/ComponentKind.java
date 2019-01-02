@@ -67,21 +67,21 @@ enum ComponentKind {
   PRODUCER_MODULE(ProducerModule.class, Optional.empty(), true, true),
   ;
 
-  private static final ImmutableSet<ComponentKind> TOP_LEVEL_COMPONENT_KINDS =
+  private static final ImmutableSet<ComponentKind> ROOT_COMPONENT_KINDS =
       stream(values())
           .filter(kind -> !kind.isForModuleValidation())
-          .filter(kind -> kind.isTopLevel())
+          .filter(kind -> kind.isRoot())
           .collect(toImmutableSet());
 
   private static final ImmutableSet<ComponentKind> SUBCOMPONENT_KINDS =
       stream(values())
           .filter(kind -> !kind.isForModuleValidation())
-          .filter(kind -> !kind.isTopLevel())
+          .filter(kind -> !kind.isRoot())
           .collect(toImmutableSet());
 
-  /** Returns the set of kinds for top-level components. */
-  static ImmutableSet<ComponentKind> topLevelComponentKinds() {
-    return TOP_LEVEL_COMPONENT_KINDS;
+  /** Returns the set of kinds for root components. */
+  static ImmutableSet<ComponentKind> rootComponentKinds() {
+    return ROOT_COMPONENT_KINDS;
   }
 
   /** Returns the set of kinds for subcomponents. */
@@ -162,17 +162,17 @@ enum ComponentKind {
 
   private final Class<? extends Annotation> annotation;
   private final Optional<Class<? extends Annotation>> builderAnnotation;
-  private final boolean topLevel;
+  private final boolean isRoot;
   private final boolean production;
 
   ComponentKind(
       Class<? extends Annotation> annotation,
       Optional<Class<? extends Annotation>> builderAnnotation,
-      boolean topLevel,
+      boolean isRoot,
       boolean production) {
     this.annotation = annotation;
     this.builderAnnotation = builderAnnotation;
-    this.topLevel = topLevel;
+    this.isRoot = isRoot;
     this.production = production;
   }
 
@@ -205,11 +205,11 @@ enum ComponentKind {
   }
 
   /**
-   * Returns {@code true} if the descriptor is for a top-level (not a child) component or is for
+   * Returns {@code true} if the descriptor is for a root component (not a subcomponent) or is for
    * {@linkplain #isForModuleValidation() module-validation}.
    */
-  boolean isTopLevel() {
-    return topLevel;
+  boolean isRoot() {
+    return isRoot;
   }
 
   /** Returns true if this is a production component. */

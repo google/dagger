@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.ComponentKind.allComponentAndBuilderAnnotations;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
+import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
-import static dagger.internal.codegen.ComponentKind.topLevelComponentKinds;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
@@ -108,7 +108,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     builderReportsByComponent =
         processBuilders(
             getElementsFromAnnotations(
-                elementsByAnnotation, builderAnnotationsFor(topLevelComponentKinds())),
+                elementsByAnnotation, builderAnnotationsFor(rootComponentKinds())),
             rejectedElements);
     builderReportsBySubcomponent = processBuilders(subcomponentBuilderElements, rejectedElements);
     reportsBySubcomponent =
@@ -120,7 +120,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   @Override
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
-    if (!disjoint(annotations, annotationsFor(topLevelComponentKinds()))) {
+    if (!disjoint(annotations, annotationsFor(rootComponentKinds()))) {
       ComponentValidationReport validationReport =
           componentValidator.validate(element, subcomponentElements, subcomponentBuilderElements);
       validationReport.report().printMessagesTo(messager);

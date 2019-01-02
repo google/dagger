@@ -274,7 +274,7 @@ abstract class ComponentDescriptor {
    * builder.
    */
   final boolean hasCreator() {
-    return kind().isTopLevel() || creatorDescriptor().isPresent();
+    return kind().isRoot() || creatorDescriptor().isPresent();
   }
 
   /**
@@ -404,7 +404,7 @@ abstract class ComponentDescriptor {
           "%s must have a component or subcomponent or module annotation",
           typeElement);
       if (!compilerOptions.aheadOfTimeSubcomponents()) {
-        checkArgument(kind.get().isTopLevel(), "%s must be a top-level component.", typeElement);
+        checkArgument(kind.get().isRoot(), "%s must be a top-level component.", typeElement);
       }
       return create(typeElement, kind.get());
     }
@@ -414,7 +414,7 @@ abstract class ComponentDescriptor {
           getAnnotationMirror(typeElement, kind.annotation()).get();
       DeclaredType declaredComponentType = MoreTypes.asDeclared(typeElement.asType());
       ImmutableSet<ComponentRequirement> componentDependencies =
-          kind.isTopLevel() && !kind.isForModuleValidation()
+          kind.isRoot() && !kind.isForModuleValidation()
               ? getComponentDependencies(componentAnnotation).stream()
                   .map(ComponentRequirement::forDependency)
                   .collect(toImmutableSet())

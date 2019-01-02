@@ -98,7 +98,7 @@ final class BindingGraphFactory {
   /** Creates a binding graph for a root component. */
   BindingGraph create(ComponentDescriptor componentDescriptor) {
     checkArgument(
-        componentDescriptor.kind().isTopLevel() || compilerOptions.aheadOfTimeSubcomponents());
+        componentDescriptor.kind().isRoot() || compilerOptions.aheadOfTimeSubcomponents());
     return create(Optional.empty(), componentDescriptor);
   }
 
@@ -236,7 +236,7 @@ final class BindingGraphFactory {
       ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
     ComponentKind kind = componentDescriptor.kind();
     return kind.isProducer()
-        && ((kind.isTopLevel() && !kind.isForModuleValidation())
+        && ((kind.isRoot() && !kind.isForModuleValidation())
             || (parentResolver.isPresent()
                 && !parentResolver.get().componentDescriptor.kind().isProducer()));
   }
@@ -396,7 +396,7 @@ final class BindingGraphFactory {
       checkArgument(binding.kind().equals(INJECTION));
       Resolver owningResolver = getOwningResolver(binding).orElse(this);
       ComponentDescriptor owningComponent = owningResolver.componentDescriptor;
-      return !rootComponent().kind().isTopLevel()
+      return !rootComponent().kind().isRoot()
           && binding.scope().isPresent()
           && !owningComponent.scopes().contains(binding.scope().get());
     }

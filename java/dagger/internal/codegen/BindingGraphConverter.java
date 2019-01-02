@@ -55,11 +55,11 @@ final class BindingGraphConverter {
   }
 
   /**
-   * Creates the external {@link dagger.model.BindingGraph} representing the given internal root
-   * {@link dagger.internal.codegen.BindingGraph}.
+   * Creates the external {@link dagger.model.BindingGraph} representing the given internal {@link
+   * dagger.internal.codegen.BindingGraph}.
    */
-  dagger.model.BindingGraph convert(BindingGraph rootGraph) {
-    Traverser traverser = new Traverser(rootGraph);
+  dagger.model.BindingGraph convert(BindingGraph bindingGraph) {
+    Traverser traverser = new Traverser(bindingGraph);
     traverser.traverseComponents();
 
     // When bindings are copied down into child graphs because they transitively depend on local
@@ -70,11 +70,9 @@ final class BindingGraphConverter {
     unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
         .forEach(traverser.network::removeNode);
 
-    ComponentKind rootComponentKind = rootGraph.componentDescriptor().kind();
+    ComponentKind componentKind = bindingGraph.componentDescriptor().kind();
     return BindingGraphProxies.bindingGraph(
-        traverser.network,
-        rootComponentKind.isForModuleValidation(),
-        !rootComponentKind.isTopLevel());
+        traverser.network, componentKind.isForModuleValidation(), !componentKind.isRoot());
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.

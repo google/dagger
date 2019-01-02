@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
-import static dagger.internal.codegen.ComponentKind.topLevelComponentKinds;
+import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -102,7 +102,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return annotationsFor(topLevelComponentKinds());
+    return annotationsFor(rootComponentKinds());
   }
 
   @Override
@@ -213,7 +213,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
    * ComponentDescriptor#creatorDescriptor()}.
    */
   private Stream<ComponentRequirement> componentRequirements(ComponentDescriptor component) {
-    checkArgument(component.kind().isTopLevel());
+    checkArgument(component.kind().isRoot());
     return Stream.concat(
         component.dependencies().stream(),
         component.modules().stream()

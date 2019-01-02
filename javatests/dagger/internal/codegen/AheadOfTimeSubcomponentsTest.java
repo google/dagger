@@ -5445,7 +5445,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      initialize();",
             "    }",
             "",
-            "    private Object getObject() {",
+            "    private Object getUnresolvedSetBinding() {",
             "      return LeafModule_UnresolvedSetBindingFactory.proxyUnresolvedSetBinding(",
             "          getMissing(), getMissingProvider());",
             "    }",
@@ -5467,7 +5467,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    protected Set<Object> getSetOfObject() {",
             "      return ImmutableSet.<Object>of(",
-            "          AncestorModule_SetContributionFactory.proxySetContribution(), getObject());",
+            "          AncestorModule_SetContributionFactory.proxySetContribution(),",
+            "          getUnresolvedSetBinding());",
             "    }",
             "",
             "    @Override",
@@ -6665,16 +6666,14 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public Set<CharSequence> set() {",
-            "    return ImmutableSet.<CharSequence>of(getCharSequence());",
+            "    return ImmutableSet.<CharSequence>of(getBindsMultibindingWithMissingDep());",
             "  }",
             "",
             // The expected output here is subtle: the Key of
             // LeafModule.bindsMultibindingWithMissingDep() is Set<CharSequence>, but the binding
             // method should only be returning an individual CharSequence. Otherwise the
             // ImmutableSet factory method above will fail.
-            // TODO(b/117833324): It would be great to get this method name to match the binding
-            // element name
-            "  protected abstract CharSequence getCharSequence();",
+            "  protected abstract CharSequence getBindsMultibindingWithMissingDep();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -6807,14 +6806,14 @@ public final class AheadOfTimeSubcomponentsTest {
             "  protected abstract class LeafImpl extends DaggerLeaf {",
             "    protected LeafImpl() {}",
             "",
-            "    private Runnable getRunnable() {",
+            "    private Runnable getDepOnBarThing() {",
             "      return LeafModule_DepOnBarThingFactory.proxyDepOnBarThing(getThing2());",
             "    }",
             "",
             "    protected abstract Thing getThing2();",
             "",
             "    protected Set<Runnable> getSetOfRunnable() {",
-            "      return ImmutableSet.<Runnable>of(getRunnable());",
+            "      return ImmutableSet.<Runnable>of(getDepOnBarThing());",
             "    }",
             "",
             "    @Override",
@@ -6948,7 +6947,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "  protected abstract class MaybeLeafImpl extends DaggerMaybeLeaf {",
             "    protected MaybeLeafImpl() {}",
             "",
-            "    private Object getObject() {",
+            "    private Object getInducedSet() {",
             "      return InducedSubcomponentModule_InducedSetFactory.proxyInducedSet(",
             "          getInducedSubcomponentBuilder());",
             "    }",
@@ -6956,7 +6955,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    protected abstract Object getInducedSubcomponentBuilder();",
             "",
             "    protected Set<Object> getSetOfObject() {",
-            "      return ImmutableSet.<Object>of(getObject());",
+            "      return ImmutableSet.<Object>of(getInducedSet());",
             "    }",
             "",
             "    @Override",

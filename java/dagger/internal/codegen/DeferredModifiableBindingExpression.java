@@ -64,7 +64,7 @@ final class DeferredModifiableBindingExpression extends ModifiableAbstractMethod
 
   @Override
   String chooseMethodName() {
-    return componentImplementation.getUniqueMethodName(request, binding);
+    return componentImplementation.getUniqueMethodName(request);
   }
 
   @Override

@@ -474,16 +474,6 @@ final class ComponentImplementation {
     return uniqueMethodName(request, KeyVariableNamer.name(request.key()));
   }
 
-  /**
-   * Returns a new, unique method name for a getter method exposing the given binding for the given
-   * request.
-   */
-  String getUniqueMethodName(BindingRequest request, ContributionBinding binding) {
-    // TODO(user): Use a better name for @MapKey binding instances.
-    // TODO(user): Include the binding method as part of the method name.
-    return uniqueMethodName(request, BindingVariableNamer.name(binding));
-  }
-
   private String uniqueMethodName(BindingRequest request, String bindingName) {
     String baseMethodName =
         "get"

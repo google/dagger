@@ -136,7 +136,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "  private volatile Provider<Long> provideLong1Provider;",
                 "  private volatile Provider<Long> provideLong2Provider;",
                 "",
-                "  private Provider<Integer> getMapOfIntegerAndProviderOfIntegerProvider() {",
+                "  private Provider<Integer> getProvideIntProvider() {",
                 "    Object local = provideIntProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -145,7 +145,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Integer>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getMapOfLongAndProviderOfLongProvider() {",
+                "  private Provider<Long> getProvideLong0Provider() {",
                 "    Object local = provideLong0Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(1);",
@@ -154,7 +154,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getMapOfLongAndProviderOfLongProvider2() {",
+                "  private Provider<Long> getProvideLong1Provider() {",
                 "    Object local = provideLong1Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(2);",
@@ -163,7 +163,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getMapOfLongAndProviderOfLongProvider3() {",
+                "  private Provider<Long> getProvideLong2Provider() {",
                 "    Object local = provideLong2Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(3);",
@@ -195,7 +195,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "        0, getMapOfIntegerAndProviderOfIntegerProvider());")
+                "        0, getProvideIntProvider());")
             .addLines(
                 "  }",
                 "",
@@ -217,9 +217,9 @@ public class MapBindingExpressionWithGuavaTest {
                 "      2L, MapModule_ProvideLong2Factory.create());")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "      0L, getMapOfLongAndProviderOfLongProvider(),",
-                "      1L, getMapOfLongAndProviderOfLongProvider2(),",
-                "      2L, getMapOfLongAndProviderOfLongProvider3());")
+                "      0L, getProvideLong0Provider(),",
+                "      1L, getProvideLong1Provider(),",
+                "      2L, getProvideLong2Provider());")
             .addLines(
                 "  }",
                 "",
@@ -236,7 +236,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    private volatile Provider<Long> provideLong5Provider;",
                 "    private SubImpl() {}",
                 "",
-                "    private Provider<Long> getMapOfLongAndProviderOfLongProvider() {",
+                "    private Provider<Long> getProvideLong3Provider() {",
                 "      Object local = provideLong3Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(0);",
@@ -245,7 +245,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "      return (Provider<Long>) local;",
                 "    }",
                 "",
-                "    private Provider<Long> getMapOfLongAndProviderOfLongProvider2() {",
+                "    private Provider<Long> getProvideLong4Provider() {",
                 "      Object local = provideLong4Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(1);",
@@ -254,7 +254,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "      return (Provider<Long>) local;",
                 "    }",
                 "",
-                "    private Provider<Long> getMapOfLongAndProviderOfLongProvider3() {",
+                "    private Provider<Long> getProvideLong5Provider() {",
                 "      Object local = provideLong5Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(2);",
@@ -288,15 +288,12 @@ public class MapBindingExpressionWithGuavaTest {
                 "          .put(5L, SubcomponentMapModule_ProvideLong5Factory.create())")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "          .put(0L, DaggerTestComponent.this",
-                "              .getMapOfLongAndProviderOfLongProvider())",
-                "          .put(1L, DaggerTestComponent.this",
-                "              .getMapOfLongAndProviderOfLongProvider2())",
-                "          .put(2L, DaggerTestComponent.this",
-                "              .getMapOfLongAndProviderOfLongProvider3())",
-                "          .put(3L, getMapOfLongAndProviderOfLongProvider())",
-                "          .put(4L, getMapOfLongAndProviderOfLongProvider2())",
-                "          .put(5L, getMapOfLongAndProviderOfLongProvider3())")
+                "          .put(0L, DaggerTestComponent.this.getProvideLong0Provider())",
+                "          .put(1L, DaggerTestComponent.this.getProvideLong1Provider())",
+                "          .put(2L, DaggerTestComponent.this.getProvideLong2Provider())",
+                "          .put(3L, getProvideLong3Provider())",
+                "          .put(4L, getProvideLong4Provider())",
+                "          .put(5L, getProvideLong5Provider())")
             .addLines( //
                 "          .build();", "    }")
             .addLinesIn(

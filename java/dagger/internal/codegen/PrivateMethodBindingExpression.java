@@ -30,20 +30,17 @@ import com.squareup.javapoet.TypeName;
  * <p>Dependents of this binding expression will just call the no-arg private method.
  */
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
-  private final ContributionBinding binding;
   private final BindingRequest request;
   private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private String methodName;
 
   PrivateMethodBindingExpression(
-      ContributionBinding binding,
       BindingRequest request,
       BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
       DaggerTypes types) {
     super(request, methodImplementation, componentImplementation, types);
-    this.binding = checkNotNull(binding);
     this.request = checkNotNull(request);
     this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
@@ -53,7 +50,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = componentImplementation.getUniqueMethodName(request, binding);
+      methodName = componentImplementation.getUniqueMethodName(request);
       // TODO(user): Fix the order that these generated methods are written to the component.
       componentImplementation.addMethod(
           PRIVATE_METHOD,

@@ -92,7 +92,7 @@ abstract class FrameworkField {
             : name;
       }
     }
-    return BindingVariableNamer.name(resolvedBindings.binding());
+    return KeyVariableNamer.name(resolvedBindings.key());
   }
 
   private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =

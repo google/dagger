@@ -617,7 +617,6 @@ final class ComponentBindingExpressions {
       return bindingExpression;
     }
 
-    ContributionBinding binding = resolvedBindings.contributionBinding();
     BindingMethodImplementation methodImplementation =
         methodImplementation(resolvedBindings, request, bindingExpression);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
@@ -627,14 +626,14 @@ final class ComponentBindingExpressions {
         && (componentImplementation.superclassImplementation().isPresent()
             || !matchingComponentMethod.isPresent())) {
       return modifiableBindingExpressions.wrapInModifiableMethodBindingExpression(
-          binding, request, methodImplementation);
+          request, methodImplementation);
     } else if (matchingComponentMethod.isPresent()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
       return new ComponentMethodBindingExpression(
           request, methodImplementation, componentImplementation, componentMethod, types);
     } else {
       return new PrivateMethodBindingExpression(
-          binding, request, methodImplementation, componentImplementation, types);
+          request, methodImplementation, componentImplementation, types);
     }
   }
 

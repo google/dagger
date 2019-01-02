@@ -454,13 +454,10 @@ final class ModifiableBindingExpressions {
    * implementation.
    */
   BindingExpression wrapInModifiableMethodBindingExpression(
-      ContributionBinding binding,
-      BindingRequest request,
-      BindingMethodImplementation methodImplementation) {
+      BindingRequest request, BindingMethodImplementation methodImplementation) {
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
     checkState(modifiableBindingType.isModifiable());
     return new ModifiableConcreteMethodBindingExpression(
-        binding,
         request,
         modifiableBindingType,
         methodImplementation,

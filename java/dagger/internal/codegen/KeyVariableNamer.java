@@ -33,9 +33,8 @@ import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
- * Suggests a variable name for a type based on a {@link Key}. Prefer {@link BindingVariableNamer}
- * for cases where a specific {@link Binding} is present, or {@link DependencyVariableNamer} for
- * cases where a specific {@link DependencyRequest} is present.
+ * Suggests a variable name for a type based on a {@link Key}. Prefer {@link
+ * DependencyVariableNamer} for cases where a specific {@link DependencyRequest} is present.
  */
 final class KeyVariableNamer {
   private static final TypeVisitor<Void, StringBuilder> TYPE_NAMER =
@@ -80,6 +79,10 @@ final class KeyVariableNamer {
   private KeyVariableNamer() {}
 
   static String name(Key key) {
+    if (key.multibindingContributionIdentifier().isPresent()) {
+      return key.multibindingContributionIdentifier().get().bindingElement();
+    }
+
     StringBuilder builder = new StringBuilder();
 
     if (key.qualifier().isPresent()) {

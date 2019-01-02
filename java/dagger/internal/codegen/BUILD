@@ -133,7 +133,6 @@ java_library(
         "BindingNode.java",
         "BindingRequest.java",
         "BindingType.java",
-        "BindingVariableNamer.java",  # needs KeyVariableNamer
         "BindsTypeChecker.java",
         "ChildFactoryMethodEdgeImpl.java",
         "ComponentCreatorDescriptor.java",

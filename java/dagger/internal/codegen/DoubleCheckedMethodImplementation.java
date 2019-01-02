@@ -69,7 +69,7 @@ final class DoubleCheckedMethodImplementation extends BindingMethodImplementatio
   }
 
   private String createField() {
-    String name = componentImplementation.getUniqueFieldName(BindingVariableNamer.name(binding));
+    String name = componentImplementation.getUniqueFieldName(KeyVariableNamer.name(binding.key()));
     componentImplementation.addField(
         PRIVATE_METHOD_SCOPED_FIELD,
         FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)

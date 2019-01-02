@@ -80,7 +80,7 @@ final class SingleCheckedMethodImplementation extends BindingMethodImplementatio
     String name =
         componentImplementation.getUniqueFieldName(
             request.isRequestKind(RequestKind.INSTANCE)
-                ? BindingVariableNamer.name(binding)
+                ? KeyVariableNamer.name(binding.key())
                 : FrameworkField.forResolvedBindings(resolvedBindings, Optional.empty()).name());
 
     FieldSpec.Builder builder = FieldSpec.builder(fieldType(), name, PRIVATE, VOLATILE);

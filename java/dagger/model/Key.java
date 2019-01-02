@@ -25,6 +25,7 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
+import java.util.Objects;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -164,7 +165,8 @@ public abstract class Key {
    * @see #multibindingContributionIdentifier()
    */
   public static final class MultibindingContributionIdentifier {
-    private final String identifierString;
+    private final String module;
+    private final String bindingElement;
 
     /**
      * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
@@ -173,9 +175,17 @@ public abstract class Key {
     @Deprecated
     public MultibindingContributionIdentifier(
         ExecutableElement bindingMethod, TypeElement contributingModule) {
-      this.identifierString =
-          String.format(
-              "%s#%s", contributingModule.getQualifiedName(), bindingMethod.getSimpleName());
+      this.module = contributingModule.getQualifiedName().toString();
+      this.bindingElement = bindingMethod.getSimpleName().toString();
+    }
+
+    /**
+     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
+     * It is not part of a specified API and may change at any point.
+     */
+    @Deprecated
+    public String bindingElement() {
+      return bindingElement;
     }
 
     /**
@@ -186,19 +196,21 @@ public abstract class Key {
      */
     @Override
     public String toString() {
-      return identifierString;
+      return String.format("%s#%s", module, bindingElement);
     }
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof MultibindingContributionIdentifier
-          && ((MultibindingContributionIdentifier) obj)
-              .identifierString.equals(this.identifierString);
+      if (obj instanceof MultibindingContributionIdentifier) {
+        MultibindingContributionIdentifier other = (MultibindingContributionIdentifier) obj;
+        return module.equals(other.module) && bindingElement.equals(other.bindingElement);
+      }
+      return false;
     }
 
     @Override
     public int hashCode() {
-      return identifierString.hashCode();
+      return Objects.hash(module, bindingElement);
     }
   }
 }

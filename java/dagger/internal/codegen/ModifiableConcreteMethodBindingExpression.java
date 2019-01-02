@@ -31,7 +31,7 @@ import java.util.Optional;
  * <p>Dependents of this binding expression will just call the modifiable binding method.
  */
 final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpression {
-  private final ContributionBinding binding;
+
   private final BindingRequest request;
   private final ModifiableBindingType modifiableBindingType;
   private final BindingMethodImplementation methodImplementation;
@@ -40,7 +40,6 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
   private Optional<String> methodName = Optional.empty();
 
   ModifiableConcreteMethodBindingExpression(
-      ContributionBinding binding,
       BindingRequest request,
       ModifiableBindingType modifiableBindingType,
       BindingMethodImplementation methodImplementation,
@@ -48,7 +47,6 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
       boolean bindingCannotBeModified,
       DaggerTypes types) {
     super(request, methodImplementation, componentImplementation, types);
-    this.binding = checkNotNull(binding);
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
     this.methodImplementation = checkNotNull(methodImplementation);
@@ -68,7 +66,7 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
     }
 
     // Add the modifiable binding method to the component if we haven't already.
-    methodName = Optional.of(componentImplementation.getUniqueMethodName(request, binding));
+    methodName = Optional.of(componentImplementation.getUniqueMethodName(request));
     componentImplementation.addModifiableBindingMethod(
         modifiableBindingType,
         request,

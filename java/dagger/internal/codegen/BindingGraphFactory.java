@@ -186,10 +186,10 @@ final class BindingGraphFactory {
               }
             });
 
-    if (componentDescriptor.kind().isForModuleValidation()) {
+    if (requestResolver.rootComponent().kind().isForModuleValidation()) {
       // For module-binding validation, resolve the keys for all bindings in all modules, stripping
       // any multibinding contribution identifier so that the multibinding itself is resolved.
-      componentDescriptor.modules().stream()
+      modules(componentDescriptor, parentResolver).stream()
           .flatMap(module -> module.allBindingKeys().stream())
           .map(key -> key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build())
           .forEach(requestResolver::resolve);

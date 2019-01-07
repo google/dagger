@@ -34,7 +34,6 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Traverser;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -46,9 +45,11 @@ import dagger.Provides;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -79,21 +80,15 @@ abstract class ModuleDescriptor {
   /** The kind of the module. */
   abstract ModuleKind kind();
 
-  /** Returns all of the bindings declared in this module. */
-  @Memoized
-  ImmutableSet<BindingDeclaration> allBindingDeclarations() {
-    return ImmutableSet.<BindingDeclaration>builder()
-        .addAll(bindings())
-        .addAll(delegateDeclarations())
-        .addAll(multibindingDeclarations())
-        .addAll(optionalDeclarations())
-        .addAll(subcomponentDeclarations())
-        .build();
-  }
-
   /** Returns the keys of all bindings declared by this module. */
   ImmutableSet<Key> allBindingKeys() {
-    return allBindingDeclarations().stream()
+    return Stream.of(
+            bindings(),
+            delegateDeclarations(),
+            multibindingDeclarations(),
+            optionalDeclarations(),
+            subcomponentDeclarations())
+        .flatMap(Collection::stream)
         .map(BindingDeclaration::key)
         .collect(toImmutableSet());
   }

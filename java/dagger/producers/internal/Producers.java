@@ -207,7 +207,7 @@ public final class Producers {
   }
 
   private static final Producer<Map<Object, Object>> EMPTY_MAP_PRODUCER =
-      Producers.<Map<Object, Object>>immediateProducer(ImmutableMap.of());
+      dagger.producers.Producers.<Map<Object, Object>>immediateProducer(ImmutableMap.of());
 
   @SuppressWarnings("unchecked") // safe contravariant cast
   public static <K, V> Producer<Map<K, V>> emptyMapProducer() {

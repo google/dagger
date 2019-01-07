@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import dagger.producers.Producer;
+import dagger.producers.Producers;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;

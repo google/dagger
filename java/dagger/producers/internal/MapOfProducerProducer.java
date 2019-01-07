@@ -103,7 +103,7 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
 
   private Producer<Map<K, Producer<V>>> newTransformedValuesView(
       Function<Producer<V>, Producer<V>> valueTransformationFunction) {
-    return Producers.<Map<K, Producer<V>>>immediateProducer(
+    return dagger.producers.Producers.<Map<K, Producer<V>>>immediateProducer(
         ImmutableMap.copyOf(Maps.transformValues(contributingMap, valueTransformationFunction)));
   }
 

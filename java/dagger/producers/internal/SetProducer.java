@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public final class SetProducer<T> extends AbstractProducer<Set<T>> {
   private static final Producer<Set<Object>> EMPTY_PRODUCER =
-      Producers.<Set<Object>>immediateProducer(ImmutableSet.<Object>of());
+      dagger.producers.Producers.<Set<Object>>immediateProducer(ImmutableSet.<Object>of());
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // safe covariant cast
   public static <T> Producer<Set<T>> empty() {

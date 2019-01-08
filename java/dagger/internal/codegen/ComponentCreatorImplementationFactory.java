@@ -178,7 +178,8 @@ final class ComponentCreatorImplementationFactory {
     }
 
     FieldSpec toFieldSpec(ComponentRequirement requirement) {
-      Modifier modifier = componentImplementation.isAbstract() ? PUBLIC : PRIVATE;
+      // Fields in an abstract creator class need to be visible from subclasses.
+      Modifier modifier = componentImplementation.isAbstract() ? PROTECTED : PRIVATE;
       return FieldSpec.builder(
               TypeName.get(requirement.type()), requirementNames.get(requirement), modifier)
           .build();

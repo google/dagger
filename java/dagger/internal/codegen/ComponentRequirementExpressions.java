@@ -36,7 +36,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
-import dagger.internal.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -88,7 +87,7 @@ final class ComponentRequirementExpressions {
 
   /**
    * Returns an expression for the {@code componentRequirement} to be used only within {@code
-   * initialize()} methods, where the component builder is available.
+   * initialize()} methods, where the component constructor parameters are available.
    *
    * <p>When accessing this expression from a subcomponent, this may cause a field to be initialized
    * or a method to be added in the component that owns this {@link ComponentRequirement}.
@@ -133,13 +132,13 @@ final class ComponentRequirementExpressions {
             componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()),
             componentImplementation.creatorImplementation());
     if (creatorImplementation.isPresent()) {
-      FieldSpec builderField = creatorImplementation.get().builderFields().get(requirement);
-      return new BuilderField(requirement, componentImplementation, builderField);
+      String name =
+          creatorImplementation.get().requirementNames().get(requirement);
+      return new ComponentParameterField(requirement, componentImplementation, name);
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {
-      ParameterSpec factoryParameter =
-          ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
-      return new ComponentParameterField(requirement, componentImplementation, factoryParameter);
+      ParameterSpec parameter = ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
+      return new ComponentParameterField(requirement, componentImplementation, parameter.name);
     } else if (requirement.kind().isModule()) {
       return new InstantiableModuleField(requirement, componentImplementation);
     } else {
@@ -150,7 +149,8 @@ final class ComponentRequirementExpressions {
 
   private abstract static class AbstractField implements ComponentRequirementExpression {
     private final ComponentRequirement componentRequirement;
-    private final ComponentImplementation componentImplementation;
+    protected final ComponentImplementation componentImplementation;
+    protected final String fieldName;
     private final Supplier<MemberSelect> field = memoize(this::createField);
 
     private AbstractField(
@@ -158,6 +158,16 @@ final class ComponentRequirementExpressions {
         ComponentImplementation componentImplementation) {
       this.componentRequirement = checkNotNull(componentRequirement);
       this.componentImplementation = checkNotNull(componentImplementation);
+      // Note: The field name is being claimed eagerly here even though we don't know at this point
+      // whether or not the requirement will even need a field. This is done because:
+      // A) ComponentParameterField wants to ensure that it doesn't give the parameter the same name
+      //    as any field in the component, which requires that it claim a "field name" for itself
+      //    when naming the parameter.
+      // B) The parameter name may be needed before the field name is.
+      // C) We want to prefer giving the best name to the field rather than the parameter given its
+      //    wider scope.
+      this.fieldName =
+          componentImplementation.getUniqueFieldName(componentRequirement.variableName());
     }
 
     @Override
@@ -166,14 +176,11 @@ final class ComponentRequirementExpressions {
     }
 
     private MemberSelect createField() {
-      // TODO(dpb,ronshapiro): think about whether ComponentImplementation.addField
-      // should make a unique name for the field.
-      String fieldName =
-          componentImplementation.getUniqueFieldName(componentRequirement.variableName());
       FieldSpec field =
           FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE).build();
       componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
+      componentImplementation.addComponentRequirementInitialization(
+          componentRequirement, fieldInitialization(field));
       return MemberSelect.localField(componentImplementation.name(), fieldName);
     }
 
@@ -182,51 +189,17 @@ final class ComponentRequirementExpressions {
   }
 
   /**
-   * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that have a
-   * corresponding field on the component builder.
-   */
-  private static final class BuilderField extends AbstractField {
-    private final FieldSpec builderField;
-
-    private BuilderField(
-        ComponentRequirement componentRequirement,
-        ComponentImplementation componentImplementation,
-        FieldSpec builderField) {
-      super(componentRequirement, componentImplementation);
-      this.builderField = checkNotNull(builderField);
-    }
-
-    @Override
-    public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      if (super.componentImplementation.name().equals(requestingClass)) {
-        return CodeBlock.of("builder.$N", builderField);
-      } else {
-        // requesting this component requirement during initialization of a child component requires
-        // the it to be access from a field and not the builder (since it is no longer available)
-        return getExpression(requestingClass);
-      }
-    }
-
-    @Override
-    CodeBlock fieldInitialization(FieldSpec componentField) {
-      return CodeBlock.of("this.$N = builder.$N;", componentField, builderField);
-    }
-  }
-
-  /**
    * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that can be
    * instantiated by the component (i.e. a static class with a no-arg constructor).
    */
   private final class InstantiableModuleField extends AbstractField {
     private final TypeElement moduleElement;
-    private final ComponentImplementation componentImplementation;
 
     private InstantiableModuleField(
         ComponentRequirement module, ComponentImplementation componentImplementation) {
       super(module, componentImplementation);
       checkArgument(module.kind().isModule());
       this.moduleElement = module.typeElement();
-      this.componentImplementation = componentImplementation;
     }
 
     @Override
@@ -240,23 +213,46 @@ final class ComponentRequirementExpressions {
 
   /**
    * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that are passed in
-   * as parameters to a component factory method.
+   * as parameters to the component's constructor.
    */
   private static final class ComponentParameterField extends AbstractField {
-    private final ParameterSpec factoryParameter;
+    private final String name;
 
     private ComponentParameterField(
         ComponentRequirement componentRequirement,
         ComponentImplementation componentImplementation,
-        ParameterSpec factoryParameter) {
+        String name) {
       super(componentRequirement, componentImplementation);
-      this.factoryParameter = checkNotNull(factoryParameter);
+      // Get the name that the component implementation will use for its parameter for the
+      // requirement. If the given name is different than the name of the field created for the
+      // requirement (as may be the case when the parameter name is derived from a user-written
+      // factory method parameter), just use that as the base name for the parameter. Otherwise,
+      // append "Param" to the end of the name to differentiate.
+      // In either case, componentImplementation.getParameterName() will ensure that the final name
+      // that is used is not the same name as any field in the component even if there's something
+      // weird where the component actually has fields named, say, "foo" and "fooParam".
+      this.name =
+          componentImplementation.getParameterName(
+              componentRequirement,
+              name.equals(fieldName) ? name + "Param" : name);
+    }
+
+    @Override
+    public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
+      if (componentImplementation.name().equals(requestingClass)) {
+        return CodeBlock.of("$L", name);
+      } else {
+        // requesting this component requirement during initialization of a child component requires
+        // it to be accessed from a field and not the parameter (since it is no longer available)
+        return getExpression(requestingClass);
+      }
     }
 
     @Override
     CodeBlock fieldInitialization(FieldSpec componentField) {
-      return CodeBlock.of(
-          "this.$N = $T.checkNotNull($N);", componentField, Preconditions.class, factoryParameter);
+      // Don't checkNotNull here because the parameter may be nullable; if it isn't, the caller
+      // should handle checking that before passing the parameter.
+      return CodeBlock.of("this.$N = $L;", componentField, name);
     }
   }
 
@@ -325,7 +321,7 @@ final class ComponentRequirementExpressions {
           "throw new UnsupportedOperationException($T.class + $S)",
           module.typeElement(),
           " has been pruned from the final resolved binding graph. If this exception is thrown, "
-              + "it is a cause of a Dagger bug - please report it!");
+              + "it is a Dagger bug, so please report it!");
     }
   }
 }

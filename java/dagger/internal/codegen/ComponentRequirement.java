@@ -29,6 +29,8 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Provides;
@@ -168,6 +170,11 @@ abstract class ComponentRequirement {
 
   /** Returns the name for this requirement that could be used as a variable. */
   abstract String variableName();
+
+  /** Returns a parameter spec for this requirement with the given parameter name. */
+  ParameterSpec toParameterSpec(String name) {
+    return ParameterSpec.builder(TypeName.get(type()), name).build();
+  }
 
   static ComponentRequirement forDependency(TypeMirror type) {
     return new AutoValue_ComponentRequirement(

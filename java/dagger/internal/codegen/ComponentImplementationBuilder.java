@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Predicates.in;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
@@ -46,22 +47,31 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.Preconditions;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ComponentImplementation.ConfigureInitializationMethod;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.Key;
 import dagger.producers.internal.CancellationListener;
 import dagger.producers.internal.Producers;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
@@ -84,7 +94,7 @@ abstract class ComponentImplementationBuilder {
   @Inject ComponentBindingExpressions bindingExpressions;
   @Inject ComponentRequirementExpressions componentRequirementExpressions;
   @Inject ComponentImplementation componentImplementation;
-  @Inject ComponentCreatorImplementation.Factory componentCreatorImplementationFactory;
+  @Inject ComponentCreatorImplementationFactory componentCreatorImplementationFactory;
   @Inject DaggerTypes types;
   @Inject DaggerElements elements;
   @Inject CompilerOptions compilerOptions;
@@ -104,7 +114,7 @@ abstract class ComponentImplementationBuilder {
         componentImplementation.name());
     setSupertype();
     componentImplementation.setCreatorImplementation(
-        componentCreatorImplementationFactory.create(componentImplementation, graph));
+        componentCreatorImplementationFactory.create(componentImplementation));
     componentImplementation
         .creatorImplementation()
         .map(ComponentCreatorImplementation::componentCreatorClass)
@@ -126,7 +136,7 @@ abstract class ComponentImplementationBuilder {
     addChildComponents();
     implementModifiableModuleMethods();
 
-    addConstructor();
+    addConstructorAndInitializationMethods();
 
     if (graph.componentDescriptor().kind().isProducer()) {
       addCancellationListenerImplementation();
@@ -137,7 +147,7 @@ abstract class ComponentImplementationBuilder {
   }
 
   /** Set the supertype for this generated class. */
-  final void setSupertype() {
+  private void setSupertype() {
     if (componentImplementation.superclassImplementation().isPresent()) {
       componentImplementation.addSuperclass(
           componentImplementation.superclassImplementation().get().name());
@@ -150,12 +160,12 @@ abstract class ComponentImplementationBuilder {
    * Adds {@code creator} as a nested creator class. Root components and subcomponents will nest
    * this in different classes.
    */
-  abstract void addCreatorClass(TypeSpec creator);
+  protected abstract void addCreatorClass(TypeSpec creator);
 
   /** Adds component factory methods. */
-  abstract void addFactoryMethods();
+  protected abstract void addFactoryMethods();
 
-  void addInterfaceMethods() {
+  protected void addInterfaceMethods() {
     // Each component method may have been declared by several supertypes. We want to implement
     // only one method for each distinct signature.
     ImmutableListMultimap<MethodSignature, ComponentMethodDescriptor> componentMethodsBySignature =
@@ -178,15 +188,18 @@ abstract class ComponentImplementationBuilder {
     }
   }
 
-  final void addCancellationListenerImplementation() {
+  private void addCancellationListenerImplementation() {
     componentImplementation.addSupertype(elements.getTypeElement(CancellationListener.class));
     componentImplementation.claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
+
+    ImmutableList<ParameterSpec> parameters =
+        ImmutableList.of(ParameterSpec.builder(boolean.class, MAY_INTERRUPT_IF_RUNNING).build());
 
     MethodSpec.Builder methodBuilder =
         methodBuilder(CANCELLATION_LISTENER_METHOD_NAME)
             .addModifiers(PUBLIC)
             .addAnnotation(Override.class)
-            .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING);
+            .addParameters(parameters);
     if (componentImplementation.superclassImplementation().isPresent()) {
       methodBuilder.addStatement(
           "super.$L($L)", CANCELLATION_LISTENER_METHOD_NAME, MAY_INTERRUPT_IF_RUNNING);
@@ -197,18 +210,15 @@ abstract class ComponentImplementationBuilder {
     if (cancellationStatements.size() < STATEMENTS_PER_METHOD) {
       methodBuilder.addCode(CodeBlocks.concat(cancellationStatements)).build();
     } else {
-      List<List<CodeBlock>> partitions =
-          Lists.partition(cancellationStatements, STATEMENTS_PER_METHOD);
-      for (List<CodeBlock> partition : partitions) {
-        String methodName = componentImplementation.getUniqueMethodName("cancelProducers");
-        MethodSpec method =
-            methodBuilder(methodName)
-                .addModifiers(PRIVATE)
-                .addParameter(boolean.class, MAY_INTERRUPT_IF_RUNNING)
-                .addCode(CodeBlocks.concat(partition))
-                .build();
-        methodBuilder.addStatement("$N($L)", method, MAY_INTERRUPT_IF_RUNNING);
-        componentImplementation.addMethod(CANCELLATION_LISTENER_METHOD, method);
+      ImmutableList<MethodSpec> cancelProducersMethods =
+          createPartitionedMethods(
+              "cancelProducers",
+              parameters,
+              cancellationStatements,
+              methodName -> methodBuilder(methodName).addModifiers(PRIVATE));
+      for (MethodSpec cancelProducersMethod : cancelProducersMethods) {
+        methodBuilder.addStatement("$N($L)", cancelProducersMethod, MAY_INTERRUPT_IF_RUNNING);
+        componentImplementation.addMethod(CANCELLATION_LISTENER_METHOD, cancelProducersMethod);
       }
     }
 
@@ -255,7 +265,7 @@ abstract class ComponentImplementationBuilder {
     return cancellationStatements.build();
   }
 
-  Optional<CodeBlock> cancelParentStatement() {
+  protected Optional<CodeBlock> cancelParentStatement() {
     // Returns empty by default. Overridden in subclass(es) to add a statement if and only if the
     // component being generated is a concrete subcomponent implementation with a parent that
     // allows cancellation to propagate to it from subcomponents.
@@ -290,12 +300,12 @@ abstract class ComponentImplementationBuilder {
             .build());
   }
 
-  final MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
+  private MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
     return MethodSignature.forComponentMethod(
         method, MoreTypes.asDeclared(graph.componentTypeElement().asType()), types);
   }
 
-  final void addChildComponents() {
+  private void addChildComponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
       // TODO(b/117833324): Can an abstract inner subcomponent implementation be elided if it's
       // totally empty?
@@ -304,11 +314,11 @@ abstract class ComponentImplementationBuilder {
     }
   }
 
-  final ComponentImplementation buildChildImplementation(BindingGraph childGraph) {
+  private ComponentImplementation buildChildImplementation(BindingGraph childGraph) {
     ComponentImplementation childImplementation =
         compilerOptions.aheadOfTimeSubcomponents()
-            ? abstractInnerSubcomponent(childGraph.componentDescriptor())
-            : concreteSubcomponent(childGraph.componentDescriptor());
+            ? abstractInnerSubcomponent(childGraph)
+            : concreteSubcomponent(childGraph);
     return topLevelImplementationComponent
         .currentImplementationSubcomponentBuilder()
         .componentImplementation(childImplementation)
@@ -322,161 +332,285 @@ abstract class ComponentImplementationBuilder {
   }
 
   /** Creates an inner abstract subcomponent implementation. */
-  final ComponentImplementation abstractInnerSubcomponent(ComponentDescriptor child) {
+  private ComponentImplementation abstractInnerSubcomponent(BindingGraph childGraph) {
     return new ComponentImplementation(
         componentImplementation,
-        child,
+        childGraph,
         Optional.of(
             componentImplementationFactory.findChildSuperclassImplementation(
-                child, componentImplementation)),
+                childGraph.componentDescriptor(), componentImplementation)),
         PROTECTED,
         componentImplementation.isAbstract() ? ABSTRACT : FINAL);
   }
 
   /** Creates a concrete inner subcomponent implementation. */
-  final ComponentImplementation concreteSubcomponent(ComponentDescriptor child) {
+  private ComponentImplementation concreteSubcomponent(BindingGraph childGraph) {
     return new ComponentImplementation(
         componentImplementation,
-        child,
+        childGraph,
         Optional.empty(), // superclassImplementation
         PRIVATE,
         FINAL);
   }
 
-  final void addConstructor() {
-    List<List<CodeBlock>> partitions =
-        Lists.partition(componentImplementation.getInitializations(), STATEMENTS_PER_METHOD);
-    ImmutableList<CodeBlock> componentRequirementInitializations =
-        componentImplementation.getComponentRequirementInitializations();
-
-    ImmutableList<ParameterSpec> constructorParameters = constructorParameters();
-    MethodSpec.Builder constructor =
-        constructorBuilder()
-            .addModifiers(componentImplementation.isAbstract() ? PROTECTED : PRIVATE);
-
+  /** Creates and adds the constructor and methods needed for initializing the component. */
+  private void addConstructorAndInitializationMethods() {
+    MethodSpec.Builder constructor = componentConstructorBuilder();
     if (!componentImplementation.isAbstract()) {
-      constructor.addParameters(constructorParameters);
-    }
-
-    Optional<MethodSpec.Builder> configureInitialization =
-        (partitions.isEmpty() && componentRequirementInitializations.isEmpty())
-                || !componentImplementation.isAbstract()
-            ? Optional.empty()
-            : Optional.of(configureInitializationMethodBuilder(constructorParameters));
-
-    configureInitialization
-        .orElse(constructor)
-        .addCode(CodeBlocks.concat(componentRequirementInitializations));
-
-    if (componentImplementation.superConfigureInitializationMethod().isPresent()) {
-      MethodSpec superConfigureInitializationMethod =
-          componentImplementation.superConfigureInitializationMethod().get();
-      CodeBlock superInvocation =
-          CodeBlock.of(
-              "$N($L)",
-              superConfigureInitializationMethod,
-              parameterNames(superConfigureInitializationMethod.parameters));
-      if (configureInitialization.isPresent()) {
-        configureInitialization.get().addStatement("super.$L", superInvocation);
-      } else if (!componentImplementation.isAbstract()) {
-        constructor.addStatement(superInvocation);
-      }
-    }
-
-    ImmutableList<ParameterSpec> initializeParameters = initializeParameters();
-    CodeBlock initializeParametersCodeBlock = parameterNames(constructorParameters);
-
-    for (List<CodeBlock> partition : partitions) {
-      String methodName = componentImplementation.getUniqueMethodName("initialize");
-      MethodSpec.Builder initializeMethod =
-          methodBuilder(methodName)
-              .addModifiers(PRIVATE)
-              /* TODO(gak): Strictly speaking, we only need the suppression here if we are also
-               * initializing a raw field in this method, but the structure of this code makes it
-               * awkward to pass that bit through.  This will be cleaned up when we no longer
-               * separate fields and initialization as we do now. */
-              .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED))
-              .addCode(CodeBlocks.concat(partition));
-      initializeMethod.addParameters(initializeParameters);
-      configureInitialization
-          .orElse(constructor)
-          .addStatement("$L($L)", methodName, initializeParametersCodeBlock);
-      componentImplementation.addMethod(INITIALIZE_METHOD, initializeMethod.build());
+      implementInitializationMethod(constructor, initializationParameters());
+    } else if (componentImplementation.hasInitializations()) {
+      addConfigureInitializationMethod();
     }
     componentImplementation.addMethod(CONSTRUCTOR, constructor.build());
-    configureInitialization.ifPresent(
-        method -> componentImplementation.setConfigureInitializationMethod(method.build()));
+  }
+
+  /** Returns a builder for the component's constructor. */
+  private MethodSpec.Builder componentConstructorBuilder() {
+    return constructorBuilder()
+            .addModifiers(componentImplementation.isAbstract() ? PROTECTED : PRIVATE);
+  }
+
+  /** Adds parameters and code to the given {@code initializationMethod}. */
+  private void implementInitializationMethod(
+      MethodSpec.Builder initializationMethod,
+      ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters) {
+    initializationMethod.addParameters(initializationParameters.values());
+    initializationMethod.addCode(
+        CodeBlocks.concat(
+            componentImplementation.getComponentRequirementInitializations().values()));
+    componentImplementation
+        .superConfigureInitializationMethod()
+        .ifPresent(
+            superConfigureInitializationMethod ->
+                addSuperConfigureInitializationCall(
+                    initializationMethod,
+                    initializationParameters,
+                    superConfigureInitializationMethod));
+    addInitializeMethods(initializationMethod, initializationParameters.values().asList());
+  }
+
+  /** Creates and adds a {@code configureInitializatoin} method to the component. */
+  private void addConfigureInitializationMethod() {
+    MethodSpec.Builder method = configureInitializationMethodBuilder();
+    ImmutableMap<ComponentRequirement, ParameterSpec> parameters = initializationParameters();
+    implementInitializationMethod(method, parameters);
+    componentImplementation.setConfigureInitializationMethod(
+        ConfigureInitializationMethod.create(method.build(), parameters.keySet()));
+  }
+
+  /** Returns a builder for the component's {@code configureInitialization} method. */
+  private MethodSpec.Builder configureInitializationMethodBuilder() {
+    String methodName = componentImplementation.getUniqueMethodName("configureInitialization");
+    MethodSpec.Builder configureInitialization = methodBuilder(methodName).addModifiers(PROTECTED);
+    if (overridesSuperclassConfigureInitialization(configureInitialization.build())) {
+      configureInitialization.addAnnotation(Override.class);
+    }
+    return configureInitialization;
   }
 
   /**
-   * Returns a {@link MethodSpec.Builder} for the {@link
-   * ComponentImplementation#configureInitializationMethod()}.
+   * Returns whether or not the given method overrides a configureInitialization method from a
+   * superclass.
    */
-  private MethodSpec.Builder configureInitializationMethodBuilder(
-      ImmutableList<ParameterSpec> initializationMethodParameters) {
-    String methodName = componentImplementation.getUniqueMethodName("configureInitialization");
-    MethodSpec.Builder configureInitialization =
-        methodBuilder(methodName)
-            .addModifiers(PROTECTED)
-            .addParameters(initializationMethodParameters);
-
-    // Checks all super configureInitialization() methods to see if they have the same signature
-    // as this one, and if so, adds as an @Override annotation
+  private boolean overridesSuperclassConfigureInitialization(MethodSpec method) {
     for (Optional<ComponentImplementation> currentSuperImplementation =
             componentImplementation.superclassImplementation();
         currentSuperImplementation.isPresent();
         currentSuperImplementation = currentSuperImplementation.get().superclassImplementation()) {
       Optional<MethodSpec> superConfigureInitializationMethod =
-          currentSuperImplementation.get().configureInitializationMethod();
+          currentSuperImplementation.get().configureInitializationMethod().map(m -> m.spec());
       if (superConfigureInitializationMethod
-          .filter(superMethod -> superMethod.name.equals(methodName))
-          .filter(superMethod -> superMethod.parameters.equals(initializationMethodParameters))
+          .filter(superMethod -> haveSameSignature(method, superMethod))
           .isPresent()) {
-        configureInitialization.addAnnotation(Override.class);
-        break;
+        return true;
       }
     }
 
-    return configureInitialization;
+    return false;
   }
 
-  /** Returns the list of {@link ParameterSpec}s for the initialize methods. */
-  final ImmutableList<ParameterSpec> initializeParameters() {
-    return constructorParameters().stream()
+  /** Returns whether or not methods {@code a} and {@code b} have the same signature. */
+  private boolean haveSameSignature(MethodSpec a, MethodSpec b) {
+    return a.name.equals(b.name) && types(a.parameters).equals(types(b.parameters));
+  }
+
+  private ImmutableList<TypeName> types(List<ParameterSpec> parameters) {
+    return parameters.stream().map(parameter -> parameter.type).collect(toImmutableList());
+  }
+
+  /**
+   * Adds a call to the superclass's {@code configureInitialization} method to the given {@code
+   * callingMethod}.
+   */
+  private void addSuperConfigureInitializationCall(
+      MethodSpec.Builder callingMethod,
+      ImmutableMap<ComponentRequirement, ParameterSpec> parameters,
+      ConfigureInitializationMethod superConfigureInitializationMethod) {
+    // This component's constructor may not have all of the parameters that the superclass's
+    // configureInitialization method takes, because the superclass configureInitialization method
+    // necessarily accepts things that it can't know whether will be needed or not. If they aren't
+    // needed (as is the case when the constructor doesn't have a parameter for the module), just
+    // pass null to super.configureInitialization for that parameter; it won't be used.
+    CodeBlock args =
+        superConfigureInitializationMethod.parameters().stream()
+            .map(
+                requirement ->
+                    parameters.containsKey(requirement)
+                        ? CodeBlock.of("$N", parameters.get(requirement))
+                        : CodeBlock.of("null"))
+            .collect(toParametersCodeBlock());
+
+    String qualifier =
+        haveSameSignature(callingMethod.build(), superConfigureInitializationMethod.spec())
+            ? "super."
+            : "";
+    callingMethod.addStatement(
+        qualifier + "$N($L)", superConfigureInitializationMethod.spec(), args);
+  }
+
+  /**
+   * Adds any necessary {@code initialize} methods to the component and adds calls to them to the
+   * given {@code callingMethod}.
+   */
+  private void addInitializeMethods(
+      MethodSpec.Builder callingMethod, ImmutableList<ParameterSpec> parameters) {
+    // TODO(cgdecker): It's not the case that each initialize() method has need for all of the
+    // given parameters. In some cases, those parameters may have already been assigned to fields
+    // which could be referenced instead. In other cases, an initialize method may just not need
+    // some of the parameters because the set of initializations in that partition does not
+    // include any reference to them. Right now, the Dagger code has no way of getting that
+    // information because, among other things, componentImplementation.getImplementations() just
+    // returns a bunch of CodeBlocks with no semantic information. Additionally, we may not know
+    // yet whether a field will end up needing to be created for a specific requirement, and we
+    // don't want to create a field that ends up only being used during initialization.
+    CodeBlock args = parameterNames(parameters);
+    ImmutableList<MethodSpec> methods =
+        createPartitionedMethods(
+            "initialize",
+            makeFinal(parameters),
+            componentImplementation.getInitializations(),
+            methodName ->
+                methodBuilder(methodName)
+                    .addModifiers(PRIVATE)
+                    /* TODO(gak): Strictly speaking, we only need the suppression here if we are
+                     * also initializing a raw field in this method, but the structure of this
+                     * code makes it awkward to pass that bit through.  This will be cleaned up
+                     * when we no longer separate fields and initialization as we do now. */
+                    .addAnnotation(AnnotationSpecs.suppressWarnings(UNCHECKED)));
+    for (MethodSpec method : methods) {
+      callingMethod.addStatement("$N($L)", method, args);
+      componentImplementation.addMethod(INITIALIZE_METHOD, method);
+    }
+  }
+
+  /**
+   * Creates one or more methods, all taking the given {@code parameters}, which partition the given
+   * list of {@code statements} among themselves such that no method has more than {@code
+   * STATEMENTS_PER_METHOD} statements in it and such that the returned methods, if called in order,
+   * will execute the {@code statements} in the given order.
+   */
+  private ImmutableList<MethodSpec> createPartitionedMethods(
+      String methodName,
+      Iterable<ParameterSpec> parameters,
+      List<CodeBlock> statements,
+      Function<String, MethodSpec.Builder> methodBuilderCreator) {
+    return Lists.partition(statements, STATEMENTS_PER_METHOD).stream()
+        .map(
+            partition ->
+                methodBuilderCreator
+                    .apply(componentImplementation.getUniqueMethodName(methodName))
+                    .addParameters(parameters)
+                    .addCode(CodeBlocks.concat(partition))
+                    .build())
+        .collect(toImmutableList());
+  }
+
+  /** Returns the given parameters with a final modifier added. */
+  private final ImmutableList<ParameterSpec> makeFinal(Collection<ParameterSpec> parameters) {
+    return parameters.stream()
         .map(param -> param.toBuilder().addModifiers(FINAL).build())
         .collect(toImmutableList());
   }
 
-  /** Returns the list of {@link ParameterSpec}s for the constructor. */
-  final ImmutableList<ParameterSpec> constructorParameters() {
-    Optional<ClassName> componentCreatorName;
-    if (componentImplementation.creatorImplementation().isPresent()) {
-      componentCreatorName =
-          componentImplementation.creatorImplementation().map(creator -> creator.name());
-    } else {
-      componentCreatorName =
-          componentImplementation
-              .baseImplementation()
-              .filter(component -> component.componentDescriptor().hasCreator())
-              .map(ComponentImplementation::getCreatorName);
-    }
+  /**
+   * Returns the parameters for the constructor or {@code configureInitilization} method as a map
+   * from the requirement the parameter fulfills to the spec for the parameter.
+   */
+  private final ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters() {
+    Optional<ComponentCreatorImplementation> creatorImplementation =
+        Optionals.firstPresent(
+            componentImplementation.creatorImplementation(),
+            componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()));
 
-    if (componentCreatorName.isPresent()) {
-      return ImmutableList.of(ParameterSpec.builder(componentCreatorName.get(), "builder").build());
+    Map<ComponentRequirement, ParameterSpec> parameters;
+    if (creatorImplementation.isPresent()) {
+      parameters =
+          Maps.transformEntries(
+              creatorImplementation.get().requirementNames(),
+              (requirement, name) -> requirement.toParameterSpec(name));
     } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
       // If we're generating an abstract inner subcomponent, then we are not implementing module
       // instance bindings and have no need for factory method parameters.
-      return ImmutableList.of();
+      parameters = ImmutableMap.of();
     } else if (graph.factoryMethod().isPresent()) {
-      return getFactoryMethodParameterSpecs(graph);
+      parameters = getFactoryMethodParameters(graph);
     } else if (componentImplementation.isAbstract()) {
       // If we're generating an abstract base implementation of a subcomponent it's acceptable to
       // have neither a creator nor factory method.
-      return ImmutableList.of();
+      parameters = ImmutableMap.of();
     } else {
       throw new AssertionError(
           "Expected either a component creator or factory method but found neither.");
     }
+
+    if (componentImplementation.isAbstract()) {
+      parameters = Maps.filterKeys(parameters, in(configureInitializationRequirements()));
+    }
+    return renameParameters(parameters);
+  }
+
+  /**
+   * Returns the set of requirements for the configureInitialization method: the parameters that are
+   * needed either for initializing a component requirement field or for calling the superclass's
+   * {@code configureInitialization} method.
+   */
+  private ImmutableSet<ComponentRequirement> configureInitializationRequirements() {
+    ImmutableSet<ComponentRequirement> initializationRequirements =
+        componentImplementation.getComponentRequirementInitializations().keySet();
+    ImmutableSet<ComponentRequirement> superConfigureInitializationRequirements =
+        componentImplementation
+            .superConfigureInitializationMethod()
+            .map(ConfigureInitializationMethod::parameters)
+            .orElse(ImmutableSet.of());
+    return Sets.union(initializationRequirements, superConfigureInitializationRequirements)
+        .immutableCopy();
+  }
+
+  /**
+   * Renames the given parameters to guarantee their names do not conflict with fields in the
+   * component to ensure that a parameter is never referenced where a reference to a field was
+   * intended.
+   */
+  // TODO(cgdecker): This is a bit kludgy; it would be preferable to either qualify the field
+  // references with "this." or "super." when needed to disambiguate between field and parameter,
+  // but that would require more context than is currently available when the code referencing a
+  // field is generated.
+  private ImmutableMap<ComponentRequirement, ParameterSpec> renameParameters(
+      Map<ComponentRequirement, ParameterSpec> parameters) {
+    return ImmutableMap.copyOf(
+        Maps.transformEntries(
+            parameters,
+            (requirement, parameter) ->
+                renameParameter(
+                    parameter,
+                    componentImplementation.getParameterName(requirement, parameter.name))));
+  }
+
+  private ParameterSpec renameParameter(ParameterSpec parameter, String newName) {
+    return ParameterSpec.builder(parameter.type, newName)
+        .addAnnotations(parameter.annotations)
+        .addModifiers(parameter.modifiers)
+        .build();
   }
 
   /** Builds a root component implementation. */
@@ -487,12 +621,12 @@ abstract class ComponentImplementationBuilder {
     }
 
     @Override
-    void addCreatorClass(TypeSpec creator) {
+    protected void addCreatorClass(TypeSpec creator) {
       componentImplementation.addType(COMPONENT_CREATOR, creator);
     }
 
     @Override
-    void addFactoryMethods() {
+    protected void addFactoryMethods() {
       // Only top-level components have the factory builder() method.
       // Mirror the user's creator API type if they had one.
       MethodSpec creatorFactoryMethod =
@@ -525,13 +659,13 @@ abstract class ComponentImplementationBuilder {
     }
 
     /** {@code true} if all of the graph's required dependencies can be automatically constructed */
-    boolean canInstantiateAllRequirements() {
+    private boolean canInstantiateAllRequirements() {
       return !Iterables.any(
           graph.componentRequirements(),
           dependency -> dependency.requiresAPassedInstance(elements, types));
     }
 
-    ClassName componentCreatorName() {
+    private ClassName componentCreatorName() {
       return componentImplementation.creatorImplementation().get().name();
     }
   }
@@ -552,7 +686,7 @@ abstract class ComponentImplementationBuilder {
     }
 
     @Override
-    void addCreatorClass(TypeSpec creator) {
+    protected void addCreatorClass(TypeSpec creator) {
       if (parent.isPresent()) {
         // In an inner implementation of a subcomponent the creator is a peer class.
         parent.get().componentImplementation.addType(SUBCOMPONENT, creator);
@@ -562,7 +696,7 @@ abstract class ComponentImplementationBuilder {
     }
 
     @Override
-    void addFactoryMethods() {
+    protected void addFactoryMethods() {
       // Only construct instances of subcomponents that have concrete implementations.
       if (!componentImplementation.isAbstract()) {
         // Use the parent's factory method to create this subcomponent if the
@@ -571,29 +705,25 @@ abstract class ComponentImplementationBuilder {
       }
     }
 
-    void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
+    private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
       checkState(parent.isPresent());
-      parent
-          .get()
-          .componentImplementation
-          .addMethod(
-              COMPONENT_METHOD,
-              MethodSpec.overriding(factoryMethod, parentType(), types)
-                  .addStatement(
-                      "return new $T($L)",
-                      componentImplementation.name(),
-                      getFactoryMethodParameterSpecs(graph).stream()
-                          .map(param -> CodeBlock.of("$N", param))
-                          .collect(toParametersCodeBlock()))
-                  .build());
+
+      Collection<ParameterSpec> params = getFactoryMethodParameters(graph).values();
+      MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType(), types);
+      params.forEach(
+          param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
+      method.addStatement(
+          "return new $T($L)", componentImplementation.name(), parameterNames(params));
+
+      parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
     }
 
-    DeclaredType parentType() {
+    private DeclaredType parentType() {
       return asDeclared(parent.get().graph.componentTypeElement().asType());
     }
 
     @Override
-    void addInterfaceMethods() {
+    protected void addInterfaceMethods() {
       if (componentImplementation.superclassImplementation().isPresent()) {
         // Since we're overriding a subcomponent implementation we add to its implementation given
         // an expanded binding graph.
@@ -613,7 +743,7 @@ abstract class ComponentImplementationBuilder {
     }
 
     @Override
-    Optional<CodeBlock> cancelParentStatement() {
+    protected Optional<CodeBlock> cancelParentStatement() {
       if (!shouldPropagateCancellationToParent()) {
         return Optional.empty();
       }
@@ -627,7 +757,7 @@ abstract class ComponentImplementationBuilder {
               .build());
     }
 
-    boolean shouldPropagateCancellationToParent() {
+    private boolean shouldPropagateCancellationToParent() {
       return parent.isPresent()
           && parent
               .get()
@@ -639,10 +769,12 @@ abstract class ComponentImplementationBuilder {
     }
   }
 
-  /** Returns the list of {@link ParameterSpec}s for the corresponding graph's factory method. */
-  private static ImmutableList<ParameterSpec> getFactoryMethodParameterSpecs(BindingGraph graph) {
-    return graph.factoryMethodParameters().values().stream()
-        .map(ParameterSpec::get)
-        .collect(toImmutableList());
+  /**
+   * Returns the map of {@link ComponentRequirement}s to {@link ParameterSpec}s for the
+   * given graph's factory method.
+   */
+  private static Map<ComponentRequirement, ParameterSpec> getFactoryMethodParameters(
+      BindingGraph graph) {
+    return Maps.transformValues(graph.factoryMethodParameters(), ParameterSpec::get);
   }
 }

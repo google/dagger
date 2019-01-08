@@ -1401,7 +1401,7 @@ public class MembersInjectionTest {
                 "  private Provider inaccessiblesProvider;",
                 "",
                 "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Builder builder) {",
+                "  private void initialize() {",
                 "    this.inaccessiblesProvider =",
                 "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
                 "  }")

@@ -336,7 +336,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             GENERATED_ANNOTATION,
             "public final class DaggerTestComponent implements TestComponent, "
                 + "CancellationListener {",
-            "  private DaggerTestComponent(Builder builder) {}",
+            "  private DaggerTestComponent() {}",
             "",
             "  public static Builder builder() {",
             "    return new Builder();",
@@ -363,7 +363,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "    private Builder() {}",
             "",
             "    public TestComponent build() {",
-            "      return new DaggerTestComponent(this);",
+            "      return new DaggerTestComponent();",
             "    }",
             "  }",
             "}");

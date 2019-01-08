@@ -83,7 +83,7 @@ final class ComponentImplementationFactory {
   /** Creates a root component or top-level abstract subcomponent implementation. */
   ComponentImplementation topLevelImplementation(ClassName name, BindingGraph graph) {
     return new ComponentImplementation(
-        graph.componentDescriptor(),
+        graph,
         name,
         NestingKind.TOP_LEVEL,
         Optional.empty(), // superclassImplementation

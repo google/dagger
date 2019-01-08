@@ -337,6 +337,7 @@ java_library(
     srcs = [
         "BindingGraphValidationModule.java",
         "BindingMethodValidatorsModule.java",
+        "ComponentCreatorImplementationFactory.java",
         "ComponentGenerator.java",
         "ComponentHjarProcessingStep.java",
         "ComponentImplementationBuilder.java",

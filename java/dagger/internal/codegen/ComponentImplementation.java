@@ -26,6 +26,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -144,7 +145,30 @@ final class ComponentImplementation {
     SUBCOMPONENT
   }
 
-  private final ComponentDescriptor componentDescriptor;
+  /**
+   * The method spec for a {@code configureInitialization} method plus details on the component
+   * requirements that its parameters are associated with.
+   */
+  @AutoValue
+  abstract static class ConfigureInitializationMethod {
+    /** Creates a new {@link ConfigureInitializationMethod}. */
+    static ConfigureInitializationMethod create(
+        MethodSpec spec, ImmutableSet<ComponentRequirement> parameters) {
+      return new AutoValue_ComponentImplementation_ConfigureInitializationMethod(
+          spec, parameters);
+    }
+
+    /** The spec for the method. */
+    abstract MethodSpec spec();
+
+    /**
+     * The component requirements associated with the method's parameters, in the same order as the
+     * parameters.
+     */
+    abstract ImmutableSet<ComponentRequirement> parameters();
+  }
+
+  private final BindingGraph graph;
   private final ClassName name;
   private final NestingKind nestingKind;
   private final boolean isAbstract;
@@ -156,7 +180,10 @@ final class ComponentImplementation {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
-  private final List<CodeBlock> componentRequirementInitializations = new ArrayList<>();
+  private final Map<ComponentRequirement, CodeBlock> componentRequirementInitializations =
+      new LinkedHashMap<>();
+  private final Map<ComponentRequirement, String> componentRequirementParameterNames =
+      new HashMap<>();
   private final Set<Key> cancellableProducerKeys = new LinkedHashSet<>();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
@@ -170,18 +197,18 @@ final class ComponentImplementation {
   // implicit
   private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
       HashMultimap.create();
-  private Optional<MethodSpec> configureInitializationMethod = Optional.empty();
+  private Optional<ConfigureInitializationMethod> configureInitializationMethod = Optional.empty();
   private final Map<ComponentRequirement, String> modifiableModuleMethods = new LinkedHashMap<>();
 
   ComponentImplementation(
-      ComponentDescriptor componentDescriptor,
+      BindingGraph graph,
       ClassName name,
       NestingKind nestingKind,
       Optional<ComponentImplementation> superclassImplementation,
       SubcomponentNames subcomponentNames,
       Modifier... modifiers) {
     checkName(name, nestingKind);
-    this.componentDescriptor = componentDescriptor;
+    this.graph = graph;
     this.name = name;
     this.nestingKind = nestingKind;
     this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
@@ -192,12 +219,12 @@ final class ComponentImplementation {
 
   ComponentImplementation(
       ComponentImplementation parent,
-      ComponentDescriptor componentDescriptor,
+      BindingGraph graph,
       Optional<ComponentImplementation> superclassImplementation,
       Modifier... modifiers) {
     this(
-        componentDescriptor,
-        parent.getSubcomponentName(componentDescriptor),
+        graph,
+        parent.getSubcomponentName(graph.componentDescriptor()),
         NestingKind.MEMBER,
         superclassImplementation,
         parent.subcomponentNames,
@@ -222,9 +249,14 @@ final class ComponentImplementation {
     }
   }
 
+  /** Returns the binding graph for the component being generated. */
+  BindingGraph graph() {
+    return graph;
+  }
+
   /** Returns the descriptor for the component being generated. */
   ComponentDescriptor componentDescriptor() {
-    return componentDescriptor;
+    return graph.componentDescriptor();
   }
 
   /** Returns the name of the component. */
@@ -263,7 +295,7 @@ final class ComponentImplementation {
    *
    * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
    */
-  Optional<MethodSpec> superConfigureInitializationMethod() {
+  Optional<ConfigureInitializationMethod> superConfigureInitializationMethod() {
     for (Optional<ComponentImplementation> currentSuper = superclassImplementation;
         currentSuper.isPresent();
         currentSuper = currentSuper.get().superclassImplementation) {
@@ -280,7 +312,7 @@ final class ComponentImplementation {
    *
    * <p>Only returns a present value in {@link CompilerOptions#aheadOfTimeSubcomponents()}.
    */
-  Optional<MethodSpec> configureInitializationMethod() {
+  Optional<ConfigureInitializationMethod> configureInitializationMethod() {
     return configureInitializationMethod;
   }
 
@@ -288,9 +320,9 @@ final class ComponentImplementation {
    * Set's this component implementation's {@code configureInitialization()} method and {@linkplain
    * #addMethod(MethodSpecKind, MethodSpec) adds the method}.
    */
-  void setConfigureInitializationMethod(MethodSpec method) {
+  void setConfigureInitializationMethod(ConfigureInitializationMethod method) {
     configureInitializationMethod = Optional.of(method);
-    addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method);
+    addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method.spec());
   }
 
   void setCreatorImplementation(Optional<ComponentCreatorImplementation> creatorImplementation) {
@@ -310,17 +342,17 @@ final class ComponentImplementation {
    */
   ClassName getCreatorName() {
     return isNested()
-        ? name.peerClass(subcomponentNames.get(componentDescriptor) + "Builder")
+        ? name.peerClass(subcomponentNames.get(componentDescriptor()) + "Builder")
         : name.nestedClass("Builder");
   }
 
   /** Returns the name of the nested implementation class for a child component. */
   ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
     checkArgument(
-        componentDescriptor.childComponents().contains(childDescriptor),
+        componentDescriptor().childComponents().contains(childDescriptor),
         "%s is not a child component of %s",
         childDescriptor.typeElement(),
-        componentDescriptor.typeElement());
+        componentDescriptor().typeElement());
     return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
@@ -444,11 +476,12 @@ final class ComponentImplementation {
   }
 
   /**
-   * Adds the given code block that initializes a {@link ComponentRequirement} to the component
-   * implementation.
+   * Adds the given code block that initializes the given {@link ComponentRequirement} to the
+   * component implementation.
    */
-  void addComponentRequirementInitialization(CodeBlock codeBlock) {
-    componentRequirementInitializations.add(codeBlock);
+  void addComponentRequirementInitialization(
+      ComponentRequirement requirement, CodeBlock codeBlock) {
+    componentRequirementInitializations.put(requirement, codeBlock);
   }
 
   /**
@@ -484,6 +517,20 @@ final class ComponentImplementation {
     return getUniqueMethodName(baseMethodName);
   }
 
+  /** Gets the parameter name to use for the given requirement for this component. */
+  String getParameterName(ComponentRequirement requirement) {
+    return getParameterName(requirement, requirement.variableName());
+  }
+
+  /**
+   * Gets the parameter name to use for the given requirement for this component, starting with the
+   * given base name if no parameter name has already been selected for the requirement.
+   */
+  String getParameterName(ComponentRequirement requirement, String baseName) {
+    return componentRequirementParameterNames.computeIfAbsent(
+        requirement, r -> getUniqueFieldName(baseName));
+  }
+
   /** Claims a new method name for the component. Does nothing if method name already exists. */
   void claimMethodName(CharSequence name) {
     componentMethodNames.claim(name);
@@ -495,16 +542,26 @@ final class ComponentImplementation {
   }
 
   /**
-   * Returns the list of {@link CodeBlock}s that initialize {@link ComponentRequirement}s. These
-   * initializations are kept separate from {@link #getInitializations()} because they must be
-   * executed before the initializations of any framework instance initializations in a superclass
-   * implementation that may depend on the instances. We cannot use the same strategy that we use
-   * for framework instances (i.e. wrap in a {@link dagger.internal.DelegateFactory} or {@link
-   * dagger.producers.internal.DelegateProducer} since the types of these initialized fields have no
-   * interface type that we can write a proxy for.
+   * Returns the map of {@link ComponentRequirement}s to {@link CodeBlock}s that initialize them.
+   *
+   * <p>These initializations are kept separate from {@link #getInitializations()} because they must
+   * be executed before the initializations of any framework instance initializations in a
+   * superclass implementation that may depend on the instances. We cannot use the same strategy
+   * that we use for framework instances (i.e. wrap in a {@link dagger.internal.DelegateFactory} or
+   * {@link dagger.producers.internal.DelegateProducer} since the types of these initialized fields
+   * have no interface type that we can write a proxy for.
    */
-  ImmutableList<CodeBlock> getComponentRequirementInitializations() {
-    return ImmutableList.copyOf(componentRequirementInitializations);
+  ImmutableMap<ComponentRequirement, CodeBlock> getComponentRequirementInitializations() {
+    return ImmutableMap.copyOf(componentRequirementInitializations);
+  }
+
+  /**
+   * Returns whether or not this component has any {@linkplain #getInitializations() initilizations}
+   * or {@linkplain #getComponentRequirementInitializations() component requirement
+   * initializations}.
+   */
+  boolean hasInitializations() {
+    return !initializations.isEmpty() || !componentRequirementInitializations.isEmpty();
   }
 
   /**

@@ -35,7 +35,7 @@ interface ComponentRequirementExpression {
 
   /**
    * Returns an expression for the {@link ComponentRequirement} to be used only within {@code
-   * initialize()} methods, where the component builder is available.
+   * initialize()} methods, where the constructor parameters are available.
    *
    * <p>When accessing this expression from a subcomponent, this may cause a field to be initialized
    * or a method to be added in the component that owns this {@link ComponentRequirement}.

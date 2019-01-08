@@ -64,7 +64,16 @@ final class DependencyMethodProducerCreationExpression
                 ClassName.get(dependency.typeElement()), dependency.variableName(), PRIVATE, FINAL)
             .initializer(
                 componentRequirementExpressions.getExpressionDuringInitialization(
-                    dependency, componentImplementation.name()))
+                    dependency,
+                    // This isn't a real class name, but we want the requesting class for the
+                    // expression to *not* be the same class as the component implementation,
+                    // because it isn't... it's an anonymous inner class.
+                    // TODO(cgdecker): If we didn't use an anonymous inner class here but instead
+                    // generated a named nested class as with
+                    // DependencyMethodProviderCreationExpression, we wouldn't need to deal with
+                    // this and might be able to avoid potentially creating an extra field in the
+                    // component?
+                    componentImplementation.name().nestedClass("Anonymous")))
             .build();
     // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
     TypeName keyType = TypeName.get(binding.key().type());

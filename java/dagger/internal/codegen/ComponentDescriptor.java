@@ -41,6 +41,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableBiMap;
@@ -56,6 +57,7 @@ import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -250,6 +252,16 @@ abstract class ComponentDescriptor {
         ? Optional.ofNullable(typeElement().getAnnotation(CancellationPolicy.class))
         : Optional.empty();
   }
+
+  @Memoized
+  @Override
+  public int hashCode() {
+    return Objects.hash(typeElement(), kind());
+  }
+
+  // TODO(ronshapiro): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
 
   /** A function that returns all {@link #scopes()} of its input. */
   @AutoValue

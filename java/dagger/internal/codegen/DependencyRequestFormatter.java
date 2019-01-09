@@ -17,18 +17,13 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerElements.elementToString;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
-import dagger.internal.codegen.ComponentTreeTraverser.DependencyTrace;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produces;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -64,27 +59,6 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
   @Inject
   DependencyRequestFormatter(DaggerTypes types) {
     this.types = types;
-  }
-
-  /** Returns a representation of the dependency trace, with the entry point at the bottom. */
-  String format(DependencyTrace dependencyTrace) {
-    AtomicReference<ImmutableSet<OptionalBindingDeclaration>> dependentOptionalBindingDeclarations =
-        new AtomicReference<>(ImmutableSet.of());
-    return Joiner.on('\n')
-        .join(
-            dependencyTrace
-                .transform(
-                    (dependencyRequest, resolvedBindings) -> {
-                      ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations =
-                          dependentOptionalBindingDeclarations.getAndSet(
-                              resolvedBindings.optionalBindingDeclarations());
-                      return optionalBindingDeclarations.isEmpty()
-                          ? format(dependencyRequest)
-                          : formatSyntheticOptionalBindingDependency(optionalBindingDeclarations);
-                    })
-                .filter(f -> !f.isEmpty())
-                .collect(toImmutableList())
-                .reverse());
   }
 
   @Override
@@ -172,30 +146,5 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
       default:
         throw new AssertionError("illegal request kind for method: " + request);
     }
-  }
-
-  /**
-   * Returns a string of the form "{@code @BindsOptionalOf SomeKey is declared at Module.method()}",
-   * where {@code Module.method()} is the declaration. If there is more than one such declaration,
-   * one is chosen arbitrarily, and ", among others" is appended.
-   */
-  private String formatSyntheticOptionalBindingDependency(
-      ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations) {
-    OptionalBindingDeclaration optionalBindingDeclaration =
-        optionalBindingDeclarations.iterator().next();
-    StringBuilder builder = new StringBuilder();
-    builder
-        .append(INDENT)
-        .append("@BindsOptionalOf ")
-        .append(optionalBindingDeclaration.key())
-        .append(" is declared at\n")
-        .append(DOUBLE_INDENT)
-        .append(elementToString(optionalBindingDeclaration.bindingElement().get()));
-
-    if (optionalBindingDeclarations.size() > 1) {
-      builder.append(", among others");
-    }
-
-    return builder.toString();
   }
 }

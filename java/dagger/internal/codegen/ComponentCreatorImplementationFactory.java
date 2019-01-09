@@ -133,10 +133,8 @@ final class ComponentCreatorImplementationFactory {
       setSupertype();
       addFields();
       addConstructor();
-      addFactoryMethod();
-      // TODO(ronshapiro): this should be switched with addFactoryMethod(), but that currently
-      // breaks compile-testing tests that rely on the order of the methods
       addSetterMethods();
+      addFactoryMethod();
       return ComponentCreatorImplementation.create(
           componentCreatorClass.build(),
           componentImplementation.getCreatorName(),

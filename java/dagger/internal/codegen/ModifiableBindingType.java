@@ -72,28 +72,6 @@ enum ModifiableBindingType {
   INJECTION,
 
   /**
-   * {@link dagger.producers.ProductionScope} is a unique scope that is allowed on multiple
-   * components. In Ahead-of-Time mode, we don't actually know what component will end up owning the
-   * binding because a parent could install the same module or also be an @ProductionScoped @Inject
-   * constructor.
-   *
-   * <p>We don't apply the same logic to @Reusable, even though it can also be on multiple
-   * components, because it is by definition ok to be reimplemented across multiple components.
-   * Allowing @Reusable bindings to be redefined could only result in more code for subclass
-   * implementations.
-   *
-   * <p>All production bindings are also treated as modifiable since they are implicitly {@link
-   * dagger.producers.ProductionScope} in {@link dagger.producers.internal.AbstractProducer}. If an
-   * ancestor component includes the same module as a descendant component, the descendant's
-   * subclass implementation will need to be replaced with the ancestor's {@link
-   * dagger.producers.Producer} instance. beder@ believes this to be a bug and that, because
-   * {@code @Produces} methods are implicitly scoped, descendant components should not be allowed to
-   * redefine the same module as an ancestor. If we disallow that, we can stop treating all
-   * {@code @Produces} methods as modifiable.
-   */
-  PRODUCTION,
-
-  /**
    * A {@link dagger.Binds} method whose dependency is {@link #MISSING}.
    *
    * <p>There's not much to do for @Binds bindings if the dependency is missing - at best, if the
@@ -105,7 +83,7 @@ enum ModifiableBindingType {
   ;
 
   private static final ImmutableSet<ModifiableBindingType> TYPES_WITH_BASE_CLASS_IMPLEMENTATIONS =
-      ImmutableSet.of(NONE, INJECTION, MULTIBINDING, OPTIONAL, PRODUCTION);
+      ImmutableSet.of(NONE, INJECTION, MULTIBINDING, OPTIONAL);
 
   boolean isModifiable() {
     return !equals(NONE);

@@ -29,7 +29,6 @@ import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
-import dagger.model.Scope;
 import java.util.Optional;
 
 /**
@@ -173,13 +172,6 @@ final class ModifiableBindingExpressions {
       case INJECTION:
         // Once we modify any of the above a single time, then they are finalized.
         return modifyingBinding;
-      case PRODUCTION:
-        // For production bindings, we know that the binding will be finalized if the parent is a
-        // non-production component, but for @ProductionScope bindings we don't ever know because an
-        // ancestor non-production component can apply @ProductionScope. We therefore return false
-        // always. If we wanted, we could create a separate ModifiableBindingType for production
-        // scope to allow us to make this distinction.
-        return false;
       case MULTIBINDING:
         return false;
       default:
@@ -260,7 +252,6 @@ final class ModifiableBindingExpressions {
       case OPTIONAL:
       case MULTIBINDING:
       case INJECTION:
-      case PRODUCTION:
         return bindingExpressions.wrapInMethod(
             resolvedBindings,
             request,
@@ -323,12 +314,6 @@ final class ModifiableBindingExpressions {
 
       if (binding.kind().equals(BindingKind.INJECTION)) {
         return ModifiableBindingType.INJECTION;
-      }
-
-      if ((binding.scope().map(Scope::isProductionScope).orElse(false)
-              && componentImplementation.isAbstract())
-          || binding.bindingType().equals(BindingType.PRODUCTION)) {
-        return ModifiableBindingType.PRODUCTION;
       }
     } else if (!resolvableBinding(request)) {
       return ModifiableBindingType.MISSING;
@@ -413,12 +398,6 @@ final class ModifiableBindingExpressions {
 
       case INJECTION:
         return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);
-
-      case PRODUCTION:
-        // TODO(b/117833324): Profile this to see if this check is slow
-        return !resolvedBindings
-            .owningComponent()
-            .equals(componentImplementation.componentDescriptor());
 
       default:
         throw new IllegalStateException(

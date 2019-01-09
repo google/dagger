@@ -82,7 +82,11 @@ final class ComponentCreatorImplementationFactory {
       return Optional.empty();
     }
 
-    return Optional.of(new Builder(componentImplementation).build());
+    Builder builder =
+        componentImplementation.graph().componentDescriptor().creatorDescriptor().isPresent()
+            ? new BuilderForCreatorDescriptor(componentImplementation)
+            : new BuilderForGeneratedRootComponentBuilder(componentImplementation);
+    return Optional.of(builder.build());
   }
 
   private static ImmutableMap<ComponentRequirement, String> requirementNames(
@@ -109,7 +113,7 @@ final class ComponentCreatorImplementationFactory {
     return Maps.toMap(requirements, requirement -> names.getUniqueName(requirement.variableName()));
   }
 
-  private final class Builder {
+  private abstract class Builder {
     final ComponentImplementation componentImplementation;
     final BindingGraph graph;
     final TypeSpec.Builder componentCreatorClass;
@@ -125,59 +129,44 @@ final class ComponentCreatorImplementationFactory {
     }
 
     ComponentCreatorImplementation build() {
-      if (!componentImplementation.isNested()) {
-        componentCreatorClass.addModifiers(STATIC);
-      }
-      if (creatorDescriptor().isPresent()) {
-        if (componentImplementation.isAbstract()) {
-          // The component creator class of a top-level component implementation in ahead-of-time
-          // subcomponents mode must be public, not protected, because the creator's subclass will
-          // be a sibling of the component subclass implementation, not nested.
-          componentCreatorClass.addModifiers(
-              componentImplementation.isNested() ? PROTECTED : PUBLIC);
-        } else {
-          componentCreatorClass.addModifiers(PRIVATE);
-        }
-        setSupertype();
-      } else {
-        componentCreatorClass
-            .addModifiers(PUBLIC)
-            .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
-      }
-
-      if (componentImplementation.isAbstract()) {
-        componentCreatorClass.addModifiers(ABSTRACT);
-      } else {
-        componentCreatorClass.addModifiers(FINAL);
-        componentCreatorClass.addMethod(factoryMethod());
-      }
-
-      if (!componentImplementation.baseImplementation().isPresent()) {
-        requirements.stream().map(this::toFieldSpec).forEach(componentCreatorClass::addField);
-      }
-
-      // TODO(ronshapiro): this should be switched with factoryMethod(), but that currently breaks
-      // compile-testing tests that rely on the order of the methods
-      componentCreatorClass.addMethods(setterMethods());
-
+      setModifiers();
+      setSupertype();
+      addFields();
+      addConstructor();
+      addFactoryMethod();
+      // TODO(ronshapiro): this should be switched with addFactoryMethod(), but that currently
+      // breaks compile-testing tests that rely on the order of the methods
+      addSetterMethods();
       return ComponentCreatorImplementation.create(
           componentCreatorClass.build(),
           componentImplementation.getCreatorName(),
           requirementNames);
     }
 
-    /** Set the superclass being extended or interface being implemented for this creator. */
-    void setSupertype() {
-      if (componentImplementation.baseImplementation().isPresent()) {
-        // If there's a superclass, extend the creator defined there.
-        componentCreatorClass.superclass(
-            componentImplementation.baseImplementation().get().getCreatorName());
-      } else {
-        addSupertype(componentCreatorClass, creatorDescriptor().get().typeElement());
+    private final void setModifiers() {
+      componentCreatorClass.addModifiers(visibility());
+      if (!componentImplementation.isNested()) {
+        componentCreatorClass.addModifiers(STATIC);
+      }
+      componentCreatorClass.addModifiers(componentImplementation.isAbstract() ? ABSTRACT : FINAL);
+    }
+
+    /** Returns the visibility modifier the generated class should have. */
+    protected abstract Modifier visibility();
+
+    /** Sets the superclass being extended or interface being implemented for this creator. */
+    protected abstract void setSupertype();
+
+    /** Adds a constructor for the creator type, if needed. */
+    protected abstract void addConstructor();
+
+    private void addFields() {
+      if (!componentImplementation.baseImplementation().isPresent()) {
+        requirements.stream().map(this::toFieldSpec).forEach(componentCreatorClass::addField);
       }
     }
 
-    FieldSpec toFieldSpec(ComponentRequirement requirement) {
+    private FieldSpec toFieldSpec(ComponentRequirement requirement) {
       // Fields in an abstract creator class need to be visible from subclasses.
       Modifier modifier = componentImplementation.isAbstract() ? PROTECTED : PRIVATE;
       return FieldSpec.builder(
@@ -185,25 +174,18 @@ final class ComponentCreatorImplementationFactory {
           .build();
     }
 
-    CodeBlock parametersCodeBlock() {
-      return requirements.stream()
-          .map(requirement -> CodeBlock.of("$L", requirementNames.get(requirement)))
-          .collect(toParametersCodeBlock());
+    private void addSetterMethods() {
+      componentCreatorClass.addMethods(setterMethods());
+    }
+
+    private void addFactoryMethod() {
+      if (!componentImplementation.isAbstract()) {
+        componentCreatorClass.addMethod(factoryMethod());
+      }
     }
 
     MethodSpec factoryMethod() {
-      MethodSpec.Builder factoryMethod;
-      if (creatorDescriptor().isPresent()) {
-        ExecutableElement factoryMethodElement = creatorDescriptor().get().factoryMethod();
-        // Note: we don't use the factoryMethodElement.getReturnType() as the return type
-        // because it might be a type variable.  We make use of covariant returns to allow
-        // us to return the component type, which will always be valid.
-        factoryMethod =
-            methodBuilder(factoryMethodElement.getSimpleName().toString())
-                .addAnnotation(Override.class);
-      } else {
-        factoryMethod = methodBuilder("build");
-      }
+      MethodSpec.Builder factoryMethod = factoryMethodBuilder();
       factoryMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
 
       requirements.forEach(
@@ -235,109 +217,139 @@ final class ComponentCreatorImplementationFactory {
             }
           });
       factoryMethod.addStatement(
-          "return new $T($L)", componentImplementation.name(), parametersCodeBlock());
+          "return new $T($L)", componentImplementation.name(), componentConstructorArgs());
       return factoryMethod.build();
+    }
+
+    /** Returns a builder for the creator's factory method. */
+    protected abstract MethodSpec.Builder factoryMethodBuilder();
+
+    private CodeBlock componentConstructorArgs() {
+      return requirements.stream()
+          .map(requirement -> CodeBlock.of("$L", requirementNames.get(requirement)))
+          .collect(toParametersCodeBlock());
     }
 
     /**
      * Computes the methods that set each field on the builder. If the {@link
      * ComponentCreatorDescriptor} is present, it will tailor the methods to match the descriptor.
      */
-    ImmutableSet<MethodSpec> setterMethods() {
-      ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
-      // TODO(ronshapiro): extract two separate methods: setterMethodsForBuilderSpec and
-      // setterMethodsForGeneratedTopLevelComponentBuilder()
-      if (creatorDescriptor().isPresent()) {
-        ComponentCreatorDescriptor creatorDescriptor = creatorDescriptor().get();
+    protected abstract ImmutableSet<MethodSpec> setterMethods();
+  }
 
-        // In ahead-of-time subcomponents mode, all builder methods are defined at the base
-        // implementation. The only case where a method needs to be overridden is for a repeated
-        // module, which is unknown at the point when a base implementation is generated. We do this
-        // at the root for simplicity (and as an aside, repeated modules are never used in google
-        // as of 11/28/18, and thus the additional cost of including these methods at the root is
-        // negligible).
-        boolean hasBaseCreatorImplementation =
-            !componentImplementation.isAbstract()
-                && componentImplementation.baseImplementation().isPresent();
+  /** Builder for a creator type defined by a {@code ComponentCreatorDescriptor}. */
+  private final class BuilderForCreatorDescriptor extends Builder {
+    final ComponentCreatorDescriptor creatorDescriptor;
 
-        UniqueNameSet parameterNames = new UniqueNameSet();
-        for (ComponentRequirement requirement : creatorDescriptor.requirements()) {
-          ExecutableElement method = creatorDescriptor.elementForRequirement(requirement);
-          MethodSpec.Builder setterMethod = setterMethod(method);
-          VariableElement parameterElement = getOnlyElement(method.getParameters());
-          String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
+    BuilderForCreatorDescriptor(ComponentImplementation componentImplementation) {
+      super(componentImplementation);
+      this.creatorDescriptor =
+          componentImplementation.componentDescriptor().creatorDescriptor().get();
+    }
 
-          TypeName argType =
-              parameterElement.asType().getKind().isPrimitive()
-                  // Primitives need to use the original (unresolved) type to avoid boxing.
-                  ? TypeName.get(parameterElement.asType())
-                  // Otherwise we use the full resolved type.
-                  : TypeName.get(requirement.type());
-
-          setterMethod.addParameter(argType, parameterName);
-
-          if (requirements.contains(requirement)) {
-            if (hasBaseCreatorImplementation) {
-              continue;
-            }
-            // required type
-            setterMethod.addStatement(
-                "this.$N = $L",
-                requirementNames.get(requirement),
-                requirement
-                        .nullPolicy(elements, types)
-                        .equals(ComponentRequirement.NullPolicy.ALLOW)
-                    ? parameterName
-                    : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
-            addSetterMethodReturnStatementForSpec(method, setterMethod);
-          } else if (graph.ownedModuleTypes().contains(requirement.typeElement())) {
-            if (hasBaseCreatorImplementation) {
-              continue;
-            }
-            // owned, but not required
-            setterMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
-            addSetterMethodReturnStatementForSpec(method, setterMethod);
-          } else {
-            // neither owned nor required, so it must be an inherited module
-            setterMethod.addStatement(
-                "throw new $T($T.format($S, $T.class.getCanonicalName()))",
-                UnsupportedOperationException.class,
-                String.class,
-                "%s cannot be set because it is inherited from the enclosing component",
-                TypeNames.rawTypeName(TypeName.get(requirement.type())));
-          }
-
-          methods.add(setterMethod.build());
-        }
-      } else {
-        for (ComponentRequirement requirement :
-            graph.componentDescriptor().dependenciesAndConcreteModules()) {
-          String componentRequirementName = simpleVariableName(requirement.typeElement());
-          MethodSpec.Builder setterMethod =
-              methodBuilder(componentRequirementName)
-                  .returns(componentImplementation.getCreatorName())
-                  .addModifiers(PUBLIC)
-                  .addParameter(TypeName.get(requirement.type()), componentRequirementName);
-          if (requirements.contains(requirement)) {
-            setterMethod.addStatement(
-                "this.$N = $T.checkNotNull($L)",
-                requirementNames.get(requirement),
-                Preconditions.class,
-                componentRequirementName);
-          } else {
-            setterMethod.addStatement(
-                "$T.checkNotNull($L)", Preconditions.class, componentRequirementName);
-            setterMethod.addJavadoc("@deprecated " + NOOP_BUILDER_METHOD_JAVADOC);
-            setterMethod.addAnnotation(Deprecated.class);
-          }
-          setterMethod.addStatement("return this");
-          methods.add(setterMethod.build());
-        }
+    @Override
+    protected Modifier visibility() {
+      if (componentImplementation.isAbstract()) {
+        // The component creator class of a top-level component implementation in ahead-of-time
+        // subcomponents mode must be public, not protected, because the creator's subclass will
+        // be a sibling of the component subclass implementation, not nested.
+        return componentImplementation.isNested() ? PROTECTED : PUBLIC;
       }
+      return PRIVATE;
+    }
+
+    @Override
+    protected void setSupertype() {
+      if (componentImplementation.baseImplementation().isPresent()) {
+        // If there's a superclass, extend the creator defined there.
+        componentCreatorClass.superclass(
+            componentImplementation.baseImplementation().get().getCreatorName());
+      } else {
+        addSupertype(componentCreatorClass, creatorDescriptor.typeElement());
+      }
+    }
+
+    @Override
+    protected void addConstructor() {
+      // Just use the implicit no-arg public constructor.
+    }
+
+    @Override
+    protected MethodSpec.Builder factoryMethodBuilder() {
+      ExecutableElement factoryMethodElement = creatorDescriptor.factoryMethod();
+      // Note: we don't use the factoryMethodElement.getReturnType() as the return type
+      // because it might be a type variable.  We make use of covariant returns to allow
+      // us to return the component type, which will always be valid.
+      return methodBuilder(factoryMethodElement.getSimpleName().toString())
+          .addAnnotation(Override.class);
+    }
+
+    @Override
+    protected ImmutableSet<MethodSpec> setterMethods() {
+      ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
+
+      // In ahead-of-time subcomponents mode, all builder methods are defined at the base
+      // implementation. The only case where a method needs to be overridden is for a repeated
+      // module, which is unknown at the point when a base implementation is generated. We do this
+      // at the root for simplicity (and as an aside, repeated modules are never used in google
+      // as of 11/28/18, and thus the additional cost of including these methods at the root is
+      // negligible).
+      boolean hasBaseCreatorImplementation =
+          !componentImplementation.isAbstract()
+              && componentImplementation.baseImplementation().isPresent();
+
+      UniqueNameSet parameterNames = new UniqueNameSet();
+      for (ComponentRequirement requirement : creatorDescriptor.requirements()) {
+        ExecutableElement method = creatorDescriptor.elementForRequirement(requirement);
+        MethodSpec.Builder setterMethod = setterMethod(method);
+        VariableElement parameterElement = getOnlyElement(method.getParameters());
+        String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
+
+        TypeName argType =
+            parameterElement.asType().getKind().isPrimitive()
+                // Primitives need to use the original (unresolved) type to avoid boxing.
+                ? TypeName.get(parameterElement.asType())
+                // Otherwise we use the full resolved type.
+                : TypeName.get(requirement.type());
+
+        setterMethod.addParameter(argType, parameterName);
+
+        if (requirements.contains(requirement)) {
+          if (hasBaseCreatorImplementation) {
+            continue;
+          }
+          // required type
+          setterMethod.addStatement(
+              "this.$N = $L",
+              requirementNames.get(requirement),
+              requirement.nullPolicy(elements, types).equals(ComponentRequirement.NullPolicy.ALLOW)
+                  ? parameterName
+                  : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
+          addSetterMethodReturnStatementForSpec(method, setterMethod);
+        } else if (graph.ownedModuleTypes().contains(requirement.typeElement())) {
+          if (hasBaseCreatorImplementation) {
+            continue;
+          }
+          // owned, but not required
+          setterMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
+          addSetterMethodReturnStatementForSpec(method, setterMethod);
+        } else {
+          // neither owned nor required, so it must be an inherited module
+          setterMethod.addStatement(
+              "throw new $T($T.format($S, $T.class.getCanonicalName()))",
+              UnsupportedOperationException.class,
+              String.class,
+              "%s cannot be set because it is inherited from the enclosing component",
+              TypeNames.rawTypeName(TypeName.get(requirement.type())));
+        }
+
+        methods.add(setterMethod.build());
+      }
+
       return methods.build();
     }
 
-    MethodSpec.Builder setterMethod(ExecutableElement method) {
+    private MethodSpec.Builder setterMethod(ExecutableElement method) {
       TypeMirror returnType = method.getReturnType();
       MethodSpec.Builder setterMethod =
           methodBuilder(method.getSimpleName().toString())
@@ -352,15 +364,72 @@ final class ComponentCreatorImplementationFactory {
       return setterMethod;
     }
 
-    void addSetterMethodReturnStatementForSpec(
+    private void addSetterMethodReturnStatementForSpec(
         ExecutableElement specMethod, MethodSpec.Builder setterMethod) {
       if (!specMethod.getReturnType().getKind().equals(VOID)) {
         setterMethod.addStatement("return this");
       }
     }
+  }
 
-    Optional<ComponentCreatorDescriptor> creatorDescriptor() {
-      return graph.componentDescriptor().creatorDescriptor();
+  /**
+   * Builder for a component builder class that is automatically generated for a root component that
+   * does not have its own user-defined creator type (i.e. a {@code ComponentCreatorDescriptor}).
+   */
+  private final class BuilderForGeneratedRootComponentBuilder extends Builder {
+    BuilderForGeneratedRootComponentBuilder(ComponentImplementation componentImplementation) {
+      super(componentImplementation);
+    }
+
+    @Override
+    protected Modifier visibility() {
+      return PUBLIC;
+    }
+
+    @Override
+    protected void setSupertype() {
+      // There's never a supertype for a root component auto-generated builder type.
+    }
+
+    @Override
+    protected void addConstructor() {
+      componentCreatorClass.addMethod(constructorBuilder().addModifiers(PRIVATE).build());
+    }
+
+    @Override
+    protected MethodSpec.Builder factoryMethodBuilder() {
+      return methodBuilder("build");
+    }
+
+    @Override
+    protected ImmutableSet<MethodSpec> setterMethods() {
+      ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
+
+      for (ComponentRequirement requirement :
+          graph.componentDescriptor().dependenciesAndConcreteModules()) {
+        String componentRequirementName = simpleVariableName(requirement.typeElement());
+        MethodSpec.Builder setterMethod =
+            methodBuilder(componentRequirementName)
+                .returns(componentImplementation.getCreatorName())
+                .addModifiers(PUBLIC)
+                .addParameter(TypeName.get(requirement.type()), componentRequirementName);
+        if (requirements.contains(requirement)) {
+          setterMethod.addStatement(
+              "this.$N = $T.checkNotNull($L)",
+              requirementNames.get(requirement),
+              Preconditions.class,
+              componentRequirementName);
+        } else {
+          setterMethod.addStatement(
+              "$T.checkNotNull($L)", Preconditions.class, componentRequirementName);
+          setterMethod.addJavadoc("@deprecated " + NOOP_BUILDER_METHOD_JAVADOC);
+          setterMethod.addAnnotation(Deprecated.class);
+        }
+        setterMethod.addStatement("return this");
+        methods.add(setterMethod.build());
+      }
+
+      return methods.build();
     }
   }
 }

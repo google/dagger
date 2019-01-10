@@ -206,8 +206,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public DependsOnMissingBinding dependsOnMissingBinding() {",
-            "    return DependsOnMissingBinding_Factory.newDependsOnMissingBinding(",
-            "        getMissingInLeaf());",
+            "    return new DependsOnMissingBinding((MissingInLeaf) getMissingInLeaf());",
             "  }",
             "",
             "  protected abstract Object getMissingInLeaf();",
@@ -859,9 +858,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public DependsOnPrunedSubcomponentBuilder dependsOnPrunedSubcomponentBuilder() {",
-            "    return DependsOnPrunedSubcomponentBuilder_Factory",
-            "        .newDependsOnPrunedSubcomponentBuilder(",
-            "            getPrunedSubcomponentBuilder());",
+            "    return new DependsOnPrunedSubcomponentBuilder(",
+            "        (PrunedSubcomponent.Builder) getPrunedSubcomponentBuilder());",
             "  }",
             "",
             "  protected abstract Object getPrunedSubcomponentBuilder();",
@@ -4147,7 +4145,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public InjectedInLeaf injectedInLeaf() {",
-            "    return InjectedInLeaf_Factory.newInjectedInLeaf(getProvidedInAncestor());",
+            "    return new InjectedInLeaf((ProvidedInAncestor) getProvidedInAncestor());",
             "  }",
             "",
             "  protected abstract String getString();",
@@ -4256,8 +4254,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public InjectsPrunedDependency injectsPrunedDependency() {",
-            "    return InjectsPrunedDependency_Factory.newInjectsPrunedDependency(",
-            "        getPrunedDependency());",
+            "    return new InjectsPrunedDependency((PrunedDependency) getPrunedDependency());",
             "  }",
             "",
             "  protected abstract Object getPrunedDependency();",
@@ -4407,8 +4404,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public InjectsPrunedDependency injectsPrunedDependency() {",
-            "    return InjectsPrunedDependency_Factory.newInjectsPrunedDependency(",
-            "        getPrunedDependency());",
+            "    return new InjectsPrunedDependency((PrunedDependency) getPrunedDependency());",
             "  }",
             "",
             "  protected Object getPrunedDependency() {",
@@ -4555,8 +4551,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Override",
             "  public InjectsPrunedDependency injectsPrunedDependency() {",
-            "    return InjectsPrunedDependency_Factory.newInjectsPrunedDependency(",
-            "        getPrunedDependency());",
+            "    return new InjectsPrunedDependency((PrunedDependency) getPrunedDependency());",
             "  }",
             "",
             "  protected Object getPrunedDependency() {",
@@ -5173,9 +5168,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "  @Override",
             "  public DependsOnMissing instance() {",
             "    return LeafModule_TestFactory.proxyTest(",
-            "        getMissing(),",
+            // TODO(b/117833324): remove these unnecessary casts
+            "        (Missing) getMissing(),",
             "        getMissingProvider(),",
-            "        getProvidedInAncestor_InducesSetBinding());",
+            "        (ProvidedInAncestor_InducesSetBinding)",
+            "            getProvidedInAncestor_InducesSetBinding());",
             "  }",
             "",
             "  @Override",
@@ -5261,7 +5258,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    private Object getUnresolvedSetBinding() {",
             "      return LeafModule_UnresolvedSetBindingFactory.proxyUnresolvedSetBinding(",
-            "          getMissing(), getMissingProvider());",
+            // TODO(b/117833324): remove this unnecessary cast
+            "          (Missing) getMissing(), getMissingProvider());",
             "    }",
             "",
             "    @SuppressWarnings(\"unchecked\")",
@@ -6763,7 +6761,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    private Object getInducedSet() {",
             "      return InducedSubcomponentModule_InducedSetFactory.proxyInducedSet(",
-            "          getInducedSubcomponentBuilder());",
+            // TODO(b/117833324): remove this unnecessary cast
+            "          (InducedSubcomponent.Builder) getInducedSubcomponentBuilder());",
             "    }",
             "",
             "    protected abstract Object getInducedSubcomponentBuilder();",
@@ -7218,6 +7217,72 @@ public final class AheadOfTimeSubcomponentsTest {
         .generatedSourceFile("test.DaggerRoot")
         .containsElementsIn(generatedRoot);
 
+  }
+
+  @Test
+  public void dependencyExpressionCasting() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PublicType",
+            "package test;",
+            "", //
+            "public class PublicType {}"),
+        JavaFileObjects.forSourceLines(
+            "test.ModifiableNonPublicSubclass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class ModifiableNonPublicSubclass extends PublicType {",
+            "  @Inject ModifiableNonPublicSubclass() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Parameterized",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Parameterized<T extends PublicType> {",
+            "  @Inject Parameterized(T t) {}",
+            "}"),
+
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  Parameterized<ModifiableNonPublicSubclass> parameterizedWithNonPublicSubtype();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  @Override",
+            "  public Parameterized<ModifiableNonPublicSubclass> ",
+            "      parameterizedWithNonPublicSubtype() {",
+            "    return Parameterized_Factory.newParameterized(",
+            "        (ModifiableNonPublicSubclass) getModifiableNonPublicSubclass());",
+            "  }",
+            "",
+            "  protected Object getModifiableNonPublicSubclass() {",
+            "    return new ModifiableNonPublicSubclass();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
   }
 
   private void createAncillaryClasses(

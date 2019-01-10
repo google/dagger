@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.Accessibility.isRawTypeAccessible;
+import static dagger.internal.codegen.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
@@ -171,8 +172,24 @@ final class ComponentBindingExpressions {
       DependencyRequest dependencyRequest, ClassName requestingClass) {
 
     TypeMirror dependencyType = dependencyRequest.key().type();
+    BindingRequest bindingRequest = bindingRequest(dependencyRequest);
     Expression dependencyExpression =
-        getDependencyExpression(bindingRequest(dependencyRequest), requestingClass);
+        getDependencyExpression(bindingRequest, requestingClass);
+
+    if (compilerOptions.aheadOfTimeSubcomponents()) {
+      TypeMirror requestedType =
+          bindingRequest.requestedType(dependencyRequest.key().type(), types);
+      // If dependencyExpression.type() has been erased to it's publicly accessible type in AOT,
+      // we must sometimes cast the expression so that it is usable in the current component. To do
+      // so, we check that without the cast the assignment would fail, that argument to this proxy
+      // method erased the type, and that the raw type of the requested type is actually accessible
+      // in the current class so that the cast is valid.
+      if (!types.isAssignable(dependencyExpression.type(), requestedType)
+          && !isRawTypePubliclyAccessible(requestedType)
+          && isRawTypeAccessible(requestedType, requestingClass.packageName())) {
+        return dependencyExpression.castTo(types.erasure(requestedType));
+      }
+    }
 
     if (dependencyRequest.kind().equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(dependencyType, requestingClass.packageName())

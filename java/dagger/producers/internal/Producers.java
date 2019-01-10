@@ -134,26 +134,26 @@ public final class Producers {
     };
   }
 
-  /** Returns a producer that succeeds with the given value. */
-  public static <T> Producer<T> immediateProducer(final T value) {
-    final ListenableFuture<T> future = Futures.immediateFuture(value);
-    return new CompletedProducer<T>() {
-      @Override
-      public ListenableFuture<T> get() {
-        return future;
-      }
-    };
+  /**
+   * Returns a producer that succeeds with the given value.
+   *
+   * @deprecated Prefer the non-internal version of this method: {@link
+   * dagger.producers.Producers#immediateProducer(Object)}.
+   */
+  @Deprecated
+  public static <T> Producer<T> immediateProducer(T value) {
+    return dagger.producers.Producers.immediateProducer(value);
   }
 
-  /** Returns a producer that fails with the given exception. */
-  public static <T> Producer<T> immediateFailedProducer(final Throwable throwable) {
-    final ListenableFuture<T> future = Futures.immediateFailedFuture(throwable);
-    return new CompletedProducer<T>() {
-      @Override
-      public ListenableFuture<T> get() {
-        return future;
-      }
-    };
+  /**
+   * Returns a producer that fails with the given exception.
+   *
+   * @deprecated Prefer the non-internal version of this method: {@link
+   * dagger.producers.Producers#immediateFailedProducer(Throwable)}.
+   */
+  @Deprecated
+  public static <T> Producer<T> immediateFailedProducer(Throwable throwable) {
+    return dagger.producers.Producers.immediateFailedProducer(throwable);
   }
 
   /**

@@ -31,18 +31,24 @@ import com.squareup.javapoet.TypeName;
  */
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
   private final BindingRequest request;
-  private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private String methodName;
 
   PrivateMethodBindingExpression(
       BindingRequest request,
-      BindingMethodImplementation methodImplementation,
+      ResolvedBindings resolvedBindings,
+      MethodImplementationStrategy methodImplementationStrategy,
+      BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
       DaggerTypes types) {
-    super(request, methodImplementation, componentImplementation, types);
+    super(
+        request,
+        resolvedBindings,
+        methodImplementationStrategy,
+        wrappedBindingExpression,
+        componentImplementation,
+        types);
     this.request = checkNotNull(request);
-    this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
   }
 
@@ -56,8 +62,8 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
           PRIVATE_METHOD,
           methodBuilder(methodName)
               .addModifiers(PRIVATE)
-              .returns(TypeName.get(methodImplementation.returnType()))
-              .addCode(methodImplementation.body())
+              .returns(TypeName.get(returnType()))
+              .addCode(methodBody())
               .build());
     }
   }
@@ -66,5 +72,10 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected String methodName() {
     checkState(methodName != null, "addMethod() must be called before methodName()");
     return methodName;
+  }
+
+  @Override
+  protected boolean isPrivateMethod() {
+    return true;
   }
 }

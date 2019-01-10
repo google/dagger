@@ -29,18 +29,24 @@ import javax.lang.model.type.TypeMirror;
  * <p>Dependents of this binding expression will just call the component method.
  */
 final class ComponentMethodBindingExpression extends MethodBindingExpression {
-  private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private final ComponentMethodDescriptor componentMethod;
 
   ComponentMethodBindingExpression(
       BindingRequest request,
-      BindingMethodImplementation methodImplementation,
+      ResolvedBindings resolvedBindings,
+      MethodImplementationStrategy methodImplementationStrategy,
+      BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
       ComponentMethodDescriptor componentMethod,
       DaggerTypes types) {
-    super(request, methodImplementation, componentImplementation, types);
-    this.methodImplementation = checkNotNull(methodImplementation);
+    super(
+        request,
+        resolvedBindings,
+        methodImplementationStrategy,
+        wrappedBindingExpression,
+        componentImplementation,
+        types);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.componentMethod = checkNotNull(componentMethod);
   }
@@ -58,7 +64,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
     return componentMethod.equals(this.componentMethod) && component.equals(componentImplementation)
-        ? methodImplementation.bodyForComponentMethod(componentMethod)
+        ? methodBodyForComponentMethod(componentMethod)
         : super.getComponentMethodImplementation(componentMethod, component);
   }
 

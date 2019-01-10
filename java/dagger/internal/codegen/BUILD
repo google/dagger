@@ -241,7 +241,6 @@ java_library(
     srcs = [
         "AnnotationCreatorGenerator.java",
         "BindingExpression.java",
-        "BindingMethodImplementation.java",
         "ComponentBindingExpressions.java",
         "ComponentCreatorImplementation.java",
         "ComponentImplementation.java",
@@ -257,7 +256,6 @@ java_library(
         "DependencyMethodProducerCreationExpression.java",
         "DependencyMethodProviderCreationExpression.java",
         "DerivedFromFrameworkInstanceBindingExpression.java",
-        "DoubleCheckedMethodImplementation.java",
         "FactoryGenerator.java",
         "FrameworkFieldInitializer.java",
         "FrameworkInstanceBindingExpression.java",
@@ -310,7 +308,6 @@ java_library(
         "SetFactoryCreationExpression.java",
         "SimpleInvocationBindingExpression.java",
         "SimpleMethodBindingExpression.java",
-        "SingleCheckedMethodImplementation.java",
         "SubcomponentBuilderBindingExpression.java",
         "SubcomponentBuilderProviderCreationExpression.java",
         "SubcomponentNames.java",

@@ -26,6 +26,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.MethodBindingExpression.MethodImplementationStrategy;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
@@ -433,13 +434,18 @@ final class ModifiableBindingExpressions {
    * implementation.
    */
   BindingExpression wrapInModifiableMethodBindingExpression(
-      BindingRequest request, BindingMethodImplementation methodImplementation) {
+      BindingRequest request,
+      ResolvedBindings resolvedBindings,
+      MethodImplementationStrategy methodImplementationStrategy,
+      BindingExpression wrappedBindingExpression) {
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
     checkState(modifiableBindingType.isModifiable());
     return new ModifiableConcreteMethodBindingExpression(
         request,
+        resolvedBindings,
+        methodImplementationStrategy,
+        wrappedBindingExpression,
         modifiableBindingType,
-        methodImplementation,
         componentImplementation,
         newModifiableBindingWillBeFinalized(modifiableBindingType, request),
         types);

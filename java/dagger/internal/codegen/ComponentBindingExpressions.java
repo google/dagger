@@ -41,6 +41,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.MethodBindingExpression.MethodImplementationStrategy;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import java.util.HashMap;
@@ -629,8 +630,8 @@ final class ComponentBindingExpressions {
       return bindingExpression;
     }
 
-    BindingMethodImplementation methodImplementation =
-        methodImplementation(resolvedBindings, request, bindingExpression);
+    MethodImplementationStrategy methodImplementationStrategy =
+        methodImplementationStrategy(resolvedBindings, request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
@@ -638,39 +639,40 @@ final class ComponentBindingExpressions {
         && (componentImplementation.superclassImplementation().isPresent()
             || !matchingComponentMethod.isPresent())) {
       return modifiableBindingExpressions.wrapInModifiableMethodBindingExpression(
-          request, methodImplementation);
+          request, resolvedBindings, methodImplementationStrategy, bindingExpression);
     } else if (matchingComponentMethod.isPresent()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
       return new ComponentMethodBindingExpression(
-          request, methodImplementation, componentImplementation, componentMethod, types);
+          request,
+          resolvedBindings,
+          methodImplementationStrategy,
+          bindingExpression,
+          componentImplementation,
+          componentMethod,
+          types);
     } else {
       return new PrivateMethodBindingExpression(
-          request, methodImplementation, componentImplementation, types);
+          request,
+          resolvedBindings,
+          methodImplementationStrategy,
+          bindingExpression,
+          componentImplementation,
+          types);
     }
   }
 
-  // TODO(ronshapiro): pass ContributionBinding directly instead of ResolvedBindings. The
-  // ResolvedBindings type is only needed in one case, and it seems like it could be removed.
-  private BindingMethodImplementation methodImplementation(
-      ResolvedBindings resolvedBindings,
-      BindingRequest request,
-      BindingExpression bindingExpression) {
-    ContributionBinding binding = resolvedBindings.contributionBinding();
+  private MethodImplementationStrategy methodImplementationStrategy(
+      ResolvedBindings resolvedBindings, BindingRequest request) {
     if (compilerOptions.fastInit()) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
-        return new SingleCheckedMethodImplementation(
-            componentImplementation, resolvedBindings, request, bindingExpression, types);
+        return MethodImplementationStrategy.SINGLE_CHECK;
       } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(resolvedBindings)) {
         return resolvedBindings.scope().get().isReusable()
-            ? new SingleCheckedMethodImplementation(
-                componentImplementation, resolvedBindings, request, bindingExpression, types)
-            : new DoubleCheckedMethodImplementation(
-                componentImplementation, binding, request, bindingExpression, types);
+            ? MethodImplementationStrategy.SINGLE_CHECK
+            : MethodImplementationStrategy.DOUBLE_CHECK;
       }
     }
-
-    return new BindingMethodImplementation(
-        componentImplementation, binding, request, bindingExpression, types);
+    return MethodImplementationStrategy.SIMPLE;
   }
 
   /**

@@ -34,22 +34,28 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
 
   private final BindingRequest request;
   private final ModifiableBindingType modifiableBindingType;
-  private final BindingMethodImplementation methodImplementation;
   private final ComponentImplementation componentImplementation;
   private final boolean bindingCannotBeModified;
   private Optional<String> methodName = Optional.empty();
 
   ModifiableConcreteMethodBindingExpression(
       BindingRequest request,
+      ResolvedBindings resolvedBindings,
+      MethodImplementationStrategy methodImplementationStrategy,
+      BindingExpression wrappedBindingExpression,
       ModifiableBindingType modifiableBindingType,
-      BindingMethodImplementation methodImplementation,
       ComponentImplementation componentImplementation,
       boolean bindingCannotBeModified,
       DaggerTypes types) {
-    super(request, methodImplementation, componentImplementation, types);
+    super(
+        request,
+        resolvedBindings,
+        methodImplementationStrategy,
+        wrappedBindingExpression,
+        componentImplementation,
+        types);
     this.request = checkNotNull(request);
     this.modifiableBindingType = checkNotNull(modifiableBindingType);
-    this.methodImplementation = checkNotNull(methodImplementation);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.bindingCannotBeModified = bindingCannotBeModified;
   }
@@ -70,11 +76,11 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
     componentImplementation.addModifiableBindingMethod(
         modifiableBindingType,
         request,
-        methodImplementation.returnType(),
+        returnType(),
         methodBuilder(methodName.get())
             .addModifiers(bindingCannotBeModified ? PRIVATE : PROTECTED)
-            .returns(TypeName.get(methodImplementation.returnType()))
-            .addCode(methodImplementation.body())
+            .returns(TypeName.get(returnType()))
+            .addCode(methodBody())
             .build(),
         bindingCannotBeModified);
   }

@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
 import javax.annotation.processing.Processor;
@@ -49,5 +50,13 @@ final class Compilers {
     processors.add(new ComponentProcessor(), new AutoAnnotationProcessor());
     processors.add(extraProcessors);
     return javac().withProcessors(processors.build());
+  }
+
+  static Compiler compilerWithOptions(CompilerMode... compilerModes) {
+    FluentIterable<String> options = FluentIterable.of();
+    for (CompilerMode compilerMode : compilerModes) {
+      options = options.append(compilerMode.javacopts());
+    }
+    return daggerCompiler().withOptions(options);
   }
 }

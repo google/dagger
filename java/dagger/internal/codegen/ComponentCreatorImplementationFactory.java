@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
@@ -31,7 +32,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -41,21 +41,19 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
+import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeKind;
 
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
 final class ComponentCreatorImplementationFactory {
-  private static final String NOOP_BUILDER_METHOD_JAVADOC =
-      "This module is declared, but an instance is not used in the component. This method is a "
-          + "no-op. For more, see https://google.github.io/dagger/unused-modules.\n";
 
   private final DaggerElements elements;
   private final DaggerTypes types;
@@ -115,19 +113,16 @@ final class ComponentCreatorImplementationFactory {
 
   private abstract class Builder {
     final ComponentImplementation componentImplementation;
-    final BindingGraph graph;
     final TypeSpec.Builder componentCreatorClass;
-    final ImmutableMap<ComponentRequirement, String> requirementNames;
-    final ImmutableSet<ComponentRequirement> requirements;
+    private final ImmutableMap<ComponentRequirement, String> requirementNames;
 
     Builder(ComponentImplementation componentImplementation) {
       this.componentImplementation = componentImplementation;
-      this.graph = componentImplementation.graph();
       this.componentCreatorClass = classBuilder(componentImplementation.getCreatorName());
       this.requirementNames = requirementNames(componentImplementation);
-      this.requirements = requirementNames.keySet();
     }
 
+    /** Builds the {@link ComponentCreatorImplementation}. */
     ComponentCreatorImplementation build() {
       setModifiers();
       setSupertype();
@@ -139,6 +134,28 @@ final class ComponentCreatorImplementationFactory {
           componentCreatorClass.build(),
           componentImplementation.getCreatorName(),
           requirementNames);
+    }
+
+    /** Returns the name of the creator class being generated. */
+    final ClassName className() {
+      return componentImplementation.getCreatorName();
+    }
+
+    /** Returns the binding graph for the component. */
+    final BindingGraph graph() {
+      return componentImplementation.graph();
+    }
+
+    /** Returns the {@link ComponentRequirement}s that are actually required by the component. */
+    final ImmutableSet<ComponentRequirement> componentRequirements() {
+      return requirementNames.keySet();
+    }
+
+    /**
+     * Returns whether the given {@code requirement} is for a module type owned by the component.
+     */
+    final boolean isOwnedModule(ComponentRequirement requirement) {
+      return graph().ownedModuleTypes().contains(requirement.typeElement());
     }
 
     private final void setModifiers() {
@@ -160,7 +177,9 @@ final class ComponentCreatorImplementationFactory {
 
     private void addFields() {
       if (!componentImplementation.baseImplementation().isPresent()) {
-        requirements.stream().map(this::toFieldSpec).forEach(componentCreatorClass::addField);
+        componentRequirements().stream()
+            .map(this::toFieldSpec)
+            .forEach(componentCreatorClass::addField);
       }
     }
 
@@ -173,7 +192,71 @@ final class ComponentCreatorImplementationFactory {
     }
 
     private void addSetterMethods() {
-      componentCreatorClass.addMethods(setterMethods());
+      setterMethodRequirements().stream()
+          .map(this::createSetterMethod)
+          .forEach(componentCreatorClass::addMethod);
+    }
+
+    /** The set of requirements that need a setter method. */
+    protected abstract ImmutableSet<ComponentRequirement> setterMethodRequirements();
+
+    /** Creates a new setter method builder, with no method body, for the given requirement. */
+    protected abstract MethodSpec.Builder setterMethodBuilder(
+        ComponentRequirement requirement);
+
+    private MethodSpec createSetterMethod(ComponentRequirement requirement) {
+      if (componentRequirements().contains(requirement)) {
+        return normalSetterMethod(requirement);
+      } else if (isOwnedModule(requirement)) {
+        return noopSetterMethod(requirement);
+      } else {
+        return inheritedModuleSetterMethod(requirement);
+      }
+    }
+
+    private MethodSpec normalSetterMethod(ComponentRequirement requirement) {
+      MethodSpec.Builder method = setterMethodBuilder(requirement);
+      MethodSpec unimplemented = method.build();
+      method.addStatement(
+          "this.$N = $L",
+          requirementNames.get(requirement),
+          requirement.nullPolicy(elements, types).equals(NullPolicy.ALLOW)
+              ? CodeBlock.of("$N", parameter(unimplemented))
+              : CodeBlock.of("$T.checkNotNull($N)", Preconditions.class, parameter(unimplemented)));
+      return maybeReturnThis(unimplemented, method);
+    }
+
+    private MethodSpec noopSetterMethod(ComponentRequirement requirement) {
+      MethodSpec.Builder method = setterMethodBuilder(requirement);
+      MethodSpec unimplemented = method.build();
+      method
+          .addAnnotation(Deprecated.class)
+          .addJavadoc(
+              "@deprecated This module is declared, but an instance is not used in the component. "
+                  + "This method is a no-op. For more, see https://google.github.io/dagger/unused-modules.\n")
+          .addStatement("$T.checkNotNull($N)", Preconditions.class, parameter(unimplemented));
+      return maybeReturnThis(unimplemented, method);
+    }
+
+    private MethodSpec inheritedModuleSetterMethod(ComponentRequirement requirement) {
+      MethodSpec.Builder method = setterMethodBuilder(requirement);
+      method.addStatement(
+          "throw new $T($T.format($S, $T.class.getCanonicalName()))",
+          UnsupportedOperationException.class,
+          String.class,
+          "%s cannot be set because it is inherited from the enclosing component",
+          TypeNames.rawTypeName(TypeName.get(requirement.type())));
+      return method.build();
+    }
+
+    private ParameterSpec parameter(MethodSpec method) {
+      return getOnlyElement(method.parameters);
+    }
+
+    private MethodSpec maybeReturnThis(MethodSpec unimplemented, MethodSpec.Builder method) {
+      return unimplemented.returnType.equals(TypeName.VOID)
+          ? method.build()
+          : method.addStatement("return this").build();
     }
 
     private void addFactoryMethod() {
@@ -184,9 +267,9 @@ final class ComponentCreatorImplementationFactory {
 
     MethodSpec factoryMethod() {
       MethodSpec.Builder factoryMethod = factoryMethodBuilder();
-      factoryMethod.returns(ClassName.get(graph.componentTypeElement())).addModifiers(PUBLIC);
+      factoryMethod.returns(ClassName.get(graph().componentTypeElement())).addModifiers(PUBLIC);
 
-      requirements.forEach(
+      componentRequirements().forEach(
           requirement -> {
             FieldSpec field = toFieldSpec(requirement);
             switch (requirement.nullPolicy(elements, types)) {
@@ -223,16 +306,10 @@ final class ComponentCreatorImplementationFactory {
     protected abstract MethodSpec.Builder factoryMethodBuilder();
 
     private CodeBlock componentConstructorArgs() {
-      return requirements.stream()
+      return componentRequirements().stream()
           .map(requirement -> CodeBlock.of("$L", requirementNames.get(requirement)))
           .collect(toParametersCodeBlock());
     }
-
-    /**
-     * Computes the methods that set each field on the builder. If the {@link
-     * ComponentCreatorDescriptor} is present, it will tailor the methods to match the descriptor.
-     */
-    protected abstract ImmutableSet<MethodSpec> setterMethods();
   }
 
   /** Builder for a creator type defined by a {@code ComponentCreatorDescriptor}. */
@@ -283,90 +360,46 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected ImmutableSet<MethodSpec> setterMethods() {
-      ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
+    protected ImmutableSet<ComponentRequirement> setterMethodRequirements() {
+      return ImmutableSet.copyOf(
+          Sets.filter(creatorDescriptor.requirements(), this::requiresSetterMethod));
+    }
 
+    private boolean requiresSetterMethod(ComponentRequirement requirement) {
+      // TODO(cgdecker): Document this better; it does what was being done before, but this
+      // explanation is lacking.
+      // We generate a method that throws UOE for an inherited module regardless of whether there's
+      // a base creator implementation or not.
+      return !hasBaseCreatorImplementation() || isInheritedModule(requirement);
+    }
+
+    private boolean isInheritedModule(ComponentRequirement requirement) {
+      return !componentRequirements().contains(requirement) && !isOwnedModule(requirement);
+    }
+
+    private boolean hasBaseCreatorImplementation() {
       // In ahead-of-time subcomponents mode, all builder methods are defined at the base
       // implementation. The only case where a method needs to be overridden is for a repeated
       // module, which is unknown at the point when a base implementation is generated. We do this
       // at the root for simplicity (and as an aside, repeated modules are never used in google
       // as of 11/28/18, and thus the additional cost of including these methods at the root is
       // negligible).
-      boolean hasBaseCreatorImplementation =
-          !componentImplementation.isAbstract()
-              && componentImplementation.baseImplementation().isPresent();
-
-      UniqueNameSet parameterNames = new UniqueNameSet();
-      for (ComponentRequirement requirement : creatorDescriptor.requirements()) {
-        ExecutableElement method = creatorDescriptor.elementForRequirement(requirement);
-        MethodSpec.Builder setterMethod = setterMethod(method);
-        VariableElement parameterElement = getOnlyElement(method.getParameters());
-        String parameterName = parameterNames.getUniqueName(parameterElement.getSimpleName());
-
-        TypeName argType =
-            parameterElement.asType().getKind().isPrimitive()
-                // Primitives need to use the original (unresolved) type to avoid boxing.
-                ? TypeName.get(parameterElement.asType())
-                // Otherwise we use the full resolved type.
-                : TypeName.get(requirement.type());
-
-        setterMethod.addParameter(argType, parameterName);
-
-        if (requirements.contains(requirement)) {
-          if (hasBaseCreatorImplementation) {
-            continue;
-          }
-          // required type
-          setterMethod.addStatement(
-              "this.$N = $L",
-              requirementNames.get(requirement),
-              requirement.nullPolicy(elements, types).equals(ComponentRequirement.NullPolicy.ALLOW)
-                  ? parameterName
-                  : CodeBlock.of("$T.checkNotNull($L)", Preconditions.class, parameterName));
-          addSetterMethodReturnStatementForSpec(method, setterMethod);
-        } else if (graph.ownedModuleTypes().contains(requirement.typeElement())) {
-          if (hasBaseCreatorImplementation) {
-            continue;
-          }
-          // owned, but not required
-          setterMethod.addJavadoc(NOOP_BUILDER_METHOD_JAVADOC);
-          addSetterMethodReturnStatementForSpec(method, setterMethod);
-        } else {
-          // neither owned nor required, so it must be an inherited module
-          setterMethod.addStatement(
-              "throw new $T($T.format($S, $T.class.getCanonicalName()))",
-              UnsupportedOperationException.class,
-              String.class,
-              "%s cannot be set because it is inherited from the enclosing component",
-              TypeNames.rawTypeName(TypeName.get(requirement.type())));
-        }
-
-        methods.add(setterMethod.build());
-      }
-
-      return methods.build();
+      return !componentImplementation.isAbstract()
+          && componentImplementation.baseImplementation().isPresent();
     }
 
-    private MethodSpec.Builder setterMethod(ExecutableElement method) {
-      TypeMirror returnType = method.getReturnType();
-      MethodSpec.Builder setterMethod =
-          methodBuilder(method.getSimpleName().toString())
-              .addAnnotation(Override.class)
-              .addModifiers(Sets.difference(method.getModifiers(), ImmutableSet.of(ABSTRACT)));
-      // If the return type is void, we add a method with the void return type.
-      // Otherwise we use the generated builder name and take advantage of covariant returns
-      // (so that we don't have to worry about setter methods that return type variables).
-      if (!returnType.getKind().equals(VOID)) {
-        setterMethod.returns(componentImplementation.getCreatorName());
+    @Override
+    protected MethodSpec.Builder setterMethodBuilder(ComponentRequirement requirement) {
+      ExecutableElement supertypeMethod = creatorDescriptor.elementForRequirement(requirement);
+      MethodSpec.Builder method =
+          MethodSpec.overriding(
+              supertypeMethod, asDeclared(creatorDescriptor.typeElement().asType()), types);
+      if (!supertypeMethod.getReturnType().getKind().equals(TypeKind.VOID)) {
+        // Take advantage of covariant returns so that we don't have to worry about setter methods
+        // that return type variables.
+        method.returns(className());
       }
-      return setterMethod;
-    }
-
-    private void addSetterMethodReturnStatementForSpec(
-        ExecutableElement specMethod, MethodSpec.Builder setterMethod) {
-      if (!specMethod.getReturnType().getKind().equals(VOID)) {
-        setterMethod.addStatement("return this");
-      }
+      return method;
     }
   }
 
@@ -400,34 +433,17 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected ImmutableSet<MethodSpec> setterMethods() {
-      ImmutableSet.Builder<MethodSpec> methods = ImmutableSet.builder();
+    protected ImmutableSet<ComponentRequirement> setterMethodRequirements() {
+      return graph().componentDescriptor().dependenciesAndConcreteModules();
+    }
 
-      for (ComponentRequirement requirement :
-          graph.componentDescriptor().dependenciesAndConcreteModules()) {
-        String componentRequirementName = simpleVariableName(requirement.typeElement());
-        MethodSpec.Builder setterMethod =
-            methodBuilder(componentRequirementName)
-                .returns(componentImplementation.getCreatorName())
-                .addModifiers(PUBLIC)
-                .addParameter(TypeName.get(requirement.type()), componentRequirementName);
-        if (requirements.contains(requirement)) {
-          setterMethod.addStatement(
-              "this.$N = $T.checkNotNull($L)",
-              requirementNames.get(requirement),
-              Preconditions.class,
-              componentRequirementName);
-        } else {
-          setterMethod.addStatement(
-              "$T.checkNotNull($L)", Preconditions.class, componentRequirementName);
-          setterMethod.addJavadoc("@deprecated " + NOOP_BUILDER_METHOD_JAVADOC);
-          setterMethod.addAnnotation(Deprecated.class);
-        }
-        setterMethod.addStatement("return this");
-        methods.add(setterMethod.build());
-      }
-
-      return methods.build();
+    @Override
+    protected MethodSpec.Builder setterMethodBuilder(ComponentRequirement requirement) {
+      String name = simpleVariableName(requirement.typeElement());
+      return methodBuilder(name)
+          .addModifiers(PUBLIC)
+          .addParameter(TypeName.get(requirement.type()), name)
+          .returns(className());
     }
   }
 }

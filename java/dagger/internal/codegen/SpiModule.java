@@ -16,42 +16,40 @@
 
 package dagger.internal.codegen;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.BindingGraphPlugins.TestingPlugins;
 import dagger.spi.BindingGraphPlugin;
-import java.util.Map;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import javax.annotation.processing.Filer;
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
-/** Contains the bindings for {@link BindingGraphPlugins} from external SPI providers. */
+/** Contains the bindings for {@link BindingGraphValidator} from external SPI providers. */
 @Module
 abstract class SpiModule {
   private SpiModule() {}
 
   @Provides
   @Singleton
-  static BindingGraphPlugins spiPlugins(
-      @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins,
-      Filer filer,
-      DaggerTypes types,
-      DaggerElements elements,
-      @ProcessingOptions Map<String, String> processingOptions,
-      DiagnosticReporterFactory diagnosticReporterFactory) {
-    return new BindingGraphPlugins(
-        testingPlugins.orElseGet(SpiModule::loadPlugins),
-        filer,
-        types,
-        elements,
-        processingOptions,
-        diagnosticReporterFactory);
+  static ImmutableSet<BindingGraphPlugin> externalPlugins(
+      @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins) {
+    return testingPlugins.orElseGet(
+        () ->
+            ImmutableSet.copyOf(
+                ServiceLoader.load(
+                    BindingGraphPlugin.class, BindingGraphValidator.class.getClassLoader())));
   }
 
-  private static ImmutableSet<BindingGraphPlugin> loadPlugins() {
-    return ImmutableSet.copyOf(
-        ServiceLoader.load(BindingGraphPlugin.class, BindingGraphPlugins.class.getClassLoader()));
-  }
+  @Qualifier
+  @Retention(RUNTIME)
+  @Target({FIELD, PARAMETER, METHOD})
+  @interface TestingPlugins {}
 }

@@ -16,69 +16,49 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import dagger.internal.codegen.DiagnosticReporterFactory.DiagnosticReporterImpl;
-import dagger.model.BindingGraph;
+import com.google.common.collect.Sets;
 import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Filer;
-import javax.inject.Qualifier;
-import javax.inject.Singleton;
-import javax.tools.Diagnostic;
+import javax.inject.Inject;
 
-/** The set of SPI and validation plugins. */
-@Singleton
+/** Initializes {@link BindingGraphPlugin}s. */
 final class BindingGraphPlugins {
-
-  @Qualifier
-  @Retention(RUNTIME)
-  @Target({FIELD, PARAMETER, METHOD})
-  @interface TestingPlugins {}
-
   private final ImmutableSet<BindingGraphPlugin> plugins;
   private final Filer filer;
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final Map<String, String> processingOptions;
-  private final DiagnosticReporterFactory diagnosticReporterFactory;
 
+  @Inject
   BindingGraphPlugins(
-      Iterable<BindingGraphPlugin> plugins,
+      @Validation Set<BindingGraphPlugin> validationPlugins,
+      ImmutableSet<BindingGraphPlugin> externalPlugins,
       Filer filer,
       DaggerTypes types,
       DaggerElements elements,
-      Map<String, String> processingOptions,
-      DiagnosticReporterFactory diagnosticReporterFactory) {
-    this.plugins = ImmutableSet.copyOf(plugins);
-    this.filer = checkNotNull(filer);
-    this.types = checkNotNull(types);
-    this.elements = checkNotNull(elements);
-    this.processingOptions = checkNotNull(processingOptions);
-    this.diagnosticReporterFactory = checkNotNull(diagnosticReporterFactory);
+      @ProcessingOptions Map<String, String> processingOptions) {
+    this.plugins = Sets.union(validationPlugins, externalPlugins).immutableCopy();
+    this.filer = filer;
+    this.types = types;
+    this.elements = elements;
+    this.processingOptions = processingOptions;
   }
 
   /** Returns {@link BindingGraphPlugin#supportedOptions()} from all the plugins. */
   ImmutableSet<String> allSupportedOptions() {
-    return plugins
-        .stream()
+    return plugins.stream()
         .flatMap(plugin -> plugin.supportedOptions().stream())
         .collect(toImmutableSet());
   }
 
   /** Initializes the plugins. */
+  // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
   void initializePlugins() {
     plugins.forEach(this::initializePlugin);
   }
@@ -91,27 +71,5 @@ final class BindingGraphPlugins {
     if (!supportedOptions.isEmpty()) {
       plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));
     }
-  }
-
-  /**
-   * Calls {@link BindingGraphPlugin#visitGraph(BindingGraph, DiagnosticReporter)} on each of the
-   * SPI plugins
-   *
-   * @return the kinds of diagnostics that were reported
-   */
-  // TODO(ronshapiro): Should we validate the uniqueness of plugin names?
-  ImmutableSet<Diagnostic.Kind> visitGraph(BindingGraph graph) {
-    ImmutableSet.Builder<Diagnostic.Kind> diagnosticKinds = ImmutableSet.builder();
-    for (BindingGraphPlugin plugin : plugins) {
-      DiagnosticReporterImpl reporter = diagnosticReporterFactory.reporter(graph, plugin);
-      plugin.visitGraph(graph, reporter);
-      diagnosticKinds.addAll(reporter.reportedDiagnosticKinds());
-    }
-    return diagnosticKinds.build();
-  }
-
-  /** Returns {@code true} if any errors are reported by any of the plugins for {@code graph}. */
-  boolean pluginsReportErrors(BindingGraph graph) {
-    return visitGraph(graph).contains(ERROR);
   }
 }

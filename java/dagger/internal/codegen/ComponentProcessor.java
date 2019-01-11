@@ -27,7 +27,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.BindingGraphPlugins.TestingPlugins;
+import dagger.internal.codegen.SpiModule.TestingPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
 import java.util.Optional;
@@ -52,9 +52,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject SourceFileGenerator<ProvisionBinding> factoryGenerator;
   @Inject SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
-  @Inject BindingGraphPlugins spiPlugins;
+  @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
-  @Inject @Validation BindingGraphPlugins validationPlugins;
   @Inject DaggerStatistics daggerStatistics;
 
   public ComponentProcessor() {
@@ -92,8 +91,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   public Set<String> getSupportedOptions() {
     ImmutableSet.Builder<String> options = ImmutableSet.builder();
     options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
-    options.addAll(spiPlugins.allSupportedOptions());
-    options.addAll(validationPlugins.allSupportedOptions());
+    options.addAll(bindingGraphPlugins.allSupportedOptions());
     if (compilerOptions.useGradleIncrementalProcessing()) {
       options.add("org.gradle.annotation.processing.isolating");
     }
@@ -109,8 +107,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         .inject(this);
 
     daggerStatistics.processingStarted();
-    spiPlugins.initializePlugins();
-    validationPlugins.initializePlugins();
+    bindingGraphPlugins.initializePlugins();
     return processingSteps;
   }
 

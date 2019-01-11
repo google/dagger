@@ -53,8 +53,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final BindingGraphFactory bindingGraphFactory;
   private final SourceFileGenerator<BindingGraph> componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
-  private final BindingGraphPlugins validationPlugins;
-  private final BindingGraphPlugins spiPlugins;
+  private final BindingGraphValidator bindingGraphValidator;
   private final CompilerOptions compilerOptions;
   private ImmutableSet<Element> subcomponentElements;
   private ImmutableSet<Element> subcomponentBuilderElements;
@@ -72,8 +71,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       BindingGraphFactory bindingGraphFactory,
       SourceFileGenerator<BindingGraph> componentGenerator,
       BindingGraphConverter bindingGraphConverter,
-      @Validation BindingGraphPlugins validationPlugins,
-      BindingGraphPlugins spiPlugins,
+      BindingGraphValidator bindingGraphValidator,
       CompilerOptions compilerOptions) {
     super(MoreElements::asType);
     this.messager = messager;
@@ -84,8 +82,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
     this.bindingGraphConverter = bindingGraphConverter;
-    this.validationPlugins = validationPlugins;
-    this.spiPlugins = spiPlugins;
+    this.bindingGraphValidator = bindingGraphValidator;
     this.compilerOptions = compilerOptions;
   }
 
@@ -154,8 +151,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   private boolean isValid(BindingGraph bindingGraph) {
     dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
-    return !validationPlugins.pluginsReportErrors(modelGraph)
-        && !spiPlugins.pluginsReportErrors(modelGraph);
+    return bindingGraphValidator.isValid(modelGraph);
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

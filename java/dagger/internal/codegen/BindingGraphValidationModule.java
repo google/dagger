@@ -16,14 +16,13 @@
 
 package dagger.internal.codegen;
 
+import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoSet;
 import dagger.spi.BindingGraphPlugin;
-import java.util.Map;
 import java.util.Set;
-import javax.annotation.processing.Filer;
 import javax.inject.Singleton;
 
 /** Binds the set of {@link BindingGraphPlugin}s used to implement Dagger validation. */
@@ -83,37 +82,20 @@ interface BindingGraphValidationModule {
 
   @Provides
   @Singleton
-  @Validation
-  static BindingGraphPlugins validationPlugins(
+  @ModuleValidation
+  static BindingGraphValidator moduleBindingGraphValidator(
       @Validation Set<BindingGraphPlugin> validationPlugins,
-      Filer filer,
-      DaggerTypes types,
-      DaggerElements elements,
-      @ProcessingOptions Map<String, String> processingOptions,
-      DiagnosticReporterFactory diagnosticReporterFactory) {
-    return new BindingGraphPlugins(
-        validationPlugins, filer, types, elements, processingOptions, diagnosticReporterFactory);
+      ImmutableSet<BindingGraphPlugin> externalPlugins,
+      @ModuleValidation DiagnosticReporterFactory diagnosticReporterFactory) {
+    return new BindingGraphValidator(validationPlugins, externalPlugins, diagnosticReporterFactory);
   }
 
   @Provides
-  @Singleton
   @ModuleValidation
-  static BindingGraphPlugins moduleValidationPlugins(
-      @Validation Set<BindingGraphPlugin> validationPlugins,
-      Filer filer,
-      DaggerTypes types,
-      DaggerElements elements,
-      @ProcessingOptions Map<String, String> processingOptions,
-      DiagnosticReporterFactory diagnosticReporterFactory,
-      CompilerOptions compilerOptions) {
-    return new BindingGraphPlugins(
-        validationPlugins,
-        filer,
-        types,
-        elements,
-        processingOptions,
-        diagnosticReporterFactory
-            .treatingErrorsAs(compilerOptions.moduleBindingValidationType())
-            .withoutPrintingEntryPoints());
+  static DiagnosticReporterFactory moduleValidationDiagnosticReporterFactory(
+      DiagnosticReporterFactory diagnosticReporterFactory, CompilerOptions compilerOptions) {
+    return diagnosticReporterFactory
+        .treatingErrorsAs(compilerOptions.moduleBindingValidationType())
+        .withoutPrintingEntryPoints();
   }
 }

@@ -22,12 +22,15 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Scopes.getReadableSource;
+import static dagger.internal.codegen.Scopes.uniqueScopeOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
@@ -60,6 +63,7 @@ final class ComponentHierarchyValidator {
         report,
         componentDescriptor,
         Maps.toMap(componentDescriptor.moduleTypes(), constant(componentDescriptor.typeElement())));
+    validateRepeatedScopedDeclarations(report, componentDescriptor, LinkedHashMultimap.create());
 
     if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
       validateScopeHierarchy(
@@ -197,5 +201,68 @@ final class ComponentHierarchyValidator {
     }
 
     report.addError(error.toString());
+  }
+
+  private void validateRepeatedScopedDeclarations(
+      ValidationReport.Builder<TypeElement> report,
+      ComponentDescriptor component,
+      // TODO(ronshapiro): optimize ModuleDescriptor.hashCode()/equals. Otherwise this could be
+      // quite costly
+      SetMultimap<ComponentDescriptor, ModuleDescriptor> modulesWithScopes) {
+    ImmutableSet<ModuleDescriptor> modules =
+        component.modules().stream().filter(this::hasScopedDeclarations).collect(toImmutableSet());
+    modulesWithScopes.putAll(component, modules);
+    for (ComponentDescriptor childComponent : component.childComponents()) {
+      validateRepeatedScopedDeclarations(report, childComponent, modulesWithScopes);
+    }
+    modulesWithScopes.removeAll(component);
+
+    SetMultimap<ComponentDescriptor, ModuleDescriptor> repeatedModules =
+        Multimaps.filterValues(modulesWithScopes, modules::contains);
+    if (repeatedModules.isEmpty()) {
+      return;
+    }
+
+    report.addError(
+        repeatedModulesWithScopeError(component, ImmutableSetMultimap.copyOf(repeatedModules)));
+  }
+
+  private boolean hasScopedDeclarations(ModuleDescriptor module) {
+    return !moduleScopes(module).isEmpty();
+  }
+
+  private String repeatedModulesWithScopeError(
+      ComponentDescriptor component,
+      ImmutableSetMultimap<ComponentDescriptor, ModuleDescriptor> repeatedModules) {
+    StringBuilder error =
+        new StringBuilder()
+            .append(component.typeElement().getQualifiedName())
+            .append(" repeats modules with scoped bindings or declarations:");
+
+    repeatedModules
+        .asMap()
+        .forEach(
+            (conflictingComponent, conflictingModules) -> {
+              error
+                  .append("\n  - ")
+                  .append(conflictingComponent.typeElement().getQualifiedName())
+                  .append(" also includes:");
+              for (ModuleDescriptor conflictingModule : conflictingModules) {
+                error
+                    .append("\n    - ")
+                    .append(conflictingModule.moduleElement().getQualifiedName())
+                    .append(" with scopes: ")
+                    .append(COMMA_SEPARATED_JOINER.join(moduleScopes(conflictingModule)));
+              }
+            });
+    return error.toString();
+  }
+
+  private ImmutableSet<Scope> moduleScopes(ModuleDescriptor module) {
+    return FluentIterable.concat(module.allBindingDeclarations())
+        .transform(declaration -> uniqueScopeOf(declaration.bindingElement().get()))
+        .filter(scope -> scope.isPresent() && !scope.get().isReusable())
+        .transform(scope -> scope.get())
+        .toSet();
   }
 }

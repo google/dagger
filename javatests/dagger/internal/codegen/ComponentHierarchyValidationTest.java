@@ -214,4 +214,136 @@ public class ComponentHierarchyValidationTest {
         .hadErrorContaining(
             "Components may not have factory methods for subcomponents that define a builder.");
   }
+
+  @Test
+  public void repeatedModulesWithScopes() {
+    JavaFileObject testScope =
+        JavaFileObjects.forSourceLines(
+            "test.TestScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface TestScope {}");
+    JavaFileObject moduleWithScopedProvides =
+        JavaFileObjects.forSourceLines(
+            "test.ModuleWithScopedProvides",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class ModuleWithScopedProvides {",
+            "  @Provides",
+            "  @TestScope",
+            "  static Object o() { return new Object(); }",
+            "}");
+    JavaFileObject moduleWithScopedBinds =
+        JavaFileObjects.forSourceLines(
+            "test.ModuleWithScopedBinds",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface ModuleWithScopedBinds {",
+            "  @Binds",
+            "  @TestScope",
+            "  Object o(String s);",
+            "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = {ModuleWithScopedProvides.class, ModuleWithScopedBinds.class})",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(",
+            "    modules = {ModuleWithScopedProvides.class, ModuleWithScopedBinds.class})",
+            "interface Child {}");
+    Compilation compilation =
+        daggerCompiler()
+            .compile(testScope, moduleWithScopedProvides, moduleWithScopedBinds, parent, child);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.Child repeats modules with scoped bindings or declarations:",
+                "  - test.Parent also includes:",
+                "    - test.ModuleWithScopedProvides with scopes: @test.TestScope",
+                "    - test.ModuleWithScopedBinds with scopes: @test.TestScope"));
+  }
+
+  @Test
+  public void repeatedModulesWithReusableScope() {
+    JavaFileObject moduleWithScopedProvides =
+        JavaFileObjects.forSourceLines(
+            "test.ModuleWithScopedProvides",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.Reusable;",
+            "",
+            "@Module",
+            "class ModuleWithScopedProvides {",
+            "  @Provides",
+            "  @Reusable",
+            "  static Object o() { return new Object(); }",
+            "}");
+    JavaFileObject moduleWithScopedBinds =
+        JavaFileObjects.forSourceLines(
+            "test.ModuleWithScopedBinds",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Reusable;",
+            "",
+            "@Module",
+            "interface ModuleWithScopedBinds {",
+            "  @Binds",
+            "  @Reusable",
+            "  Object o(String s);",
+            "}");
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = {ModuleWithScopedProvides.class, ModuleWithScopedBinds.class})",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(",
+            "    modules = {ModuleWithScopedProvides.class, ModuleWithScopedBinds.class})",
+            "interface Child {}");
+    Compilation compilation =
+        daggerCompiler()
+            .compile(moduleWithScopedProvides, moduleWithScopedBinds, parent, child);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
 }

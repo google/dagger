@@ -207,11 +207,9 @@ final class BindingGraphConverter {
     }
 
     private BindingNode bindingNode(
-        ResolvedBindings resolvedBindings, Binding binding, ComponentDescriptor owningComponent) {
+        ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
       return BindingNode.create(
-          componentTreePath()
-              .pathFromRootToAncestor(owningComponent.typeElement())
-              .toComponentPath(),
+          componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
           binding,
           associatedDeclaringElements(resolvedBindings),
           () -> bindingDeclarationFormatter.format(binding));
@@ -228,7 +226,7 @@ final class BindingGraphConverter {
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
       return BindingGraphProxies.missingBindingNode(
           componentTreePath()
-              .pathFromRootToAncestor(dependencies.owningComponent().typeElement())
+              .pathFromRootToAncestor(dependencies.resolvingComponent())
               .toComponentPath(),
           dependencies.key());
     }

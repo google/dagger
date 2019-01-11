@@ -213,7 +213,7 @@ final class BindingGraphFactory {
         requestResolver.getResolvedContributionBindings();
     for (ResolvedBindings resolvedBindings : resolvedContributionBindingsMap.values()) {
       verify(
-          resolvedBindings.owningComponent().equals(componentDescriptor),
+          resolvedBindings.resolvingComponent().equals(componentDescriptor.typeElement()),
           "%s is not owned by %s",
           resolvedBindings,
           componentDescriptor);
@@ -557,10 +557,9 @@ final class BindingGraphFactory {
     // but should it? We're currently conflating the two all over the place and it would be good
     // to unify, or if it's necessary, clarify why with docs+tests. Specifically, should we also
     // be checking these for keysMatchingRequest?
-    private ImmutableSetMultimap<ComponentDescriptor, ContributionBinding>
-        indexBindingsByOwningComponent(
-            Key requestKey, Iterable<? extends ContributionBinding> bindings) {
-      ImmutableSetMultimap.Builder<ComponentDescriptor, ContributionBinding> index =
+    private ImmutableSetMultimap<TypeElement, ContributionBinding> indexBindingsByOwningComponent(
+        Key requestKey, Iterable<? extends ContributionBinding> bindings) {
+      ImmutableSetMultimap.Builder<TypeElement, ContributionBinding> index =
           ImmutableSetMultimap.builder();
       for (ContributionBinding binding : bindings) {
         index.put(getOwningComponent(requestKey, binding), binding);
@@ -578,14 +577,14 @@ final class BindingGraphFactory {
      * multibinding contributions in the parent, and returns the parent-resolved {@link
      * ResolvedBindings#owningComponent(ContributionBinding)}.
      */
-    private ComponentDescriptor getOwningComponent(Key requestKey, ContributionBinding binding) {
+    private TypeElement getOwningComponent(Key requestKey, ContributionBinding binding) {
       if (isResolvedInParent(requestKey, binding)
           && !new LocalDependencyChecker().dependsOnLocalBindings(binding)) {
         ResolvedBindings parentResolvedBindings =
             parentResolver.get().resolvedContributionBindings.get(requestKey);
         return parentResolvedBindings.owningComponent(binding);
       } else {
-        return componentDescriptor;
+        return componentDescriptor.typeElement();
       }
     }
 
@@ -870,11 +869,11 @@ final class BindingGraphFactory {
     }
 
     /**
-     * {@link #resolve(Key) Resolves} each of the dependencies of the {@link
-     * ResolvedBindings#ownedBindings() owned bindings} of {@code resolvedBindings}.
+     * {@link #resolve(Key) Resolves} each of the dependencies of the bindings owned by this
+     * component.
      */
     private void resolveDependencies(ResolvedBindings resolvedBindings) {
-      for (Binding binding : resolvedBindings.ownedBindings()) {
+      for (Binding binding : resolvedBindings.bindingsOwnedBy(componentDescriptor)) {
         for (DependencyRequest dependency : binding.dependencies()) {
           resolve(dependency.key());
         }

@@ -33,6 +33,7 @@ import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
 import dagger.model.Scope;
 import java.util.Optional;
+import javax.lang.model.element.TypeElement;
 
 /**
  * The collection of bindings that have been resolved for a key. For valid graphs, contains exactly
@@ -51,21 +52,22 @@ abstract class ResolvedBindings implements HasContributionType {
    */
   abstract Key key();
 
-  /** The component in which the bindings in {@link #ownedBindings()}, were resolved. */
-  abstract ComponentDescriptor owningComponent();
+  /** The component in which these bindings were resolved. */
+  abstract TypeElement resolvingComponent();
 
   /**
-   * The contribution bindings for {@link #key()} that were resolved in {@link #owningComponent()}
-   * or its ancestor components, indexed by the component in which the binding was resolved.
+   * The contribution bindings for {@link #key()} that were resolved in {@link
+   * #resolvingComponent()} or its ancestor components, indexed by the component that owns the
+   * binding.
    */
-  abstract ImmutableSetMultimap<ComponentDescriptor, ContributionBinding> allContributionBindings();
+  abstract ImmutableSetMultimap<TypeElement, ContributionBinding> allContributionBindings();
 
   /**
    * The members-injection bindings for {@link #key()} that were resolved in {@link
-   * #owningComponent()} or its ancestor components, indexed by the component in which the binding
-   * was resolved.
+   * #resolvingComponent()} or its ancestor components, indexed by the component that owns the
+   * binding.
    */
-  abstract ImmutableMap<ComponentDescriptor, MembersInjectionBinding> allMembersInjectionBindings();
+  abstract ImmutableMap<TypeElement, MembersInjectionBinding> allMembersInjectionBindings();
 
   /** The multibinding declarations for {@link #key()}. */
   abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
@@ -87,16 +89,14 @@ abstract class ResolvedBindings implements HasContributionType {
   @Override
   public abstract boolean equals(Object other);
 
-  /**
-   * All bindings for {@link #key()}, indexed by the component in which the binding was resolved.
-   */
-  final ImmutableSetMultimap<ComponentDescriptor, ? extends Binding> allBindings() {
+  /** All bindings for {@link #key()}, indexed by the component that owns the binding. */
+  final ImmutableSetMultimap<TypeElement, ? extends Binding> allBindings() {
     return !allMembersInjectionBindings().isEmpty()
         ? allMembersInjectionBindings().asMultimap()
         : allContributionBindings();
   }
 
-  /** All bindings for {@link #key()}, regardless of in which component they were resolved. */
+  /** All bindings for {@link #key()}, regardless of which component owns them. */
   final ImmutableSet<? extends Binding> bindings() {
     return ImmutableSet.copyOf(allBindings().values());
   }
@@ -122,9 +122,9 @@ abstract class ResolvedBindings implements HasContributionType {
         && subcomponentDeclarations().isEmpty();
   }
 
-  /** All bindings for {@link #key()} that were resolved in {@link #owningComponent()}. */
-  ImmutableSet<? extends Binding> ownedBindings() {
-    return allBindings().get(owningComponent());
+  /** All bindings for {@link #key()} that are owned by a component. */
+  ImmutableSet<? extends Binding> bindingsOwnedBy(ComponentDescriptor component) {
+    return allBindings().get(component.typeElement());
   }
 
   /**
@@ -136,7 +136,7 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /** The component that owns {@code binding}. */
-  final ComponentDescriptor owningComponent(ContributionBinding binding) {
+  final TypeElement owningComponent(ContributionBinding binding) {
     checkArgument(
         contributionBindings().contains(binding),
         "binding is not resolved for %s: %s",
@@ -161,13 +161,13 @@ abstract class ResolvedBindings implements HasContributionType {
   static ResolvedBindings forContributionBindings(
       Key key,
       ComponentDescriptor owningComponent,
-      Multimap<ComponentDescriptor, ? extends ContributionBinding> contributionBindings,
+      Multimap<TypeElement, ContributionBinding> contributionBindings,
       Iterable<MultibindingDeclaration> multibindings,
       Iterable<SubcomponentDeclaration> subcomponentDeclarations,
       Iterable<OptionalBindingDeclaration> optionalBindingDeclarations) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent,
+        owningComponent.typeElement(),
         ImmutableSetMultimap.copyOf(contributionBindings),
         ImmutableMap.of(),
         ImmutableSet.copyOf(multibindings),
@@ -184,9 +184,9 @@ abstract class ResolvedBindings implements HasContributionType {
       MembersInjectionBinding ownedMembersInjectionBinding) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent,
+        owningComponent.typeElement(),
         ImmutableSetMultimap.of(),
-        ImmutableMap.of(owningComponent, ownedMembersInjectionBinding),
+        ImmutableMap.of(owningComponent.typeElement(), ownedMembersInjectionBinding),
         ImmutableSet.of(),
         ImmutableSet.of(),
         ImmutableSet.of());
@@ -198,7 +198,7 @@ abstract class ResolvedBindings implements HasContributionType {
   static ResolvedBindings noBindings(Key key, ComponentDescriptor owningComponent) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent,
+        owningComponent.typeElement(),
         ImmutableSetMultimap.of(),
         ImmutableMap.of(),
         ImmutableSet.of(),
@@ -207,13 +207,13 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /**
-   * Returns a {@code ResolvedBindings} with the same {@link #key()} and {@link #bindings()}
-   * as this one, but no {@link #ownedBindings()}.
+   * Returns a {@code ResolvedBindings} with the same {@link #key()} and {@link #allBindings()} as
+   * this one, but whose {@link #resolvingComponent()} is changed.
    */
-  ResolvedBindings asInheritedIn(ComponentDescriptor owningComponent) {
+  ResolvedBindings asInheritedIn(ComponentDescriptor resolvingComponent) {
     return new AutoValue_ResolvedBindings(
         key(),
-        owningComponent,
+        resolvingComponent.typeElement(),
         allContributionBindings(),
         allMembersInjectionBindings(),
         multibindingDeclarations(),

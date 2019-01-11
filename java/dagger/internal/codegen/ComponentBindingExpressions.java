@@ -224,7 +224,8 @@ final class ComponentBindingExpressions {
         modifiableBindingExpressions.maybeCreateModifiableBindingExpression(request);
     if (!expression.isPresent()) {
       ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-      if (resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty()) {
+      if (resolvedBindings != null
+          && !resolvedBindings.bindingsOwnedBy(graph.componentDescriptor()).isEmpty()) {
         expression = Optional.of(createBindingExpression(resolvedBindings, request));
       }
     }

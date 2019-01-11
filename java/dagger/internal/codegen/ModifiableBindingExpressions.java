@@ -426,7 +426,8 @@ final class ModifiableBindingExpressions {
   /** Returns true if the binding can be resolved by the graph for this component. */
   private boolean resolvedInThisComponent(BindingRequest request) {
     ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-    return resolvedBindings != null && !resolvedBindings.ownedBindings().isEmpty();
+    return resolvedBindings != null
+        && !resolvedBindings.bindingsOwnedBy(graph.componentDescriptor()).isEmpty();
   }
 
   /**

@@ -175,15 +175,27 @@ abstract class ComponentImplementationBuilder {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
       MethodSpec methodSpec = bindingExpressions.getComponentMethod(anyOneMethod);
 
-      // If the binding for the component method is modifiable, register it as such.
-      ModifiableBindingType modifiableBindingType =
-          bindingExpressions
-              .modifiableBindingExpressions()
-              .registerComponentMethodIfModifiable(anyOneMethod, methodSpec);
+      if (anyOneMethod.dependencyRequest().isPresent()
+          && componentImplementation
+              .getModifiableBindingMethod(bindingRequest(anyOneMethod.dependencyRequest().get()))
+              .isPresent()) {
+        // If there are multiple component methods that are modifiable and for the same binding
+        // request, implement all but one in the base implementation to delegate to the one that
+        // will remain (and be registered) modifiable
+        checkState(componentImplementation.isAbstract() && !componentImplementation.isNested());
+        componentImplementation.addMethod(
+            COMPONENT_METHOD, methodSpec.toBuilder().addModifiers(FINAL).build());
+      } else {
+        // If the binding for the component method is modifiable, register it as such.
+        ModifiableBindingType modifiableBindingType =
+            bindingExpressions
+                .modifiableBindingExpressions()
+                .registerComponentMethodIfModifiable(anyOneMethod, methodSpec);
 
-      // If the method should be implemented in this component, implement it.
-      if (modifiableBindingType.hasBaseClassImplementation()) {
-        componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
+        // If the method should be implemented in this component, implement it.
+        if (modifiableBindingType.hasBaseClassImplementation()) {
+          componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
+        }
       }
     }
   }

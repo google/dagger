@@ -4891,6 +4891,89 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generatedLeaf);
   }
 
+  @Test
+  public void multipleComponentMethodsForSameBindingRequest() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  String string1();",
+            "  String string2();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  @Override",
+            "  public final String string2() {",
+            "    return string1();",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface RootModule {",
+            "  @Provides",
+            "  static String string() {",
+            "    return new String();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = RootModule.class)",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  protected final class LeafImpl extends DaggerLeaf {",
+            "    private LeafImpl() {}",
+            "",
+            "    @Override",
+            "    public String string1() {",
+            "      return RootModule_StringFactory.proxyString();",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+  }
+
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {

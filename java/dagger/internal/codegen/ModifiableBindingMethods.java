@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.auto.common.MoreTypes;
@@ -56,8 +57,14 @@ final class ModifiableBindingMethods {
     if (finalized) {
       finalizedMethods.add(request);
     }
-    methods.put(
-        request, ModifiableBindingMethod.create(type, request, returnType, method, finalized));
+    ModifiableBindingMethod modifiableMethod =
+        ModifiableBindingMethod.create(type, request, returnType, method, finalized);
+    ModifiableBindingMethod previousMethod = methods.put(request, modifiableMethod);
+    verify(
+        previousMethod == null,
+        "registering %s but %s is already registered for the same binding request",
+        modifiableMethod,
+        previousMethod);
   }
 
   /** Returns all {@link ModifiableBindingMethod}s that have not been marked as finalized. */

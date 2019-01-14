@@ -79,7 +79,7 @@ final class ComponentBindingExpressions {
       OptionalFactories optionalFactories,
       DaggerTypes types,
       DaggerElements elements,
-      CompilerOptions compilerOptions) {
+      @GenerationCompilerOptions CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;

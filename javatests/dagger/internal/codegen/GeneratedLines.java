@@ -34,6 +34,8 @@ public final class GeneratedLines {
           ? "import javax.annotation.Generated;"
           : "import javax.annotation.processing.Generated;";
 
+  static final String GENERATION_OPTIONS_ANNOTATION = "@GenerationOptions(fastInit = false)";
+
   private static boolean isBeforeJava9() {
     try {
       Class.forName("java.lang.Module");

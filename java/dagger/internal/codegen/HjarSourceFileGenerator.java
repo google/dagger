@@ -66,13 +66,13 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
     TypeSpec.Builder skeleton =
         classBuilder(completeType.name)
             .addSuperinterfaces(completeType.superinterfaces)
-            .addTypeVariables(completeType.typeVariables);
+            .addTypeVariables(completeType.typeVariables)
+            .addModifiers(completeType.modifiers.toArray(new Modifier[0]))
+            .addAnnotations(completeType.annotations);
 
     if (!completeType.superclass.equals(ClassName.OBJECT)) {
       skeleton.superclass(completeType.superclass);
     }
-
-    completeType.modifiers.forEach(skeleton::addModifiers);
 
     completeType.methodSpecs.stream()
         .filter(method -> !method.modifiers.contains(PRIVATE) || method.isConstructor())
@@ -110,6 +110,7 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
         .addParameters(completeMethod.parameters)
         .addExceptions(completeMethod.exceptions)
         .varargs(completeMethod.varargs)
+        .addAnnotations(completeMethod.annotations)
         .build();
   }
 
@@ -118,6 +119,7 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
             completeField.type,
             completeField.name,
             completeField.modifiers.toArray(new Modifier[0]))
+        .addAnnotations(completeField.annotations)
         .build();
   }
 }

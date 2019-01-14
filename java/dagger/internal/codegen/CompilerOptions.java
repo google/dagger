@@ -33,6 +33,8 @@ import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.squareup.javapoet.AnnotationSpec;
+import dagger.internal.GenerationOptions;
 import dagger.producers.Produces;
 import java.util.Arrays;
 import java.util.Map;
@@ -109,6 +111,26 @@ abstract class CompilerOptions {
       option.set(builder, processingEnv);
     }
     return builder.build();
+  }
+
+  abstract Builder toBuilder();
+
+  /**
+   * Creates a new {@link CompilerOptions} from the serialized {@link GenerationOptions} of a base
+   * component implementation.
+   */
+  CompilerOptions withGenerationOptions(GenerationOptions generationOptions) {
+    return toBuilder().fastInit(generationOptions.fastInit()).build();
+  }
+
+  /**
+   * Returns an {@link GenerationOptions} annotation that serializes any options for this
+   * compilation that should be reused in future compilations.
+   */
+  AnnotationSpec toGenerationOptionsAnnotation() {
+    return AnnotationSpec.builder(GenerationOptions.class)
+        .addMember("fastInit", "$L", fastInit())
+        .build();
   }
 
   @AutoValue.Builder

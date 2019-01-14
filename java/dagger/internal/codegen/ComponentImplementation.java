@@ -36,6 +36,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -428,6 +429,11 @@ final class ComponentImplementation {
   /** Adds the given methods to the component. */
   void addMethods(MethodSpecKind methodKind, Iterable<MethodSpec> methodSpecs) {
     methodSpecsMap.putAll(methodKind, methodSpecs);
+  }
+
+  /** Adds the given annotation to the component. */
+  void addAnnotation(AnnotationSpec annotation) {
+    component.addAnnotation(annotation);
   }
 
   /**

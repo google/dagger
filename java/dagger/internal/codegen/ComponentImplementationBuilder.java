@@ -142,6 +142,11 @@ abstract class ComponentImplementationBuilder {
       addCancellationListenerImplementation();
     }
 
+    if (componentImplementation.isAbstract()
+        && !componentImplementation.baseImplementation().isPresent()) {
+      componentImplementation.addAnnotation(compilerOptions.toGenerationOptionsAnnotation());
+    }
+
     done = true;
     return componentImplementation;
   }

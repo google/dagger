@@ -27,7 +27,7 @@ import java.util.Optional;
  * ComponentImplementation} instance. Each child {@link ComponentImplementation} will have its own
  * instance of {@link CurrentImplementationSubcomponent}.
  */
-@Subcomponent
+@Subcomponent(modules = GenerationOptionsModule.class)
 @PerComponentImplementation
 interface CurrentImplementationSubcomponent {
   RootComponentImplementationBuilder rootComponentBuilder();

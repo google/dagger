@@ -74,7 +74,7 @@ final class BindingGraphConverter {
 
     ComponentKind componentKind = bindingGraph.componentDescriptor().kind();
     return BindingGraphProxies.bindingGraph(
-        traverser.network, componentKind.isForModuleValidation(), !componentKind.isRoot());
+        traverser.network, componentKind.isForModuleValidation());
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.

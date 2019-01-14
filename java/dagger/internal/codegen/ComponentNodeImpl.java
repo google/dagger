@@ -34,7 +34,12 @@ abstract class ComponentNodeImpl implements ComponentNode {
   }
 
   @Override
-  public ImmutableSet<DependencyRequest> entryPoints() {
+  public final boolean isSubcomponent() {
+    return !componentDescriptor().kind().isRoot();
+  }
+
+  @Override
+  public final ImmutableSet<DependencyRequest> entryPoints() {
     return componentDescriptor().entryPointMethods().stream()
         .map(method -> method.dependencyRequest().get())
         .collect(toImmutableSet());

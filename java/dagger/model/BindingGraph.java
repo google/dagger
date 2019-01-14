@@ -89,10 +89,8 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 public abstract class BindingGraph {
 
-  static BindingGraph create(
-      Network<Node, Edge> network, boolean isModuleBindingGraph, boolean isPartialBindingGraph) {
-    return new AutoValue_BindingGraph(
-        ImmutableNetwork.copyOf(network), isModuleBindingGraph, isPartialBindingGraph);
+  static BindingGraph create(Network<Node, Edge> network, boolean isModuleBindingGraph) {
+    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isModuleBindingGraph);
   }
 
   BindingGraph() {}
@@ -116,10 +114,12 @@ public abstract class BindingGraph {
   public abstract boolean isModuleBindingGraph();
 
   /**
-   * Returns {@code true} if this graph was constructed with a root subcomponent in ahead-of-time
-   * subcomponents mode.
+   * Returns {@code true} if the {@link #rootComponentNode()} is a subcomponent. This occurs in
+   * ahead-of-time-subcomponents mode.
    */
-  public abstract boolean isPartialBindingGraph();
+  public final boolean isPartialBindingGraph() {
+    return rootComponentNode().isSubcomponent();
+  }
 
   /** Returns the bindings. */
   public final ImmutableSet<Binding> bindings() {
@@ -404,6 +404,12 @@ public abstract class BindingGraph {
     /** The component represented by this node. */
     @Override
     ComponentPath componentPath();
+
+    /**
+     * Returns {@code true} if the component is a {@code @Subcomponent} or
+     * {@code @ProductionSubcomponent}.
+     */
+    boolean isSubcomponent();
 
     /** The entry points on this component. */
     ImmutableSet<DependencyRequest> entryPoints();

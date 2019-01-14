@@ -117,7 +117,7 @@ abstract class ComponentImplementationBuilder {
         componentCreatorImplementationFactory.create(componentImplementation));
     componentImplementation
         .creatorImplementation()
-        .map(ComponentCreatorImplementation::componentCreatorClass)
+        .map(ComponentCreatorImplementation::spec)
         .ifPresent(this::addCreatorClass);
 
     getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
@@ -551,14 +551,14 @@ abstract class ComponentImplementationBuilder {
     Optional<ComponentCreatorImplementation> creatorImplementation =
         Optionals.firstPresent(
             componentImplementation.creatorImplementation(),
-            componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()));
+            componentImplementation.baseCreatorImplementation());
 
     Map<ComponentRequirement, ParameterSpec> parameters;
     if (creatorImplementation.isPresent()) {
       parameters =
-          Maps.transformEntries(
-              creatorImplementation.get().requirementNames(),
-              (requirement, name) -> requirement.toParameterSpec(name));
+          Maps.toMap(
+              creatorImplementation.get().providedRequirements(),
+              ComponentRequirement::toParameterSpec);
     } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
       // If we're generating an abstract inner subcomponent, then we are not implementing module
       // instance bindings and have no need for factory method parameters.

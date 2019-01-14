@@ -171,9 +171,9 @@ abstract class ComponentRequirement {
   /** Returns the name for this requirement that could be used as a variable. */
   abstract String variableName();
 
-  /** Returns a parameter spec for this requirement with the given parameter name. */
-  ParameterSpec toParameterSpec(String name) {
-    return ParameterSpec.builder(TypeName.get(type()), name).build();
+  /** Returns a parameter spec for this requirement. */
+  ParameterSpec toParameterSpec() {
+    return ParameterSpec.builder(TypeName.get(type()), variableName()).build();
   }
 
   static ComponentRequirement forDependency(TypeMirror type) {

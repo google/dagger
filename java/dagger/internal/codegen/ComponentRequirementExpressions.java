@@ -35,7 +35,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.HashMap;
 import java.util.Map;
@@ -133,13 +132,13 @@ final class ComponentRequirementExpressions {
             componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()),
             componentImplementation.creatorImplementation());
     if (creatorImplementation.isPresent()) {
-      String name =
-          creatorImplementation.get().requirementNames().get(requirement);
-      return new ComponentParameterField(requirement, componentImplementation, name);
+      return new ComponentParameterField(requirement, componentImplementation, Optional.empty());
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {
-      ParameterSpec parameter = ParameterSpec.get(graph.factoryMethodParameters().get(requirement));
-      return new ComponentParameterField(requirement, componentImplementation, parameter.name);
+      String parameterName =
+          graph.factoryMethodParameters().get(requirement).getSimpleName().toString();
+      return new ComponentParameterField(
+          requirement, componentImplementation, Optional.of(parameterName));
     } else if (requirement.kind().isModule()) {
       return new InstantiableModuleField(requirement, componentImplementation);
     } else {
@@ -224,12 +223,12 @@ final class ComponentRequirementExpressions {
    * as parameters to the component's constructor.
    */
   private static final class ComponentParameterField extends AbstractField {
-    private final String name;
+    private final String parameterName;
 
     private ComponentParameterField(
         ComponentRequirement componentRequirement,
         ComponentImplementation componentImplementation,
-        String name) {
+        Optional<String> name) {
       super(componentRequirement, componentImplementation);
       componentImplementation.addComponentRequirementParameter(componentRequirement);
       // Get the name that the component implementation will use for its parameter for the
@@ -240,15 +239,14 @@ final class ComponentRequirementExpressions {
       // In either case, componentImplementation.getParameterName() will ensure that the final name
       // that is used is not the same name as any field in the component even if there's something
       // weird where the component actually has fields named, say, "foo" and "fooParam".
-      this.name =
-          componentImplementation.getParameterName(
-              componentRequirement, name.equals(fieldName) ? name + "Param" : name);
+      String baseName = name.filter(n -> !n.equals(fieldName)).orElse(fieldName + "Param");
+      this.parameterName = componentImplementation.getParameterName(componentRequirement, baseName);
     }
 
     @Override
     public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
       if (componentImplementation.name().equals(requestingClass)) {
-        return CodeBlock.of("$L", name);
+        return CodeBlock.of("$L", parameterName);
       } else {
         // requesting this component requirement during initialization of a child component requires
         // it to be accessed from a field and not the parameter (since it is no longer available)
@@ -260,7 +258,7 @@ final class ComponentRequirementExpressions {
     CodeBlock fieldInitialization(FieldSpec componentField) {
       // Don't checkNotNull here because the parameter may be nullable; if it isn't, the caller
       // should handle checking that before passing the parameter.
-      return CodeBlock.of("this.$N = $L;", componentField, name);
+      return CodeBlock.of("this.$N = $L;", componentField, parameterName);
     }
   }
 

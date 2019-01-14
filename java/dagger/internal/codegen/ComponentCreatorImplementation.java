@@ -18,7 +18,9 @@ package dagger.internal.codegen;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
 
 /** The implementation of a component creator type. */
@@ -27,22 +29,34 @@ abstract class ComponentCreatorImplementation {
 
   /** Creates a new {@link ComponentCreatorImplementation}. */
   static ComponentCreatorImplementation create(
-      TypeSpec componentCreatorClass,
+      TypeSpec spec,
       ClassName name,
-      ImmutableMap<ComponentRequirement, String> requirementNames) {
-    return new AutoValue_ComponentCreatorImplementation(
-        componentCreatorClass, name, requirementNames);
+      ImmutableSet<ComponentRequirement> providedRequirements,
+      ImmutableMap<ComponentRequirement, FieldSpec> fields) {
+    return new AutoValue_ComponentCreatorImplementation(spec, name, providedRequirements, fields);
   }
 
-  /** The type for the creator implementation. */
-  abstract TypeSpec componentCreatorClass();
+  /** The type spec for the creator implementation. */
+  abstract TypeSpec spec();
 
   /** The name of the creator implementation class. */
   abstract ClassName name();
 
   /**
-   * The names to use for fields or parameters for the requirements this creator implementation
-   * provides.
+   * The component requirements this creator provides instances for when calling the component's
+   * constructor.
+   *
+   * <p>Instances will be passed to the  constructor in the same order the requirements are returned
+   * here.
    */
-  abstract ImmutableMap<ComponentRequirement, String> requirementNames();
+  abstract ImmutableSet<ComponentRequirement> providedRequirements();
+
+  /**
+   * All fields that are present in this implementation or its supertype.
+   *
+   * <p>In the case of ahead-of-time subcomponents, not all fields will necessarily be passed to
+   * the component's constructor (because, for example, it turns out that a particular module that
+   * the creator can set is actually inherited from an ancestor module).
+   */
+  abstract ImmutableMap<ComponentRequirement, FieldSpec> fields();
 }

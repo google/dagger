@@ -307,6 +307,21 @@ final class ComponentImplementation {
   }
 
   /**
+   * The possible requirements for creating an instance of this component implementation type.
+   *
+   * <p>If this component implementation is concrete, these requirements will be in the order that
+   * the implementation's constructor takes them as parameters.
+   */
+  ImmutableSet<ComponentRequirement> requirements() {
+    // If the base implementation's creator is being generated in ahead-of-time-subcomponents
+    // mode, this uses possiblyNecessaryRequirements() since Dagger doesn't know what modules may
+    // end up being unused. Otherwise, we use the necessary component requirements.
+    return isAbstract() && !superclassImplementation().isPresent()
+        ? graph().possiblyNecessaryRequirements()
+        : graph().componentRequirements();
+  }
+
+  /**
    * Returns the {@link MethodSpecKind#CONFIGURE_INITIALIZATION_METHOD} of this implementation if
    * there is one.
    *
@@ -334,6 +349,14 @@ final class ComponentImplementation {
   Optional<ComponentCreatorImplementation> creatorImplementation() {
     checkState(creatorImplementation != null, "setCreatorImplementation has not been called yet");
     return creatorImplementation;
+  }
+
+  /**
+   * Returns the {@link ComponentCreatorImplementation} defined in the base implementation for this
+   * component, if one exists.
+   */
+  Optional<ComponentCreatorImplementation> baseCreatorImplementation() {
+    return baseImplementation().flatMap(baseImpl -> baseImpl.creatorImplementation());
   }
 
   /**

@@ -1205,8 +1205,8 @@ public class ComponentProcessorTest {
                 "  private Provider<A> aProvider;")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private volatile Provider<A> aProvider;",
                 "  private final AComponent aComponent;",
+                "  private volatile Provider<A> aProvider;",
                 "",
                 "  private DaggerBComponent(AComponent aComponentParam) {",
                 "    this.aComponent = aComponentParam;",

@@ -67,14 +67,14 @@ final class ComponentImplementation {
   // be component requirements, reference managers, framework fields, private method fields, ... etc
   enum FieldSpecKind {
 
+    /** A field required by the component, e.g. module instances. */
+    COMPONENT_REQUIREMENT_FIELD,
+
     /**
      * A field for the lock and cached value for {@linkplain PrivateMethodBindingExpression
      * private-method scoped bindings}.
      */
     PRIVATE_METHOD_SCOPED_FIELD,
-
-    /** A field required by the component, e.g. module instances. */
-    COMPONENT_REQUIREMENT_FIELD,
 
     /** A framework field for type T, e.g. {@code Provider<T>}. */
     FRAMEWORK_FIELD,

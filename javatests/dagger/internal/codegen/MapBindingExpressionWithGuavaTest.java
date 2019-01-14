@@ -467,7 +467,7 @@ public class MapBindingExpressionWithGuavaTest {
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
-            "  private ParentModule parentModule;",
+            "  private final ParentModule parentModule;",
             "",
             "  private final class ChildImpl implements Child {",
             "    @Override",

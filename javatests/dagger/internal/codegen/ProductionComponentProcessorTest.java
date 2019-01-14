@@ -257,7 +257,7 @@ public class ProductionComponentProcessorTest {
                 "  private volatile Object productionComponentMonitor = new MemoizedSentinel();",
                 "  private volatile Provider<ProductionComponentMonitor> monitorProvider;",
                 "  private volatile Provider<TestClass.B> bProvider;",
-                "  private TestClass.BModule bModule;",
+                "  private final TestClass.BModule bModule;",
                 "  private Producer<TestClass.A> aEntryPoint;",
                 "  private Provider<TestClass.SimpleComponent> simpleComponentProvider;",
                 "  private Producer<TestClass.B> bProducer;",

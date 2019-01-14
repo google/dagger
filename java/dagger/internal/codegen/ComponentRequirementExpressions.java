@@ -25,6 +25,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static dagger.internal.codegen.ModuleProxies.newModuleInstance;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 
@@ -151,7 +152,7 @@ final class ComponentRequirementExpressions {
     private final ComponentRequirement componentRequirement;
     protected final ComponentImplementation componentImplementation;
     protected final String fieldName;
-    private final Supplier<MemberSelect> field = memoize(this::createField);
+    private final Supplier<MemberSelect> field = memoize(this::addField);
 
     private AbstractField(
         ComponentRequirement componentRequirement,
@@ -175,13 +176,21 @@ final class ComponentRequirementExpressions {
       return field.get().getExpressionFor(requestingClass);
     }
 
-    private MemberSelect createField() {
-      FieldSpec field =
-          FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE).build();
+    private MemberSelect addField() {
+      FieldSpec field = createField();
       componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
       componentImplementation.addComponentRequirementInitialization(
           componentRequirement, fieldInitialization(field));
       return MemberSelect.localField(componentImplementation.name(), fieldName);
+    }
+
+    private FieldSpec createField() {
+      FieldSpec.Builder field =
+          FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE);
+      if (!componentImplementation.isAbstract()) {
+        field.addModifiers(FINAL);
+      }
+      return field.build();
     }
 
     /** Returns the {@link CodeBlock} that initializes the component field during construction. */

@@ -537,7 +537,7 @@ public class SubcomponentValidationTest {
             .addLines(
                 "",
                 "  private final class ChildComponentImpl implements ChildComponent {",
-                "    private ChildModule childModule;",
+                "    private final ChildModule childModule;",
                 "",
                 "    private ChildComponentImpl() {",
                 "      this.childModule = new ChildModule();",

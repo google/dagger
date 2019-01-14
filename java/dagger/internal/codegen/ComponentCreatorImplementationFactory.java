@@ -216,46 +216,47 @@ final class ComponentCreatorImplementationFactory {
 
     private MethodSpec normalSetterMethod(ComponentRequirement requirement) {
       MethodSpec.Builder method = setterMethodBuilder(requirement);
-      MethodSpec unimplemented = method.build();
+      ParameterSpec parameter = parameter(method.build());
       method.addStatement(
           "this.$N = $L",
           requirementNames.get(requirement),
           requirement.nullPolicy(elements, types).equals(NullPolicy.ALLOW)
-              ? CodeBlock.of("$N", parameter(unimplemented))
-              : CodeBlock.of("$T.checkNotNull($N)", Preconditions.class, parameter(unimplemented)));
-      return maybeReturnThis(unimplemented, method);
+              ? CodeBlock.of("$N", parameter)
+              : CodeBlock.of("$T.checkNotNull($N)", Preconditions.class, parameter));
+      return maybeReturnThis(method);
     }
 
     private MethodSpec noopSetterMethod(ComponentRequirement requirement) {
       MethodSpec.Builder method = setterMethodBuilder(requirement);
-      MethodSpec unimplemented = method.build();
+      ParameterSpec parameter = parameter(method.build());
       method
           .addAnnotation(Deprecated.class)
           .addJavadoc(
               "@deprecated This module is declared, but an instance is not used in the component. "
                   + "This method is a no-op. For more, see https://google.github.io/dagger/unused-modules.\n")
-          .addStatement("$T.checkNotNull($N)", Preconditions.class, parameter(unimplemented));
-      return maybeReturnThis(unimplemented, method);
+          .addStatement("$T.checkNotNull($N)", Preconditions.class, parameter);
+      return maybeReturnThis(method);
     }
 
     private MethodSpec inheritedModuleSetterMethod(ComponentRequirement requirement) {
-      MethodSpec.Builder method = setterMethodBuilder(requirement);
-      method.addStatement(
-          "throw new $T($T.format($S, $T.class.getCanonicalName()))",
-          UnsupportedOperationException.class,
-          String.class,
-          "%s cannot be set because it is inherited from the enclosing component",
-          TypeNames.rawTypeName(TypeName.get(requirement.type())));
-      return method.build();
+      return setterMethodBuilder(requirement)
+          .addStatement(
+              "throw new $T($T.format($S, $T.class.getCanonicalName()))",
+              UnsupportedOperationException.class,
+              String.class,
+              "%s cannot be set because it is inherited from the enclosing component",
+              TypeNames.rawTypeName(TypeName.get(requirement.type())))
+          .build();
     }
 
     private ParameterSpec parameter(MethodSpec method) {
       return getOnlyElement(method.parameters);
     }
 
-    private MethodSpec maybeReturnThis(MethodSpec unimplemented, MethodSpec.Builder method) {
-      return unimplemented.returnType.equals(TypeName.VOID)
-          ? method.build()
+    private MethodSpec maybeReturnThis(MethodSpec.Builder method) {
+      MethodSpec built = method.build();
+      return built.returnType.equals(TypeName.VOID)
+          ? built
           : method.addStatement("return this").build();
     }
 

@@ -180,8 +180,8 @@ final class ComponentImplementation {
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
-  private final Map<ComponentRequirement, CodeBlock> componentRequirementInitializations =
-      new LinkedHashMap<>();
+  private final Set<ComponentRequirement> componentRequirementParameters = new HashSet<>();
+  private final List<CodeBlock> componentRequirementInitializations = new ArrayList<>();
   private final Map<ComponentRequirement, String> componentRequirementParameterNames =
       new HashMap<>();
   private final Set<Key> cancellableProducerKeys = new LinkedHashSet<>();
@@ -476,12 +476,24 @@ final class ComponentImplementation {
   }
 
   /**
-   * Adds the given code block that initializes the given {@link ComponentRequirement} to the
-   * component implementation.
+   * Adds the given component requirement as one that should have a parameter in the component's
+   * initialization methods.
    */
-  void addComponentRequirementInitialization(
-      ComponentRequirement requirement, CodeBlock codeBlock) {
-    componentRequirementInitializations.put(requirement, codeBlock);
+  void addComponentRequirementParameter(ComponentRequirement requirement) {
+    componentRequirementParameters.add(requirement);
+  }
+
+  /**
+   * The set of component requirements that have parameters in the component's initialization
+   * methods.
+   */
+  ImmutableSet<ComponentRequirement> getComponentRequirementParameters() {
+    return ImmutableSet.copyOf(componentRequirementParameters);
+  }
+
+  /** Adds the given code block that initializes a {@link ComponentRequirement}. */
+  void addComponentRequirementInitialization(CodeBlock codeBlock) {
+    componentRequirementInitializations.add(codeBlock);
   }
 
   /**
@@ -542,7 +554,7 @@ final class ComponentImplementation {
   }
 
   /**
-   * Returns the map of {@link ComponentRequirement}s to {@link CodeBlock}s that initialize them.
+   * Returns a list of {@link CodeBlock}s for initializing {@link ComponentRequirement}s.
    *
    * <p>These initializations are kept separate from {@link #getInitializations()} because they must
    * be executed before the initializations of any framework instance initializations in a
@@ -551,8 +563,8 @@ final class ComponentImplementation {
    * {@link dagger.producers.internal.DelegateProducer} since the types of these initialized fields
    * have no interface type that we can write a proxy for.
    */
-  ImmutableMap<ComponentRequirement, CodeBlock> getComponentRequirementInitializations() {
-    return ImmutableMap.copyOf(componentRequirementInitializations);
+  ImmutableList<CodeBlock> getComponentRequirementInitializations() {
+    return ImmutableList.copyOf(componentRequirementInitializations);
   }
 
   /**

@@ -4974,6 +4974,67 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generatedRoot);
   }
 
+  @Test
+  public void boundInstanceUsedOnlyInInitialize() {
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Subcomponent;",
+            "import javax.inject.Provider;",
+            "",
+            "@Subcomponent",
+            "interface Sub {",
+            "  Provider<String> stringProvider();",
+            "",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    @BindsInstance",
+            "    Builder string(String string);",
+            "    Sub build();",
+            "  }",
+            "}");
+
+    JavaFileObject generated  =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.internal.InstanceFactory;",
+            "import dagger.internal.Preconditions;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerSub implements Sub {",
+            "  private Provider<String> stringProvider;",
+            "",
+            "  protected DaggerSub() {}",
+            "",
+            "  protected void configureInitialization(String stringParam) {",
+            "    initialize(stringParam);",
+            "  }",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize(final String stringParam) {",
+            "    this.stringProvider = InstanceFactory.create(stringParam);",
+            "  }",
+            "",
+            "  @Override",
+            "  public Provider<String> stringProvider() {",
+            "    return stringProvider;",
+            "  }",
+            "}");
+
+    Compilation compilation = compile(ImmutableList.of(subcomponent));
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerSub")
+        .containsElementsIn(generated);
+  }
+
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {

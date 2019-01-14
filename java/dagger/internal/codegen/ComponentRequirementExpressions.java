@@ -149,9 +149,9 @@ final class ComponentRequirementExpressions {
   }
 
   private abstract static class AbstractField implements ComponentRequirementExpression {
-    private final ComponentRequirement componentRequirement;
-    protected final ComponentImplementation componentImplementation;
-    protected final String fieldName;
+    final ComponentRequirement componentRequirement;
+    final ComponentImplementation componentImplementation;
+    final String fieldName;
     private final Supplier<MemberSelect> field = memoize(this::addField);
 
     private AbstractField(
@@ -179,8 +179,7 @@ final class ComponentRequirementExpressions {
     private MemberSelect addField() {
       FieldSpec field = createField();
       componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      componentImplementation.addComponentRequirementInitialization(
-          componentRequirement, fieldInitialization(field));
+      componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
       return MemberSelect.localField(componentImplementation.name(), fieldName);
     }
 
@@ -232,6 +231,7 @@ final class ComponentRequirementExpressions {
         ComponentImplementation componentImplementation,
         String name) {
       super(componentRequirement, componentImplementation);
+      componentImplementation.addComponentRequirementParameter(componentRequirement);
       // Get the name that the component implementation will use for its parameter for the
       // requirement. If the given name is different than the name of the field created for the
       // requirement (as may be the case when the parameter name is derived from a user-written
@@ -242,8 +242,7 @@ final class ComponentRequirementExpressions {
       // weird where the component actually has fields named, say, "foo" and "fooParam".
       this.name =
           componentImplementation.getParameterName(
-              componentRequirement,
-              name.equals(fieldName) ? name + "Param" : name);
+              componentRequirement, name.equals(fieldName) ? name + "Param" : name);
     }
 
     @Override

@@ -388,8 +388,7 @@ abstract class ComponentImplementationBuilder {
       ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters) {
     initializationMethod.addParameters(initializationParameters.values());
     initializationMethod.addCode(
-        CodeBlocks.concat(
-            componentImplementation.getComponentRequirementInitializations().values()));
+        CodeBlocks.concat(componentImplementation.getComponentRequirementInitializations()));
     componentImplementation
         .superConfigureInitializationMethod()
         .ifPresent(
@@ -587,14 +586,14 @@ abstract class ComponentImplementationBuilder {
    * {@code configureInitialization} method.
    */
   private ImmutableSet<ComponentRequirement> configureInitializationRequirements() {
-    ImmutableSet<ComponentRequirement> initializationRequirements =
-        componentImplementation.getComponentRequirementInitializations().keySet();
+    ImmutableSet<ComponentRequirement> initializationParameters =
+        componentImplementation.getComponentRequirementParameters();
     ImmutableSet<ComponentRequirement> superConfigureInitializationRequirements =
         componentImplementation
             .superConfigureInitializationMethod()
             .map(ConfigureInitializationMethod::parameters)
             .orElse(ImmutableSet.of());
-    return Sets.union(initializationRequirements, superConfigureInitializationRequirements)
+    return Sets.union(initializationParameters, superConfigureInitializationRequirements)
         .immutableCopy();
   }
 

@@ -57,8 +57,11 @@ final class BindingGraphConverter {
   /**
    * Creates the external {@link dagger.model.BindingGraph} representing the given internal {@link
    * dagger.internal.codegen.BindingGraph}.
+   *
+   * @param fullBindingGraph if {@code true}, include bindings that are not reachable from any entry
+   *     points
    */
-  dagger.model.BindingGraph convert(BindingGraph bindingGraph) {
+  dagger.model.BindingGraph convert(BindingGraph bindingGraph, boolean fullBindingGraph) {
     Traverser traverser = new Traverser(bindingGraph);
     traverser.traverseComponents();
 
@@ -66,15 +69,13 @@ final class BindingGraphConverter {
     // multibindings or optional bindings, the parent-owned binding is still there. If that
     // parent-owned binding is not reachable from its component, it doesn't need to be in the graph
     // because it will never be used. So remove all nodes that are not reachable from the root
-    // component—unless the component is a module-binding validation component.
-    if (!bindingGraph.componentDescriptor().kind().isForModuleValidation()) {
+    // component—unless we're building a full binding graph.
+    if (!fullBindingGraph) {
       unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
           .forEach(traverser.network::removeNode);
     }
 
-    ComponentKind componentKind = bindingGraph.componentDescriptor().kind();
-    return BindingGraphProxies.bindingGraph(
-        traverser.network, componentKind.isForModuleValidation());
+    return BindingGraphProxies.bindingGraph(traverser.network, fullBindingGraph);
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.

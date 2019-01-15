@@ -150,7 +150,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private boolean isValid(BindingGraph bindingGraph) {
-    dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph);
+    dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph, false);
     return bindingGraphValidator.isValid(modelGraph);
   }
 

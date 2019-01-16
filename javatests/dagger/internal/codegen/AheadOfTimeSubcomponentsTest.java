@@ -3162,9 +3162,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "  }",
             "",
             "  public abstract static class Builder implements Leaf.Builder {",
-            "    protected LeafModule leafModule;",
             "    protected Integer bindsInstance;",
             "    protected String inducedInSubclass;",
+            "    protected LeafModule leafModule;",
             "",
             "    @Override",
             "    public Builder bindsInstance(int boundInstance) {",
@@ -3326,9 +3326,9 @@ public final class AheadOfTimeSubcomponentsTest {
             // builder so that the contents of this method are just call to that and then new
             // FooImpl? But repeated modules may make this more complicated, since those *should*
             // be null
-            "        Preconditions.checkBuilderRequirement(leafModule, LeafModule.class);",
             "        Preconditions.checkBuilderRequirement(bindsInstance, Integer.class);",
             "        Preconditions.checkBuilderRequirement(inducedInSubclass, String.class);",
+            "        Preconditions.checkBuilderRequirement(leafModule, LeafModule.class);",
             "        return new LeafImpl(leafModule, bindsInstance, inducedInSubclass);",
             "      }",
             "    }",
@@ -3403,6 +3403,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
+            "    Builder setUsed(ModuleWithUsedBinding module);",
+            "    Builder setUnused(ModuleWithUnusedBinding module);",
             "    Leaf build();",
             "  }",
             "}"));
@@ -3412,6 +3414,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "package test;",
             "",
             "import dagger.internal.GenerationOptions;",
+            "import dagger.internal.Preconditions;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATION_OPTIONS_ANNOTATION,
@@ -3439,6 +3442,18 @@ public final class AheadOfTimeSubcomponentsTest {
             "  public abstract static class Builder implements Leaf.Builder {",
             "    protected ModuleWithUsedBinding moduleWithUsedBinding;",
             "    protected ModuleWithUnusedBinding moduleWithUnusedBinding;",
+            "",
+            "    @Override",
+            "    public Builder setUsed(ModuleWithUsedBinding module) {",
+            "      this.moduleWithUsedBinding = Preconditions.checkNotNull(module);",
+            "      return this;",
+            "    }",
+            "",
+            "    @Override",
+            "    public Builder setUnused(ModuleWithUnusedBinding module) {",
+            "      this.moduleWithUnusedBinding = Preconditions.checkNotNull(module);",
+            "      return this;",
+            "    }",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -4871,6 +4886,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  @Subcomponent.Builder",
             "  interface Builder {",
+            "    Builder setAMod(a.Mod mod);",
+            "    Builder setBMod(b.Mod mod);",
+            "    Builder setCMod(c.Mod mod);",
             "    HasUnusedModuleLeaf build();",
             "  }",
             "}"));
@@ -4887,9 +4905,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "public abstract class DaggerHasUnusedModuleLeaf implements HasUnusedModuleLeaf {",
             "  public abstract static class Builder implements HasUnusedModuleLeaf.Builder {",
             "    protected Mod mod;",
-            "",
             "    protected b.Mod mod2;",
-            "",
             "    protected c.Mod mod3;",
             "  }",
             "}");

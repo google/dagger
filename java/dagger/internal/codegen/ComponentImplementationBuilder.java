@@ -561,9 +561,7 @@ abstract class ComponentImplementationBuilder {
     Map<ComponentRequirement, ParameterSpec> parameters;
     if (creatorImplementation.isPresent()) {
       parameters =
-          Maps.toMap(
-              creatorImplementation.get().providedRequirements(),
-              ComponentRequirement::toParameterSpec);
+          Maps.toMap(componentImplementation.requirements(), ComponentRequirement::toParameterSpec);
     } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
       // If we're generating an abstract inner subcomponent, then we are not implementing module
       // instance bindings and have no need for factory method parameters.

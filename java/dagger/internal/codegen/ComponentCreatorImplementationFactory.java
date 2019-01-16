@@ -17,13 +17,13 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.ModuleProxies.newModuleInstance;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -34,7 +34,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
@@ -47,6 +46,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -109,8 +109,7 @@ final class ComponentCreatorImplementationFactory {
       addConstructor();
       addSetterMethods();
       addFactoryMethod();
-      return ComponentCreatorImplementation.create(
-          classBuilder.build(), className, providedRequirements(), fields);
+      return ComponentCreatorImplementation.create(classBuilder.build(), className, fields);
     }
 
     /** Returns the binding graph for the component. */
@@ -119,16 +118,20 @@ final class ComponentCreatorImplementationFactory {
     }
 
     /**
-     * The component requirements that this creator will actually provide when constructing a
+     * The {@link ComponentRequirement}s that this creator allows users to set. Values are a status
+     * for each requirement indicating what's needed for that requirement in the implementation
+     * class currently being generated.
+     */
+    abstract ImmutableMap<ComponentRequirement, RequirementStatus> userSettableRequirements();
+
+    /**
+     * Component requirements that are both settable by the creator and needed to construct the
      * component.
      */
-    final ImmutableSet<ComponentRequirement> providedRequirements() {
-      return Sets.intersection(fields.keySet(), componentImplementation.requirements())
-          .immutableCopy();
+    private Set<ComponentRequirement> neededUserSettableRequirements() {
+      return Sets.intersection(
+          userSettableRequirements().keySet(), componentImplementation.requirements());
     }
-
-    /** The {@link ComponentRequirement}s that this creator can set. */
-    abstract ImmutableMap<ComponentRequirement, RequirementStatus> settableRequirements();
 
     private void setModifiers() {
       classBuilder.addModifiers(visibility());
@@ -162,7 +165,7 @@ final class ComponentCreatorImplementationFactory {
       UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap<ComponentRequirement, FieldSpec> result =
           Maps.toMap(
-              componentImplementation.requirements(),
+              neededUserSettableRequirements(),
               requirement ->
                   FieldSpec.builder(
                           TypeName.get(requirement.type()),
@@ -174,7 +177,7 @@ final class ComponentCreatorImplementationFactory {
     }
 
     private void addSetterMethods() {
-      settableRequirements()
+      userSettableRequirements()
           .forEach(
               (requirement, status) ->
                   createSetterMethod(requirement, status).ifPresent(classBuilder::addMethod));
@@ -254,34 +257,31 @@ final class ComponentCreatorImplementationFactory {
       MethodSpec.Builder factoryMethod = factoryMethodBuilder();
       factoryMethod.returns(ClassName.get(graph().componentTypeElement())).addModifiers(PUBLIC);
 
-      providedRequirements().forEach(
-          requirement -> {
-            FieldSpec field = fields.get(requirement);
-            switch (requirement.nullPolicy(elements, types)) {
-              case NEW:
-                checkState(requirement.kind().isModule());
-                factoryMethod
-                    .beginControlFlow("if ($N == null)", field)
-                    .addStatement(
-                        "this.$N = $L",
+      neededUserSettableRequirements()
+          .forEach(
+              requirement -> {
+                FieldSpec field = fields.get(requirement);
+                switch (requirement.nullPolicy(elements, types)) {
+                  case NEW:
+                    checkState(requirement.kind().isModule());
+                    factoryMethod
+                        .beginControlFlow("if ($N == null)", field)
+                        .addStatement("this.$N = $L", field, newModuleInstance(requirement))
+                        .endControlFlow();
+                    break;
+                  case THROW:
+                    // TODO(cgdecker,ronshapiro): ideally this should use the key instead of a class
+                    // for @BindsInstance requirements, but that's not easily proguardable.
+                    factoryMethod.addStatement(
+                        "$T.checkBuilderRequirement($N, $T.class)",
+                        Preconditions.class,
                         field,
-                        newModuleInstance(
-                            requirement.typeElement(), componentImplementation.name(), elements))
-                    .endControlFlow();
-                break;
-              case THROW:
-                // TODO(cgdecker,ronshapiro): ideally this should use the key instead of a class for
-                // @BindsInstance requirements, but that's not easily proguardable.
-                factoryMethod.addStatement(
-                    "$T.checkBuilderRequirement($N, $T.class)",
-                    Preconditions.class,
-                    field,
-                    TypeNames.rawTypeName(field.type));
-                break;
-              case ALLOW:
-                break;
-            }
-          });
+                        TypeNames.rawTypeName(field.type));
+                    break;
+                  case ALLOW:
+                    break;
+                }
+              });
       factoryMethod.addStatement(
           "return new $T($L)", componentImplementation.name(), componentConstructorArgs());
       return factoryMethod.build();
@@ -291,10 +291,18 @@ final class ComponentCreatorImplementationFactory {
     protected abstract MethodSpec.Builder factoryMethodBuilder();
 
     private CodeBlock componentConstructorArgs() {
-      return providedRequirements().stream()
-          .map(fields::get)
-          .map(field -> CodeBlock.of("$N", field))
+      return componentImplementation.requirements().stream()
+          .map(
+              requirement ->
+                  fields.containsKey(requirement)
+                      ? CodeBlock.of("$N", fields.get(requirement))
+                      : newModuleInstance(requirement))
           .collect(toParametersCodeBlock());
+    }
+
+    private CodeBlock newModuleInstance(ComponentRequirement requirement) {
+      checkArgument(requirement.kind().isModule()); // this should be guaranteed to be true here
+      return ModuleProxies.newModuleInstance(requirement.typeElement(), className, elements);
     }
   }
 
@@ -309,8 +317,8 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected ImmutableMap<ComponentRequirement, RequirementStatus> settableRequirements() {
-      return Maps.toMap(creatorDescriptor.settableRequirements(), this::requirementStatus);
+    protected ImmutableMap<ComponentRequirement, RequirementStatus> userSettableRequirements() {
+      return Maps.toMap(creatorDescriptor.userSettableRequirements(), this::requirementStatus);
     }
 
     @Override
@@ -416,7 +424,7 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected ImmutableMap<ComponentRequirement, RequirementStatus> settableRequirements() {
+    protected ImmutableMap<ComponentRequirement, RequirementStatus> userSettableRequirements() {
       return Maps.toMap(
           graph().componentDescriptor().dependenciesAndConcreteModules(),
           requirement -> componentImplementation.requirements().contains(requirement)

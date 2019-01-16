@@ -55,21 +55,21 @@ abstract class ComponentCreatorDescriptor {
    */
   abstract ImmutableSetMultimap<ComponentRequirement, ExecutableElement> requirementElements();
 
-  /** Returns the set of component requirements this creator can set. */
-  final ImmutableSet<ComponentRequirement> settableRequirements() {
+  /** Returns the set of component requirements this creator allows the user to set. */
+  final ImmutableSet<ComponentRequirement> userSettableRequirements() {
     return requirementElements().keySet();
   }
 
   /** Returns the set of requirements for modules and component dependencies for this creator. */
   final ImmutableSet<ComponentRequirement> moduleAndDependencyRequirements() {
-    return settableRequirements().stream()
+    return userSettableRequirements().stream()
         .filter(requirement -> !requirement.isBoundInstance())
         .collect(toImmutableSet());
   }
 
   /** Returns the set of bound instance requirements for this creator. */
   final ImmutableSet<ComponentRequirement> boundInstanceRequirements() {
-    return settableRequirements().stream()
+    return userSettableRequirements().stream()
         .filter(requirement -> requirement.isBoundInstance())
         .collect(toImmutableSet());
   }

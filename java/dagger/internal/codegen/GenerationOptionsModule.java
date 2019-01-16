@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.GenerationOptions;
+import java.util.Optional;
 
 /** Adds bindings for serializing and rereading {@link GenerationOptions}. */
 @Module
@@ -30,9 +31,18 @@ interface GenerationOptionsModule {
       CompilerOptions defaultOptions,
       ComponentImplementation componentImplementation,
       DaggerElements elements) {
-    return componentImplementation
-        .baseImplementation()
+    // Inspect the base implementation for the @GenerationOptions annotation. Even if
+    // componentImplementation is the base implementation, inspect it for the case where we are
+    // recomputing the ComponentImplementation from a previous compilation.
+    // TODO(b/117833324): consider adding a method that returns baseImplementation.orElse(this).
+    // The current state of the world is a little confusing and maybe not intuitive: the base
+    // implementation has no base implementation, but it _is_ a base implementation.
+    return Optional.of(componentImplementation.baseImplementation().orElse(componentImplementation))
         .map(baseImplementation -> elements.getTypeElement(baseImplementation.name()))
+        // If this returns null, the type has not been generated yet and Optional will switch to an
+        // empty state. This means that we're currently generating componentImplementation, or that
+        // the base implementation is being generated in this round, and thus the options passed to
+        // this compilation are applicable
         .map(typeElement -> typeElement.getAnnotation(GenerationOptions.class))
         .map(defaultOptions::withGenerationOptions)
         .orElse(defaultOptions);

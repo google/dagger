@@ -109,7 +109,7 @@ final class ComponentValidator {
 
   @AutoValue
   abstract static class ComponentValidationReport {
-    abstract Set<Element> referencedSubcomponents();
+    abstract ImmutableSet<Element> referencedSubcomponents();
 
     abstract ValidationReport<TypeElement> report();
   }

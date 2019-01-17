@@ -18,11 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentOrSubcomponentAnnotation;
-import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
-import static java.util.Arrays.stream;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreElements;
@@ -32,7 +29,6 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -42,13 +38,6 @@ import javax.lang.model.element.VariableElement;
  * correct elements.
  */
 final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<ExecutableElement> {
-
-  private static final ImmutableSet<Class<? extends Annotation>> COMPONENT_ANNOTATIONS =
-      stream(ComponentKind.values())
-          .filter(kind -> !kind.isForModuleValidation())
-          .map(ComponentKind::annotation)
-          .collect(toImmutableSet());
-
   private final Messager messager;
 
   @Inject
@@ -81,15 +70,14 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<Execu
     TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
     moduleAnnotation(enclosingType)
         .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
-    if (isAnyAnnotationPresent(enclosingType, COMPONENT_ANNOTATIONS)) {
-      AnnotationMirror componentAnnotation =
-          getComponentOrSubcomponentAnnotation(enclosingType).get();
-      report.addError(
-          String.format(
-              "@BindsInstance methods should not be included in @%1$ss. "
-                  + "Did you mean to put it in a @%1$s.Builder?",
-              simpleName(componentAnnotation)));
-    }
+    getComponentOrSubcomponentAnnotation(enclosingType)
+        .ifPresent(
+            componentAnnotation ->
+                report.addError(
+                    String.format(
+                        "@BindsInstance methods should not be included in @%1$ss. "
+                            + "Did you mean to put it in a @%1$s.Builder?",
+                        simpleName(componentAnnotation))));
     report.build().printMessagesTo(messager);
   }
 

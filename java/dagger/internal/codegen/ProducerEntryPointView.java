@@ -55,7 +55,7 @@ final class ProducerEntryPointView {
       BindingExpression producerExpression,
       ComponentMethodDescriptor componentMethod,
       ComponentImplementation component) {
-    if (component.componentDescriptor().kind().isProducer()
+    if (component.componentDescriptor().isProduction()
         && (componentMethod.dependencyRequest().get().kind().equals(RequestKind.FUTURE)
             || componentMethod.dependencyRequest().get().kind().equals(RequestKind.PRODUCER))) {
       return Optional.of(

@@ -298,7 +298,7 @@ final class BindingFactory {
     checkArgument(dependencyMethod.getKind().equals(METHOD));
     checkArgument(dependencyMethod.getParameters().isEmpty());
     ContributionBinding.Builder<?, ?> builder;
-    if (componentDescriptor.kind().isProducer()
+    if (componentDescriptor.isProduction()
         && isComponentProductionMethod(elements, dependencyMethod)) {
       builder =
           ProductionBinding.builder()

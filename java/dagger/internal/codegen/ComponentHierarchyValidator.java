@@ -141,7 +141,7 @@ final class ComponentHierarchyValidator {
     scopesByComponent.removeAll(subject);
 
     Predicate<Scope> subjectScopes =
-        subject.kind().isProducer()
+        subject.isProduction()
             // TODO(beder): validate that @ProductionScope is only applied on production components
             ? and(in(subject.scopes()), not(Scope::isProductionScope))
             : in(subject.scopes());

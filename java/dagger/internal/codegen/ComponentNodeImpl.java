@@ -35,7 +35,7 @@ abstract class ComponentNodeImpl implements ComponentNode {
 
   @Override
   public final boolean isSubcomponent() {
-    return !componentDescriptor().kind().isRoot();
+    return componentDescriptor().isSubcomponent();
   }
 
   @Override

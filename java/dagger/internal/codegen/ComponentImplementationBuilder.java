@@ -138,7 +138,7 @@ abstract class ComponentImplementationBuilder {
 
     addConstructorAndInitializationMethods();
 
-    if (graph.componentDescriptor().kind().isProducer()) {
+    if (graph.componentDescriptor().isProduction()) {
       addCancellationListenerImplementation();
     }
 

@@ -98,7 +98,7 @@ final class BindingGraphFactory {
   /** Creates a binding graph for a root component. */
   BindingGraph create(ComponentDescriptor componentDescriptor) {
     checkArgument(
-        componentDescriptor.kind().isRoot() || compilerOptions.aheadOfTimeSubcomponents());
+        !componentDescriptor.isSubcomponent() || compilerOptions.aheadOfTimeSubcomponents());
     return create(Optional.empty(), componentDescriptor);
   }
 
@@ -108,7 +108,7 @@ final class BindingGraphFactory {
     ImmutableSet.Builder<DelegateDeclaration> delegatesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
 
-    if (!componentDescriptor.kind().isForModuleValidation()) {
+    if (componentDescriptor.isRealComponent()) {
       // binding for the component itself
       explicitBindingsBuilder.add(
           bindingFactory.componentBinding(componentDescriptor.typeElement()));
@@ -186,7 +186,7 @@ final class BindingGraphFactory {
               }
             });
 
-    if (requestResolver.rootComponent().kind().isForModuleValidation()) {
+    if (!requestResolver.rootComponent().isRealComponent()) {
       // For module-binding validation, resolve the keys for all bindings in all modules, stripping
       // any multibinding contribution identifier so that the multibinding itself is resolved.
       modules(componentDescriptor, parentResolver).stream()
@@ -246,12 +246,11 @@ final class BindingGraphFactory {
   }
 
   private boolean shouldIncludeImplicitProductionModules(
-      ComponentDescriptor componentDescriptor, Optional<Resolver> parentResolver) {
-    ComponentKind kind = componentDescriptor.kind();
-    return kind.isProducer()
-        && ((kind.isRoot() && !kind.isForModuleValidation())
+      ComponentDescriptor component, Optional<Resolver> parentResolver) {
+    return component.isProduction()
+        && ((!component.isSubcomponent() && component.isRealComponent())
             || (parentResolver.isPresent()
-                && !parentResolver.get().componentDescriptor.kind().isProducer()));
+                && !parentResolver.get().componentDescriptor.isProduction()));
   }
 
   /**
@@ -409,7 +408,7 @@ final class BindingGraphFactory {
       checkArgument(binding.kind().equals(INJECTION));
       Resolver owningResolver = getOwningResolver(binding).orElse(this);
       ComponentDescriptor owningComponent = owningResolver.componentDescriptor;
-      return !rootComponent().kind().isRoot()
+      return rootComponent().isSubcomponent()
           && binding.scope().isPresent()
           && !binding.scope().get().isReusable()
           && !owningComponent.scopes().contains(binding.scope().get());
@@ -611,7 +610,7 @@ final class BindingGraphFactory {
         for (Resolver requestResolver : getResolverLineage()) {
           // Resolve @Inject @ProductionScope bindings at the highest production component.
           if (binding.kind().equals(INJECTION)
-              && requestResolver.componentDescriptor.kind().isProducer()) {
+              && requestResolver.componentDescriptor.isProduction()) {
             return Optional.of(requestResolver);
           }
 

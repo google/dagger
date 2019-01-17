@@ -52,7 +52,7 @@ public class ComponentTreeTraverser {
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
   public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
     checkArgument(
-        rootGraph.componentDescriptor().kind().isRoot()
+        !rootGraph.componentDescriptor().isSubcomponent()
             || compilerOptions.aheadOfTimeSubcomponents(),
         "only root graphs can be traversed, not %s",
         rootGraph.componentTypeElement().getQualifiedName());

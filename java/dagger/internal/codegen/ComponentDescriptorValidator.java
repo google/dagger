@@ -271,7 +271,7 @@ final class ComponentDescriptorValidator {
       }
 
       ComponentCreatorDescriptor creator = component.creatorDescriptor().get();
-      ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(component.kind());
+      ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(component);
 
       // Requirements for modules and dependencies that the creator can set
       Set<ComponentRequirement> creatorModuleAndDependencyRequirements =

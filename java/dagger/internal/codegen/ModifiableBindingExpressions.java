@@ -275,7 +275,7 @@ final class ModifiableBindingExpressions {
 
     // When generating a component the binding is not considered modifiable. Bindings are modifiable
     // only across subcomponent implementations.
-    if (componentImplementation.componentDescriptor().kind().isRoot()) {
+    if (!componentImplementation.componentDescriptor().isSubcomponent()) {
       return ModifiableBindingType.NONE;
     }
 

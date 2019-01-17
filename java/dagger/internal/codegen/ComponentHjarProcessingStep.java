@@ -187,7 +187,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
                   generatedComponent.addMethod(
                       emptyComponentMethod(componentElement, method.methodElement())));
 
-      if (componentDescriptor.kind().isProducer()) {
+      if (componentDescriptor.isProduction()) {
         generatedComponent
             .addSuperinterface(ClassName.get(CancellationListener.class))
             .addMethod(onProducerFutureCancelledMethod());
@@ -211,7 +211,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
    * ComponentDescriptor#creatorDescriptor()}.
    */
   private Stream<ComponentRequirement> componentRequirements(ComponentDescriptor component) {
-    checkArgument(component.kind().isRoot());
+    checkArgument(!component.isSubcomponent());
     return Stream.concat(
         component.dependencies().stream(),
         component.modules().stream()

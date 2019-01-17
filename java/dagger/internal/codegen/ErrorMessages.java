@@ -27,6 +27,16 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ErrorMessages {
 
+  static ComponentCreatorMessages creatorMessagesFor(ComponentDescriptor component) {
+    return component.isProduction()
+        ? component.isSubcomponent()
+            ? ProductionSubcomponentCreatorMessages.INSTANCE
+            : ProductionComponentCreatorMessages.INSTANCE
+        : component.isSubcomponent()
+            ? SubcomponentCreatorMessages.INSTANCE
+            : ComponentCreatorMessages.INSTANCE;
+  }
+
   static ComponentCreatorMessages creatorMessagesFor(ComponentKind kind) {
     switch(kind) {
       case COMPONENT:

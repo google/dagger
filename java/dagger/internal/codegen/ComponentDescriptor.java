@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -24,7 +25,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
-import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponent;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
@@ -55,10 +55,14 @@ import dagger.Subcomponent;
 import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
+import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
+import dagger.producers.ProductionSubcomponent;
+import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -82,11 +86,39 @@ import javax.lang.model.type.TypeMirror;
  */
 @AutoValue
 abstract class ComponentDescriptor {
-  /** The kind of the component. */
-  abstract ComponentKind kind();
-
   /** The annotation that specifies that {@link #typeElement()} is a component. */
   abstract AnnotationMirror annotation();
+
+  /** Returns {@code true} if this is a subcomponent. */
+  final boolean isSubcomponent() {
+    return Stream.of(Subcomponent.class, ProductionSubcomponent.class).anyMatch(isAnnotationType());
+  }
+
+  /**
+   * Returns {@code true} if this is a production component or subcomponent, or a
+   * {@code @ProducerModule} when doing module binding validation.
+   */
+  final boolean isProduction() {
+    return Stream.of(ProductionComponent.class, ProductionSubcomponent.class, ProducerModule.class)
+        .anyMatch(isAnnotationType());
+  }
+
+  /**
+   * Returns {@code true} if this is a real component, and not a fictional one used to validate
+   * module bindings.
+   */
+  final boolean isRealComponent() {
+    return Stream.of(
+            Component.class,
+            Subcomponent.class,
+            ProductionComponent.class,
+            ProductionSubcomponent.class)
+        .anyMatch(isAnnotationType());
+  }
+
+  private Predicate<Class<? extends Annotation>> isAnnotationType() {
+    return clazz -> isTypeOf(clazz, annotation().getAnnotationType());
+  }
 
   /**
    * The element that defines the component. This is the element to which the {@link #annotation()}
@@ -240,7 +272,7 @@ abstract class ComponentDescriptor {
    * builder.
    */
   final boolean hasCreator() {
-    return kind().isRoot() || creatorDescriptor().isPresent();
+    return !isSubcomponent() || creatorDescriptor().isPresent();
   }
 
   /**
@@ -248,7 +280,7 @@ abstract class ComponentDescriptor {
    * component is not a production component or no {@code CancellationPolicy} annotation is present.
    */
   final Optional<CancellationPolicy> cancellationPolicy() {
-    return kind().isProducer()
+    return isProduction()
         ? Optional.ofNullable(typeElement().getAnnotation(CancellationPolicy.class))
         : Optional.empty();
   }
@@ -256,7 +288,8 @@ abstract class ComponentDescriptor {
   @Memoized
   @Override
   public int hashCode() {
-    return Objects.hash(typeElement(), kind());
+    // TODO(b/122962745): Only use typeElement().hashCode()
+    return Objects.hash(typeElement(), annotation());
   }
 
   // TODO(ronshapiro): simplify the equality semantics
@@ -486,7 +519,6 @@ abstract class ComponentDescriptor {
       }
 
       return new AutoValue_ComponentDescriptor(
-          kind,
           componentAnnotation,
           typeElement,
           componentDependencies,
@@ -509,15 +541,14 @@ abstract class ComponentDescriptor {
               types.asMemberOf(MoreTypes.asDeclared(componentElement.asType()), componentMethod));
       TypeMirror returnType = resolvedComponentMethod.getReturnType();
       if (returnType.getKind().equals(DECLARED)) {
-        if (MoreTypes.isTypeOf(Provider.class, returnType)
-            || MoreTypes.isTypeOf(Lazy.class, returnType)) {
+        if (isTypeOf(Provider.class, returnType) || isTypeOf(Lazy.class, returnType)) {
           return ComponentMethodDescriptor.forProvision(
               componentMethod,
               dependencyRequestFactory.forComponentProvisionMethod(
                   componentMethod, resolvedComponentMethod));
         } else if (!getQualifier(componentMethod).isPresent()) {
           Element returnTypeElement = MoreTypes.asElement(returnType);
-          if (isSubcomponent(returnTypeElement)) {
+          if (ConfigurationAnnotations.isSubcomponent(returnTypeElement)) {
             return ComponentMethodDescriptor.forSubcomponent(
                 isAnnotationPresent(returnTypeElement, Subcomponent.class)
                     ? ComponentMethodKind.SUBCOMPONENT

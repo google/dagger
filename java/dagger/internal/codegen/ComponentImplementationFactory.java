@@ -89,7 +89,7 @@ final class ComponentImplementationFactory {
         Optional.empty(), // superclassImplementation
         new SubcomponentNames(graph, keyFactory),
         PUBLIC,
-        graph.componentDescriptor().kind().isRoot() ? FINAL : ABSTRACT);
+        graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL);
   }
 
   /** Returns the superclass of the child nested within a superclass of the parent component. */

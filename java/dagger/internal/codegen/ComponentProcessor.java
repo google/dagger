@@ -55,6 +55,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
   @Inject DaggerStatistics daggerStatistics;
+  @Inject ModuleDescriptor.Factory moduleDescriptorFactory;
 
   public ComponentProcessor() {
     this.testingPlugins = Optional.empty();
@@ -188,5 +189,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         e.printMessageTo(processingEnv.getMessager());
       }
     }
+    moduleDescriptorFactory.clearCache();
   }
 }

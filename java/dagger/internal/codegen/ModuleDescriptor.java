@@ -26,6 +26,7 @@ import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.SourceFiles.classFileName;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -45,9 +46,12 @@ import dagger.Provides;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -95,6 +99,7 @@ abstract class ModuleDescriptor {
         .collect(toImmutableSet());
   }
 
+  @Singleton
   static final class Factory {
     private final DaggerElements elements;
     private final BindingFactory bindingFactory;
@@ -102,6 +107,7 @@ abstract class ModuleDescriptor {
     private final DelegateDeclaration.Factory bindingDelegateDeclarationFactory;
     private final SubcomponentDeclaration.Factory subcomponentDeclarationFactory;
     private final OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory;
+    private final Map<TypeElement, ModuleDescriptor> cache = new HashMap<>();
 
     @Inject
     Factory(
@@ -120,6 +126,10 @@ abstract class ModuleDescriptor {
     }
 
     ModuleDescriptor create(TypeElement moduleElement) {
+      return reentrantComputeIfAbsent(cache, moduleElement, this::createUncached);
+    }
+
+    ModuleDescriptor createUncached(TypeElement moduleElement) {
       ImmutableSet.Builder<ContributionBinding> bindings = ImmutableSet.builder();
       ImmutableSet.Builder<DelegateDeclaration> delegates = ImmutableSet.builder();
       ImmutableSet.Builder<MultibindingDeclaration> multibindingDeclarations =
@@ -208,6 +218,11 @@ abstract class ModuleDescriptor {
           + classFileName(ClassName.get(MoreElements.asType(method.getEnclosingElement())))
           + "_"
           + LOWER_CAMEL.to(UPPER_CAMEL, method.getSimpleName().toString());
+    }
+
+    /** Releases references to any {@link ModuleDescriptor}s that this factory is retaining. */
+    void clearCache() {
+      cache.clear();
     }
   }
 }

@@ -411,6 +411,7 @@ final class BindingGraphFactory {
       ComponentDescriptor owningComponent = owningResolver.componentDescriptor;
       return !rootComponent().kind().isRoot()
           && binding.scope().isPresent()
+          && !binding.scope().get().isReusable()
           && !owningComponent.scopes().contains(binding.scope().get());
     }
 

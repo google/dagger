@@ -26,12 +26,12 @@ import static com.google.common.collect.Multimaps.asMap;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
@@ -456,7 +456,7 @@ final class ComponentValidator {
       ValidationReport.Builder<T> report, Iterable<TypeMirror> types) {
     validateTypesAreDeclared(report, types, "component dependency");
     for (TypeMirror type : types) {
-      if (getModuleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
+      if (moduleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
         report.addError(
             String.format("%s is a module, which cannot be a component dependency", type));
       }

@@ -19,11 +19,14 @@ package dagger.internal.codegen;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.consumingIterable;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
+import static dagger.internal.codegen.ModuleAnnotation.isModuleAnnotation;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
 import static javax.lang.model.util.ElementFilter.typesIn;
@@ -37,7 +40,6 @@ import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
-import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
@@ -108,8 +110,8 @@ final class ConfigurationAnnotations {
         .isPresent()) {
       return asAnnotationValues(getAnnotationValue(annotation, MODULES_ATTRIBUTE));
     }
-    if (ModuleKind.forAnnotatedElement(annotatedType).isPresent()) {
-      return asAnnotationValues(getAnnotationValue(annotation, INCLUDES_ATTRIBUTE));
+    if (isModuleAnnotation(annotation)) {
+      return moduleAnnotation(annotation).includesAsAnnotationValues();
     }
     throw new IllegalArgumentException(String.format("unsupported annotation: %s", annotation));
   }
@@ -128,29 +130,10 @@ final class ConfigurationAnnotations {
     return getTypeListValue(componentAnnotation, DEPENDENCIES_ATTRIBUTE);
   }
 
-  static Optional<AnnotationMirror> getModuleAnnotation(TypeElement moduleElement) {
-    return getAnyAnnotation(moduleElement, Module.class, ProducerModule.class);
-  }
-
-  private static final String INCLUDES_ATTRIBUTE = "includes";
-
-  static ImmutableList<TypeMirror> getModuleIncludes(AnnotationMirror moduleAnnotation) {
-    checkNotNull(moduleAnnotation);
-    return getTypeListValue(moduleAnnotation, INCLUDES_ATTRIBUTE);
-  }
-
-  private static final String SUBCOMPONENTS_ATTRIBUTE = "subcomponents";
-
-  static ImmutableList<TypeMirror> getModuleSubcomponents(AnnotationMirror moduleAnnotation) {
-    checkNotNull(moduleAnnotation);
-    return getTypeListValue(moduleAnnotation, SUBCOMPONENTS_ATTRIBUTE);
-  }
-
-  private static final String INJECTS_ATTRIBUTE = "injects";
-
+  // Dagger 1 support.
   static ImmutableList<TypeMirror> getModuleInjects(AnnotationMirror moduleAnnotation) {
     checkNotNull(moduleAnnotation);
-    return getTypeListValue(moduleAnnotation, INJECTS_ATTRIBUTE);
+    return getTypeListValue(moduleAnnotation, "injects");
   }
 
   /** Returns the first type that specifies this' nullability, or empty if none. */
@@ -178,26 +161,26 @@ final class ConfigurationAnnotations {
     Queue<TypeElement> moduleQueue = new ArrayDeque<>();
     Iterables.addAll(moduleQueue, seedModules);
     Set<TypeElement> moduleElements = Sets.newLinkedHashSet();
-    for (TypeElement moduleElement = moduleQueue.poll();
-        moduleElement != null;
-        moduleElement = moduleQueue.poll()) {
-      Optional<AnnotationMirror> moduleMirror = getModuleAnnotation(moduleElement);
-      if (moduleMirror.isPresent()) {
-        ImmutableSet.Builder<TypeElement> moduleDependenciesBuilder = ImmutableSet.builder();
-        moduleDependenciesBuilder.addAll(
-            MoreTypes.asTypeElements(getModuleIncludes(moduleMirror.get())));
-        // (note: we don't recurse on the parent class because we don't want the parent class as a
-        // root that the component depends on, and also because we want the dependencies rooted
-        // against this element, not the parent.)
-        addIncludesFromSuperclasses(types, moduleElement, moduleDependenciesBuilder, objectType);
-        ImmutableSet<TypeElement> moduleDependencies = moduleDependenciesBuilder.build();
-        moduleElements.add(moduleElement);
-        for (TypeElement dependencyType : moduleDependencies) {
-          if (!moduleElements.contains(dependencyType)) {
-            moduleQueue.add(dependencyType);
-          }
-        }
-      }
+    for (TypeElement moduleElement : consumingIterable(moduleQueue)) {
+      moduleAnnotation(moduleElement)
+          .ifPresent(
+              moduleAnnotation -> {
+                ImmutableSet.Builder<TypeElement> moduleDependenciesBuilder =
+                    ImmutableSet.builder();
+                moduleDependenciesBuilder.addAll(moduleAnnotation.includes());
+                // We don't recur on the parent class because we don't want the parent class as a
+                // root that the component depends on, and also because we want the dependencies
+                // rooted against this element, not the parent.
+                addIncludesFromSuperclasses(
+                    types, moduleElement, moduleDependenciesBuilder, objectType);
+                ImmutableSet<TypeElement> moduleDependencies = moduleDependenciesBuilder.build();
+                moduleElements.add(moduleElement);
+                for (TypeElement dependencyType : moduleDependencies) {
+                  if (!moduleElements.contains(dependencyType)) {
+                    moduleQueue.add(dependencyType);
+                  }
+                }
+              });
     }
     return ImmutableSet.copyOf(moduleElements);
   }
@@ -225,11 +208,8 @@ final class ConfigurationAnnotations {
     while (!types.isSameType(objectType, superclass)
         && superclass.getKind().equals(TypeKind.DECLARED)) {
       element = MoreElements.asType(types.asElement(superclass));
-      getModuleAnnotation(element)
-          .ifPresent(
-              moduleMirror -> {
-                builder.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleMirror)));
-              });
+      moduleAnnotation(element)
+          .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
       superclass = element.getSuperclass();
     }
   }

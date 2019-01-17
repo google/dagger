@@ -17,20 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
@@ -45,7 +42,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
@@ -74,13 +70,11 @@ import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import javax.lang.model.util.SimpleTypeVisitor6;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
@@ -245,35 +239,43 @@ final class ModuleValidator {
       final TypeElement subject,
       ModuleKind moduleKind,
       final ValidationReport.Builder<TypeElement> builder) {
-    final AnnotationMirror moduleAnnotation = moduleKind.getModuleAnnotation(subject);
     // TODO(ronshapiro): use validateTypesAreDeclared when it is checked in
-    for (TypeMirror subcomponentAttribute : getModuleSubcomponents(moduleAnnotation)) {
-      subcomponentAttribute.accept(
-          new SimpleTypeVisitor6<Void, Void>() {
-            @Override
-            protected Void defaultAction(TypeMirror e, Void aVoid) {
-              builder.addError(e + " is not a valid subcomponent type", subject, moduleAnnotation);
-              return null;
-            }
+    ModuleAnnotation moduleAnnotation = moduleAnnotation(moduleKind.getModuleAnnotation(subject));
+    for (AnnotationValue subcomponentAttribute :
+        moduleAnnotation.subcomponentsAsAnnotationValues()) {
+      asType(subcomponentAttribute)
+          .accept(
+              new SimpleTypeVisitor8<Void, Void>() {
+                @Override
+                protected Void defaultAction(TypeMirror e, Void aVoid) {
+                  builder.addError(
+                      e + " is not a valid subcomponent type",
+                      subject,
+                      moduleAnnotation.annotation(),
+                      subcomponentAttribute);
+                  return null;
+                }
 
-            @Override
-            public Void visitDeclared(DeclaredType declaredType, Void aVoid) {
-              TypeElement attributeType = MoreTypes.asTypeElement(declaredType);
-              if (isAnyAnnotationPresent(attributeType, SUBCOMPONENT_TYPES)) {
-                validateSubcomponentHasBuilder(attributeType, moduleAnnotation, builder);
-              } else {
-                builder.addError(
-                    isAnyAnnotationPresent(attributeType, SUBCOMPONENT_BUILDER_TYPES)
-                        ? moduleSubcomponentsIncludesBuilder(attributeType)
-                        : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
-                    subject,
-                    moduleAnnotation);
-              }
+                @Override
+                public Void visitDeclared(DeclaredType declaredType, Void aVoid) {
+                  TypeElement attributeType = MoreTypes.asTypeElement(declaredType);
+                  if (isAnyAnnotationPresent(attributeType, SUBCOMPONENT_TYPES)) {
+                    validateSubcomponentHasBuilder(
+                        attributeType, moduleAnnotation.annotation(), builder);
+                  } else {
+                    builder.addError(
+                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_BUILDER_TYPES)
+                            ? moduleSubcomponentsIncludesBuilder(attributeType)
+                            : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
+                        subject,
+                        moduleAnnotation.annotation(),
+                        subcomponentAttribute);
+                  }
 
-              return null;
-            }
-          },
-          null);
+                  return null;
+                }
+              },
+              null);
     }
   }
 
@@ -507,6 +509,8 @@ final class ModuleValidator {
       final TypeElement moduleElement,
       ModuleKind moduleKind,
       final ValidationReport.Builder<?> reportBuilder) {
+    ModuleAnnotation moduleAnnotation =
+        moduleAnnotation(getAnnotationMirror(moduleElement, moduleKind.annotation()).get());
     Visibility moduleVisibility = Visibility.ofElement(moduleElement);
     if (moduleVisibility.equals(PRIVATE)) {
       reportBuilder.addError("Modules cannot be private.", moduleElement);
@@ -523,12 +527,9 @@ final class ModuleValidator {
       case TOP_LEVEL:
         if (moduleVisibility.equals(PUBLIC)) {
           ImmutableSet<Element> nonPublicModules =
-              FluentIterable.from(
-                      getModuleIncludes(
-                          getAnnotationMirror(moduleElement, moduleKind.annotation()).get()))
-                  .transform(types::asElement)
+              moduleAnnotation.includes().stream()
                   .filter(element -> effectiveVisibilityOfElement(element).compareTo(PUBLIC) < 0)
-                  .toSet();
+                  .collect(toImmutableSet());
           if (!nonPublicModules.isEmpty()) {
             reportBuilder.addError(
                 String.format(
@@ -559,31 +560,27 @@ final class ModuleValidator {
 
   private void validateSelfCycles(
       TypeElement module, ValidationReport.Builder<TypeElement> builder) {
-    AnnotationMirror moduleAnnotation = getModuleAnnotation(module).get();
-    getAnnotationValue(moduleAnnotation, "includes")
-        .accept(
-            new SimpleAnnotationValueVisitor8<Void, AnnotationValue>() {
-              @Override
-              public Void visitType(TypeMirror includedModule, AnnotationValue value) {
-                if (MoreTypes.equivalence().equivalent(module.asType(), includedModule)) {
-                  Name moduleKind =
-                      moduleAnnotation.getAnnotationType().asElement().getSimpleName();
-                  builder.addError(
-                      String.format("@%s cannot include themselves.", moduleKind),
-                      module,
-                      moduleAnnotation,
-                      value);
-                }
-                return null;
-              }
-
-              @Override
-              public Void visitArray(List<? extends AnnotationValue> values, AnnotationValue p) {
-                values.stream().forEach(value -> value.accept(this, value));
-                return null;
-              }
-            },
-            null);
+    ModuleAnnotation moduleAnnotation = moduleAnnotation(module).get();
+    moduleAnnotation
+        .includesAsAnnotationValues()
+        .forEach(
+            value ->
+                value.accept(
+                    new SimpleAnnotationValueVisitor8<Void, Void>() {
+                      @Override
+                      public Void visitType(TypeMirror includedModule, Void aVoid) {
+                        if (MoreTypes.equivalence().equivalent(module.asType(), includedModule)) {
+                          String moduleKind = moduleAnnotation.annotationClass().getSimpleName();
+                          builder.addError(
+                              String.format("@%s cannot include themselves.", moduleKind),
+                              module,
+                              moduleAnnotation.annotation(),
+                              value);
+                        }
+                        return null;
+                      }
+                    },
+                    null));
   }
 
   private void validateModuleBindings(

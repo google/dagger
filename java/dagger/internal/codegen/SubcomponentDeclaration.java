@@ -17,17 +17,13 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -50,7 +46,8 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
    */
   abstract TypeElement subcomponentType();
 
-  abstract AnnotationMirror moduleAnnotation();
+  /** The module annotation. */
+  abstract ModuleAnnotation moduleAnnotation();
 
   static class Factory {
     private final KeyFactory keyFactory;
@@ -62,11 +59,10 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
 
     ImmutableSet<SubcomponentDeclaration> forModule(TypeElement module) {
       ImmutableSet.Builder<SubcomponentDeclaration> declarations = ImmutableSet.builder();
-      AnnotationMirror moduleAnnotation = getModuleAnnotation(module).get();
+      ModuleAnnotation moduleAnnotation = ModuleAnnotation.moduleAnnotation(module).get();
       Element subcomponentAttribute =
-          getAnnotationElementAndValue(moduleAnnotation, "subcomponents").getKey();
-      for (TypeElement subcomponent :
-          MoreTypes.asTypeElements(getModuleSubcomponents(moduleAnnotation))) {
+          getAnnotationElementAndValue(moduleAnnotation.annotation(), "subcomponents").getKey();
+      for (TypeElement subcomponent : moduleAnnotation.subcomponents()) {
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
                 Optional.of(subcomponentAttribute),

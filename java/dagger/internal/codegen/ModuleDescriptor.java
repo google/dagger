@@ -22,10 +22,9 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.transform;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleIncludes;
 import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.SourceFiles.classFileName;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
@@ -47,10 +46,8 @@ import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -181,11 +178,12 @@ abstract class ModuleDescriptor {
           collectIncludedModules(includedModules, superclassElement);
         }
       }
-      Optional<AnnotationMirror> moduleAnnotation = getModuleAnnotation(moduleElement);
-      if (moduleAnnotation.isPresent()) {
-        includedModules.addAll(MoreTypes.asTypeElements(getModuleIncludes(moduleAnnotation.get())));
-        includedModules.addAll(implicitlyIncludedModules(moduleElement));
-      }
+      moduleAnnotation(moduleElement)
+          .ifPresent(
+              moduleAnnotation -> {
+                includedModules.addAll(moduleAnnotation.includes());
+                includedModules.addAll(implicitlyIncludedModules(moduleElement));
+              });
       return includedModules;
     }
 

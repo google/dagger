@@ -21,6 +21,7 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -122,7 +123,7 @@ abstract class ComponentCreatorDescriptor {
           request.key(), request.isNullable(), method.getSimpleName().toString());
     }
 
-    return ConfigurationAnnotations.getModuleAnnotation(asTypeElement(type)).isPresent()
+    return moduleAnnotation(asTypeElement(type)).isPresent()
         ? ComponentRequirement.forModule(type)
         : ComponentRequirement.forDependency(type);
   }

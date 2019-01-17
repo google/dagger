@@ -18,9 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentOrSubcomponentAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static java.util.Arrays.stream;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -49,9 +49,6 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<Execu
           .map(ComponentKind::annotation)
           .collect(toImmutableSet());
 
-  private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
-      stream(ModuleKind.values()).map(ModuleKind::annotation).collect(toImmutableSet());
-
   private final Messager messager;
 
   @Inject
@@ -68,35 +65,37 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<Execu
   @Override
   protected void process(
       ExecutableElement method, ImmutableSet<Class<? extends Annotation>> annotations) {
-      ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(method);
-      if (!method.getModifiers().contains(ABSTRACT)) {
-        report.addError("@BindsInstance methods must be abstract");
+    ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(method);
+    if (!method.getModifiers().contains(ABSTRACT)) {
+      report.addError("@BindsInstance methods must be abstract");
+    }
+    if (method.getParameters().size() != 1) {
+      report.addError(
+          "@BindsInstance methods should have exactly one parameter for the bound type");
+    } else {
+      VariableElement parameter = getOnlyElement(method.getParameters());
+      if (FrameworkTypes.isFrameworkType(parameter.asType())) {
+        report.addError("@BindsInstance parameters may not be framework types", parameter);
       }
-      if (method.getParameters().size() != 1) {
-        report.addError(
-            "@BindsInstance methods should have exactly one parameter for the bound type");
-      } else {
-        VariableElement parameter = getOnlyElement(method.getParameters());
-        if (FrameworkTypes.isFrameworkType(parameter.asType())) {
-          report.addError("@BindsInstance parameters may not be framework types", parameter);
-        }
-      }
-      TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
-      if (isAnyAnnotationPresent(enclosingType, MODULE_ANNOTATIONS)) {
-        report.addError(
-            String.format(
-                "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?",
-                simpleName(getModuleAnnotation(enclosingType).get())));
-      }
-      if (isAnyAnnotationPresent(enclosingType, COMPONENT_ANNOTATIONS)) {
-        AnnotationMirror componentAnnotation =
-            getComponentOrSubcomponentAnnotation(enclosingType).get();
-        report.addError(
-            String.format(
-                "@BindsInstance methods should not be included in @%1$ss. "
-                    + "Did you mean to put it in a @%1$s.Builder?",
-                simpleName(componentAnnotation)));
-      }
-      report.build().printMessagesTo(messager);
+    }
+    TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
+    moduleAnnotation(enclosingType)
+        .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
+    if (isAnyAnnotationPresent(enclosingType, COMPONENT_ANNOTATIONS)) {
+      AnnotationMirror componentAnnotation =
+          getComponentOrSubcomponentAnnotation(enclosingType).get();
+      report.addError(
+          String.format(
+              "@BindsInstance methods should not be included in @%1$ss. "
+                  + "Did you mean to put it in a @%1$s.Builder?",
+              simpleName(componentAnnotation)));
+    }
+    report.build().printMessagesTo(messager);
+  }
+
+  private static String didYouMeanBinds(ModuleAnnotation moduleAnnotation) {
+    return String.format(
+        "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?",
+        moduleAnnotation.annotationClass().getSimpleName());
   }
 }

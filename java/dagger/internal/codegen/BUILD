@@ -94,6 +94,7 @@ java_library(
         "Keys.java",
         "MapKeyAccessibility.java",
         "MapType.java",
+        "ModuleAnnotation.java",
         "MoreAnnotationMirrors.java",
         "MoreAnnotationValues.java",
         "MultibindingAnnotations.java",

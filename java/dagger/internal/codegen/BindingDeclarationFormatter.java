@@ -17,9 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModuleSubcomponents;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
-import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
@@ -27,11 +25,10 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Formats a {@link BindingDeclaration} into a {@link String} suitable for use in error messages.
@@ -94,13 +91,9 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
   }
 
   private String formatSubcomponentDeclaration(SubcomponentDeclaration subcomponentDeclaration) {
-    ImmutableList<TypeMirror> moduleSubcomponents =
-        getModuleSubcomponents(subcomponentDeclaration.moduleAnnotation());
-    int index =
-        Iterables.indexOf(
-            moduleSubcomponents,
-            MoreTypes.equivalence()
-                .equivalentTo(subcomponentDeclaration.subcomponentType().asType()));
+    ImmutableList<TypeElement> moduleSubcomponents =
+        subcomponentDeclaration.moduleAnnotation().subcomponents();
+    int index = moduleSubcomponents.indexOf(subcomponentDeclaration.subcomponentType());
     StringBuilder annotationValue = new StringBuilder();
     if (moduleSubcomponents.size() != 1) {
       annotationValue.append("{");
@@ -116,7 +109,7 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
 
     return String.format(
         "@%s(subcomponents = %s) for %s",
-        simpleName(subcomponentDeclaration.moduleAnnotation()),
+        subcomponentDeclaration.moduleAnnotation().annotationClass().getSimpleName(),
         annotationValue,
         subcomponentDeclaration.contributingModule().get());
   }

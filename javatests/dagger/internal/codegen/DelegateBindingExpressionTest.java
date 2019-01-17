@@ -428,7 +428,7 @@ public class DelegateBindingExpressionTest {
                     "      synchronized (local) {",
                     "        local = subtype;",
                     "        if (local instanceof MemoizedSentinel) {",
-                    "          local = Subtype_Factory.newSubtype();",
+                    "          local = Subtype_Factory.newInstance();",
                     "          subtype = DoubleCheck.reentrantCheck(subtype, local);",
                     "        }",
                     "      }",
@@ -521,7 +521,7 @@ public class DelegateBindingExpressionTest {
                     "  @Override",
                     "  public UsesSupertype usesSupertype() {",
                     //   can't cast the provider.get() to a type that's not accessible
-                    "    return UsesSupertype_Factory.newUsesSupertype(subtypeProvider.get());",
+                    "    return UsesSupertype_Factory.newInstance(subtypeProvider.get());",
                     "  }",
                     "}")
                 .addLinesIn(
@@ -534,7 +534,7 @@ public class DelegateBindingExpressionTest {
                     "      synchronized (local) {",
                     "        local = subtype;",
                     "        if (local instanceof MemoizedSentinel) {",
-                    "          local = Subtype_Factory.newSubtype();",
+                    "          local = Subtype_Factory.newInstance();",
                     "          subtype = DoubleCheck.reentrantCheck(subtype, local);",
                     "        }",
                     "      }",
@@ -544,7 +544,7 @@ public class DelegateBindingExpressionTest {
                     "",
                     "  @Override",
                     "  public UsesSupertype usesSupertype() {",
-                    "    return UsesSupertype_Factory.newUsesSupertype(getSubtype());",
+                    "    return UsesSupertype_Factory.newInstance(getSubtype());",
                     "  }")
                 .build());
   }
@@ -645,7 +645,7 @@ public class DelegateBindingExpressionTest {
                     "    public T get() {",
                     "      switch (id) {",
                     "        case 0:",
-                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "            return (T) TestModule_ProvideStringFactory.provideString();",
                     "        default:",
                     "            throw new AssertionError(id);",
                     "      }",
@@ -746,7 +746,7 @@ public class DelegateBindingExpressionTest {
                     "    public T get() {",
                     "      switch (id) {",
                     "        case 0:",
-                    "            return (T) TestModule_ProvideStringFactory.proxyProvideString();",
+                    "            return (T) TestModule_ProvideStringFactory.provideString();",
                     "        default:",
                     "            throw new AssertionError(id);",
                     "      }",
@@ -843,7 +843,7 @@ public class DelegateBindingExpressionTest {
                     "    @Override",
                     "    public T get() {",
                     "      switch (id) {",
-                    "        case 0: return (T) Subtype_Factory.newSubtype();",
+                    "        case 0: return (T) Subtype_Factory.newInstance();",
                     "        default: throw new AssertionError(id);",
                     "      }",
                     "    }",
@@ -932,7 +932,7 @@ public class DelegateBindingExpressionTest {
                     "  private String getString() {",
                     "    Object local = string;",
                     "    if (local == null) {",
-                    "      local = TestModule_ProvideStringFactory.proxyProvideString();",
+                    "      local = TestModule_ProvideStringFactory.provideString();",
                     "      string = (String) local;",
                     "    }",
                     "    return (String) local;",

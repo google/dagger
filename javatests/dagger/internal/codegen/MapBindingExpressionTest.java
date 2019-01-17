@@ -278,7 +278,7 @@ public class MapBindingExpressionTest {
             "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
-            "    return UsesInaccessible_Factory.newUsesInaccessible(",
+            "    return UsesInaccessible_Factory.newInstance(",
             "        (Map) Collections.emptyMap());",
             "  }",
             "}");
@@ -346,7 +346,7 @@ public class MapBindingExpressionTest {
             "    public Map<String, Object> objectMap() {",
             "      return Collections.<String, Object>singletonMap(",
             "          \"parent key\",",
-            "          ParentModule_ParentKeyObjectFactory.proxyParentKeyObject(",
+            "          ParentModule_ParentKeyObjectFactory.parentKeyObject(",
             "              DaggerParent.this.parentModule));",
             "    }",
             "  }",

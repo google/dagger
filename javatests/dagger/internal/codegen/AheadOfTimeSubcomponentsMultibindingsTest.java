@@ -86,7 +86,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Set<InLeaf> contributionsInLeaf() {",
             "    return ImmutableSet.<InLeaf>of(",
-            "        LeafModule_ProvideInLeafFactory.proxyProvideInLeaf());",
+            "        LeafModule_ProvideInLeafFactory.provideInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -182,7 +182,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public Set<InAncestor> contributionsInAncestor() {",
             "      return ImmutableSet.<InAncestor>copyOf(",
-            "          AncestorModule_ProvideInAncestorsFactory.proxyProvideInAncestors());",
+            "          AncestorModule_ProvideInAncestorsFactory.provideInAncestors());",
             "    }",
             "  }",
             "}");
@@ -249,8 +249,8 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Set<InEachSubcomponent> contributionsInEachSubcomponent() {",
             "    return ImmutableSet.<InEachSubcomponent>of(",
-            "        LeafModule_ProvideInLeafFactory.proxyProvideInLeaf(),",
-            "        LeafModule_ProvideAnotherInLeafFactory.proxyProvideAnotherInLeaf());",
+            "        LeafModule_ProvideInLeafFactory.provideInLeaf(),",
+            "        LeafModule_ProvideAnotherInLeafFactory.provideAnotherInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -310,7 +310,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public Set<InEachSubcomponent> contributionsInEachSubcomponent() {",
             "      return ImmutableSet.<InEachSubcomponent>builderWithExpectedSize(3)",
-            "          .addAll(AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor())",
+            "          .addAll(AncestorModule_ProvideInAncestorFactory.provideInAncestor())",
             "          .addAll(super.contributionsInEachSubcomponent())",
             "          .build();",
             "    }",
@@ -379,8 +379,8 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Set<InLeafAndGrandAncestor> contributionsInLeafAndGrandAncestor() {",
             "    return ImmutableSet.<InLeafAndGrandAncestor>of(",
-            "        LeafModule_ProvideInLeafFactory.proxyProvideInLeaf(),",
-            "        LeafModule_ProvideAnotherInLeafFactory.proxyProvideAnotherInLeaf());",
+            "        LeafModule_ProvideInLeafFactory.provideInLeaf(),",
+            "        LeafModule_ProvideAnotherInLeafFactory.provideAnotherInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -477,7 +477,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    public Set<InLeafAndGrandAncestor> contributionsInLeafAndGrandAncestor() {",
             "      return ImmutableSet.<InLeafAndGrandAncestor>builderWithExpectedSize(3)",
             "          .addAll(GrandAncestorModule_ProvideInGrandAncestorFactory",
-            "              .proxyProvideInGrandAncestor())",
+            "              .provideInGrandAncestor())",
             "          .addAll(super.contributionsInLeafAndGrandAncestor())",
             "          .build();",
             "    }",
@@ -547,13 +547,13 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public RequresInAllSubcomponentsSet requiresNonComponentMethod() {",
             "    return LeafModule_ProvidesRequresInAllSubcomponentsSetFactory",
-            "        .proxyProvidesRequresInAllSubcomponentsSet(getSetOfInAllSubcomponents());",
+            "        .providesRequresInAllSubcomponentsSet(getSetOfInAllSubcomponents());",
             "  }",
             "",
             "  protected Set getSetOfInAllSubcomponents() {",
             "    return ImmutableSet.<InAllSubcomponents>of(",
             "        LeafModule_ProvideInAllSubcomponentsFactory",
-            "            .proxyProvideInAllSubcomponents());",
+            "            .provideInAllSubcomponents());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -611,7 +611,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    protected Set getSetOfInAllSubcomponents() {",
             "      return ImmutableSet.<InAllSubcomponents>builderWithExpectedSize(2)",
             "          .add(AncestorModule_ProvideInAllSubcomponentsFactory",
-            "              .proxyProvideInAllSubcomponents())",
+            "              .provideInAllSubcomponents())",
             "          .addAll(super.getSetOfInAllSubcomponents())",
             "          .build();",
             "    }",
@@ -710,12 +710,12 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "",
             "  private RequiresInAncestorSet getRequiresInAncestorSet() {",
             "    return AncestorModule_ProvideRequiresInAncestorSetFactory",
-            "        .proxyProvideRequiresInAncestorSet(getSetOfInAncestor());",
+            "        .provideRequiresInAncestorSet(getSetOfInAncestor());",
             "  }",
             "",
             "  protected Set getSetOfInAncestor() {",
             "    return ImmutableSet.<InAncestor>of(",
-            "        AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor());",
+            "        AncestorModule_ProvideInAncestorFactory.provideInAncestor());",
             "  }",
             "",
             "  protected abstract class LeafImpl extends DaggerLeaf {",
@@ -788,7 +788,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Set<Multibound> instance() {",
             "    return ImmutableSet.<Multibound>of(",
-            "        LeafModule_ContributionFactory.proxyContribution());",
+            "        LeafModule_ContributionFactory.contribution());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -868,7 +868,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public final MissingInLeaf_WillDependOnFrameworkInstance ",
             "        willDependOnFrameworkInstance() {",
-            "      return AncestorModule_ProvidedInAncestorFactory.proxyProvidedInAncestor(",
+            "      return AncestorModule_ProvidedInAncestorFactory.providedInAncestor(",
             "          getSetOfMultiboundProvider());",
             "    }",
             "  }",
@@ -1098,7 +1098,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  public Map<String, InLeaf> contributionsInLeaf() {",
             "    return ImmutableMap.<String, InLeaf>of(",
             "        \"leafmodule\",",
-            "        LeafModule_ProvideInLeafFactory.proxyProvideInLeaf());",
+            "        LeafModule_ProvideInLeafFactory.provideInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -1194,7 +1194,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public Map<String, InAncestor> contributionsInAncestor() {",
             "      return ImmutableMap.<String, InAncestor>of(\"ancestormodule\",",
-            "          AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor());",
+            "          AncestorModule_ProvideInAncestorFactory.provideInAncestor());",
             "    }",
             "  }",
             "}");
@@ -1258,7 +1258,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Map<String, InEachSubcomponent> contributionsInEachSubcomponent() {",
             "    return ImmutableMap.<String, InEachSubcomponent>of(",
-            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.proxyProvideInLeaf());",
+            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.provideInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -1319,7 +1319,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    public Map<String, InEachSubcomponent> contributionsInEachSubcomponent() {",
             "      return ImmutableMap.<String, InEachSubcomponent>builderWithExpectedSize(2)",
             "          .put(\"ancestormodule\",",
-            "              AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor())",
+            "              AncestorModule_ProvideInAncestorFactory.provideInAncestor())",
             "          .putAll(super.contributionsInEachSubcomponent())",
             "          .build();",
             "    }",
@@ -1549,7 +1549,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Map<String, InLeafAndGrandAncestor> contributionsInLeafAndGrandAncestor() {",
             "    return ImmutableMap.<String, InLeafAndGrandAncestor>of(",
-            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.proxyProvideInLeaf());",
+            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.provideInLeaf());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -1650,7 +1650,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "            ImmutableMap.<String, InLeafAndGrandAncestor>builderWithExpectedSize(2)",
             "                .put(\"grandancestormodule\",",
             "                    GrandAncestorModule_ProvideInGrandAncestorFactory",
-            "                        .proxyProvideInGrandAncestor())",
+            "                        .provideInGrandAncestor())",
             "                .putAll(super.contributionsInLeafAndGrandAncestor())",
             "                .build();",
             "      }",
@@ -1717,7 +1717,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Map<String, InEachSubcomponent> contributionsInEachSubcomponent() {",
             "    return Collections.<String, InEachSubcomponent>singletonMap(",
-            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.proxyProvideInLeaf());",
+            "        \"leafmodule\", LeafModule_ProvideInLeafFactory.provideInLeaf());",
             "  }",
             "}");
     Compilation compilation = compileWithoutGuava(filesToCompile.build());
@@ -1778,7 +1778,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    public Map<String, InEachSubcomponent> contributionsInEachSubcomponent() {",
             "      return MapBuilder.<String, InEachSubcomponent>newMapBuilder(2)",
             "          .put(\"ancestormodule\",",
-            "              AncestorModule_ProvideInAncestorFactory.proxyProvideInAncestor())",
+            "              AncestorModule_ProvideInAncestorFactory.provideInAncestor())",
             "          .putAll(super.contributionsInEachSubcomponent())",
             "          .build();",
             "    }",
@@ -1847,7 +1847,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "  @Override",
             "  public Map<Integer, Multibound> instance() {",
             "    return ImmutableMap.<Integer, Multibound>of(",
-            "        111, LeafModule_ContributionFactory.proxyContribution());",
+            "        111, LeafModule_ContributionFactory.contribution());",
             "  }",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -1927,7 +1927,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public final MissingInLeaf_WillDependOnFrameworkInstance ",
             "        willDependOnFrameworkInstance() {",
-            "      return AncestorModule_ProvidedInAncestorFactory.proxyProvidedInAncestor(",
+            "      return AncestorModule_ProvidedInAncestorFactory.providedInAncestor(",
             "          getMapOfIntegerAndMultiboundProvider());",
             "    }",
             "  }",
@@ -2042,7 +2042,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public Set<Multibound> set() {",
             "      return ImmutableSet.<Multibound>of(",
-            "          AncestorModule_FromAncestorFactory.proxyFromAncestor());",
+            "          AncestorModule_FromAncestorFactory.fromAncestor());",
             "    }",
             "  }",
             "}");
@@ -2291,7 +2291,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    @Override",
             "    public Map<Integer, Multibound> map() {",
             "      return ImmutableMap.<Integer, Multibound>of(",
-            "          111, AncestorModule_FromAncestorFactory.proxyFromAncestor());",
+            "          111, AncestorModule_FromAncestorFactory.fromAncestor());",
             "    }",
             "  }",
             "}");
@@ -2587,7 +2587,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "      synchronized (local) {",
             "        local = setContribution;",
             "        if (local instanceof MemoizedSentinel) {",
-            "          local = MultibindingModule_SetContributionFactory.proxySetContribution();",
+            "          local = MultibindingModule_SetContributionFactory.setContribution();",
             "          setContribution = DoubleCheck.reentrantCheck(setContribution, local);",
             "        }",
             "      }",
@@ -2601,7 +2601,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "      synchronized (local) {",
             "        local = mapContribution;",
             "        if (local instanceof MemoizedSentinel) {",
-            "          local = MultibindingModule_MapContributionFactory.proxyMapContribution();",
+            "          local = MultibindingModule_MapContributionFactory.mapContribution();",
             "          mapContribution = DoubleCheck.reentrantCheck(mapContribution, local);",
             "        }",
             "      }",

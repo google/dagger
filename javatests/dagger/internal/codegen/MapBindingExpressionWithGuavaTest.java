@@ -406,7 +406,7 @@ public class MapBindingExpressionWithGuavaTest {
             "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
-            "    return UsesInaccessible_Factory.newUsesInaccessible((Map) ImmutableMap.of());",
+            "    return UsesInaccessible_Factory.newInstance((Map) ImmutableMap.of());",
             "  }",
             "}");
     Compilation compilation =
@@ -474,7 +474,7 @@ public class MapBindingExpressionWithGuavaTest {
             "    public Map<String, Object> objectMap() {",
             "      return ImmutableMap.<String, Object>of(",
             "          \"parent key\",",
-            "          ParentModule_ParentKeyObjectFactory.proxyParentKeyObject(",
+            "          ParentModule_ParentKeyObjectFactory.parentKeyObject(",
             "              DaggerParent.this.parentModule));",
             "    }",
             "  }",

@@ -92,6 +92,11 @@ final class InjectionMethods {
    * </code></pre>
    */
   static final class ProvisionMethod {
+    /**
+     * Names of methods that are already defined in factories and shouldn't be used for the proxy
+     * method name.
+     */
+    private static final ImmutableSet<String> BANNED_PROXY_NAMES = ImmutableSet.of("get", "create");
 
     /**
      * Returns a method that invokes the binding's {@linkplain ProvisionBinding#bindingElement()
@@ -200,9 +205,12 @@ final class InjectionMethods {
     private static String methodName(ExecutableElement method) {
       switch (method.getKind()) {
         case CONSTRUCTOR:
-          return "new" + method.getEnclosingElement().getSimpleName();
+          return "newInstance";
         case METHOD:
-          return "proxy" + LOWER_CAMEL.to(UPPER_CAMEL, method.getSimpleName().toString());
+          String methodName = method.getSimpleName().toString();
+          return BANNED_PROXY_NAMES.contains(methodName)
+              ? "proxy" + LOWER_CAMEL.to(UPPER_CAMEL, methodName)
+              : methodName;
         default:
           throw new AssertionError(method);
       }

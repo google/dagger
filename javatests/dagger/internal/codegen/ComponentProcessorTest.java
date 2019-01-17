@@ -515,7 +515,7 @@ public class ComponentProcessorTest {
                 "  }",
                 "",
                 "  private B getB() {",
-                "    return TestModule_BFactory.proxyB(testModule, new C());",
+                "    return TestModule_BFactory.b(testModule, new C());",
                 "  }",
                 "",
                 "  @Override",
@@ -613,7 +613,7 @@ public class ComponentProcessorTest {
                 GENERATED_ANNOTATION,
                 "public final class DaggerTestComponent implements TestComponent {",
                 "  private B getB() {",
-                "    return TestModule_BFactory.proxyB(new C());",
+                "    return TestModule_BFactory.b(new C());",
                 "  }",
                 "",
                 "  @Override",
@@ -908,7 +908,7 @@ public class ComponentProcessorTest {
             "",
             "  @Override",
             "  public String notSubcomponent() {",
-            "    return ParentModule_NotSubcomponentFactory.proxyNotSubcomponent();",
+            "    return ParentModule_NotSubcomponentFactory.notSubcomponent();",
             "  }",
             "",
             "  public static final class Builder {",
@@ -1134,7 +1134,7 @@ public class ComponentProcessorTest {
                 "  @Override",
                 "  public SomeInjectedType createAndInject() {",
                 "    return injectSomeInjectedType(",
-                "        SomeInjectedType_Factory.newSomeInjectedType());",
+                "        SomeInjectedType_Factory.newInstance());",
                 "  }",
                 "",
                 "  @CanIgnoreReturnValue",
@@ -1357,12 +1357,12 @@ public class ComponentProcessorTest {
             "",
             "  @Override",
             "  public A a() {",
-            "    return TestModule_AFactory.proxyA(testModule);",
+            "    return TestModule_AFactory.a(testModule);",
             "  }",
             "",
             "  @Override",
             "  public other.test.A otherA() {",
-            "    return other.test.TestModule_AFactory.proxyA(testModule2);",
+            "    return other.test.TestModule_AFactory.a(testModule2);",
             "  }",
             "",
             "  public static final class Builder {",
@@ -2230,10 +2230,10 @@ public class ComponentProcessorTest {
                 "    implements Factory<String> {",
                 "  @Override",
                 "  public String get() {",
-                "    return proxyNonNullableString();",
+                "    return nonNullableString();",
                 "  }",
                 "",
-                "  public static String proxyNonNullableString() {",
+                "  public static String nonNullableString() {",
                 "    return Preconditions.checkNotNull(",
                 "        TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + ");",
                 "  }",
@@ -2249,7 +2249,7 @@ public class ComponentProcessorTest {
                 "public final class DaggerTestComponent implements TestComponent {",
                 "  @Override",
                 "  public String nonNullableString() {",
-                "    return TestModule_NonNullableStringFactory.proxyNonNullableString());",
+                "    return TestModule_NonNullableStringFactory.nonNullableString());",
                 "  }",
                 "",
                 "  @Override",
@@ -2260,7 +2260,7 @@ public class ComponentProcessorTest {
                 "  @CanIgnoreReturnValue",
                 "  private InjectsMember injectInjectsMember(InjectsMember instance) {",
                 "    InjectsMember_MembersInjector.injectMember(instance,",
-                "        TestModule_NonNullableStringFactory.proxyNonNullableString());",
+                "        TestModule_NonNullableStringFactory.nonNullableString());",
                 "    return instance;",
                 "  }",
                 "}")
@@ -2322,10 +2322,10 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public Integer get() {",
-                "    return proxyPrimitiveInteger();",
+                "    return primitiveInteger();",
                 "  }",
                 "",
-                "  public static int proxyPrimitiveInteger() {",
+                "  public static int primitiveInteger() {",
                 "    return TestModule.primitiveInteger();",
                 "  }",
                 "}"));
@@ -2415,7 +2415,7 @@ public class ComponentProcessorTest {
             GENERATED_ANNOTATION,
             "public final class DaggerParent implements Parent {",
             "  private String getString() {",
-            "    return TestModule_StringFactory.proxyString(numberProvider.get());",
+            "    return TestModule_StringFactory.string(numberProvider.get());",
             "  }",
             "}");
 
@@ -2557,7 +2557,7 @@ public class ComponentProcessorTest {
             // that if the qualifier type hasn't been generated, a duplicate binding error will be
             // reported, since the annotation won't be recognized as a qualifier and instead as an
             // ordinary annotation.
-            "    return new Injected(TestModule_QualifiedFactory.proxyQualified());",
+            "    return new Injected(TestModule_QualifiedFactory.qualified());",
             "  }",
             "}");
 
@@ -2629,7 +2629,7 @@ public class ComponentProcessorTest {
             // Ensure that the unqualified @Provides method is used. It's also probably more likely
             // if the qualifier hasn't been generated, a duplicate binding exception will be thrown
             // since the annotation won't be considered a qualifier
-            "    return TestModule_UnqualifiedFactory.proxyUnqualified();",
+            "    return TestModule_UnqualifiedFactory.unqualified();",
             "  }",
             "}");
 

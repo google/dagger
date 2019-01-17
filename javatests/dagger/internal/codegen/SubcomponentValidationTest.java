@@ -483,7 +483,7 @@ public class SubcomponentValidationTest {
                 "      synchronized (local) {",
                 "        local = dep1;",
                 "        if (local instanceof MemoizedSentinel) {",
-                "          local = injectDep1(Dep1_Factory.newDep1());",
+                "          local = injectDep1(Dep1_Factory.newInstance());",
                 "          dep1 = DoubleCheck.reentrantCheck(dep1, local);",
                 "        }",
                 "      }",
@@ -504,7 +504,7 @@ public class SubcomponentValidationTest {
                 "      synchronized (local) {",
                 "        local = dep2;",
                 "        if (local instanceof MemoizedSentinel) {",
-                "          local = injectDep2(Dep2_Factory.newDep2());",
+                "          local = injectDep2(Dep2_Factory.newInstance());",
                 "          dep2 = DoubleCheck.reentrantCheck(dep2, local);",
                 "        }",
                 "      }",
@@ -556,7 +556,7 @@ public class SubcomponentValidationTest {
             .addLines(
                 "    private A getA() {",
                 "      return injectA(",
-                "          A_Factory.newA(",
+                "          A_Factory.newInstance(",
                 "              getNeedsDep1(),")
             .addLinesIn(
                 DEFAULT_MODE,
@@ -571,7 +571,7 @@ public class SubcomponentValidationTest {
                 "",
                 "    @Override",
                 "    public Object getObject() {",
-                "      return ChildModule_ProvideObjectFactory.proxyProvideObject(",
+                "      return ChildModule_ProvideObjectFactory.provideObject(",
                 "          childModule, getA());",
                 "    }",
                 "",
@@ -612,7 +612,7 @@ public class SubcomponentValidationTest {
             "",
             "@Component",
             "interface ParentComponent {",
-            "  Foo.Sub newFooSubcomponent();",
+            "  Foo.Sub newInstanceSubcomponent();",
             "  NoConflict newNoConflictSubcomponent();",
             "}");
     JavaFileObject foo =
@@ -666,7 +666,7 @@ public class SubcomponentValidationTest {
             GENERATED_ANNOTATION,
             "public final class DaggerParentComponent implements ParentComponent {",
             "  @Override",
-            "  public Foo.Sub newFooSubcomponent() {",
+            "  public Foo.Sub newInstanceSubcomponent() {",
             "    return new F_SubImpl();",
             "  }",
             "",
@@ -927,7 +927,7 @@ public class SubcomponentValidationTest {
             "",
             "@Component",
             "interface C {",
-            "  test.Foo.C newFooC();",
+            "  test.Foo.C newInstanceC();",
             "}");
     JavaFileObject subcomponentWithSameSimpleNameAsParent =
         JavaFileObjects.forSourceLines(
@@ -948,7 +948,7 @@ public class SubcomponentValidationTest {
             GENERATED_ANNOTATION,
             "public final class DaggerC implements C {",
             "  @Override",
-            "  public Foo.C newFooC() {",
+            "  public Foo.C newInstanceC() {",
             "    return new F_CImpl();",
             "  }",
             "",

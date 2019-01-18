@@ -5172,6 +5172,58 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generated);
   }
 
+  @Test
+  public void packagePrivate_derivedFromFrameworkInstance_ComponentMethod() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PackagePrivate",
+            "package test;",
+            "",
+            "import dagger.Reusable;",
+            "import javax.inject.Inject;",
+            "",
+            "@Reusable", // Use @Reusable to force a framework field
+            "class PackagePrivate {",
+            "  @Inject PackagePrivate() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  PackagePrivate packagePrivate();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  private Provider<PackagePrivate> packagePrivateProvider;",
+            "",
+            "  @Override",
+            "  public PackagePrivate packagePrivate() {",
+            "    return (PackagePrivate) getPackagePrivateProvider().get();",
+            "  }",
+            "",
+            "  protected Provider getPackagePrivateProvider() {",
+            "    return packagePrivateProvider;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+  }
+
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
   private void createAncillaryClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {

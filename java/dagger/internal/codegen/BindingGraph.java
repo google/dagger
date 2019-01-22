@@ -202,14 +202,14 @@ abstract class BindingGraph {
         .map(module -> ComponentRequirement.forModule(module.asType()))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {
-      factoryMethodParameters().keySet().forEach(requirements::add);
+      requirements.addAll(factoryMethodParameters().keySet());
     }
     requirements.addAll(componentDescriptor().dependencies());
     componentDescriptor()
         .creatorDescriptor()
         .ifPresent(
             creatorDescriptor ->
-                creatorDescriptor.boundInstanceRequirements().forEach(requirements::add));
+                requirements.addAll(creatorDescriptor.boundInstanceRequirements()));
     return requirements.build();
   }
 

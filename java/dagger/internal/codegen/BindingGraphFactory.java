@@ -78,6 +78,7 @@ final class BindingGraphFactory {
   private final BindingFactory bindingFactory;
   private final CompilerOptions compilerOptions;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
+  private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
 
   @Inject
   BindingGraphFactory(
@@ -277,6 +278,11 @@ final class BindingGraphFactory {
     return ImmutableSetMultimap.copyOf(Multimaps.index(declarations, BindingDeclaration::key));
   }
 
+  /** Releases cached references that this factory is retaining during this processing round. */
+  void clearCache() {
+    keysMatchingRequestCache.clear();
+  }
+
   private final class Resolver {
     final Optional<Resolver> parentResolver;
     final ComponentDescriptor componentDescriptor;
@@ -443,7 +449,28 @@ final class BindingGraphFactory {
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }
 
+    /**
+     * Profiling has determined that computing the keys matching {@code requestKey} has measurable
+     * performance impact. It is called repeatedly (at least 3 times per key resolved per {@link
+     * BindingGraph}. {@code javac}'s name-checking performance seems suboptimal (converting byte
+     * strings to Strings repeatedly), and the matching keys creations relies on that. This also
+     * ensures that the resulting keys have their hash codes cached on successive calls to this
+     * method.
+     *
+     * <p>This caching may become obsolete if:
+     *
+     * <ul>
+     *   <li>We decide to intern all {@link Key} instances
+     *   <li>We fix javac's name-checking peformance (though we may want to keep this for older
+     *       javac users)
+     * </ul>
+     */
     private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
+      return keysMatchingRequestCache.computeIfAbsent(
+          requestKey, this::keysMatchingRequestUncached);
+    }
+
+    private ImmutableSet<Key> keysMatchingRequestUncached(Key requestKey) {
       ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
       keys.add(requestKey);
       keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);

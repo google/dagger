@@ -55,7 +55,10 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
   @Inject DaggerStatistics daggerStatistics;
+
+  // TODO(ronshapiro): inject a multibinding for all instances that retain caches?
   @Inject ModuleDescriptor.Factory moduleDescriptorFactory;
+  @Inject BindingGraphFactory bindingGraphFactory;
 
   public ComponentProcessor() {
     this.testingPlugins = Optional.empty();
@@ -190,5 +193,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
       }
     }
     moduleDescriptorFactory.clearCache();
+    bindingGraphFactory.clearCache();
   }
 }

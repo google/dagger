@@ -139,6 +139,7 @@ java_library(
         "ChildFactoryMethodEdgeImpl.java",
         "ComponentCreatorDescriptor.java",
         "ComponentDescriptor.java",
+        "ComponentDescriptorFactory.java",
         "ComponentKind.java",
         "ComponentNodeImpl.java",
         "ComponentRequirement.java",

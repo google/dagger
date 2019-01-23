@@ -49,7 +49,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final ComponentValidator componentValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorValidator componentDescriptorValidator;
-  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final SourceFileGenerator<BindingGraph> componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
@@ -67,7 +67,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       ComponentValidator componentValidator,
       ComponentCreatorValidator creatorValidator,
       ComponentDescriptorValidator componentDescriptorValidator,
-      ComponentDescriptor.Factory componentDescriptorFactory,
+      ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       SourceFileGenerator<BindingGraph> componentGenerator,
       BindingGraphConverter bindingGraphConverter,

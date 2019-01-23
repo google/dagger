@@ -105,7 +105,7 @@ final class ModuleValidator {
   private final DaggerElements elements;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
@@ -119,7 +119,7 @@ final class ModuleValidator {
       DaggerElements elements,
       AnyBindingMethodValidator anyBindingMethodValidator,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentDescriptor.Factory componentDescriptorFactory,
+      ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
       @ModuleValidation BindingGraphValidator bindingGraphValidator,

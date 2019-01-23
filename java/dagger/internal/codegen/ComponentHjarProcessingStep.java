@@ -41,7 +41,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
-import dagger.internal.codegen.ComponentDescriptor.Factory;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import dagger.producers.internal.CancellationListener;
 import java.lang.annotation.Annotation;
@@ -77,7 +76,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   private final Filer filer;
   private final Messager messager;
   private final ComponentValidator componentValidator;
-  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final ComponentDescriptorFactory componentDescriptorFactory;
 
   @Inject
   ComponentHjarProcessingStep(
@@ -87,7 +86,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       Filer filer,
       Messager messager,
       ComponentValidator componentValidator,
-      Factory componentDescriptorFactory) {
+      ComponentDescriptorFactory componentDescriptorFactory) {
     super(MoreElements::asType);
     this.sourceVersion = sourceVersion;
     this.elements = elements;

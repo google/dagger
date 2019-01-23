@@ -16,7 +16,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="dagger.android.support.functional">
 
-  <uses-sdk android:minSdkVersion="1" android:targetSdkVersion="26" />
+  <uses-sdk android:minSdkVersion="1" android:targetSdkVersion="27" />
 
   <application android:theme="@style/Theme.AppCompat"
       android:name=".UsesGeneratedModulesApplication">

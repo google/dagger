@@ -131,7 +131,8 @@ abstract class ResolvedBindings implements HasContributionType {
    * All contribution bindings, regardless of owning component. Empty if this is a members-injection
    * binding.
    */
-  final ImmutableSet<ContributionBinding> contributionBindings() {
+  @Memoized
+  ImmutableSet<ContributionBinding> contributionBindings() {
     return ImmutableSet.copyOf(allContributionBindings().values());
   }
 

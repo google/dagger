@@ -80,6 +80,11 @@ abstract class MembersInjectionBinding extends Binding {
                 injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
   }
 
+  @Override
+  boolean requiresModuleInstance() {
+    return false;
+  }
+
   @AutoValue
   abstract static class InjectionSite {
     enum Kind {

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -35,6 +34,7 @@ import dagger.model.RequestKind;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -102,6 +102,7 @@ abstract class BindingGraph {
    */
   abstract ImmutableSet<ModuleDescriptor> ownedModules();
 
+  @Memoized
   ImmutableSet<TypeElement> ownedModuleTypes() {
     return FluentIterable.from(ownedModules()).transform(ModuleDescriptor::moduleElement).toSet();
   }
@@ -157,8 +158,7 @@ abstract class BindingGraph {
     return componentRequirements(
         StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
             .flatMap(graph -> graph.contributionBindings().values().stream())
-            .flatMap(bindings -> bindings.contributionBindings().stream())
-        .collect(toImmutableSet()));
+            .flatMap(bindings -> bindings.contributionBindings().stream()));
   }
 
   /**
@@ -178,8 +178,7 @@ abstract class BindingGraph {
     return componentRequirements(
         StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
             .flatMap(graph -> graph.ownedModules().stream())
-            .flatMap(module -> module.bindings().stream())
-            .collect(toImmutableSet()));
+            .flatMap(module -> module.bindings().stream()));
   }
 
   /**
@@ -192,11 +191,15 @@ abstract class BindingGraph {
    * </ul>
    */
   private ImmutableSet<ComponentRequirement> componentRequirements(
-      ImmutableSet<ContributionBinding> bindings) {
+      // accept Stream instead of ImmutableSet so the binding instances don't need to be
+      // materialized in a large set + hashed. Even though this is in support of implementing
+      // methods that are themselves memoized, they still have a measurable impact on performance
+      Stream<ContributionBinding> bindings) {
     ImmutableSet.Builder<ComponentRequirement> requirements = ImmutableSet.builder();
-    bindings.stream()
+    bindings
         .filter(ContributionBinding::requiresModuleInstance)
         .map(ContributionBinding::contributingModule)
+        .distinct()
         .flatMap(presentValues())
         .filter(module -> ownedModuleTypes().contains(module))
         .map(module -> ComponentRequirement.forModule(module.asType()))

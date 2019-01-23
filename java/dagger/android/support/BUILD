@@ -44,15 +44,15 @@ android_library(
 android_library(
     name = "manual-maven-deps",
     tags = [
-        "maven_coordinates=com.android.support:appcompat-v7:25.0.0",
-        "maven_coordinates=com.android.support:support-annotations:25.0.0",
-        "maven_coordinates=com.android.support:support-fragment:25.0.0",
+        "maven_coordinates=com.android.support:appcompat-v7:27.1.1",
+        "maven_coordinates=com.android.support:support-annotations:27.1.1",
+        "maven_coordinates=com.android.support:support-fragment:27.1.1",
     ],
     visibility = ["//visibility:private"],
     exports = [
-        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@androidsdk//com.android.support:appcompat-v7-27.1.1",
+        "@androidsdk//com.android.support:support-annotations-27.1.1",
+        "@androidsdk//com.android.support:support-fragment-27.1.1",
     ],
 )
 

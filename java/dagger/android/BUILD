@@ -56,10 +56,10 @@ android_library(
 # targets that don't have the necessary maven_coordinates tags.
 android_library(
     name = "manual-maven-deps",
-    tags = ["maven_coordinates=com.android.support:support-annotations:25.0.0"],
+    tags = ["maven_coordinates=com.android.support:support-annotations:27.1.1"],
     visibility = ["//visibility:private"],
     exports = [
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
+        "@androidsdk//com.android.support:support-annotations-27.1.1",
     ],
 )
 

@@ -48,6 +48,7 @@ import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
@@ -64,39 +65,56 @@ final class ComponentDescriptorFactory {
   private final DaggerTypes types;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
-  private final CompilerOptions compilerOptions;
 
   @Inject
   ComponentDescriptorFactory(
       DaggerElements elements,
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory,
-      ModuleDescriptor.Factory moduleDescriptorFactory,
-      CompilerOptions compilerOptions) {
+      ModuleDescriptor.Factory moduleDescriptorFactory) {
     this.elements = elements;
     this.types = types;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
-    this.compilerOptions = compilerOptions;
+  }
+
+  /** Returns a descriptor for a root component type. */
+  ComponentDescriptor rootComponentDescriptor(TypeElement typeElement) {
+    return create(
+        typeElement,
+        checkComponentKind(
+            typeElement, ComponentKind::isRoot, "%s must have a component annotation"));
+  }
+
+  /** Returns a descriptor for a subcomponent type. */
+  ComponentDescriptor subcomponentDescriptor(TypeElement typeElement) {
+    return create(
+        typeElement,
+        checkComponentKind(
+            typeElement, kind -> !kind.isRoot(), "%s must have a subcomponent annotation"));
   }
 
   /**
-   * Returns a component descriptor for a type.
-   *
-   * <p>The type must be annotated with a top-level component annotation unless ahead-of-time
-   * subcomponents are being generated or we are creating a descriptor for a module in order to
-   * validate its bindings.
+   * Returns a descriptor for a fictional component based on a module type in order to validate its
+   * bindings.
    */
-  ComponentDescriptor forTypeElement(TypeElement typeElement) {
+  ComponentDescriptor moduleComponentDescriptor(TypeElement typeElement) {
+    return create(
+        typeElement,
+        checkComponentKind(
+            typeElement, ComponentKind::isForModuleValidation, "%s must have a module annotation"));
+  }
+
+  private ComponentKind checkComponentKind(
+      TypeElement typeElement,
+      Predicate<ComponentKind> componentKindPredicate,
+      String errorMessageTemplate) {
     Optional<ComponentKind> kind = ComponentKind.forAnnotatedElement(typeElement);
     checkArgument(
-        kind.isPresent(),
-        "%s must have a component or subcomponent or module annotation",
+        kind.isPresent() && componentKindPredicate.test(kind.get()),
+        errorMessageTemplate,
         typeElement);
-    if (!compilerOptions.aheadOfTimeSubcomponents()) {
-      checkArgument(kind.get().isRoot(), "%s must be a top-level component.", typeElement);
-    }
-    return create(typeElement, kind.get());
+    return kind.get();
   }
 
   private ComponentDescriptor create(TypeElement typeElement, ComponentKind kind) {
@@ -136,8 +154,7 @@ final class ComponentDescriptorFactory {
     for (ModuleDescriptor module : transitiveModules) {
       for (SubcomponentDeclaration subcomponentDeclaration : module.subcomponentDeclarations()) {
         TypeElement subcomponent = subcomponentDeclaration.subcomponentType();
-        subcomponentsFromModules.add(
-            create(subcomponent, ComponentKind.forAnnotatedElement(subcomponent).get()));
+        subcomponentsFromModules.add(subcomponentDescriptor(subcomponent));
       }
     }
 
@@ -161,19 +178,17 @@ final class ComponentDescriptorFactory {
           case PRODUCTION_SUBCOMPONENT:
             subcomponentsByFactoryMethod.put(
                 componentMethodDescriptor,
-                create(
-                    MoreElements.asType(MoreTypes.asElement(resolvedMethod.getReturnType())),
-                    componentMethodDescriptor.kind().componentKind()));
+                subcomponentDescriptor(MoreTypes.asTypeElement(resolvedMethod.getReturnType())));
             break;
 
           case SUBCOMPONENT_BUILDER:
           case PRODUCTION_SUBCOMPONENT_BUILDER:
             subcomponentsByBuilderMethod.put(
                 componentMethodDescriptor,
-                create(
+                subcomponentDescriptor(
                     MoreElements.asType(
-                        MoreTypes.asElement(resolvedMethod.getReturnType()).getEnclosingElement()),
-                    componentMethodDescriptor.kind().componentKind()));
+                        MoreTypes.asElement(resolvedMethod.getReturnType())
+                            .getEnclosingElement())));
             break;
 
           default: // nothing special to do for other methods.

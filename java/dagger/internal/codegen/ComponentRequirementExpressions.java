@@ -323,11 +323,15 @@ final class ComponentRequirementExpressions {
 
     @Override
     public CodeBlock getModifiableModuleMethodExpression(ClassName requestingClass) {
-      return CodeBlock.of(
-          "throw new UnsupportedOperationException($T.class + $S)",
-          module.typeElement(),
-          " has been pruned from the final resolved binding graph. If this exception is thrown, "
-              + "it is a Dagger bug, so please report it!");
+      return CodeBlock.builder()
+          .add(
+              "// $L has been pruned from the final resolved binding graph. The result of this "
+                  + "method should never be used, but it may be called in an initialize() method "
+                  + "when creating a framework instance of a now-pruned binding. Those framework "
+                  + "instances should never be used.\n",
+              module.typeElement())
+          .add("return null")
+          .build();
     }
   }
 }

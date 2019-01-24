@@ -4704,9 +4704,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "  Leaf leaf();",
             "}"));
 
-    String exceptionText =
-        " has been pruned from the final resolved binding graph. If this exception is thrown, it "
-            + "is a Dagger bug, so please report it!";
     JavaFileObject generatedRoot =
         JavaFileObjects.forSourceLines(
             "test.DaggerRoot",
@@ -4724,8 +4721,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    @Override",
             "    protected LeafModule leafModule() {",
-            "      throw new UnsupportedOperationException(",
-            "          LeafModule.class + \"" + exceptionText + "\");",
+            "      return null;",
             "    }",
             "  }",
             "}");

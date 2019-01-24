@@ -16,10 +16,8 @@
 
 package dagger.producers.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.Futures.transform;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-import static dagger.producers.internal.Producers.producerFromProvider;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -38,11 +36,9 @@ import javax.inject.Provider;
  * {@code Map<K, Produced<V>>} which is populated by calls to the delegate {@link Producer#get}
  * methods.
  */
-public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, Produced<V>>> {
-  private final Map<K, Producer<V>> contributingMap;
-
-  private MapOfProducedProducer(Map<K, Producer<V>> contributingMap) {
-    this.contributingMap = contributingMap;
+public final class MapOfProducedProducer<K, V> extends AbstractMapProducer<K, V, Produced<V>> {
+  private MapOfProducedProducer(ImmutableMap<K, Producer<V>> contributingMap) {
+    super(contributingMap);
   }
 
   @Override
@@ -50,7 +46,7 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
     return Futures.transform(
         Futures.allAsList(
             Iterables.transform(
-                contributingMap.entrySet(), MapOfProducedProducer.<K, V>entryUnwrapper())),
+                contributingMap().entrySet(), MapOfProducedProducer.<K, V>entryUnwrapper())),
         new Function<List<Map.Entry<K, Produced<V>>>, Map<K, Produced<V>>>() {
           @Override
           public Map<K, Produced<V>> apply(List<Map.Entry<K, Produced<V>>> entries) {
@@ -95,40 +91,32 @@ public final class MapOfProducedProducer<K, V> extends AbstractProducer<Map<K, P
   }
 
   /** A builder for {@link MapOfProducedProducer}. */
-  public static final class Builder<K, V> {
-    private final ImmutableMap.Builder<K, Producer<V>> mapBuilder;
-
+  public static final class Builder<K, V> extends AbstractMapProducer.Builder<K, V, Produced<V>> {
     private Builder(int size) {
-      mapBuilder = ImmutableMap.builderWithExpectedSize(size);
+      super(size);
+    }
+
+    @Override
+    public Builder<K, V> put(K key, Producer<V> producerOfValue) {
+      super.put(key, producerOfValue);
+      return this;
+    }
+
+    @Override
+    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
+      super.put(key, providerOfValue);
+      return this;
+    }
+
+    @Override
+    public Builder<K, V> putAll(Producer<Map<K, Produced<V>>> mapOfProducedProducer) {
+      super.putAll(mapOfProducedProducer);
+      return this;
     }
 
     /** Returns a new {@link MapOfProducedProducer}. */
     public MapOfProducedProducer<K, V> build() {
       return new MapOfProducedProducer<>(mapBuilder.build());
-    }
-
-    /** Associates {@code key} with {@code producerOfValue}. */
-    public Builder<K, V> put(K key, Producer<V> producerOfValue) {
-      checkNotNull(key, "key");
-      checkNotNull(producerOfValue, "producer of value");
-      mapBuilder.put(key, producerOfValue);
-      return this;
-    }
-
-    /** Associates {@code key} with {@code providerOfValue}. */
-    public Builder<K, V> put(K key, Provider<V> providerOfValue) {
-      checkNotNull(key, "key");
-      checkNotNull(providerOfValue, "provider of value");
-      mapBuilder.put(key, producerFromProvider(providerOfValue));
-      return this;
-    }
-
-    // TODO(b/118630627): make this accept MapOfProducedProducer<K, V>, and change all framework
-    // fields to be of that type so we don't need an unsafe cast
-    /** Adds contributions from a super-implementation of a component into this builder. */
-    public Builder<K, V> putAll(Producer<Map<K, Produced<V>>> mapOfProducedProducer) {
-      mapBuilder.putAll(((MapOfProducedProducer<K, V>) mapOfProducedProducer).contributingMap);
-      return this;
     }
   }
 }

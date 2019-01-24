@@ -122,7 +122,7 @@ final class ModuleValidator {
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
-      @ModuleValidation BindingGraphValidator bindingGraphValidator,
+      BindingGraphValidator bindingGraphValidator,
       CompilerOptions compilerOptions) {
     this.types = types;
     this.elements = elements;

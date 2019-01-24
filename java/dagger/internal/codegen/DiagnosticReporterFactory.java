@@ -32,6 +32,7 @@ import static dagger.internal.codegen.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ValidationType.NONE;
 import static java.util.Collections.min;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
@@ -74,41 +75,18 @@ final class DiagnosticReporterFactory {
   private final DaggerTypes types;
   private final Messager messager;
   private final DependencyRequestFormatter dependencyRequestFormatter;
-  private final ValidationType validationType;
-  private final boolean printingEntryPoints;
+  private final CompilerOptions compilerOptions;
 
   @Inject
   DiagnosticReporterFactory(
-      DaggerTypes types, Messager messager, DependencyRequestFormatter dependencyRequestFormatter) {
-    this(types, messager, dependencyRequestFormatter, ValidationType.ERROR, true);
-  }
-
-  private DiagnosticReporterFactory(
       DaggerTypes types,
       Messager messager,
       DependencyRequestFormatter dependencyRequestFormatter,
-      ValidationType validationType,
-      boolean printingEntryPoints) {
+      CompilerOptions compilerOptions) {
     this.types = types;
     this.messager = messager;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
-    this.validationType = validationType;
-    this.printingEntryPoints = printingEntryPoints;
-  }
-
-  /** Returns a factory that treats all reported errors as some other kind instead. */
-  DiagnosticReporterFactory treatingErrorsAs(ValidationType validationType) {
-    if (validationType.equals(this.validationType)) {
-      return this;
-    }
-    return new DiagnosticReporterFactory(
-        types, messager, dependencyRequestFormatter, validationType, printingEntryPoints);
-  }
-
-  /** Returns a factory that does not print dependency traces from entry points to the error. */
-  DiagnosticReporterFactory withoutPrintingEntryPoints() {
-    return new DiagnosticReporterFactory(
-        types, messager, dependencyRequestFormatter, validationType, false);
+    this.compilerOptions = compilerOptions;
   }
 
   /** Creates a reporter for a binding graph and a plugin. */
@@ -251,11 +229,13 @@ final class DiagnosticReporterFactory {
 
     void printMessage(
         Diagnostic.Kind diagnosticKind, CharSequence message, Element elementToReport) {
-      if (diagnosticKind.equals(ERROR)) {
-        if (!validationType.diagnosticKind().isPresent()) {
+      if (graph.isModuleBindingGraph()) {
+        if (compilerOptions.moduleBindingValidationType().equals(NONE)) {
           return;
         }
-        diagnosticKind = validationType.diagnosticKind().get();
+        if (diagnosticKind.equals(ERROR)) {
+          diagnosticKind = compilerOptions.moduleBindingValidationType().diagnosticKind().get();
+        }
       }
       reportedDiagnosticKinds.add(diagnosticKind);
       StringBuilder fullMessage = new StringBuilder();
@@ -312,12 +292,12 @@ final class DiagnosticReporterFactory {
       @Override
       public String toString() {
         StringBuilder message =
-            printingEntryPoints
-                ? new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */)
-                : new StringBuilder();
+            graph.isModuleBindingGraph()
+                ? new StringBuilder()
+                : new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */);
 
-        // Print the dependency trace if we're printing entry points
-        if (printingEntryPoints) {
+        // Print the dependency trace unless it's a module binding graph
+        if (!graph.isModuleBindingGraph()) {
           dependencyTrace.forEach(
               edge ->
                   dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
@@ -332,7 +312,7 @@ final class DiagnosticReporterFactory {
                 // if printing entry points, skip entry points and the traced request
                 .filter(
                     request ->
-                        !printingEntryPoints
+                        graph.isModuleBindingGraph()
                             || (!request.isEntryPoint() && !isTracedRequest(request)))
                 .map(request -> request.dependencyRequest().requestElement())
                 .flatMap(presentValues())
@@ -340,16 +320,16 @@ final class DiagnosticReporterFactory {
         if (!requestsToPrint.isEmpty()) {
           message
               .append("\nIt is")
-              .append(printingEntryPoints ? " also " : " ")
+              .append(graph.isModuleBindingGraph() ? " " : " also ")
               .append("requested at:");
           for (Element request : requestsToPrint) {
             message.append("\n    ").append(elementToString(request));
           }
         }
 
-        // Print the remaining entry points, showing which component they're in, if we're printing
-        // entry points.
-        if (printingEntryPoints && entryPoints.size() > 1) {
+        // Print the remaining entry points, showing which component they're in, unless we're in a
+        // module binding graph
+        if (!graph.isModuleBindingGraph() && entryPoints.size() > 1) {
           message.append("\nThe following other entry points also depend on it:");
           entryPoints.stream()
               .filter(entryPoint -> !entryPoint.equals(getLast(dependencyTrace)))

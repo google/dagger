@@ -200,7 +200,6 @@ java_library(
         "InjectValidator.java",
         "MapKeyValidator.java",
         "MembersInjectionValidator.java",
-        "ModuleValidation.java",
         "ModuleValidator.java",
         "MultibindingAnnotationsProcessingStep.java",
         "MultibindsMethodValidator.java",

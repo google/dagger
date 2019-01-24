@@ -78,6 +78,11 @@ abstract class AbstractMapProducer<K, V, V2> extends AbstractProducer<Map<K, V2>
 
     /** Adds contributions from a super-implementation of a component into this builder. */
     Builder<K, V, V2> putAll(Producer<Map<K, V2>> mapOfProducers) {
+      if (mapOfProducers instanceof DelegateProducer) {
+        @SuppressWarnings("unchecked")
+        DelegateProducer<Map<K, V2>> asDelegateProducer = (DelegateProducer) mapOfProducers;
+        return putAll(asDelegateProducer.getDelegate());
+      }
       @SuppressWarnings("unchecked")
       AbstractMapProducer<K, V, ?> asAbstractMapProducer =
           ((AbstractMapProducer<K, V, ?>) (Producer) mapOfProducers);

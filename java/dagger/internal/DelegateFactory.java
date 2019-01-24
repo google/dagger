@@ -57,5 +57,14 @@ public final class DelegateFactory<T> implements Factory<T> {
     }
     asDelegateFactory.delegate = delegate;
   }
+
+  /**
+   * Returns the factory's delegate.
+   *
+   * @throws NullPointerException if the delegate has not been set
+   */
+  Provider<T> getDelegate() {
+    return checkNotNull(delegate);
+  }
 }
 

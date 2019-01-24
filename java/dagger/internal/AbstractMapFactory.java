@@ -66,6 +66,11 @@ abstract class AbstractMapFactory<K, V, V2> implements Factory<Map<K, V2>> {
     }
 
     Builder<K, V, V2> putAll(Provider<Map<K, V2>> mapOfProviders) {
+      if (mapOfProviders instanceof DelegateFactory) {
+        @SuppressWarnings("unchecked")
+        DelegateFactory<Map<K, V2>> asDelegateFactory = (DelegateFactory) mapOfProviders;
+        return putAll(asDelegateFactory.getDelegate());
+      }
       @SuppressWarnings("unchecked")
       AbstractMapFactory<K, V, ?> asAbstractMapFactory =
           ((AbstractMapFactory<K, V, ?>) (Provider) mapOfProviders);

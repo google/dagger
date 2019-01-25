@@ -54,8 +54,10 @@ final class MissingBindingValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
-    if (graph.isModuleBindingGraph() || graph.isPartialBindingGraph()) {
-      return; // Don't report missing bindings when validating a module or a partial binding graph
+    // Don't report missing bindings when validating a binding graph based on a subcomponent or
+    // module.
+    if (graph.isModuleBindingGraph() || graph.rootComponentNode().isSubcomponent()) {
+      return;
     }
     graph
         .missingBindings()

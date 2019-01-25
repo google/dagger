@@ -109,14 +109,16 @@ public abstract class BindingGraph {
    * @see <a href="https://google.github.io/dagger/compiler-options#module-binding-validation">Module binding
    *     validation</a>
    */
-  // TODO(dpb): Figure out the relationship between this and isPartialBindingGraph(). Maybe this
-  // implies that?
   public abstract boolean isModuleBindingGraph();
 
   /**
    * Returns {@code true} if the {@link #rootComponentNode()} is a subcomponent. This occurs in
    * ahead-of-time-subcomponents mode.
+   *
+   * @deprecated use {@link ComponentNode#isSubcomponent() rootComponentNode().isSubcomponent()}
+   *     instead
    */
+  @Deprecated
   public final boolean isPartialBindingGraph() {
     return rootComponentNode().isSubcomponent();
   }

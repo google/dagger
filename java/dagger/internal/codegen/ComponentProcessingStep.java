@@ -132,7 +132,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       if (!componentDescriptorReport.isClean()) {
         return;
       }
-      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
+      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
       if (isValid(bindingGraph)) {
         generateComponent(bindingGraph);
       }
@@ -144,7 +144,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       }
       ComponentDescriptor componentDescriptor =
           componentDescriptorFactory.subcomponentDescriptor(element);
-      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor);
+      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
       if (isValid(bindingGraph)) {
         generateComponent(bindingGraph);
       }
@@ -152,8 +152,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private boolean isValid(BindingGraph bindingGraph) {
-    dagger.model.BindingGraph modelGraph = bindingGraphConverter.convert(bindingGraph, false);
-    return bindingGraphValidator.isValid(modelGraph);
+    return bindingGraphValidator.isValid(bindingGraphConverter.convert(bindingGraph));
   }
 
   private void generateComponent(BindingGraph bindingGraph) {

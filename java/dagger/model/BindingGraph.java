@@ -55,9 +55,10 @@ import javax.lang.model.element.TypeElement;
  * </ul>
  *
  * In the case of a {@link BindingGraph} representing a module, the root {@link ComponentNode} will
- * actually represent the module type, and there will be an entry point edge (with no request
- * element) for every binding (except multibinding contributions) in the module, including its
- * transitively included modules.
+ * actually represent the module type. The graph will also be a {@linkplain #isFullBindingGraph()
+ * full binding graph}, which means it will contain all bindings in all modules, as well as nodes
+ * for their dependencies. Otherwise it will contain only bindings that are reachable from at least
+ * one {@linkplain #entryPointEdges() entry point}.
  *
  * <h3>Nodes</h3>
  *
@@ -89,8 +90,8 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 public abstract class BindingGraph {
 
-  static BindingGraph create(Network<Node, Edge> network, boolean isModuleBindingGraph) {
-    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isModuleBindingGraph);
+  static BindingGraph create(Network<Node, Edge> network, boolean isFullBindingGraph) {
+    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isFullBindingGraph);
   }
 
   BindingGraph() {}
@@ -108,8 +109,22 @@ public abstract class BindingGraph {
    *
    * @see <a href="https://google.github.io/dagger/compiler-options#module-binding-validation">Module binding
    *     validation</a>
+   * @deprecated use {@link #isFullBindingGraph()} to tell if this is a full binding graph, or
+   *     {@link ComponentNode#isRealComponent() rootComponentNode().isRealComponent()} to tell if
+   *     the root component node is really a component or derived from a module. Dagger will soon
+   *     generate full binding graphs for components and subcomponents as well as modules.
    */
-  public abstract boolean isModuleBindingGraph();
+  @Deprecated
+  public final boolean isModuleBindingGraph() {
+    return !rootComponentNode().isRealComponent();
+  }
+
+  /**
+   * Returns {@code true} if this is a full binding graph, which contains all bindings installed in
+   * the component, or {@code false} if it is a reachable binding graph, which contains only
+   * bindings that are reachable from at least one {@linkplain #entryPointEdges() entry point}.
+   */
+  public abstract boolean isFullBindingGraph();
 
   /**
    * Returns {@code true} if the {@link #rootComponentNode()} is a subcomponent. This occurs in
@@ -412,6 +427,12 @@ public abstract class BindingGraph {
      * {@code @ProductionSubcomponent}.
      */
     boolean isSubcomponent();
+
+    /**
+     * Returns {@code true} if the component is a real component, or {@code false} if it is a
+     * fictional component based on a module.
+     */
+    boolean isRealComponent();
 
     /** The entry points on this component. */
     ImmutableSet<DependencyRequest> entryPoints();

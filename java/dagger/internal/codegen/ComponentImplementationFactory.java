@@ -112,7 +112,7 @@ final class ComponentImplementationFactory {
     // Otherwise, the superclass implementation is top-level, so we must recreate the
     // implementation object for the base implementation of the child by truncating the binding
     // graph at the child.
-    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child);
+    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child, false);
     return createComponentImplementation(truncatedBindingGraph);
   }
 }

@@ -76,7 +76,6 @@ final class BindingGraphFactory {
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
-  private final CompilerOptions compilerOptions;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
   private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
 
@@ -86,25 +85,28 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
-      ModuleDescriptor.Factory moduleDescriptorFactory,
-      CompilerOptions compilerOptions) {
+      ModuleDescriptor.Factory moduleDescriptorFactory) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
-    this.compilerOptions = compilerOptions;
   }
 
-  /** Creates a binding graph for a root component. */
-  BindingGraph create(ComponentDescriptor componentDescriptor) {
-    checkArgument(
-        !componentDescriptor.isSubcomponent() || compilerOptions.aheadOfTimeSubcomponents());
-    return create(Optional.empty(), componentDescriptor);
+  /**
+   * Creates a binding graph for a component.
+   *
+   * @param createFullBindingGraph if {@code true}, the binding graph will include all bindings;
+   *     otherwise it will include only bindings reachable from at least one entry point
+   */
+  BindingGraph create(ComponentDescriptor componentDescriptor, boolean createFullBindingGraph) {
+    return create(Optional.empty(), componentDescriptor, createFullBindingGraph);
   }
 
   private BindingGraph create(
-      Optional<Resolver> parentResolver, ComponentDescriptor componentDescriptor) {
+      Optional<Resolver> parentResolver,
+      ComponentDescriptor componentDescriptor,
+      boolean createFullBindingGraph) {
     ImmutableSet.Builder<ContributionBinding> explicitBindingsBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<DelegateDeclaration> delegatesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
@@ -187,9 +189,9 @@ final class BindingGraphFactory {
               }
             });
 
-    if (!requestResolver.rootComponent().isRealComponent()) {
-      // For module-binding validation, resolve the keys for all bindings in all modules, stripping
-      // any multibinding contribution identifier so that the multibinding itself is resolved.
+    if (createFullBindingGraph) {
+      // Resolve the keys for all bindings in all modules, stripping any multibinding contribution
+      // identifier so that the multibinding itself is resolved.
       modules(componentDescriptor, parentResolver).stream()
           .flatMap(module -> module.allBindingKeys().stream())
           .map(key -> key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build())
@@ -206,7 +208,7 @@ final class BindingGraphFactory {
     for (ComponentDescriptor subcomponent :
         Iterables.consumingIterable(requestResolver.subcomponentsToResolve)) {
       if (resolvedSubcomponents.add(subcomponent)) {
-        subgraphs.add(create(Optional.of(requestResolver), subcomponent));
+        subgraphs.add(create(Optional.of(requestResolver), subcomponent, createFullBindingGraph));
       }
     }
 
@@ -226,7 +228,8 @@ final class BindingGraphFactory {
         requestResolver.getResolvedMembersInjectionBindings(),
         subgraphs.build(),
         requestResolver.getOwnedModules(),
-        requestResolver.getFactoryMethod());
+        requestResolver.getFactoryMethod(),
+        createFullBindingGraph);
   }
 
   /**

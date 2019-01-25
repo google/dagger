@@ -61,7 +61,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (tree.sym != null
         && isAnyAnnotationPresent(tree.sym, Component.class, ProductionComponent.class)) {
       addNodesForGraph(
-          bindingGraphFactory.create(componentDescriptorFactory.rootComponentDescriptor(tree.sym)));
+          bindingGraphFactory.create(
+              componentDescriptorFactory.rootComponentDescriptor(tree.sym), false));
     }
     return super.visitClassDef(tree, p);
   }

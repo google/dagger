@@ -223,6 +223,12 @@ abstract class BindingGraph {
         .toSet();
   }
 
+  /**
+   * {@code true} if this graph contains all bindings installed in the component; {@code false} if
+   * it contains only those bindings that are reachable from at least one entry point.
+   */
+  abstract boolean isFullBindingGraph();
+
   @Memoized
   @Override
   public abstract int hashCode();
@@ -236,7 +242,8 @@ abstract class BindingGraph {
       ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
       ImmutableList<BindingGraph> subgraphs,
       ImmutableSet<ModuleDescriptor> ownedModules,
-      Optional<ExecutableElement> factoryMethod) {
+      Optional<ExecutableElement> factoryMethod,
+      boolean isFullBindingGraph) {
     checkForDuplicates(subgraphs);
     return new AutoValue_BindingGraph(
         componentDescriptor,
@@ -244,7 +251,8 @@ abstract class BindingGraph {
         resolvedMembersInjectionBindings,
         subgraphs,
         ownedModules,
-        factoryMethod);
+        factoryMethod,
+        isFullBindingGraph);
   }
 
   private static final void checkForDuplicates(Iterable<BindingGraph> graphs) {

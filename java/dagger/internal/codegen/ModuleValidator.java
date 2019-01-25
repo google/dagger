@@ -588,8 +588,7 @@ final class ModuleValidator {
     BindingGraph bindingGraph =
         bindingGraphConverter.convert(
             bindingGraphFactory.create(
-                componentDescriptorFactory.moduleComponentDescriptor(module)),
-            true);
+                componentDescriptorFactory.moduleComponentDescriptor(module), true));
     if (!bindingGraphValidator.isValid(bindingGraph)) {
       // Since the validator uses a DiagnosticReporter to report errors, the ValdiationReport won't
       // have any Items for them. We have to tell the ValidationReport that some errors were

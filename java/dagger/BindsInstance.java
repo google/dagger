@@ -17,6 +17,7 @@
 package dagger;
 
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import dagger.internal.Beta;
@@ -25,8 +26,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method on a component builder or subcomponent builder that allows an instance to be bound
- * to some type within the component.
+ * Marks a method on a {@linkplain Component.Builder component builder} or a parameter on a
+ * {@linkplain Component.Factory component factory} as binding an instance to some key within the
+ * component.
  *
  * <p>For example:
  *
@@ -37,19 +39,28 @@ import java.lang.annotation.Target;
  *     {@literal @BindsInstance} Builder bar({@literal @Blue} Bar bar);
  *     ...
  *   }
+ *
+ *   // or
+ *
+ *   {@literal @Component.Factory}
+ *   interface Factory {
+ *     MyComponent newMyComponent(
+ *         {@literal @BindsInstance} Foo foo,
+ *         {@literal @BindsInstance @Blue} Bar bar);
+ *   }
  * </pre>
  *
- * <p>will allow clients of this builder to pass their own instances of {@code Foo} and {@code Bar},
- * and those instances can be injected within the component as {@code Foo} or {@code @Blue Bar},
- * respectively.
+ * <p>will allow clients of the builder or factory to pass their own instances of {@code Foo} and
+ * {@code Bar}, and those instances can be injected within the component as {@code Foo} or
+ * {@code @Blue Bar}, respectively.
  *
- * <p>{@code @BindsInstance} methods may not be passed null arguments unless the parameter is
- * annotated with {@code @Nullable}; in that case, both null and non-null arguments may be passed to
- * the method.
+ * <p>{@code @BindsInstance} arguments may not be {@code null} unless the parameter is annotated
+ * with {@code @Nullable}.
  *
- * <p>{@code @BindsInstance} methods must be called before building the component, unless their
- * parameter is marked {@code @Nullable}, in which case the component will act as though it was
- * called with a null argument. Primitives, of course, may not be marked {@code @Nullable}.
+ * <p>For builders, {@code @BindsInstance} methods must be called before building the component,
+ * unless their parameter is marked {@code @Nullable}, in which case the component will act as
+ * though it was called with a {@code null} argument. Primitives, of course, may not be marked
+ * {@code @Nullable}.
  *
  * <p>Binding an instance is equivalent to passing an instance to a module constructor and providing
  * that instance, but is often more efficient. When possible, binding object instances should be
@@ -57,6 +68,6 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RUNTIME)
-@Target(METHOD)
+@Target({METHOD, PARAMETER})
 @Beta
 public @interface BindsInstance {}

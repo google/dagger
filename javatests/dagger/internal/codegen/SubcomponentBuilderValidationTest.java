@@ -18,6 +18,11 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
+import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
+import static dagger.internal.codegen.ErrorMessages.componentMessagesFor;
+import static dagger.internal.codegen.ErrorMessages.creatorMessagesFor;
 import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.testing.compile.Compilation;
@@ -31,8 +36,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SubcomponentBuilderValidationTest {
 
-  private static final ErrorMessages.SubcomponentCreatorMessages MSGS =
-      new ErrorMessages.SubcomponentCreatorMessages();
+  private static final ErrorMessages.ComponentCreatorMessages MSGS =
+      creatorMessagesFor(SUBCOMPONENT, BUILDER);
 
   @Test
   public void testRefSubcomponentAndSubBuilderFails() {
@@ -64,7 +69,7 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.moreThanOneRefToSubcomponent(), "test.ChildComponent", "[child(), builder()]"))
+                moreThanOneRefToSubcomponent(), "test.ChildComponent", "[child(), builder()]"))
         .inFile(componentFile);
   }
 
@@ -98,9 +103,7 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.moreThanOneRefToSubcomponent(),
-                "test.ChildComponent",
-                "[builder1(), builder2()]"))
+                moreThanOneRefToSubcomponent(), "test.ChildComponent", "[builder1(), builder2()]"))
         .inFile(componentFile);
   }
 
@@ -138,7 +141,8 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.moreThanOne(), "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]"))
+                componentMessagesFor(SUBCOMPONENT).moreThanOne(),
+                "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]"))
         .inFile(childComponentFile);
   }
 
@@ -210,7 +214,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(componentFile, childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.missingBuildMethod())
+        .hadErrorContaining(MSGS.missingFactoryMethod())
         .inFile(childComponentFile);
   }
 
@@ -282,7 +286,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
+        .hadErrorContaining(MSGS.invalidConstructor())
         .inFile(childComponentFile);
   }
 
@@ -304,7 +308,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.cxtorOnlyOneAndNoArgs())
+        .hadErrorContaining(MSGS.invalidConstructor())
         .inFile(childComponentFile);
   }
 
@@ -344,7 +348,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.buildMustReturnComponentType())
+        .hadErrorContaining(MSGS.factoryMethodMustReturnComponentType())
         .inFile(childComponentFile)
         .onLine(9);
   }
@@ -368,7 +372,8 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(MSGS.inheritedBuildMustReturnComponentType(), "build"))
+        .hadErrorContaining(
+            String.format(MSGS.inheritedFactoryMethodMustReturnComponentType(), "build"))
         .inFile(childComponentFile)
         .onLine(12);
   }
@@ -391,7 +396,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(MSGS.twoBuildMethods(), "build()"))
+        .hadErrorContaining(String.format(MSGS.twoFactoryMethods(), "build()"))
         .inFile(childComponentFile)
         .onLine(10);
   }
@@ -416,7 +421,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(MSGS.inheritedTwoBuildMethods(), "build()", "create()"))
+        .hadErrorContaining(String.format(MSGS.inheritedTwoFactoryMethods(), "build()", "create()"))
         .inFile(childComponentFile)
         .onLine(13);
   }
@@ -440,11 +445,11 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
         .inFile(childComponentFile)
         .onLine(10);
     assertThat(compilation)
-        .hadErrorContaining(MSGS.methodsMustTakeOneArg())
+        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
         .inFile(childComponentFile)
         .onLine(11);
   }
@@ -471,7 +476,8 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.inheritedMethodsMustTakeOneArg(), "set1(java.lang.String,java.lang.Integer)"))
+                MSGS.inheritedSetterMethodsMustTakeOneArg(),
+                "set1(java.lang.String,java.lang.Integer)"))
         .inFile(childComponentFile)
         .onLine(13);
   }
@@ -494,7 +500,7 @@ public class SubcomponentBuilderValidationTest {
     Compilation compilation = daggerCompiler().compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(MSGS.methodsMustReturnVoidOrBuilder())
+        .hadErrorContaining(MSGS.setterMethodsMustReturnVoidOrBuilder())
         .inFile(childComponentFile)
         .onLine(10);
   }
@@ -520,7 +526,8 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            String.format(MSGS.inheritedMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
+            String.format(
+                MSGS.inheritedSetterMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
         .inFile(childComponentFile)
         .onLine(13);
   }
@@ -623,9 +630,10 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.manyMethodsForType(),
+                MSGS.multipleSettersForModuleOrDependencyType(),
                 "test.TestModule",
-                "[set1(test.TestModule), set2(test.TestModule)]"))
+                "[void test.ChildComponent.Builder.set1(test.TestModule), "
+                    + "void test.ChildComponent.Builder.set2(test.TestModule)]"))
         .inFile(childComponentFile)
         .onLine(10);
   }
@@ -682,7 +690,10 @@ public class SubcomponentBuilderValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                MSGS.manyMethodsForType(), "test.TestModule", "[set1(T), set2(test.TestModule)]"))
+                MSGS.multipleSettersForModuleOrDependencyType(),
+                "test.TestModule",
+                "[void test.ChildComponent.Builder.set1(test.TestModule), "
+                    + "void test.ChildComponent.Builder.set2(test.TestModule)]"))
         .inFile(childComponentFile)
         .onLine(14);
   }

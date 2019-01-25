@@ -24,12 +24,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /** Utilities for streams. */
 public final class DaggerStreams {
@@ -99,6 +102,11 @@ public final class DaggerStreams {
     return f -> to.isInstance(f) ? Stream.of(to.cast(f)) : Stream.empty();
   }
 
+  /** Returns a stream of all values of the given {@code enumType}. */
+  public static <E extends Enum<E>> Stream<E> valuesOf(Class<E> enumType) {
+    return EnumSet.allOf(enumType).stream();
+  }
+
   /**
    * A function that you can use to extract the present values from a stream of {@link Optional}s.
    *
@@ -111,6 +119,16 @@ public final class DaggerStreams {
    */
   public static <T> Function<Optional<T>, Stream<T>> presentValues() {
     return optional -> optional.map(Stream::of).orElse(Stream.empty());
+  }
+
+  /**
+   * Returns a sequential {@link Stream} of the contents of {@code iterable}, delegating to {@link
+   * Collection#stream} if possible.
+   */
+  public static <T> Stream<T> stream(Iterable<T> iterable) {
+    return (iterable instanceof Collection)
+        ? ((Collection<T>) iterable).stream()
+        : StreamSupport.stream(iterable.spliterator(), false);
   }
 
   private DaggerStreams() {}

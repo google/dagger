@@ -22,15 +22,20 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
+import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
-import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
+import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.element.ElementKind.CLASS;
@@ -51,7 +56,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
-import dagger.internal.codegen.ErrorMessages.SubcomponentCreatorMessages;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.producers.CancellationPolicy;
@@ -119,13 +123,40 @@ final class ComponentValidator {
    * already included in the {@code validatedSubcomponents} set.
    */
   public ComponentValidationReport validate(
-      final TypeElement subject,
+      TypeElement subject,
       Set<? extends Element> validatedSubcomponents,
       Set<? extends Element> validatedSubcomponentCreators) {
     ValidationReport.Builder<TypeElement> report = ValidationReport.about(subject);
 
-    ComponentKind componentKind = ComponentKind.forAnnotatedElement(subject).get();
+    ImmutableSet<ComponentKind> componentKinds = ComponentKind.getComponentKinds(subject);
+    ImmutableSet<Element> allSubcomponents;
+    if (componentKinds.size() > 1) {
+      String error =
+          "Components may not be annotated with more than one component annotation: found "
+              + annotationsFor(componentKinds);
+      report.addError(error, subject);
+      allSubcomponents = ImmutableSet.of();
+    } else {
+      ComponentKind componentKind = getOnlyElement(componentKinds);
+      allSubcomponents =
+          validate(
+              subject,
+              componentKind,
+              validatedSubcomponents,
+              validatedSubcomponentCreators,
+              report);
+    }
 
+    return new AutoValue_ComponentValidator_ComponentValidationReport(
+        allSubcomponents, report.build());
+  }
+
+  private ImmutableSet<Element> validate(
+      TypeElement subject,
+      ComponentKind componentKind,
+      Set<? extends Element> validatedSubcomponents,
+      Set<? extends Element> validatedSubcomponentCreators,
+      ValidationReport.Builder<TypeElement> report) {
     if (isAnnotationPresent(subject, CancellationPolicy.class) && !componentKind.isProducer()) {
       report.addError(
           "@CancellationPolicy may only be applied to production components and subcomponents",
@@ -141,14 +172,13 @@ final class ComponentValidator {
           subject);
     }
 
-    ImmutableList<DeclaredType> builders =
-        componentKind
-            .builderAnnotation()
-            .map(builderAnnotation -> enclosedAnnotatedTypes(subject, builderAnnotation))
-            .orElse(ImmutableList.of());
-    if (builders.size() > 1) {
+    ImmutableList<DeclaredType> creators =
+        creatorAnnotationsFor(componentKind).stream()
+            .flatMap(annotation -> enclosedAnnotatedTypes(subject, annotation).stream())
+            .collect(toImmutableList());
+    if (creators.size() > 1) {
       report.addError(
-          String.format(ErrorMessages.creatorMessagesFor(componentKind).moreThanOne(), builders),
+          String.format(ErrorMessages.componentMessagesFor(componentKind).moreThanOne(), creators),
           subject);
     }
 
@@ -184,13 +214,9 @@ final class ComponentValidator {
                       componentKind.legalSubcomponentKinds().stream()
                           .map(ComponentKind::annotation)
                           .collect(toImmutableSet()));
-              Optional<AnnotationMirror> subcomponentBuilderAnnotation =
+              Optional<AnnotationMirror> subcomponentCreatorAnnotation =
                   checkForAnnotations(
-                      returnType,
-                      componentKind.legalSubcomponentKinds().stream()
-                          .map(ComponentKind::builderAnnotation)
-                          .flatMap(presentValues())
-                          .collect(toImmutableSet()));
+                      returnType, creatorAnnotationsFor(componentKind.legalSubcomponentKinds()));
               if (subcomponentAnnotation.isPresent()) {
                 referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
                 validateSubcomponentMethod(
@@ -201,7 +227,7 @@ final class ComponentValidator {
                     parameterTypes,
                     returnType,
                     subcomponentAnnotation);
-              } else if (subcomponentBuilderAnnotation.isPresent()) {
+              } else if (subcomponentCreatorAnnotation.isPresent()) {
                 referencedSubcomponents.put(
                     MoreTypes.asElement(returnType).getEnclosingElement(), method);
                 validateSubcomponentCreatorMethod(
@@ -244,11 +270,7 @@ final class ComponentValidator {
         .forEach(
             (subcomponent, methods) ->
                 report.addError(
-                    String.format(
-                        SubcomponentCreatorMessages.INSTANCE.moreThanOneRefToSubcomponent(),
-                        subcomponent,
-                        methods),
-                    subject));
+                    String.format(moreThanOneRefToSubcomponent(), subcomponent, methods), subject));
 
     AnnotationMirror componentMirror =
         getAnnotationMirror(subject, componentKind.annotation()).get();
@@ -273,9 +295,7 @@ final class ComponentValidator {
       report.addItems(subreport.report().items());
       allSubcomponents.addAll(subreport.referencedSubcomponents());
     }
-
-    return new AutoValue_ComponentValidator_ComponentValidationReport(
-        allSubcomponents.build(), report.build());
+    return allSubcomponents.build();
   }
 
   private void checkConflictingEntryPoints(ValidationReport.Builder<TypeElement> report) {
@@ -437,9 +457,8 @@ final class ComponentValidator {
       List<? extends VariableElement> parameters,
       TypeMirror returnType,
       Set<? extends Element> validatedSubcomponentCreators) {
-
     if (!parameters.isEmpty()) {
-      report.addError(SubcomponentCreatorMessages.INSTANCE.builderMethodRequiresNoArgs(), method);
+      report.addError(builderMethodRequiresNoArgs(), method);
     }
 
     // If we haven't already validated the subcomponent creator itself, validate it now.

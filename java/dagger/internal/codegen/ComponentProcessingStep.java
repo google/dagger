@@ -16,9 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ComponentKind.allComponentAndBuilderAnnotations;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
-import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
 import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
 import static java.util.Collections.disjoint;
@@ -30,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -56,9 +56,9 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final BindingGraphValidator bindingGraphValidator;
   private final CompilerOptions compilerOptions;
   private ImmutableSet<Element> subcomponentElements;
-  private ImmutableSet<Element> subcomponentBuilderElements;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> builderReportsByComponent;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> builderReportsBySubcomponent;
+  private ImmutableSet<Element> subcomponentCreatorElements;
+  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent;
+  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsBySubcomponent;
   private ImmutableMap<Element, ValidationReport<TypeElement>> reportsBySubcomponent;
 
   @Inject
@@ -88,7 +88,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return allComponentAndBuilderAnnotations();
+    return Sets.union(ComponentKind.allAnnotations(), ComponentCreatorAnnotation.allAnnotations());
   }
 
   @Override
@@ -96,20 +96,20 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     subcomponentElements =
         getElementsFromAnnotations(elementsByAnnotation, annotationsFor(subcomponentKinds()));
-    subcomponentBuilderElements =
+    subcomponentCreatorElements =
         getElementsFromAnnotations(
-            elementsByAnnotation, builderAnnotationsFor(subcomponentKinds()));
+            elementsByAnnotation, creatorAnnotationsFor(subcomponentKinds()));
 
     ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
 
-    builderReportsByComponent =
-        processBuilders(
+    creatorReportsByComponent =
+        processCreators(
             getElementsFromAnnotations(
-                elementsByAnnotation, builderAnnotationsFor(rootComponentKinds())),
+                elementsByAnnotation, creatorAnnotationsFor(rootComponentKinds())),
             rejectedElements);
-    builderReportsBySubcomponent = processBuilders(subcomponentBuilderElements, rejectedElements);
+    creatorReportsBySubcomponent = processCreators(subcomponentCreatorElements, rejectedElements);
     reportsBySubcomponent =
-        processSubcomponents(subcomponentElements, subcomponentBuilderElements, rejectedElements);
+        processSubcomponents(subcomponentElements, subcomponentCreatorElements, rejectedElements);
 
     return rejectedElements.addAll(super.process(elementsByAnnotation)).build();
   }
@@ -119,7 +119,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
     if (!disjoint(annotations, annotationsFor(rootComponentKinds()))) {
       ComponentValidationReport validationReport =
-          componentValidator.validate(element, subcomponentElements, subcomponentBuilderElements);
+          componentValidator.validate(element, subcomponentElements, subcomponentCreatorElements);
       validationReport.report().printMessagesTo(messager);
       if (!isClean(validationReport)) {
         return;
@@ -166,7 +166,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
         Multimaps.filterKeys(elementsByAnnotation, Predicates.in(annotations)).values());
   }
 
-  private ImmutableMap<Element, ValidationReport<TypeElement>> processBuilders(
+  private ImmutableMap<Element, ValidationReport<TypeElement>> processCreators(
       Set<? extends Element> builderElements, ImmutableSet.Builder<Element> rejectedElements) {
     // Can't use an ImmutableMap.Builder here because a component may have (invalidly) more than one
     // builder type, and that would make ImmutableMap.Builder throw.
@@ -213,7 +213,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     if (!componentReport.isClean()) {
       return false;
     }
-    ValidationReport<?> builderReport = builderReportsByComponent.get(component);
+    ValidationReport<?> builderReport = creatorReportsByComponent.get(component);
     if (builderReport != null && !builderReport.isClean()) {
       return false;
     }
@@ -228,7 +228,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   /** Returns true if the reports associated with the subcomponent are clean. */
   private boolean subcomponentIsClean(Element subcomponentElement) {
     ValidationReport<?> subcomponentBuilderReport =
-        builderReportsBySubcomponent.get(subcomponentElement);
+        creatorReportsBySubcomponent.get(subcomponentElement);
     if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
       return false;
     }

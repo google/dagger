@@ -364,10 +364,10 @@ final class ComponentImplementation {
    * Returns the name of the creator class for this component. It will be a sibling of this
    * generated class unless this is a top-level component, in which case it will be nested.
    */
-  ClassName getCreatorName() {
+  ClassName getCreatorName(ComponentCreatorKind kind) {
     return isNested()
-        ? name.peerClass(subcomponentNames.get(componentDescriptor()) + "Builder")
-        : name.nestedClass("Builder");
+        ? name.peerClass(subcomponentNames.get(componentDescriptor()) + kind.typeName())
+        : name.nestedClass(kind.typeName());
   }
 
   /** Returns the name of the nested implementation class for a child component. */

@@ -45,20 +45,24 @@ import javax.inject.Singleton;
  * <a name="provision-methods"></a>
  * <h3>Provision methods</h3>
  *
- * <p>Provision methods have no parameters and return an {@link Inject injected} or
- * {@link Provides provided} type. Each method may have a {@link Qualifier} annotation as well. The
- * following are all valid provision method declarations: <pre><code>
+ * <p>Provision methods have no parameters and return an {@link Inject injected} or {@link Provides
+ * provided} type. Each method may have a {@link Qualifier} annotation as well. The following are
+ * all valid provision method declarations:
+ *
+ * <pre><code>
  *   SomeType getSomeType();
  *   {@literal Set<SomeType>} getSomeTypes();
  *   {@literal @PortNumber} int getPortNumber();
  * </code></pre>
  *
  * <p>Provision methods, like typical {@link Inject injection} sites, may use {@link Provider} or
- * {@link Lazy} to more explicitly control provision requests. A {@link Provider} allows the user
- * of the component to request provision any number of times by calling {@link Provider#get}. A
- * {@link Lazy} will only ever request a single provision, but will defer it until the first call to
- * {@link Lazy#get}. The following provision methods all request provision of the same type, but
- * each implies different semantics: <pre><code>
+ * {@link Lazy} to more explicitly control provision requests. A {@link Provider} allows the user of
+ * the component to request provision any number of times by calling {@link Provider#get}. A {@link
+ * Lazy} will only ever request a single provision, but will defer it until the first call to {@link
+ * Lazy#get}. The following provision methods all request provision of the same type, but each
+ * implies different semantics:
+ *
+ * <pre><code>
  *   SomeType getSomeType();
  *   {@literal Provider<SomeType>} getSomeTypeProvider();
  *   {@literal Lazy<SomeType>} getLazySomeType();
@@ -70,24 +74,30 @@ import javax.inject.Singleton;
  * <p>Members-injection methods have a single parameter and inject dependencies into each of the
  * {@link Inject}-annotated fields and methods of the passed instance. A members-injection method
  * may be void or return its single parameter as a convenience for chaining. The following are all
- * valid members-injection method declarations: <pre><code>
+ * valid members-injection method declarations:
+ *
+ * <pre><code>
  *   void injectSomeType(SomeType someType);
  *   SomeType injectAndReturnSomeType(SomeType someType);
  * </code></pre>
  *
  * <p>A method with no parameters that returns a {@link MembersInjector} is equivalent to a members
  * injection method. Calling {@link MembersInjector#injectMembers} on the returned object will
- * perform the same work as a members injection method. For example: <pre><code>
+ * perform the same work as a members injection method. For example:
+ *
+ * <pre><code>
  *   {@literal MembersInjector<SomeType>} getSomeTypeMembersInjector();
  * </code></pre>
  *
  * <h4>A note about covariance</h4>
  *
- * <p>While a members-injection method for a type will accept instances of its subtypes, only
- * {@link Inject}-annotated members of the parameter type and its supertypes will be injected;
- * members of subtypes will not. For example, given the following types, only {@code a} and
- * {@code b} will be injected into an instance of {@code Child} when it is passed to the
- * members-injection method {@code injectSelf(Self instance)}: <pre><code>
+ * <p>While a members-injection method for a type will accept instances of its subtypes, only {@link
+ * Inject}-annotated members of the parameter type and its supertypes will be injected; members of
+ * subtypes will not. For example, given the following types, only {@code a} and {@code b} will be
+ * injected into an instance of {@code Child} when it is passed to the members-injection method
+ * {@code injectSelf(Self instance)}:
+ *
+ * <pre><code>
  *   class Parent {
  *     {@literal @}Inject A a;
  *   }
@@ -104,18 +114,23 @@ import javax.inject.Singleton;
  * <a name="instantiation"></a>
  * <h2>Instantiation</h2>
  *
- * <p>Component implementations are primarily instantiated via a generated
- * <a href="http://en.wikipedia.org/wiki/Builder_pattern">builder</a>. An instance of the builder
- * is obtained using the {@code builder()} method on the component implementation.
- * If a nested {@code @Component.Builder} type exists in the component, the {@code builder()}
- * method will return a generated implementation of that type.  If no nested
- * {@code @Component.Builder} exists, the returned builder has a method to set each of the
- * {@linkplain #modules} and component {@linkplain #dependencies} named with the
- * <a href="http://en.wikipedia.org/wiki/CamelCase">lower camel case</a> version of the module
- * or dependency type. Each component dependency and module without a visible default constructor
- * must be set explicitly, but any module with a default or no-args constructor accessible to the
- * component implementation may be elided. This is an example usage of a component builder:
- * <pre><code>
+ * <p>Component implementations are primarily instantiated via a generated <a
+ * href="http://en.wikipedia.org/wiki/Builder_pattern">builder</a> or <a
+ * href="https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)">factory</a>.
+ *
+ * <p>If a nested {@link Builder @Component.Builder} or {@link Factory @Component.Factory} type
+ * exists in the component, Dagger will generate an implementation of that type. If neither exists,
+ * Dagger will generate a builder type that has a method to set each of the {@linkplain #modules}
+ * and component {@linkplain #dependencies} named with the <a
+ * href="http://en.wikipedia.org/wiki/CamelCase">lower camel case</a> version of the module or
+ * dependency type.
+ *
+ * <p>In either case, the Dagger-generated component type will have a static method, named either
+ * {@code builder()} or {@code factory()}, that returns a builder or factory instance.
+ *
+ * <p>Example of using a builder:
+ *
+ * <pre>{@code
  *   public static void main(String[] args) {
  *     OtherComponent otherComponent = ...;
  *     MyComponent component = DaggerMyComponent.builder()
@@ -127,21 +142,35 @@ import javax.inject.Singleton;
  *         .myApplicationModule(new MyApplicationModule())
  *         .build();
  *   }
- * </code></pre>
+ * }</pre>
+ *
+ * <p>Example of using a factory:
+ *
+ * <pre>{@code
+ * public static void main(String[] args) {
+ *     OtherComponent otherComponent = ...;
+ *     MyComponent component = DaggerMyComponent.factory()
+ *         .create(otherComponent, new FlagsModule(args), new MyApplicationModule());
+ *     // Note that all parameters to a factory method are required, even if one is for a module
+ *     // that Dagger could instantiate. The only case where null is legal is for a
+ *     // @BindsInstance @Nullable parameter.
+ *   }
+ * }</pre>
  *
  * <p>In the case that a component has no component dependencies and only no-arg modules, the
- * generated component will also have a factory method {@code create()}.
- * {@code SomeComponent.create()} and {@code SomeComponent.builder().build()} are both valid and
+ * generated component will also have a factory method {@code create()}. {@code
+ * SomeComponent.create()} and {@code SomeComponent.builder().build()} are both valid and
  * equivalent.
  *
  * <a name="scope"></a>
  * <h2>Scope</h2>
  *
- * <p>Each Dagger component can be associated with a scope by annotating it with the
- * {@linkplain Scope scope annotation}. The component implementation ensures that there is only one
- * provision of each scoped binding per instance of the component. If the component declares a
- * scope, it may only contain unscoped bindings or bindings of that scope anywhere in the graph. For
- * example: <pre><code>
+ * <p>Each Dagger component can be associated with a scope by annotating it with the {@linkplain
+ * Scope scope annotation}. The component implementation ensures that there is only one provision of
+ * each scoped binding per instance of the component. If the component declares a scope, it may only
+ * contain unscoped bindings or bindings of that scope anywhere in the graph. For example:
+ *
+ * <pre><code>
  *   {@literal @}Singleton {@literal @}Component
  *   interface MyApplicationComponent {
  *     // this component can only inject types using unscoped or {@literal @}Singleton bindings
@@ -150,8 +179,8 @@ import javax.inject.Singleton;
  *
  * <p>In order to get the proper behavior associated with a scope annotation, it is the caller's
  * responsibility to instantiate new component instances when appropriate. A {@link Singleton}
- * component, for instance, should only be instantiated once per application, while a
- * {@code RequestScoped} component should be instantiated once per request. Because components are
+ * component, for instance, should only be instantiated once per application, while a {@code
+ * RequestScoped} component should be instantiated once per request. Because components are
  * self-contained implementations, exiting a scope is as simple as dropping all references to the
  * component instance.
  *
@@ -166,20 +195,22 @@ import javax.inject.Singleton;
  * <h3>Subcomponents</h3>
  *
  * <p>The simplest way to relate two components is by declaring a {@link Subcomponent}. A
- * subcomponent behaves exactly like a component, but has its implementation generated within
- * a parent component or subcomponent. That relationship allows the subcomponent implementation to
- * inherit the <em>entire</em> binding graph from its parent when it is declared. For that reason,
- * a subcomponent isn't evaluated for completeness until it is associated with a parent.
+ * subcomponent behaves exactly like a component, but has its implementation generated within a
+ * parent component or subcomponent. That relationship allows the subcomponent implementation to
+ * inherit the <em>entire</em> binding graph from its parent when it is declared. For that reason, a
+ * subcomponent isn't evaluated for completeness until it is associated with a parent.
  *
  * <p>Subcomponents are declared by listing the class in the {@link Module#subcomponents()}
  * attribute of one of the parent component's modules. This binds the {@link Subcomponent.Builder}
- * within the parent component.
+ * or {@link Subcomponent.Factory} for that subcomponent within the parent component.
  *
  * <p>Subcomponents may also be declared via a factory method on a parent component or subcomponent.
  * The method may have any name, but must return the subcomponent. The factory method's parameters
  * may be any number of the subcomponent's modules, but must at least include those without visible
  * no-arg constructors. The following is an example of a factory method that creates a
- * request-scoped subcomponent from a singleton-scoped parent: <pre><code>
+ * request-scoped subcomponent from a singleton-scoped parent:
+ *
+ * <pre><code>
  *   {@literal @}Singleton {@literal @}Component
  *   interface ApplicationComponent {
  *     // component methods...
@@ -193,11 +224,11 @@ import javax.inject.Singleton;
  *
  * <p>While subcomponents are the simplest way to compose subgraphs of bindings, subcomponents are
  * tightly coupled with the parents; they may use any binding defined by their ancestor component
- * and subcomponents. As an alternative, components can use bindings only from another
- * <em>component interface</em> by declaring a {@linkplain #dependencies component dependency}. When
- * a type is used as a component dependency, each <a href="#provision-methods">provision method</a>
- * on the dependency is bound as a provider. Note that <em>only</em> the bindings exposed as
- * provision methods are available through component dependencies.
+ * and subcomponents. As an alternative, components can use bindings only from another <em>component
+ * interface</em> by declaring a {@linkplain #dependencies component dependency}. When a type is
+ * used as a component dependency, each <a href="#provision-methods">provision method</a> on the
+ * dependency is bound as a provider. Note that <em>only</em> the bindings exposed as provision
+ * methods are available through component dependencies.
  *
  * @since 2.0
  */
@@ -219,36 +250,112 @@ public @interface Component {
   Class<?>[] dependencies() default {};
 
   /**
-   * A builder for a component. Components may have a single nested static abstract class or
-   * interface annotated with {@code @Component.Builder}.  If they do, then the component's
-   * generated builder will match the API in the type.  Builders must follow some rules:
+   * A builder for a component.
+   *
+   * <p>A builder is a type with setter methods for the {@linkplain Component#modules modules},
+   * {@linkplain Component#dependencies dependencies} and {@linkplain BindsInstance bound instances}
+   * required by the component and a single no-argument build method that creates a new component
+   * instance.
+   *
+   * <p>Components may have a single nested {@code static abstract class} or {@code interface}
+   * annotated with {@code @Component.Builder}. If they do, then Dagger will generate a builder
+   * class that implements that type. Note that a component with a {@code @Component.Builder} may
+   * not also have a {@code @Component.Factory}.
+   *
+   * <p>Builder types must follow some rules:
+   *
    * <ul>
-   * <li> A single abstract method with no arguments must exist, and must return the component.
-   *      (This is typically the {@code build()} method.)
-   * <li> All other abstract methods must take a single argument and must return void,
-   *      the Builder type, or a supertype of the builder.
-   * <li> Each component dependency <b>must</b> have an abstract setter method.
-   * <li> Each module dependency that Dagger can't instantiate itself (e.g, the module
-   *      doesn't have a visible no-args constructor) <b>must</b> have an abstract setter method.
-   *      Other module dependencies (ones that Dagger can instantiate) are allowed, but not required.
-   * <li> Non-abstract methods are allowed, but ignored as far as validation and builder generation
-   *      are concerned.
+   *   <li>There <i>must</i> be exactly one abstract no-argument method that returns the component
+   *       type or one of its supertypes, called the "build method".
+   *   <li>There <i>may</i> be other other abstract methods, called "setter methods".
+   *   <li>Setter methods <i>must</i> take a single argument and return {@code void}, the builder
+   *       type or a supertype of the builder type.
+   *   <li>There <i>must</i> be a setter method for each {@linkplain Component#dependencies
+   *       component dependency}.
+   *   <li>There <i>must</i> be a setter method for each non-{@code abstract} {@linkplain
+   *       Component#modules module} that has non-{@code static} binding methods, unless Dagger can
+   *       instantiate that module with a visible no-argument constructor.
+   *   <li>There <i>may</i> be setter methods for modules that Dagger can instantiate or does not
+   *       need to instantiate.
+   *   <li>There <i>may</i> be setter methods annotated with {@code @BindsInstance}. These methods
+   *       bind the instance passed to them within the component. See {@link
+   *       BindsInstance @BindsInstance} for more information.
+   *   <li>There <i>may</i> be non-{@code abstract} methods, but they are ignored as far as
+   *       validation and builder generation are concerned.
    * </ul>
-   * 
-   * For example, this could be a valid Component with a Builder: <pre><code>
+   *
+   * For example, this could be a valid {@code Component} with a {@code Builder}:
+   *
+   * <pre><code>
    * {@literal @}Component(modules = {BackendModule.class, FrontendModule.class})
    * interface MyComponent {
    *   MyWidget myWidget();
-   *   
+   *
    *   {@literal @}Component.Builder
    *   interface Builder {
-   *     MyComponent build();
    *     Builder backendModule(BackendModule bm);
    *     Builder frontendModule(FrontendModule fm);
+   *     {@literal @}BindsInstance
+   *     Builder foo(Foo foo);
+   *     MyComponent build();
    *   }
    * }</code></pre>
    */
   @Target(TYPE)
   @Documented
   @interface Builder {}
+
+  /**
+   * A factory for a component.
+   *
+   * <p>A factory is a type with a single method that returns a new component instance each time it
+   * is called. The parameters of that method allow the caller to provide the {@linkplain
+   * Component#modules modules}, {@linkplain Component#dependencies dependencies} and {@linkplain
+   * BindsInstance bound instances} required by the component.
+   *
+   * <p>Components may have a single nested {@code static abstract class} or {@code interface}
+   * annotated with {@code @Component.Factory}. If they do, then Dagger will generate a factory
+   * class that will implement that type. Note that a component with a {@code @Component.Factory}
+   * may not also have a {@code @Component.Builder}.
+   *
+   * <p>Factory types must follow some rules:
+   *
+   * <ul>
+   *   <li>There <i>must</i> be exactly one abstract method, which must return the component type or
+   *       one of its supertypes.
+   *   <li>The method <i>must</i> have a parameter for each {@linkplain Component#dependencies
+   *       component dependency}.
+   *   <li>The method <i>must</i> have a parameter for each non-{@code abstract} {@linkplain
+   *       Component#modules module} that has non-{@code static} binding methods, unless Dagger can
+   *       instantiate that module with a visible no-argument constructor.
+   *   <li>The method <i>may</i> have parameters for modules that Dagger can instantiate or does not
+   *       need to instantiate.
+   *   <li>The method <i>may</i> have parameters annotated with {@code @BindsInstance}. These
+   *       parameters bind the instance passed for that parameter within the component. See {@link
+   *       BindsInstance @BindsInstance} for more information.
+   *   <li>There <i>may</i> be non-{@code abstract} methods, but they are ignored as far as
+   *       validation and factory generation are concerned.
+   * </ul>
+   *
+   * For example, this could be a valid {@code Component} with a {@code Factory}:
+   *
+   * <pre><code>
+   * {@literal @}Component(modules = {BackendModule.class, FrontendModule.class})
+   * interface MyComponent {
+   *   MyWidget myWidget();
+   *
+   *   {@literal @}Component.Factory
+   *   interface Factory {
+   *     MyComponent newMyComponent(
+   *         BackendModule bm, FrontendModule fm, {@literal @}BindsInstance Foo foo);
+   *   }
+   * }</code></pre>
+   *
+   * <p>For a root component, if a {@code @Component.Factory} is defined, the generated component
+   * type will have a {@code static} method named {@code factory()} that returns an instance of that
+   * factory.
+   */
+  @Target(TYPE)
+  @Documented
+  @interface Factory {}
 }

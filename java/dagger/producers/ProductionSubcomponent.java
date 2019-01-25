@@ -50,13 +50,30 @@ public @interface ProductionSubcomponent {
   Class<?>[] modules() default {};
 
   /**
-   * A builder for a subcomponent.  This follows all the rules of
-   * {@link ProductionComponent.Builder}, except it must appear in classes annotated with
-   * {@link ProductionSubcomponent} instead of {@code ProductionComponent}. Components can have
-   * methods that return a {@link ProductionSubcomponent.Builder}-annotated type, allowing the user
-   * to set modules on the subcomponent using their defined API.
+   * A builder for a production subcomponent.
+   *
+   * <p>This follows all the rules of {@link Component.Builder}, except it must appear in classes
+   * annotated with {@link ProductionSubcomponent} instead of {@code Component}.
+   *
+   * <p>If a subcomponent defines a builder, its parent component(s) will have a binding for that
+   * builder type, allowing an instance or {@code Provider} of that builder to be injected or
+   * returned from a method on that component like any other binding.
    */
   @Target(TYPE)
   @Documented
   @interface Builder {}
+
+  /**
+   * A factory for a production subcomponent.
+   *
+   * <p>This follows all the rules of {@link Component.Factory}, except it must appear in classes
+   * annotated with {@link ProductionSubcomponent} instead of {@code Component}.
+   *
+   * <p>If a subcomponent defines a factory, its parent component(s) will have a binding for that
+   * factory type, allowing an instance that factory to be injected or returned from a method on
+   * that component like any other binding.
+   */
+  @Target(TYPE)
+  @Documented
+  @interface Factory {}
 }

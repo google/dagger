@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -248,6 +249,14 @@ final class DaggerTypes implements Types {
           }
         },
         null);
+  }
+
+  /**
+   * Resolves the type of the given executable element as a member of the given type. This may
+   * resolve type variables to concrete types, etc.
+   */
+  public ExecutableType resolveExecutableType(ExecutableElement element, TypeMirror containerType) {
+    return MoreTypes.asExecutable(asMemberOf(MoreTypes.asDeclared(containerType), element));
   }
 
   // Implementation of Types methods, delegating to types.

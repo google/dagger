@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -26,11 +26,11 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ObjectArrays;
 import dagger.BindsInstance;
 import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
@@ -38,13 +38,13 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ExecutableType;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
-/** Validates {@link dagger.Component.Builder} annotations. */
-class ComponentCreatorValidator {
+/** Validates types annotated with component creator annotations. */
+final class ComponentCreatorValidator {
 
   private final DaggerElements elements;
   private final DaggerTypes types;
@@ -55,153 +55,277 @@ class ComponentCreatorValidator {
     this.types = types;
   }
 
-  public ValidationReport<TypeElement> validate(TypeElement subject) {
-    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(subject);
+  /** Validates that the given {@code type} is potentially a valid component creator type. */
+  public ValidationReport<TypeElement> validate(TypeElement type) {
+    ValidationReport.Builder<TypeElement> report = ValidationReport.about(type);
 
-    ComponentKind componentKind = ComponentKind.forAnnotatedBuilderElement(subject).get();
+    ImmutableSet<ComponentCreatorAnnotation> creatorAnnotations = getCreatorAnnotations(type);
+    if (creatorAnnotations.size() > 1) {
+      String error =
+          "May not have more than one component Builder or Factory annotation on a type: found "
+              + creatorAnnotations;
+      report.addError(error);
+      return report.build();
+    }
 
-    Element componentElement = subject.getEnclosingElement();
-    ErrorMessages.ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(componentKind);
-    checkArgument(isAnnotationPresent(subject, componentKind.builderAnnotation().get()));
+    // creatorAnnotations should never be empty because the validate method should only ever be
+    // called for types that have been found to have some creator annotation
+    ComponentCreatorAnnotation annotation = getOnlyElement(creatorAnnotations);
+    ComponentCreatorMessages messages = ErrorMessages.creatorMessagesFor(annotation);
 
+    ComponentKind componentKind = annotation.componentKind();
+    ComponentCreatorKind creatorKind = annotation.creatorKind();
+
+    Element componentElement = type.getEnclosingElement();
     if (!isAnnotationPresent(componentElement, componentKind.annotation())) {
-      builder.addError(msgs.mustBeInComponent(), subject);
+      report.addError(messages.mustBeInComponent());
     }
 
-    switch (subject.getKind()) {
+    // If the type isn't a class or interface, don't validate anything else since the rest of the
+    // messages will be bogus.
+    if (validateIsClassOrInterface(type, report, messages)) {
+      validateTypeRequirements(type, report, messages);
+      switch (creatorKind) {
+        case FACTORY:
+          validateFactory(type, report, componentElement, messages);
+          break;
+        case BUILDER:
+          validateBuilder(type, report, componentElement, messages);
+      }
+    }
+
+    // Note: there's more validation in ComponentDescriptorValidator:
+    // - to make sure the setter methods/factory parameters mirror the deps
+    // - to make sure each type or key is set by only one method or parameter
+
+    return report.build();
+  }
+
+  /** Validates that the type is a class or interface type and returns true if it is. */
+  private boolean validateIsClassOrInterface(
+      TypeElement type,
+      ValidationReport.Builder<TypeElement> report,
+      ComponentCreatorMessages messages) {
+    switch (type.getKind()) {
       case CLASS:
-        List<? extends Element> allElements = subject.getEnclosedElements();
-        List<ExecutableElement> cxtors = ElementFilter.constructorsIn(allElements);
-        if (cxtors.size() != 1 || getOnlyElement(cxtors).getParameters().size() != 0) {
-          builder.addError(msgs.cxtorOnlyOneAndNoArgs(), subject);
-        }
-        break;
+        validateConstructor(type, report, messages);
+        return true;
       case INTERFACE:
-        break;
+        return true;
       default:
-        // If not the correct type, exit early since the rest of the messages will be bogus.
-        builder.addError(msgs.mustBeClassOrInterface(), subject);
-        return builder.build();
+        report.addError(messages.mustBeClassOrInterface());
+    }
+    return false;
+  }
+
+  private void validateConstructor(
+      TypeElement type,
+      ValidationReport.Builder<TypeElement> report,
+      ComponentCreatorMessages messages) {
+    List<? extends Element> allElements = type.getEnclosedElements();
+    List<ExecutableElement> constructors = ElementFilter.constructorsIn(allElements);
+
+    boolean valid = true;
+    if (constructors.size() != 1) {
+      valid = false;
+    } else {
+      ExecutableElement constructor = getOnlyElement(constructors);
+      valid = constructor.getParameters().isEmpty()
+          && !constructor.getModifiers().contains(PRIVATE);
     }
 
-    if (!subject.getTypeParameters().isEmpty()) {
-      builder.addError(msgs.generics(), subject);
+    if (!valid) {
+      report.addError(messages.invalidConstructor());
+    }
+  }
+
+  /** Validates basic requirements about the type that are common to both creator kinds. */
+  private void validateTypeRequirements(
+      TypeElement type,
+      ValidationReport.Builder<TypeElement> report,
+      ComponentCreatorMessages messages) {
+    if (!type.getTypeParameters().isEmpty()) {
+      report.addError(messages.generics());
     }
 
-    Set<Modifier> modifiers = subject.getModifiers();
+    Set<Modifier> modifiers = type.getModifiers();
     if (modifiers.contains(PRIVATE)) {
-      builder.addError(msgs.isPrivate(), subject);
+      report.addError(messages.isPrivate());
     }
     if (!modifiers.contains(STATIC)) {
-      builder.addError(msgs.mustBeStatic(), subject);
+      report.addError(messages.mustBeStatic());
     }
     // Note: Must be abstract, so no need to check for final.
     if (!modifiers.contains(ABSTRACT)) {
-      builder.addError(msgs.mustBeAbstract(), subject);
+      report.addError(messages.mustBeAbstract());
     }
+  }
 
-    ExecutableElement factoryMethod = null;
-    for (ExecutableElement method : elements.getUnimplementedMethods(subject)) {
-      ExecutableType resolvedMethodType =
-          MoreTypes.asExecutable(types.asMemberOf(MoreTypes.asDeclared(subject.asType()), method));
-      TypeMirror returnType = resolvedMethodType.getReturnType();
+  private void validateBuilder(
+      TypeElement type,
+      ValidationReport.Builder<TypeElement> report,
+      Element componentElement,
+      ComponentCreatorMessages messages) {
+    ExecutableElement buildMethod = null;
+    for (ExecutableElement method : elements.getUnimplementedMethods(type)) {
+      TypeMirror returnType = types.resolveExecutableType(method, type.asType()).getReturnType();
       switch (method.getParameters().size()) {
         case 0: // If this is potentially a build() method, validate it returns the correct type.
-          if (types.isSubtype(componentElement.asType(), returnType)) {
-            validateFactoryMethodReturnType(
-                builder,
-                // since types.isSubtype() passed, componentElement cannot be a PackageElement
-                MoreElements.asType(componentElement),
-                msgs,
-                method,
-                returnType);
-            if (factoryMethod != null) {
+          if (validateFactoryMethodReturnType(
+              report, type, componentElement, messages, method)) {
+            if (buildMethod != null) {
               // If we found more than one build-like method, fail.
               error(
-                  builder,
+                  report,
                   method,
-                  msgs.twoBuildMethods(),
-                  msgs.inheritedTwoBuildMethods(),
-                  factoryMethod);
+                  messages.twoFactoryMethods(),
+                  messages.inheritedTwoFactoryMethods(),
+                  buildMethod);
             }
-          } else {
-            error(
-                builder,
-                method,
-                msgs.buildMustReturnComponentType(),
-                msgs.inheritedBuildMustReturnComponentType());
           }
-          // We set the factoryMethod regardless of the return type to reduce error spam.
-          factoryMethod = method;
+          // We set the buildMethod regardless of the return type to reduce error spam.
+          buildMethod = method;
           break;
 
         case 1: // If this correctly had one parameter, make sure the return types are valid.
-          if (returnType.getKind() != TypeKind.VOID
-              && !types.isSubtype(subject.asType(), returnType)) {
-            error(
-                builder,
-                method,
-                msgs.methodsMustReturnVoidOrBuilder(),
-                msgs.inheritedMethodsMustReturnVoidOrBuilder());
-          }
-          if (!method.getTypeParameters().isEmpty()) {
-            error(
-                builder,
-                method,
-                msgs.methodsMayNotHaveTypeParameters(),
-                msgs.inheritedMethodsMayNotHaveTypeParameters());
-          }
-          if (!isAnyAnnotationPresent(method, BindsInstance.class)
-              && method.getParameters().get(0).asType().getKind().isPrimitive()) {
-            error(
-                builder,
-                method,
-                msgs.nonBindsInstanceMethodsMayNotTakePrimitives(),
-                msgs.inheritedNonBindsInstanceMethodsMayNotTakePrimitives());
-          }
+          validateSetterMethod(type, method, returnType, report, messages);
           break;
 
         default: // more than one parameter
           error(
-              builder, method, msgs.methodsMustTakeOneArg(), msgs.inheritedMethodsMustTakeOneArg());
+              report,
+              method,
+              messages.setterMethodsMustTakeOneArg(),
+              messages.inheritedSetterMethodsMustTakeOneArg());
           break;
       }
     }
 
-    if (factoryMethod == null) {
-      builder.addError(msgs.missingBuildMethod(), subject);
+    if (buildMethod == null) {
+      report.addError(messages.missingFactoryMethod());
+    } else {
+      validateNotGeneric(buildMethod, report, messages);
     }
-
-    // Note: there's more validation in ComponentDescriptorValidator:
-    // - to make sure the setter methods mirror the deps
-    // - to make sure each type or key is set by only one method
-
-    return builder.build();
   }
 
-  private void validateFactoryMethodReturnType(
-      ValidationReport.Builder<TypeElement> builder,
-      TypeElement componentElement,
-      ComponentCreatorMessages msgs,
+  private void validateSetterMethod(
+      TypeElement type,
       ExecutableElement method,
-      TypeMirror returnType) {
-    if (types.isSameType(componentElement.asType(), returnType)) {
+      TypeMirror returnType,
+      ValidationReport.Builder<TypeElement> report,
+      ComponentCreatorMessages messages) {
+    if (returnType.getKind() != TypeKind.VOID && !types.isSubtype(type.asType(), returnType)) {
+      error(
+          report,
+          method,
+          messages.setterMethodsMustReturnVoidOrBuilder(),
+          messages.inheritedSetterMethodsMustReturnVoidOrBuilder());
+    }
+
+    validateNotGeneric(method, report, messages);
+
+    if (!isAnyAnnotationPresent(method, BindsInstance.class)
+        && method.getParameters().get(0).asType().getKind().isPrimitive()) {
+      error(
+          report,
+          method,
+          messages.nonBindsInstanceParametersMayNotBePrimitives(),
+          messages.inheritedNonBindsInstanceParametersMayNotBePrimitives());
+    }
+  }
+
+  private void validateFactory(
+      TypeElement type,
+      ValidationReport.Builder<TypeElement> report,
+      Element componentElement,
+      ComponentCreatorMessages messages) {
+    ImmutableList<ExecutableElement> abstractMethods =
+        elements.getUnimplementedMethods(type).asList();
+    switch (abstractMethods.size()) {
+      case 0:
+        report.addError(messages.missingFactoryMethod());
+        return;
+      case 1:
+        break; // good
+      default:
+        error(
+            report,
+            abstractMethods.get(1),
+            messages.twoFactoryMethods(),
+            messages.inheritedTwoFactoryMethods(),
+            abstractMethods.get(0));
+        return;
+    }
+
+    ExecutableElement method = getOnlyElement(abstractMethods);
+    validateNotGeneric(method, report, messages);
+
+    if (!validateFactoryMethodReturnType(report, type, componentElement, messages, method)) {
+      // If we can't determine that the single method is a valid factory method, don't bother
+      // validating its parameters.
       return;
     }
-    ImmutableSet<ExecutableElement> methodsOnlyInComponent =
-        methodsOnlyInComponent(componentElement);
-    if (!methodsOnlyInComponent.isEmpty()) {
-      builder.addWarning(
-          msgs.buildMethodReturnsSupertypeWithMissingMethods(
-              componentElement, builder.getSubject(), returnType, method, methodsOnlyInComponent),
-          method);
+
+    for (VariableElement parameter : method.getParameters()) {
+      if (!isAnnotationPresent(parameter, BindsInstance.class)
+          && parameter.asType().getKind().isPrimitive()) {
+        error(
+            report,
+            method,
+            messages.nonBindsInstanceParametersMayNotBePrimitives(),
+            messages.inheritedNonBindsInstanceParametersMayNotBePrimitives());
+      }
     }
+  }
+
+  /**
+   * Validates that the factory method that actually returns a new component instance. Returns true
+   * if the return type was valid.
+   */
+  private boolean validateFactoryMethodReturnType(
+      ValidationReport.Builder<TypeElement> report,
+      TypeElement type,
+      Element componentElement,
+      ComponentCreatorMessages messages,
+      ExecutableElement method) {
+    TypeMirror returnType = types.resolveExecutableType(method, type.asType()).getReturnType();
+
+    if (!types.isSubtype(componentElement.asType(), returnType)) {
+      error(
+          report,
+          method,
+          messages.factoryMethodMustReturnComponentType(),
+          messages.inheritedFactoryMethodMustReturnComponentType());
+      return false;
+    }
+
+    if (isAnnotationPresent(method, BindsInstance.class)) {
+      error(
+          report,
+          method,
+          messages.factoryMethodMayNotBeAnnotatedWithBindsInstance(),
+          messages.inheritedFactoryMethodMayNotBeAnnotatedWithBindsInstance());
+      return false;
+    }
+
+    TypeElement componentType = MoreElements.asType(componentElement);
+    if (!types.isSameType(componentType.asType(), returnType)) {
+      ImmutableSet<ExecutableElement> methodsOnlyInComponent =
+          methodsOnlyInComponent(componentType);
+      if (!methodsOnlyInComponent.isEmpty()) {
+        report.addWarning(
+            messages.factoryMethodReturnsSupertypeWithMissingMethods(
+                componentType, report.getSubject(), returnType, method, methodsOnlyInComponent),
+            method);
+      }
+    }
+    return true;
   }
 
   /**
    * Generates one of two error messages. If the method is enclosed in the subject, we target the
    * error to the method itself. Otherwise we target the error to the subject and list the method as
-   * an argumnent. (Otherwise we have no way of knowing if the method is being compiled in this pass
+   * an argument. (Otherwise we have no way of knowing if the method is being compiled in this pass
    * too, so javac might not be able to pinpoint it's line of code.)
    */
   /*
@@ -217,22 +341,29 @@ class ComponentCreatorValidator {
    * class was included in this compile run.  But that's hard, and this is close enough.
    */
   private static void error(
-      ValidationReport.Builder<TypeElement> builder,
+      ValidationReport.Builder<TypeElement> report,
       ExecutableElement method,
       String enclosedError,
       String inheritedError,
       Object... extraArgs) {
-    if (method.getEnclosingElement().equals(builder.getSubject())) {
-      builder.addError(String.format(enclosedError, extraArgs), method);
+    if (method.getEnclosingElement().equals(report.getSubject())) {
+      report.addError(String.format(enclosedError, extraArgs), method);
     } else {
-      builder.addError(String.format(inheritedError, append(extraArgs, method)));
+      report.addError(String.format(inheritedError, ObjectArrays.concat(extraArgs, method)));
     }
   }
 
-  private static Object[] append(Object[] initial, Object additional) {
-    Object[] newArray = Arrays.copyOf(initial, initial.length + 1);
-    newArray[initial.length] = additional;
-    return newArray;
+  private void validateNotGeneric(
+      ExecutableElement method,
+      ValidationReport.Builder<TypeElement> report,
+      ComponentCreatorMessages messages) {
+    if (!method.getTypeParameters().isEmpty()) {
+      error(
+          report,
+          method,
+          messages.methodsMayNotHaveTypeParameters(),
+          messages.inheritedMethodsMayNotHaveTypeParameters());
+    }
   }
 
   /**

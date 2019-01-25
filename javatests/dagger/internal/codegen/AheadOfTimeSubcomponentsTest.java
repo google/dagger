@@ -719,8 +719,6 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
-            "",
-            "  public abstract static class Builder implements Leaf.Builder {}",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -813,7 +811,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      return new LeafBuilder();",
             "    }",
             "",
-            "    private final class LeafBuilder extends DaggerLeaf.Builder {",
+            "    private final class LeafBuilder implements Leaf.Builder {",
             "      @Override",
             "      public Leaf build() {",
             "        return new LeafImpl();",
@@ -2532,8 +2530,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    Producers.cancel(getSetOfResponseProducer(), mayInterruptIfRunning);",
             "    Producers.cancel(responseProducer, mayInterruptIfRunning);",
             "  }",
-            "",
-            "  public abstract static class Builder implements Leaf.Builder {}",
             "}");
 
     Compilation compilation = compile(filesToCompile.build());
@@ -2689,7 +2685,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "",
-            "  private final class LeafBuilder extends DaggerLeaf.Builder {",
+            "  private final class LeafBuilder implements Leaf.Builder {",
             "    @Override",
             "    public Leaf build() {",
             "      return new LeafImpl();",

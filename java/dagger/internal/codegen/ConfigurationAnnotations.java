@@ -20,8 +20,9 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
-import static dagger.internal.codegen.ComponentKind.builderAnnotationsFor;
+import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
@@ -39,9 +40,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Module;
-import dagger.Subcomponent;
-import dagger.producers.ProductionComponent;
-import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -63,11 +61,11 @@ import javax.lang.model.type.TypeMirror;
 final class ConfigurationAnnotations {
 
   static Optional<AnnotationMirror> getComponentAnnotation(TypeElement component) {
-    return getAnyAnnotation(component, Component.class, ProductionComponent.class);
+    return getAnyAnnotation(component, annotationsFor(rootComponentKinds()));
   }
 
   static Optional<AnnotationMirror> getSubcomponentAnnotation(TypeElement subcomponent) {
-    return getAnyAnnotation(subcomponent, Subcomponent.class, ProductionSubcomponent.class);
+    return getAnyAnnotation(subcomponent, annotationsFor(subcomponentKinds()));
   }
 
   static Optional<AnnotationMirror> getComponentOrSubcomponentAnnotation(TypeElement type) {
@@ -93,7 +91,7 @@ final class ConfigurationAnnotations {
   }
 
   static boolean isSubcomponentCreator(Element element) {
-    return isAnyAnnotationPresent(element, builderAnnotationsFor(subcomponentKinds()));
+    return isAnyAnnotationPresent(element, creatorAnnotationsFor(subcomponentKinds()));
   }
 
   /**

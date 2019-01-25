@@ -16,55 +16,98 @@
 
 package dagger.internal.codegen;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * The collection of error messages to be reported back to users.
- */
+/** The collection of error messages to be reported back to users. */
 final class ErrorMessages {
 
-  static ComponentCreatorMessages creatorMessagesFor(ComponentDescriptor component) {
-    return component.isProduction()
-        ? component.isSubcomponent()
-            ? ProductionSubcomponentCreatorMessages.INSTANCE
-            : ProductionComponentCreatorMessages.INSTANCE
-        : component.isSubcomponent()
-            ? SubcomponentCreatorMessages.INSTANCE
-            : ComponentCreatorMessages.INSTANCE;
+  private static final UnaryOperator<String> PRODUCTION =
+      s ->
+          s.replace("component", "production component")
+              .replace("Component", "ProductionComponent");
+
+  private static final UnaryOperator<String> SUBCOMPONENT =
+      s -> s.replace("component", "subcomponent").replace("Component", "Subcomponent");
+
+  private static final UnaryOperator<String> FACTORY = s -> s.replace("Builder", "Factory");
+
+  private static final ImmutableMap<ComponentKind, Function<String, String>>
+      COMPONENT_TRANSFORMATIONS =
+          ImmutableMap.of(
+              ComponentKind.COMPONENT, UnaryOperator.identity(),
+              ComponentKind.SUBCOMPONENT, SUBCOMPONENT,
+              ComponentKind.PRODUCTION_COMPONENT, PRODUCTION,
+              ComponentKind.PRODUCTION_SUBCOMPONENT, PRODUCTION.andThen(SUBCOMPONENT));
+
+  static ComponentMessages componentMessagesFor(ComponentKind componentKind) {
+    return new ComponentMessages(COMPONENT_TRANSFORMATIONS.get(componentKind));
   }
 
-  static ComponentCreatorMessages creatorMessagesFor(ComponentKind kind) {
-    switch(kind) {
-      case COMPONENT:
-        return ComponentCreatorMessages.INSTANCE;
-      case SUBCOMPONENT:
-        return SubcomponentCreatorMessages.INSTANCE;
-      case PRODUCTION_COMPONENT:
-        return ProductionComponentCreatorMessages.INSTANCE;
-      case PRODUCTION_SUBCOMPONENT:
-        return ProductionSubcomponentCreatorMessages.INSTANCE;
-      default:
-        throw new IllegalStateException(kind.toString());
+  static ComponentCreatorMessages creatorMessagesFor(ComponentCreatorAnnotation creatorAnnotation) {
+    return creatorMessagesFor(creatorAnnotation.componentKind(), creatorAnnotation.creatorKind());
+  }
+
+  @VisibleForTesting
+  static ComponentCreatorMessages creatorMessagesFor(
+      ComponentKind componentKind, ComponentCreatorKind creatorKind) {
+    Function<String, String> transformation = COMPONENT_TRANSFORMATIONS.get(componentKind);
+    switch (creatorKind) {
+      case BUILDER:
+        return new BuilderMessages(transformation);
+      case FACTORY:
+        return new FactoryMessages(transformation);
+    }
+    throw new AssertionError();
+  }
+
+  private abstract static class Messages {
+    private final Function<String, String> transformation;
+
+    Messages(Function<String, String> transformation) {
+      this.transformation = transformation;
+    }
+
+    protected final String process(String s) {
+      return transformation.apply(s);
     }
   }
 
-  static class ComponentCreatorMessages {
-    static final ComponentCreatorMessages INSTANCE = new ComponentCreatorMessages();
+  /** Errors for components. */
+  static final class ComponentMessages extends Messages {
+    ComponentMessages(Function<String, String> transformation) {
+      super(transformation);
+    }
 
-    protected String process(String s) { return s; }
-
-    /** Errors for component builders. */
     final String moreThanOne() {
-      return process("@Component has more than one @Component.Builder: %s");
+      return process("@Component has more than one @Component.Builder or @Component.Factory: %s");
+    }
+  }
+
+  /** Errors for component creators. */
+  abstract static class ComponentCreatorMessages extends Messages {
+    ComponentCreatorMessages(Function<String, String> transformation) {
+      super(transformation);
     }
 
-    final String cxtorOnlyOneAndNoArgs() {
+    static String builderMethodRequiresNoArgs() {
+      return "Methods returning a @Component.Builder must have no arguments";
+    }
+
+    static String moreThanOneRefToSubcomponent() {
+      return "Only one method can create a given subcomponent. %s is created by: %s";
+    }
+
+    final String invalidConstructor() {
       return process("@Component.Builder classes must have exactly one constructor,"
-          + " and it must not have any parameters");
+          + " and it must not be private or have any parameters");
     }
 
     final String generics() {
@@ -91,63 +134,45 @@ final class ErrorMessages {
       return process("@Component.Builder types must be abstract");
     }
 
-    final String missingBuildMethod() {
-      return process("@Component.Builder types must have exactly one no-args method that "
-          + " returns the @Component type");
+    abstract String missingFactoryMethod();
+
+    abstract String multipleSettersForModuleOrDependencyType();
+
+    abstract String extraSetters();
+
+    abstract String missingSetters();
+
+    abstract String twoFactoryMethods();
+
+    abstract String inheritedTwoFactoryMethods();
+
+    abstract String factoryMethodMustReturnComponentType();
+
+    final String inheritedFactoryMethodMustReturnComponentType() {
+      return factoryMethodMustReturnComponentType() + ". Inherited method: %s";
     }
 
-    final String manyMethodsForType() {
-      return process("@Component.Builder types must not have more than one setter method per type,"
-          + " but %s is set by %s");
+    abstract String factoryMethodMayNotBeAnnotatedWithBindsInstance();
+
+    final String inheritedFactoryMethodMayNotBeAnnotatedWithBindsInstance() {
+      return factoryMethodMayNotBeAnnotatedWithBindsInstance() + ". Inherited method: %s";
     }
 
-    final String extraSetters() {
-      return process(
-          "@Component.Builder has setters for modules or components that aren't required: %s");
-    }
-
-    final String missingSetters() {
-      return process(
-          "@Component.Builder is missing setters for required modules or components: %s");
-    }
-
-    final String twoBuildMethods() {
-      return process("@Component.Builder types must have exactly one zero-arg method, and that"
-          + " method must return the @Component type. Already found: %s");
-    }
-
-    final String inheritedTwoBuildMethods() {
-      return process("@Component.Builder types must have exactly one zero-arg method, and that"
-          + " method must return the @Component type. Found %s and %s");
-    }
-
-    final String buildMustReturnComponentType() {
-      return process(
-          "@Component.Builder methods that have no arguments must return the @Component type or a "
-              + "supertype of the @Component");
-    }
-
-    final String inheritedBuildMustReturnComponentType() {
-      return buildMustReturnComponentType() + ". Inherited method: %s";
-    }
-
-    final String methodsMustTakeOneArg() {
+    final String setterMethodsMustTakeOneArg() {
       return process("@Component.Builder methods must not have more than one argument");
     }
 
-    final String inheritedMethodsMustTakeOneArg() {
-      return process(
-          "@Component.Builder methods must not have more than one argument. Inherited method: %s");
+    final String inheritedSetterMethodsMustTakeOneArg() {
+      return setterMethodsMustTakeOneArg() + ". Inherited method: %s";
     }
 
-    final String methodsMustReturnVoidOrBuilder() {
+    final String setterMethodsMustReturnVoidOrBuilder() {
       return process("@Component.Builder setter methods must return void, the builder,"
           + " or a supertype of the builder");
     }
 
-    final String inheritedMethodsMustReturnVoidOrBuilder() {
-      return process("@Component.Builder setter methods must return void, the builder,"
-          + "or a supertype of the builder. Inherited method: %s");
+    final String inheritedSetterMethodsMustReturnVoidOrBuilder() {
+      return setterMethodsMustReturnVoidOrBuilder() + ". Inherited method: %s";
     }
 
     final String methodsMayNotHaveTypeParameters() {
@@ -155,23 +180,18 @@ final class ErrorMessages {
     }
 
     final String inheritedMethodsMayNotHaveTypeParameters() {
-      return process(
-          "@Component.Builder methods must not have type parameters. Inherited method: %s");
+      return methodsMayNotHaveTypeParameters() + ". Inherited method: %s";
     }
 
-    final String nonBindsInstanceMethodsMayNotTakePrimitives() {
-      return process(
-          "@Component.Builder methods that are not annotated with @BindsInstance "
-              + "must take either a module or a component dependency, not a primitive");
+    abstract String nonBindsInstanceParametersMayNotBePrimitives();
+
+    final String inheritedNonBindsInstanceParametersMayNotBePrimitives() {
+      return nonBindsInstanceParametersMayNotBePrimitives() + ". Inherited method: %s";
     }
 
-    final String inheritedNonBindsInstanceMethodsMayNotTakePrimitives() {
-      return nonBindsInstanceMethodsMayNotTakePrimitives() + process(". Inherited method: %s");
-    }
-
-    final String buildMethodReturnsSupertypeWithMissingMethods(
+    final String factoryMethodReturnsSupertypeWithMissingMethods(
         TypeElement component,
-        TypeElement componentCreator,
+        TypeElement componentBuilder,
         TypeMirror returnType,
         ExecutableElement buildMethod,
         Set<ExecutableElement> additionalMethods) {
@@ -179,7 +199,7 @@ final class ErrorMessages {
           "%1$s.%2$s() returns %3$s, but %4$s declares additional component method(s): %5$s. In "
               + "order to provide type-safe access to these methods, override %2$s() to return "
               + "%4$s",
-          componentCreator.getQualifiedName(),
+          componentBuilder.getQualifiedName(),
           buildMethod.getSimpleName(),
           returnType,
           component.getQualifiedName(),
@@ -187,44 +207,132 @@ final class ErrorMessages {
     }
   }
 
-  static final class SubcomponentCreatorMessages extends ComponentCreatorMessages {
-    @SuppressWarnings("hiding")
-    static final SubcomponentCreatorMessages INSTANCE = new SubcomponentCreatorMessages();
-
-    @Override protected String process(String s) {
-      return s.replaceAll("component", "subcomponent").replaceAll("Component", "Subcomponent");
+  private static final class BuilderMessages extends ComponentCreatorMessages {
+    BuilderMessages(Function<String, String> transformation) {
+      super(transformation);
     }
-
-    String builderMethodRequiresNoArgs() {
-      return "Methods returning a @Subcomponent.Builder must have no arguments";
-    }
-
-    String moreThanOneRefToSubcomponent() {
-      return "Only one method can create a given subcomponent. %s is created by: %s";
-    }
-  }
-
-  private static final class ProductionComponentCreatorMessages extends ComponentCreatorMessages {
-    @SuppressWarnings("hiding")
-    static final ProductionComponentCreatorMessages INSTANCE =
-        new ProductionComponentCreatorMessages();
-
-    @Override protected String process(String s) {
-      return s.replaceAll("component", "production component")
-          .replaceAll("Component", "ProductionComponent");
-    }
-  }
-
-  private static final class ProductionSubcomponentCreatorMessages
-      extends ComponentCreatorMessages {
-    @SuppressWarnings("hiding")
-    static final ProductionSubcomponentCreatorMessages INSTANCE =
-        new ProductionSubcomponentCreatorMessages();
 
     @Override
-    protected String process(String s) {
-      return s.replaceAll("component", "production subcomponent")
-          .replaceAll("Component", "ProductionSubcomponent");
+    String missingFactoryMethod() {
+      return process(
+          "@Component.Builder types must have exactly one no-args method that "
+              + " returns the @Component type");
+    }
+
+    @Override
+    String multipleSettersForModuleOrDependencyType() {
+      return process(
+          "@Component.Builder types must not have more than one setter method per module or "
+              + "dependency, but %s is set by %s");
+    }
+
+    @Override
+    String extraSetters() {
+      return process(
+          "@Component.Builder has setters for modules or components that aren't required: %s");
+    }
+
+    @Override
+    String missingSetters() {
+      return process(
+          "@Component.Builder is missing setters for required modules or components: %s");
+    }
+
+    @Override
+    String twoFactoryMethods() {
+      return process(
+          "@Component.Builder types must have exactly one zero-arg method, and that"
+              + " method must return the @Component type. Already found: %s");
+    }
+
+    @Override
+    String inheritedTwoFactoryMethods() {
+      return process(
+          "@Component.Builder types must have exactly one zero-arg method, and that"
+              + " method must return the @Component type. Found %s and %s");
+    }
+
+    @Override
+    String factoryMethodMustReturnComponentType() {
+      return process(
+          "@Component.Builder methods that have no arguments must return the @Component type or a "
+              + "supertype of the @Component");
+    }
+
+    @Override
+    String factoryMethodMayNotBeAnnotatedWithBindsInstance() {
+      return process(
+          "@Component.Builder no-arg build methods may not be annotated with @BindsInstance");
+    }
+
+    @Override
+    String nonBindsInstanceParametersMayNotBePrimitives() {
+      return process(
+          "@Component.Builder methods that are not annotated with @BindsInstance "
+              + "must take either a module or a component dependency, not a primitive");
+    }
+  }
+
+  private static final class FactoryMessages extends ComponentCreatorMessages {
+    FactoryMessages(Function<String, String> transformation) {
+      super(transformation.andThen(FACTORY));
+    }
+
+    @Override
+    String missingFactoryMethod() {
+      return process(
+          "@Component.Factory types must have exactly one method that "
+              + "returns the @Component type");
+    }
+
+    @Override
+    String multipleSettersForModuleOrDependencyType() {
+      return process(
+          "@Component.Factory methods must not have more than one parameter per module or "
+              + "dependency, but %s is set by %s");
+    }
+
+    @Override
+    String extraSetters() {
+      return process(
+          "@Component.Factory method has parameters for modules or components that aren't "
+              + "required: %s");
+    }
+
+    @Override
+    String missingSetters() {
+      return process(
+          "@Component.Factory method is missing parameters for required modules or components: %s");
+    }
+
+    @Override
+    String twoFactoryMethods() {
+      return process(
+          "@Component.Factory types must have exactly one abstract method. Already found: %s");
+    }
+
+    @Override
+    String inheritedTwoFactoryMethods() {
+      return twoFactoryMethods();
+    }
+
+    @Override
+    String factoryMethodMustReturnComponentType() {
+      return process(
+          "@Component.Factory abstract methods must return the @Component type or a "
+              + "supertype of the @Component");
+    }
+
+    @Override
+    String factoryMethodMayNotBeAnnotatedWithBindsInstance() {
+      return process("@Component.Factory method may not be annotated with @BindsInstance");
+    }
+
+    @Override
+    String nonBindsInstanceParametersMayNotBePrimitives() {
+      return process(
+          "@Component.Factory method parameters that are not annotated with @BindsInstance "
+              + "must be either a module or a component dependency, not a primitive");
     }
   }
 

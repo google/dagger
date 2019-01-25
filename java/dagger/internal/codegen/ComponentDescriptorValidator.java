@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
+import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
@@ -34,6 +35,7 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableSet;
@@ -52,12 +54,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -67,7 +73,7 @@ import javax.lang.model.type.TypeMirror;
  *   <li>Validates scope hierarchy of component dependencies and subcompoennts.
  *   <li>Reports errors if there are component dependency cycles.
  *   <li>Reports errors if any abstract modules have non-abstract instance binding methods.
- *   <li>Validates component builder types.
+ *   <li>Validates component creator types.
  * </ul>
  */
 // TODO(dpb): Combine with ComponentHierarchyValidator.
@@ -271,7 +277,7 @@ final class ComponentDescriptorValidator {
       }
 
       ComponentCreatorDescriptor creator = component.creatorDescriptor().get();
-      ComponentCreatorMessages msgs = ErrorMessages.creatorMessagesFor(component);
+      ComponentCreatorMessages messages = ErrorMessages.creatorMessagesFor(creator.annotation());
 
       // Requirements for modules and dependencies that the creator can set
       Set<ComponentRequirement> creatorModuleAndDependencyRequirements =
@@ -286,18 +292,18 @@ final class ComponentDescriptorValidator {
           Sets.difference(
               creatorModuleAndDependencyRequirements, componentModuleAndDependencyRequirements);
 
+      DeclaredType container = asDeclared(creator.typeElement().asType());
       if (!inapplicableRequirementsOnCreator.isEmpty()) {
-        Collection<ExecutableElement> excessElements =
+        Collection<Element> excessElements =
             Multimaps.filterKeys(
-                    creator.requirementElements(), in(inapplicableRequirementsOnCreator))
+                    creator.unvalidatedRequirementElements(), in(inapplicableRequirementsOnCreator))
                 .values();
-        Optional<DeclaredType> container = Optional.of(asDeclared(creator.typeElement().asType()));
         String formatted =
             excessElements.stream()
-                .map(method -> methodSignatureFormatter.format(method, container))
+                .map(element -> formatElement(element, container))
                 .collect(joining(", ", "[", "]"));
         report(component)
-            .addError(String.format(msgs.extraSetters(), formatted), creator.typeElement());
+            .addError(String.format(messages.extraSetters(), formatted), creator.typeElement());
       }
 
       // Component requirements that the creator must be able to set
@@ -313,17 +319,17 @@ final class ComponentDescriptorValidator {
         report(component)
             .addError(
                 String.format(
-                    msgs.missingSetters(),
+                    messages.missingSetters(),
                     missingRequirements.stream().map(ComponentRequirement::type).collect(toList())),
                 creator.typeElement());
       }
 
-      // Validate that declared builder requirements (modules, dependencies) have unique types.
-      ImmutableSetMultimap<Wrapper<TypeMirror>, ExecutableElement> declaredRequirementsByType =
+      // Validate that declared creator requirements (modules, dependencies) have unique types.
+      ImmutableSetMultimap<Wrapper<TypeMirror>, Element> declaredRequirementsByType =
           Multimaps.filterKeys(
-                  creator.requirementElements(), in(creatorModuleAndDependencyRequirements))
-              .entries()
-              .stream()
+                  creator.unvalidatedRequirementElements(),
+                  creatorModuleAndDependencyRequirements::contains)
+              .entries().stream()
               .collect(
                   toImmutableSetMultimap(entry -> entry.getKey().wrappedType(), Entry::getValue));
       declaredRequirementsByType
@@ -332,9 +338,16 @@ final class ComponentDescriptorValidator {
               (typeWrapper, elementsForType) -> {
                 if (elementsForType.size() > 1) {
                   TypeMirror type = typeWrapper.get();
+                  // TODO(cgdecker): Attach this error message to the factory method rather than
+                  // the component type if the elements are factory method parameters AND the
+                  // factory method is defined by the factory type itself and not by a supertype.
                   report(component)
                       .addError(
-                          String.format(msgs.manyMethodsForType(), type, elementsForType),
+                          String.format(
+                              messages.multipleSettersForModuleOrDependencyType(),
+                              type,
+                              transform(
+                                  elementsForType, element -> formatElement(element, container))),
                           creator.typeElement());
                 }
               });
@@ -342,6 +355,43 @@ final class ComponentDescriptorValidator {
       // TODO(cgdecker): Duplicate binding validation should handle the case of multiple elements
       // that set the same bound-instance Key, but validating that here would make it fail faster
       // for subcomponents.
+    }
+
+    private String formatElement(Element element, DeclaredType container) {
+      // TODO(cgdecker): Extract some or all of this to another class?
+      // But note that it does different formatting for parameters than
+      // DaggerElements.elementToString(Element).
+      switch (element.getKind()) {
+        case METHOD:
+          return methodSignatureFormatter.format(
+              MoreElements.asExecutable(element), Optional.of(container));
+        case PARAMETER:
+          return formatParameter(MoreElements.asVariable(element), container);
+        default:
+          // This method shouldn't be called with any other type of element.
+          throw new AssertionError();
+      }
+    }
+
+    private String formatParameter(VariableElement parameter, DeclaredType container) {
+      // TODO(cgdecker): Possibly leave the type (and annotations?) off of the parameters here and
+      // just use their names, since the type will be redundant in the context of the error message.
+      StringJoiner joiner = new StringJoiner(" ");
+      parameter.getAnnotationMirrors().stream().map(Object::toString).forEach(joiner::add);
+      TypeMirror parameterType = resolveParameterType(parameter, container);
+      return joiner
+          .add(stripCommonTypePrefixes(parameterType.toString()))
+          .add(parameter.getSimpleName())
+          .toString();
+    }
+
+    private TypeMirror resolveParameterType(VariableElement parameter, DeclaredType container) {
+      ExecutableElement method =
+          MoreElements.asExecutable(parameter.getEnclosingElement());
+      int parameterIndex = method.getParameters().indexOf(parameter);
+
+      ExecutableType methodType = MoreTypes.asExecutable(types.asMemberOf(container, method));
+      return methodType.getParameterTypes().get(parameterIndex);
     }
 
     /**

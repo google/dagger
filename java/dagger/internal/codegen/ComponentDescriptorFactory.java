@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
@@ -37,7 +38,6 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.Lazy;
@@ -196,10 +196,13 @@ final class ComponentDescriptorFactory {
       }
     }
 
-    ImmutableList<DeclaredType> enclosedCreators =
-        kind.builderAnnotation()
-            .map(builderAnnotation -> enclosedAnnotatedTypes(typeElement, builderAnnotation))
-            .orElse(ImmutableList.of());
+    // Validation should have ensured that this set will have at most one element.
+    ImmutableSet<DeclaredType> enclosedCreators =
+        creatorAnnotationsFor(kind).stream()
+            .flatMap(
+                creatorAnnotation ->
+                    enclosedAnnotatedTypes(typeElement, creatorAnnotation).stream())
+            .collect(toImmutableSet());
     Optional<ComponentCreatorDescriptor> creatorDescriptor =
         enclosedCreators.isEmpty()
             ? Optional.empty()

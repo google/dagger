@@ -20,6 +20,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.Beta;
@@ -95,37 +96,22 @@ public @interface ProductionComponent {
   Class<?>[] dependencies() default {};
 
   /**
-   * A builder for a component. Components may have a single nested static abstract class or
-   * interface annotated with {@code @ProductionComponent.Builder}. If they do, then the component's
-   * generated builder will match the API in the type.  Builders must follow some rules:
-   * <ul>
-   * <li> A single abstract method with no arguments must exist, and must return the component.
-   *      (This is typically the {@code build()} method.)
-   * <li> All other abstract methods must take a single argument and must return void,
-   *      the builder type, or a supertype of the builder.
-   * <li> Each component dependency <b>must</b> have an abstract setter method.
-   * <li> Each module dependency that Dagger can't instantiate itself (i.e., the module
-   *      doesn't have a visible no-args constructor) <b>must</b> have an abstract setter method.
-   *      Other module dependencies (ones that Dagger can instantiate) are allowed, but not
-   *      required.
-   * <li> Non-abstract methods are allowed, but ignored as far as validation and builder generation
-   *      are concerned.
-   * </ul>
+   * A builder for a production component.
    *
-   * For example, this could be a valid {@code ProductionComponent} with a builder: <pre><code>
-   * {@literal @}ProductionComponent(modules = {BackendModule.class, FrontendModule.class})
-   * interface MyComponent {
-   *   {@literal ListenableFuture<MyWidget>} myWidget();
-   *
-   *   {@literal @}ProductionComponent.Builder
-   *   interface Builder {
-   *     MyComponent build();
-   *     Builder backendModule(BackendModule bm);
-   *     Builder frontendModule(FrontendModule fm);
-   *   }
-   * }</code></pre>
+   * <p>This follows all the rules of {@link Component.Builder}, except it must appear in classes
+   * annotated with {@link ProductionComponent} instead of {@code Component}.
    */
   @Target(TYPE)
   @Documented
   @interface Builder {}
+
+  /**
+   * A factory for a production component.
+   *
+   * <p>This follows all the rules of {@link Component.Factory}, except it must appear in classes
+   * annotated with {@link ProductionComponent} instead of {@code Component}.
+   */
+  @Target(TYPE)
+  @Documented
+  @interface Factory {}
 }

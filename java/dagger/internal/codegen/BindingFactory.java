@@ -321,17 +321,19 @@ final class BindingFactory {
 
   /**
    * Returns a {@link dagger.model.BindingKind#BOUND_INSTANCE} binding for a
-   * {@code @BindsInstance}-annotated builder method.
+   * {@code @BindsInstance}-annotated builder setter method or factory method parameter.
    */
-  ProvisionBinding boundInstanceBinding(
-      ComponentRequirement requirement, ExecutableElement method) {
-    checkArgument(method.getKind().equals(METHOD));
-    checkArgument(method.getParameters().size() == 1);
+  ProvisionBinding boundInstanceBinding(ComponentRequirement requirement, Element element) {
+    checkArgument(element instanceof VariableElement || element instanceof ExecutableElement);
+    VariableElement parameterElement =
+        element instanceof VariableElement
+            ? MoreElements.asVariable(element)
+            : getOnlyElement(MoreElements.asExecutable(element).getParameters());
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(method)
+        .bindingElement(element)
         .key(requirement.key().get())
-        .nullableType(getNullableType(getOnlyElement(method.getParameters())))
+        .nullableType(getNullableType(parameterElement))
         .kind(BOUND_INSTANCE)
         .build();
   }

@@ -18,9 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.stream;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static java.util.Arrays.stream;
+import static dagger.internal.codegen.DaggerStreams.valuesOf;
 import static java.util.EnumSet.allOf;
 
 import com.google.common.collect.ImmutableSet;
@@ -31,50 +31,44 @@ import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
-import java.util.EnumSet;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Stream;
 import javax.lang.model.element.TypeElement;
 
 /** Enumeration of the different kinds of components. */
 enum ComponentKind {
   /** {@code @Component} */
-  COMPONENT(Component.class, Optional.of(Component.Builder.class), true, false),
+  COMPONENT(Component.class, true, false),
 
   /** {@code @Subcomponent} */
-  SUBCOMPONENT(Subcomponent.class, Optional.of(Subcomponent.Builder.class), false, false),
+  SUBCOMPONENT(Subcomponent.class, false, false),
 
   /** {@code @ProductionComponent} */
-  PRODUCTION_COMPONENT(
-      ProductionComponent.class, Optional.of(ProductionComponent.Builder.class), true, true),
+  PRODUCTION_COMPONENT(ProductionComponent.class, true, true),
 
   /** {@code @ProductionSubcomponent} */
-  PRODUCTION_SUBCOMPONENT(
-      ProductionSubcomponent.class, Optional.of(ProductionSubcomponent.Builder.class), false, true),
+  PRODUCTION_SUBCOMPONENT(ProductionSubcomponent.class, false, true),
 
   /**
    * Kind for a descriptor that was generated from a {@link Module} instead of a component type in
    * order to validate the module's bindings.
    */
-  MODULE(Module.class, Optional.empty(), true, false),
+  MODULE(Module.class, true, false),
 
   /**
    * Kind for a descriptor was generated from a {@link ProducerModule} instead of a component type
    * in order to validate the module's bindings.
    */
-  PRODUCER_MODULE(ProducerModule.class, Optional.empty(), true, true),
+  PRODUCER_MODULE(ProducerModule.class, true, true),
   ;
 
   private static final ImmutableSet<ComponentKind> ROOT_COMPONENT_KINDS =
-      stream(values())
+      valuesOf(ComponentKind.class)
           .filter(kind -> !kind.isForModuleValidation())
           .filter(kind -> kind.isRoot())
           .collect(toImmutableSet());
 
   private static final ImmutableSet<ComponentKind> SUBCOMPONENT_KINDS =
-      stream(values())
+      valuesOf(ComponentKind.class)
           .filter(kind -> !kind.isForModuleValidation())
           .filter(kind -> !kind.isRoot())
           .collect(toImmutableSet());
@@ -89,31 +83,24 @@ enum ComponentKind {
     return SUBCOMPONENT_KINDS;
   }
 
-  /** Returns the set of all annotations that mark components and their builders. */
-  static ImmutableSet<Class<? extends Annotation>> allComponentAndBuilderAnnotations() {
-    return stream(values())
+  /** Returns all annotations that mark a component type. */
+  static ImmutableSet<Class<? extends Annotation>> allAnnotations() {
+    return valuesOf(ComponentKind.class)
         .filter(kind -> !kind.isForModuleValidation())
-        .flatMap(kind -> Stream.of(kind.annotation(), kind.builderAnnotation().get()))
+        .map(ComponentKind::annotation)
         .collect(toImmutableSet());
   }
 
   /** Returns the annotations for components of the given kinds. */
-  static ImmutableSet<Class<? extends Annotation>> annotationsFor(Set<ComponentKind> kinds) {
-    return annotationsFor(kinds, kind -> Optional.of(kind.annotation()));
+  static ImmutableSet<Class<? extends Annotation>> annotationsFor(Iterable<ComponentKind> kinds) {
+    return stream(kinds).map(ComponentKind::annotation).collect(toImmutableSet());
   }
 
-  private static ImmutableSet<Class<? extends Annotation>> annotationsFor(
-      Set<ComponentKind> kinds,
-      Function<ComponentKind, Optional<Class<? extends Annotation>>> annotationFunction) {
-    return kinds.stream()
-        .map(annotationFunction)
-        .flatMap(presentValues())
+  /** Returns the set of component kinds the given {@code element} has annotations for. */
+  static ImmutableSet<ComponentKind> getComponentKinds(TypeElement element) {
+    return valuesOf(ComponentKind.class)
+        .filter(kind -> isAnnotationPresent(element, kind.annotation()))
         .collect(toImmutableSet());
-  }
-  
-  /** Returns the annotations for builders for components of the given kinds. */
-  static ImmutableSet<Class<? extends Annotation>> builderAnnotationsFor(Set<ComponentKind> kinds) {
-    return annotationsFor(kinds, ComponentKind::builderAnnotation);
   }
 
   /**
@@ -124,54 +111,23 @@ enum ComponentKind {
    *     annotations
    */
   static Optional<ComponentKind> forAnnotatedElement(TypeElement element) {
-    return forAnnotatedElement(element, kind -> Optional.of(kind.annotation()));
-  }
-
-  private static Optional<ComponentKind> forAnnotatedElement(
-      TypeElement element,
-      Function<ComponentKind, Optional<Class<? extends Annotation>>> annotationFunction) {
-    Set<ComponentKind> kinds = EnumSet.noneOf(ComponentKind.class);
-    for (ComponentKind kind : values()) {
-      if (annotationFunction
-          .apply(kind)
-          .filter(annotation -> isAnnotationPresent(element, annotation))
-          .isPresent()) {
-        kinds.add(kind);
-      }
-    }
-
+    ImmutableSet<ComponentKind> kinds = getComponentKinds(element);
     if (kinds.size() > 1) {
       throw new IllegalArgumentException(
-          element
-              + " cannot be annotated with more than one of "
-              + annotationsFor(kinds, annotationFunction));
+          element + " cannot be annotated with more than one of " + annotationsFor(kinds));
     }
     return kinds.stream().findAny();
   }
-  
-  /**
-   * Returns the kind of an annotated element if it is annotated with one of the {@linkplain
-   * #builderAnnotation() builder annotations}.
-   *
-   * @throws IllegalArgumentException if the element is annotated with more than one of the builder
-   *     annotations
-   */
-  static Optional<ComponentKind> forAnnotatedBuilderElement(TypeElement element) {
-    return forAnnotatedElement(element, ComponentKind::builderAnnotation);
-  }
 
   private final Class<? extends Annotation> annotation;
-  private final Optional<Class<? extends Annotation>> builderAnnotation;
   private final boolean isRoot;
   private final boolean production;
 
   ComponentKind(
       Class<? extends Annotation> annotation,
-      Optional<Class<? extends Annotation>> builderAnnotation,
       boolean isRoot,
       boolean production) {
     this.annotation = annotation;
-    this.builderAnnotation = builderAnnotation;
     this.isRoot = isRoot;
     this.production = production;
   }
@@ -179,15 +135,6 @@ enum ComponentKind {
   /** Returns the annotation that marks a component of this kind. */
   Class<? extends Annotation> annotation() {
     return annotation;
-  }
-
-  /**
-   * Returns the {@code @Builder} annotation type for this kind of component, or empty if the
-   * descriptor is {@linkplain #isForModuleValidation() for a module} in order to validate its
-   * bindings.
-   */
-  Optional<Class<? extends Annotation>> builderAnnotation() {
-    return builderAnnotation;
   }
 
   /** Returns the kinds of modules that can be used with a component of this kind. */

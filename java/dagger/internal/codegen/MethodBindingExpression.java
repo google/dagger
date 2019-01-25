@@ -122,8 +122,11 @@ abstract class MethodBindingExpression extends BindingExpression {
   /** Returns the name of the method to call. */
   protected abstract String methodName();
 
-  /** Returns {@code true} if the method of this binding expression is {@code private}. */
-  protected boolean isPrivateMethod() {
+  /**
+   * Returns {@code true} if the method of this binding expression is modifiable and is not a
+   * component method.
+   */
+  protected boolean isModifiableImplementationMethod() {
     return false;
   }
 
@@ -179,7 +182,7 @@ abstract class MethodBindingExpression extends BindingExpression {
     // worry about this, and instead just need to check accessibility of the file we're about to
     // write
     TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
-    return componentImplementation.isAbstract() && !isPrivateMethod()
+    return isModifiableImplementationMethod()
         ? types.publiclyAccessibleType(requestedType)
         : types.accessibleType(requestedType, componentImplementation.name());
   }

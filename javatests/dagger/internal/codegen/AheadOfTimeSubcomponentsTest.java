@@ -4982,7 +4982,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "class Parameterized<T extends PublicType> {",
             "  @Inject Parameterized(T t) {}",
             "}"),
-
         JavaFileObjects.forSourceLines(
             "test.Leaf",
             "package test;",
@@ -5218,6 +5217,194 @@ public final class AheadOfTimeSubcomponentsTest {
     assertThat(compilation)
         .generatedSourceFile("test.DaggerLeaf")
         .containsElementsIn(generatedLeaf);
+  }
+
+  @Test
+  public void castModifiableMethodAccessedInFinalImplementation() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createAncillaryClasses(filesToCompile, "PackagePrivate");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PublicBaseType",
+            "package test;",
+            "", //
+            "public class PublicBaseType {}"),
+        JavaFileObjects.forSourceLines(
+            "test.PackagePrivateSubtype",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            // Force this to be a modifiable binding resolved in the ancestor even though the
+            // binding is requested in the leaf.
+            "@AncestorScope",
+            "class PackagePrivateSubtype extends PublicBaseType {",
+            "  @Inject PackagePrivateSubtype() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface AncestorScope {}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Binds PublicBaseType publicBaseType(PackagePrivateSubtype subtype);",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.InjectsOptionalOfModifiable",
+            "package test;",
+            "",
+            "import java.util.Optional;",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectsOptionalOfModifiable {",
+            "  @Inject InjectsOptionalOfModifiable(",
+            "      Optional<PublicBaseType> optionalOfModifiable) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  InjectsOptionalOfModifiable injectsOptionalOfModifiable();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected abstract Optional<PublicBaseType> getOptionalOfPublicBaseType();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.InjectsPackagePrivateSubtype",
+            "package test;",
+            "",
+            "import java.util.Optional;",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectsPackagePrivateSubtype {",
+            "  @Inject InjectsPackagePrivateSubtype(",
+            //     Force a modifiable binding method for PackagePrivateSubtype in Ancestor. The
+            //     final Leaf implementation will refer to this method, but will need to cast it
+            //     since the PackagePrivateSubtype is accessible from the current package, but the
+            //     method returns Object
+            "      PackagePrivateSubtype packagePrivateSubtype) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static PackagePrivateSubtype packagePrivateSubtype() {",
+            "    return new PackagePrivateSubtype();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@AncestorScope",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  InjectsPackagePrivateSubtype injectsPackagePrivateSubtype();",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected Object getPackagePrivateSubtype() {",
+            "    return getPackagePrivateSubtypeProvider().get();",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .containsElementsIn(generatedAncestor);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface RootModule {",
+            "  @BindsOptionalOf",
+            "  PublicBaseType optionalPublicBaseType();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = RootModule.class)",
+            "interface Root {",
+            "  Ancestor ancestor();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  protected final class AncestorImpl extends DaggerAncestor {",
+            "    protected final class LeafImpl extends DaggerAncestor.LeafImpl {",
+            "      @Override",
+            "      protected Optional<PublicBaseType> getOptionalOfPublicBaseType() {",
+            "        return Optional.of(",
+            "            (PublicBaseType) AncestorImpl.this.getPackagePrivateSubtype());",
+            "      }",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
   }
 
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes

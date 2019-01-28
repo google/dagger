@@ -21,6 +21,8 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
@@ -84,8 +86,12 @@ import javax.lang.model.util.SimpleTypeVisitor8;
 final class ModuleValidator {
   private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_TYPES =
       ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
-  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_BUILDER_TYPES =
-      ImmutableSet.of(Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_CREATOR_TYPES =
+      ImmutableSet.of(
+          Subcomponent.Builder.class,
+          Subcomponent.Factory.class,
+          ProductionSubcomponent.Builder.class,
+          ProductionSubcomponent.Factory.class);
   private static final Optional<Class<?>> ANDROID_PROCESSOR;
   private static final String CONTRIBUTES_ANDROID_INJECTOR_NAME =
       "dagger.android.ContributesAndroidInjector";
@@ -264,8 +270,8 @@ final class ModuleValidator {
                         attributeType, moduleAnnotation.annotation(), builder);
                   } else {
                     builder.addError(
-                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_BUILDER_TYPES)
-                            ? moduleSubcomponentsIncludesBuilder(attributeType)
+                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_CREATOR_TYPES)
+                            ? moduleSubcomponentsIncludesCreator(attributeType)
                             : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
                         subject,
                         moduleAnnotation.annotation(),
@@ -284,14 +290,17 @@ final class ModuleValidator {
         + " is not a @Subcomponent or @ProductionSubcomponent";
   }
 
-  private static String moduleSubcomponentsIncludesBuilder(
+  private static String moduleSubcomponentsIncludesCreator(
       TypeElement moduleSubcomponentsAttribute) {
     TypeElement subcomponentType =
         MoreElements.asType(moduleSubcomponentsAttribute.getEnclosingElement());
+    ComponentCreatorAnnotation creatorAnnotation =
+        getOnlyElement(getCreatorAnnotations(moduleSubcomponentsAttribute));
     return String.format(
-        "%s is a @%s.Builder. Did you mean to use %s?",
+        "%s is a @%s.%s. Did you mean to use %s?",
         moduleSubcomponentsAttribute.getQualifiedName(),
         simpleName(getSubcomponentAnnotation(subcomponentType).get()),
+        creatorAnnotation.creatorKind().typeName(),
         subcomponentType.getQualifiedName());
   }
 
@@ -303,17 +312,21 @@ final class ModuleValidator {
       return;
     }
     builder.addError(
-        moduleSubcomponentsDoesntHaveBuilder(subcomponentAttribute, moduleAnnotation),
+        moduleSubcomponentsDoesntHaveCreator(subcomponentAttribute, moduleAnnotation),
         builder.getSubject(),
         moduleAnnotation);
   }
 
-  private static String moduleSubcomponentsDoesntHaveBuilder(
+  private static String moduleSubcomponentsDoesntHaveCreator(
       TypeElement subcomponent, AnnotationMirror moduleAnnotation) {
+    String subcomponentAnnotation =
+        simpleName(getSubcomponentAnnotation(subcomponent).get()).toString();
     return String.format(
-        "%s doesn't have a @%s.Builder, which is required when used with @%s.subcomponents",
+        "%s doesn't have a @%s.Builder or @%s.Factory, which is required when used with "
+            + "@%s.subcomponents",
         subcomponent.getQualifiedName(),
-        simpleName(getSubcomponentAnnotation(subcomponent).get()),
+        subcomponentAnnotation,
+        subcomponentAnnotation,
         simpleName(moduleAnnotation));
   }
 

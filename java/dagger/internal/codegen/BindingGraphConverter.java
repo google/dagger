@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
@@ -167,11 +166,19 @@ final class BindingGraphConverter {
 
     private boolean hasDependencyEdge(
         Node source, Node dependency, DependencyRequest dependencyRequest) {
-      return network
-          .edgesConnecting(source, dependency)
-          .stream()
-          .flatMap(instancesOf(DependencyEdge.class))
-          .anyMatch(edge -> edge.dependencyRequest().equals(dependencyRequest));
+      // An iterative approach is used instead of a Stream because this method is called in a hot
+      // loop, and the Stream calculates the size of network.edgesConnecting(), which is slow. This
+      // seems to be because caculating the edges connecting two nodes in a Network that supports
+      // parallel edges is must check the equality of many nodes, and BindingNode's equality
+      // semantics drag in the equality of many other expensive objects
+      for (Edge edge : network.edgesConnecting(source, dependency)) {
+        if (edge instanceof DependencyEdge) {
+          if (((DependencyEdge) edge).dependencyRequest().equals(dependencyRequest)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     private ResolvedBindings resolvedDependencies(

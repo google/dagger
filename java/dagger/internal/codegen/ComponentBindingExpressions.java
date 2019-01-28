@@ -338,8 +338,8 @@ final class ComponentBindingExpressions {
             compilerOptions,
             graph);
 
-      case SUBCOMPONENT_BUILDER:
-        return new SubcomponentBuilderProviderCreationExpression(
+      case SUBCOMPONENT_CREATOR:
+        return new SubcomponentCreatorProviderCreationExpression(
             binding.key().type(), componentImplementation.getSubcomponentName(binding.key()));
 
       case INJECTION:
@@ -539,9 +539,9 @@ final class ComponentBindingExpressions {
             new ComponentProvisionBindingExpression(
                 resolvedBindings, graph, componentRequirementExpressions, compilerOptions));
 
-      case SUBCOMPONENT_BUILDER:
+      case SUBCOMPONENT_CREATOR:
         return Optional.of(
-            new SubcomponentBuilderBindingExpression(
+            new SubcomponentCreatorBindingExpression(
                 resolvedBindings,
                 componentImplementation.getSubcomponentName(resolvedBindings.key())));
 

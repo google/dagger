@@ -43,7 +43,7 @@ import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.model.BindingKind.OPTIONAL;
 import static dagger.model.BindingKind.PRODUCTION;
 import static dagger.model.BindingKind.PROVISION;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -339,7 +339,7 @@ final class BindingFactory {
   }
 
   /**
-   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared by a component
+   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_CREATOR} binding declared by a component
    * method that returns a subcomponent builder. Use {{@link
    * #subcomponentCreatorBinding(ImmutableSet)}} for bindings declared using {@link
    * Module#subcomponents()}.
@@ -357,12 +357,12 @@ final class BindingFactory {
         .contributionType(ContributionType.UNIQUE)
         .bindingElement(subcomponentCreatorMethod)
         .key(key)
-        .kind(SUBCOMPONENT_BUILDER)
+        .kind(SUBCOMPONENT_CREATOR)
         .build();
   }
 
   /**
-   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared using {@link
+   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_CREATOR} binding declared using {@link
    * Module#subcomponents()}.
    */
   ProvisionBinding subcomponentCreatorBinding(
@@ -371,7 +371,7 @@ final class BindingFactory {
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
         .key(subcomponentDeclaration.key())
-        .kind(SUBCOMPONENT_BUILDER)
+        .kind(SUBCOMPONENT_CREATOR)
         .build();
   }
 

@@ -18,12 +18,12 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 
-/** A binding expression for a subcomponent builder that just invokes the constructor. */
-final class SubcomponentBuilderBindingExpression extends SimpleInvocationBindingExpression {
+/** A binding expression for a subcomponent creator that just invokes the constructor. */
+final class SubcomponentCreatorBindingExpression extends SimpleInvocationBindingExpression {
   private final String subcomponentBuilderName;
   private final ContributionBinding binding;
 
-  SubcomponentBuilderBindingExpression(
+  SubcomponentCreatorBindingExpression(
       ResolvedBindings resolvedBindings, String subcomponentBuilderName) {
     super(resolvedBindings);
     this.subcomponentBuilderName = subcomponentBuilderName;

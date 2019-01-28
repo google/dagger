@@ -22,7 +22,7 @@ import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -109,12 +109,12 @@ final class BindingGraphConverter {
         ImmutableSet<TypeElement> declaringModules = subcomponentDeclaringModules(resolvedBindings);
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
           addBinding(binding);
-          if (binding.kind().equals(SUBCOMPONENT_BUILDER)
+          if (binding.kind().equals(SUBCOMPONENT_CREATOR)
               && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
                 binding,
                 subcomponentNode(binding.key().type(), graph),
-                new SubcomponentBuilderBindingEdgeImpl(declaringModules));
+                new SubcomponentCreatorBindingEdgeImpl(declaringModules));
           }
         }
       }

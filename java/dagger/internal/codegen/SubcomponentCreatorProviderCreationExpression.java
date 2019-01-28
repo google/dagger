@@ -23,13 +23,13 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import javax.lang.model.type.TypeMirror;
 
-/** A {@link javax.inject.Provider} creation expression for a subcomponent builder.. */
-final class SubcomponentBuilderProviderCreationExpression
+/** A {@link javax.inject.Provider} creation expression for a subcomponent creator. */
+final class SubcomponentCreatorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final String subcomponentName;
   private final TypeMirror subcomponentBuilderType;
 
-  SubcomponentBuilderProviderCreationExpression(
+  SubcomponentCreatorProviderCreationExpression(
       TypeMirror subcomponentBuilderType, String subcomponentName) {
     this.subcomponentName = subcomponentName;
     this.subcomponentBuilderType = subcomponentBuilderType;

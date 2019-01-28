@@ -79,7 +79,7 @@ import javax.lang.model.element.TypeElement;
  *
  * <p>There is a <b>subcomponent edge</b> for each parent-child component relationship in the graph.
  * The target node is the component node for the child component. For subcomponents defined by a
- * {@linkplain SubcomponentBuilderBindingEdge subcomponent builder binding} (either a method on the
+ * {@linkplain SubcomponentCreatorBindingEdge subcomponent builder binding} (either a method on the
  * component or a set of {@code @Module.subcomponents} annotation values), the source node is the
  * binding for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
  * ChildFactoryMethodEdge subcomponent factory methods}, the source node is the component node for
@@ -314,7 +314,7 @@ public abstract class BindingGraph {
 
   /**
    * An edge in the binding graph. Either a {@link DependencyEdge}, a {@link
-   * ChildFactoryMethodEdge}, or a {@link SubcomponentBuilderBindingEdge}.
+   * ChildFactoryMethodEdge}, or a {@link SubcomponentCreatorBindingEdge}.
    */
   public interface Edge {}
 
@@ -350,15 +350,18 @@ public abstract class BindingGraph {
 
   /**
    * An edge that represents the link between a parent component and a child subcomponent implied by
-   * a subcomponent builder binding. The {@linkplain com.google.common.graph.EndpointPair#source()
-   * source node} of this edge is a {@link Binding} for the subcomponent builder {@link Key} and the
-   * {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
-   * ComponentNode} for the child subcomponent.
+   * a subcomponent creator ({@linkplain dagger.Subcomponent.Builder builder} or {@linkplain
+   * dagger.Subcomponent.Factory factory}) binding.
+   *
+   * <p>The {@linkplain com.google.common.graph.EndpointPair#source() source node} of this edge is a
+   * {@link Binding} for the subcomponent creator {@link Key} and the {@linkplain
+   * com.google.common.graph.EndpointPair#target() target node} is a {@link ComponentNode} for the
+   * child subcomponent.
    */
-  public interface SubcomponentBuilderBindingEdge extends Edge {
+  public interface SubcomponentCreatorBindingEdge extends Edge {
     /**
      * The modules that {@linkplain Module#subcomponents() declare the subcomponent} that generated
-     * this edge. Empty if the parent component has a subcomponent builder method and there are no
+     * this edge. Empty if the parent component has a subcomponent creator method and there are no
      * declaring modules.
      */
     ImmutableSet<TypeElement> declaringModules();

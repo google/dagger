@@ -181,8 +181,8 @@ final class ComponentDescriptorFactory {
                 subcomponentDescriptor(MoreTypes.asTypeElement(resolvedMethod.getReturnType())));
             break;
 
-          case SUBCOMPONENT_BUILDER:
-          case PRODUCTION_SUBCOMPONENT_BUILDER:
+          case SUBCOMPONENT_CREATOR:
+          case PRODUCTION_SUBCOMPONENT_CREATOR:
             subcomponentsByBuilderMethod.put(
                 componentMethodDescriptor,
                 subcomponentDescriptor(
@@ -257,8 +257,8 @@ final class ComponentDescriptorFactory {
                   componentMethod, resolvedComponentMethod);
           return ComponentMethodDescriptor.forSubcomponentCreator(
               isAnnotationPresent(returnTypeElement, Subcomponent.Builder.class)
-                  ? ComponentMethodKind.SUBCOMPONENT_BUILDER
-                  : ComponentMethodKind.PRODUCTION_SUBCOMPONENT_BUILDER,
+                  ? ComponentMethodKind.SUBCOMPONENT_CREATOR
+                  : ComponentMethodKind.PRODUCTION_SUBCOMPONENT_CREATOR,
               dependencyRequest,
               componentMethod);
         }

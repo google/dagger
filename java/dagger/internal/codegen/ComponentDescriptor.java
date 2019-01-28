@@ -335,9 +335,9 @@ abstract class ComponentDescriptor {
     PRODUCTION,
     MEMBERS_INJECTION,
     SUBCOMPONENT,
-    SUBCOMPONENT_BUILDER,
+    SUBCOMPONENT_CREATOR,
     PRODUCTION_SUBCOMPONENT,
-    PRODUCTION_SUBCOMPONENT_BUILDER;
+    PRODUCTION_SUBCOMPONENT_CREATOR;
 
     /**
      * Returns the component kind associated with this component method, if it exists. Otherwise,
@@ -346,10 +346,10 @@ abstract class ComponentDescriptor {
     ComponentKind componentKind() {
       switch (this) {
         case SUBCOMPONENT:
-        case SUBCOMPONENT_BUILDER:
+        case SUBCOMPONENT_CREATOR:
           return ComponentKind.SUBCOMPONENT;
         case PRODUCTION_SUBCOMPONENT:
-        case PRODUCTION_SUBCOMPONENT_BUILDER:
+        case PRODUCTION_SUBCOMPONENT_CREATOR:
           return ComponentKind.PRODUCTION_SUBCOMPONENT;
         default:
           throw new IllegalStateException("no component associated with method " + this);

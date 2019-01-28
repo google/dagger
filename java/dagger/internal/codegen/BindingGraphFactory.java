@@ -30,7 +30,7 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.OPTIONAL;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static dagger.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -444,7 +444,7 @@ final class BindingGraphFactory {
      * will be used to detect which subcomponents need to be resolved.
      */
     private void addSubcomponentToOwningResolver(ProvisionBinding subcomponentCreatorBinding) {
-      checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_BUILDER));
+      checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_CREATOR));
       Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
       TypeElement builderType = MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type());

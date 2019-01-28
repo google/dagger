@@ -85,35 +85,15 @@ public abstract class Key {
   /** Returns a {@link Builder} that inherits the properties of this key. */
   public abstract Builder toBuilder();
 
+  // The main hashCode/equality bottleneck is in MoreTypes.equivalence(). It's possible that we can
+  // avoid this by tuning that method. Perhaps we can also avoid the issue entirely by interning all
+  // Keys
   @Memoized
   @Override
   public abstract int hashCode();
 
-  // We are modifying what would be the AutoValue-generated equals() method to stick in a check for
-  // hashCode() equality before other properties. Profiling indicated that Key equality is called in
-  // numerous places and it cannot be @Memoized, but hashCode() can be. Because so many other value
-  // types use Key, their equality is dependant on Key's. Inserting the check removed Key.equals()
-  // from the profile.
-  // The main equality bottleneck in calculating the equality is in MoreTypes.equivalence()'s
-  // equality checker. It's possible that we can avoid this by tuning that method. Perhaps we can
-  // also avoid the issue entirely by interning all Keys
-  // TODO(ronshapiro): consider creating an AutoValue extension that can generate this code on its
-  // own
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o instanceof Key) {
-      Key that = (Key) o;
-      return (this.hashCode() == that.hashCode())
-          && (this.wrappedQualifier().equals(that.wrappedQualifier()))
-          && (this.wrappedType().equals(that.wrappedType()))
-          && (this.multibindingContributionIdentifier()
-              .equals(that.multibindingContributionIdentifier()));
-    }
-    return false;
-  }
+  public abstract boolean equals(Object o);
 
   @Override
   public final String toString() {

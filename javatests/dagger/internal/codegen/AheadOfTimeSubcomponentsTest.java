@@ -42,7 +42,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_fromComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -128,7 +128,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_dependsOnBindingWithMatchingComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -178,7 +178,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_dependsOnMissingBinding() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -280,7 +280,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_satisfiedInGreatAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -987,7 +987,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_boundAndSatisfiedInSameSubcomponent() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInSub");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInSub");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Sub",
@@ -1055,7 +1055,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_satisfiedInAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1164,7 +1164,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_satisfiedInGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1312,7 +1312,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_nonComponentMethodDependencySatisfiedInAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "SatisfiedInAncestor", "RequiresOptionalSatisfiedInAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -1436,7 +1436,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_boundInAncestorAndSatisfiedInGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1951,7 +1951,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void provisionOverInjection_prunedIndirectDependency() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "PrunedDependency");
+    createSimplePackagePrivateClasses(filesToCompile, "PrunedDependency");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.InjectsPrunedDependency",
@@ -2429,7 +2429,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void productionSubcomponentAndModifiableFrameworkInstance() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Response", "ResponseDependency");
+    createSimplePackagePrivateClasses(filesToCompile, "Response", "ResponseDependency");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -2742,7 +2742,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void lazyOfModifiableBinding() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -2848,7 +2848,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindingAccessInLeafAndAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "Missing", "DependsOnMissing", "ProvidedInAncestor_InducesSetBinding");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -3061,7 +3061,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentBuilders() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InducesDependenciesOnBuilderFields");
+    createSimplePackagePrivateClasses(filesToCompile, "InducesDependenciesOnBuilderFields");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3357,7 +3357,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentBuilders_moduleWithUnusedInstanceBindings() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Used", "Unused");
+    createSimplePackagePrivateClasses(filesToCompile, "Used", "Unused");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.ModuleWithUsedBinding",
@@ -3706,7 +3706,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void bindsWithMissingDependency() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3824,7 +3824,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void bindsWithMissingDependency_pruned() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3964,7 +3964,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void modifiedProducerFromProvider() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "DependsOnModifiedProducerFromProvider");
+    createSimplePackagePrivateClasses(filesToCompile, "DependsOnModifiedProducerFromProvider");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -4379,7 +4379,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentInducedFromAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Inducer");
+    createSimplePackagePrivateClasses(filesToCompile, "Inducer");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.InducedSubcomponent",
@@ -4523,7 +4523,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void rootScopedAtInjectConstructor_effectivelyMissingInSubcomponent() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "ProvidesMethodRootScoped");
+    createSimplePackagePrivateClasses(filesToCompile, "ProvidesMethodRootScoped");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.RootScope",
@@ -4612,7 +4612,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void prunedModuleWithInstanceState() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Pruned");
+    createSimplePackagePrivateClasses(filesToCompile, "Pruned");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Modified",
@@ -5218,7 +5218,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void castModifiableMethodAccessedInFinalImplementation() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "PackagePrivate");
+    createSimplePackagePrivateClasses(filesToCompile, "PackagePrivate");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.PublicBaseType",
@@ -5404,7 +5404,7 @@ public final class AheadOfTimeSubcomponentsTest {
   }
 
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
-  private void createAncillaryClasses(
+  private void createSimplePackagePrivateClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {
       filesBuilder.add(

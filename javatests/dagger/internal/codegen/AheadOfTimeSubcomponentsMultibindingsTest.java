@@ -39,7 +39,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_contributionsInLeaf() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "InLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -99,7 +99,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_contributionsInAncestorOnly() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "InAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -196,7 +196,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_contributionsInLeafAndAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    createSimplePackagePrivateClasses(filesToCompile, "InEachSubcomponent");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -326,7 +326,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_contributionsInLeafAndGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InLeafAndGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "InLeafAndGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -493,7 +493,8 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_nonComponentMethodDependency() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InAllSubcomponents", "RequresInAllSubcomponentsSet");
+    createSimplePackagePrivateClasses(
+        filesToCompile, "InAllSubcomponents", "RequresInAllSubcomponentsSet");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -627,7 +628,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_newSubclass() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InAncestor", "RequiresInAncestorSet");
+    createSimplePackagePrivateClasses(filesToCompile, "InAncestor", "RequiresInAncestorSet");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -737,7 +738,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibinding_requestedAsInstanceInLeaf_requestedAsFrameworkInstanceFromAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "Multibound", "MissingInLeaf_WillDependOnFrameworkInstance");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -883,7 +884,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void setMultibindings_contributionsInLeafAndAncestor_frameworkInstances() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    createSimplePackagePrivateClasses(filesToCompile, "InEachSubcomponent");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1047,7 +1048,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInLeaf() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "InLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1111,7 +1112,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInAncestorOnly() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "InAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1208,7 +1209,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInLeafAndAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    createSimplePackagePrivateClasses(filesToCompile, "InEachSubcomponent");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1335,7 +1336,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInLeafAndAncestor_frameworkInstance() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    createSimplePackagePrivateClasses(filesToCompile, "InEachSubcomponent");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1499,7 +1500,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInLeafAndGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InLeafAndGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "InLeafAndGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1667,7 +1668,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibindings_contributionsInLeafAndAncestorWithoutGuava() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InEachSubcomponent");
+    createSimplePackagePrivateClasses(filesToCompile, "InEachSubcomponent");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1794,7 +1795,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void mapMultibinding_requestedAsInstanceInLeaf_requestedAsFrameworkInstanceFromAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "Multibound", "MissingInLeaf_WillDependOnFrameworkInstance");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -1942,7 +1943,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void emptyMultibinds_set() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Multibound");
+    createSimplePackagePrivateClasses(filesToCompile, "Multibound");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -2056,7 +2057,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void emptyMultibinds_set_frameworkInstance() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Multibound");
+    createSimplePackagePrivateClasses(filesToCompile, "Multibound");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -2189,7 +2190,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void emptyMultibinds_map() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Multibound");
+    createSimplePackagePrivateClasses(filesToCompile, "Multibound");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -2305,7 +2306,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void emptyMultibinds_map_frameworkInstance() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Multibound");
+    createSimplePackagePrivateClasses(filesToCompile, "Multibound");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -2503,7 +2504,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   @Test
   public void multibindingsAndFastInit() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "PackagePrivate");
+    createSimplePackagePrivateClasses(filesToCompile, "PackagePrivate");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.MultibindingModule",
@@ -2629,7 +2630,7 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
   }
 
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
-  private void createAncillaryClasses(
+  private void createSimplePackagePrivateClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {
       filesBuilder.add(

@@ -105,6 +105,14 @@ abstract class ProvisionBinding extends ContributionBinding {
     return super.requiresModuleInstance();
   }
 
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // TODO(ronshapiro,dpb): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
+
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<ProvisionBinding, Builder> {

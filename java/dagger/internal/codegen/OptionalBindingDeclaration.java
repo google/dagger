@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import dagger.BindsOptionalOf;
 import dagger.model.Key;
 import java.util.Optional;
@@ -40,6 +41,13 @@ abstract class OptionalBindingDeclaration extends BindingDeclaration {
    */
   @Override
   public abstract Key key();
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object obj);
 
   static class Factory {
     private final KeyFactory keyFactory;

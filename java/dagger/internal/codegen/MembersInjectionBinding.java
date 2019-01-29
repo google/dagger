@@ -85,6 +85,14 @@ abstract class MembersInjectionBinding extends Binding {
     return false;
   }
 
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // TODO(ronshapiro,dpb): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
+
   @AutoValue
   abstract static class InjectionSite {
     enum Kind {

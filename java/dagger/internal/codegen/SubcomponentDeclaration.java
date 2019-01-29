@@ -20,6 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndVa
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import dagger.model.Key;
 import java.util.Optional;
@@ -48,6 +49,13 @@ abstract class SubcomponentDeclaration extends BindingDeclaration {
 
   /** The module annotation. */
   abstract ModuleAnnotation moduleAnnotation();
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object obj);
 
   static class Factory {
     private final KeyFactory keyFactory;

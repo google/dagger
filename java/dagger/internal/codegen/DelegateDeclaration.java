@@ -23,6 +23,7 @@ import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquiva
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
@@ -44,6 +45,13 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
   abstract DependencyRequest delegateRequest();
 
   abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object obj);
 
   static final class Factory {
     private final DaggerTypes types;

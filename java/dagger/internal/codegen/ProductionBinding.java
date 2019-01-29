@@ -113,6 +113,14 @@ abstract class ProductionBinding extends ContributionBinding {
         .thrownTypes(ImmutableList.<TypeMirror>of());
   }
 
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // TODO(ronshapiro,dpb): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
+
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<ProductionBinding, Builder> {

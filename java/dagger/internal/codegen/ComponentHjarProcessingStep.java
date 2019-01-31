@@ -21,6 +21,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
+import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
@@ -34,6 +35,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
@@ -145,9 +147,14 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       addSupertype(generatedComponent, componentElement);
 
       TypeName builderMethodReturnType;
+      ComponentCreatorKind creatorKind;
+      boolean noArgFactoryMethod;
       if (componentDescriptor.creatorDescriptor().isPresent()) {
-        builderMethodReturnType =
-            ClassName.get(componentDescriptor.creatorDescriptor().get().typeElement());
+        ComponentCreatorDescriptor creatorDescriptor =
+            componentDescriptor.creatorDescriptor().get();
+        builderMethodReturnType = ClassName.get(creatorDescriptor.typeElement());
+        creatorKind = creatorDescriptor.kind();
+        noArgFactoryMethod = creatorDescriptor.factoryParameters().isEmpty();
       } else {
         TypeSpec.Builder builder =
             TypeSpec.classBuilder("Builder")
@@ -155,18 +162,21 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
                 .addMethod(privateConstructor());
         ClassName builderClassName = generatedTypeName.nestedClass("Builder");
         builderMethodReturnType = builderClassName;
+        creatorKind = BUILDER;
+        noArgFactoryMethod = true;
         componentRequirements(componentDescriptor)
-            .map(requirement -> builderInstanceMethod(requirement.typeElement(), builderClassName))
+            .map(requirement -> builderSetterMethod(requirement.typeElement(), builderClassName))
             .forEach(builder::addMethod);
         builder.addMethod(builderBuildMethod(componentDescriptor));
         generatedComponent.addType(builder.build());
       }
 
-      generatedComponent.addMethod(staticBuilderMethod(builderMethodReturnType));
+      generatedComponent.addMethod(staticCreatorMethod(builderMethodReturnType, creatorKind));
 
-      if (componentRequirements(componentDescriptor)
-              .noneMatch(requirement -> requirement.requiresAPassedInstance(elements, types))
-          && !hasBindsInstanceMethods(componentDescriptor)) {
+      if (noArgFactoryMethod
+          && !hasBindsInstanceMethods(componentDescriptor)
+          && componentRequirements(componentDescriptor)
+              .noneMatch(requirement -> requirement.requiresAPassedInstance(elements, types))) {
         generatedComponent.addMethod(createMethod(componentDescriptor));
       }
 
@@ -227,7 +237,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
             .anyMatch(method -> isAnnotationPresent(method, BindsInstance.class));
   }
 
-  private MethodSpec builderInstanceMethod(
+  private MethodSpec builderSetterMethod(
       TypeElement componentRequirement, ClassName builderClass) {
     String simpleName =
         UPPER_CAMEL.to(LOWER_CAMEL, componentRequirement.getSimpleName().toString());
@@ -245,10 +255,11 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
         .build();
   }
 
-  private MethodSpec staticBuilderMethod(TypeName builderMethodReturnType) {
-    return MethodSpec.methodBuilder("builder")
+  private MethodSpec staticCreatorMethod(
+      TypeName creatorMethodReturnType, ComponentCreatorKind creatorKind) {
+    return MethodSpec.methodBuilder(Ascii.toLowerCase(creatorKind.typeName()))
         .addModifiers(PUBLIC, STATIC)
-        .returns(builderMethodReturnType)
+        .returns(creatorMethodReturnType)
         .build();
   }
 

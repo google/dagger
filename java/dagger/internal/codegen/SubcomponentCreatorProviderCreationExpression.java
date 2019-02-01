@@ -26,19 +26,18 @@ import javax.lang.model.type.TypeMirror;
 /** A {@link javax.inject.Provider} creation expression for a subcomponent creator. */
 final class SubcomponentCreatorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
-  private final String subcomponentName;
-  private final TypeMirror subcomponentBuilderType;
+  private final TypeMirror creatorType;
+  private final String creatorImplementationName;
 
   SubcomponentCreatorProviderCreationExpression(
-      TypeMirror subcomponentBuilderType, String subcomponentName) {
-    this.subcomponentName = subcomponentName;
-    this.subcomponentBuilderType = subcomponentBuilderType;
+      TypeMirror creatorType, String creatorImplementationName) {
+    this.creatorType = creatorType;
+    this.creatorImplementationName = creatorImplementationName;
   }
 
   @Override
   public CodeBlock creationExpression() {
     return anonymousProvider(
-        TypeName.get(subcomponentBuilderType),
-        CodeBlock.of("return new $LBuilder();", subcomponentName));
+        TypeName.get(creatorType), CodeBlock.of("return new $L();", creatorImplementationName));
   }
 }

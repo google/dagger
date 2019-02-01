@@ -24,7 +24,6 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -105,16 +104,14 @@ final class ComponentCreatorImplementationFactory {
   /** Base class for building a creator implementation. */
   private abstract class Builder {
     final ComponentImplementation componentImplementation;
-    final ComponentCreatorKind creatorKind;
     final ClassName className;
     final TypeSpec.Builder classBuilder;
 
     private ImmutableMap<ComponentRequirement, FieldSpec> fields;
 
-    Builder(ComponentImplementation componentImplementation, ComponentCreatorKind creatorKind) {
+    Builder(ComponentImplementation componentImplementation) {
       this.componentImplementation = componentImplementation;
-      this.creatorKind = creatorKind;
-      this.className = componentImplementation.getCreatorName(creatorKind);
+      this.className = componentImplementation.getCreatorName();
       this.classBuilder = classBuilder(className);
     }
 
@@ -368,7 +365,7 @@ final class ComponentCreatorImplementationFactory {
     BuilderForCreatorDescriptor(
         ComponentImplementation componentImplementation,
         ComponentCreatorDescriptor creatorDescriptor) {
-      super(componentImplementation, creatorDescriptor.kind());
+      super(componentImplementation);
       this.creatorDescriptor = creatorDescriptor;
     }
 
@@ -485,7 +482,7 @@ final class ComponentCreatorImplementationFactory {
    */
   private final class BuilderForGeneratedRootComponentBuilder extends Builder {
     BuilderForGeneratedRootComponentBuilder(ComponentImplementation componentImplementation) {
-      super(componentImplementation, BUILDER);
+      super(componentImplementation);
     }
 
     @Override

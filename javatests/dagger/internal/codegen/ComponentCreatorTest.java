@@ -24,22 +24,18 @@ import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.ComponentKind.COMPONENT;
 import static dagger.internal.codegen.ErrorMessages.componentMessagesFor;
-import static dagger.internal.codegen.ErrorMessages.creatorMessagesFor;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
-import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +44,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 /** Tests for properties of component creators shared by both builders and factories. */
 @RunWith(Parameterized.class)
-public class ComponentCreatorTest {
+public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   @Parameters(name = "compilerMode={0}, creatorKind={1}")
   public static Collection<Object[]> parameters() {
     Set<List<Object>> params =
@@ -58,43 +54,8 @@ public class ComponentCreatorTest {
     return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
   }
 
-  private final CompilerMode compilerMode;
-  private final ComponentCreatorKind creatorKind;
-
-  private final ErrorMessages.ComponentCreatorMessages messages;
-
   public ComponentCreatorTest(CompilerMode compilerMode, ComponentCreatorKind creatorKind) {
-    this.compilerMode = compilerMode;
-    this.creatorKind = creatorKind;
-    this.messages = creatorMessagesFor(COMPONENT, creatorKind);
-  }
-
-  // For tests where code for both builders and factories can be largely equivalent, i.e. when there
-  // is nothing to set, just preprocess the lines to change code written for a builder to code for a
-  // factory.
-  // For more complicated code, use a JavaFileBuilder to add different code depending on the creator
-  // kind.
-
-  private String process(String... lines) {
-    Stream<String> stream = Arrays.stream(lines);
-    if (creatorKind.equals(FACTORY)) {
-      stream =
-          stream.map(
-              line ->
-                  line.replace("Builder", "Factory")
-                      .replace("builder", "factory")
-                      .replace("build", "create"));
-    }
-    return stream.collect(joining("\n"));
-  }
-
-  private JavaFileObject preprocessedJavaFile(String fullyQualifiedName, String... lines) {
-    return JavaFileObjects.forSourceString(fullyQualifiedName, process(lines));
-  }
-
-  /** Returns a file builder for the current creator kind. */
-  private JavaFileBuilder javaFileBuilder(String qualifiedName) {
-    return new JavaFileBuilder(qualifiedName).withSettings(compilerMode, creatorKind);
+    super(compilerMode, COMPONENT, creatorKind);
   }
 
   @Test
@@ -140,10 +101,7 @@ public class ComponentCreatorTest {
             "    }",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, componentFile);
+    Compilation compilation = compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -216,8 +174,7 @@ public class ComponentCreatorTest {
             "    }",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(module, componentFile);
+    Compilation compilation = compile(module, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -246,8 +203,7 @@ public class ComponentCreatorTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -279,8 +235,7 @@ public class ComponentCreatorTest {
             "     SimpleComponent create();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -307,8 +262,7 @@ public class ComponentCreatorTest {
             "     SimpleComponent build();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(messages.generics()).inFile(componentFile);
   }
@@ -324,8 +278,7 @@ public class ComponentCreatorTest {
             "",
             "@Component.Builder",
             "interface Builder {}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(builder);
+    Compilation compilation = compile(builder);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(messages.mustBeInComponent()).inFile(builder);
   }
@@ -345,8 +298,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  interface Builder {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.missingFactoryMethod())
@@ -446,8 +398,7 @@ public class ComponentCreatorTest {
             .addLines("}")
             .build();
 
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -537,8 +488,7 @@ public class ComponentCreatorTest {
                 "}")
             .build();
 
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
@@ -560,8 +510,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  private interface Builder {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(messages.isPrivate()).inFile(componentFile);
   }
@@ -581,8 +530,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  abstract class Builder {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(messages.mustBeStatic()).inFile(componentFile);
   }
@@ -602,8 +550,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  static class Builder {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(messages.mustBeAbstract()).inFile(componentFile);
   }
@@ -625,8 +572,7 @@ public class ComponentCreatorTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.invalidConstructor())
@@ -651,8 +597,7 @@ public class ComponentCreatorTest {
             "    Builder(String unused) {}",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.invalidConstructor())
@@ -674,8 +619,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  enum Builder {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.mustBeClassOrInterface())
@@ -699,8 +643,7 @@ public class ComponentCreatorTest {
             "    String build();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.factoryMethodMustReturnComponentType())
@@ -737,8 +680,7 @@ public class ComponentCreatorTest {
             .addLines( //
                 "}")
             .build();
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+    Compilation compilation = compile(component);
     assertThat(compilation).failed();
 
     assertThat(compilation)
@@ -766,8 +708,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -795,8 +736,7 @@ public class ComponentCreatorTest {
             "    SimpleComponent newSimpleComponent();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(String.format(messages.twoFactoryMethods(), process("build")))
@@ -805,7 +745,7 @@ public class ComponentCreatorTest {
   }
 
   @Test
-  public void testInheritedTwoBuildMethodsFails() {
+  public void testInheritedTwoFactoryMethodsFails() {
     JavaFileObject componentFile =
         preprocessedJavaFile(
             "test.SimpleComponent",
@@ -824,8 +764,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -878,8 +817,7 @@ public class ComponentCreatorTest {
             .addLines( //
                 "}")
             .build();
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+    Compilation compilation = compile(moduleFile, componentFile);
     assertThat(compilation).failed();
     String elements =
         creatorKind.equals(BUILDER)
@@ -942,8 +880,7 @@ public class ComponentCreatorTest {
             .addLines( //
                 "}")
             .build();
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+    Compilation compilation = compile(moduleFile, componentFile);
     assertThat(compilation).failed();
     String elements =
         creatorKind.equals(BUILDER)
@@ -995,10 +932,7 @@ public class ComponentCreatorTest {
             "",
             "@Module",
             "abstract class AbstractModule {}");
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(componentFile, abstractModule);
+    Compilation compilation = compile(componentFile, abstractModule);
     assertThat(compilation).failed();
     String elements =
         creatorKind.equals(BUILDER)
@@ -1129,8 +1063,7 @@ public class ComponentCreatorTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(foo, supertype, component);
+    Compilation compilation = compile(foo, supertype, component);
     assertThat(compilation).succeededWithoutWarnings();
   }
 
@@ -1182,10 +1115,7 @@ public class ComponentCreatorTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(foo, bar, supertype, component);
+    Compilation compilation = compile(foo, bar, supertype, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining(
@@ -1253,10 +1183,7 @@ public class ComponentCreatorTest {
             "  interface Builder extends CreatorSupertype {}",
             "}");
 
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(foo, bar, supertype, creatorSupertype, component);
+    Compilation compilation = compile(foo, bar, supertype, creatorSupertype, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining(
@@ -1284,8 +1211,7 @@ public class ComponentCreatorTest {
             "    <T> SimpleComponent build();",
             "  }",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(messages.methodsMayNotHaveTypeParameters())
@@ -1312,8 +1238,7 @@ public class ComponentCreatorTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    Compilation compilation = compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(

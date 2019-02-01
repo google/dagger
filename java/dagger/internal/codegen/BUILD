@@ -246,6 +246,7 @@ java_library(
     name = "writing",
     srcs = [
         "AnnotationCreatorGenerator.java",
+        "AnonymousProviderCreationExpression.java",
         "BindingExpression.java",
         "ComponentBindingExpressions.java",
         "ComponentCreatorImplementation.java",
@@ -316,7 +317,6 @@ java_library(
         "SimpleInvocationBindingExpression.java",
         "SimpleMethodBindingExpression.java",
         "SubcomponentCreatorBindingExpression.java",
-        "SubcomponentCreatorProviderCreationExpression.java",
         "SubcomponentNames.java",
         "SwitchingProviders.java",
         "TopLevel.java",

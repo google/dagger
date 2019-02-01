@@ -339,9 +339,8 @@ final class ComponentBindingExpressions {
             graph);
 
       case SUBCOMPONENT_CREATOR:
-        return new SubcomponentCreatorProviderCreationExpression(
-            binding.key().type(),
-            componentImplementation.getSubcomponentCreatorSimpleName(binding.key()));
+        return new AnonymousProviderCreationExpression(
+            binding, this, componentImplementation.name());
 
       case INJECTION:
       case PROVISION:

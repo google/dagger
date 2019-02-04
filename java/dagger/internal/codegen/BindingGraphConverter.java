@@ -98,9 +98,7 @@ final class BindingGraphConverter {
     protected void visitComponent(BindingGraph graph) {
       ComponentNode grandparentComponent = parentComponent;
       parentComponent = currentComponent;
-      currentComponent =
-          ComponentNodeImpl.create(
-              componentTreePath().toComponentPath(), graph.componentDescriptor());
+      currentComponent = ComponentNodeImpl.create(componentPath(), graph.componentDescriptor());
 
       network.addNode(currentComponent);
 
@@ -183,9 +181,7 @@ final class BindingGraphConverter {
 
     private ResolvedBindings resolvedDependencies(
         Node source, DependencyRequest dependencyRequest) {
-      return componentTreePath()
-          .pathFromRootToAncestor(source.componentPath().currentComponent())
-          .currentGraph()
+      return graphForAncestor(source.componentPath().currentComponent())
           .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
@@ -214,7 +210,7 @@ final class BindingGraphConverter {
     private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
       return BindingNode.create(
-          componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
+          pathFromRootToAncestor(owningComponent),
           binding,
           associatedDeclaringElements(resolvedBindings),
           () -> bindingDeclarationFormatter.format(binding));
@@ -230,10 +226,7 @@ final class BindingGraphConverter {
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
       return BindingGraphProxies.missingBindingNode(
-          componentTreePath()
-              .pathFromRootToAncestor(dependencies.resolvingComponent())
-              .toComponentPath(),
-          dependencies.key());
+          pathFromRootToAncestor(dependencies.resolvingComponent()), dependencies.key());
     }
 
     private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {
@@ -241,8 +234,7 @@ final class BindingGraphConverter {
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
-          componentTreePath().childPath(subcomponent.typeElement()).toComponentPath(),
-          subcomponent);
+          componentPath().childPath(subcomponent.typeElement()), subcomponent);
     }
 
     private ImmutableSet<TypeElement> subcomponentDeclaringModules(

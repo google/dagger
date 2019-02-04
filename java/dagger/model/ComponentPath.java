@@ -71,6 +71,11 @@ public abstract class ComponentPath {
     return create(components().subList(0, components().size() - 1));
   }
 
+  /** Returns the path from the root component to the {@code child} of the current component. */
+  public final ComponentPath childPath(TypeElement child) {
+    return create(ImmutableList.<TypeElement>builder().addAll(components()).add(child).build());
+  }
+
   /**
    * Returns {@code true} if the {@linkplain #currentComponent()} current component} is the
    * {@linkplain #rootComponent()} root component}.

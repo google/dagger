@@ -17,7 +17,9 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
+import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
+import static javax.lang.model.element.ElementKind.PARAMETER;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
@@ -54,9 +56,11 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
       return true;
     }
     if (bindingDeclaration.bindingElement().isPresent()) {
-      return FORMATTABLE_ELEMENT_TYPE_KINDS.contains(
-          bindingDeclaration.bindingElement().get().asType().getKind());
+      Element bindingElement = bindingDeclaration.bindingElement().get();
+      return bindingElement.getKind().equals(PARAMETER)
+          || FORMATTABLE_ELEMENT_TYPE_KINDS.contains(bindingElement.asType().getKind());
     }
+    // TODO(dpb): validate whether what this is doing is correct
     return false;
   }
 
@@ -68,6 +72,10 @@ final class BindingDeclarationFormatter extends Formatter<BindingDeclaration> {
 
     if (bindingDeclaration.bindingElement().isPresent()) {
       Element bindingElement = bindingDeclaration.bindingElement().get();
+      if (bindingElement.getKind().equals(PARAMETER)) {
+        return elementToString(bindingElement);
+      }
+
       switch (bindingElement.asType().getKind()) {
         case EXECUTABLE:
           return methodSignatureFormatter.format(

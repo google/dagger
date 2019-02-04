@@ -24,6 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.value.AutoValue;
@@ -361,13 +362,26 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the kind of this component's creator.
+   *
+   * @throws IllegalStateException if the component has no creator
+   */
+  private ComponentCreatorKind creatorKind() {
+    checkState(componentDescriptor().hasCreator());
+    return componentDescriptor()
+        .creatorDescriptor()
+        .map(ComponentCreatorDescriptor::kind)
+        .orElse(BUILDER);
+  }
+
+  /**
    * Returns the name of the creator class for this component. It will be a sibling of this
    * generated class unless this is a top-level component, in which case it will be nested.
    */
-  ClassName getCreatorName(ComponentCreatorKind kind) {
+  ClassName getCreatorName() {
     return isNested()
-        ? name.peerClass(subcomponentNames.get(componentDescriptor()) + kind.typeName())
-        : name.nestedClass(kind.typeName());
+        ? name.peerClass(subcomponentNames.getCreatorName(componentDescriptor()))
+        : name.nestedClass(creatorKind().typeName());
   }
 
   /** Returns the name of the nested implementation class for a child component. */
@@ -380,9 +394,12 @@ final class ComponentImplementation {
     return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
-  /** Returns the simple subcomponent name for the given subcomponent builder {@link Key}. */
-  String getSubcomponentName(Key key) {
-    return subcomponentNames.get(key);
+  /**
+   * Returns the simple name of the creator implementation class for the given subcomponent creator
+   * {@link Key}.
+   */
+  String getSubcomponentCreatorSimpleName(Key key) {
+    return subcomponentNames.getCreatorName(key);
   }
 
   /** Returns the child implementation. */

@@ -17,21 +17,22 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
+import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for a subcomponent creator that just invokes the constructor. */
 final class SubcomponentCreatorBindingExpression extends SimpleInvocationBindingExpression {
-  private final String subcomponentBuilderName;
-  private final ContributionBinding binding;
+  private final TypeMirror creatorType;
+  private final String creatorImplementationName;
 
   SubcomponentCreatorBindingExpression(
-      ResolvedBindings resolvedBindings, String subcomponentBuilderName) {
+      ResolvedBindings resolvedBindings, String creatorImplementationName) {
     super(resolvedBindings);
-    this.subcomponentBuilderName = subcomponentBuilderName;
-    this.binding = resolvedBindings.contributionBinding();
+    this.creatorType = resolvedBindings.key().type();
+    this.creatorImplementationName = creatorImplementationName;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    return Expression.create(binding.key().type(), "new $LBuilder()", subcomponentBuilderName);
+    return Expression.create(creatorType, "new $L()", creatorImplementationName);
   }
 }

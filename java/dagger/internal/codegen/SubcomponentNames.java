@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
 
@@ -24,6 +26,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import dagger.model.Key;
 import java.util.Collection;
@@ -32,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Holds the unique simple names for all subcomponents, keyed by their {@link ComponentDescriptor}
@@ -40,12 +42,13 @@ import javax.lang.model.type.TypeMirror;
  */
 final class SubcomponentNames {
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
+
   private final ImmutableMap<ComponentDescriptor, String> namesByDescriptor;
-  private final ImmutableMap<Key, String> namesByKey;
+  private final ImmutableMap<Key, ComponentDescriptor> descriptorsByCreatorKey;
 
   SubcomponentNames(BindingGraph graph, KeyFactory keyFactory) {
     this.namesByDescriptor = namesByDescriptor(graph);
-    this.namesByKey = namesByKey(keyFactory, namesByDescriptor);
+    this.descriptorsByCreatorKey = descriptorsByCreatorKey(keyFactory, namesByDescriptor.keySet());
   }
 
   /** Returns the simple component name for the given {@link ComponentDescriptor}. */
@@ -53,9 +56,21 @@ final class SubcomponentNames {
     return namesByDescriptor.get(componentDescriptor);
   }
 
-  /** Returns the simple component name for the given subcomponent builder {@link Key}. */
-  String get(Key key) {
-    return namesByKey.get(key);
+  /**
+   * Returns the simple name for the subcomponent creator implementation with the given {@link Key}.
+   */
+  String getCreatorName(Key key) {
+    return getCreatorName(descriptorsByCreatorKey.get(key));
+  }
+
+  /**
+   * Returns the simple name for the subcomponent creator implementation for the given {@link
+   * ComponentDescriptor}.
+   */
+  String getCreatorName(ComponentDescriptor componentDescriptor) {
+    checkArgument(componentDescriptor.creatorDescriptor().isPresent());
+    ComponentCreatorDescriptor creatorDescriptor = componentDescriptor.creatorDescriptor().get();
+    return get(componentDescriptor) + creatorDescriptor.kind().typeName();
   }
 
   private static ImmutableMap<ComponentDescriptor, String> namesByDescriptor(BindingGraph graph) {
@@ -77,19 +92,16 @@ final class SubcomponentNames {
     return ImmutableMap.copyOf(subcomponentImplSimpleNames);
   }
 
-  private static ImmutableMap<Key, String> namesByKey(
-      KeyFactory keyFactory, ImmutableMap<ComponentDescriptor, String> subcomponentNames) {
-    ImmutableMap.Builder<Key, String> builder = ImmutableMap.builder();
-    subcomponentNames.forEach(
-        (component, name) ->
-            component
-                .creatorDescriptor()
-                .ifPresent(
-                    creatorDescriptor -> {
-                      TypeMirror creatorType = creatorDescriptor.typeElement().asType();
-                      builder.put(keyFactory.forSubcomponentCreator(creatorType), name);
-                    }));
-    return builder.build();
+  private static ImmutableMap<Key, ComponentDescriptor> descriptorsByCreatorKey(
+      KeyFactory keyFactory, ImmutableSet<ComponentDescriptor> subcomponents) {
+    return subcomponents.stream()
+        .filter(subcomponent -> subcomponent.creatorDescriptor().isPresent())
+        .collect(
+            toImmutableMap(
+                subcomponent ->
+                    keyFactory.forSubcomponentCreator(
+                        subcomponent.creatorDescriptor().get().typeElement().asType()),
+                subcomponent -> subcomponent));
   }
 
   private static ImmutableBiMap<ComponentDescriptor, String> disambiguateConflictingSimpleNames(

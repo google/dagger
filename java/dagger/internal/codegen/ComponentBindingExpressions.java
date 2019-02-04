@@ -339,8 +339,8 @@ final class ComponentBindingExpressions {
             graph);
 
       case SUBCOMPONENT_CREATOR:
-        return new SubcomponentCreatorProviderCreationExpression(
-            binding.key().type(), componentImplementation.getSubcomponentName(binding.key()));
+        return new AnonymousProviderCreationExpression(
+            binding, this, componentImplementation.name());
 
       case INJECTION:
       case PROVISION:
@@ -543,7 +543,7 @@ final class ComponentBindingExpressions {
         return Optional.of(
             new SubcomponentCreatorBindingExpression(
                 resolvedBindings,
-                componentImplementation.getSubcomponentName(resolvedBindings.key())));
+                componentImplementation.getSubcomponentCreatorSimpleName(resolvedBindings.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(

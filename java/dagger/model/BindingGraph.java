@@ -79,7 +79,7 @@ import javax.lang.model.element.TypeElement;
  *
  * <p>There is a <b>subcomponent edge</b> for each parent-child component relationship in the graph.
  * The target node is the component node for the child component. For subcomponents defined by a
- * {@linkplain SubcomponentCreatorBindingEdge subcomponent builder binding} (either a method on the
+ * {@linkplain SubcomponentCreatorBindingEdge subcomponent creator binding} (either a method on the
  * component or a set of {@code @Module.subcomponents} annotation values), the source node is the
  * binding for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
  * ChildFactoryMethodEdge subcomponent factory methods}, the source node is the component node for

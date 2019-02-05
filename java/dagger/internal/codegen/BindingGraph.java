@@ -25,6 +25,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.graph.Traverser;
@@ -73,12 +74,12 @@ abstract class BindingGraph {
         : contributionBindings().get(request.key());
   }
 
-  @Memoized
-  ImmutableSet<ResolvedBindings> resolvedBindings() {
-    return ImmutableSet.<ResolvedBindings>builder()
-        .addAll(membersInjectionBindings().values())
-        .addAll(contributionBindings().values())
-        .build();
+  final Iterable<ResolvedBindings> resolvedBindings() {
+    // Don't return an immutable collection - this is only ever used for looping over all bindings
+    // in the graph. Copying is wasteful, especially if is a hashing collection, since the values
+    // should all, by definition, be distinct.
+    // TODO(dpb): consider inlining this to callers and removing this.
+    return Iterables.concat(membersInjectionBindings().values(), contributionBindings().values());
   }
 
   abstract ImmutableList<BindingGraph> subgraphs();

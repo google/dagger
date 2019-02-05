@@ -21,6 +21,7 @@ import static dagger.internal.codegen.BindingType.PRODUCTION;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.model.BindingKind;
@@ -30,7 +31,6 @@ import dagger.model.Key;
 import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
@@ -45,17 +45,30 @@ abstract class BindingNode implements dagger.model.Binding {
   static BindingNode create(
       ComponentPath component,
       Binding delegate,
-      Iterable<BindingDeclaration> associatedDeclarations,
-      Supplier<String> toStringFunction) {
+      ImmutableSet<MultibindingDeclaration> multibindingDeclarations,
+      ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations,
+      ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations,
+      BindingDeclarationFormatter bindingDeclarationFormatter) {
     BindingNode node =
-        new AutoValue_BindingNode(component, delegate, ImmutableSet.copyOf(associatedDeclarations));
-    node.toStringFunction = checkNotNull(toStringFunction);
+        new AutoValue_BindingNode(
+            component,
+            delegate,
+            multibindingDeclarations,
+            optionalBindingDeclarations,
+            subcomponentDeclarations);
+    node.bindingDeclarationFormatter = checkNotNull(bindingDeclarationFormatter);
     return node;
   }
 
-  private Supplier<String> toStringFunction;
+  private BindingDeclarationFormatter bindingDeclarationFormatter;
 
   abstract Binding delegate();
+
+  abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
+
+  abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
+
+  abstract ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations();
 
   /**
    * The {@link Element}s (other than the binding's {@link #bindingElement()}) that are associated
@@ -67,7 +80,10 @@ abstract class BindingNode implements dagger.model.Binding {
    *   <li>{@linkplain Multibinds multibinding} declarations
    * </ul>
    */
-  abstract ImmutableSet<BindingDeclaration> associatedDeclarations();
+  final Iterable<BindingDeclaration> associatedDeclarations() {
+    return Iterables.concat(
+        multibindingDeclarations(), optionalBindingDeclarations(), subcomponentDeclarations());
+  }
 
   @Override
   public Key key() {
@@ -116,6 +132,6 @@ abstract class BindingNode implements dagger.model.Binding {
 
   @Override
   public final String toString() {
-    return toStringFunction.get();
+    return bindingDeclarationFormatter.format(delegate());
   }
 }

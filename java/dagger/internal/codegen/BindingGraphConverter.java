@@ -212,16 +212,10 @@ final class BindingGraphConverter {
       return BindingNode.create(
           pathFromRootToAncestor(owningComponent),
           binding,
-          associatedDeclaringElements(resolvedBindings),
-          () -> bindingDeclarationFormatter.format(binding));
-    }
-
-    private Iterable<BindingDeclaration> associatedDeclaringElements(
-        ResolvedBindings resolvedBindings) {
-      return Iterables.concat(
           resolvedBindings.multibindingDeclarations(),
           resolvedBindings.optionalBindingDeclarations(),
-          resolvedBindings.subcomponentDeclarations());
+          resolvedBindings.subcomponentDeclarations(),
+          bindingDeclarationFormatter);
     }
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {

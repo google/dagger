@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -42,6 +43,9 @@ public class ComponentTreeTraverser {
   /** The path from the root graph to the currently visited graph. */
   private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
 
+  /** The {@link ComponentPath} for each component in {@link #bindingGraphPath}. */
+  private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
+
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
   public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
     checkArgument(
@@ -50,6 +54,7 @@ public class ComponentTreeTraverser {
         "only root graphs can be traversed, not %s",
         rootGraph.componentTypeElement().getQualifiedName());
     bindingGraphPath.add(rootGraph);
+    componentPaths.add(ComponentPath.create(ImmutableList.of(rootGraph.componentTypeElement())));
   }
 
   /**
@@ -59,6 +64,7 @@ public class ComponentTreeTraverser {
    */
   public final void traverseComponents() {
     checkState(bindingGraphPath.size() == 1);
+    checkState(componentPaths.size() == 1);
     visitComponent(bindingGraphPath.getFirst());
   }
 
@@ -101,10 +107,17 @@ public class ComponentTreeTraverser {
 
     for (BindingGraph child : graph.subgraphs()) {
       bindingGraphPath.addLast(child);
+      ComponentPath childPath =
+          ComponentPath.create(
+              bindingGraphPath.stream()
+                  .map(BindingGraph::componentTypeElement)
+                  .collect(toImmutableList()));
+      componentPaths.addLast(childPath);
       try {
         visitComponent(child);
       } finally {
         verify(bindingGraphPath.removeLast().equals(child));
+        verify(componentPaths.removeLast().equals(childPath));
       }
     }
   }
@@ -140,11 +153,7 @@ public class ComponentTreeTraverser {
    * component.
    */
   protected final ComponentPath componentPath() {
-    ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
-    for (BindingGraph graph : bindingGraphPath) {
-      path.add(graph.componentTypeElement());
-    }
-    return ComponentPath.create(path.build());
+    return componentPaths.getLast();
   }
 
   /**
@@ -152,11 +161,9 @@ public class ComponentTreeTraverser {
    * component.
    */
   protected final ComponentPath pathFromRootToAncestor(TypeElement ancestor) {
-    ImmutableList.Builder<TypeElement> path = ImmutableList.builder();
-    for (TypeElement component : componentPath().components()) {
-      path.add(component);
-      if (component.equals(ancestor)) {
-        return ComponentPath.create(path.build());
+    for (ComponentPath componentPath : componentPaths) {
+      if (componentPath.currentComponent().equals(ancestor)) {
+        return componentPath;
       }
     }
     throw new IllegalArgumentException(

@@ -49,6 +49,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
@@ -171,6 +172,19 @@ final class DaggerElements implements Elements {
         }
       };
 
+  /** A formatter that calls {@link #elementToString(Element)}. */
+  static Formatter<Element> elementFormatter() {
+    return ELEMENT_FORMATTER;
+  }
+
+  private static final Formatter<Element> ELEMENT_FORMATTER =
+      new Formatter<Element>() {
+        @Override
+        public String format(Element element) {
+          return elementToString(element);
+        }
+      };
+
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
   static TypeElement closestEnclosingTypeElement(Element element) {
     return element.accept(CLOSEST_ENCLOSING_TYPE_ELEMENT, null);
@@ -194,7 +208,15 @@ final class DaggerElements implements Elements {
    * elements enclosed by the same parent.
    */
   static final Comparator<Element> DECLARATION_ORDER =
-      comparing(element -> element.getEnclosingElement().getEnclosedElements().indexOf(element));
+      comparing(element -> siblings(element).indexOf(element));
+
+  // For parameter elements, element.getEnclosingElement().getEnclosedElements() is empty. So
+  // instead look at the parameter list of the enclosing executable.
+  private static List<? extends Element> siblings(Element element) {
+    return element.getKind().equals(ElementKind.PARAMETER)
+        ? asExecutable(element.getEnclosingElement()).getParameters()
+        : element.getEnclosingElement().getEnclosedElements();
+  }
 
   /**
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose

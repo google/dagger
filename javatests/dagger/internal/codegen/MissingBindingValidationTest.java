@@ -663,4 +663,118 @@ public class MissingBindingValidationTest {
         .onLineContaining("interface TestComponent");
     assertThat(compilation).hadErrorCount(1);
   }
+
+  @Test
+  public void tooManyRequests() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Foo {",
+            "  @Inject Foo(",
+            "      String one,",
+            "      String two,",
+            "      String three,",
+            "      String four,",
+            "      String five,",
+            "      String six,",
+            "      String seven,",
+            "      String eight,",
+            "      String nine,",
+            "      String ten,",
+            "      String eleven,",
+            "      String twelve,",
+            "      String thirteen) {",
+            "  }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  String string();",
+            "  Foo foo();",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(foo, component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "[Dagger/MissingBinding] java.lang.String cannot be provided without an @Inject "
+                    + "constructor or an @Provides-annotated method.",
+                "    java.lang.String is provided at",
+                "        test.TestComponent.string()",
+                "It is also requested at:",
+                "    test.Foo(one, …)",
+                "    test.Foo(…, two, …)",
+                "    test.Foo(…, three, …)",
+                "    test.Foo(…, four, …)",
+                "    test.Foo(…, five, …)",
+                "    test.Foo(…, six, …)",
+                "    test.Foo(…, seven, …)",
+                "    test.Foo(…, eight, …)",
+                "    test.Foo(…, nine, …)",
+                "    test.Foo(…, ten, …)",
+                "    and 3 others"))
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void tooManyEntryPoints() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  String string1();",
+            "  String string2();",
+            "  String string3();",
+            "  String string4();",
+            "  String string5();",
+            "  String string6();",
+            "  String string7();",
+            "  String string8();",
+            "  String string9();",
+            "  String string10();",
+            "  String string11();",
+            "  String string12();",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "[Dagger/MissingBinding] java.lang.String cannot be provided without an @Inject "
+                    + "constructor or an @Provides-annotated method.",
+                "    java.lang.String is provided at",
+                "        test.TestComponent.string1()",
+                "The following other entry points also depend on it:",
+                "    test.TestComponent.string2()",
+                "    test.TestComponent.string3()",
+                "    test.TestComponent.string4()",
+                "    test.TestComponent.string5()",
+                "    test.TestComponent.string6()",
+                "    test.TestComponent.string7()",
+                "    test.TestComponent.string8()",
+                "    test.TestComponent.string9()",
+                "    test.TestComponent.string10()",
+                "    test.TestComponent.string11()",
+                "    and 1 other"))
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
+  }
 }

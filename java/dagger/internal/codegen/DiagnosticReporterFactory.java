@@ -27,10 +27,12 @@ import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.DaggerElements.DECLARATION_ORDER;
 import static dagger.internal.codegen.DaggerElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.DaggerElements.elementEncloses;
+import static dagger.internal.codegen.DaggerElements.elementFormatter;
 import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ValidationType.NONE;
 import static java.util.Collections.min;
@@ -59,7 +61,6 @@ import dagger.model.ComponentPath;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;
 import java.util.Comparator;
-import java.util.Formatter;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.processing.Messager;
@@ -253,12 +254,12 @@ final class DiagnosticReporterFactory {
 
     private void appendComponentPathUnlessAtRoot(StringBuilder message, Node node) {
       if (!node.componentPath().equals(graph.rootComponentNode().componentPath())) {
-        new Formatter(message).format(" [%s]", node.componentPath());
+        message.append(String.format(" [%s]", node.componentPath()));
       }
     }
 
     private void appendBracketPrefix(StringBuilder message, String prefix) {
-      new Formatter(message).format("[%s] ", prefix);
+      message.append(String.format("[%s] ", prefix));
     }
 
     /** The diagnostic information associated with an error. */
@@ -322,43 +323,47 @@ final class DiagnosticReporterFactory {
               .append("\nIt is")
               .append(graph.isModuleBindingGraph() ? " " : " also ")
               .append("requested at:");
-          for (Element request : requestsToPrint) {
-            message.append("\n    ").append(elementToString(request));
-          }
+          elementFormatter().formatIndentedList(message, requestsToPrint, 1);
         }
 
         // Print the remaining entry points, showing which component they're in, unless we're in a
         // module binding graph
         if (!graph.isModuleBindingGraph() && entryPoints.size() > 1) {
           message.append("\nThe following other entry points also depend on it:");
-          entryPoints.stream()
-              .filter(entryPoint -> !entryPoint.equals(getLast(dependencyTrace)))
-              .sorted(
-                  // start with entry points in components closest to the root
-                  rootComponentFirst()
-                      // then list entry points declared in the component before those declared in a
-                      // supertype
-                      .thenComparing(nearestComponentSupertypeFirst())
-                      // finally list entry points in declaration order in their declaring type
-                      .thenComparing(requestElementDeclarationOrder()))
-              .forEachOrdered(
-                  entryPoint -> {
-                    message.append("\n    ");
-                    Element requestElement = entryPoint.dependencyRequest().requestElement().get();
-                    message.append(elementToString(requestElement));
-
-                    // For entry points declared in subcomponents or supertypes of the root
-                    // component, append the component path to make clear to the user which
-                    // component it's in.
-                    ComponentPath componentPath = source(entryPoint).componentPath();
-                    if (!componentPath.atRoot()
-                        || !requestElement.getEnclosingElement().equals(rootComponent)) {
-                      message.append(String.format(" [%s]", componentPath));
-                    }
-                  });
+          entryPointFormatter.formatIndentedList(
+              message,
+              entryPoints.stream()
+                  .filter(entryPoint -> !entryPoint.equals(getLast(dependencyTrace)))
+                  .sorted(
+                      // 1. List entry points in components closest to the root first.
+                      // 2. List entry points declared in a component before those in a supertype.
+                      // 3. List entry points in declaration order in their declaring type.
+                      rootComponentFirst()
+                          .thenComparing(nearestComponentSupertypeFirst())
+                          .thenComparing(requestElementDeclarationOrder()))
+                  .collect(toImmutableList()),
+              1);
         }
         return message.toString();
       }
+
+      private final Formatter<DependencyEdge> entryPointFormatter =
+          new Formatter<DependencyEdge>() {
+            @Override
+            public String format(DependencyEdge object) {
+              Element requestElement = object.dependencyRequest().requestElement().get();
+              StringBuilder element = new StringBuilder(elementToString(requestElement));
+
+              // For entry points declared in subcomponents or supertypes of the root component,
+              // append the component path to make clear to the user which component it's in.
+              ComponentPath componentPath = source(object).componentPath();
+              if (!componentPath.atRoot()
+                  || !requestElement.getEnclosingElement().equals(rootComponent)) {
+                element.append(String.format(" [%s]", componentPath));
+              }
+              return element.toString();
+            }
+          };
 
       private boolean isTracedRequest(DependencyEdge request) {
         return !dependencyTrace.isEmpty() && request.equals(dependencyTrace.get(0));

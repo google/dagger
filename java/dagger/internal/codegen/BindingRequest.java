@@ -97,4 +97,12 @@ abstract class BindingRequest {
             : frameworkType().get().frameworkClass().getSimpleName();
     return requestKindObject.toString();
   }
+
+  /** Returns {@code true} if this request can be satisfied by a production binding. */
+  final boolean canBeSatisfiedByProductionBinding() {
+    if (requestKind().isPresent()) {
+      return RequestKinds.canBeSatisfiedByProductionBinding(requestKind().get());
+    }
+    return frameworkType().get().equals(FrameworkType.PRODUCER_NODE);
+  }
 }

@@ -165,10 +165,10 @@ final class RequestKinds {
   }
 
   /**
-   * Returns {@code true} if entry points with the given request kind may be satisfied with a
-   * production binding.
+   * Returns {@code true} if requests for {@code requestKind} can be satisfied by a production
+   * binding.
    */
-  static boolean entryPointCanUseProduction(RequestKind requestKind) {
+  static boolean canBeSatisfiedByProductionBinding(RequestKind requestKind) {
     switch (requestKind) {
       case INSTANCE:
       case PROVIDER:

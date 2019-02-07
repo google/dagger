@@ -84,14 +84,36 @@ final class ModifiableBindingExpressions {
    * implementation of this subcomponent. Returns {@link Optional#empty()} when the binding cannot
    * or should not be modified by the current binding graph.
    */
-  Optional<ModifiableBindingMethod> reimplementedModifiableBindingMethod(
+  Optional<ModifiableBindingMethod> possiblyReimplementedMethod(
       ModifiableBindingMethod modifiableBindingMethod) {
     checkState(componentImplementation.superclassImplementation().isPresent());
-    ModifiableBindingType newModifiableBindingType =
-        getModifiableBindingType(modifiableBindingMethod.request());
+    BindingRequest request = modifiableBindingMethod.request();
+    ModifiableBindingType newModifiableBindingType = getModifiableBindingType(request);
     ModifiableBindingType oldModifiableBindingType = modifiableBindingMethod.type();
     boolean modifiableBindingTypeChanged =
         !newModifiableBindingType.equals(oldModifiableBindingType);
+
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
+    // Don't reimplement modifiable bindings that were perceived to be provision bindings in a
+    // superclass implementation but are now production bindings.
+    if ((modifiableBindingTypeChanged
+            // Optional bindings don't need the same treatment since the only transition they can
+            // make is empty -> present. In that case, the Producer<Optional<T>> will be overridden
+            // and the absentOptionalProvider() will be a dangling reference that is never attempted
+            // to be overridden.
+            || newModifiableBindingType.equals(ModifiableBindingType.MULTIBINDING))
+        && resolvedBindings != null
+        && resolvedBindings.bindingType().equals(BindingType.PRODUCTION)
+        && !request.canBeSatisfiedByProductionBinding()) {
+      return oldModifiableBindingType.hasBaseClassImplementation()
+          ? Optional.empty()
+          : Optional.of(
+              reimplementedMethod(
+                  modifiableBindingMethod,
+                  new PrunedConcreteMethodBindingExpression(),
+                  componentImplementation.isAbstract()));
+    }
+
     if (modifiableBindingTypeChanged
         && !newModifiableBindingType.hasBaseClassImplementation()
         && (oldModifiableBindingType.hasBaseClassImplementation()
@@ -103,30 +125,41 @@ final class ModifiableBindingExpressions {
     }
 
     if (modifiableBindingTypeChanged
-        || shouldModifyImplementation(
-            newModifiableBindingType, modifiableBindingMethod.request())) {
-      MethodSpec baseMethod = modifiableBindingMethod.methodSpec();
+        || shouldModifyImplementation(newModifiableBindingType, request)) {
       boolean markMethodFinal =
           knownModifiableBindingWillBeFinalized(modifiableBindingMethod)
               // no need to mark the method final if the component implementation will be final
               && componentImplementation.isAbstract();
       return Optional.of(
-          ModifiableBindingMethod.implement(
+          reimplementedMethod(
               modifiableBindingMethod,
-              MethodSpec.methodBuilder(baseMethod.name)
-                  .addModifiers(baseMethod.modifiers.contains(PUBLIC) ? PUBLIC : PROTECTED)
-                  .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())
-                  .returns(baseMethod.returnType)
-                  .addAnnotation(Override.class)
-                  .addCode(
-                      bindingExpressions
-                          .getBindingExpression(modifiableBindingMethod.request())
-                          .getModifiableBindingMethodImplementation(
-                              modifiableBindingMethod, componentImplementation, types))
-                  .build(),
+              bindingExpressions.getBindingExpression(request),
               markMethodFinal));
     }
     return Optional.empty();
+  }
+
+  /**
+   * Returns a new {@link ModifiableBindingMethod} that overrides {@code supertypeMethod} and is
+   * implemented with {@code bindingExpression}.
+   */
+  private ModifiableBindingMethod reimplementedMethod(
+      ModifiableBindingMethod supertypeMethod,
+      BindingExpression bindingExpression,
+      boolean markMethodFinal) {
+    MethodSpec baseMethod = supertypeMethod.methodSpec();
+    return ModifiableBindingMethod.implement(
+        supertypeMethod,
+        MethodSpec.methodBuilder(baseMethod.name)
+            .addModifiers(baseMethod.modifiers.contains(PUBLIC) ? PUBLIC : PROTECTED)
+            .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())
+            .returns(baseMethod.returnType)
+            .addAnnotation(Override.class)
+            .addCode(
+                bindingExpression.getModifiableBindingMethodImplementation(
+                    supertypeMethod, componentImplementation, types))
+            .build(),
+        markMethodFinal);
   }
 
   /**
@@ -329,16 +362,29 @@ final class ModifiableBindingExpressions {
    */
   private boolean shouldModifyImplementation(
       ModifiableBindingType modifiableBindingType, BindingRequest request) {
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     if (request.requestKind().isPresent()) {
       switch (request.requestKind().get()) {
         case FUTURE:
-          // Futures are always requested by a Producer.get() call, so if the binding is modifiable,
-          // the producer will be wrapped in a modifiable method and the future can refer to that
-          // method; even if the producer binding is modified, getModifiableProducer().get() will
-          // never need to be modified. Furthermore, because cancellation is treated by wrapped
-          // producers, and those producers point to the modifiable producer wrapper methods, we
-          // never need or want to change the access of these wrapped producers for entry
-          // methods
+          // Futures backed by production bindings are always requested by a Producer.get() call, so
+          // if the binding is modifiable, the producer will be wrapped in a modifiable method and
+          // the future can refer to that  method; even if the producer binding is modified,
+          // getModifiableProducer().get() will never need to be modified. Furthermore, because
+          // cancellation is treated by wrapped producers, and those producers point to the
+          // modifiable producer wrapper methods, we never need or want to change the access of
+          // these wrapped producers for entry methods
+          //
+          // Futures backed by provision bindings are inlined and contain no wrapping producer, so
+          // if the binding is modifiable and is resolved as a provision binding in a superclass
+          // but later resolved as a production binding, we can't take the same shortcut as before.
+          if (componentImplementation.superclassImplementation().isPresent()) {
+            BindingGraph superclassGraph =
+                componentImplementation.superclassImplementation().get().graph();
+            ResolvedBindings superclassBindings = superclassGraph.resolvedBindings(request);
+            return superclassBindings != null
+                && resolvedBindings != null
+                && !superclassBindings.bindingType().equals(resolvedBindings.bindingType());
+          }
           return false;
 
         case LAZY:
@@ -365,7 +411,6 @@ final class ModifiableBindingExpressions {
       }
     }
 
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
     switch (modifiableBindingType) {
       case GENERATED_INSTANCE:
         return !componentImplementation.isAbstract();

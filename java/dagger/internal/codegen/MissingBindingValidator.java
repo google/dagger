@@ -20,7 +20,7 @@ import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
-import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
+import static dagger.internal.codegen.RequestKinds.canBeSatisfiedByProductionBinding;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
@@ -107,10 +107,12 @@ final class MissingBindingValidator implements BindingGraphPlugin {
         .allMatch(edge -> dependencyCanBeProduction(edge, graph));
   }
 
+  // TODO(ronshapiro): merge with
+  // ProvisionDependencyOnProduerBindingValidator.dependencyCanUseProduction
   private boolean dependencyCanBeProduction(DependencyEdge edge, BindingGraph graph) {
     Node source = graph.network().incidentNodes(edge).source();
     if (source instanceof ComponentNode) {
-      return entryPointCanUseProduction(edge.dependencyRequest().kind());
+      return canBeSatisfiedByProductionBinding(edge.dependencyRequest().kind());
     }
     if (source instanceof dagger.model.Binding) {
       return ((dagger.model.Binding) source).isProduction();

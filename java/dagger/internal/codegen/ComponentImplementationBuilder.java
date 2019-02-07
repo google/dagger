@@ -765,7 +765,7 @@ abstract class ComponentImplementationBuilder {
             superclassImplementation.getModifiableBindingMethods()) {
           bindingExpressions
               .modifiableBindingExpressions()
-              .reimplementedModifiableBindingMethod(superclassModifiableBindingMethod)
+              .possiblyReimplementedMethod(superclassModifiableBindingMethod)
               .ifPresent(componentImplementation::addImplementedModifiableBindingMethod);
         }
       } else {

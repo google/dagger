@@ -5403,6 +5403,187 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generatedRoot);
   }
 
+  @Test
+  public void injectInLeaf_ProductionInRoot() {
+    // most of this is also covered in ProducesMethodShadowsInjectConstructorTest, but this test
+    // asserts that the correct PrunedConcreteBindingExpression is used
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createSimplePackagePrivateClasses(filesToCompile, "Dependency", "Missing");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Injected {",
+            "  @Inject Injected(Dependency dependency, Missing missing) {}",
+            "",
+            "  Injected(Dependency dependency) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "interface LeafModule {",
+            "  @Produces",
+            "  static Object dependsOnInjectReplacedWithProduces(Injected injected) {",
+            "    return new Object();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.producers.Producer;",
+            "import dagger.producers.ProductionSubcomponent;",
+            "",
+            "@ProductionSubcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Producer<Object> objectProducer();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf, CancellationListener {",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.injectedProvider = Injected_Factory.create(",
+            "        getDependencyProvider(), getMissingProvider());",
+            "    this.injectedProducer = Producers.producerFromProvider(getInjectedProvider());",
+            "    this.dependsOnInjectReplacedWithProducesProducer =",
+            "        LeafModule_DependsOnInjectReplacedWithProducesFactory.create(",
+            "            getProductionImplementationExecutorProvider(),",
+            "            getProductionComponentMonitorProvider(),",
+            "            getInjectedProducer());",
+            "    this.objectProducerEntryPoint =",
+            "        Producers.entryPointViewOf(",
+            "            dependsOnInjectReplacedWithProducesProducer, this);",
+            "  }",
+            "",
+            "  protected abstract Provider getDependencyProvider();",
+            "  protected abstract Provider getMissingProvider();",
+            "",
+            "  protected Provider getInjectedProvider() {",
+            "    return injectedProvider;",
+            "  }",
+            "",
+            "  protected Producer getInjectedProducer() {",
+            "    return injectedProducer;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.MoreExecutors;",
+            "import dagger.Provides;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import dagger.producers.Production;",
+            "import java.util.concurrent.Executor;",
+            "",
+            "@ProducerModule",
+            "interface RootModule {",
+            "  @Produces",
+            "  static Injected replaceInjectWithProduces(Dependency dependency) {",
+            "    return new Injected(dependency);",
+            "  }",
+            "",
+            "  @Produces",
+            "  static Dependency dependency() {",
+            "    return new Dependency();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @Production",
+            "  static Executor executor() {",
+            "    return MoreExecutors.directExecutor();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent(modules = RootModule.class)",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root, CancellationListener {",
+            "  private Producer<Dependency> dependencyProducer;",
+            "  private Producer<Injected> replaceInjectWithProducesProducer;",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.productionImplementationExecutorProvider =",
+            "        DoubleCheck.provider((Provider) RootModule_ExecutorFactory.create());",
+            "    this.rootProvider = InstanceFactory.create((Root) this);",
+            "    this.monitorProvider =",
+            "        DoubleCheck.provider(",
+            "            Root_MonitoringModule_MonitorFactory.create(",
+            "                rootProvider,",
+            "                SetFactory.<ProductionComponentMonitor.Factory>empty()));",
+            "    this.dependencyProducer =",
+            "        RootModule_DependencyFactory.create(",
+            "            productionImplementationExecutorProvider, monitorProvider);",
+            "    this.replaceInjectWithProducesProducer =",
+            "        RootModule_ReplaceInjectWithProducesFactory.create(",
+            "            productionImplementationExecutorProvider,",
+            "            monitorProvider,",
+            "            dependencyProducer);",
+            "  }",
+            "",
+            "  protected final class LeafImpl extends DaggerLeaf",
+            "      implements CancellationListener {",
+            "    @Override",
+            "    protected Provider getDependencyProvider() {",
+            "      return MissingBindingFactory.create();",
+            "    }",
+            "",
+            "    @Override",
+            "    protected Provider getMissingProvider() {",
+            "      return MissingBindingFactory.create();",
+            "    }",
+            "",
+            "    @Override",
+            "    protected Producer getInjectedProducer() {",
+            "      return DaggerRoot.this.replaceInjectWithProducesProducer;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+  }
+
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
   private void createSimplePackagePrivateClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {

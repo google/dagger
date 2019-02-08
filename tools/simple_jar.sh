@@ -19,7 +19,11 @@ shift 2
 
 dirname=""
 for src in "$@"; do
-  src_dirname="$(echo "${src}" | grep -o -P "(.*/)?${PACKAGE_NAME}" | head -n1)"
+  if [[ ! "${src}" =~ ^((.*/)?"${PACKAGE_NAME}")/ ]]; then
+    echo "Sources must be in ${PACKAGE_NAME}: $@"
+    exit 1
+  fi
+  src_dirname="${BASH_REMATCH[1]}"
   if [[ -z "${dirname}" ]]; then
     dirname="${src_dirname}"
   elif [[ "${dirname}" != "${src_dirname}" ]]; then

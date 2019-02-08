@@ -26,9 +26,7 @@ find_dirname() {
       return 1
     fi
     src_dirname="${BASH_REMATCH[1]}"
-    if [[ -z "${dirname}" ]]; then
-      dirname="${src_dirname}"
-    elif [[ "${dirname}" != "${src_dirname}" ]]; then
+    if [[ "${dirname:=${src_dirname}}" != "${src_dirname}" ]]; then
       echo "Sources must all be in the same directory: $@" >&2
       return 1
     fi

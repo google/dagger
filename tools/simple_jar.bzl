@@ -19,31 +19,13 @@ def simple_jar(name, srcs):
 
     # TODO(dpb): consider creating a Fileset() under the hood to support srcs from different
     # directories, or continually update the same zip file for each source file
-    # TODO(ronshapiro): extract a .sh file to make this easier to understand
     native.genrule(
         name = name,
         srcs = srcs,
         outs = ["%s.jar" % name],
-        cmd = 'package_name="{package_name}"'.format(package_name = native.package_name()) +
-              """
-        dirname=""
-        for src in $(SRCS); do
-          src_dirname="$$(echo "$${src}" | grep -o -P "(.*/)?$${package_name}" | head -n1)"
-          if [[ -z "$${dirname}" ]]; then
-            dirname="$${src_dirname}"
-          elif [[ "$${dirname}" != "$${src_dirname}" ]]; then
-            echo "Sources must all be in the same directory: $(SRCS)"
-            exit 1
-          fi
-        done
-
-        if [[ -z "$${dirname}" ]]; then
-          echo "No sources provided"
-          exit 1
-        fi
-
-        OUT="$$(pwd)/$@"
-        cd "$${dirname}"
-        zip "$$OUT" -r * &> /dev/null
-        """,
+        cmd = """
+            $(location //tools:simple_jar.sh) \
+              "{package_name}" "$@" $(SRCS)
+              """.format(package_name = native.package_name()),
+        tools = ["//tools:simple_jar.sh"],
     )

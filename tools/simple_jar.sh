@@ -1,4 +1,5 @@
-# Copyright (C) 2017 The Dagger Authors.
+#!/bin/bash
+# Copyright (C) 2018 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Description:
-#   Tools for Dagger
+readonly PACKAGE_NAME="$1"
+readonly OUT="${PWD}/$2"
+shift 2
 
-package(default_visibility = ["//:src"])
+dirname=""
+for src in "$@"; do
+  src_dirname="$(echo "${src}" | grep -o -P "(.*/)?${PACKAGE_NAME}" | head -n1)"
+  if [[ -z "${dirname}" ]]; then
+    dirname="${src_dirname}"
+  elif [[ "${dirname}" != "${src_dirname}" ]]; then
+    echo "Sources must all be in the same directory: $@"
+    exit 1
+  fi
+done
 
-exports_files([
-    "pom-template.xml",
-    "simple_jar.sh",
-])
+if [[ -z "${dirname}" ]]; then
+  echo "No sources provided"
+  exit 1
+fi
+
+cd "${dirname}"
+zip "${OUT}" -r * &> /dev/null

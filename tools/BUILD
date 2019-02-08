@@ -19,5 +19,15 @@ package(default_visibility = ["//:src"])
 
 exports_files([
     "pom-template.xml",
-    "simple_jar.sh",
 ])
+
+sh_library(
+    name = "simple_jar",
+    srcs = ["simple_jar.sh"],
+)
+
+sh_test(
+    name = "simple_jar_test",
+    srcs = ["simple_jar_test.sh"],
+    deps = [":simple_jar"],
+)

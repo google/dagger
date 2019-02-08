@@ -25,18 +25,22 @@ fail() {
 
 [[ "$(find_dirname some/package some/package/a/b/c some/package/d/e/f)" \
     == "some/package" ]] \
-  || fail "without prefix"
+  || fail "no prefix"
 
 [[ "$(find_dirname some/package prefix/some/package/a prefix/some/package/b)" \
     == "prefix/some/package" ]] \
   || fail "with prefix"
 
 ! find_dirname some/package some/package/a other/package/b >/dev/null \
-  || fail "wrong package"
+  || fail "expected failure if one file is in the wrong package"
+
+! find_dirname some/package other/package/a other/package/b >/dev/null \
+  || fail "expected failure if all files are in the wrong package"
 
 ! find_dirname some/package some/package/a prefix/some/package/b >/dev/null \
-  || fail "different prefixes"
+  || fail "expected failure if files have different prefixes"
 
-! find_dirname some/package >/dev/null || fail "no sources"
+! find_dirname some/package >/dev/null \
+  || fail "expected failure with no sources"
 
 true

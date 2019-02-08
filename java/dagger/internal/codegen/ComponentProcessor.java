@@ -54,7 +54,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
-  @Inject DaggerStatistics daggerStatistics;
+  @Inject DaggerStatisticsCollector statisticsCollector;
 
   // TODO(ronshapiro): inject a multibinding for all instances that retain caches?
   @Inject ModuleDescriptor.Factory moduleDescriptorFactory;
@@ -110,7 +110,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         .build()
         .inject(this);
 
-    daggerStatistics.processingStarted();
+    statisticsCollector.processingStarted();
     bindingGraphPlugins.initializePlugins();
     return processingSteps;
   }
@@ -183,7 +183,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Override
   protected void postRound(RoundEnvironment roundEnv) {
     if (roundEnv.processingOver()) {
-      daggerStatistics.processingStopped();
+      statisticsCollector.processingStopped();
     } else {
       try {
         injectBindingRegistry.generateSourcesForRequiredBindings(

@@ -23,6 +23,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -78,5 +79,10 @@ final class ProcessingEnvironmentModule {
   @Reusable // to avoid parsing options more than once
   CompilerOptions compilerOptions() {
     return CompilerOptions.create(processingEnvironment);
+  }
+
+  @Provides
+  Optional<DaggerStatisticsRecorder> daggerStatisticsRecorder() {
+    return Optional.empty();
   }
 }

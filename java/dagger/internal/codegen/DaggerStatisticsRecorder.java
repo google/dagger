@@ -16,17 +16,8 @@
 
 package dagger.internal.codegen;
 
-import com.google.auto.value.AutoValue;
-import java.time.Duration;
-
-/** Statistics collected over the course of Dagger annotation processing. */
-@AutoValue
-abstract class DaggerStatistics {
-  /** Creates a new {@link DaggerStatistics}. */
-  static DaggerStatistics create(Duration totalProcessingTime) {
-    return new AutoValue_DaggerStatistics(totalProcessingTime);
-  }
-
-  /** Total time spent in Dagger annotation processing. */
-  abstract Duration totalProcessingTime();
+/** Records collected {@link DaggerStatistics}. */
+interface DaggerStatisticsRecorder {
+  /** Records the given {@code statistics}. */
+  void recordStatistics(DaggerStatistics statistics);
 }

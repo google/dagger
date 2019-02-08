@@ -84,6 +84,8 @@ java_library(
         "ContributionType.java",
         "DaggerElements.java",
         "DaggerStatistics.java",
+        "DaggerStatisticsCollector.java",
+        "DaggerStatisticsRecorder.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
         "Expression.java",

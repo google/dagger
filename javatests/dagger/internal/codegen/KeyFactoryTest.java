@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.Iterables;
@@ -30,6 +31,7 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import java.lang.annotation.Retention;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
@@ -111,8 +113,14 @@ public class KeyFactoryTest {
         .isEqualTo(MoreTypes.equivalence().wrap(stringType));
     assertThat(key.toString())
         .isEqualTo(
-            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier("
-                + "{@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation}) java.lang.String");
+            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier({"
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=1, value=\"value a\"), "
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=2, value=\"value b\"), "
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=3145, value=\"default\")"
+                + "}) java.lang.String");
   }
 
   @Test public void qualifiedKeyEquivalents() {
@@ -133,29 +141,51 @@ public class KeyFactoryTest {
     assertThat(provisionKey).isEqualTo(injectionKey);
     assertThat(injectionKey.toString())
         .isEqualTo(
-            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier("
-                + "{@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation}) java.lang.String");
+            "@dagger.internal.codegen.KeyFactoryTest.TestQualifier({"
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=1, value=\"value a\"), "
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=2, value=\"value b\"), "
+                + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
+                + "param1=3145, value=\"default\")"
+                + "}) java.lang.String");
   }
 
   @Module
   static final class QualifiedProvidesMethodModule {
     @Provides
-    @TestQualifier(@InnerAnnotation)
-    String provideQualifiedString() {
+    @TestQualifier({
+      @InnerAnnotation(value = "value a", param1 = 1),
+      // please note the order of 'param' and 'value' is inverse
+      @InnerAnnotation(param1 = 2, value = "value b"),
+      @InnerAnnotation()
+    })
+    static String provideQualifiedString() {
       throw new UnsupportedOperationException();
     }
   }
 
   static final class QualifiedFieldHolder {
-    @TestQualifier(@InnerAnnotation) String aString;
+    @TestQualifier({
+      @InnerAnnotation(value = "value a", param1 = 1),
+      // please note the order of 'param' and 'value' is inverse
+      @InnerAnnotation(param1 = 2, value = "value b"),
+      @InnerAnnotation()
+    })
+    String aString;
   }
 
+  @Retention(RUNTIME)
   @Qualifier
   @interface TestQualifier {
     InnerAnnotation[] value();
   }
 
-  @interface InnerAnnotation {}
+  @interface InnerAnnotation {
+    int param1() default 3145;
+
+    String value() default "default";
+  }
 
   @Test public void forProvidesMethod_sets() {
     TypeElement setElement = elements.getTypeElement(Set.class.getCanonicalName());

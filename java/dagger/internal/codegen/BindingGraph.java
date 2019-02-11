@@ -202,7 +202,7 @@ abstract class BindingGraph {
         .map(ContributionBinding::contributingModule)
         .distinct()
         .flatMap(presentValues())
-        .filter(module -> ownedModuleTypes().contains(module))
+        .filter(ownedModuleTypes()::contains)
         .map(module -> ComponentRequirement.forModule(module.asType()))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {

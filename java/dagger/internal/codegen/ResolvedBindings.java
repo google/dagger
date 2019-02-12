@@ -23,7 +23,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -97,8 +97,8 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /** All bindings for {@link #key()}, regardless of which component owns them. */
-  final ImmutableSet<? extends Binding> bindings() {
-    return ImmutableSet.copyOf(allBindings().values());
+  final ImmutableCollection<? extends Binding> bindings() {
+    return allBindings().values();
   }
 
   /**
@@ -116,7 +116,8 @@ abstract class ResolvedBindings implements HasContributionType {
    * #optionalBindingDeclarations()}, or {@link #subcomponentDeclarations()}.
    */
   final boolean isEmpty() {
-    return bindings().isEmpty()
+    return allMembersInjectionBindings().isEmpty()
+        && allContributionBindings().isEmpty()
         && multibindingDeclarations().isEmpty()
         && optionalBindingDeclarations().isEmpty()
         && subcomponentDeclarations().isEmpty();
@@ -133,6 +134,10 @@ abstract class ResolvedBindings implements HasContributionType {
    */
   @Memoized
   ImmutableSet<ContributionBinding> contributionBindings() {
+    // TODO(ronshapiro): consider optimizing ImmutableSet.copyOf(Collection) for small immutable
+    // collections so that it doesn't need to call toArray(). Even though this method is memoized,
+    // toArray() can take ~150ms for large components, and there are surely other places in the
+    // processor that can benefit from this.
     return ImmutableSet.copyOf(allContributionBindings().values());
   }
 
@@ -151,11 +156,9 @@ abstract class ResolvedBindings implements HasContributionType {
    * bindings, or if there is no members-injection binding because the type fails validation.
    */
   final Optional<MembersInjectionBinding> membersInjectionBinding() {
-    ImmutableSet<MembersInjectionBinding> membersInjectionBindings =
-        FluentIterable.from(allMembersInjectionBindings().values()).toSet();
-    return membersInjectionBindings.isEmpty()
+    return allMembersInjectionBindings().isEmpty()
         ? Optional.empty()
-        : Optional.of(Iterables.getOnlyElement(membersInjectionBindings));
+        : Optional.of(Iterables.getOnlyElement(allMembersInjectionBindings().values()));
   }
 
   /** Creates a {@link ResolvedBindings} for contribution bindings. */
@@ -248,7 +251,7 @@ abstract class ResolvedBindings implements HasContributionType {
    */
   final BindingType bindingType() {
     checkState(!isEmpty(), "empty bindings for %s", key());
-    if (bindings().isEmpty()
+    if (allBindings().isEmpty()
         && (!multibindingDeclarations().isEmpty() || !subcomponentDeclarations().isEmpty())) {
       // Only multibinding declarations, so assume provision.
       return BindingType.PROVISION;
@@ -259,6 +262,7 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /** The binding types for {@link #bindings()}. */
+  @Memoized
   ImmutableSet<BindingType> bindingTypes() {
     return bindings().stream().map(Binding::bindingType).collect(toImmutableSet());
   }
@@ -280,6 +284,6 @@ abstract class ResolvedBindings implements HasContributionType {
    * @throws IllegalStateException if {@link #bindings()} does not have exactly one element
    */
   Optional<Scope> scope() {
-    return getOnlyElement(bindings()).scope();
+    return binding().scope();
   }
 }

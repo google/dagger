@@ -657,7 +657,8 @@ final class BindingGraphFactory {
           // If a @Reusable binding was resolved in an ancestor, use that component.
           ResolvedBindings resolvedBindings =
               requestResolver.resolvedContributionBindings.get(binding.key());
-          if (resolvedBindings != null && resolvedBindings.bindings().contains(binding)) {
+          if (resolvedBindings != null
+              && resolvedBindings.contributionBindings().contains(binding)) {
             return Optional.of(requestResolver);
           }
         }

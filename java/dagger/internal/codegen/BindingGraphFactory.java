@@ -20,7 +20,6 @@ import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -212,19 +211,9 @@ final class BindingGraphFactory {
       }
     }
 
-    ImmutableMap<Key, ResolvedBindings> resolvedContributionBindingsMap =
-        requestResolver.getResolvedContributionBindings();
-    for (ResolvedBindings resolvedBindings : resolvedContributionBindingsMap.values()) {
-      verify(
-          resolvedBindings.resolvingComponent().equals(componentDescriptor.typeElement()),
-          "%s is not owned by %s",
-          resolvedBindings,
-          componentDescriptor);
-    }
-
     return BindingGraph.create(
         componentDescriptor,
-        resolvedContributionBindingsMap,
+        requestResolver.getResolvedContributionBindings(),
         requestResolver.getResolvedMembersInjectionBindings(),
         subgraphs.build(),
         requestResolver.getOwnedModules(),
@@ -399,7 +388,6 @@ final class BindingGraphFactory {
 
       return ResolvedBindings.forContributionBindings(
           requestKey,
-          componentDescriptor,
           indexBindingsByOwningComponent(requestKey, ImmutableSet.copyOf(bindings)),
           multibindingDeclarations,
           subcomponentDeclarations,
@@ -435,7 +423,7 @@ final class BindingGraphFactory {
       return binding.isPresent()
           ? ResolvedBindings.forMembersInjectionBinding(
               requestKey, componentDescriptor, binding.get())
-          : ResolvedBindings.noBindings(requestKey, componentDescriptor);
+          : ResolvedBindings.noBindings(requestKey);
     }
 
     /**
@@ -882,9 +870,7 @@ final class BindingGraphFactory {
             && getLocalExplicitBindings(key).isEmpty()) {
           /* Cache the inherited parent component's bindings in case resolving at the parent found
            * bindings in some component between this one and the previously-resolved one. */
-          ResolvedBindings inheritedBindings =
-              getPreviouslyResolvedBindings(key).get().asInheritedIn(componentDescriptor);
-          resolvedContributionBindings.put(key, inheritedBindings);
+          resolvedContributionBindings.put(key, getPreviouslyResolvedBindings(key).get());
           return;
         }
       }
@@ -921,13 +907,9 @@ final class BindingGraphFactory {
       if (parentResolver.isPresent()) {
         ImmutableMap<Key, ResolvedBindings> parentBindings =
             parentResolver.get().getResolvedContributionBindings();
-        Collection<ResolvedBindings> bindingsResolvedInParent =
-            Maps.difference(parentBindings, resolvedContributionBindings)
-                .entriesOnlyOnLeft()
-                .values();
-        for (ResolvedBindings resolvedInParent : bindingsResolvedInParent) {
-          builder.put(resolvedInParent.key(), resolvedInParent.asInheritedIn(componentDescriptor));
-        }
+        Map<Key, ResolvedBindings> bindingsResolvedInParent =
+            Maps.difference(parentBindings, resolvedContributionBindings).entriesOnlyOnLeft();
+        builder.putAll(bindingsResolvedInParent);
       }
       return builder.build();
     }

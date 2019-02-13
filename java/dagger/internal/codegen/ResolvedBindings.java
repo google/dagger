@@ -52,20 +52,15 @@ abstract class ResolvedBindings implements HasContributionType {
    */
   abstract Key key();
 
-  /** The component in which these bindings were resolved. */
-  abstract TypeElement resolvingComponent();
-
   /**
-   * The contribution bindings for {@link #key()} that were resolved in {@link
-   * #resolvingComponent()} or its ancestor components, indexed by the component that owns the
-   * binding.
+   * The {@link ContributionBinding}s for {@link #key()} indexed by the component that owns the
+   * binding. Each key in the multimap is a part of the same component ancestry.
    */
   abstract ImmutableSetMultimap<TypeElement, ContributionBinding> allContributionBindings();
 
   /**
-   * The members-injection bindings for {@link #key()} that were resolved in {@link
-   * #resolvingComponent()} or its ancestor components, indexed by the component that owns the
-   * binding.
+   * The {@link MembersInjectionBinding}s for {@link #key()} indexed by the component that owns the
+   * binding.  Each key in the map is a part of the same component ancestry.
    */
   abstract ImmutableMap<TypeElement, MembersInjectionBinding> allMembersInjectionBindings();
 
@@ -164,14 +159,12 @@ abstract class ResolvedBindings implements HasContributionType {
   /** Creates a {@link ResolvedBindings} for contribution bindings. */
   static ResolvedBindings forContributionBindings(
       Key key,
-      ComponentDescriptor owningComponent,
       Multimap<TypeElement, ContributionBinding> contributionBindings,
       Iterable<MultibindingDeclaration> multibindings,
       Iterable<SubcomponentDeclaration> subcomponentDeclarations,
       Iterable<OptionalBindingDeclaration> optionalBindingDeclarations) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent.typeElement(),
         ImmutableSetMultimap.copyOf(contributionBindings),
         ImmutableMap.of(),
         ImmutableSet.copyOf(multibindings),
@@ -188,7 +181,6 @@ abstract class ResolvedBindings implements HasContributionType {
       MembersInjectionBinding ownedMembersInjectionBinding) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent.typeElement(),
         ImmutableSetMultimap.of(),
         ImmutableMap.of(owningComponent.typeElement(), ownedMembersInjectionBinding),
         ImmutableSet.of(),
@@ -199,30 +191,14 @@ abstract class ResolvedBindings implements HasContributionType {
   /**
    * Creates a {@link ResolvedBindings} appropriate for when there are no bindings for the key.
    */
-  static ResolvedBindings noBindings(Key key, ComponentDescriptor owningComponent) {
+  static ResolvedBindings noBindings(Key key) {
     return new AutoValue_ResolvedBindings(
         key,
-        owningComponent.typeElement(),
         ImmutableSetMultimap.of(),
         ImmutableMap.of(),
         ImmutableSet.of(),
         ImmutableSet.of(),
         ImmutableSet.of());
-  }
-
-  /**
-   * Returns a {@code ResolvedBindings} with the same {@link #key()} and {@link #allBindings()} as
-   * this one, but whose {@link #resolvingComponent()} is changed.
-   */
-  ResolvedBindings asInheritedIn(ComponentDescriptor resolvingComponent) {
-    return new AutoValue_ResolvedBindings(
-        key(),
-        resolvingComponent.typeElement(),
-        allContributionBindings(),
-        allMembersInjectionBindings(),
-        multibindingDeclarations(),
-        subcomponentDeclarations(),
-        optionalBindingDeclarations());
   }
 
   /**

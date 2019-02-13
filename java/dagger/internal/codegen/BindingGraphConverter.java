@@ -219,8 +219,7 @@ final class BindingGraphConverter {
     }
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
-      return BindingGraphProxies.missingBindingNode(
-          pathFromRootToAncestor(dependencies.resolvingComponent()), dependencies.key());
+      return BindingGraphProxies.missingBindingNode(componentPath(), dependencies.key());
     }
 
     private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {

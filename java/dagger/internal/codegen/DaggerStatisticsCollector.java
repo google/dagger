@@ -19,9 +19,12 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,11 +33,18 @@ import javax.inject.Singleton;
 @Singleton // for state sharing
 final class DaggerStatisticsCollector {
 
+  private final Ticker ticker;
   private final Stopwatch totalRuntimeStopwatch;
+  private final Map<ProcessingStep, Stopwatch> stepStopwatches = new HashMap<>();
+
+  private final DaggerStatistics.Builder statisticsBuilder = DaggerStatistics.builder();
+  private DaggerStatistics.RoundStatistics.Builder roundBuilder = DaggerStatistics.roundBuilder();
+
   private final Optional<DaggerStatisticsRecorder> statisticsRecorder;
 
   @Inject
   DaggerStatisticsCollector(Ticker ticker, Optional<DaggerStatisticsRecorder> statisticsRecorder) {
+    this.ticker = ticker;
     this.totalRuntimeStopwatch = Stopwatch.createUnstarted(ticker);
     this.statisticsRecorder = statisticsRecorder;
   }
@@ -45,16 +55,34 @@ final class DaggerStatisticsCollector {
     totalRuntimeStopwatch.start();
   }
 
+  /** Called when the given {@code step} starts processing for a round. */
+  void stepStarted(ProcessingStep step) {
+    Stopwatch stopwatch =
+        stepStopwatches.computeIfAbsent(step, unused -> Stopwatch.createUnstarted(ticker));
+    stopwatch.start();
+  }
+
+  /** Called when the given {@code step} finishes processing for a round. */
+  void stepFinished(ProcessingStep step) {
+    Stopwatch stopwatch = stepStopwatches.get(step);
+    roundBuilder.addStepDuration(step, elapsedTime(stopwatch));
+    stopwatch.reset();
+  }
+
+  /** Called when Dagger finishes a processing round. */
+  void roundFinished() {
+    statisticsBuilder.addRound(roundBuilder.build());
+    roundBuilder = DaggerStatistics.roundBuilder();
+  }
+
   /** Called when Dagger annotation processing completes. */
   void processingStopped() {
     checkState(totalRuntimeStopwatch.isRunning());
     totalRuntimeStopwatch.stop();
+    statisticsBuilder.setTotalProcessingTime(elapsedTime(totalRuntimeStopwatch));
 
     statisticsRecorder.ifPresent(
-        recorder -> {
-          DaggerStatistics statistics = DaggerStatistics.create(elapsedTime(totalRuntimeStopwatch));
-          recorder.recordStatistics(statistics);
-        });
+        recorder -> recorder.recordStatistics(statisticsBuilder.build()));
   }
 
   @SuppressWarnings("StopwatchNanosToDuration") // intentional

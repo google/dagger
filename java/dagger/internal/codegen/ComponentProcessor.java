@@ -21,6 +21,7 @@ import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
@@ -112,7 +113,9 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
     statisticsCollector.processingStarted();
     bindingGraphPlugins.initializePlugins();
-    return processingSteps;
+    return Iterables.transform(
+        processingSteps,
+        step -> new DaggerStatisticsCollectingProcessingStep(step, statisticsCollector));
   }
 
   @Singleton
@@ -182,6 +185,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected void postRound(RoundEnvironment roundEnv) {
+    statisticsCollector.roundFinished();
     if (roundEnv.processingOver()) {
       statisticsCollector.processingStopped();
     } else {

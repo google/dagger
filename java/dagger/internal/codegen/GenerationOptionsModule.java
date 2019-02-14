@@ -31,6 +31,10 @@ interface GenerationOptionsModule {
       CompilerOptions defaultOptions,
       ComponentImplementation componentImplementation,
       DaggerElements elements) {
+    // Avoid looking up types that don't exist. Performance improves for large components.
+    if (!defaultOptions.aheadOfTimeSubcomponents()) {
+      return defaultOptions;
+    }
     // Inspect the base implementation for the @GenerationOptions annotation. Even if
     // componentImplementation is the base implementation, inspect it for the case where we are
     // recomputing the ComponentImplementation from a previous compilation.

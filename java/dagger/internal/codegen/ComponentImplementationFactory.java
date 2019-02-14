@@ -18,17 +18,24 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.ClassName;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.NestingKind;
+import javax.lang.model.element.TypeElement;
 
 /** Factory for {@link ComponentImplementation}s. */
-final class ComponentImplementationFactory {
+@Singleton
+final class ComponentImplementationFactory implements ClearableCache {
+  private final Map<TypeElement, ComponentImplementation> topLevelComponentCache = new HashMap<>();
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
   private final BindingGraphFactory bindingGraphFactory;
@@ -53,6 +60,13 @@ final class ComponentImplementationFactory {
    *     ahead-of-time-subcomponents mode is not enabled
    */
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
+    return reentrantComputeIfAbsent(
+        topLevelComponentCache,
+        bindingGraph.componentTypeElement(),
+        component -> createComponentImplementationUncached(bindingGraph));
+  }
+
+  private ComponentImplementation createComponentImplementationUncached(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
         topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
     // TODO(dpb): explore using optional bindings for the "parent" bindings
@@ -114,5 +128,10 @@ final class ComponentImplementationFactory {
     // graph at the child.
     BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child, false);
     return createComponentImplementation(truncatedBindingGraph);
+  }
+
+  @Override
+  public void clearCache() {
+    topLevelComponentCache.clear();
   }
 }

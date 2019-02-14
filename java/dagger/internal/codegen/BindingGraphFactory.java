@@ -66,11 +66,13 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** A factory for {@link BindingGraph} objects. */
-final class BindingGraphFactory {
+@Singleton
+final class BindingGraphFactory implements ClearableCache {
   private final DaggerElements elements;
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
@@ -270,8 +272,8 @@ final class BindingGraphFactory {
     return ImmutableSetMultimap.copyOf(Multimaps.index(declarations, BindingDeclaration::key));
   }
 
-  /** Releases cached references that this factory is retaining during this processing round. */
-  void clearCache() {
+  @Override
+  public void clearCache() {
     keysMatchingRequestCache.clear();
   }
 

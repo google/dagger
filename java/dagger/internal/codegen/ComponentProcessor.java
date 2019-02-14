@@ -56,10 +56,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
   @Inject DaggerStatisticsCollector statisticsCollector;
-
-  // TODO(ronshapiro): inject a multibinding for all instances that retain caches?
-  @Inject ModuleDescriptor.Factory moduleDescriptorFactory;
-  @Inject BindingGraphFactory bindingGraphFactory;
+  @Inject Set<ClearableCache> clearableCaches;
 
   public ComponentProcessor() {
     this.testingPlugins = Optional.empty();
@@ -125,6 +122,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingMethodValidatorsModule.class,
         InjectBindingRegistryModule.class,
         ProcessingEnvironmentModule.class,
+        ProcessingRoundCacheModule.class,
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
         SpiModule.class,
@@ -196,7 +194,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         e.printMessageTo(processingEnv.getMessager());
       }
     }
-    moduleDescriptorFactory.clearCache();
-    bindingGraphFactory.clearCache();
+    clearableCaches.forEach(ClearableCache::clearCache);
   }
 }

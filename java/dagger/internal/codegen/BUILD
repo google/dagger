@@ -79,6 +79,7 @@ java_library(
     srcs = [
         "Accessibility.java",
         "AnnotationSpecs.java",
+        "ClearableCache.java",
         "CodeBlocks.java",
         "CompilerOptions.java",
         "ContributionType.java",
@@ -359,6 +360,7 @@ java_library(
         "MapKeyProcessingStep.java",
         "ModuleProcessingStep.java",
         "ProcessingEnvironmentModule.java",
+        "ProcessingRoundCacheModule.java",
         "SourceFileGeneratorsModule.java",
         "SpiModule.java",
         "SystemComponentsModule.java",

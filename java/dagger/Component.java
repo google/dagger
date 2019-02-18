@@ -301,6 +301,7 @@ public @interface Component {
    *   }
    * }</code></pre>
    */
+  @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)
   @Documented
   @interface Builder {}
@@ -355,6 +356,7 @@ public @interface Component {
    * type will have a {@code static} method named {@code factory()} that returns an instance of that
    * factory.
    */
+  @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)
   @Documented
   @interface Factory {}

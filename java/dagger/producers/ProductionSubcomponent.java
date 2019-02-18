@@ -59,6 +59,7 @@ public @interface ProductionSubcomponent {
    * builder type, allowing an instance or {@code Provider} of that builder to be injected or
    * returned from a method on that component like any other binding.
    */
+  @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)
   @Documented
   @interface Builder {}
@@ -73,6 +74,7 @@ public @interface ProductionSubcomponent {
    * factory type, allowing an instance that factory to be injected or returned from a method on
    * that component like any other binding.
    */
+  @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)
   @Documented
   @interface Factory {}

@@ -25,6 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.value.AutoValue;
@@ -195,9 +196,7 @@ final class ComponentImplementation {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
-  // TODO(b/117833324): can this just be a Set instead of a SetMultimap? The values should be
-  // implicit
-  private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
+  private final SetMultimap<BindingRequest, Key> multibindingContributionsMade =
       HashMultimap.create();
   private Optional<ConfigureInitializationMethod> configureInitializationMethod = Optional.empty();
   private final Map<ComponentRequirement, String> modifiableModuleMethods = new LinkedHashMap<>();
@@ -443,11 +442,6 @@ final class ComponentImplementation {
     methodSpecsMap.put(methodKind, methodSpec);
   }
 
-  /** Adds the given methods to the component. */
-  void addMethods(MethodSpecKind methodKind, Iterable<MethodSpec> methodSpecs) {
-    methodSpecsMap.putAll(methodKind, methodSpecs);
-  }
-
   /** Adds the given annotation to the component. */
   void addAnnotation(AnnotationSpec annotation) {
     component.addAnnotation(annotation);
@@ -498,11 +492,6 @@ final class ComponentImplementation {
   /** Adds the given type to the component. */
   void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
     typeSpecsMap.put(typeKind, typeSpec);
-  }
-
-  /** Adds the given types to the component. */
-  void addTypes(TypeSpecKind typeKind, Iterable<TypeSpec> typeSpecs) {
-    typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
   /** Adds the type generated from the given child implementation. */
@@ -740,7 +729,9 @@ final class ComponentImplementation {
     // We register a multibinding as implemented each time we request the multibinding expression,
     // so only modify the set of contributions once.
     if (!multibindingContributionsMade.containsKey(bindingRequest)) {
-      multibindingContributionsMade.putAll(bindingRequest, multibinding.dependencies());
+      multibindingContributionsMade.putAll(
+          bindingRequest,
+          multibinding.dependencies().stream().map(DependencyRequest::key).collect(toList()));
     }
   }
 
@@ -748,7 +739,7 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all superclass implementations of
    * a multibinding.
    */
-  ImmutableSet<DependencyRequest> superclassContributionsMade(BindingRequest bindingRequest) {
+  ImmutableSet<Key> superclassContributionsMade(BindingRequest bindingRequest) {
     return superclassImplementation
         .map(s -> s.getAllMultibindingContributions(bindingRequest))
         .orElse(ImmutableSet.of());
@@ -758,8 +749,7 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all implementations of a
    * multibinding.
    */
-  private ImmutableSet<DependencyRequest> getAllMultibindingContributions(
-      BindingRequest bindingRequest) {
+  private ImmutableSet<Key> getAllMultibindingContributions(BindingRequest bindingRequest) {
     return ImmutableSet.copyOf(
         Sets.union(
             multibindingContributionsMade.get(bindingRequest),

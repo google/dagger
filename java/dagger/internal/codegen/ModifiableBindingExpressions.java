@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -440,7 +441,10 @@ final class ModifiableBindingExpressions {
         // Only modify a multibinding if there are new contributions.
         return !componentImplementation
             .superclassContributionsMade(request)
-            .containsAll(resolvedBindings.contributionBinding().dependencies());
+            .containsAll(
+                resolvedBindings.contributionBinding().dependencies().stream()
+                    .map(DependencyRequest::key)
+                    .collect(toList()));
 
       case INJECTION:
         return !resolvedBindings.contributionBinding().kind().equals(BindingKind.INJECTION);

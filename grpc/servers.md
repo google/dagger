@@ -217,7 +217,7 @@ You create and start the server in the same way as above.
 [`@CallScope`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/CallScope.html
 [`@ForGrpcService`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/ForGrpcService.html
 [`GrpcCallMetadataModule`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/GrpcCallMetadataModule.html
-[`@GrpcService`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/GrpcServices.html
+[`@GrpcService`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/GrpcService.html
 [`@Inject`]: https://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [`Metadata.Headers`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Metadata.java
 [module]: https://google.github.io/dagger/api/latest/dagger/Module.html

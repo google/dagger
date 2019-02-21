@@ -554,13 +554,8 @@ abstract class ComponentImplementationBuilder {
    * from the requirement the parameter fulfills to the spec for the parameter.
    */
   private final ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters() {
-    Optional<ComponentCreatorImplementation> creatorImplementation =
-        Optionals.firstPresent(
-            componentImplementation.creatorImplementation(),
-            componentImplementation.baseCreatorImplementation());
-
     Map<ComponentRequirement, ParameterSpec> parameters;
-    if (creatorImplementation.isPresent()) {
+    if (componentImplementation.componentDescriptor().hasCreator()) {
       parameters =
           Maps.toMap(componentImplementation.requirements(), ComponentRequirement::toParameterSpec);
     } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {

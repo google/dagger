@@ -127,11 +127,7 @@ final class ComponentRequirementExpressions {
 
   /** Returns a field for a {@link ComponentRequirement}. */
   private ComponentRequirementExpression createField(ComponentRequirement requirement) {
-    Optional<ComponentCreatorImplementation> creatorImplementation =
-        Optionals.firstPresent(
-            componentImplementation.baseImplementation().flatMap(c -> c.creatorImplementation()),
-            componentImplementation.creatorImplementation());
-    if (creatorImplementation.isPresent()) {
+    if (componentImplementation.componentDescriptor().hasCreator()) {
       return new ComponentParameterField(requirement, componentImplementation, Optional.empty());
     } else if (graph.factoryMethod().isPresent()
         && graph.factoryMethodParameters().containsKey(requirement)) {

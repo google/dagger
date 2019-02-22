@@ -181,27 +181,40 @@ abstract class ComponentImplementationBuilder {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
       MethodSpec methodSpec = bindingExpressions.getComponentMethod(anyOneMethod);
 
-      if (anyOneMethod.dependencyRequest().isPresent()
-          && componentImplementation
-              .getModifiableBindingMethod(bindingRequest(anyOneMethod.dependencyRequest().get()))
-              .isPresent()) {
-        // If there are multiple component methods that are modifiable and for the same binding
-        // request, implement all but one in the base implementation to delegate to the one that
-        // will remain (and be registered) modifiable
-        checkState(componentImplementation.isAbstract() && !componentImplementation.isNested());
-        componentImplementation.addMethod(
-            COMPONENT_METHOD, methodSpec.toBuilder().addModifiers(FINAL).build());
+      if (compilerOptions.aheadOfTimeSubcomponents()) {
+        addPossiblyModifiableInterfaceMethod(anyOneMethod, methodSpec);
       } else {
-        // If the binding for the component method is modifiable, register it as such.
-        ModifiableBindingType modifiableBindingType =
-            bindingExpressions
-                .modifiableBindingExpressions()
-                .registerComponentMethodIfModifiable(anyOneMethod, methodSpec);
+        componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
+      }
+    }
+  }
 
-        // If the method should be implemented in this component, implement it.
-        if (modifiableBindingType.hasBaseClassImplementation()) {
-          componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
-        }
+  /**
+   * Adds a component interface method in ahead-of-time subcomponents mode. If the binding that
+   * implements the method is modifiable, registers the method.
+   */
+  private void addPossiblyModifiableInterfaceMethod(
+      ComponentMethodDescriptor methodDescriptor, MethodSpec implementedComponentMethod) {
+    if (methodDescriptor.dependencyRequest().isPresent()
+        && componentImplementation
+            .getModifiableBindingMethod(bindingRequest(methodDescriptor.dependencyRequest().get()))
+            .isPresent()) {
+      // If there are multiple component methods that are modifiable and for the same binding
+      // request, implement all but one in the base implementation to delegate to the one that
+      // will remain (and be registered) modifiable
+      checkState(componentImplementation.isAbstract() && !componentImplementation.isNested());
+      componentImplementation.addMethod(
+          COMPONENT_METHOD, implementedComponentMethod.toBuilder().addModifiers(FINAL).build());
+    } else {
+      // If the binding for the component method is modifiable, register it as such.
+      ModifiableBindingType modifiableBindingType =
+          bindingExpressions
+              .modifiableBindingExpressions()
+              .registerComponentMethodIfModifiable(methodDescriptor, implementedComponentMethod);
+
+      // If the method should be implemented in this component, implement it.
+      if (modifiableBindingType.hasBaseClassImplementation()) {
+        componentImplementation.addMethod(COMPONENT_METHOD, implementedComponentMethod);
       }
     }
   }

@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -458,7 +459,8 @@ final class ComponentImplementation {
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
+    modifiableBindingMethods.addNewModifiableMethod(
+        type, request, returnType, methodSpec, finalized);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
@@ -473,12 +475,13 @@ final class ComponentImplementation {
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
+    modifiableBindingMethods.addNewModifiableMethod(
+        type, request, returnType, methodSpec, finalized);
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
   void addImplementedModifiableBindingMethod(ModifiableBindingMethod method) {
-    modifiableBindingMethods.methodImplemented(method);
+    modifiableBindingMethods.addReimplementedMethod(method);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method.methodSpec());
   }
 
@@ -632,18 +635,20 @@ final class ComponentImplementation {
    * Returns the {@link ModifiableBindingMethod}s for this subcomponent implementation and its
    * superclasses.
    */
-  ImmutableList<ModifiableBindingMethod> getModifiableBindingMethods() {
-    ImmutableList.Builder<ModifiableBindingMethod> modifiableBindingMethodsBuilder =
-        ImmutableList.builder();
+  ImmutableMap<BindingRequest, ModifiableBindingMethod> getModifiableBindingMethods() {
+    Map<BindingRequest, ModifiableBindingMethod> modifiableBindingMethodsBuilder =
+        new LinkedHashMap<>();
     if (superclassImplementation.isPresent()) {
-      ImmutableList<ModifiableBindingMethod> superclassModifiableBindingMethods =
-          superclassImplementation.get().getModifiableBindingMethods();
-      superclassModifiableBindingMethods.stream()
-          .filter(method -> !modifiableBindingMethods.finalized(method))
-          .forEach(modifiableBindingMethodsBuilder::add);
+      modifiableBindingMethodsBuilder.putAll(
+          Maps.filterValues(
+              superclassImplementation.get().getModifiableBindingMethods(),
+              // filters the modifiable methods of a superclass that are finalized in this component
+              method -> !modifiableBindingMethods.finalized(method)));
     }
-    modifiableBindingMethodsBuilder.addAll(modifiableBindingMethods.getNonFinalizedMethods());
-    return modifiableBindingMethodsBuilder.build();
+    // replace superclass modifiable binding methods with any that are defined in this component
+    // implementation
+    modifiableBindingMethodsBuilder.putAll(modifiableBindingMethods.getNonFinalizedMethods());
+    return ImmutableMap.copyOf(modifiableBindingMethodsBuilder);
   }
 
   /**

@@ -757,7 +757,7 @@ abstract class ComponentImplementationBuilder {
         ComponentImplementation superclassImplementation =
             componentImplementation.superclassImplementation().get();
         for (ModifiableBindingMethod superclassModifiableBindingMethod :
-            superclassImplementation.getModifiableBindingMethods()) {
+            superclassImplementation.getModifiableBindingMethods().values()) {
           bindingExpressions
               .modifiableBindingExpressions()
               .possiblyReimplementedMethod(superclassModifiableBindingMethod)

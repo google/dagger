@@ -111,6 +111,7 @@ final class ModifiableBindingExpressions {
           : Optional.of(
               reimplementedMethod(
                   modifiableBindingMethod,
+                  newModifiableBindingType,
                   new PrunedConcreteMethodBindingExpression(),
                   componentImplementation.isAbstract()));
     }
@@ -134,6 +135,7 @@ final class ModifiableBindingExpressions {
       return Optional.of(
           reimplementedMethod(
               modifiableBindingMethod,
+              newModifiableBindingType,
               bindingExpressions.getBindingExpression(request),
               markMethodFinal));
     }
@@ -146,11 +148,12 @@ final class ModifiableBindingExpressions {
    */
   private ModifiableBindingMethod reimplementedMethod(
       ModifiableBindingMethod supertypeMethod,
+      ModifiableBindingType newModifiableBindingType,
       BindingExpression bindingExpression,
       boolean markMethodFinal) {
     MethodSpec baseMethod = supertypeMethod.methodSpec();
-    return ModifiableBindingMethod.implement(
-        supertypeMethod,
+    return supertypeMethod.reimplement(
+        newModifiableBindingType,
         MethodSpec.methodBuilder(baseMethod.name)
             .addModifiers(baseMethod.modifiers.contains(PUBLIC) ? PUBLIC : PROTECTED)
             .addModifiers(markMethodFinal ? ImmutableSet.of(FINAL) : ImmutableSet.of())

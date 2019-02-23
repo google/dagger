@@ -136,17 +136,19 @@ public final class FactoryImplicitModulesTest {
   }
 
   @Test
-  public void concreteModuleThatCouldBeAbstract_withFactoryParameter_doesNotFailOnNull() {
-    // TODO(cgdecker): Is this really what we want to happen?
-    // Builders allow there to be a setter for such a module; the setter checks that the argument
-    // is not null but otherwise ignores it. If nothing else, we should probably throw if the arg
-    // is null. But it's not clear to me that we should even allow such a parameter for a factory,
-    // since unlike a builder, where the setter can just not be called, a factory doesn't give the
-    // option of not passing *something* for the unused parameter.
-    ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent component =
-        DaggerFactoryImplicitModulesTest_ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent
-            .factory()
-            .create(null); // the parameter is unused and therefore not checked
-    assertThat(component.getDouble()).isEqualTo(42.0);
+  public void concreteModuleThatCouldBeAbstract_withFactoryParameter_failsOnNull() {
+    // This matches what builders do when there's a setter for such a module; the setter checks that
+    // the argument is not null but otherwise ignores it.
+    // It's possible that we shouldn't even allow such a parameter for a factory, since unlike a
+    // builder, where the setter can just not be called, a factory doesn't give the option of not
+    // passing *something* for the unused parameter.
+    try {
+      ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent component =
+          DaggerFactoryImplicitModulesTest_ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent
+              .factory()
+              .create(null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
   }
 }

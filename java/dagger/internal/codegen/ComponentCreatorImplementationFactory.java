@@ -131,6 +131,14 @@ final class ComponentCreatorImplementationFactory {
       return componentImplementation.graph();
     }
 
+    /**
+     * The set of requirements that must be passed to the component's constructor in the order
+     * they must be passed.
+     */
+    final ImmutableSet<ComponentRequirement> componentConstructorRequirements() {
+      return componentImplementation.requirements();
+    }
+
     /** Returns the requirements that have setter methods on the creator type. */
     abstract ImmutableSet<ComponentRequirement> setterMethods();
 
@@ -153,7 +161,7 @@ final class ComponentCreatorImplementationFactory {
      */
     private Set<ComponentRequirement> neededUserSettableRequirements() {
       return Sets.intersection(
-          userSettableRequirements().keySet(), componentImplementation.requirements());
+          userSettableRequirements().keySet(), componentConstructorRequirements());
     }
 
     private void setModifiers() {
@@ -282,13 +290,18 @@ final class ComponentCreatorImplementationFactory {
 
       ImmutableMap<ComponentRequirement, String> factoryMethodParameters =
           factoryMethodParameters();
-      neededUserSettableRequirements()
+      userSettableRequirements()
+          .keySet()
           .forEach(
               requirement -> {
-                if (fields.containsKey(requirement)) {
+                if (fields.containsKey(requirement)
+                    && componentConstructorRequirements().contains(requirement)) {
+                  // In AOT mode, there can be a field for a requirement even if the component's
+                  // constructor doesn't need it, because the base class for the creator was created
+                  // before the final graph for the component was known.
                   FieldSpec field = fields.get(requirement);
                   addNullHandlingForField(requirement, field, factoryMethod);
-                } else {
+                } else if (factoryMethodParameters.containsKey(requirement)) {
                   String parameterName = factoryMethodParameters.get(requirement);
                   addNullHandlingForParameter(requirement, parameterName, factoryMethod);
                 }
@@ -338,7 +351,7 @@ final class ComponentCreatorImplementationFactory {
 
     private CodeBlock componentConstructorArgs(
         ImmutableMap<ComponentRequirement, String> factoryMethodParameters) {
-      return componentImplementation.requirements().stream()
+      return componentConstructorRequirements().stream()
           .map(
               requirement -> {
                 if (fields.containsKey(requirement)) {
@@ -438,7 +451,7 @@ final class ComponentCreatorImplementationFactory {
         return RequirementStatus.IMPLEMENTED_IN_SUPERTYPE;
       }
 
-      return componentImplementation.requirements().contains(requirement)
+      return componentConstructorRequirements().contains(requirement)
           ? RequirementStatus.NEEDED
           : RequirementStatus.UNNEEDED;
     }
@@ -448,7 +461,7 @@ final class ComponentCreatorImplementationFactory {
      * component. This creator is not allowed to set such a module.
      */
     final boolean isRepeatedModule(ComponentRequirement requirement) {
-      return !componentImplementation.requirements().contains(requirement)
+      return !componentConstructorRequirements().contains(requirement)
           && !isOwnedModule(requirement);
     }
 
@@ -490,7 +503,7 @@ final class ComponentCreatorImplementationFactory {
       return Maps.toMap(
           setterMethods(),
           requirement ->
-              componentImplementation.requirements().contains(requirement)
+              componentConstructorRequirements().contains(requirement)
                   ? RequirementStatus.NEEDED
                   : RequirementStatus.UNNEEDED);
     }

@@ -18,12 +18,14 @@ package dagger.android;
 
 import android.content.ContentProvider;
 import android.support.annotation.CallSuper;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.Beta;
 
 /** A {@link ContentProvider} that injects its members in {@link #onCreate()}. */
 @Beta
 public abstract class DaggerContentProvider extends ContentProvider {
   @CallSuper
+  @CanIgnoreReturnValue
   @Override
   public boolean onCreate() {
     AndroidInjection.inject(this);

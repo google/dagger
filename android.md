@@ -33,10 +33,9 @@ mechanism by which Android-specific compatbility will be provided.
 
 Dagger assumes that users on Android will use ProGuard.
 
-## Recommended ProGuard Settings
+## ProGuard configuration
 
-Watch this space for ProGuard settings that are relevant to applications using
-Dagger.
+Dagger does not require any special ProGuard configuration.
 
 ## `dagger.android`
 

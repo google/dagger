@@ -142,7 +142,7 @@ dependencies {
 ```groovy
 // Add Dagger dependencies
 dependencies {
-  compile 'com.google.dagger:dagger:2.x'
+  implementation 'com.google.dagger:dagger:2.x'
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```

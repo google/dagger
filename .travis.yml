@@ -42,9 +42,16 @@ script:
 
 env:
   global:
+    # Encrypted credentials for deploying snapshots.
     - secure: eGc3LHBRIPmTnXLM1YoIqG1do9BkpFI2pJm3fz5Cd8UaXtf7Oefa+Ts3rcn4ipee5A+lf8kEouPshSoaQs81KZ2/qf8rSTCIqeFjHR8hzmOVYo/0zRfS/VSUT0yqN+jeRhuNk3+A49RTPlcfJqPv3tyddtrM1vF7axhCJPQIRJM=
     - secure: LTzrlqcSNeZTOV52D3ibY9RBdxY4Yu8dUOYhAonrWLE+eDTzuoyCzcPw8pEcYVNUi1rG6Q7v3QBDTnBztsPoCbcN5tEGjw5cQEbfEzSTkWaNCFjncWn36cLwx9lgbF+5Db/L0mYJ36unDKUpKVC8AgOtxQibfv/ffugfxxj8ohY=
-    - secure: PEdRiHTy+xVFPnlBwOhr7RVW/QIFSgd4hO0LESRBeF7KGIjxTZWtKPjnYrysZFm6tozMk6WBVJO6avOss0v7L64nemwpCnSspNYBa6pRGPgQ3rv/wgdPSzqDDmABmpPC18EHbUtF94KVdRX3Cr4kmwKQyD+YUKNRCY11Txt+xfo=
+
+    # Encrypted GitHub access token to allow util/generate-latest-docs.sh to
+    # push Javadoc to gh-pages.
+    # This uses an access token created by cgdecker and will need to be updated
+    # (see util/generate-latest-docs.sh for a link) if he no longer has
+    # permission to push to the repo.
+    - secure: "UpTUhCQzAGbr5JetRg2GZxp/dPDep/7Il3yGeyDECopciWdx41OPk/QNqAXBhNtKuEaMVsmASyoteuhgaTryQdV4qUIGVOMhES6kbOlYy3nwK44VdsNeeepwVospyDyZbxMtXq5LuHWuTADmAl1mdjNPNoziXc523zjnUzUx/EQ="
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
     - BAZEL_VERSION="0.19.2"
 

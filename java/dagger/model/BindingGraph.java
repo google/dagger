@@ -25,6 +25,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
@@ -145,7 +146,7 @@ public abstract class BindingGraph {
 
   /** Returns the bindings for a key. */
   public final ImmutableSet<Binding> bindings(Key key) {
-    return nodeStream(Binding.class)
+    return nodes(Binding.class).stream()
         .filter(binding -> binding.key().equals(key))
         .collect(toImmutableSet());
   }
@@ -162,21 +163,21 @@ public abstract class BindingGraph {
 
   /** Returns the component node for a component. */
   public final Optional<ComponentNode> componentNode(ComponentPath component) {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().equals(component))
         .findFirst();
   }
 
   /** Returns the component nodes for a component. */
   public final ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
   }
 
   /** Returns the component node for the root component. */
   public final ComponentNode rootComponentNode() {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().atRoot())
         .findFirst()
         .get();
@@ -296,12 +297,22 @@ public abstract class BindingGraph {
     return ImmutableNetwork.copyOf(dependencyGraph);
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private <N extends Node> ImmutableSet<N> nodes(Class<N> clazz) {
-    return nodeStream(clazz).collect(toImmutableSet());
+    return (ImmutableSet) nodesByClass().get(clazz);
   }
 
-  private <N extends Node> Stream<N> nodeStream(Class<N> clazz) {
-    return network().nodes().stream().flatMap(instancesOf(clazz));
+  private static final ImmutableSet<Class<? extends Node>> NODE_TYPES =
+      ImmutableSet.of(Binding.class, MissingBinding.class, ComponentNode.class);
+
+  @Memoized
+  ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
+    return network().nodes().stream()
+        .collect(
+            toImmutableSetMultimap(
+                node ->
+                    NODE_TYPES.stream().filter(clazz -> clazz.isInstance(node)).findFirst().get(),
+                node -> node));
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream() {

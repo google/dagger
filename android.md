@@ -93,7 +93,7 @@ The classes in [`dagger.android`] offer one approach to simplify this pattern.
     @Subcomponent(modules = ...)
     public interface YourActivitySubcomponent extends AndroidInjector<YourActivity> {
       @Subcomponent.Factory
-      public abstract class Factory extends AndroidInjector.Factory<YourActivity> {}
+      public interface Factory extends AndroidInjector.Factory<YourActivity> {}
     }
     ```
 
@@ -226,7 +226,7 @@ public class YourFragment extends Fragment {
 @Subcomponent(modules = ...)
 public interface YourFragmentSubcomponent extends AndroidInjector<YourFragment> {
   @Subcomponent.Factory
-  public abstract class Factory extends AndroidInjector.Factory<YourFragment> {}
+  public interface Factory extends AndroidInjector.Factory<YourFragment> {}
 }
 
 @Module(subcomponents = YourFragmentSubcomponent.class)

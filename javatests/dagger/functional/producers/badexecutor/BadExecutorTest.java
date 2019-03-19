@@ -60,7 +60,7 @@ public final class BadExecutorTest {
       component.noArgStr().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(RejectedExecutionException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
     }
   }
 
@@ -70,7 +70,7 @@ public final class BadExecutorTest {
       component.singleArgInt().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(RejectedExecutionException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
     }
   }
 
@@ -80,7 +80,7 @@ public final class BadExecutorTest {
       component.singleArgBool().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(RejectedExecutionException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
     }
   }
 

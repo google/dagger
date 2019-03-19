@@ -18,7 +18,6 @@ package dagger.functional.binds;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableMap;
 import dagger.Binds;
 import dagger.Component;
 import dagger.Module;
@@ -71,9 +70,8 @@ public class BindsCollectionsWithoutMultibindingsTest {
 
     assertThat(component.set()).containsExactly("binds", "set");
     assertThat(component.map())
-        .containsExactlyEntriesIn(
-            ImmutableMap.of(
-                "binds", "map",
-                "without", "multibindings"));
+        .containsExactly(
+            "binds", "map",
+            "without", "multibindings");
   }
 }

@@ -56,12 +56,12 @@ final class Provisions {
   static final class TestModule {
     @Produces @First static WrappedProducer<InjectedClass> firstProducer(
         Producer<InjectedClass> injectedClass) {
-      return new WrappedProducer<InjectedClass>(injectedClass);
+      return new WrappedProducer<>(injectedClass);
     }
 
     @Produces @Second static WrappedProducer<InjectedClass> secondProducer(
         Producer<InjectedClass> injectedClass) {
-      return new WrappedProducer<InjectedClass>(injectedClass);
+      return new WrappedProducer<>(injectedClass);
     }
 
     @Produces static Output output(

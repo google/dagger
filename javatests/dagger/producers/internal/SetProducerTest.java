@@ -56,7 +56,7 @@ public class SetProducerTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(NullPointerException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
     }
   }
 
@@ -71,7 +71,7 @@ public class SetProducerTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(NullPointerException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
     }
   }
 
@@ -88,7 +88,7 @@ public class SetProducerTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(NullPointerException.class);
+      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
     }
   }
 }

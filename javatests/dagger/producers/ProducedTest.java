@@ -44,7 +44,7 @@ public class ProducedTest {
       Produced.failed(cause).get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isSameAs(cause);
+      assertThat(e).hasCauseThat().isSameAs(cause);
     }
   }
 

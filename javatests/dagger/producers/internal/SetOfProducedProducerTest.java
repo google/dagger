@@ -73,7 +73,8 @@ public class SetOfProducedProducerTest {
     Results<Integer> results = Results.create(producer.get().get());
     assertThat(results.successes).isEmpty();
     assertThat(results.failures).hasSize(1);
-    assertThat(Iterables.getOnlyElement(results.failures).getCause())
+    assertThat(Iterables.getOnlyElement(results.failures))
+        .hasCauseThat()
         .isInstanceOf(NullPointerException.class);
   }
 
@@ -86,7 +87,8 @@ public class SetOfProducedProducerTest {
     Results<Integer> results = Results.create(producer.get().get());
     assertThat(results.successes).isEmpty();
     assertThat(results.failures).hasSize(1);
-    assertThat(Iterables.getOnlyElement(results.failures).getCause())
+    assertThat(Iterables.getOnlyElement(results.failures))
+        .hasCauseThat()
         .isInstanceOf(NullPointerException.class);
   }
 
@@ -100,7 +102,8 @@ public class SetOfProducedProducerTest {
     Results<Integer> results = Results.create(producer.get().get());
     assertThat(results.successes).isEmpty();
     assertThat(results.failures).hasSize(1);
-    assertThat(Iterables.getOnlyElement(results.failures).getCause())
+    assertThat(Iterables.getOnlyElement(results.failures))
+        .hasCauseThat()
         .isInstanceOf(NullPointerException.class);
   }
 
@@ -115,7 +118,8 @@ public class SetOfProducedProducerTest {
     Results<Integer> results = Results.create(producer.get().get());
     assertThat(results.successes).containsExactly(2, 5);
     assertThat(results.failures).hasSize(1);
-    assertThat(Iterables.getOnlyElement(results.failures).getCause())
+    assertThat(Iterables.getOnlyElement(results.failures))
+        .hasCauseThat()
         .isInstanceOf(NullPointerException.class);
   }
 

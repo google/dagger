@@ -74,7 +74,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
     }
   }
 
-  private ImmutableList.Builder<String> imports =
+  private final ImmutableList.Builder<String> imports =
       new ImmutableList.Builder<String>()
           .add(
               // explicitly import Module so it's not ambiguous with java.lang.Module

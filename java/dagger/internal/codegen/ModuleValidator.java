@@ -505,9 +505,10 @@ final class ModuleValidator {
     ModuleAnnotation moduleAnnotation =
         moduleAnnotation(getAnnotationMirror(moduleElement, moduleKind.annotation()).get());
     Visibility moduleVisibility = Visibility.ofElement(moduleElement);
+    Visibility moduleEffectiveVisibility = effectiveVisibilityOfElement(moduleElement);
     if (moduleVisibility.equals(PRIVATE)) {
       reportBuilder.addError("Modules cannot be private.", moduleElement);
-    } else if (effectiveVisibilityOfElement(moduleElement).equals(PRIVATE)) {
+    } else if (moduleEffectiveVisibility.equals(PRIVATE)) {
       reportBuilder.addError("Modules cannot be enclosed in private types.", moduleElement);
     }
 
@@ -518,7 +519,7 @@ final class ModuleValidator {
         throw new IllegalStateException("Local classes shouldn't show up in the processor");
       case MEMBER:
       case TOP_LEVEL:
-        if (moduleVisibility.equals(PUBLIC)) {
+        if (moduleEffectiveVisibility.equals(PUBLIC)) {
           ImmutableSet<TypeElement> invalidVisibilityIncludes =
               getModuleIncludesWithInvalidVisibility(moduleAnnotation);
           if (!invalidVisibilityIncludes.isEmpty()) {

@@ -49,7 +49,9 @@ public class ProducersTest {
     ListenableFuture<String> future = Futures.immediateFailedFuture(new RuntimeException("monkey"));
     ListenableFuture<Produced<String>> producedFuture = Producers.createFutureProduced(future);
     assertThat(producedFuture.isDone()).isTrue();
-    assertThat(getProducedException(producedFuture.get()).getCause()).hasMessage("monkey");
+    assertThat(getProducedException(producedFuture.get()).getCause())
+        .hasMessageThat()
+        .isEqualTo("monkey");
   }
 
   @Test public void createFutureProduced_cancelPropagatesBackwards() throws Exception {
@@ -94,7 +96,7 @@ public class ProducersTest {
       setFuture.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("monkey");
+      assertThat(e.getCause()).hasMessageThat().isEqualTo("monkey");
     }
   }
 
@@ -120,7 +122,7 @@ public class ProducersTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("gorilla");
+      assertThat(e.getCause()).hasMessageThat().isEqualTo("gorilla");
     }
   }
 

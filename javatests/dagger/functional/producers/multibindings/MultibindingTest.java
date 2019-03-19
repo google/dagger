@@ -85,7 +85,7 @@ public class MultibindingTest {
     }
     assertThat(successes).containsExactly("singleton", "double", "ton");
     assertThat(failures).hasSize(1);
-    assertThat(Iterables.getOnlyElement(failures).getCause()).hasMessage("monkey");
+    assertThat(Iterables.getOnlyElement(failures).getCause()).hasMessageThat().isEqualTo("monkey");
   }
 
   @Test
@@ -131,7 +131,7 @@ public class MultibindingTest {
       multibindingComponent.possiblyThrowingMap().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("monkey");
+      assertThat(e.getCause()).hasMessageThat().isEqualTo("monkey");
     }
   }
 
@@ -149,7 +149,7 @@ public class MultibindingTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("monkey");
+      assertThat(e.getCause()).hasMessageThat().isEqualTo("monkey");
     }
   }
 
@@ -167,7 +167,7 @@ public class MultibindingTest {
       produced.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).hasMessage("monkey");
+      assertThat(e.getCause()).hasMessageThat().isEqualTo("monkey");
     }
   }
 

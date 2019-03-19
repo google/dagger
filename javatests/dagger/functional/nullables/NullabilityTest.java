@@ -35,7 +35,9 @@ public class NullabilityTest {
       component.nullFoo();
       fail();
     } catch (NullPointerException npe) {
-      assertThat(npe).hasMessage("Cannot return null from a non-@Nullable @Provides method");
+      assertThat(npe)
+          .hasMessageThat()
+          .isEqualTo("Cannot return null from a non-@Nullable @Provides method");
     }
 
     // set number to non-null so we can create
@@ -106,7 +108,9 @@ public class NullabilityTest {
       component.number();
       fail();
     } catch (NullPointerException npe) {
-      assertThat(npe).hasMessage("Cannot return null from a non-@Nullable component method");
+      assertThat(npe)
+          .hasMessageThat()
+          .isEqualTo("Cannot return null from a non-@Nullable component method");
     }
   }
 
@@ -120,8 +124,12 @@ public class NullabilityTest {
       numberProvider.get();
       fail();
     } catch (NullPointerException npe) {
-      assertThat(npe).hasMessage("Cannot return null from a non-@Nullable "
-          + (fromProvides ? "@Provides" : "component") + " method");
+      assertThat(npe)
+          .hasMessageThat()
+          .isEqualTo(
+              "Cannot return null from a non-@Nullable "
+                  + (fromProvides ? "@Provides" : "component")
+                  + " method");
     }
     assertThat(stringProvider.get()).isNull();
   }

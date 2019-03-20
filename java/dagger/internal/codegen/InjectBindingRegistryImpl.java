@@ -127,9 +127,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     /** Returns true if the binding needs to be generated. */
     private boolean shouldGenerateBinding(B binding, ClassName factoryName) {
       return !binding.unresolved().isPresent()
-          && elements.getTypeElement(factoryName) == null
           && !materializedBindingKeys.contains(binding.key())
-          && !bindingsRequiringGeneration.contains(binding);
+          && !bindingsRequiringGeneration.contains(binding)
+          && elements.getTypeElement(factoryName) == null;
     }
 
     /** Caches the binding for future lookups by key. */

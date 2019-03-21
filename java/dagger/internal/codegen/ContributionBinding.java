@@ -152,7 +152,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   final boolean requiresGeneratedInstance() {
     switch (kind()) {
       case COMPONENT:
-      case SUBCOMPONENT_BUILDER:
+      case SUBCOMPONENT_CREATOR:
         return true;
       default:
         return false;

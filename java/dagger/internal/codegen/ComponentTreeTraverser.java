@@ -17,23 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.function.Predicate;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -49,6 +43,9 @@ public class ComponentTreeTraverser {
   /** The path from the root graph to the currently visited graph. */
   private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
 
+  /** The {@link ComponentPath} for each component in {@link #bindingGraphPath}. */
+  private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
+
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
   public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
     checkArgument(
@@ -57,6 +54,7 @@ public class ComponentTreeTraverser {
         "only root graphs can be traversed, not %s",
         rootGraph.componentTypeElement().getQualifiedName());
     bindingGraphPath.add(rootGraph);
+    componentPaths.add(ComponentPath.create(ImmutableList.of(rootGraph.componentTypeElement())));
   }
 
   /**
@@ -66,6 +64,7 @@ public class ComponentTreeTraverser {
    */
   public final void traverseComponents() {
     checkState(bindingGraphPath.size() == 1);
+    checkState(componentPaths.size() == 1);
     visitComponent(bindingGraphPath.getFirst());
   }
 
@@ -108,10 +107,17 @@ public class ComponentTreeTraverser {
 
     for (BindingGraph child : graph.subgraphs()) {
       bindingGraphPath.addLast(child);
+      ComponentPath childPath =
+          ComponentPath.create(
+              bindingGraphPath.stream()
+                  .map(BindingGraph::componentTypeElement)
+                  .collect(toImmutableList()));
+      componentPaths.addLast(childPath);
       try {
         visitComponent(child);
       } finally {
         verify(bindingGraphPath.removeLast().equals(child));
+        verify(componentPaths.removeLast().equals(childPath));
       }
     }
   }
@@ -146,126 +152,35 @@ public class ComponentTreeTraverser {
    * Returns an immutable snapshot of the path from the root component to the currently visited
    * component.
    */
-  protected final ComponentTreePath componentTreePath() {
-    return ComponentTreePath.create(bindingGraphPath);
+  protected final ComponentPath componentPath() {
+    return componentPaths.getLast();
   }
 
   /**
-   * A path from the root component to a component within the component tree during a {@linkplain
-   * ComponentTreeTraverser traversal}.
+   * Returns the subpath from the root component to the matching {@code ancestor} of the current
+   * component.
    */
-  @AutoValue
-  public abstract static class ComponentTreePath {
-
-    private static ComponentTreePath create(Iterable<BindingGraph> path) {
-      return new AutoValue_ComponentTreeTraverser_ComponentTreePath(ImmutableList.copyOf(path));
-    }
-
-    /**
-     * Returns the binding graphs in the path, starting from the {@linkplain #rootGraph() root
-     * graph} and ending with the {@linkplain #currentGraph() current graph}.
-     */
-    public abstract ImmutableList<BindingGraph> graphsInPath();
-
-    /** Returns the binding graph for the component at the end of the path. */
-    public BindingGraph currentGraph() {
-      return Iterables.getLast(graphsInPath());
-    }
-
-    /** Returns the type of the component at the end of the path. */
-    public TypeElement currentComponent() {
-      return currentGraph().componentTypeElement();
-    }
-
-    /**
-     * Returns the binding graph for the parent of the {@linkplain #currentGraph() current
-     * component}.
-     *
-     * @throws IllegalStateException if the current graph is the {@linkplain #atRoot() root graph}
-     */
-    public BindingGraph parentGraph() {
-      checkState(!atRoot());
-      return graphsInPath().reverse().get(1);
-    }
-
-    /** Returns the binding graph for the root component. */
-    public BindingGraph rootGraph() {
-      return graphsInPath().get(0);
-    }
-
-    /**
-     * Returns {@code true} if the {@linkplain #currentGraph() current graph} is the {@linkplain
-     * #rootGraph() root graph}.
-     */
-    public boolean atRoot() {
-      return graphsInPath().size() == 1;
-    }
-
-    /** Returns the rootmost binding graph in the component path among the given components. */
-    public BindingGraph rootmostGraph(Iterable<ComponentDescriptor> components) {
-      ImmutableSet<ComponentDescriptor> set = ImmutableSet.copyOf(components);
-      return rootmostGraph(graph -> set.contains(graph.componentDescriptor()));
-    }
-
-    /** Returns the binding graph within this path that represents the given component. */
-    public BindingGraph graphForComponent(ComponentDescriptor component) {
-      checkNotNull(component);
-      return rootmostGraph(graph -> graph.componentDescriptor().equals(component));
-    }
-
-    /**
-     * Returns the subpath from the root component to the matching {@code ancestor} of the current
-     * component.
-     */
-    ComponentTreePath pathFromRootToAncestor(TypeElement ancestor) {
-      ImmutableList.Builder<BindingGraph> path = ImmutableList.builder();
-      for (BindingGraph graph : graphsInPath()) {
-        path.add(graph);
-        if (graph.componentTypeElement().equals(ancestor)) {
-          return create(path.build());
-        }
+  protected final ComponentPath pathFromRootToAncestor(TypeElement ancestor) {
+    for (ComponentPath componentPath : componentPaths) {
+      if (componentPath.currentComponent().equals(ancestor)) {
+        return componentPath;
       }
-      throw new IllegalArgumentException(
-          String.format("%s is not in the current path: %s", ancestor.getQualifiedName(), this));
     }
+    throw new IllegalArgumentException(
+        String.format("%s is not in the current path: %s", ancestor.getQualifiedName(), this));
+  }
 
-    /**
-     * Returns the path from the root component to the child of the current component for a {@code
-     * subcomponent}.
-     *
-     * @throws IllegalArgumentException if {@code subcomponent} is not a child of the current
-     *     component
-     */
-    ComponentTreePath childPath(TypeElement subcomponent) {
-      for (BindingGraph child : currentGraph().subgraphs()) {
-        if (child.componentTypeElement().equals(subcomponent)) {
-          return create(
-              ImmutableList.<BindingGraph>builder().addAll(graphsInPath()).add(child).build());
-        }
+  /**
+   * Returns the BindingGraph for {@code ancestor}, where {@code ancestor} is in the component path
+   * of the current traversal.
+   */
+  protected final BindingGraph graphForAncestor(TypeElement ancestor) {
+    for (BindingGraph graph : bindingGraphPath) {
+      if (graph.componentTypeElement().equals(ancestor)) {
+        return graph;
       }
-      throw new IllegalArgumentException(
-          String.format(
-              "%s is not a child of %s",
-              subcomponent.getQualifiedName(),
-              currentGraph().componentTypeElement().getQualifiedName()));
     }
-
-    private BindingGraph rootmostGraph(Predicate<? super BindingGraph> predicate) {
-      return graphsInPath().stream().filter(predicate).findFirst().get();
-    }
-
-    /** Converts this {@link ComponentTreePath} into a {@link ComponentPath}. */
-    ComponentPath toComponentPath() {
-      return ComponentPath.create(
-          graphsInPath().stream().map(BindingGraph::componentTypeElement).collect(toList()));
-    }
-
-    @Override
-    public final String toString() {
-      return graphsInPath().stream()
-          .map(BindingGraph::componentTypeElement)
-          .map(TypeElement::getQualifiedName)
-          .collect(joining(" → "));
-    }
+    throw new IllegalArgumentException(
+        String.format("%s is not in the current path: %s", ancestor.getQualifiedName(), this));
   }
 }

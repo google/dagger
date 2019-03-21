@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.internal.codegen.RequestKinds.entryPointCanUseProduction;
+import static dagger.internal.codegen.RequestKinds.canBeSatisfiedByProductionBinding;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.model.BindingGraph;
@@ -74,9 +74,10 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
         .flatMap(instancesOf(DependencyEdge.class));
   }
 
+  // TODO(ronshapiro): merge with MissingBindingValidator.dependencyCanUseProduction
   private boolean dependencyCanUseProduction(DependencyEdge edge, BindingGraph bindingGraph) {
     return edge.isEntryPoint()
-        ? entryPointCanUseProduction(edge.dependencyRequest().kind())
+        ? canBeSatisfiedByProductionBinding(edge.dependencyRequest().kind())
         : bindingRequestingDependency(edge, bindingGraph).isProduction();
   }
 

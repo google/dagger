@@ -17,10 +17,11 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
@@ -45,11 +46,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
-import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.model.BindingGraph;
-import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
@@ -67,13 +66,11 @@ import javax.inject.Scope;
 import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
@@ -84,8 +81,12 @@ import javax.lang.model.util.SimpleTypeVisitor8;
 final class ModuleValidator {
   private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_TYPES =
       ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
-  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_BUILDER_TYPES =
-      ImmutableSet.of(Subcomponent.Builder.class, ProductionSubcomponent.Builder.class);
+  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_CREATOR_TYPES =
+      ImmutableSet.of(
+          Subcomponent.Builder.class,
+          Subcomponent.Factory.class,
+          ProductionSubcomponent.Builder.class,
+          ProductionSubcomponent.Factory.class);
   private static final Optional<Class<?>> ANDROID_PROCESSOR;
   private static final String CONTRIBUTES_ANDROID_INJECTOR_NAME =
       "dagger.android.ContributesAndroidInjector";
@@ -105,7 +106,7 @@ final class ModuleValidator {
   private final DaggerElements elements;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
@@ -119,10 +120,10 @@ final class ModuleValidator {
       DaggerElements elements,
       AnyBindingMethodValidator anyBindingMethodValidator,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentDescriptor.Factory componentDescriptorFactory,
+      ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
-      @ModuleValidation BindingGraphValidator bindingGraphValidator,
+      BindingGraphValidator bindingGraphValidator,
       CompilerOptions compilerOptions) {
     this.types = types;
     this.elements = elements;
@@ -180,10 +181,6 @@ final class ModuleValidator {
     for (ExecutableElement moduleMethod : methodsIn(module.getEnclosedElements())) {
       if (anyBindingMethodValidator.isBindingMethod(moduleMethod)) {
         builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
-      }
-      if (isAnyAnnotationPresent(
-          moduleMethod,
-          ImmutableSet.of(moduleKind.methodAnnotation(), Binds.class, Multibinds.class))) {
         bindingMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
         methodKinds.add(ModuleMethodKind.ofMethod(moduleMethod));
       }
@@ -209,17 +206,14 @@ final class ModuleValidator {
         EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
       builder.addError(
           String.format(
-              "A @%s may not contain both non-static @%s methods and "
-                  + "abstract @Binds or @Multibinds declarations",
-              moduleKind.annotation().getSimpleName(),
-              moduleKind.methodAnnotation().getSimpleName()));
+              "A @%s may not contain both non-static and abstract binding methods",
+              moduleKind.annotation().getSimpleName()));
     }
 
     validateModuleVisibility(module, moduleKind, builder);
-    validateMethodsWithSameName(moduleKind, builder, bindingMethodsByName);
+    validateMethodsWithSameName(builder, bindingMethodsByName);
     if (module.getKind() != ElementKind.INTERFACE) {
-      validateProvidesOverrides(
-          module, moduleKind, builder, allMethodsByName, bindingMethodsByName);
+      validateBindingMethodOverrides(module, builder, allMethodsByName, bindingMethodsByName);
     }
     validateModifiers(module, builder);
     validateReferencedModules(module, moduleKind, visitedModules, builder);
@@ -264,8 +258,8 @@ final class ModuleValidator {
                         attributeType, moduleAnnotation.annotation(), builder);
                   } else {
                     builder.addError(
-                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_BUILDER_TYPES)
-                            ? moduleSubcomponentsIncludesBuilder(attributeType)
+                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_CREATOR_TYPES)
+                            ? moduleSubcomponentsIncludesCreator(attributeType)
                             : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
                         subject,
                         moduleAnnotation.annotation(),
@@ -284,14 +278,17 @@ final class ModuleValidator {
         + " is not a @Subcomponent or @ProductionSubcomponent";
   }
 
-  private static String moduleSubcomponentsIncludesBuilder(
+  private static String moduleSubcomponentsIncludesCreator(
       TypeElement moduleSubcomponentsAttribute) {
     TypeElement subcomponentType =
         MoreElements.asType(moduleSubcomponentsAttribute.getEnclosingElement());
+    ComponentCreatorAnnotation creatorAnnotation =
+        getOnlyElement(getCreatorAnnotations(moduleSubcomponentsAttribute));
     return String.format(
-        "%s is a @%s.Builder. Did you mean to use %s?",
+        "%s is a @%s.%s. Did you mean to use %s?",
         moduleSubcomponentsAttribute.getQualifiedName(),
         simpleName(getSubcomponentAnnotation(subcomponentType).get()),
+        creatorAnnotation.creatorKind().typeName(),
         subcomponentType.getQualifiedName());
   }
 
@@ -303,17 +300,21 @@ final class ModuleValidator {
       return;
     }
     builder.addError(
-        moduleSubcomponentsDoesntHaveBuilder(subcomponentAttribute, moduleAnnotation),
+        moduleSubcomponentsDoesntHaveCreator(subcomponentAttribute, moduleAnnotation),
         builder.getSubject(),
         moduleAnnotation);
   }
 
-  private static String moduleSubcomponentsDoesntHaveBuilder(
+  private static String moduleSubcomponentsDoesntHaveCreator(
       TypeElement subcomponent, AnnotationMirror moduleAnnotation) {
+    String subcomponentAnnotation =
+        simpleName(getSubcomponentAnnotation(subcomponent).get()).toString();
     return String.format(
-        "%s doesn't have a @%s.Builder, which is required when used with @%s.subcomponents",
+        "%s doesn't have a @%s.Builder or @%s.Factory, which is required when used with "
+            + "@%s.subcomponents",
         subcomponent.getQualifiedName(),
-        simpleName(getSubcomponentAnnotation(subcomponent).get()),
+        subcomponentAnnotation,
+        subcomponentAnnotation,
         simpleName(moduleAnnotation));
   }
 
@@ -344,7 +345,6 @@ final class ModuleValidator {
   }
 
   private void validateMethodsWithSameName(
-      ModuleKind moduleKind,
       ValidationReport.Builder<TypeElement> builder,
       ListMultimap<String, ExecutableElement> bindingMethodsByName) {
     for (Entry<String, Collection<ExecutableElement>> entry :
@@ -353,8 +353,7 @@ final class ModuleValidator {
         for (ExecutableElement offendingMethod : entry.getValue()) {
           builder.addError(
               String.format(
-                  "Cannot have more than one @%s method with the same name in a single module",
-                  moduleKind.methodAnnotation().getSimpleName()),
+                  "Cannot have more than one binding method with the same name in a single module"),
               offendingMethod);
         }
       }
@@ -441,13 +440,12 @@ final class ModuleValidator {
     return subreport.build();
   }
 
-  private void validateProvidesOverrides(
+  private void validateBindingMethodOverrides(
       TypeElement subject,
-      ModuleKind moduleKind,
       ValidationReport.Builder<TypeElement> builder,
       ListMultimap<String, ExecutableElement> allMethodsByName,
       ListMultimap<String, ExecutableElement> bindingMethodsByName) {
-    // For every @Provides method, confirm it overrides nothing *and* nothing overrides it.
+    // For every binding method, confirm it overrides nothing *and* nothing overrides it.
     // Consider the following hierarchy:
     // class Parent {
     //    @Provides Foo a() {}
@@ -460,41 +458,36 @@ final class ModuleValidator {
     //    @Provides Foo c() {}
     // }
     // In each of those cases, we want to fail.  "a" is clear, "b" because Child is overriding
-    // a method marked @Provides in Parent, and "c" because Child is defining an @Provides
-    // method that overrides Parent.
+    // a binding method in Parent, and "c" because Child is defining a binding method that overrides
+    // Parent.
     TypeElement currentClass = subject;
     TypeMirror objectType = elements.getTypeElement(Object.class).asType();
     // We keep track of methods that failed so we don't spam with multiple failures.
     Set<ExecutableElement> failedMethods = Sets.newHashSet();
     while (!types.isSameType(currentClass.getSuperclass(), objectType)) {
       currentClass = MoreElements.asType(types.asElement(currentClass.getSuperclass()));
-      List<ExecutableElement> superclassMethods =
-          ElementFilter.methodsIn(currentClass.getEnclosedElements());
+      List<ExecutableElement> superclassMethods = methodsIn(currentClass.getEnclosedElements());
       for (ExecutableElement superclassMethod : superclassMethods) {
         String name = superclassMethod.getSimpleName().toString();
-        // For each method in the superclass, confirm our @Provides methods don't override it
-        for (ExecutableElement providesMethod : bindingMethodsByName.get(name)) {
-          if (!failedMethods.contains(providesMethod)
-              && elements.overrides(providesMethod, superclassMethod, subject)) {
-            failedMethods.add(providesMethod);
+        // For each method in the superclass, confirm our binding methods don't override it
+        for (ExecutableElement bindingMethod : bindingMethodsByName.get(name)) {
+          if (failedMethods.add(bindingMethod)
+              && elements.overrides(bindingMethod, superclassMethod, subject)) {
             builder.addError(
                 String.format(
-                    "@%s methods may not override another method. Overrides: %s",
-                    moduleKind.methodAnnotation().getSimpleName(),
+                    "Binding methods may not override another method. Overrides: %s",
                     methodSignatureFormatter.format(superclassMethod)),
-                providesMethod);
+                bindingMethod);
           }
         }
-        // For each @Provides method in superclass, confirm our methods don't override it.
-        if (isAnnotationPresent(superclassMethod, moduleKind.methodAnnotation())) {
+        // For each binding method in superclass, confirm our methods don't override it.
+        if (anyBindingMethodValidator.isBindingMethod(superclassMethod)) {
           for (ExecutableElement method : allMethodsByName.get(name)) {
-            if (!failedMethods.contains(method)
+            if (failedMethods.add(method)
                 && elements.overrides(method, superclassMethod, subject)) {
-              failedMethods.add(method);
               builder.addError(
                   String.format(
-                      "@%s methods may not be overridden in modules. Overrides: %s",
-                      moduleKind.methodAnnotation().getSimpleName(),
+                      "Binding methods may not be overridden in modules. Overrides: %s",
                       methodSignatureFormatter.format(superclassMethod)),
                   method);
             }
@@ -512,9 +505,10 @@ final class ModuleValidator {
     ModuleAnnotation moduleAnnotation =
         moduleAnnotation(getAnnotationMirror(moduleElement, moduleKind.annotation()).get());
     Visibility moduleVisibility = Visibility.ofElement(moduleElement);
+    Visibility moduleEffectiveVisibility = effectiveVisibilityOfElement(moduleElement);
     if (moduleVisibility.equals(PRIVATE)) {
       reportBuilder.addError("Modules cannot be private.", moduleElement);
-    } else if (effectiveVisibilityOfElement(moduleElement).equals(PRIVATE)) {
+    } else if (moduleEffectiveVisibility.equals(PRIVATE)) {
       reportBuilder.addError("Modules cannot be enclosed in private types.", moduleElement);
     }
 
@@ -525,25 +519,47 @@ final class ModuleValidator {
         throw new IllegalStateException("Local classes shouldn't show up in the processor");
       case MEMBER:
       case TOP_LEVEL:
-        if (moduleVisibility.equals(PUBLIC)) {
-          ImmutableSet<Element> nonPublicModules =
-              moduleAnnotation.includes().stream()
-                  .filter(element -> effectiveVisibilityOfElement(element).compareTo(PUBLIC) < 0)
-                  .collect(toImmutableSet());
-          if (!nonPublicModules.isEmpty()) {
+        if (moduleEffectiveVisibility.equals(PUBLIC)) {
+          ImmutableSet<TypeElement> invalidVisibilityIncludes =
+              getModuleIncludesWithInvalidVisibility(moduleAnnotation);
+          if (!invalidVisibilityIncludes.isEmpty()) {
             reportBuilder.addError(
                 String.format(
-                    "This module is public, but it includes non-public "
-                        + "(or effectively non-public) modules. "
-                        + "Either reduce the visibility of this module or make %s public.",
-                    formatListForErrorMessage(nonPublicModules.asList())),
+                    "This module is public, but it includes non-public (or effectively non-public) "
+                        + "modules (%s) that have non-static, non-abstract binding methods. Either "
+                        + "reduce the visibility of this module, make the included modules "
+                        + "public, or make all of the binding methods on the included modules "
+                        + "abstract or static.",
+                    formatListForErrorMessage(invalidVisibilityIncludes.asList())),
                 moduleElement);
           }
         }
-        break;
-      default:
-        throw new AssertionError();
     }
+  }
+
+  private ImmutableSet<TypeElement> getModuleIncludesWithInvalidVisibility(
+      ModuleAnnotation moduleAnnotation) {
+    return moduleAnnotation.includes().stream()
+        .filter(include -> !effectiveVisibilityOfElement(include).equals(PUBLIC))
+        .filter(this::requiresModuleInstance)
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns {@code true} if a module instance is needed for any of the binding methods on the
+   * given {@code module}. This is the case when the module has any binding methods that are neither
+   * {@code abstract} nor {@code static}.
+   */
+  private boolean requiresModuleInstance(TypeElement module) {
+    // Note elements.getAllMembers(module) rather than module.getEnclosedElements() here: we need to
+    // include binding methods declared in supertypes because unlike most other validations being
+    // done in this class, which assume that supertype binding methods will be validated in a
+    // separate call to the validator since the supertype itself must be a @Module, we need to look
+    // at all the binding methods in the module's type hierarchy here.
+    return methodsIn(elements.getAllMembers(module)).stream()
+        .filter(method -> anyBindingMethodValidator.isBindingMethod(method))
+        .map(ExecutableElement::getModifiers)
+        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
 
   private void validateNoScopeAnnotationsOnModuleElement(
@@ -587,7 +603,8 @@ final class ModuleValidator {
       TypeElement module, ValidationReport.Builder<TypeElement> report) {
     BindingGraph bindingGraph =
         bindingGraphConverter.convert(
-            bindingGraphFactory.create(componentDescriptorFactory.forTypeElement(module)), true);
+            bindingGraphFactory.create(
+                componentDescriptorFactory.moduleComponentDescriptor(module), true));
     if (!bindingGraphValidator.isValid(bindingGraph)) {
       // Since the validator uses a DiagnosticReporter to report errors, the ValdiationReport won't
       // have any Items for them. We have to tell the ValidationReport that some errors were

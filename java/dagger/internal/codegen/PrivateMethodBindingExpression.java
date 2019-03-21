@@ -73,9 +73,4 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
     checkState(methodName != null, "addMethod() must be called before methodName()");
     return methodName;
   }
-
-  @Override
-  protected boolean isPrivateMethod() {
-    return true;
-  }
 }

@@ -46,89 +46,77 @@ public class ModuleFactoryGeneratorTest {
   // TODO(gak): add tests for invalid combinations of scope and qualifier annotations like we have
   // for @Inject
 
-  private String formatErrorMessage(String msg) {
-    return String.format(msg, "Provides");
-  }
-
-  private String formatModuleErrorMessage(String msg) {
-    return String.format(msg, "Provides", "Module");
-  }
-
   @Test public void providesMethodNotInModule() {
     assertThatMethodInUnannotatedClass("@Provides String provideString() { return null; }")
-        .hasError(formatModuleErrorMessage("@%s methods can only be present within a @%s"));
+        .hasError("@Provides methods can only be present within a @Module or @ProducerModule");
   }
 
   @Test public void providesMethodAbstract() {
     assertThatModuleMethod("@Provides abstract String abstractMethod();")
-        .hasError(formatErrorMessage("@%s methods cannot be abstract"));
+        .hasError("@Provides methods cannot be abstract");
   }
 
   @Test public void providesMethodPrivate() {
     assertThatModuleMethod("@Provides private String privateMethod() { return null; }")
-        .hasError(formatErrorMessage("@%s methods cannot be private"));
+        .hasError("@Provides methods cannot be private");
   }
 
   @Test public void providesMethodReturnVoid() {
     assertThatModuleMethod("@Provides void voidMethod() {}")
-        .hasError(formatErrorMessage("@%s methods must return a value (not void)"));
+        .hasError("@Provides methods must return a value (not void)");
   }
 
   @Test
   public void providesMethodReturnsProvider() {
     assertThatModuleMethod("@Provides Provider<String> provideProvider() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Provides methods must not return framework types");
   }
 
   @Test
   public void providesMethodReturnsLazy() {
     assertThatModuleMethod("@Provides Lazy<String> provideLazy() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Provides methods must not return framework types");
   }
 
   @Test
   public void providesMethodReturnsMembersInjector() {
     assertThatModuleMethod("@Provides MembersInjector<String> provideMembersInjector() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Provides methods must not return framework types");
   }
 
   @Test
   public void providesMethodReturnsProducer() {
     assertThatModuleMethod("@Provides Producer<String> provideProducer() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Provides methods must not return framework types");
   }
 
   @Test
   public void providesMethodReturnsProduced() {
     assertThatModuleMethod("@Provides Produced<String> provideProduced() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Provides methods must not return framework types");
   }
 
   @Test public void providesMethodWithTypeParameter() {
     assertThatModuleMethod("@Provides <T> String typeParameter() { return null; }")
-        .hasError(formatErrorMessage("@%s methods may not have type parameters"));
+        .hasError("@Provides methods may not have type parameters");
   }
 
   @Test public void providesMethodSetValuesWildcard() {
     assertThatModuleMethod("@Provides @ElementsIntoSet Set<?> provideWildcard() { return null; }")
         .hasError(
-            formatErrorMessage(
-                "@%s methods must return a primitive, an array, a type variable, "
-                    + "or a declared type"));
+            "@Provides methods must return a primitive, an array, a type variable, "
+                + "or a declared type");
   }
 
   @Test public void providesMethodSetValuesRawSet() {
     assertThatModuleMethod("@Provides @ElementsIntoSet Set provideSomething() { return null; }")
-        .hasError(
-            formatErrorMessage(
-                "@%s methods annotated with @ElementsIntoSet cannot return a raw Set"));
+        .hasError("@Provides methods annotated with @ElementsIntoSet cannot return a raw Set");
   }
 
   @Test public void providesMethodSetValuesNotASet() {
     assertThatModuleMethod(
             "@Provides @ElementsIntoSet List<String> provideStrings() { return null; }")
-        .hasError(
-            formatErrorMessage("@%s methods annotated with @ElementsIntoSet must return a Set"));
+        .hasError("@Provides methods annotated with @ElementsIntoSet must return a Set");
   }
 
   @Test public void modulesWithTypeParamsMustBeAbstract() {
@@ -162,9 +150,8 @@ public class ModuleFactoryGeneratorTest {
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
         .hasError(
-            String.format(
-                "@%s methods may not be overridden in modules. Overrides: %s",
-                "Provides", "@Provides String test.Parent.foo()"));
+            "Binding methods may not be overridden in modules. Overrides: "
+                + "@Provides String test.Parent.foo()");
   }
 
   @Test public void provideOverriddenByProvide() {
@@ -182,9 +169,8 @@ public class ModuleFactoryGeneratorTest {
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
         .hasError(
-            String.format(
-                "@%s methods may not override another method. Overrides: %s",
-                "Provides", "@Provides String test.Parent.foo()"));
+            "Binding methods may not override another method. Overrides: "
+                + "@Provides String test.Parent.foo()");
   }
 
   @Test public void providesOverridesNonProvides() {
@@ -201,9 +187,8 @@ public class ModuleFactoryGeneratorTest {
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
         .hasError(
-            String.format(
-                "@%s methods may not override another method. Overrides: %s",
-                "Provides", "String test.Parent.foo()"));
+            "Binding methods may not override another method. Overrides: "
+                + "String test.Parent.foo()");
   }
 
   @Test public void validatesIncludedModules() {
@@ -638,14 +623,12 @@ public class ModuleFactoryGeneratorTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            formatErrorMessage(
-                "Cannot have more than one @%s method with the same name in a single module"))
+            "Cannot have more than one binding method with the same name in a single module")
         .inFile(moduleFile)
         .onLine(8);
     assertThat(compilation)
         .hadErrorContaining(
-            formatErrorMessage(
-                "Cannot have more than one @%s method with the same name in a single module"))
+            "Cannot have more than one binding method with the same name in a single module")
         .inFile(moduleFile)
         .onLine(12);
   }
@@ -673,11 +656,11 @@ public class ModuleFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(formatErrorMessage("@%s methods may only throw unchecked exceptions"))
+        .hadErrorContaining("@Provides methods may only throw unchecked exceptions")
         .inFile(moduleFile)
         .onLine(8);
     assertThat(compilation)
-        .hadErrorContaining(formatErrorMessage("@%s methods may only throw unchecked exceptions"))
+        .hadErrorContaining("@Provides methods may only throw unchecked exceptions")
         .inFile(moduleFile)
         .onLine(12);
   }
@@ -770,25 +753,37 @@ public class ModuleFactoryGeneratorTest {
         "import dagger.Module;",
         "",
         "@Module(includes = {",
-        "    NonPublicModule1.class, OtherPublicModule.class, NonPublicModule2.class",
+        "    BadNonPublicModule.class, OtherPublicModule.class, OkNonPublicModule.class",
         "})",
         "public final class PublicModule {",
         "}");
-    JavaFileObject nonPublicModule1File = JavaFileObjects.forSourceLines("test.NonPublicModule1",
+    JavaFileObject badNonPublicModuleFile =
+        JavaFileObjects.forSourceLines(
+            "test.BadNonPublicModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class BadNonPublicModule {",
+            "  @Provides",
+            "  int provideInt() {",
+            "    return 42;",
+            "  }",
+            "}");
+    JavaFileObject okNonPublicModuleFile = JavaFileObjects.forSourceLines("test.OkNonPublicModule",
         "package test;",
         "",
         "import dagger.Module;",
+        "import dagger.Provides;",
         "",
         "@Module",
-        "final class NonPublicModule1 {",
-        "}");
-    JavaFileObject nonPublicModule2File = JavaFileObjects.forSourceLines("test.NonPublicModule2",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "",
-        "@Module",
-        "final class NonPublicModule2 {",
+        "final class OkNonPublicModule {",
+        "  @Provides",
+        "  static String provideString() {",
+        "    return \"foo\";",
+        "  }",
         "}");
     JavaFileObject otherPublicModuleFile = JavaFileObjects.forSourceLines("test.OtherPublicModule",
         "package test;",
@@ -802,16 +797,16 @@ public class ModuleFactoryGeneratorTest {
         daggerCompiler()
             .compile(
                 publicModuleFile,
-                nonPublicModule1File,
-                nonPublicModule2File,
+                badNonPublicModuleFile,
+                okNonPublicModuleFile,
                 otherPublicModuleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "This module is public, but it includes non-public "
-                + "(or effectively non-public) modules. "
-                + "Either reduce the visibility of this module or make "
-                + "test.NonPublicModule1 and test.NonPublicModule2 public.")
+            "This module is public, but it includes non-public (or effectively non-public) modules "
+                + "(test.BadNonPublicModule) that have non-static, non-abstract binding methods. "
+                + "Either reduce the visibility of this module, make the included modules public, "
+                + "or make all of the binding methods on the included modules abstract or static.")
         .inFile(publicModuleFile)
         .onLine(8);
   }
@@ -1338,11 +1333,11 @@ public class ModuleFactoryGeneratorTest {
     Compilation compilation = daggerCompiler().compile(moduleFile, SCOPE_A, SCOPE_B);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("Cannot use more than one @Scope")
+        .hadErrorContaining("cannot use more than one @Scope")
         .inFile(moduleFile)
         .onLineContaining("@ScopeA");
     assertThat(compilation)
-        .hadErrorContaining("Cannot use more than one @Scope")
+        .hadErrorContaining("cannot use more than one @Scope")
         .inFile(moduleFile)
         .onLineContaining("@ScopeB");
   }
@@ -1469,8 +1464,7 @@ public class ModuleFactoryGeneratorTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "A @Module may not contain both non-static @Provides methods and "
-                + "abstract @Binds or @Multibinds declarations");
+            "A @Module may not contain both non-static and abstract binding methods");
   }
 
   @Test
@@ -1479,8 +1473,7 @@ public class ModuleFactoryGeneratorTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "A @Module may not contain both non-static @Provides methods and "
-                + "abstract @Binds or @Multibinds declarations");
+            "A @Module may not contain both non-static and abstract binding methods");
   }
 
   @Test

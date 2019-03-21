@@ -70,9 +70,9 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
                 ComponentNode componentNode =
                     bindingGraph.componentNode(binding.componentPath()).get();
                 if (!componentNode.scopes().contains(scope)) {
-                  // @Inject bindings in module binding graphs will appear at the properly scoped
+                  // @Inject bindings in full binding graphs will appear at the properly scoped
                   // ancestor component, so ignore them here.
-                  if (binding.kind().equals(INJECTION) && bindingGraph.isModuleBindingGraph()) {
+                  if (binding.kind().equals(INJECTION) && bindingGraph.isFullBindingGraph()) {
                     return;
                   }
                   incompatibleBindings.put(componentNode, binding);
@@ -80,23 +80,20 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
               });
     }
     Multimaps.asMap(incompatibleBindings.build())
-        .forEach(
-            (componentNode, bindings) ->
-                report(componentNode, bindings, bindingGraph, diagnosticReporter));
+        .forEach((componentNode, bindings) -> report(componentNode, bindings, diagnosticReporter));
   }
 
   private void report(
       ComponentNode componentNode,
       Set<Binding> bindings,
-      BindingGraph bindingGraph,
       DiagnosticReporter diagnosticReporter) {
     Diagnostic.Kind diagnosticKind = ERROR;
     StringBuilder message =
         new StringBuilder(componentNode.componentPath().currentComponent().getQualifiedName());
 
-    if (bindingGraph.isModuleBindingGraph() && componentNode.componentPath().atRoot()) {
-      // The root "component" of a module binding graph is a module, which will have no scopes
-      // attached. We want to report if there is more than one scope in that component.
+    if (!componentNode.isRealComponent()) {
+      // If the "component" is really a module, it will have no scopes attached. We want to report
+      // if there is more than one scope in that component.
       if (bindings.stream().map(Binding::scope).map(Optional::get).distinct().count() <= 1) {
         return;
       }

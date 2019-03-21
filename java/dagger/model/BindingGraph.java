@@ -25,6 +25,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
@@ -55,9 +56,10 @@ import javax.lang.model.element.TypeElement;
  * </ul>
  *
  * In the case of a {@link BindingGraph} representing a module, the root {@link ComponentNode} will
- * actually represent the module type, and there will be an entry point edge (with no request
- * element) for every binding (except multibinding contributions) in the module, including its
- * transitively included modules.
+ * actually represent the module type. The graph will also be a {@linkplain #isFullBindingGraph()
+ * full binding graph}, which means it will contain all bindings in all modules, as well as nodes
+ * for their dependencies. Otherwise it will contain only bindings that are reachable from at least
+ * one {@linkplain #entryPointEdges() entry point}.
  *
  * <h3>Nodes</h3>
  *
@@ -78,7 +80,7 @@ import javax.lang.model.element.TypeElement;
  *
  * <p>There is a <b>subcomponent edge</b> for each parent-child component relationship in the graph.
  * The target node is the component node for the child component. For subcomponents defined by a
- * {@linkplain SubcomponentBuilderBindingEdge subcomponent builder binding} (either a method on the
+ * {@linkplain SubcomponentCreatorBindingEdge subcomponent creator binding} (either a method on the
  * component or a set of {@code @Module.subcomponents} annotation values), the source node is the
  * binding for the {@code @Subcomponent.Builder} type. For subcomponents defined by {@linkplain
  * ChildFactoryMethodEdge subcomponent factory methods}, the source node is the component node for
@@ -89,8 +91,8 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 public abstract class BindingGraph {
 
-  static BindingGraph create(Network<Node, Edge> network, boolean isModuleBindingGraph) {
-    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isModuleBindingGraph);
+  static BindingGraph create(Network<Node, Edge> network, boolean isFullBindingGraph) {
+    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isFullBindingGraph);
   }
 
   BindingGraph() {}
@@ -108,15 +110,31 @@ public abstract class BindingGraph {
    *
    * @see <a href="https://google.github.io/dagger/compiler-options#module-binding-validation">Module binding
    *     validation</a>
+   * @deprecated use {@link #isFullBindingGraph()} to tell if this is a full binding graph, or
+   *     {@link ComponentNode#isRealComponent() rootComponentNode().isRealComponent()} to tell if
+   *     the root component node is really a component or derived from a module. Dagger will soon
+   *     generate full binding graphs for components and subcomponents as well as modules.
    */
-  // TODO(dpb): Figure out the relationship between this and isPartialBindingGraph(). Maybe this
-  // implies that?
-  public abstract boolean isModuleBindingGraph();
+  @Deprecated
+  public final boolean isModuleBindingGraph() {
+    return !rootComponentNode().isRealComponent();
+  }
+
+  /**
+   * Returns {@code true} if this is a full binding graph, which contains all bindings installed in
+   * the component, or {@code false} if it is a reachable binding graph, which contains only
+   * bindings that are reachable from at least one {@linkplain #entryPointEdges() entry point}.
+   */
+  public abstract boolean isFullBindingGraph();
 
   /**
    * Returns {@code true} if the {@link #rootComponentNode()} is a subcomponent. This occurs in
    * ahead-of-time-subcomponents mode.
+   *
+   * @deprecated use {@link ComponentNode#isSubcomponent() rootComponentNode().isSubcomponent()}
+   *     instead
    */
+  @Deprecated
   public final boolean isPartialBindingGraph() {
     return rootComponentNode().isSubcomponent();
   }
@@ -128,7 +146,7 @@ public abstract class BindingGraph {
 
   /** Returns the bindings for a key. */
   public final ImmutableSet<Binding> bindings(Key key) {
-    return nodeStream(Binding.class)
+    return nodes(Binding.class).stream()
         .filter(binding -> binding.key().equals(key))
         .collect(toImmutableSet());
   }
@@ -145,21 +163,21 @@ public abstract class BindingGraph {
 
   /** Returns the component node for a component. */
   public final Optional<ComponentNode> componentNode(ComponentPath component) {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().equals(component))
         .findFirst();
   }
 
   /** Returns the component nodes for a component. */
   public final ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
   }
 
   /** Returns the component node for the root component. */
   public final ComponentNode rootComponentNode() {
-    return nodeStream(ComponentNode.class)
+    return componentNodes().stream()
         .filter(node -> node.componentPath().atRoot())
         .findFirst()
         .get();
@@ -279,12 +297,22 @@ public abstract class BindingGraph {
     return ImmutableNetwork.copyOf(dependencyGraph);
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private <N extends Node> ImmutableSet<N> nodes(Class<N> clazz) {
-    return nodeStream(clazz).collect(toImmutableSet());
+    return (ImmutableSet) nodesByClass().get(clazz);
   }
 
-  private <N extends Node> Stream<N> nodeStream(Class<N> clazz) {
-    return network().nodes().stream().flatMap(instancesOf(clazz));
+  private static final ImmutableSet<Class<? extends Node>> NODE_TYPES =
+      ImmutableSet.of(Binding.class, MissingBinding.class, ComponentNode.class);
+
+  @Memoized
+  ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
+    return network().nodes().stream()
+        .collect(
+            toImmutableSetMultimap(
+                node ->
+                    NODE_TYPES.stream().filter(clazz -> clazz.isInstance(node)).findFirst().get(),
+                node -> node));
   }
 
   private Stream<DependencyEdge> dependencyEdgeStream() {
@@ -297,7 +325,7 @@ public abstract class BindingGraph {
 
   /**
    * An edge in the binding graph. Either a {@link DependencyEdge}, a {@link
-   * ChildFactoryMethodEdge}, or a {@link SubcomponentBuilderBindingEdge}.
+   * ChildFactoryMethodEdge}, or a {@link SubcomponentCreatorBindingEdge}.
    */
   public interface Edge {}
 
@@ -333,15 +361,18 @@ public abstract class BindingGraph {
 
   /**
    * An edge that represents the link between a parent component and a child subcomponent implied by
-   * a subcomponent builder binding. The {@linkplain com.google.common.graph.EndpointPair#source()
-   * source node} of this edge is a {@link Binding} for the subcomponent builder {@link Key} and the
-   * {@linkplain com.google.common.graph.EndpointPair#target() target node} is a {@link
-   * ComponentNode} for the child subcomponent.
+   * a subcomponent creator ({@linkplain dagger.Subcomponent.Builder builder} or {@linkplain
+   * dagger.Subcomponent.Factory factory}) binding.
+   *
+   * <p>The {@linkplain com.google.common.graph.EndpointPair#source() source node} of this edge is a
+   * {@link Binding} for the subcomponent creator {@link Key} and the {@linkplain
+   * com.google.common.graph.EndpointPair#target() target node} is a {@link ComponentNode} for the
+   * child subcomponent.
    */
-  public interface SubcomponentBuilderBindingEdge extends Edge {
+  public interface SubcomponentCreatorBindingEdge extends Edge {
     /**
      * The modules that {@linkplain Module#subcomponents() declare the subcomponent} that generated
-     * this edge. Empty if the parent component has a subcomponent builder method and there are no
+     * this edge. Empty if the parent component has a subcomponent creator method and there are no
      * declaring modules.
      */
     ImmutableSet<TypeElement> declaringModules();
@@ -410,6 +441,12 @@ public abstract class BindingGraph {
      * {@code @ProductionSubcomponent}.
      */
     boolean isSubcomponent();
+
+    /**
+     * Returns {@code true} if the component is a real component, or {@code false} if it is a
+     * fictional component based on a module.
+     */
+    boolean isRealComponent();
 
     /** The entry points on this component. */
     ImmutableSet<DependencyRequest> entryPoints();

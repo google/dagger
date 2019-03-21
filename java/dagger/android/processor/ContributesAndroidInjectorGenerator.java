@@ -45,7 +45,6 @@ import com.squareup.javapoet.WildcardTypeName;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
-import dagger.Subcomponent.Builder;
 import dagger.android.AndroidInjectionKey;
 import dagger.android.AndroidInjector;
 import dagger.android.ContributesAndroidInjector;
@@ -114,7 +113,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
 
     String baseName = descriptor.injectedType().simpleName();
     ClassName subcomponentName = moduleName.nestedClass(baseName + "Subcomponent");
-    ClassName subcomponentBuilderName = subcomponentName.nestedClass("Builder");
+    ClassName subcomponentFactoryName = subcomponentName.nestedClass("Factory");
 
     TypeSpec.Builder module =
         classBuilder(moduleName)
@@ -124,8 +123,8 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
                     .addMember("subcomponents", "$T.class", subcomponentName)
                     .build())
             .addModifiers(PUBLIC, ABSTRACT)
-            .addMethod(bindAndroidInjectorFactory(descriptor, subcomponentBuilderName))
-            .addType(subcomponent(descriptor, subcomponentName, subcomponentBuilderName))
+            .addMethod(bindAndroidInjectorFactory(descriptor, subcomponentFactoryName))
+            .addType(subcomponent(descriptor, subcomponentName, subcomponentFactoryName))
             .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
     generatedAnnotationSpec(elements, sourceVersion, AndroidProcessor.class)
         .ifPresent(module::addAnnotation);
@@ -169,7 +168,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
   private TypeSpec subcomponent(
       AndroidInjectorDescriptor descriptor,
       ClassName subcomponentName,
-      ClassName subcomponentBuilderName) {
+      ClassName subcomponentFactoryName) {
     AnnotationSpec.Builder subcomponentAnnotation = AnnotationSpec.builder(Subcomponent.class);
     for (ClassName module : descriptor.modules()) {
       subcomponentAnnotation.addMember("modules", CodeBlock.of("$T.class", module));
@@ -180,16 +179,17 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
         .addAnnotation(subcomponentAnnotation.build())
         .addAnnotations(descriptor.scopes())
         .addSuperinterface(parameterizedTypeName(AndroidInjector.class, descriptor.injectedType()))
-        .addType(subcomponentBuilder(descriptor, subcomponentBuilderName))
+        .addType(subcomponentFactory(descriptor, subcomponentFactoryName))
         .build();
   }
 
-  private TypeSpec subcomponentBuilder(
-      AndroidInjectorDescriptor descriptor, ClassName subcomponentBuilderName) {
-    return classBuilder(subcomponentBuilderName)
-        .addAnnotation(Builder.class)
-        .addModifiers(PUBLIC, ABSTRACT, STATIC)
-        .superclass(parameterizedTypeName(AndroidInjector.Builder.class, descriptor.injectedType()))
+  private TypeSpec subcomponentFactory(
+      AndroidInjectorDescriptor descriptor, ClassName subcomponentFactoryName) {
+    return interfaceBuilder(subcomponentFactoryName)
+        .addAnnotation(Subcomponent.Factory.class)
+        .addModifiers(PUBLIC, STATIC)
+        .addSuperinterface(
+            parameterizedTypeName(AndroidInjector.Factory.class, descriptor.injectedType()))
         .build();
   }
 

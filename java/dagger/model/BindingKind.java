@@ -45,8 +45,11 @@ public enum BindingKind {
   /** A binding for a {@link dagger.MembersInjector} of a type. */
   MEMBERS_INJECTOR,
 
-  /** A binding for a subcomponent builder. */
-  SUBCOMPONENT_BUILDER,
+  /**
+   * A binding for a subcomponent creator (a {@linkplain dagger.Subcomponent.Builder builder} or
+   * {@linkplain dagger.Subcomponent.Factory factory}).
+   */
+  SUBCOMPONENT_CREATOR,
 
   /** A binding for a {@link dagger.BindsInstance}-annotated builder method. */
   BOUND_INSTANCE,

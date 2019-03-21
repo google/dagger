@@ -16,12 +16,7 @@
 
 package dagger.internal;
 
-import static dagger.internal.DaggerCollections.newLinkedHashMapWithExpectedSize;
-import static dagger.internal.Preconditions.checkNotNull;
-import static java.util.Collections.unmodifiableMap;
-
 import dagger.Lazy;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Provider;
 
@@ -29,49 +24,42 @@ import javax.inject.Provider;
  * A {@link Factory} implementation used to implement {@link Map} bindings. This factory returns a
  * {@code Map<K, Provider<V>>} when calling {@link #get} (as specified by {@link Factory}).
  */
-public final class MapProviderFactory<K, V>
-    implements Factory<Map<K, Provider<V>>>, Lazy<Map<K, Provider<V>>> {
-  private final Map<K, Provider<V>> contributingMap;
+public final class MapProviderFactory<K, V> extends AbstractMapFactory<K, V, Provider<V>>
+    implements Lazy<Map<K, Provider<V>>> {
 
-  /**
-   * Returns a new {@link Builder}
-   */
+  /** Returns a new {@link Builder} */
   public static <K, V> Builder<K, V> builder(int size) {
     return new Builder<>(size);
   }
 
   private MapProviderFactory(Map<K, Provider<V>> contributingMap) {
-    this.contributingMap = unmodifiableMap(contributingMap);
+    super(contributingMap);
   }
 
   /**
-   * Returns a {@code Map<K, Provider<V>>} whose iteration order is that of the elements
-   * given by each of the providers, which are invoked in the order given at creation.
-   *
+   * Returns a {@code Map<K, Provider<V>>} whose iteration order is that of the elements given by
+   * each of the providers, which are invoked in the order given at creation.
    */
   @Override
   public Map<K, Provider<V>> get() {
-    return this.contributingMap;
+    return contributingMap();
   }
 
   /** A builder for {@link MapProviderFactory}. */
-  public static final class Builder<K, V> {
-    private final LinkedHashMap<K, Provider<V>> map;
-
+  public static final class Builder<K, V> extends AbstractMapFactory.Builder<K, V, Provider<V>> {
     private Builder(int size) {
-      this.map = newLinkedHashMapWithExpectedSize(size);
+      super(size);
     }
 
-    /** Associates {@code key} with {@code providerOfValue}. */
+    @Override
     public Builder<K, V> put(K key, Provider<V> providerOfValue) {
-      map.put(checkNotNull(key, "key"), checkNotNull(providerOfValue, "provider"));
+      super.put(key, providerOfValue);
       return this;
     }
 
-    // TODO(b/118630627): make this accept MapProviderFactory<K, V>, and change all framework fields
-    // to be of that type so we don't need an unsafe cast
+    @Override
     public Builder<K, V> putAll(Provider<Map<K, Provider<V>>> mapProviderFactory) {
-      map.putAll(((MapProviderFactory<K, V>) mapProviderFactory).contributingMap);
+      super.putAll(mapProviderFactory);
       return this;
     }
 

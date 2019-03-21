@@ -20,7 +20,6 @@ import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.isEmpty;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -30,7 +29,7 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.OPTIONAL;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static dagger.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -67,17 +66,19 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** A factory for {@link BindingGraph} objects. */
-final class BindingGraphFactory {
+@Singleton
+final class BindingGraphFactory implements ClearableCache {
   private final DaggerElements elements;
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
-  private final CompilerOptions compilerOptions;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
+  private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
 
   @Inject
   BindingGraphFactory(
@@ -85,25 +86,28 @@ final class BindingGraphFactory {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
-      ModuleDescriptor.Factory moduleDescriptorFactory,
-      CompilerOptions compilerOptions) {
+      ModuleDescriptor.Factory moduleDescriptorFactory) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
-    this.compilerOptions = compilerOptions;
   }
 
-  /** Creates a binding graph for a root component. */
-  BindingGraph create(ComponentDescriptor componentDescriptor) {
-    checkArgument(
-        !componentDescriptor.isSubcomponent() || compilerOptions.aheadOfTimeSubcomponents());
-    return create(Optional.empty(), componentDescriptor);
+  /**
+   * Creates a binding graph for a component.
+   *
+   * @param createFullBindingGraph if {@code true}, the binding graph will include all bindings;
+   *     otherwise it will include only bindings reachable from at least one entry point
+   */
+  BindingGraph create(ComponentDescriptor componentDescriptor, boolean createFullBindingGraph) {
+    return create(Optional.empty(), componentDescriptor, createFullBindingGraph);
   }
 
   private BindingGraph create(
-      Optional<Resolver> parentResolver, ComponentDescriptor componentDescriptor) {
+      Optional<Resolver> parentResolver,
+      ComponentDescriptor componentDescriptor,
+      boolean createFullBindingGraph) {
     ImmutableSet.Builder<ContributionBinding> explicitBindingsBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<DelegateDeclaration> delegatesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<OptionalBindingDeclaration> optionalsBuilder = ImmutableSet.builder();
@@ -186,9 +190,9 @@ final class BindingGraphFactory {
               }
             });
 
-    if (!requestResolver.rootComponent().isRealComponent()) {
-      // For module-binding validation, resolve the keys for all bindings in all modules, stripping
-      // any multibinding contribution identifier so that the multibinding itself is resolved.
+    if (createFullBindingGraph) {
+      // Resolve the keys for all bindings in all modules, stripping any multibinding contribution
+      // identifier so that the multibinding itself is resolved.
       modules(componentDescriptor, parentResolver).stream()
           .flatMap(module -> module.allBindingKeys().stream())
           .map(key -> key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build())
@@ -205,27 +209,18 @@ final class BindingGraphFactory {
     for (ComponentDescriptor subcomponent :
         Iterables.consumingIterable(requestResolver.subcomponentsToResolve)) {
       if (resolvedSubcomponents.add(subcomponent)) {
-        subgraphs.add(create(Optional.of(requestResolver), subcomponent));
+        subgraphs.add(create(Optional.of(requestResolver), subcomponent, createFullBindingGraph));
       }
-    }
-
-    ImmutableMap<Key, ResolvedBindings> resolvedContributionBindingsMap =
-        requestResolver.getResolvedContributionBindings();
-    for (ResolvedBindings resolvedBindings : resolvedContributionBindingsMap.values()) {
-      verify(
-          resolvedBindings.resolvingComponent().equals(componentDescriptor.typeElement()),
-          "%s is not owned by %s",
-          resolvedBindings,
-          componentDescriptor);
     }
 
     return BindingGraph.create(
         componentDescriptor,
-        resolvedContributionBindingsMap,
+        requestResolver.getResolvedContributionBindings(),
         requestResolver.getResolvedMembersInjectionBindings(),
         subgraphs.build(),
         requestResolver.getOwnedModules(),
-        requestResolver.getFactoryMethod());
+        requestResolver.getFactoryMethod(),
+        createFullBindingGraph);
   }
 
   /**
@@ -275,6 +270,11 @@ final class BindingGraphFactory {
   private static <T extends BindingDeclaration>
       ImmutableSetMultimap<Key, T> indexBindingDeclarationsByKey(Iterable<T> declarations) {
     return ImmutableSetMultimap.copyOf(Multimaps.index(declarations, BindingDeclaration::key));
+  }
+
+  @Override
+  public void clearCache() {
+    keysMatchingRequestCache.clear();
   }
 
   private final class Resolver {
@@ -390,7 +390,6 @@ final class BindingGraphFactory {
 
       return ResolvedBindings.forContributionBindings(
           requestKey,
-          componentDescriptor,
           indexBindingsByOwningComponent(requestKey, ImmutableSet.copyOf(bindings)),
           multibindingDeclarations,
           subcomponentDeclarations,
@@ -426,7 +425,7 @@ final class BindingGraphFactory {
       return binding.isPresent()
           ? ResolvedBindings.forMembersInjectionBinding(
               requestKey, componentDescriptor, binding.get())
-          : ResolvedBindings.noBindings(requestKey, componentDescriptor);
+          : ResolvedBindings.noBindings(requestKey);
     }
 
     /**
@@ -435,7 +434,7 @@ final class BindingGraphFactory {
      * will be used to detect which subcomponents need to be resolved.
      */
     private void addSubcomponentToOwningResolver(ProvisionBinding subcomponentCreatorBinding) {
-      checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_BUILDER));
+      checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_CREATOR));
       Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
       TypeElement builderType = MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type());
@@ -443,7 +442,28 @@ final class BindingGraphFactory {
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }
 
+    /**
+     * Profiling has determined that computing the keys matching {@code requestKey} has measurable
+     * performance impact. It is called repeatedly (at least 3 times per key resolved per {@link
+     * BindingGraph}. {@code javac}'s name-checking performance seems suboptimal (converting byte
+     * strings to Strings repeatedly), and the matching keys creations relies on that. This also
+     * ensures that the resulting keys have their hash codes cached on successive calls to this
+     * method.
+     *
+     * <p>This caching may become obsolete if:
+     *
+     * <ul>
+     *   <li>We decide to intern all {@link Key} instances
+     *   <li>We fix javac's name-checking peformance (though we may want to keep this for older
+     *       javac users)
+     * </ul>
+     */
     private ImmutableSet<Key> keysMatchingRequest(Key requestKey) {
+      return keysMatchingRequestCache.computeIfAbsent(
+          requestKey, this::keysMatchingRequestUncached);
+    }
+
+    private ImmutableSet<Key> keysMatchingRequestUncached(Key requestKey) {
       ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
       keys.add(requestKey);
       keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);
@@ -627,7 +647,8 @@ final class BindingGraphFactory {
           // If a @Reusable binding was resolved in an ancestor, use that component.
           ResolvedBindings resolvedBindings =
               requestResolver.resolvedContributionBindings.get(binding.key());
-          if (resolvedBindings != null && resolvedBindings.bindings().contains(binding)) {
+          if (resolvedBindings != null
+              && resolvedBindings.contributionBindings().contains(binding)) {
             return Optional.of(requestResolver);
           }
         }
@@ -851,9 +872,7 @@ final class BindingGraphFactory {
             && getLocalExplicitBindings(key).isEmpty()) {
           /* Cache the inherited parent component's bindings in case resolving at the parent found
            * bindings in some component between this one and the previously-resolved one. */
-          ResolvedBindings inheritedBindings =
-              getPreviouslyResolvedBindings(key).get().asInheritedIn(componentDescriptor);
-          resolvedContributionBindings.put(key, inheritedBindings);
+          resolvedContributionBindings.put(key, getPreviouslyResolvedBindings(key).get());
           return;
         }
       }
@@ -890,13 +909,9 @@ final class BindingGraphFactory {
       if (parentResolver.isPresent()) {
         ImmutableMap<Key, ResolvedBindings> parentBindings =
             parentResolver.get().getResolvedContributionBindings();
-        Collection<ResolvedBindings> bindingsResolvedInParent =
-            Maps.difference(parentBindings, resolvedContributionBindings)
-                .entriesOnlyOnLeft()
-                .values();
-        for (ResolvedBindings resolvedInParent : bindingsResolvedInParent) {
-          builder.put(resolvedInParent.key(), resolvedInParent.asInheritedIn(componentDescriptor));
-        }
+        Map<Key, ResolvedBindings> bindingsResolvedInParent =
+            Maps.difference(parentBindings, resolvedContributionBindings).entriesOnlyOnLeft();
+        builder.putAll(bindingsResolvedInParent);
       }
       return builder.build();
     }

@@ -18,17 +18,19 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PUBLIC;
+import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 
-import com.squareup.javapoet.ClassName;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.NestingKind;
+import javax.inject.Singleton;
+import javax.lang.model.element.TypeElement;
 
 /** Factory for {@link ComponentImplementation}s. */
-final class ComponentImplementationFactory {
+@Singleton
+final class ComponentImplementationFactory implements ClearableCache {
+  private final Map<TypeElement, ComponentImplementation> topLevelComponentCache = new HashMap<>();
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
   private final BindingGraphFactory bindingGraphFactory;
@@ -53,8 +55,18 @@ final class ComponentImplementationFactory {
    *     ahead-of-time-subcomponents mode is not enabled
    */
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
+    return reentrantComputeIfAbsent(
+        topLevelComponentCache,
+        bindingGraph.componentTypeElement(),
+        component -> createComponentImplementationUncached(bindingGraph));
+  }
+
+  private ComponentImplementation createComponentImplementationUncached(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
-        topLevelImplementation(componentName(bindingGraph.componentTypeElement()), bindingGraph);
+        ComponentImplementation.topLevelComponentImplementation(
+            bindingGraph,
+            componentName(bindingGraph.componentTypeElement()),
+            new SubcomponentNames(bindingGraph, keyFactory));
     // TODO(dpb): explore using optional bindings for the "parent" bindings
     CurrentImplementationSubcomponent currentImplementationSubcomponent =
         topLevelImplementationComponentBuilder
@@ -80,18 +92,6 @@ final class ComponentImplementationFactory {
     }
   }
 
-  /** Creates a root component or top-level abstract subcomponent implementation. */
-  ComponentImplementation topLevelImplementation(ClassName name, BindingGraph graph) {
-    return new ComponentImplementation(
-        graph,
-        name,
-        NestingKind.TOP_LEVEL,
-        Optional.empty(), // superclassImplementation
-        new SubcomponentNames(graph, keyFactory),
-        PUBLIC,
-        graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL);
-  }
-
   /** Returns the superclass of the child nested within a superclass of the parent component. */
   ComponentImplementation findChildSuperclassImplementation(
       ComponentDescriptor child, ComponentImplementation parentImplementation) {
@@ -112,7 +112,12 @@ final class ComponentImplementationFactory {
     // Otherwise, the superclass implementation is top-level, so we must recreate the
     // implementation object for the base implementation of the child by truncating the binding
     // graph at the child.
-    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child);
+    BindingGraph truncatedBindingGraph = bindingGraphFactory.create(child, false);
     return createComponentImplementation(truncatedBindingGraph);
+  }
+
+  @Override
+  public void clearCache() {
+    topLevelComponentCache.clear();
   }
 }

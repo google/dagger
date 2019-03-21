@@ -40,63 +40,55 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ProducerModuleFactoryGeneratorTest {
 
-  private String formatErrorMessage(String msg) {
-    return String.format(msg, "Produces");
-  }
-
-  private String formatModuleErrorMessage(String msg) {
-    return String.format(msg, "Produces", "ProducerModule");
-  }
-
   @Test public void producesMethodNotInModule() {
     assertThatMethodInUnannotatedClass("@Produces String produceString() { return null; }")
-        .hasError(formatModuleErrorMessage("@%s methods can only be present within a @%s"));
+        .hasError("@Produces methods can only be present within a @ProducerModule");
   }
 
   @Test public void producesMethodAbstract() {
     assertThatProductionModuleMethod("@Produces abstract String produceString();")
-        .hasError(formatErrorMessage("@%s methods cannot be abstract"));
+        .hasError("@Produces methods cannot be abstract");
   }
 
   @Test public void producesMethodPrivate() {
     assertThatProductionModuleMethod("@Produces private String produceString() { return null; }")
-        .hasError(formatErrorMessage("@%s methods cannot be private"));
+        .hasError("@Produces methods cannot be private");
   }
 
   @Test public void producesMethodReturnVoid() {
     assertThatProductionModuleMethod("@Produces void produceNothing() {}")
-        .hasError(formatErrorMessage("@%s methods must return a value (not void)"));
+        .hasError("@Produces methods must return a value (not void)");
   }
 
   @Test
   public void producesProvider() {
     assertThatProductionModuleMethod("@Produces Provider<String> produceProvider() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Produces methods must not return framework types");
   }
 
   @Test
   public void producesLazy() {
     assertThatProductionModuleMethod("@Produces Lazy<String> produceLazy() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Produces methods must not return framework types");
   }
 
   @Test
   public void producesMembersInjector() {
     assertThatProductionModuleMethod(
             "@Produces MembersInjector<String> produceMembersInjector() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Produces methods must not return framework types");
   }
 
   @Test
   public void producesProducer() {
     assertThatProductionModuleMethod("@Produces Producer<String> produceProducer() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Produces methods must not return framework types");
   }
 
   @Test
   public void producesProduced() {
     assertThatProductionModuleMethod("@Produces Produced<String> produceProduced() {}")
-        .hasError(formatErrorMessage("@%s methods must not return framework types"));
+        .hasError("@Produces methods must not return framework types");
   }
 
   @Test public void producesMethodReturnRawFuture() {
@@ -115,7 +107,7 @@ public class ProducerModuleFactoryGeneratorTest {
 
   @Test public void producesMethodWithTypeParameter() {
     assertThatProductionModuleMethod("@Produces <T> String produceString() { return null; }")
-        .hasError(formatErrorMessage("@%s methods may not have type parameters"));
+        .hasError("@Produces methods may not have type parameters");
   }
 
   @Test public void producesMethodSetValuesWildcard() {
@@ -129,9 +121,7 @@ public class ProducerModuleFactoryGeneratorTest {
   @Test public void producesMethodSetValuesRawSet() {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet Set produceSomething() { return null; }")
-        .hasError(
-            formatErrorMessage(
-                "@%s methods annotated with @ElementsIntoSet cannot return a raw Set"));
+        .hasError("@Produces methods annotated with @ElementsIntoSet cannot return a raw Set");
   }
 
   @Test public void producesMethodSetValuesNotASet() {
@@ -155,9 +145,7 @@ public class ProducerModuleFactoryGeneratorTest {
     assertThatProductionModuleMethod(
             "@Produces @ElementsIntoSet ListenableFuture<Set> produceSomething() { return null; }")
         .importing(ListenableFuture.class)
-        .hasError(
-            formatErrorMessage(
-                "@%s methods annotated with @ElementsIntoSet cannot return a raw Set"));
+        .hasError("@Produces methods annotated with @ElementsIntoSet cannot return a raw Set");
   }
 
   @Test public void producesMethodSetValuesFutureNotASet() {
@@ -187,7 +175,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "  }",
         "}");
     String errorMessage =
-        "Cannot have more than one @Produces method with the same name in a single module";
+        "Cannot have more than one binding method with the same name in a single module";
     Compilation compilation = daggerCompiler().compile(moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining(errorMessage).inFile(moduleFile).onLine(8);
@@ -204,7 +192,7 @@ public class ProducerModuleFactoryGeneratorTest {
 
   @Test public void producesMethodWithScope() {
     assertThatProductionModuleMethod("@Produces @Singleton String str() { return \"\"; }")
-        .hasError("@Produces methods may not have scope annotations");
+        .hasError("@Produces methods cannot be scoped");
   }
 
   @Test
@@ -268,6 +256,8 @@ public class ProducerModuleFactoryGeneratorTest {
             "X is listed as a module, but is not annotated with one of @Module, @ProducerModule");
   }
 
+  // TODO(ronshapiro): merge this with the equivalent test in ModuleFactoryGeneratorTest and make it
+  // parameterized
   @Test
   public void publicModuleNonPublicIncludes() {
     JavaFileObject publicModuleFile = JavaFileObjects.forSourceLines("test.PublicModule",
@@ -276,25 +266,37 @@ public class ProducerModuleFactoryGeneratorTest {
         "import dagger.producers.ProducerModule;",
         "",
         "@ProducerModule(includes = {",
-        "    NonPublicModule1.class, OtherPublicModule.class, NonPublicModule2.class",
+        "    BadNonPublicModule.class, OtherPublicModule.class, OkNonPublicModule.class",
         "})",
         "public final class PublicModule {",
         "}");
-    JavaFileObject nonPublicModule1File = JavaFileObjects.forSourceLines("test.NonPublicModule1",
+    JavaFileObject badNonPublicModuleFile =
+        JavaFileObjects.forSourceLines(
+            "test.BadNonPublicModule",
+            "package test;",
+            "",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "final class BadNonPublicModule {",
+            "  @Produces",
+            "  int produceInt() {",
+            "    return 42;",
+            "  }",
+            "}");
+    JavaFileObject okNonPublicModuleFile = JavaFileObjects.forSourceLines("test.OkNonPublicModule",
         "package test;",
         "",
         "import dagger.producers.ProducerModule;",
+        "import dagger.producers.Produces;",
         "",
         "@ProducerModule",
-        "final class NonPublicModule1 {",
-        "}");
-    JavaFileObject nonPublicModule2File = JavaFileObjects.forSourceLines("test.NonPublicModule2",
-        "package test;",
-        "",
-        "import dagger.producers.ProducerModule;",
-        "",
-        "@ProducerModule",
-        "final class NonPublicModule2 {",
+        "final class OkNonPublicModule {",
+        "  @Produces",
+        "  static String produceString() {",
+        "    return \"foo\";",
+        "  }",
         "}");
     JavaFileObject otherPublicModuleFile = JavaFileObjects.forSourceLines("test.OtherPublicModule",
         "package test;",
@@ -308,16 +310,16 @@ public class ProducerModuleFactoryGeneratorTest {
         daggerCompiler()
             .compile(
                 publicModuleFile,
-                nonPublicModule1File,
-                nonPublicModule2File,
+                badNonPublicModuleFile,
+                okNonPublicModuleFile,
                 otherPublicModuleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "This module is public, but it includes non-public "
-                + "(or effectively non-public) modules. "
-                + "Either reduce the visibility of this module or make "
-                + "test.NonPublicModule1 and test.NonPublicModule2 public.")
+            "This module is public, but it includes non-public (or effectively non-public) modules "
+                + "(test.BadNonPublicModule) that have non-static, non-abstract binding methods. "
+                + "Either reduce the visibility of this module, make the included modules public, "
+                + "or make all of the binding methods on the included modules abstract or static.")
         .inFile(publicModuleFile)
         .onLine(8);
   }

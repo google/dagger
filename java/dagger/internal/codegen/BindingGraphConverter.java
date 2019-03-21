@@ -19,10 +19,9 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -57,11 +56,8 @@ final class BindingGraphConverter {
   /**
    * Creates the external {@link dagger.model.BindingGraph} representing the given internal {@link
    * dagger.internal.codegen.BindingGraph}.
-   *
-   * @param fullBindingGraph if {@code true}, include bindings that are not reachable from any entry
-   *     points
    */
-  dagger.model.BindingGraph convert(BindingGraph bindingGraph, boolean fullBindingGraph) {
+  dagger.model.BindingGraph convert(BindingGraph bindingGraph) {
     Traverser traverser = new Traverser(bindingGraph);
     traverser.traverseComponents();
 
@@ -69,13 +65,13 @@ final class BindingGraphConverter {
     // multibindings or optional bindings, the parent-owned binding is still there. If that
     // parent-owned binding is not reachable from its component, it doesn't need to be in the graph
     // because it will never be used. So remove all nodes that are not reachable from the root
-    // component—unless we're building a full binding graph.
-    if (!fullBindingGraph) {
+    // component—unless we're converting a full binding graph.
+    if (!bindingGraph.isFullBindingGraph()) {
       unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
           .forEach(traverser.network::removeNode);
     }
 
-    return BindingGraphProxies.bindingGraph(traverser.network, fullBindingGraph);
+    return BindingGraphProxies.bindingGraph(traverser.network, bindingGraph.isFullBindingGraph());
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.
@@ -102,9 +98,7 @@ final class BindingGraphConverter {
     protected void visitComponent(BindingGraph graph) {
       ComponentNode grandparentComponent = parentComponent;
       parentComponent = currentComponent;
-      currentComponent =
-          ComponentNodeImpl.create(
-              componentTreePath().toComponentPath(), graph.componentDescriptor());
+      currentComponent = ComponentNodeImpl.create(componentPath(), graph.componentDescriptor());
 
       network.addNode(currentComponent);
 
@@ -112,12 +106,12 @@ final class BindingGraphConverter {
         ImmutableSet<TypeElement> declaringModules = subcomponentDeclaringModules(resolvedBindings);
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
           addBinding(binding);
-          if (binding.kind().equals(SUBCOMPONENT_BUILDER)
+          if (binding.kind().equals(SUBCOMPONENT_CREATOR)
               && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
                 binding,
                 subcomponentNode(binding.key().type(), graph),
-                new SubcomponentBuilderBindingEdgeImpl(declaringModules));
+                new SubcomponentCreatorBindingEdgeImpl(declaringModules));
           }
         }
       }
@@ -170,18 +164,24 @@ final class BindingGraphConverter {
 
     private boolean hasDependencyEdge(
         Node source, Node dependency, DependencyRequest dependencyRequest) {
-      return network
-          .edgesConnecting(source, dependency)
-          .stream()
-          .flatMap(instancesOf(DependencyEdge.class))
-          .anyMatch(edge -> edge.dependencyRequest().equals(dependencyRequest));
+      // An iterative approach is used instead of a Stream because this method is called in a hot
+      // loop, and the Stream calculates the size of network.edgesConnecting(), which is slow. This
+      // seems to be because caculating the edges connecting two nodes in a Network that supports
+      // parallel edges is must check the equality of many nodes, and BindingNode's equality
+      // semantics drag in the equality of many other expensive objects
+      for (Edge edge : network.edgesConnecting(source, dependency)) {
+        if (edge instanceof DependencyEdge) {
+          if (((DependencyEdge) edge).dependencyRequest().equals(dependencyRequest)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     private ResolvedBindings resolvedDependencies(
         Node source, DependencyRequest dependencyRequest) {
-      return componentTreePath()
-          .pathFromRootToAncestor(source.componentPath().currentComponent())
-          .currentGraph()
+      return graphForAncestor(source.componentPath().currentComponent())
           .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
@@ -210,26 +210,16 @@ final class BindingGraphConverter {
     private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
       return BindingNode.create(
-          componentTreePath().pathFromRootToAncestor(owningComponent).toComponentPath(),
+          pathFromRootToAncestor(owningComponent),
           binding,
-          associatedDeclaringElements(resolvedBindings),
-          () -> bindingDeclarationFormatter.format(binding));
-    }
-
-    private Iterable<BindingDeclaration> associatedDeclaringElements(
-        ResolvedBindings resolvedBindings) {
-      return Iterables.concat(
           resolvedBindings.multibindingDeclarations(),
           resolvedBindings.optionalBindingDeclarations(),
-          resolvedBindings.subcomponentDeclarations());
+          resolvedBindings.subcomponentDeclarations(),
+          bindingDeclarationFormatter);
     }
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
-      return BindingGraphProxies.missingBindingNode(
-          componentTreePath()
-              .pathFromRootToAncestor(dependencies.resolvingComponent())
-              .toComponentPath(),
-          dependencies.key());
+      return BindingGraphProxies.missingBindingNode(componentPath(), dependencies.key());
     }
 
     private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {
@@ -237,8 +227,7 @@ final class BindingGraphConverter {
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
-          componentTreePath().childPath(subcomponent.typeElement()).toComponentPath(),
-          subcomponent);
+          componentPath().childPath(subcomponent.typeElement()), subcomponent);
     }
 
     private ImmutableSet<TypeElement> subcomponentDeclaringModules(

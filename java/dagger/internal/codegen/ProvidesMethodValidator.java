@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +49,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
         dependencyRequestValidator,
         MUST_BE_CONCRETE,
         RUNTIME_EXCEPTION,
-        ALLOWS_MULTIBINDINGS);
+        ALLOWS_MULTIBINDINGS,
+        ALLOWS_SCOPING);
     this.dependencyRequestValidator = dependencyRequestValidator;
   }
 

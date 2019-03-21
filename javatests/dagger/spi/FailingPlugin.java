@@ -31,7 +31,10 @@ public final class FailingPlugin implements BindingGraphPlugin {
   @Override
   public Set<String> supportedOptions() {
     return ImmutableSet.of(
-        "error_on_binding", "error_on_dependency", "error_on_component", "error_on_subcomponents");
+        "error_on_binding",
+        "error_on_dependency",
+        "error_on_component",
+        "error_on_subcomponents");
   }
 
   @Override
@@ -80,6 +83,7 @@ public final class FailingPlugin implements BindingGraphPlugin {
           .forEach(
               edge -> diagnosticReporter.reportDependency(ERROR, edge, "Bad Dependency: %s", edge));
     }
+
   }
 
   @Override

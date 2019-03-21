@@ -36,7 +36,7 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MaybeBinding;
 import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
-import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
+import dagger.model.BindingGraph.SubcomponentCreatorBindingEdge;
 import dagger.model.BindingKind;
 import dagger.model.ComponentPath;
 import dagger.spi.BindingGraphPlugin;
@@ -268,7 +268,7 @@ public final class BindingGraphVisualizer implements BindingGraphPlugin {
         dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentPath()));
         dotEdge.addAttribute("ltail", clusterName(incidentNodes.source().componentPath()));
         dotEdge.addAttribute("taillabel", ((ChildFactoryMethodEdge) edge).factoryMethod());
-      } else if (edge instanceof SubcomponentBuilderBindingEdge) {
+      } else if (edge instanceof SubcomponentCreatorBindingEdge) {
         dotEdge.addAttribute("style", "dashed");
         dotEdge.addAttribute("lhead", clusterName(incidentNodes.target().componentPath()));
         dotEdge.addAttribute("taillabel", "subcomponent");

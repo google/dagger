@@ -27,6 +27,7 @@ import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.BUILDER_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CANCELLATION_LISTENER_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
@@ -114,7 +115,8 @@ abstract class ComponentImplementationBuilder {
         componentImplementation.name());
     setSupertype();
     componentImplementation.setCreatorImplementation(
-        componentCreatorImplementationFactory.create(componentImplementation));
+        componentCreatorImplementationFactory.create(
+            componentImplementation, componentImplementation.graph()));
     componentImplementation
         .creatorImplementation()
         .map(ComponentCreatorImplementation::spec)
@@ -180,27 +182,40 @@ abstract class ComponentImplementationBuilder {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
       MethodSpec methodSpec = bindingExpressions.getComponentMethod(anyOneMethod);
 
-      if (anyOneMethod.dependencyRequest().isPresent()
-          && componentImplementation
-              .getModifiableBindingMethod(bindingRequest(anyOneMethod.dependencyRequest().get()))
-              .isPresent()) {
-        // If there are multiple component methods that are modifiable and for the same binding
-        // request, implement all but one in the base implementation to delegate to the one that
-        // will remain (and be registered) modifiable
-        checkState(componentImplementation.isAbstract() && !componentImplementation.isNested());
-        componentImplementation.addMethod(
-            COMPONENT_METHOD, methodSpec.toBuilder().addModifiers(FINAL).build());
+      if (compilerOptions.aheadOfTimeSubcomponents()) {
+        addPossiblyModifiableInterfaceMethod(anyOneMethod, methodSpec);
       } else {
-        // If the binding for the component method is modifiable, register it as such.
-        ModifiableBindingType modifiableBindingType =
-            bindingExpressions
-                .modifiableBindingExpressions()
-                .registerComponentMethodIfModifiable(anyOneMethod, methodSpec);
+        componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
+      }
+    }
+  }
 
-        // If the method should be implemented in this component, implement it.
-        if (modifiableBindingType.hasBaseClassImplementation()) {
-          componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
-        }
+  /**
+   * Adds a component interface method in ahead-of-time subcomponents mode. If the binding that
+   * implements the method is modifiable, registers the method.
+   */
+  private void addPossiblyModifiableInterfaceMethod(
+      ComponentMethodDescriptor methodDescriptor, MethodSpec implementedComponentMethod) {
+    if (methodDescriptor.dependencyRequest().isPresent()
+        && componentImplementation
+            .getModifiableBindingMethod(bindingRequest(methodDescriptor.dependencyRequest().get()))
+            .isPresent()) {
+      // If there are multiple component methods that are modifiable and for the same binding
+      // request, implement all but one in the base implementation to delegate to the one that
+      // will remain (and be registered) modifiable
+      checkState(componentImplementation.isAbstract() && !componentImplementation.isNested());
+      componentImplementation.addMethod(
+          COMPONENT_METHOD, implementedComponentMethod.toBuilder().addModifiers(FINAL).build());
+    } else {
+      // If the binding for the component method is modifiable, register it as such.
+      ModifiableBindingType modifiableBindingType =
+          bindingExpressions
+              .modifiableBindingExpressions()
+              .registerComponentMethodIfModifiable(methodDescriptor, implementedComponentMethod);
+
+      // If the method should be implemented in this component, implement it.
+      if (modifiableBindingType.hasBaseClassImplementation()) {
+        componentImplementation.addMethod(COMPONENT_METHOD, implementedComponentMethod);
       }
     }
   }
@@ -350,8 +365,7 @@ abstract class ComponentImplementationBuilder {
 
   /** Creates an inner abstract subcomponent implementation. */
   private ComponentImplementation abstractInnerSubcomponent(BindingGraph childGraph) {
-    return new ComponentImplementation(
-        componentImplementation,
+    return componentImplementation.childComponentImplementation(
         childGraph,
         Optional.of(
             componentImplementationFactory.findChildSuperclassImplementation(
@@ -362,8 +376,7 @@ abstract class ComponentImplementationBuilder {
 
   /** Creates a concrete inner subcomponent implementation. */
   private ComponentImplementation concreteSubcomponent(BindingGraph childGraph) {
-    return new ComponentImplementation(
-        componentImplementation,
+    return componentImplementation.childComponentImplementation(
         childGraph,
         Optional.empty(), // superclassImplementation
         PRIVATE,
@@ -553,13 +566,8 @@ abstract class ComponentImplementationBuilder {
    * from the requirement the parameter fulfills to the spec for the parameter.
    */
   private final ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters() {
-    Optional<ComponentCreatorImplementation> creatorImplementation =
-        Optionals.firstPresent(
-            componentImplementation.creatorImplementation(),
-            componentImplementation.baseCreatorImplementation());
-
     Map<ComponentRequirement, ParameterSpec> parameters;
-    if (creatorImplementation.isPresent()) {
+    if (componentImplementation.componentDescriptor().hasCreator()) {
       parameters =
           Maps.toMap(componentImplementation.requirements(), ComponentRequirement::toParameterSpec);
     } else if (componentImplementation.isAbstract() && componentImplementation.isNested()) {
@@ -641,29 +649,45 @@ abstract class ComponentImplementationBuilder {
 
     @Override
     protected void addFactoryMethods() {
-      // Only top-level components have the factory builder() method.
-      // Mirror the user's creator API type if they had one.
+      // Top-level components have a static method that returns a builder or factory for the
+      // component. If the user defined a @Component.Builder or @Component.Factory, an
+      // implementation of their type is returned. Otherwise, an autogenerated Builder type is
+      // returned.
+      // TODO(cgdecker): Replace this abomination with a small class?
+      // Better yet, change things so that an autogenerated builder type has a descriptor of sorts
+      // just like a user-defined creator type.
+      ComponentCreatorKind creatorKind;
+      ClassName creatorType;
+      String factoryMethodName;
+      boolean noArgFactoryMethod;
+      if (creatorDescriptor().isPresent()) {
+        ComponentCreatorDescriptor descriptor = creatorDescriptor().get();
+        creatorKind = descriptor.kind();
+        creatorType = ClassName.get(descriptor.typeElement());
+        factoryMethodName = descriptor.factoryMethod().getSimpleName().toString();
+        noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
+      } else {
+        creatorKind = BUILDER;
+        creatorType = componentCreatorName();
+        factoryMethodName = "build";
+        noArgFactoryMethod = true;
+      }
+
       MethodSpec creatorFactoryMethod =
-          methodBuilder("builder")
+          methodBuilder(creatorKind.methodName())
               .addModifiers(PUBLIC, STATIC)
-              .returns(
-                  creatorDescriptor()
-                      .map(creatorDescriptor -> ClassName.get(creatorDescriptor.typeElement()))
-                      .orElse(componentCreatorName()))
+              .returns(creatorType)
               .addStatement("return new $T()", componentCreatorName())
               .build();
       componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
-      if (canInstantiateAllRequirements()) {
-        CharSequence buildMethodName =
-            creatorDescriptor().isPresent()
-                ? creatorDescriptor().get().factoryMethod().getSimpleName()
-                : "build";
+      if (noArgFactoryMethod && canInstantiateAllRequirements()) {
         componentImplementation.addMethod(
             BUILDER_METHOD,
             methodBuilder("create")
                 .returns(ClassName.get(super.graph.componentTypeElement()))
                 .addModifiers(PUBLIC, STATIC)
-                .addStatement("return new Builder().$L()", buildMethodName)
+                .addStatement(
+                    "return new $L().$L()", creatorKind.typeName(), factoryMethodName)
                 .build());
       }
     }
@@ -745,10 +769,10 @@ abstract class ComponentImplementationBuilder {
         ComponentImplementation superclassImplementation =
             componentImplementation.superclassImplementation().get();
         for (ModifiableBindingMethod superclassModifiableBindingMethod :
-            superclassImplementation.getModifiableBindingMethods()) {
+            superclassImplementation.getModifiableBindingMethods().values()) {
           bindingExpressions
               .modifiableBindingExpressions()
-              .reimplementedModifiableBindingMethod(superclassModifiableBindingMethod)
+              .possiblyReimplementedMethod(superclassModifiableBindingMethod)
               .ifPresent(componentImplementation::addImplementedModifiableBindingMethod);
         }
       } else {

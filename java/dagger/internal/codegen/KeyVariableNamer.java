@@ -18,13 +18,14 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
 import static dagger.internal.codegen.SourceFiles.protectAgainstKeywords;
 
+import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableSet;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Iterator;
-import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
@@ -37,16 +38,25 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  * DependencyVariableNamer} for cases where a specific {@link DependencyRequest} is present.
  */
 final class KeyVariableNamer {
+  /** Simple names that are very common. Inspired by https://errorprone.info/bugpattern/BadImport */
+  private static final ImmutableSet<String> VERY_SIMPLE_NAMES =
+      ImmutableSet.of(
+          "Builder",
+          "Factory",
+          "Component",
+          "Subcomponent",
+          "Injector");
+
   private static final TypeVisitor<Void, StringBuilder> TYPE_NAMER =
       new SimpleTypeVisitor8<Void, StringBuilder>() {
         @Override
         public Void visitDeclared(DeclaredType declaredType, StringBuilder builder) {
-          Element element = declaredType.asElement();
-          if (isSubcomponentCreator(element)) {
-            // Most Subcomponent builders are named "Builder", so add their associated
-            // Subcomponent type so that they're not all "builderProvider{N}"
+          TypeElement element = MoreTypes.asTypeElement(declaredType);
+          if (element.getNestingKind().isNested()
+              && VERY_SIMPLE_NAMES.contains(element.getSimpleName().toString())) {
             builder.append(element.getEnclosingElement().getSimpleName());
           }
+
           builder.append(element.getSimpleName());
           Iterator<? extends TypeMirror> argumentIterator =
               declaredType.getTypeArguments().iterator();

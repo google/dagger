@@ -43,7 +43,7 @@ import static dagger.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.model.BindingKind.OPTIONAL;
 import static dagger.model.BindingKind.PRODUCTION;
 import static dagger.model.BindingKind.PROVISION;
-import static dagger.model.BindingKind.SUBCOMPONENT_BUILDER;
+import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -321,23 +321,25 @@ final class BindingFactory {
 
   /**
    * Returns a {@link dagger.model.BindingKind#BOUND_INSTANCE} binding for a
-   * {@code @BindsInstance}-annotated builder method.
+   * {@code @BindsInstance}-annotated builder setter method or factory method parameter.
    */
-  ProvisionBinding boundInstanceBinding(
-      ComponentRequirement requirement, ExecutableElement method) {
-    checkArgument(method.getKind().equals(METHOD));
-    checkArgument(method.getParameters().size() == 1);
+  ProvisionBinding boundInstanceBinding(ComponentRequirement requirement, Element element) {
+    checkArgument(element instanceof VariableElement || element instanceof ExecutableElement);
+    VariableElement parameterElement =
+        element instanceof VariableElement
+            ? MoreElements.asVariable(element)
+            : getOnlyElement(MoreElements.asExecutable(element).getParameters());
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(method)
+        .bindingElement(element)
         .key(requirement.key().get())
-        .nullableType(getNullableType(getOnlyElement(method.getParameters())))
+        .nullableType(getNullableType(parameterElement))
         .kind(BOUND_INSTANCE)
         .build();
   }
 
   /**
-   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared by a component
+   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_CREATOR} binding declared by a component
    * method that returns a subcomponent builder. Use {{@link
    * #subcomponentCreatorBinding(ImmutableSet)}} for bindings declared using {@link
    * Module#subcomponents()}.
@@ -355,12 +357,12 @@ final class BindingFactory {
         .contributionType(ContributionType.UNIQUE)
         .bindingElement(subcomponentCreatorMethod)
         .key(key)
-        .kind(SUBCOMPONENT_BUILDER)
+        .kind(SUBCOMPONENT_CREATOR)
         .build();
   }
 
   /**
-   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_BUILDER} binding declared using {@link
+   * Returns a {@link dagger.model.BindingKind#SUBCOMPONENT_CREATOR} binding declared using {@link
    * Module#subcomponents()}.
    */
   ProvisionBinding subcomponentCreatorBinding(
@@ -369,7 +371,7 @@ final class BindingFactory {
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
         .key(subcomponentDeclaration.key())
-        .kind(SUBCOMPONENT_BUILDER)
+        .kind(SUBCOMPONENT_CREATOR)
         .build();
   }
 

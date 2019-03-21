@@ -101,7 +101,7 @@ public class AbstractProducesMethodProducerTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isSameAs(t);
+      assertThat(e).hasCauseThat().isSameAs(t);
     }
     verify(monitor).failed(t);
     verifyNoMoreInteractions(monitor);

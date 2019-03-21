@@ -28,7 +28,7 @@ filegroup(
     srcs = glob(["*.java"]),
 )
 
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 
 java_library(
     name = "spi",

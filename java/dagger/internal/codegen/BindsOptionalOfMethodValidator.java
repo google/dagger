@@ -18,18 +18,17 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.NO_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
-import static dagger.internal.codegen.Scopes.scopesOf;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsOptionalOf;
 import dagger.Module;
-import dagger.model.Scope;
 import dagger.producers.ProducerModule;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
@@ -53,7 +52,8 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
         dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
-        NO_MULTIBINDINGS);
+        NO_MULTIBINDINGS,
+        NO_SCOPING);
     this.types = types;
   }
 
@@ -81,16 +81,6 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
   protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
     if (!builder.getSubject().getParameters().isEmpty()) {
       builder.addError("@BindsOptionalOf methods cannot have parameters");
-    }
-  }
-
-  @Override
-  protected void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
-    for (Scope scope : scopesOf(builder.getSubject())) {
-      builder.addError(
-          "@BindsOptionalOf methods cannot be scoped",
-          builder.getSubject(),
-          scope.scopeAnnotation());
     }
   }
 }

@@ -90,4 +90,9 @@ final class ModifiableConcreteMethodBindingExpression extends MethodBindingExpre
     checkState(methodName.isPresent(), "addMethod() must be called before methodName().");
     return methodName.get();
   }
+
+  @Override
+  protected boolean isModifiableImplementationMethod() {
+    return true;
+  }
 }

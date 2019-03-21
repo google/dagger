@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
-import static dagger.internal.codegen.Scopes.scopesOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -52,9 +52,10 @@ final class ProducesMethodValidator extends BindingMethodValidator {
         ProducerModule.class,
         MUST_BE_CONCRETE,
         EXCEPTION,
-        ALLOWS_MULTIBINDINGS);
+        ALLOWS_MULTIBINDINGS,
+        NO_SCOPING);
   }
-  
+
   @Override
   protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
     super.checkMethod(builder);
@@ -66,14 +67,6 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   private void checkNullable(ValidationReport.Builder<ExecutableElement> builder) {
     if (ConfigurationAnnotations.getNullableType(builder.getSubject()).isPresent()) {
       builder.addWarning("@Nullable on @Produces methods does not do anything");
-    }
-  }
-
-  /** Adds an error if a {@link Produces @Produces} method has a scope annotation. */
-  @Override
-  protected void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!scopesOf(builder.getSubject()).isEmpty()) {
-      builder.addError("@Produces methods may not have scope annotations");
     }
   }
 

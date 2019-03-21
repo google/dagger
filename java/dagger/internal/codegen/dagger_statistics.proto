@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package dagger.internal.codegen.proto;
+option java_package = "dagger.internal.codegen.proto";
+
+import "google/protobuf/duration.proto";
+
+message DaggerBuildStatistics {
+  optional google.protobuf.Duration total_processing_time = 1;
+  repeated DaggerRound rounds = 2;
+}
+
+// Duration of each Dagger ProcessingStep for a single annotation processing
+// round.
+message DaggerRound {
+  optional google.protobuf.Duration map_key_step_time = 1;
+  optional google.protobuf.Duration inject_step_time = 2;
+  optional google.protobuf.Duration monitoring_module_step_time = 3;
+  optional google.protobuf.Duration multibinding_annotations_step_time = 4;
+  optional google.protobuf.Duration binds_instance_step_time = 5;
+  optional google.protobuf.Duration module_step_time = 6;
+  optional google.protobuf.Duration component_step_time = 7;
+  optional google.protobuf.Duration component_hjar_step_time = 8;
+  optional google.protobuf.Duration binding_method_step_time = 9;
+}

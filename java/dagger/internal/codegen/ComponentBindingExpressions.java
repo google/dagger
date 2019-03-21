@@ -33,6 +33,7 @@ import static dagger.internal.codegen.TypeNames.SINGLE_CHECK;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -71,7 +72,8 @@ final class ComponentBindingExpressions {
   private final ModifiableBindingExpressions modifiableBindingExpressions;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
 
-  @Inject ComponentBindingExpressions(
+  @Inject
+  ComponentBindingExpressions(
       @ParentComponent Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
@@ -174,8 +176,7 @@ final class ComponentBindingExpressions {
 
     TypeMirror dependencyType = dependencyRequest.key().type();
     BindingRequest bindingRequest = bindingRequest(dependencyRequest);
-    Expression dependencyExpression =
-        getDependencyExpression(bindingRequest, requestingClass);
+    Expression dependencyExpression = getDependencyExpression(bindingRequest, requestingClass);
 
     if (compilerOptions.aheadOfTimeSubcomponents()) {
       TypeMirror requestedType =
@@ -205,14 +206,25 @@ final class ComponentBindingExpressions {
   MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    return MethodSpec.overriding(
+    MethodSpec.Builder method =
+        MethodSpec.overriding(
             componentMethod.methodElement(),
             MoreTypes.asDeclared(graph.componentTypeElement().asType()),
-            types)
-        .addCode(
-            getBindingExpression(request)
-                .getComponentMethodImplementation(componentMethod, componentImplementation))
-        .build();
+            types);
+    // Even though this is not used if the method is abstract, we need to invoke the binding
+    // expression in order for the side of effect of the method being added to the
+    // ComponentImplementation
+    CodeBlock methodBody =
+        getBindingExpression(request)
+            .getComponentMethodImplementation(componentMethod, componentImplementation);
+    if (!componentImplementation.superclassImplementation().isPresent()
+        && !modifiableBindingExpressions
+            .getModifiableBindingType(request)
+            .hasBaseClassImplementation()
+        && !componentImplementation.getModifiableBindingMethod(request).isPresent()) {
+      return method.addModifiers(ABSTRACT).build();
+    }
+    return method.addCode(methodBody).build();
   }
 
   /** Returns the {@link BindingExpression} for the given {@link BindingRequest}. */
@@ -338,9 +350,9 @@ final class ComponentBindingExpressions {
             compilerOptions,
             graph);
 
-      case SUBCOMPONENT_BUILDER:
-        return new SubcomponentBuilderProviderCreationExpression(
-            binding.key().type(), componentImplementation.getSubcomponentName(binding.key()));
+      case SUBCOMPONENT_CREATOR:
+        return new AnonymousProviderCreationExpression(
+            binding, this, componentImplementation.name());
 
       case INJECTION:
       case PROVISION:
@@ -539,11 +551,11 @@ final class ComponentBindingExpressions {
             new ComponentProvisionBindingExpression(
                 resolvedBindings, graph, componentRequirementExpressions, compilerOptions));
 
-      case SUBCOMPONENT_BUILDER:
+      case SUBCOMPONENT_CREATOR:
         return Optional.of(
-            new SubcomponentBuilderBindingExpression(
+            new SubcomponentCreatorBindingExpression(
                 resolvedBindings,
-                componentImplementation.getSubcomponentName(resolvedBindings.key())));
+                componentImplementation.getSubcomponentCreatorSimpleName(resolvedBindings.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(

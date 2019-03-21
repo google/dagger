@@ -17,20 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.squareup.javapoet.MethodSpec;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -44,32 +41,35 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ModifiableBindingMethods {
   private final Map<BindingRequest, ModifiableBindingMethod> methods = Maps.newLinkedHashMap();
-  private final Set<BindingRequest> finalizedMethods = Sets.newHashSet();
 
-  /** Register a method encapsulating a modifiable binding. */
-  void addMethod(
+  /** Registers a new method encapsulating a modifiable binding. */
+  void addNewModifiableMethod(
       ModifiableBindingType type,
       BindingRequest request,
       TypeMirror returnType,
       MethodSpec method,
       boolean finalized) {
     checkArgument(type.isModifiable());
-    if (finalized) {
-      finalizedMethods.add(request);
-    }
-    ModifiableBindingMethod modifiableMethod =
-        ModifiableBindingMethod.create(type, request, returnType, method, finalized);
-    ModifiableBindingMethod previousMethod = methods.put(request, modifiableMethod);
+    addMethod(ModifiableBindingMethod.create(type, request, returnType, method, finalized));
+  }
+
+  /** Registers a reimplemented modifiable method. */
+  void addReimplementedMethod(ModifiableBindingMethod method) {
+    addMethod(method);
+  }
+
+  private void addMethod(ModifiableBindingMethod method) {
+    ModifiableBindingMethod previousMethod = methods.put(method.request(), method);
     verify(
         previousMethod == null,
         "registering %s but %s is already registered for the same binding request",
-        modifiableMethod,
+        method,
         previousMethod);
   }
 
   /** Returns all {@link ModifiableBindingMethod}s that have not been marked as finalized. */
-  ImmutableList<ModifiableBindingMethod> getNonFinalizedMethods() {
-    return methods.values().stream().filter(m -> !m.finalized()).collect(toImmutableList());
+  ImmutableMap<BindingRequest, ModifiableBindingMethod> getNonFinalizedMethods() {
+    return ImmutableMap.copyOf(Maps.filterValues(methods, m -> !m.finalized()));
   }
 
   /** Returns the {@link ModifiableBindingMethod} for the given binding if present. */
@@ -82,25 +82,12 @@ final class ModifiableBindingMethods {
     return ImmutableList.copyOf(methods.values());
   }
 
-  /**
-   * Mark the {@link ModifiableBindingMethod} as having been implemented, thus modifying the
-   * binding.
-   */
-  void methodImplemented(ModifiableBindingMethod method) {
-    if (method.finalized()) {
-      checkState(
-          finalizedMethods.add(method.request()),
-          "Implementing and finalizing a modifiable binding method that has been marked as "
-              + "finalized in the current subcomponent implementation. The binding is for a %s "
-              + "of type %s.",
-          method.request(),
-          method.type());
-    }
-  }
-
   /** Whether a given binding has been marked as finalized. */
+  // TODO(ronshapiro): possibly rename this to something that indicates that the BindingRequest for
+  // `method` has been finalized in *this* component implementation?
   boolean finalized(ModifiableBindingMethod method) {
-    return finalizedMethods.contains(method.request());
+    ModifiableBindingMethod storedMethod = methods.get(method.request());
+    return storedMethod != null && storedMethod.finalized();
   }
 
   @AutoValue
@@ -115,15 +102,13 @@ final class ModifiableBindingMethods {
           type, request, MoreTypes.equivalence().wrap(returnType), methodSpec, finalized);
     }
 
-    /** Create a {@ModifiableBindingMethod} representing an implementation of an existing method. */
-    static ModifiableBindingMethod implement(
-        ModifiableBindingMethod unimplementedMethod, MethodSpec methodSpec, boolean finalized) {
+    /** Creates a {@ModifiableBindingMethod} that reimplements the current method. */
+    ModifiableBindingMethod reimplement(
+        ModifiableBindingType newModifiableBindingType,
+        MethodSpec newImplementation,
+        boolean finalized) {
       return new AutoValue_ModifiableBindingMethods_ModifiableBindingMethod(
-          unimplementedMethod.type(),
-          unimplementedMethod.request(),
-          unimplementedMethod.returnTypeWrapper(),
-          methodSpec,
-          finalized);
+          newModifiableBindingType, request(), returnTypeWrapper(), newImplementation, finalized);
     }
 
     abstract ModifiableBindingType type();

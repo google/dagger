@@ -18,7 +18,6 @@ package dagger.functional.producers.binds;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableMap;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import java.util.Map;
@@ -57,9 +56,8 @@ public class BindsProducersTest {
     assertThat(component.charSequences().get()).hasSize(5);
 
     assertThat(component.integerObjectMap().get())
-        .containsExactlyEntriesIn(
-            ImmutableMap.of(
-                123, "123-string", 456, "456-string", 789, "789-string", -1, "provision-string"));
+        .containsExactly(
+            123, "123-string", 456, "456-string", 789, "789-string", -1, "provision-string");
 
     Map<Integer, Producer<Object>> integerProducerOfObjectMap =
         component.integerProducerOfObjectMap().get();
@@ -70,12 +68,11 @@ public class BindsProducersTest {
     assertThat(integerProducerOfObjectMap.get(-1).get().get()).isEqualTo("provision-string");
 
     assertThat(component.integerProducedOfObjectMap().get())
-        .containsExactlyEntriesIn(
-            ImmutableMap.of(
-                123, Produced.successful("123-string"),
-                456, Produced.successful("456-string"),
-                789, Produced.successful("789-string"),
-                -1, Produced.successful("provision-string")));
+        .containsExactly(
+            123, Produced.successful("123-string"),
+            456, Produced.successful("456-string"),
+            789, Produced.successful("789-string"),
+            -1, Produced.successful("provision-string"));
 
     assertThat(component.qualifiedIntegerObjectMap().get()).hasSize(1);
   }

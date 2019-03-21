@@ -34,7 +34,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 /**
- * A module that provides a {@link BindingGraphFactory} and {@link ComponentDescriptor.Factory} for
+ * A module that provides a {@link BindingGraphFactory} and {@link ComponentDescriptorFactory} for
  * use in {@code javac} plugins. Requires a binding for the {@code javac} {@link Context}.
  */
 @Module(includes = InjectBindingRegistryModule.class)

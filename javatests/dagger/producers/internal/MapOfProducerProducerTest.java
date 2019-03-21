@@ -61,7 +61,7 @@ public final class MapOfProducerProducerTest {
       map.get(42).get().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isSameAs(cause);
+      assertThat(e).hasCauseThat().isSameAs(cause);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Dagger Authors.
+ * Copyright (C) 2019 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.functional.factory;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import javax.inject.Qualifier;
+import dagger.Module;
+import dagger.Provides;
 
-/**
- * Qualifier annotation for the {@link dagger.spi.BindingGraphPlugin}s that are used to implement
- * core Dagger validation for module binding graphs.
- */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Qualifier
-@interface ModuleValidation {}
+@Module
+final class UninstantiableConcreteModule {
+  private final long l;
+
+  UninstantiableConcreteModule(long l) {
+    this.l = l;
+  }
+
+  @Provides
+  long provideLong() {
+    return l;
+  }
+}

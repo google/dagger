@@ -29,7 +29,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
-import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
@@ -78,6 +77,8 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  * </pre>
  */
 class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
+  private static final ClassName AUTO_ANNOTATION =
+      ClassName.get("com.google.auto.value", "AutoAnnotation");
 
   @Inject
   AnnotationCreatorGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
@@ -112,7 +113,7 @@ class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
     String createMethodName = createMethodName(annotationElement);
     MethodSpec.Builder createMethod =
         methodBuilder(createMethodName)
-            .addAnnotation(AutoAnnotation.class)
+            .addAnnotation(AUTO_ANNOTATION)
             .addModifiers(PUBLIC, STATIC)
             .returns(TypeName.get(annotationElement.asType()));
 

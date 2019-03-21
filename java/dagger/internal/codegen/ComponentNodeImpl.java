@@ -39,6 +39,11 @@ abstract class ComponentNodeImpl implements ComponentNode {
   }
 
   @Override
+  public boolean isRealComponent() {
+    return componentDescriptor().isRealComponent();
+  }
+
+  @Override
   public final ImmutableSet<DependencyRequest> entryPoints() {
     return componentDescriptor().entryPointMethods().stream()
         .map(method -> method.dependencyRequest().get())

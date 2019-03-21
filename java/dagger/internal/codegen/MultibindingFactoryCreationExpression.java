@@ -57,9 +57,7 @@ abstract class MultibindingFactoryCreationExpression
 
   protected final ImmutableSet<FrameworkDependency> frameworkDependenciesToImplement() {
     ImmutableSet<Key> alreadyImplementedKeys =
-        componentImplementation.superclassContributionsMade(bindingRequest()).stream()
-            .map(dependency -> dependency.key())
-            .collect(toImmutableSet());
+        componentImplementation.superclassContributionsMade(bindingRequest());
     return binding.frameworkDependencies().stream()
         .filter(frameworkDependency -> !alreadyImplementedKeys.contains(frameworkDependency.key()))
         .collect(toImmutableSet());

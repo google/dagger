@@ -60,7 +60,7 @@ public interface BindingGraphPlugin {
    * of this plugin, before any graph is {@linkplain #visitGraph(BindingGraph, DiagnosticReporter)
    * visited}.
    *
-   * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils()
+   * @see javax.annotation.processing.ProcessingEnvironment#getElementUtils()
    */
   default void initElements(Elements elements) {}
 

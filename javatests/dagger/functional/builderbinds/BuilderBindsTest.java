@@ -19,9 +19,9 @@ package dagger.functional.builderbinds;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableList;
 import dagger.functional.builderbinds.TestComponent.Builder;
 import java.util.Arrays;
-import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -54,7 +54,7 @@ public final class BuilderBindsTest {
             .l(10L)
             .input("foo")
             .nullableInput(null)
-            .listOfString(Collections.<String>emptyList());
+            .listOfString(ImmutableList.of());
     builder.boundInSubtype(20);
     TestComponent component = builder.build();
 
@@ -81,7 +81,7 @@ public final class BuilderBindsTest {
               .l(10L)
               .input("foo")
               .nullableInput("bar")
-              .listOfString(Collections.<String>emptyList());
+              .listOfString(ImmutableList.of());
       builder.boundInSubtype(20);
       builder.build();
       fail("expected IllegalStateException");
@@ -97,7 +97,7 @@ public final class BuilderBindsTest {
               .count(5)
               .l(10L)
               .nullableInput("foo")
-              .listOfString(Collections.<String>emptyList());
+              .listOfString(ImmutableList.of());
       builder.boundInSubtype(20);
       builder.build();
       fail("expected IllegalStateException");
@@ -108,11 +108,7 @@ public final class BuilderBindsTest {
   @Test
   public void builderBindsNullableNotSet() {
     Builder builder =
-        DaggerTestComponent.builder()
-            .count(5)
-            .l(10L)
-            .input("foo")
-            .listOfString(Collections.<String>emptyList());
+        DaggerTestComponent.builder().count(5).l(10L).input("foo").listOfString(ImmutableList.of());
     builder.boundInSubtype(20);
     TestComponent component = builder.build();
     assertThat(component.count()).isEqualTo(5);

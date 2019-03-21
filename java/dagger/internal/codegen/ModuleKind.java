@@ -99,13 +99,6 @@ enum ModuleKind {
     return moduleAnnotation;
   }
 
-  /** Returns the annotation for binding methods on this type of module. */
-  // TODO(cgdecker): Validate how this is used... is it really correct? Producer modules can also
-  // have @Provides methods.
-  Class<? extends Annotation> methodAnnotation() {
-    return methodAnnotation;
-  }
-
   /** Returns the kinds of modules that a module of this kind is allowed to include. */
   ImmutableSet<ModuleKind> legalIncludedModuleKinds() {
     switch (this) {

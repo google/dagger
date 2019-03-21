@@ -135,34 +135,41 @@ abstract class ComponentRequirement {
    * be used within a component.
    */
   boolean requiresAPassedInstance(DaggerElements elements, DaggerTypes types) {
-    if (isBoundInstance()) {
-      // A user has explicitly defined in their component builder they will provide an instance.
+    if (!kind().isModule()) {
+      // Bound instances and dependencies always require the user to provide an instance.
       return true;
     }
+    return requiresModuleInstance(elements, types) && !componentCanMakeNewInstances(typeElement());
+  }
 
+  /**
+   * Returns {@code true} if an instance is needed for this (module) requirement.
+   *
+   * <p>An instance is only needed if there is a binding method on the module that is neither {@code
+   * abstract} nor {@code static}; if all bindings are one of those, then there should be no
+   * possible dependency on instance state in the module's bindings.
+   */
+  private boolean requiresModuleInstance(DaggerElements elements, DaggerTypes types) {
     ImmutableSet<ExecutableElement> methods =
         getLocalAndInheritedMethods(typeElement(), types, elements);
-    boolean foundInstanceMethod = false;
-    for (ExecutableElement method : methods) {
-      if (method.getModifiers().contains(ABSTRACT)
-          && !isAnyAnnotationPresent(
-              method, Binds.class, Multibinds.class, BindsOptionalOf.class)) {
+    return methods.stream()
+        .filter(this::isBindingMethod)
+        .map(ExecutableElement::getModifiers)
+        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+  }
+
+  private boolean isBindingMethod(ExecutableElement method) {
+    // TODO(cgdecker): At the very least, we should have utility methods to consolidate this stuff
+    // in one place; listing individual annotations all over the place is brittle.
+    return isAnyAnnotationPresent(
+        method,
+        Provides.class,
+        Produces.class,
         // TODO(ronshapiro): it would be cool to have internal meta-annotations that could describe
         // these, like @AbstractBindingMethod
-        /* We found an abstract method that isn't a binding method. That automatically means that
-         * a user will have to provide an instance because we don't know which subclass to use. */
-        return true;
-      } else if (!method.getModifiers().contains(STATIC)
-          && isAnyAnnotationPresent(method, Provides.class, Produces.class)) {
-        foundInstanceMethod = true;
-      }
-    }
-
-    if (foundInstanceMethod) {
-      return !componentCanMakeNewInstances(typeElement());
-    }
-
-    return false;
+        Binds.class,
+        Multibinds.class,
+        BindsOptionalOf.class);
   }
 
   /** The key for this requirement, if one is available. */

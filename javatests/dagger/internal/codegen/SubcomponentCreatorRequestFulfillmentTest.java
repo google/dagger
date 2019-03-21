@@ -17,13 +17,20 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
+import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,22 +38,25 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class SubcomponentBuilderRequestFulfillmentTest {
-  @Parameters(name = "{0}")
+public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorTestHelper {
+  @Parameters(name = "compilerMode={0}, creatorKind={1}")
   public static Collection<Object[]> parameters() {
-    return CompilerMode.TEST_PARAMETERS;
+    Set<List<Object>> params =
+        Sets.<Object>cartesianProduct(
+            Sets.immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
+            EnumSet.allOf(ComponentCreatorKind.class));
+    return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
   }
 
-  private final CompilerMode compilerMode;
-
-  public SubcomponentBuilderRequestFulfillmentTest(CompilerMode compilerMode) {
-    this.compilerMode = compilerMode;
+  public SubcomponentCreatorRequestFulfillmentTest(
+      CompilerMode compilerMode, ComponentCreatorKind creatorKind) {
+    super(compilerMode, SUBCOMPONENT, creatorKind);
   }
 
   @Test
-  public void testInlinedSubcomponentBuilders_componentMethod() {
+  public void testInlinedSubcomponentCreators_componentMethod() {
     JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
+        preprocessedJavaFile(
             "test.Sub",
             "package test;",
             "",
@@ -60,7 +70,7 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  }",
             "}");
     JavaFileObject usesSubcomponent =
-        JavaFileObjects.forSourceLines(
+        preprocessedJavaFile(
             "test.UsesSubcomponent",
             "package test;",
             "",
@@ -70,7 +80,7 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  @Inject UsesSubcomponent(Sub.Builder subBuilder) {}",
             "}");
     JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+        preprocessedJavaFile(
             "test.C",
             "package test;",
             "",
@@ -83,7 +93,7 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "}");
 
     JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
+        preprocessedJavaFile(
             "test.DaggerC",
             "package test;",
             "",
@@ -91,16 +101,6 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "",
             GENERATED_ANNOTATION,
             "public final class DaggerC implements C {",
-            "  private DaggerC() {}",
-            "",
-            "  public static Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static C create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
             "  @Override",
             "  public Sub.Builder sBuilder() {",
             "    return new SubBuilder();",
@@ -109,14 +109,6 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  @Override",
             "  public UsesSubcomponent usesSubcomponent() {",
             "    return new UsesSubcomponent(new SubBuilder());",
-            "  }",
-            "",
-            "  public static final class Builder {",
-            "    private Builder() {}",
-            "",
-            "    public C build() {",
-            "      return new DaggerC();",
-            "    }",
             "  }",
             "",
             "  private final class SubBuilder implements Sub.Builder {",
@@ -131,13 +123,10 @@ public class SubcomponentBuilderRequestFulfillmentTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
-            .compile(subcomponent, usesSubcomponent, component);
+    Compilation compilation = compile(subcomponent, usesSubcomponent, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerC")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 }

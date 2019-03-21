@@ -31,7 +31,7 @@ public class GwtIncompatiblesTest {
   }
 
   private void assertGwtIncompatible(Class<?> clazz) {
-    boolean gwtIncompatible = clazz.getAnnotation(GwtIncompatible.class) != null;
+    boolean gwtIncompatible = clazz.isAnnotationPresent(GwtIncompatible.class);
     if (!gwtIncompatible) {
       throw new AssertionError(clazz.getCanonicalName() + " is not @GwtIncompatible");
     }

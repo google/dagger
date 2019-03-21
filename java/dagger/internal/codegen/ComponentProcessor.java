@@ -21,6 +21,7 @@ import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
@@ -54,8 +55,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins bindingGraphPlugins;
   @Inject CompilerOptions compilerOptions;
-  @Inject DaggerStatistics daggerStatistics;
-  @Inject ModuleDescriptor.Factory moduleDescriptorFactory;
+  @Inject DaggerStatisticsCollector statisticsCollector;
+  @Inject Set<ClearableCache> clearableCaches;
 
   public ComponentProcessor() {
     this.testingPlugins = Optional.empty();
@@ -107,9 +108,11 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         .build()
         .inject(this);
 
-    daggerStatistics.processingStarted();
+    statisticsCollector.processingStarted();
     bindingGraphPlugins.initializePlugins();
-    return processingSteps;
+    return Iterables.transform(
+        processingSteps,
+        step -> new DaggerStatisticsCollectingProcessingStep(step, statisticsCollector));
   }
 
   @Singleton
@@ -119,6 +122,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         BindingMethodValidatorsModule.class,
         InjectBindingRegistryModule.class,
         ProcessingEnvironmentModule.class,
+        ProcessingRoundCacheModule.class,
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
         SpiModule.class,
@@ -179,8 +183,9 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected void postRound(RoundEnvironment roundEnv) {
+    statisticsCollector.roundFinished();
     if (roundEnv.processingOver()) {
-      daggerStatistics.processingStopped();
+      statisticsCollector.processingStopped();
     } else {
       try {
         injectBindingRegistry.generateSourcesForRequiredBindings(
@@ -189,6 +194,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         e.printMessageTo(processingEnv.getMessager());
       }
     }
-    moduleDescriptorFactory.clearCache();
+    clearableCaches.forEach(ClearableCache::clearCache);
   }
 }

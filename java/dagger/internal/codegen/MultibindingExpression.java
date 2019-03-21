@@ -16,17 +16,16 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Optional;
+import java.util.Set;
 
 /** An abstract base class for multibinding {@link BindingExpression}s. */
 abstract class MultibindingExpression extends SimpleInvocationBindingExpression {
@@ -60,9 +59,11 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
    * one implementation of a multibinding expression and all {@link DependencyRequest}s from the
    * argment are returned.
    */
-  protected SetView<DependencyRequest> getNewContributions(
+  protected Set<DependencyRequest> getNewContributions(
       ImmutableSet<DependencyRequest> dependencies) {
-    return Sets.difference(dependencies, superclassContributions());
+    ImmutableSet<Key> superclassContributions = superclassContributions();
+    return Sets.filter(
+        dependencies, dependency -> !superclassContributions.contains(dependency.key()));
   }
 
   /**
@@ -87,7 +88,7 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
     return BindingRequest.bindingRequest(binding.key(), RequestKind.INSTANCE);
   }
 
-  private ImmutableSet<DependencyRequest> superclassContributions() {
+  private ImmutableSet<Key> superclassContributions() {
     return componentImplementation.superclassContributionsMade(bindingRequest());
   }
 }

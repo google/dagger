@@ -25,11 +25,12 @@ import dagger.internal.Beta;
  * android.app.Activity} or {@link android.app.Fragment}).
  *
  * <p>Commonly implemented by {@link dagger.Subcomponent}-annotated types whose {@link
- * dagger.Subcomponent.Builder} extends {@link Builder}.
+ * dagger.Subcomponent.Factory} extends {@link Factory}.
  *
  * @param <T> a concrete subtype of a core Android type
  * @see AndroidInjection
  * @see DispatchingAndroidInjector
+ * @see ContributesAndroidInjector
  */
 @Beta
 public interface AndroidInjector<T> {
@@ -47,7 +48,7 @@ public interface AndroidInjector<T> {
      * Creates an {@link AndroidInjector} for {@code instance}. This should be the same instance
      * that will be passed to {@link #inject(Object)}.
      */
-    AndroidInjector<T> create(T instance);
+    AndroidInjector<T> create(@BindsInstance T instance);
   }
 
   /**
@@ -55,7 +56,10 @@ public interface AndroidInjector<T> {
    * Factory}.
    *
    * @param <T> the concrete type to be injected
+   * @deprecated Prefer {@link Factory} now that components can have {@link dagger.Component.Factory
+   *     factories} instead of builders
    */
+  @Deprecated
   abstract class Builder<T> implements AndroidInjector.Factory<T> {
     @Override
     public final AndroidInjector<T> create(T instance) {

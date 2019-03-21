@@ -18,7 +18,6 @@ package dagger.functional.binds;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +54,7 @@ public class BindsTest {
     assertThat(component.charSequences()).hasSize(5);
 
     assertThat(component.integerObjectMap())
-        .containsExactlyEntriesIn(
-            ImmutableMap.of(123, "123-string", 456, "456-string", 789, "789-string"));
+        .containsExactly(123, "123-string", 456, "456-string", 789, "789-string");
     assertThat(component.integerProviderOfObjectMap()).hasSize(3);
     assertThat(component.integerProviderOfObjectMap().get(123).get()).isEqualTo("123-string");
     assertThat(component.integerProviderOfObjectMap().get(456).get()).isEqualTo("456-string");

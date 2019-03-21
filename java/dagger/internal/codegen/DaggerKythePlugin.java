@@ -53,7 +53,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   // TODO(ronshapiro): use flogger
   private static final Logger logger = Logger.getLogger(DaggerKythePlugin.class.getCanonicalName());
   private FactEmitter emitter;
-  @Inject ComponentDescriptor.Factory componentDescriptorFactory;
+  @Inject ComponentDescriptorFactory componentDescriptorFactory;
   @Inject BindingGraphFactory bindingGraphFactory;
 
   @Override
@@ -61,7 +61,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (tree.sym != null
         && isAnyAnnotationPresent(tree.sym, Component.class, ProductionComponent.class)) {
       addNodesForGraph(
-          bindingGraphFactory.create(componentDescriptorFactory.forTypeElement(tree.sym)));
+          bindingGraphFactory.create(
+              componentDescriptorFactory.rootComponentDescriptor(tree.sym), false));
     }
     return super.visitClassDef(tree, p);
   }

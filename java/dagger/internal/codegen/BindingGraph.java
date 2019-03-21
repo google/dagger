@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.DaggerStreams.presentValues;
+import static dagger.internal.codegen.DaggerStreams.stream;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
@@ -26,6 +27,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.graph.Traverser;
@@ -35,14 +37,11 @@ import dagger.model.RequestKind;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
-/**
- * The canonical representation of a full-resolved graph.
- */
+/** The canonical representation of a full-resolved graph. */
 @AutoValue
 abstract class BindingGraph {
   abstract ComponentDescriptor componentDescriptor();
@@ -73,12 +72,12 @@ abstract class BindingGraph {
         : contributionBindings().get(request.key());
   }
 
-  @Memoized
-  ImmutableSet<ResolvedBindings> resolvedBindings() {
-    return ImmutableSet.<ResolvedBindings>builder()
-        .addAll(membersInjectionBindings().values())
-        .addAll(contributionBindings().values())
-        .build();
+  final Iterable<ResolvedBindings> resolvedBindings() {
+    // Don't return an immutable collection - this is only ever used for looping over all bindings
+    // in the graph. Copying is wasteful, especially if is a hashing collection, since the values
+    // should all, by definition, be distinct.
+    // TODO(dpb): consider inlining this to callers and removing this.
+    return Iterables.concat(membersInjectionBindings().values(), contributionBindings().values());
   }
 
   abstract ImmutableList<BindingGraph> subgraphs();
@@ -102,6 +101,7 @@ abstract class BindingGraph {
    */
   abstract ImmutableSet<ModuleDescriptor> ownedModules();
 
+  @Memoized
   ImmutableSet<TypeElement> ownedModuleTypes() {
     return FluentIterable.from(ownedModules()).transform(ModuleDescriptor::moduleElement).toSet();
   }
@@ -154,63 +154,29 @@ abstract class BindingGraph {
    */
   @Memoized
   ImmutableSet<ComponentRequirement> componentRequirements() {
-    return componentRequirements(
-        StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
-            .flatMap(graph -> graph.contributionBindings().values().stream())
-            .flatMap(bindings -> bindings.contributionBindings().stream())
-        .collect(toImmutableSet()));
-  }
-
-  /**
-   * The types for which the component may need instances, depending on how it is resolved in a
-   * parent component.
-   *
-   * <ul>
-   *   <li>{@linkplain #ownedModules() Owned modules} with concrete instance bindings. If the module
-   *       is never used in the fully resolved binding graph, the instance will not be required
-   *       unless a component builder requests it.
-   *   <li>Bound instances (always required)
-   * </ul>
-   */
-  @Memoized
-  ImmutableSet<ComponentRequirement> possiblyNecessaryRequirements() {
-    checkState(componentDescriptor().isSubcomponent());
-    return componentRequirements(
-        StreamSupport.stream(SUBGRAPH_TRAVERSER.depthFirstPreOrder(this).spliterator(), false)
-            .flatMap(graph -> graph.ownedModules().stream())
-            .flatMap(module -> module.bindings().stream())
-            .collect(toImmutableSet()));
-  }
-
-  /**
-   * The types for which the component needs instances.
-   *
-   * <ul>
-   *   <li>component dependencies
-   *   <li>The modules of {@code bindings} that require a module instance
-   *   <li>bound instances
-   * </ul>
-   */
-  private ImmutableSet<ComponentRequirement> componentRequirements(
-      ImmutableSet<ContributionBinding> bindings) {
+    ImmutableSet<TypeElement> requiredModules = requiredModuleElements();
     ImmutableSet.Builder<ComponentRequirement> requirements = ImmutableSet.builder();
-    bindings.stream()
-        .filter(ContributionBinding::requiresModuleInstance)
-        .map(ContributionBinding::contributingModule)
-        .flatMap(presentValues())
-        .filter(module -> ownedModuleTypes().contains(module))
-        .map(module -> ComponentRequirement.forModule(module.asType()))
+    componentDescriptor().requirements().stream()
+        .filter(
+            requirement ->
+                !requirement.kind().isModule()
+                    || requiredModules.contains(requirement.typeElement()))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {
-      factoryMethodParameters().keySet().forEach(requirements::add);
+      requirements.addAll(factoryMethodParameters().keySet());
     }
-    requirements.addAll(componentDescriptor().dependencies());
-    componentDescriptor()
-        .creatorDescriptor()
-        .ifPresent(
-            creatorDescriptor ->
-                creatorDescriptor.boundInstanceRequirements().forEach(requirements::add));
     return requirements.build();
+  }
+
+  private ImmutableSet<TypeElement> requiredModuleElements() {
+    return stream(SUBGRAPH_TRAVERSER.depthFirstPostOrder(this))
+        .flatMap(graph -> graph.contributionBindings().values().stream())
+        .flatMap(bindings -> bindings.contributionBindings().stream())
+        .map(ContributionBinding::contributingModule)
+        .distinct()
+        .flatMap(presentValues())
+        .filter(ownedModuleTypes()::contains)
+        .collect(toImmutableSet());
   }
 
   /** Returns the {@link ComponentDescriptor}s for this component and its subcomponents. */
@@ -219,6 +185,12 @@ abstract class BindingGraph {
         .transform(BindingGraph::componentDescriptor)
         .toSet();
   }
+
+  /**
+   * {@code true} if this graph contains all bindings installed in the component; {@code false} if
+   * it contains only those bindings that are reachable from at least one entry point.
+   */
+  abstract boolean isFullBindingGraph();
 
   @Memoized
   @Override
@@ -233,7 +205,8 @@ abstract class BindingGraph {
       ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
       ImmutableList<BindingGraph> subgraphs,
       ImmutableSet<ModuleDescriptor> ownedModules,
-      Optional<ExecutableElement> factoryMethod) {
+      Optional<ExecutableElement> factoryMethod,
+      boolean isFullBindingGraph) {
     checkForDuplicates(subgraphs);
     return new AutoValue_BindingGraph(
         componentDescriptor,
@@ -241,7 +214,8 @@ abstract class BindingGraph {
         resolvedMembersInjectionBindings,
         subgraphs,
         ownedModules,
-        factoryMethod);
+        factoryMethod,
+        isFullBindingGraph);
   }
 
   private static final void checkForDuplicates(Iterable<BindingGraph> graphs) {

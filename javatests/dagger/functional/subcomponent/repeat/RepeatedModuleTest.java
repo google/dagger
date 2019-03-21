@@ -58,7 +58,8 @@ public final class RepeatedModuleTest {
       fail();
     } catch (UnsupportedOperationException expected) {
       assertThat(expected)
-          .hasMessage(
+          .hasMessageThat()
+          .isEqualTo(
               "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
                   + "because it is inherited from the enclosing component");
     }
@@ -75,7 +76,8 @@ public final class RepeatedModuleTest {
       fail();
     } catch (UnsupportedOperationException expected) {
       assertThat(expected)
-          .hasMessage(
+          .hasMessageThat()
+          .isEqualTo(
               "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
                   + "because it is inherited from the enclosing component");
     }

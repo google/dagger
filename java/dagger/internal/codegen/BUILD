@@ -39,6 +39,7 @@ CODEGEN_SHARED_DEPS = [
     "@google_bazel_common//third_party/java/auto:service",
     "@google_bazel_common//third_party/java/auto:value",
     "@google_bazel_common//third_party/java/auto:common",
+    "@google_bazel_common//third_party/java/checker_framework_annotations",
     "@google_bazel_common//third_party/java/error_prone:annotations",
     "@google_bazel_common//third_party/java/google_java_format",
     "@google_bazel_common//third_party/java/javapoet",
@@ -79,11 +80,15 @@ java_library(
     srcs = [
         "Accessibility.java",
         "AnnotationSpecs.java",
+        "ClearableCache.java",
         "CodeBlocks.java",
         "CompilerOptions.java",
         "ContributionType.java",
         "DaggerElements.java",
         "DaggerStatistics.java",
+        "DaggerStatisticsCollectingProcessingStep.java",
+        "DaggerStatisticsCollector.java",
+        "DaggerStatisticsRecorder.java",
         "DaggerTypes.java",
         "DiagnosticFormatting.java",
         "Expression.java",
@@ -137,8 +142,11 @@ java_library(
         "BindingType.java",
         "BindsTypeChecker.java",
         "ChildFactoryMethodEdgeImpl.java",
+        "ComponentCreatorAnnotation.java",
         "ComponentCreatorDescriptor.java",
+        "ComponentCreatorKind.java",
         "ComponentDescriptor.java",
+        "ComponentDescriptorFactory.java",
         "ComponentKind.java",
         "ComponentNodeImpl.java",
         "ComponentRequirement.java",
@@ -170,7 +178,7 @@ java_library(
         "ProvisionBinding.java",
         "ResolvedBindings.java",
         "SourceFiles.java",  # Consider splitting this up?
-        "SubcomponentBuilderBindingEdgeImpl.java",
+        "SubcomponentCreatorBindingEdgeImpl.java",
         "SubcomponentDeclaration.java",
     ],
     plugins = CODEGEN_PLUGINS,
@@ -199,7 +207,6 @@ java_library(
         "InjectValidator.java",
         "MapKeyValidator.java",
         "MembersInjectionValidator.java",
-        "ModuleValidation.java",
         "ModuleValidator.java",
         "MultibindingAnnotationsProcessingStep.java",
         "MultibindsMethodValidator.java",
@@ -244,6 +251,7 @@ java_library(
     name = "writing",
     srcs = [
         "AnnotationCreatorGenerator.java",
+        "AnonymousProviderCreationExpression.java",
         "BindingExpression.java",
         "ComponentBindingExpressions.java",
         "ComponentCreatorImplementation.java",
@@ -313,8 +321,7 @@ java_library(
         "SetFactoryCreationExpression.java",
         "SimpleInvocationBindingExpression.java",
         "SimpleMethodBindingExpression.java",
-        "SubcomponentBuilderBindingExpression.java",
-        "SubcomponentBuilderProviderCreationExpression.java",
+        "SubcomponentCreatorBindingExpression.java",
         "SubcomponentNames.java",
         "SwitchingProviders.java",
         "TopLevel.java",
@@ -354,6 +361,7 @@ java_library(
         "MapKeyProcessingStep.java",
         "ModuleProcessingStep.java",
         "ProcessingEnvironmentModule.java",
+        "ProcessingRoundCacheModule.java",
         "SourceFileGeneratorsModule.java",
         "SpiModule.java",
         "SystemComponentsModule.java",
@@ -404,10 +412,10 @@ java_library(
     ],
 )
 
-# A _deploy.jar consisting of the java_librarys in https://github.com/google/kythe needed to build a
+# A _deploy.jar consisting of the java_librarys in https://github.com/kythe/kythe needed to build a
 # Kythe plugin
 # TODO(ronshapiro): replace this with a http_archive of the next release in
-# https://github.com/google/kythe/releases
+# https://github.com/kythe/kythe/releases
 java_import(
     name = "kythe_plugin",
     jars = ["kythe_plugin_deploy.jar"],

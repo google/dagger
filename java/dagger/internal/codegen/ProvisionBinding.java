@@ -97,6 +97,22 @@ abstract class ProvisionBinding extends ContributionBinding {
         && compilerOptions.doCheckForNulls();
   }
 
+  // Profiling determined that this method is called enough times that memoizing it had a measurable
+  // performance improvement for large components.
+  @Memoized
+  @Override
+  boolean requiresModuleInstance() {
+    return super.requiresModuleInstance();
+  }
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // TODO(ronshapiro,dpb): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
+
   @AutoValue.Builder
   @CanIgnoreReturnValue
   abstract static class Builder extends ContributionBinding.Builder<ProvisionBinding, Builder> {

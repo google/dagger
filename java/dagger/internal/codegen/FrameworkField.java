@@ -28,8 +28,9 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementKindVisitor6;
+import javax.lang.model.util.ElementKindVisitor8;
 
 /**
  * A value object that represents a field in the generated Component class.
@@ -96,7 +97,7 @@ abstract class FrameworkField {
   }
 
   private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =
-      new ElementKindVisitor6<String, Binding>() {
+      new ElementKindVisitor8<String, Binding>() {
 
         @Override
         protected String defaultAction(Element e, Binding p) {
@@ -116,6 +117,11 @@ abstract class FrameworkField {
         @Override
         public String visitType(TypeElement e, Binding p) {
           return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, e.getSimpleName().toString());
+        }
+
+        @Override
+        public String visitVariableAsParameter(VariableElement e, Binding p) {
+          return e.getSimpleName().toString();
         }
       };
 

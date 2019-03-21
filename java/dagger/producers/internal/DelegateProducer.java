@@ -57,6 +57,15 @@ public final class DelegateProducer<T> implements CancellableProducer<T> {
     asDelegateProducer.delegate = (CancellableProducer<T>) delegate;
   }
 
+  /**
+   * Returns the factory's delegate.
+   *
+   * @throws NullPointerException if the delegate has not been set
+   */
+  CancellableProducer<T> getDelegate() {
+    return checkNotNull(delegate);
+  }
+
   @Override
   public void cancel(boolean mayInterruptIfRunning) {
     delegate.cancel(mayInterruptIfRunning);

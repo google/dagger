@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
 import com.google.auto.common.MoreTypes;
@@ -50,7 +51,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
         dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         RUNTIME_EXCEPTION,
-        ALLOWS_MULTIBINDINGS);
+        ALLOWS_MULTIBINDINGS,
+        ALLOWS_SCOPING);
     this.types = types;
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
   }

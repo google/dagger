@@ -24,7 +24,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
@@ -33,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -64,8 +69,6 @@ import javax.lang.model.type.TypeMirror;
 /** The implementation of a component type. */
 final class ComponentImplementation {
   /** A type of field that this component can contain. */
-  // TODO(user, dpb): Move component requirements and reference managers to top? The order should
-  // be component requirements, reference managers, framework fields, private method fields, ... etc
   enum FieldSpecKind {
 
     /** A field required by the component, e.g. module instances. */
@@ -169,6 +172,7 @@ final class ComponentImplementation {
     abstract ImmutableSet<ComponentRequirement> parameters();
   }
 
+  private final ComponentDescriptor componentDescriptor;
   private final BindingGraph graph;
   private final ClassName name;
   private final NestingKind nestingKind;
@@ -194,14 +198,13 @@ final class ComponentImplementation {
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
-  // TODO(b/117833324): can this just be a Set instead of a SetMultimap? The values should be
-  // implicit
-  private final SetMultimap<BindingRequest, DependencyRequest> multibindingContributionsMade =
+  private final SetMultimap<BindingRequest, Key> multibindingContributionsMade =
       HashMultimap.create();
   private Optional<ConfigureInitializationMethod> configureInitializationMethod = Optional.empty();
   private final Map<ComponentRequirement, String> modifiableModuleMethods = new LinkedHashMap<>();
 
-  ComponentImplementation(
+  private ComponentImplementation(
+      ComponentDescriptor componentDescriptor,
       BindingGraph graph,
       ClassName name,
       NestingKind nestingKind,
@@ -209,6 +212,7 @@ final class ComponentImplementation {
       SubcomponentNames subcomponentNames,
       Modifier... modifiers) {
     checkName(name, nestingKind);
+    this.componentDescriptor = componentDescriptor;
     this.graph = graph;
     this.name = name;
     this.nestingKind = nestingKind;
@@ -218,17 +222,34 @@ final class ComponentImplementation {
     this.subcomponentNames = subcomponentNames;
   }
 
-  ComponentImplementation(
-      ComponentImplementation parent,
+  /** Returns a component implementation for a top-level component. */
+  static ComponentImplementation topLevelComponentImplementation(
+      BindingGraph graph,
+      ClassName name,
+      SubcomponentNames subcomponentNames) {
+    return new ComponentImplementation(
+        graph.componentDescriptor(),
+        graph,
+        name,
+        NestingKind.TOP_LEVEL,
+        Optional.empty(), // superclass implementation
+        subcomponentNames,
+        PUBLIC,
+        graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL);
+  }
+
+  /** Returns a component implementation that is a child of the current implementation. */
+  ComponentImplementation childComponentImplementation(
       BindingGraph graph,
       Optional<ComponentImplementation> superclassImplementation,
       Modifier... modifiers) {
-    this(
+    return new ComponentImplementation(
+        graph.componentDescriptor(),
         graph,
-        parent.getSubcomponentName(graph.componentDescriptor()),
+        getSubcomponentName(graph.componentDescriptor()),
         NestingKind.MEMBER,
         superclassImplementation,
-        parent.subcomponentNames,
+        subcomponentNames,
         modifiers);
   }
 
@@ -257,7 +278,7 @@ final class ComponentImplementation {
 
   /** Returns the descriptor for the component being generated. */
   ComponentDescriptor componentDescriptor() {
-    return graph.componentDescriptor();
+    return componentDescriptor;
   }
 
   /** Returns the name of the component. */
@@ -308,17 +329,20 @@ final class ComponentImplementation {
   }
 
   /**
-   * The possible requirements for creating an instance of this component implementation type.
+   * The requirements for creating an instance of this component implementation type.
    *
    * <p>If this component implementation is concrete, these requirements will be in the order that
    * the implementation's constructor takes them as parameters.
    */
   ImmutableSet<ComponentRequirement> requirements() {
     // If the base implementation's creator is being generated in ahead-of-time-subcomponents
-    // mode, this uses possiblyNecessaryRequirements() since Dagger doesn't know what modules may
-    // end up being unused. Otherwise, we use the necessary component requirements.
+    // mode, this uses the ComponentDescriptor's requirements() since Dagger doesn't know what
+    // modules may end being unused or owned by an ancestor component. Otherwise, we use the
+    // necessary component requirements.
+    // TODO(ronshapiro): can we remove the second condition here? Or, is it never going to be
+    // called, so we should enforce that invariant?
     return isAbstract() && !superclassImplementation().isPresent()
-        ? graph().possiblyNecessaryRequirements()
+        ? componentDescriptor().requirements()
         : graph().componentRequirements();
   }
 
@@ -361,13 +385,26 @@ final class ComponentImplementation {
   }
 
   /**
+   * Returns the kind of this component's creator.
+   *
+   * @throws IllegalStateException if the component has no creator
+   */
+  private ComponentCreatorKind creatorKind() {
+    checkState(componentDescriptor().hasCreator());
+    return componentDescriptor()
+        .creatorDescriptor()
+        .map(ComponentCreatorDescriptor::kind)
+        .orElse(BUILDER);
+  }
+
+  /**
    * Returns the name of the creator class for this component. It will be a sibling of this
    * generated class unless this is a top-level component, in which case it will be nested.
    */
   ClassName getCreatorName() {
     return isNested()
-        ? name.peerClass(subcomponentNames.get(componentDescriptor()) + "Builder")
-        : name.nestedClass("Builder");
+        ? name.peerClass(subcomponentNames.getCreatorName(componentDescriptor()))
+        : name.nestedClass(creatorKind().typeName());
   }
 
   /** Returns the name of the nested implementation class for a child component. */
@@ -380,9 +417,12 @@ final class ComponentImplementation {
     return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
-  /** Returns the simple subcomponent name for the given subcomponent builder {@link Key}. */
-  String getSubcomponentName(Key key) {
-    return subcomponentNames.get(key);
+  /**
+   * Returns the simple name of the creator implementation class for the given subcomponent creator
+   * {@link Key}.
+   */
+  String getSubcomponentCreatorSimpleName(Key key) {
+    return subcomponentNames.getCreatorName(key);
   }
 
   /** Returns the child implementation. */
@@ -426,11 +466,6 @@ final class ComponentImplementation {
     methodSpecsMap.put(methodKind, methodSpec);
   }
 
-  /** Adds the given methods to the component. */
-  void addMethods(MethodSpecKind methodKind, Iterable<MethodSpec> methodSpecs) {
-    methodSpecsMap.putAll(methodKind, methodSpecs);
-  }
-
   /** Adds the given annotation to the component. */
   void addAnnotation(AnnotationSpec annotation) {
     component.addAnnotation(annotation);
@@ -447,7 +482,8 @@ final class ComponentImplementation {
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
+    modifiableBindingMethods.addNewModifiableMethod(
+        type, request, returnType, methodSpec, finalized);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
   }
 
@@ -462,12 +498,13 @@ final class ComponentImplementation {
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addMethod(type, request, returnType, methodSpec, finalized);
+    modifiableBindingMethods.addNewModifiableMethod(
+        type, request, returnType, methodSpec, finalized);
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
   void addImplementedModifiableBindingMethod(ModifiableBindingMethod method) {
-    modifiableBindingMethods.methodImplemented(method);
+    modifiableBindingMethods.addReimplementedMethod(method);
     methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method.methodSpec());
   }
 
@@ -481,11 +518,6 @@ final class ComponentImplementation {
   /** Adds the given type to the component. */
   void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
     typeSpecsMap.put(typeKind, typeSpec);
-  }
-
-  /** Adds the given types to the component. */
-  void addTypes(TypeSpecKind typeKind, Iterable<TypeSpec> typeSpecs) {
-    typeSpecsMap.putAll(typeKind, typeSpecs);
   }
 
   /** Adds the type generated from the given child implementation. */
@@ -626,18 +658,20 @@ final class ComponentImplementation {
    * Returns the {@link ModifiableBindingMethod}s for this subcomponent implementation and its
    * superclasses.
    */
-  ImmutableList<ModifiableBindingMethod> getModifiableBindingMethods() {
-    ImmutableList.Builder<ModifiableBindingMethod> modifiableBindingMethodsBuilder =
-        ImmutableList.builder();
+  ImmutableMap<BindingRequest, ModifiableBindingMethod> getModifiableBindingMethods() {
+    Map<BindingRequest, ModifiableBindingMethod> modifiableBindingMethodsBuilder =
+        new LinkedHashMap<>();
     if (superclassImplementation.isPresent()) {
-      ImmutableList<ModifiableBindingMethod> superclassModifiableBindingMethods =
-          superclassImplementation.get().getModifiableBindingMethods();
-      superclassModifiableBindingMethods.stream()
-          .filter(method -> !modifiableBindingMethods.finalized(method))
-          .forEach(modifiableBindingMethodsBuilder::add);
+      modifiableBindingMethodsBuilder.putAll(
+          Maps.filterValues(
+              superclassImplementation.get().getModifiableBindingMethods(),
+              // filters the modifiable methods of a superclass that are finalized in this component
+              method -> !modifiableBindingMethods.finalized(method)));
     }
-    modifiableBindingMethodsBuilder.addAll(modifiableBindingMethods.getNonFinalizedMethods());
-    return modifiableBindingMethodsBuilder.build();
+    // replace superclass modifiable binding methods with any that are defined in this component
+    // implementation
+    modifiableBindingMethodsBuilder.putAll(modifiableBindingMethods.getNonFinalizedMethods());
+    return ImmutableMap.copyOf(modifiableBindingMethodsBuilder);
   }
 
   /**
@@ -723,7 +757,9 @@ final class ComponentImplementation {
     // We register a multibinding as implemented each time we request the multibinding expression,
     // so only modify the set of contributions once.
     if (!multibindingContributionsMade.containsKey(bindingRequest)) {
-      multibindingContributionsMade.putAll(bindingRequest, multibinding.dependencies());
+      multibindingContributionsMade.putAll(
+          bindingRequest,
+          multibinding.dependencies().stream().map(DependencyRequest::key).collect(toList()));
     }
   }
 
@@ -731,7 +767,7 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all superclass implementations of
    * a multibinding.
    */
-  ImmutableSet<DependencyRequest> superclassContributionsMade(BindingRequest bindingRequest) {
+  ImmutableSet<Key> superclassContributionsMade(BindingRequest bindingRequest) {
     return superclassImplementation
         .map(s -> s.getAllMultibindingContributions(bindingRequest))
         .orElse(ImmutableSet.of());
@@ -741,8 +777,7 @@ final class ComponentImplementation {
    * Returns the set of multibinding contributions associated with all implementations of a
    * multibinding.
    */
-  private ImmutableSet<DependencyRequest> getAllMultibindingContributions(
-      BindingRequest bindingRequest) {
+  private ImmutableSet<Key> getAllMultibindingContributions(BindingRequest bindingRequest) {
     return ImmutableSet.copyOf(
         Sets.union(
             multibindingContributionsMade.get(bindingRequest),

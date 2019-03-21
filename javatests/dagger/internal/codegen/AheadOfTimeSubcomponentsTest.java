@@ -42,7 +42,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_fromComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -128,7 +128,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_dependsOnBindingWithMatchingComponentMethod() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -178,7 +178,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_dependsOnMissingBinding() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -280,7 +280,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindings_satisfiedInGreatAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -719,8 +719,6 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
-            "",
-            "  public abstract static class Builder implements Leaf.Builder {}",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -813,7 +811,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "      return new LeafBuilder();",
             "    }",
             "",
-            "    private final class LeafBuilder extends DaggerLeaf.Builder {",
+            "    private final class LeafBuilder implements Leaf.Builder {",
             "      @Override",
             "      public Leaf build() {",
             "        return new LeafImpl();",
@@ -989,7 +987,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_boundAndSatisfiedInSameSubcomponent() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInSub");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInSub");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Sub",
@@ -1057,7 +1055,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_satisfiedInAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1166,7 +1164,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_satisfiedInGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1314,7 +1312,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_nonComponentMethodDependencySatisfiedInAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "SatisfiedInAncestor", "RequiresOptionalSatisfiedInAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -1438,7 +1436,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void optionalBindings_boundInAncestorAndSatisfiedInGrandAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "SatisfiedInGrandAncestor");
+    createSimplePackagePrivateClasses(filesToCompile, "SatisfiedInGrandAncestor");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -1953,7 +1951,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void provisionOverInjection_prunedIndirectDependency() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "PrunedDependency");
+    createSimplePackagePrivateClasses(filesToCompile, "PrunedDependency");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.InjectsPrunedDependency",
@@ -2431,7 +2429,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void productionSubcomponentAndModifiableFrameworkInstance() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Response", "ResponseDependency");
+    createSimplePackagePrivateClasses(filesToCompile, "Response", "ResponseDependency");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -2532,8 +2530,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "    Producers.cancel(getSetOfResponseProducer(), mayInterruptIfRunning);",
             "    Producers.cancel(responseProducer, mayInterruptIfRunning);",
             "  }",
-            "",
-            "  public abstract static class Builder implements Leaf.Builder {}",
             "}");
 
     Compilation compilation = compile(filesToCompile.build());
@@ -2689,7 +2685,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "",
-            "  private final class LeafBuilder extends DaggerLeaf.Builder {",
+            "  private final class LeafBuilder implements Leaf.Builder {",
             "    @Override",
             "    public Leaf build() {",
             "      return new LeafImpl();",
@@ -2746,7 +2742,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void lazyOfModifiableBinding() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Leaf",
@@ -2852,7 +2848,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void missingBindingAccessInLeafAndAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(
+    createSimplePackagePrivateClasses(
         filesToCompile, "Missing", "DependsOnMissing", "ProvidedInAncestor_InducesSetBinding");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
@@ -3065,7 +3061,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentBuilders() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "InducesDependenciesOnBuilderFields");
+    createSimplePackagePrivateClasses(filesToCompile, "InducesDependenciesOnBuilderFields");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3361,7 +3357,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentBuilders_moduleWithUnusedInstanceBindings() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Used", "Unused");
+    createSimplePackagePrivateClasses(filesToCompile, "Used", "Unused");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.ModuleWithUsedBinding",
@@ -3710,7 +3706,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void bindsWithMissingDependency() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3828,7 +3824,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void bindsWithMissingDependency_pruned() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "MissingInLeaf");
+    createSimplePackagePrivateClasses(filesToCompile, "MissingInLeaf");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -3968,7 +3964,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void modifiedProducerFromProvider() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "DependsOnModifiedProducerFromProvider");
+    createSimplePackagePrivateClasses(filesToCompile, "DependsOnModifiedProducerFromProvider");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.LeafModule",
@@ -4170,7 +4166,8 @@ public final class AheadOfTimeSubcomponentsTest {
             "          monitorProvider,",
             "          DoubleCheck.provider(",
             "              Leaf_MonitoringModule_MonitorFactory.create(",
-            "                  leafProvider, getSetOfFactoryProvider())));",
+            "                  leafProvider,",
+            "                  getSetOfProductionComponentMonitorFactoryProvider())));",
             "      this.setOfStringProvider =",
             "          SetFactory.<String>builder(1, 0)",
             "              .addProvider(RootModule_InduceModificationInLeafFactory.create())",
@@ -4186,7 +4183,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "",
             "    protected Provider<Set<ProductionComponentMonitor.Factory>> ",
-            "        getSetOfFactoryProvider() {",
+            "        getSetOfProductionComponentMonitorFactoryProvider() {",
             "      return SetFactory.<ProductionComponentMonitor.Factory>empty();",
             "    }",
             "",
@@ -4383,7 +4380,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void subcomponentInducedFromAncestor() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Inducer");
+    createSimplePackagePrivateClasses(filesToCompile, "Inducer");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.InducedSubcomponent",
@@ -4527,7 +4524,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void rootScopedAtInjectConstructor_effectivelyMissingInSubcomponent() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "ProvidesMethodRootScoped");
+    createSimplePackagePrivateClasses(filesToCompile, "ProvidesMethodRootScoped");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.RootScope",
@@ -4616,7 +4613,7 @@ public final class AheadOfTimeSubcomponentsTest {
   @Test
   public void prunedModuleWithInstanceState() {
     ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
-    createAncillaryClasses(filesToCompile, "Pruned");
+    createSimplePackagePrivateClasses(filesToCompile, "Pruned");
     filesToCompile.add(
         JavaFileObjects.forSourceLines(
             "test.Modified",
@@ -4704,9 +4701,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "  Leaf leaf();",
             "}"));
 
-    String exceptionText =
-        " has been pruned from the final resolved binding graph. If this exception is thrown, it "
-            + "is a Dagger bug, so please report it!";
     JavaFileObject generatedRoot =
         JavaFileObjects.forSourceLines(
             "test.DaggerRoot",
@@ -4724,8 +4718,7 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "    @Override",
             "    protected LeafModule leafModule() {",
-            "      throw new UnsupportedOperationException(",
-            "          LeafModule.class + \"" + exceptionText + "\");",
+            "      return null;",
             "    }",
             "  }",
             "}");
@@ -4819,11 +4812,11 @@ public final class AheadOfTimeSubcomponentsTest {
 
   /**
    * This tests a regression case where the component builder in the base implementation used one
-   * set of disambiguated names from all of the {@link
-   * BindingGraph#possiblyNecessaryRequirements()}, and the final implementation used a different
-   * set of disambiguated names from the resolved {@link BindingGraph#componentRequirements()}. This
-   * resulted in generated output that didn't compile, as the builder implementation attempted to
-   * use the new names in validation, which didn't line up with the old names.
+   * set of disambiguated names from all of the {@link ComponentDescriptor#requirements()}, and the
+   * final implementation used a different set of disambiguated names from the resolved {@link
+   * BindingGraph#componentRequirements()}. This resulted in generated output that didn't compile,
+   * as the builder implementation attempted to use the new names in validation, which didn't line
+   * up with the old names.
    */
   @Test
   public void componentBuilderFields_consistencyAcrossImplementations() {
@@ -4986,7 +4979,6 @@ public final class AheadOfTimeSubcomponentsTest {
             "class Parameterized<T extends PublicType> {",
             "  @Inject Parameterized(T t) {}",
             "}"),
-
         JavaFileObjects.forSourceLines(
             "test.Leaf",
             "package test;",
@@ -5172,8 +5164,429 @@ public final class AheadOfTimeSubcomponentsTest {
         .containsElementsIn(generated);
   }
 
+  @Test
+  public void packagePrivate_derivedFromFrameworkInstance_ComponentMethod() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PackagePrivate",
+            "package test;",
+            "",
+            "import dagger.Reusable;",
+            "import javax.inject.Inject;",
+            "",
+            "@Reusable", // Use @Reusable to force a framework field
+            "class PackagePrivate {",
+            "  @Inject PackagePrivate() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Leaf {",
+            "  PackagePrivate packagePrivate();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  private Provider<PackagePrivate> packagePrivateProvider;",
+            "",
+            "  @Override",
+            "  public PackagePrivate packagePrivate() {",
+            "    return (PackagePrivate) getPackagePrivateProvider().get();",
+            "  }",
+            "",
+            "  protected Provider getPackagePrivateProvider() {",
+            "    return packagePrivateProvider;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+  }
+
+  @Test
+  public void castModifiableMethodAccessedInFinalImplementation() {
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createSimplePackagePrivateClasses(filesToCompile, "PackagePrivate");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.PublicBaseType",
+            "package test;",
+            "", //
+            "public class PublicBaseType {}"),
+        JavaFileObjects.forSourceLines(
+            "test.PackagePrivateSubtype",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            // Force this to be a modifiable binding resolved in the ancestor even though the
+            // binding is requested in the leaf.
+            "@AncestorScope",
+            "class PackagePrivateSubtype extends PublicBaseType {",
+            "  @Inject PackagePrivateSubtype() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface AncestorScope {}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface LeafModule {",
+            "  @Binds PublicBaseType publicBaseType(PackagePrivateSubtype subtype);",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.InjectsOptionalOfModifiable",
+            "package test;",
+            "",
+            "import java.util.Optional;",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectsOptionalOfModifiable {",
+            "  @Inject InjectsOptionalOfModifiable(",
+            "      Optional<PublicBaseType> optionalOfModifiable) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  InjectsOptionalOfModifiable injectsOptionalOfModifiable();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf {",
+            "  protected abstract Optional<PublicBaseType> getOptionalOfPublicBaseType();",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.InjectsPackagePrivateSubtype",
+            "package test;",
+            "",
+            "import java.util.Optional;",
+            "import javax.inject.Inject;",
+            "",
+            "class InjectsPackagePrivateSubtype {",
+            "  @Inject InjectsPackagePrivateSubtype(",
+            //     Force a modifiable binding method for PackagePrivateSubtype in Ancestor. The
+            //     final Leaf implementation will refer to this method, but will need to cast it
+            //     since the PackagePrivateSubtype is accessible from the current package, but the
+            //     method returns Object
+            "      PackagePrivateSubtype packagePrivateSubtype) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.AncestorModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface AncestorModule {",
+            "  @Provides",
+            "  static PackagePrivateSubtype packagePrivateSubtype() {",
+            "    return new PackagePrivateSubtype();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Ancestor",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@AncestorScope",
+            "@Subcomponent",
+            "interface Ancestor {",
+            "  InjectsPackagePrivateSubtype injectsPackagePrivateSubtype();",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedAncestor =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerAncestor",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerAncestor implements Ancestor {",
+            "  protected Object getPackagePrivateSubtype() {",
+            "    return getPackagePrivateSubtypeProvider().get();",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerAncestor")
+        .containsElementsIn(generatedAncestor);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface RootModule {",
+            "  @BindsOptionalOf",
+            "  PublicBaseType optionalPublicBaseType();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = RootModule.class)",
+            "interface Root {",
+            "  Ancestor ancestor();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root {",
+            "  protected final class AncestorImpl extends DaggerAncestor {",
+            "    protected final class LeafImpl extends DaggerAncestor.LeafImpl {",
+            "      @Override",
+            "      protected Optional<PublicBaseType> getOptionalOfPublicBaseType() {",
+            "        return Optional.of(",
+            "            (PublicBaseType) AncestorImpl.this.getPackagePrivateSubtype());",
+            "      }",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+  }
+
+  @Test
+  public void injectInLeaf_ProductionInRoot() {
+    // most of this is also covered in ProducesMethodShadowsInjectConstructorTest, but this test
+    // asserts that the correct PrunedConcreteBindingExpression is used
+    ImmutableList.Builder<JavaFileObject> filesToCompile = ImmutableList.builder();
+    createSimplePackagePrivateClasses(filesToCompile, "Dependency", "Missing");
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.Injected",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Injected {",
+            "  @Inject Injected(Dependency dependency, Missing missing) {}",
+            "",
+            "  Injected(Dependency dependency) {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.LeafModule",
+            "package test;",
+            "",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "interface LeafModule {",
+            "  @Produces",
+            "  static Object dependsOnInjectReplacedWithProduces(Injected injected) {",
+            "    return new Object();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Leaf",
+            "package test;",
+            "",
+            "import dagger.producers.Producer;",
+            "import dagger.producers.ProductionSubcomponent;",
+            "",
+            "@ProductionSubcomponent(modules = LeafModule.class)",
+            "interface Leaf {",
+            "  Producer<Object> objectProducer();",
+            "}"));
+
+    JavaFileObject generatedLeaf =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerLeaf",
+            "package test;",
+            "",
+            GENERATION_OPTIONS_ANNOTATION,
+            GENERATED_ANNOTATION,
+            "public abstract class DaggerLeaf implements Leaf, CancellationListener {",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.injectedProvider = Injected_Factory.create(",
+            "        getDependencyProvider(), getMissingProvider());",
+            "    this.injectedProducer = Producers.producerFromProvider(getInjectedProvider());",
+            "    this.dependsOnInjectReplacedWithProducesProducer =",
+            "        LeafModule_DependsOnInjectReplacedWithProducesFactory.create(",
+            "            getProductionImplementationExecutorProvider(),",
+            "            getProductionComponentMonitorProvider(),",
+            "            getInjectedProducer());",
+            "    this.objectProducerEntryPoint =",
+            "        Producers.entryPointViewOf(",
+            "            dependsOnInjectReplacedWithProducesProducer, this);",
+            "  }",
+            "",
+            "  protected abstract Provider getDependencyProvider();",
+            "  protected abstract Provider getMissingProvider();",
+            "",
+            "  protected Provider getInjectedProvider() {",
+            "    return injectedProvider;",
+            "  }",
+            "",
+            "  protected Producer getInjectedProducer() {",
+            "    return injectedProducer;",
+            "  }",
+            "}");
+    Compilation compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerLeaf")
+        .containsElementsIn(generatedLeaf);
+
+    filesToCompile.add(
+        JavaFileObjects.forSourceLines(
+            "test.RootModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.MoreExecutors;",
+            "import dagger.Provides;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import dagger.producers.Production;",
+            "import java.util.concurrent.Executor;",
+            "",
+            "@ProducerModule",
+            "interface RootModule {",
+            "  @Produces",
+            "  static Injected replaceInjectWithProduces(Dependency dependency) {",
+            "    return new Injected(dependency);",
+            "  }",
+            "",
+            "  @Produces",
+            "  static Dependency dependency() {",
+            "    return new Dependency();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @Production",
+            "  static Executor executor() {",
+            "    return MoreExecutors.directExecutor();",
+            "  }",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "test.Root",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionComponent;",
+            "",
+            "@ProductionComponent(modules = RootModule.class)",
+            "interface Root {",
+            "  Leaf leaf();",
+            "}"));
+
+    JavaFileObject generatedRoot =
+        JavaFileObjects.forSourceLines(
+            "test.DaggerRoot",
+            "package test;",
+            "",
+            GENERATED_ANNOTATION,
+            "public final class DaggerRoot implements Root, CancellationListener {",
+            "  private Producer<Dependency> dependencyProducer;",
+            "  private Producer<Injected> replaceInjectWithProducesProducer;",
+            "",
+            "  @SuppressWarnings(\"unchecked\")",
+            "  private void initialize() {",
+            "    this.productionImplementationExecutorProvider =",
+            "        DoubleCheck.provider((Provider) RootModule_ExecutorFactory.create());",
+            "    this.rootProvider = InstanceFactory.create((Root) this);",
+            "    this.monitorProvider =",
+            "        DoubleCheck.provider(",
+            "            Root_MonitoringModule_MonitorFactory.create(",
+            "                rootProvider,",
+            "                SetFactory.<ProductionComponentMonitor.Factory>empty()));",
+            "    this.dependencyProducer =",
+            "        RootModule_DependencyFactory.create(",
+            "            productionImplementationExecutorProvider, monitorProvider);",
+            "    this.replaceInjectWithProducesProducer =",
+            "        RootModule_ReplaceInjectWithProducesFactory.create(",
+            "            productionImplementationExecutorProvider,",
+            "            monitorProvider,",
+            "            dependencyProducer);",
+            "  }",
+            "",
+            "  protected final class LeafImpl extends DaggerLeaf",
+            "      implements CancellationListener {",
+            "    @Override",
+            "    protected Provider getDependencyProvider() {",
+            "      return MissingBindingFactory.create();",
+            "    }",
+            "",
+            "    @Override",
+            "    protected Provider getMissingProvider() {",
+            "      return MissingBindingFactory.create();",
+            "    }",
+            "",
+            "    @Override",
+            "    protected Producer getInjectedProducer() {",
+            "      return DaggerRoot.this.replaceInjectWithProducesProducer;",
+            "    }",
+            "  }",
+            "}");
+    compilation = compile(filesToCompile.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerRoot")
+        .containsElementsIn(generatedRoot);
+  }
+
   // TODO(ronshapiro): remove copies from AheadOfTimeSubcomponents*Test classes
-  private void createAncillaryClasses(
+  private void createSimplePackagePrivateClasses(
       ImmutableList.Builder<JavaFileObject> filesBuilder, String... ancillaryClasses) {
     for (String className : ancillaryClasses) {
       filesBuilder.add(

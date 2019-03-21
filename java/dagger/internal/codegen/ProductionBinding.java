@@ -20,6 +20,7 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerTypes.isFutureType;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -98,11 +99,27 @@ abstract class ProductionBinding extends ContributionBinding {
    */
   abstract Optional<DependencyRequest> monitorRequest();
 
+  // Profiling determined that this method is called enough times that memoizing it had a measurable
+  // performance improvement for large components.
+  @Memoized
+  @Override
+  boolean requiresModuleInstance() {
+    return super.requiresModuleInstance();
+  }
+
   static Builder builder() {
     return new AutoValue_ProductionBinding.Builder()
         .explicitDependencies(ImmutableList.<DependencyRequest>of())
         .thrownTypes(ImmutableList.<TypeMirror>of());
   }
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  // TODO(ronshapiro,dpb): simplify the equality semantics
+  @Override
+  public abstract boolean equals(Object obj);
 
   @AutoValue.Builder
   @CanIgnoreReturnValue

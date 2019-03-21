@@ -20,15 +20,15 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableSet;
-import dagger.model.BindingGraph.SubcomponentBuilderBindingEdge;
+import dagger.model.BindingGraph.SubcomponentCreatorBindingEdge;
 import javax.lang.model.element.TypeElement;
 
-/** An implementation of {@link SubcomponentBuilderBindingEdge}. */
-final class SubcomponentBuilderBindingEdgeImpl implements SubcomponentBuilderBindingEdge {
+/** An implementation of {@link SubcomponentCreatorBindingEdge}. */
+final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCreatorBindingEdge {
 
   private final ImmutableSet<TypeElement> declaringModules;
 
-  SubcomponentBuilderBindingEdgeImpl(Iterable<TypeElement> declaringModules) {
+  SubcomponentCreatorBindingEdgeImpl(Iterable<TypeElement> declaringModules) {
     this.declaringModules = ImmutableSet.copyOf(declaringModules);
   }
 

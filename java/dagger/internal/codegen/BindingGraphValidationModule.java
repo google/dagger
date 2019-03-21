@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
 import dagger.multibindings.IntoSet;
 import dagger.spi.BindingGraphPlugin;
-import java.util.Set;
-import javax.inject.Singleton;
 
 /** Binds the set of {@link BindingGraphPlugin}s used to implement Dagger validation. */
 @Module
@@ -79,23 +75,4 @@ interface BindingGraphValidationModule {
   @IntoSet
   @Validation
   BindingGraphPlugin subcomponentFactoryMethod(SubcomponentFactoryMethodValidator validation);
-
-  @Provides
-  @Singleton
-  @ModuleValidation
-  static BindingGraphValidator moduleBindingGraphValidator(
-      @Validation Set<BindingGraphPlugin> validationPlugins,
-      ImmutableSet<BindingGraphPlugin> externalPlugins,
-      @ModuleValidation DiagnosticReporterFactory diagnosticReporterFactory) {
-    return new BindingGraphValidator(validationPlugins, externalPlugins, diagnosticReporterFactory);
-  }
-
-  @Provides
-  @ModuleValidation
-  static DiagnosticReporterFactory moduleValidationDiagnosticReporterFactory(
-      DiagnosticReporterFactory diagnosticReporterFactory, CompilerOptions compilerOptions) {
-    return diagnosticReporterFactory
-        .treatingErrorsAs(compilerOptions.moduleBindingValidationType())
-        .withoutPrintingEntryPoints();
-  }
 }

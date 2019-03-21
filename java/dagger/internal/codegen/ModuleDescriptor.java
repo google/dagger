@@ -100,7 +100,7 @@ abstract class ModuleDescriptor {
   }
 
   @Singleton
-  static final class Factory {
+  static final class Factory implements ClearableCache {
     private final DaggerElements elements;
     private final BindingFactory bindingFactory;
     private final MultibindingDeclaration.Factory multibindingDeclarationFactory;
@@ -220,8 +220,8 @@ abstract class ModuleDescriptor {
           + LOWER_CAMEL.to(UPPER_CAMEL, method.getSimpleName().toString());
     }
 
-    /** Releases references to any {@link ModuleDescriptor}s that this factory is retaining. */
-    void clearCache() {
+    @Override
+    public void clearCache() {
       cache.clear();
     }
   }

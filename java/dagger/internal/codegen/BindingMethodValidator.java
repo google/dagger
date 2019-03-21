@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Verify.verifyNotNull;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
@@ -62,6 +63,7 @@ abstract class BindingMethodValidator {
   private final ExceptionSuperclass exceptionSuperclass;
   private final Map<ExecutableElement, ValidationReport<ExecutableElement>> cache = new HashMap<>();
   private final AllowsMultibindings allowsMultibindings;
+  private final AllowsScoping allowsScoping;
 
   /**
    * Creates a validator object.
@@ -78,7 +80,8 @@ abstract class BindingMethodValidator {
       Class<? extends Annotation> enclosingElementAnnotation,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
-      AllowsMultibindings allowsMultibindings) {
+      AllowsMultibindings allowsMultibindings,
+      AllowsScoping allowsScoping) {
     this(
         elements,
         types,
@@ -87,7 +90,8 @@ abstract class BindingMethodValidator {
         dependencyRequestValidator,
         abstractness,
         exceptionSuperclass,
-        allowsMultibindings);
+        allowsMultibindings,
+        allowsScoping);
   }
 
   /**
@@ -105,7 +109,8 @@ abstract class BindingMethodValidator {
       DependencyRequestValidator dependencyRequestValidator,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
-      AllowsMultibindings allowsMultibindings) {
+      AllowsMultibindings allowsMultibindings,
+      AllowsScoping allowsScoping) {
     this.elements = elements;
     this.types = types;
     this.methodAnnotation = methodAnnotation;
@@ -114,6 +119,7 @@ abstract class BindingMethodValidator {
     this.abstractness = abstractness;
     this.exceptionSuperclass = exceptionSuperclass;
     this.allowsMultibindings = allowsMultibindings;
+    this.allowsScoping = allowsScoping;
   }
 
   /** The annotation that identifies binding methods validated by this object. */
@@ -385,13 +391,23 @@ abstract class BindingMethodValidator {
   }
 
   /** Adds an error if the method has more than one {@linkplain Scope scope} annotation. */
-  protected void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
+  private void checkScopes(ValidationReport.Builder<ExecutableElement> builder) {
     ImmutableSet<Scope> scopes = scopesOf(builder.getSubject());
-    if (scopes.size() > 1) {
-      for (Scope scope : scopes) {
-        builder.addError(
-            "Cannot use more than one @Scope", builder.getSubject(), scope.scopeAnnotation());
-      }
+    String error = null;
+    switch (allowsScoping) {
+      case ALLOWS_SCOPING:
+        if (scopes.size() <= 1) {
+          return;
+        }
+        error = bindingMethods("cannot use more than one @Scope");
+        break;
+      case NO_SCOPING:
+        error = bindingMethods("cannot be scoped");
+        break;
+    }
+    verifyNotNull(error);
+    for (Scope scope : scopes) {
+      builder.addError(error, builder.getSubject(), scope.scopeAnnotation());
     }
   }
 
@@ -520,5 +536,15 @@ abstract class BindingMethodValidator {
     private boolean allowsMultibindings() {
       return this == ALLOWS_MULTIBINDINGS;
     }
+  }
+
+  /** How to check scoping annotations. */
+  protected enum AllowsScoping {
+    /** This method disallows scope annotations, so check that none are present. */
+    NO_SCOPING,
+
+    /** This method allows scoping, so validate that there's at most one. */
+    ALLOWS_SCOPING,
+    ;
   }
 }

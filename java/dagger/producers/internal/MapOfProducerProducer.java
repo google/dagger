@@ -16,10 +16,8 @@
 
 package dagger.producers.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.producers.internal.Producers.entryPointViewOf;
 import static dagger.producers.internal.Producers.nonCancellationPropagatingViewOf;
-import static dagger.producers.internal.Producers.producerFromProvider;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -34,52 +32,42 @@ import javax.inject.Provider;
  * A {@link Producer} implementation used to implement {@link Map} bindings. This factory returns an
  * immediate future of {@code Map<K, Producer<V>>} when calling {@link #get}.
  */
-public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, Producer<V>>> {
-  private final ImmutableMap<K, Producer<V>> contributingMap;
-
+public final class MapOfProducerProducer<K, V> extends AbstractMapProducer<K, V, Producer<V>> {
   /** Returns a new {@link Builder}. */
   public static <K, V> Builder<K, V> builder(int size) {
     return new Builder<>(size);
   }
 
   private MapOfProducerProducer(ImmutableMap<K, Producer<V>> contributingMap) {
-    this.contributingMap = contributingMap;
+    super(contributingMap);
   }
 
   @Override
   public ListenableFuture<Map<K, Producer<V>>> compute() {
-    return Futures.<Map<K, Producer<V>>>immediateFuture(contributingMap);
+    return Futures.<Map<K, Producer<V>>>immediateFuture(contributingMap());
   }
 
   /** A builder for {@link MapOfProducerProducer} */
-  public static final class Builder<K, V> {
-    private final ImmutableMap.Builder<K, Producer<V>> mapBuilder;
-
+  public static final class Builder<K, V> extends AbstractMapProducer.Builder<K, V, Producer<V>> {
     private Builder(int size) {
-      mapBuilder = ImmutableMap.builderWithExpectedSize(size);
+      super(size);
     }
 
-    /** Associates {@code key} with {@code producerOfValue}. */
+    @Override
     public Builder<K, V> put(K key, Producer<V> producerOfValue) {
-      checkNotNull(key, "key");
-      checkNotNull(producerOfValue, "producer of value");
-      mapBuilder.put(key, producerOfValue);
+      super.put(key, producerOfValue);
       return this;
     }
 
-    /** Associates {@code key} with {@code providerOfValue}. */
+    @Override
     public Builder<K, V> put(K key, Provider<V> providerOfValue) {
-      checkNotNull(key, "key");
-      checkNotNull(providerOfValue, "provider of value");
-      mapBuilder.put(key, producerFromProvider(providerOfValue));
+      super.put(key, providerOfValue);
       return this;
     }
 
-    // TODO(b/118630627): make this accept MapOfProducerProducer<K, V>, and change all framework
-    // fields to be of that type so we don't need an unsafe cast
-    /** Adds contributions from a super-implementation of a component into this builder. */
-    public Builder<K, V> putAll(Producer<Map<K, Producer<V>>> mapProducerProducer) {
-      mapBuilder.putAll(((MapOfProducerProducer<K, V>) mapProducerProducer).contributingMap);
+    @Override
+    public Builder<K, V> putAll(Producer<Map<K, Producer<V>>> mapOfProducerProducer) {
+      super.putAll(mapOfProducerProducer);
       return this;
     }
 
@@ -104,7 +92,7 @@ public final class MapOfProducerProducer<K, V> extends AbstractProducer<Map<K, P
   private Producer<Map<K, Producer<V>>> newTransformedValuesView(
       Function<Producer<V>, Producer<V>> valueTransformationFunction) {
     return dagger.producers.Producers.<Map<K, Producer<V>>>immediateProducer(
-        ImmutableMap.copyOf(Maps.transformValues(contributingMap, valueTransformationFunction)));
+        ImmutableMap.copyOf(Maps.transformValues(contributingMap(), valueTransformationFunction)));
   }
 
   @SuppressWarnings("unchecked")

@@ -106,14 +106,14 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
   /**
    * Reports a dependency cycle at the dependency into the cycle that is closest to an entry point.
    *
-   * <p>For cycles found in standard components, looks for the shortest path from the component that
-   * contains the cycle (all bindings in a cycle must be in the same component; see below) to some
-   * binding in the cycle. Then looks for the last dependency in that path that is not in the cycle;
-   * that is the dependency that will be reported, so that the dependency trace will end just before
-   * the cycle.
+   * <p>For cycles found in reachable binding graphs, looks for the shortest path from the component
+   * that contains the cycle (all bindings in a cycle must be in the same component; see below) to
+   * some binding in the cycle. Then looks for the last dependency in that path that is not in the
+   * cycle; that is the dependency that will be reported, so that the dependency trace will end just
+   * before the cycle.
    *
-   * <p>For cycles found during module binding validation, just reports the component that contains
-   * the cycle.
+   * <p>For cycles found during full binding graph validation, just reports the component that
+   * contains the cycle.
    *
    * <p>Proof (by counterexample) that all bindings in a cycle must be in the same component: Assume
    * one binding in the cycle is in a parent component. Bindings cannot depend on bindings in child
@@ -121,7 +121,7 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
    */
   private void reportCycle(
       Cycle<Node> cycle, BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
-    if (bindingGraph.isModuleBindingGraph()) {
+    if (bindingGraph.isFullBindingGraph()) {
       diagnosticReporter.reportComponent(
           ERROR,
           bindingGraph.componentNode(cycle.nodes().asList().get(0).componentPath()).get(),

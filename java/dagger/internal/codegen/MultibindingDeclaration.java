@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import dagger.internal.codegen.ContributionType.HasContributionType;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
@@ -55,6 +56,13 @@ abstract class MultibindingDeclaration extends BindingDeclaration implements Has
    */
   @Override
   public abstract ContributionType contributionType();
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object obj);
 
   /**
    * A factory for {@link MultibindingDeclaration}s.

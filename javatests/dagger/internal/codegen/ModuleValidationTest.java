@@ -128,6 +128,40 @@ public final class ModuleValidationTest {
   }
 
   @Test
+  public void moduleSubcomponents_listsSubcomponentFactory() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            moduleType.importStatement(),
+            "",
+            moduleType.annotationWithSubcomponent("Sub.Factory.class"),
+            "class TestModule {}");
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Sub {",
+            "  @Subcomponent.Factory",
+            "  interface Factory {",
+            "    Sub creator();",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.Sub.Factory is a @Subcomponent.Factory. Did you mean to use test.Sub?")
+        .inFile(module)
+        .onLine(5);
+  }
+
+  @Test
   public void moduleSubcomponents_listsProductionSubcomponentBuilder() {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
@@ -162,7 +196,41 @@ public final class ModuleValidationTest {
   }
 
   @Test
-  public void moduleSubcomponents_noSubcomponentBuilder() {
+  public void moduleSubcomponents_listsProductionSubcomponentFactory() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            moduleType.importStatement(),
+            "",
+            moduleType.annotationWithSubcomponent("Sub.Factory.class"),
+            "class TestModule {}");
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.Sub",
+            "package test;",
+            "",
+            "import dagger.producers.ProductionSubcomponent;",
+            "",
+            "@ProductionSubcomponent",
+            "interface Sub {",
+            "  @ProductionSubcomponent.Factory",
+            "  interface Factory {",
+            "    Sub create();",
+            "  }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(module, subcomponent);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "test.Sub.Factory is a @ProductionSubcomponent.Factory. Did you mean to use test.Sub?")
+        .inFile(module)
+        .onLine(5);
+  }
+
+  @Test
+  public void moduleSubcomponents_noSubcomponentCreator() {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -185,8 +253,8 @@ public final class ModuleValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "test.NoBuilder doesn't have a @Subcomponent.Builder, which is required when used "
-                + "with @"
+            "test.NoBuilder doesn't have a @Subcomponent.Builder or @Subcomponent.Factory, which "
+                + "is required when used with @"
                 + moduleType.simpleName()
                 + ".subcomponents")
         .inFile(module)
@@ -194,7 +262,7 @@ public final class ModuleValidationTest {
   }
 
   @Test
-  public void moduleSubcomponents_noProductionSubcomponentBuilder() {
+  public void moduleSubcomponents_noProductionSubcomponentCreator() {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -217,8 +285,8 @@ public final class ModuleValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "test.NoBuilder doesn't have a @ProductionSubcomponent.Builder, which is required "
-                + "when used with @"
+            "test.NoBuilder doesn't have a @ProductionSubcomponent.Builder or "
+                + "@ProductionSubcomponent.Factory, which is required when used with @"
                 + moduleType.simpleName()
                 + ".subcomponents")
         .inFile(module)

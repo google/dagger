@@ -21,6 +21,7 @@ import static com.google.common.collect.Iterables.getLast;
 import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import javax.lang.model.element.TypeElement;
 
@@ -47,7 +48,8 @@ public abstract class ComponentPath {
   }
 
   /** Returns the component at the end of the path. */
-  public final TypeElement currentComponent() {
+  @Memoized
+  public TypeElement currentComponent() {
     return getLast(components());
   }
 
@@ -66,9 +68,15 @@ public abstract class ComponentPath {
    *
    * @throws IllegalStateException if the current graph is the {@linkplain #atRoot() root component}
    */
+  // TODO(ronshapiro): consider memoizing this
   public final ComponentPath parent() {
     checkState(!atRoot());
     return create(components().subList(0, components().size() - 1));
+  }
+
+  /** Returns the path from the root component to the {@code child} of the current component. */
+  public final ComponentPath childPath(TypeElement child) {
+    return create(ImmutableList.<TypeElement>builder().addAll(components()).add(child).build());
   }
 
   /**
@@ -83,4 +91,11 @@ public abstract class ComponentPath {
   public final String toString() {
     return components().stream().map(TypeElement::getQualifiedName).collect(joining(" → "));
   }
+
+  @Memoized
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object obj);
 }

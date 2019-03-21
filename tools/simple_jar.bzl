@@ -18,21 +18,14 @@ def simple_jar(name, srcs):
     """Creates a jar out of a set of flat files"""
 
     # TODO(dpb): consider creating a Fileset() under the hood to support srcs from different
-    # directories
+    # directories, or continually update the same zip file for each source file
     native.genrule(
         name = name,
         srcs = srcs,
         outs = ["%s.jar" % name],
         cmd = """
-        OUT="$$(pwd)/$@"
-        if [[ -e "{package_name}" ]]; then
-          cd "{package_name}"
-        elif [[ -e "external/{package_name}" ]]; then
-          cd "external/{package_name}"
-        else
-          echo "Cannot find {package_name} directory"
-          exit 1
-        fi
-        zip "$$OUT" -r * &> /dev/null
-        """.format(package_name = native.package_name()),
+            $(location //tools:simple_jar.sh) \
+              "{package_name}" "$@" $(SRCS)
+              """.format(package_name = native.package_name()),
+        tools = ["//tools:simple_jar.sh"],
     )

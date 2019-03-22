@@ -66,6 +66,8 @@ public @interface Subcomponent {
    * <p>If a subcomponent defines a factory, its parent component(s) will have a binding for that
    * factory type, allowing an instance of that factory to be injected or returned from a method on
    * that component like any other binding.
+   *
+   * @since 2.22
    */
   @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)

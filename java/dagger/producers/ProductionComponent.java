@@ -111,6 +111,8 @@ public @interface ProductionComponent {
    *
    * <p>This follows all the rules of {@link Component.Factory}, except it must appear in classes
    * annotated with {@link ProductionComponent} instead of {@code Component}.
+   *
+   * @since 2.22
    */
   @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)

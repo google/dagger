@@ -48,6 +48,8 @@ public enum BindingKind {
   /**
    * A binding for a subcomponent creator (a {@linkplain dagger.Subcomponent.Builder builder} or
    * {@linkplain dagger.Subcomponent.Factory factory}).
+   *
+   * @since 2.22 (previously named {@code SUBCOMPONENT_BUILDER})
    */
   SUBCOMPONENT_CREATOR,
 

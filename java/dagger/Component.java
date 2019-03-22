@@ -355,6 +355,8 @@ public @interface Component {
    * <p>For a root component, if a {@code @Component.Factory} is defined, the generated component
    * type will have a {@code static} method named {@code factory()} that returns an instance of that
    * factory.
+   *
+   * @since 2.22
    */
   @Retention(RUNTIME) // Allows runtimes to have specialized behavior interoperating with Dagger.
   @Target(TYPE)

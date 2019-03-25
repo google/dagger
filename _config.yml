@@ -40,6 +40,9 @@ nav:
       name: Testing
       url: /testing
   - item:
+      name: gRPC
+      url: /grpc
+  - item:
       name: Dagger 1 Migration
       url: /dagger-1-migration
   - item:

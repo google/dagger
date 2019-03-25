@@ -42,6 +42,9 @@ nav:
   - item:
       name: gRPC
       url: /grpc
+   - item:
+      name: Compiler Options
+      url: /compiler-options
   - item:
       name: Dagger 1 Migration
       url: /dagger-1-migration

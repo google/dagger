@@ -24,11 +24,11 @@ import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
+import static dagger.internal.codegen.ComponentAnnotation.anyComponentAnnotation;
+import static dagger.internal.codegen.ComponentAnnotation.componentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
@@ -138,9 +138,11 @@ final class ComponentValidator {
       allSubcomponents = ImmutableSet.of();
     } else {
       ComponentKind componentKind = getOnlyElement(componentKinds);
+      ComponentAnnotation componentAnnotation = anyComponentAnnotation(subject).get();
       allSubcomponents =
           validate(
               subject,
+              componentAnnotation,
               componentKind,
               validatedSubcomponents,
               validatedSubcomponentCreators,
@@ -153,6 +155,7 @@ final class ComponentValidator {
 
   private ImmutableSet<Element> validate(
       TypeElement subject,
+      ComponentAnnotation componentAnnotation,
       ComponentKind componentKind,
       Set<? extends Element> validatedSubcomponents,
       Set<? extends Element> validatedSubcomponentCreators,
@@ -272,14 +275,13 @@ final class ComponentValidator {
                 report.addError(
                     String.format(moreThanOneRefToSubcomponent(), subcomponent, methods), subject));
 
-    AnnotationMirror componentMirror =
-        getAnnotationMirror(subject, componentKind.annotation()).get();
-    if (componentKind.isRoot()) {
-      validateComponentDependencies(report, getComponentDependencies(componentMirror));
-    }
+    validateComponentDependencies(report, componentAnnotation.dependencyTypes());
     report.addSubreport(
         moduleValidator.validateReferencedModules(
-            subject, componentMirror, componentKind.legalModuleKinds(), new HashSet<>()));
+            subject,
+            componentAnnotation.annotation(),
+            componentKind.legalModuleKinds(),
+            new HashSet<>()));
 
     // Make sure we validate any subcomponents we're referencing, unless we know we validated
     // them already in this pass.
@@ -389,7 +391,7 @@ final class ComponentValidator {
       TypeMirror returnType,
       Optional<AnnotationMirror> subcomponentAnnotation) {
     ImmutableSet<TypeElement> moduleTypes =
-        MoreTypes.asTypeElements(getComponentModules(subcomponentAnnotation.get()));
+        componentAnnotation(subcomponentAnnotation.get()).modules();
 
     // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
     // subcomponents and their modules separately from how it is done in ComponentDescriptor and

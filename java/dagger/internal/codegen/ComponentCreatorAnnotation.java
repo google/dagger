@@ -60,7 +60,7 @@ abstract class ComponentCreatorAnnotation {
               ComponentCreatorAnnotation::annotation);
 
   /** Returns the set of all component creator annotations. */
-  static ImmutableSet<Class<? extends Annotation>> allAnnotations() {
+  static ImmutableSet<Class<? extends Annotation>> allCreatorAnnotations() {
     return ANNOTATIONS.keySet();
   }
 
@@ -79,6 +79,20 @@ abstract class ComponentCreatorAnnotation {
         .collect(toImmutableSet());
   }
 
+  /** Returns the legal creator annotations for the given {@code componentAnnotation}. */
+  static ImmutableSet<Class<? extends Annotation>> creatorAnnotationsFor(
+      ComponentAnnotation componentAnnotation) {
+    return ANNOTATIONS.values().stream()
+        .filter(
+            creatorAnnotation ->
+                creatorAnnotation
+                    .componentAnnotation()
+                    .getSimpleName()
+                    .equals(componentAnnotation.simpleName()))
+        .map(ComponentCreatorAnnotation::annotation)
+        .collect(toImmutableSet());
+  }
+
   /** Returns all creator annotations present on the given {@code type}. */
   static ImmutableSet<ComponentCreatorAnnotation> getCreatorAnnotations(TypeElement type) {
     return ImmutableSet.copyOf(
@@ -87,6 +101,11 @@ abstract class ComponentCreatorAnnotation {
 
   /** The actual annotation. */
   abstract Class<? extends Annotation> annotation();
+
+  /** The component annotation type that encloses this creator annotation type. */
+  final Class<? extends Annotation> componentAnnotation() {
+    return (Class<? extends Annotation>) annotation().getEnclosingClass();
+  }
 
   /** The component kind the annotation is associated with. */
   abstract ComponentKind componentKind();

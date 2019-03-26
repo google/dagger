@@ -16,8 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Sets.union;
+import static dagger.internal.codegen.ComponentAnnotation.allComponentAnnotations;
+import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotations;
+import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotations;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
-import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
 import static java.util.Collections.disjoint;
@@ -29,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -88,14 +91,14 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return Sets.union(ComponentKind.allAnnotations(), ComponentCreatorAnnotation.allAnnotations());
+    return union(allComponentAnnotations(), allCreatorAnnotations());
   }
 
   @Override
   public ImmutableSet<Element> process(
       SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
     subcomponentElements =
-        getElementsFromAnnotations(elementsByAnnotation, annotationsFor(subcomponentKinds()));
+        getElementsFromAnnotations(elementsByAnnotation, subcomponentAnnotations());
     subcomponentCreatorElements =
         getElementsFromAnnotations(
             elementsByAnnotation, creatorAnnotationsFor(subcomponentKinds()));
@@ -117,7 +120,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   @Override
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
-    if (!disjoint(annotations, annotationsFor(rootComponentKinds()))) {
+    if (!disjoint(annotations, rootComponentAnnotations())) {
       ComponentValidationReport validationReport =
           componentValidator.validate(element, subcomponentElements, subcomponentCreatorElements);
       validationReport.report().printMessagesTo(messager);
@@ -138,7 +141,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       }
     }
     if (compilerOptions.aheadOfTimeSubcomponents()
-        && !disjoint(annotations, annotationsFor(subcomponentKinds()))) {
+        && !disjoint(annotations, subcomponentAnnotations())) {
       if (!subcomponentIsClean(element)) {
         return;
       }

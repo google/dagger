@@ -21,10 +21,9 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
+import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
-import static dagger.internal.codegen.ComponentKind.annotationsFor;
-import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -101,7 +100,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return annotationsFor(rootComponentKinds());
+    return rootComponentAnnotations();
   }
 
   @Override

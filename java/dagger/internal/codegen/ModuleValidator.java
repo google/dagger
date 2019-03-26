@@ -21,13 +21,15 @@ import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentAnnotation.componentAnnotation;
+import static dagger.internal.codegen.ComponentAnnotation.isComponentAnnotation;
+import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
-import static dagger.internal.codegen.ConfigurationAnnotations.getModules;
-import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentAnnotation;
 import static dagger.internal.codegen.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ModuleAnnotation.isModuleAnnotation;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
@@ -43,6 +45,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
@@ -287,7 +290,7 @@ final class ModuleValidator {
     return String.format(
         "%s is a @%s.%s. Did you mean to use %s?",
         moduleSubcomponentsAttribute.getQualifiedName(),
-        simpleName(getSubcomponentAnnotation(subcomponentType).get()),
+        subcomponentAnnotation(subcomponentType).get().simpleName(),
         creatorAnnotation.creatorKind().typeName(),
         subcomponentType.getQualifiedName());
   }
@@ -307,14 +310,11 @@ final class ModuleValidator {
 
   private static String moduleSubcomponentsDoesntHaveCreator(
       TypeElement subcomponent, AnnotationMirror moduleAnnotation) {
-    String subcomponentAnnotation =
-        simpleName(getSubcomponentAnnotation(subcomponent).get()).toString();
     return String.format(
-        "%s doesn't have a @%s.Builder or @%s.Factory, which is required when used with "
-            + "@%s.subcomponents",
+        "%1$s doesn't have a @%2$s.Builder or @%2$s.Factory, which is required when used with "
+            + "@%3$s.subcomponents",
         subcomponent.getQualifiedName(),
-        subcomponentAnnotation,
-        subcomponentAnnotation,
+        subcomponentAnnotation(subcomponent).get().simpleName(),
         simpleName(moduleAnnotation));
   }
 
@@ -396,7 +396,7 @@ final class ModuleValidator {
     ImmutableSet<? extends Class<? extends Annotation>> validModuleAnnotations =
         validModuleKinds.stream().map(ModuleKind::annotation).collect(toImmutableSet());
 
-    for (AnnotationValue includedModule : getModules(annotatedType, annotation)) {
+    for (AnnotationValue includedModule : getModules(annotation)) {
       asType(includedModule)
           .accept(
               new SimpleTypeVisitor8<Void, Void>() {
@@ -438,6 +438,16 @@ final class ModuleValidator {
               null);
     }
     return subreport.build();
+  }
+
+  private static ImmutableList<AnnotationValue> getModules(AnnotationMirror annotation) {
+    if (isModuleAnnotation(annotation)) {
+      return moduleAnnotation(annotation).includesAsAnnotationValues();
+    }
+    if (isComponentAnnotation(annotation)) {
+      return componentAnnotation(annotation).moduleValues();
+    }
+    throw new IllegalArgumentException(String.format("unsupported annotation: %s", annotation));
   }
 
   private void validateBindingMethodOverrides(

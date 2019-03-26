@@ -21,9 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentAnnotation;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotation;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
@@ -34,6 +32,7 @@ import static dagger.internal.codegen.Scopes.singletonScope;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -42,7 +41,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-import dagger.Component;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
 import dagger.model.Scope;
@@ -56,7 +54,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -65,6 +62,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 
 /**
  * Reports errors in the component hierarchy.
@@ -129,6 +127,16 @@ final class ComponentDescriptorValidator {
           reports, component, descriptor -> ValidationReport.about(descriptor.typeElement()));
     }
 
+    private void reportComponentItem(
+        Diagnostic.Kind kind, ComponentDescriptor component, String message) {
+      report(component)
+          .addItem(message, kind, component.typeElement(), component.annotation().annotation());
+    }
+
+    private void reportComponentError(ComponentDescriptor component, String error) {
+      reportComponentItem(ERROR, component, error);
+    }
+
     void visitComponent(ComponentDescriptor component) {
       validateDependencyScopes(component);
       validateComponentDependencyHierarchy(component);
@@ -153,25 +161,23 @@ final class ComponentDescriptorValidator {
         dependencyStack.push(dependency);
         appendIndentedComponentsList(message, dependencyStack);
         dependencyStack.pop();
-        report(component)
-            .addItem(
-                message.toString(),
-                compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                component.typeElement(),
-                getComponentAnnotation(component.typeElement()).get());
+        reportComponentItem(
+            compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
+            component,
+            message.toString());
       } else {
-        Optional<AnnotationMirror> componentAnnotation = getComponentAnnotation(dependency);
-        if (componentAnnotation.isPresent()) {
-          dependencyStack.push(dependency);
+        rootComponentAnnotation(dependency)
+            .ifPresent(
+                componentAnnotation -> {
+                  dependencyStack.push(dependency);
 
-          ImmutableSet<TypeElement> dependencies =
-              MoreTypes.asTypeElements(getComponentDependencies(componentAnnotation.get()));
-          for (TypeElement nextDependency : dependencies) {
-            validateComponentDependencyHierarchy(component, nextDependency, dependencyStack);
-          }
+                  for (TypeElement nextDependency : componentAnnotation.dependencies()) {
+                    validateComponentDependencyHierarchy(
+                        component, nextDependency, dependencyStack);
+                  }
 
-          dependencyStack.pop();
-        }
+                  dependencyStack.pop();
+                });
       }
     }
 
@@ -200,12 +206,10 @@ final class ComponentDescriptorValidator {
                 new StringBuilder(
                     "This @Singleton component cannot depend on scoped components:\n");
             appendIndentedComponentsList(message, scopedDependencies);
-            report(component)
-                .addItem(
-                    message.toString(),
-                    compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                    component.typeElement(),
-                    component.annotation());
+            reportComponentItem(
+                compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
+                component,
+                message.toString());
           }
         } else if (scopedDependencies.size() > 1) {
           // Scoped components may depend on at most one scoped component.
@@ -217,8 +221,7 @@ final class ComponentDescriptorValidator {
               .append(component.typeElement().getQualifiedName())
               .append(" depends on more than one scoped component:\n");
           appendIndentedComponentsList(message, scopedDependencies);
-          report(component)
-              .addError(message.toString(), component.typeElement(), component.annotation());
+          reportComponentError(component, message.toString());
         } else {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
@@ -233,8 +236,7 @@ final class ComponentDescriptorValidator {
               new StringBuilder(component.typeElement().getQualifiedName())
                   .append(" (unscoped) cannot depend on scoped components:\n");
           appendIndentedComponentsList(message, scopedDependencies);
-          report(component)
-              .addError(message.toString(), component.typeElement(), component.annotation());
+          reportComponentError(component, message.toString());
         }
       }
     }
@@ -417,22 +419,20 @@ final class ComponentDescriptorValidator {
         message.append(" depends on scoped components in a non-hierarchical scope ordering:\n");
         appendIndentedComponentsList(message, scopedDependencyStack);
         if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
-          report(component)
-              .addItem(
-                  message.toString(),
-                  compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
-                  component.typeElement(),
-                  getComponentAnnotation(component.typeElement()).get());
+          reportComponentItem(
+              compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
+              component,
+              message.toString());
         }
         scopedDependencyStack.pop();
       } else {
         // TODO(beder): transitively check scopes of production components too.
-        getAnnotationMirror(dependency, Component.class)
+        rootComponentAnnotation(dependency)
+            .filter(componentAnnotation -> !componentAnnotation.isProduction())
             .ifPresent(
                 componentAnnotation -> {
                   ImmutableSet<TypeElement> scopedDependencies =
-                      scopedTypesIn(
-                          MoreTypes.asTypeElements(getComponentDependencies(componentAnnotation)));
+                      scopedTypesIn(componentAnnotation.dependencies());
                   if (scopedDependencies.size() == 1) {
                     // empty can be ignored (base-case), and > 1 is a separately-reported error.
                     scopeStack.push(scopes);
@@ -475,7 +475,7 @@ final class ComponentDescriptorValidator {
      * Returns a set of type elements containing only those found in the input set that have a
      * scoping annotation.
      */
-    private ImmutableSet<TypeElement> scopedTypesIn(Set<TypeElement> types) {
+    private ImmutableSet<TypeElement> scopedTypesIn(Collection<TypeElement> types) {
       return types.stream().filter(type -> !scopesOf(type).isEmpty()).collect(toImmutableSet());
     }
   }

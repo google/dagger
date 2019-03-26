@@ -18,15 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.isTypeOf;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentDependencies;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentModules;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
-import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
@@ -48,10 +45,9 @@ import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -82,16 +78,20 @@ final class ComponentDescriptorFactory {
   ComponentDescriptor rootComponentDescriptor(TypeElement typeElement) {
     return create(
         typeElement,
-        checkComponentKind(
-            typeElement, ComponentKind::isRoot, "%s must have a component annotation"));
+        checkAnnotation(
+            typeElement,
+            ComponentAnnotation::rootComponentAnnotation,
+            "must have a component annotation"));
   }
 
   /** Returns a descriptor for a subcomponent type. */
   ComponentDescriptor subcomponentDescriptor(TypeElement typeElement) {
     return create(
         typeElement,
-        checkComponentKind(
-            typeElement, kind -> !kind.isRoot(), "%s must have a subcomponent annotation"));
+        checkAnnotation(
+            typeElement,
+            ComponentAnnotation::subcomponentAnnotation,
+            "must have a subcomponent annotation"));
   }
 
   /**
@@ -101,32 +101,27 @@ final class ComponentDescriptorFactory {
   ComponentDescriptor moduleComponentDescriptor(TypeElement typeElement) {
     return create(
         typeElement,
-        checkComponentKind(
-            typeElement, ComponentKind::isForModuleValidation, "%s must have a module annotation"));
+        ComponentAnnotation.fromModuleAnnotation(
+            checkAnnotation(
+                typeElement, ModuleAnnotation::moduleAnnotation, "must have a module annotation")));
   }
 
-  private ComponentKind checkComponentKind(
+  private static <A> A checkAnnotation(
       TypeElement typeElement,
-      Predicate<ComponentKind> componentKindPredicate,
-      String errorMessageTemplate) {
-    Optional<ComponentKind> kind = ComponentKind.forAnnotatedElement(typeElement);
-    checkArgument(
-        kind.isPresent() && componentKindPredicate.test(kind.get()),
-        errorMessageTemplate,
-        typeElement);
-    return kind.get();
+      Function<TypeElement, Optional<A>> annotationFunction,
+      String message) {
+    return annotationFunction
+        .apply(typeElement)
+        .orElseThrow(() -> new IllegalArgumentException(typeElement + " " + message));
   }
 
-  private ComponentDescriptor create(TypeElement typeElement, ComponentKind kind) {
-    AnnotationMirror componentAnnotation =
-        getAnnotationMirror(typeElement, kind.annotation()).get();
+  private ComponentDescriptor create(
+      TypeElement typeElement, ComponentAnnotation componentAnnotation) {
     DeclaredType declaredComponentType = MoreTypes.asDeclared(typeElement.asType());
     ImmutableSet<ComponentRequirement> componentDependencies =
-        kind.isRoot() && !kind.isForModuleValidation()
-            ? getComponentDependencies(componentAnnotation).stream()
-                .map(ComponentRequirement::forDependency)
-                .collect(toImmutableSet())
-            : ImmutableSet.of();
+        componentAnnotation.dependencyTypes().stream()
+            .map(ComponentRequirement::forDependency)
+            .collect(toImmutableSet());
 
     ImmutableMap.Builder<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod =
         ImmutableMap.builder();
@@ -140,12 +135,12 @@ final class ComponentDescriptorFactory {
       }
     }
 
+    // Start with the component's modules. For fictional components built from a module, start with
+    // that module.
     ImmutableSet<TypeElement> modules =
-        kind.isForModuleValidation()
-            ? ImmutableSet.of(typeElement)
-            : getComponentModules(componentAnnotation).stream()
-                .map(MoreTypes::asTypeElement)
-                .collect(toImmutableSet());
+        componentAnnotation.isRealComponent()
+            ? componentAnnotation.modules()
+            : ImmutableSet.of(typeElement);
 
     ImmutableSet<ModuleDescriptor> transitiveModules =
         moduleDescriptorFactory.transitiveModules(modules);
@@ -164,14 +159,14 @@ final class ComponentDescriptorFactory {
         subcomponentsByFactoryMethod = ImmutableBiMap.builder();
     ImmutableBiMap.Builder<ComponentMethodDescriptor, ComponentDescriptor>
         subcomponentsByBuilderMethod = ImmutableBiMap.builder();
-    if (!kind.isForModuleValidation()) {
+    if (componentAnnotation.isRealComponent()) {
       ImmutableSet<ExecutableElement> unimplementedMethods =
           elements.getUnimplementedMethods(typeElement);
       for (ExecutableElement componentMethod : unimplementedMethods) {
         ExecutableType resolvedMethod =
             MoreTypes.asExecutable(types.asMemberOf(declaredComponentType, componentMethod));
         ComponentMethodDescriptor componentMethodDescriptor =
-            getDescriptorForComponentMethod(typeElement, kind, componentMethod);
+            getDescriptorForComponentMethod(typeElement, componentAnnotation, componentMethod);
         componentMethodsBuilder.add(componentMethodDescriptor);
         switch (componentMethodDescriptor.kind()) {
           case SUBCOMPONENT:
@@ -198,7 +193,7 @@ final class ComponentDescriptorFactory {
 
     // Validation should have ensured that this set will have at most one element.
     ImmutableSet<DeclaredType> enclosedCreators =
-        creatorAnnotationsFor(kind).stream()
+        creatorAnnotationsFor(componentAnnotation).stream()
             .flatMap(
                 creatorAnnotation ->
                     enclosedAnnotatedTypes(typeElement, creatorAnnotation).stream())
@@ -211,7 +206,7 @@ final class ComponentDescriptorFactory {
                     getOnlyElement(enclosedCreators), elements, types, dependencyRequestFactory));
 
     ImmutableSet<Scope> scopes = scopesOf(typeElement);
-    if (kind.isProducer()) {
+    if (componentAnnotation.isProduction()) {
       scopes = ImmutableSet.<Scope>builder().addAll(scopes).add(productionScope(elements)).build();
     }
 
@@ -231,7 +226,7 @@ final class ComponentDescriptorFactory {
 
   private ComponentMethodDescriptor getDescriptorForComponentMethod(
       TypeElement componentElement,
-      ComponentKind componentKind,
+      ComponentAnnotation componentAnnotation,
       ExecutableElement componentMethod) {
     ExecutableType resolvedComponentMethod =
         MoreTypes.asExecutable(
@@ -245,11 +240,14 @@ final class ComponentDescriptorFactory {
                 componentMethod, resolvedComponentMethod));
       } else if (!getQualifier(componentMethod).isPresent()) {
         Element returnTypeElement = MoreTypes.asElement(returnType);
-        if (ConfigurationAnnotations.isSubcomponent(returnTypeElement)) {
+        Optional<ComponentAnnotation> subcomponentAnnotation =
+            subcomponentAnnotation(MoreElements.asType(returnTypeElement));
+        if (subcomponentAnnotation.isPresent()) {
           return ComponentMethodDescriptor.forSubcomponent(
-              isAnnotationPresent(returnTypeElement, Subcomponent.class)
-                  ? ComponentMethodKind.SUBCOMPONENT
-                  : ComponentMethodKind.PRODUCTION_SUBCOMPONENT,
+              subcomponentAnnotation.get().isProduction()
+                  // TODO(dpb): Do we really need all these enums?
+                  ? ComponentMethodKind.PRODUCTION_SUBCOMPONENT
+                  : ComponentMethodKind.SUBCOMPONENT,
               componentMethod);
         } else if (isSubcomponentCreator(returnTypeElement)) {
           DependencyRequest dependencyRequest =
@@ -268,22 +266,13 @@ final class ComponentDescriptorFactory {
     // a typical provision method
     if (componentMethod.getParameters().isEmpty()
         && !componentMethod.getReturnType().getKind().equals(VOID)) {
-      switch (componentKind) {
-        case COMPONENT:
-        case SUBCOMPONENT:
-          return ComponentMethodDescriptor.forProvision(
-              componentMethod,
-              dependencyRequestFactory.forComponentProvisionMethod(
+      return ComponentMethodDescriptor.forProvision(
+          componentMethod,
+          componentAnnotation.isProduction()
+              ? dependencyRequestFactory.forComponentProductionMethod(
+                  componentMethod, resolvedComponentMethod)
+              : dependencyRequestFactory.forComponentProvisionMethod(
                   componentMethod, resolvedComponentMethod));
-        case PRODUCTION_COMPONENT:
-        case PRODUCTION_SUBCOMPONENT:
-          return ComponentMethodDescriptor.forProvision(
-              componentMethod,
-              dependencyRequestFactory.forComponentProductionMethod(
-                  componentMethod, resolvedComponentMethod));
-        default:
-          throw new AssertionError();
-      }
     }
 
     List<? extends TypeMirror> parameterTypes = resolvedComponentMethod.getParameterTypes();

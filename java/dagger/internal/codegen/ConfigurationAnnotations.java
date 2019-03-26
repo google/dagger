@@ -16,20 +16,15 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
+import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
-import static dagger.internal.codegen.ComponentKind.annotationsFor;
-import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
 import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
-import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
-import static dagger.internal.codegen.ModuleAnnotation.isModuleAnnotation;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
-import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreElements;
@@ -47,7 +42,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -60,28 +54,8 @@ import javax.lang.model.type.TypeMirror;
  */
 final class ConfigurationAnnotations {
 
-  static Optional<AnnotationMirror> getComponentAnnotation(TypeElement component) {
-    return getAnyAnnotation(component, annotationsFor(rootComponentKinds()));
-  }
-
-  static Optional<AnnotationMirror> getSubcomponentAnnotation(TypeElement subcomponent) {
-    return getAnyAnnotation(subcomponent, annotationsFor(subcomponentKinds()));
-  }
-
-  static Optional<AnnotationMirror> getComponentOrSubcomponentAnnotation(TypeElement type) {
-    Optional<AnnotationMirror> componentAnnotation = getComponentAnnotation(type);
-    if (componentAnnotation.isPresent()) {
-      return componentAnnotation;
-    }
-    return getSubcomponentAnnotation(type);
-  }
-
-  static boolean isSubcomponent(Element element) {
-    return isAnyAnnotationPresent(element, annotationsFor(subcomponentKinds()));
-  }
-
   static Optional<TypeElement> getSubcomponentCreator(TypeElement subcomponent) {
-    checkArgument(isSubcomponent(subcomponent));
+    checkArgument(subcomponentAnnotation(subcomponent).isPresent());
     for (TypeElement nestedType : typesIn(subcomponent.getEnclosedElements())) {
       if (isSubcomponentCreator(nestedType)) {
         return Optional.of(nestedType);
@@ -92,40 +66,6 @@ final class ConfigurationAnnotations {
 
   static boolean isSubcomponentCreator(Element element) {
     return isAnyAnnotationPresent(element, creatorAnnotationsFor(subcomponentKinds()));
-  }
-
-  /**
-   * Returns the annotation values for the modules directly installed into a component or included
-   * in a module.
-   *
-   * @param annotatedType the component or module type
-   * @param annotation the component or module annotation
-   */
-  static ImmutableList<AnnotationValue> getModules(
-      TypeElement annotatedType, AnnotationMirror annotation) {
-    if (ComponentKind.forAnnotatedElement(annotatedType)
-        .filter(kind -> !kind.isForModuleValidation())
-        .isPresent()) {
-      return asAnnotationValues(getAnnotationValue(annotation, MODULES_ATTRIBUTE));
-    }
-    if (isModuleAnnotation(annotation)) {
-      return moduleAnnotation(annotation).includesAsAnnotationValues();
-    }
-    throw new IllegalArgumentException(String.format("unsupported annotation: %s", annotation));
-  }
-
-  private static final String MODULES_ATTRIBUTE = "modules";
-
-  static ImmutableList<TypeMirror> getComponentModules(AnnotationMirror componentAnnotation) {
-    checkNotNull(componentAnnotation);
-    return getTypeListValue(componentAnnotation, MODULES_ATTRIBUTE);
-  }
-
-  private static final String DEPENDENCIES_ATTRIBUTE = "dependencies";
-
-  static ImmutableList<TypeMirror> getComponentDependencies(AnnotationMirror componentAnnotation) {
-    checkNotNull(componentAnnotation);
-    return getTypeListValue(componentAnnotation, DEPENDENCIES_ATTRIBUTE);
   }
 
   // Dagger 1 support.

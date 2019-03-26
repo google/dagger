@@ -17,9 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ConfigurationAnnotations.getComponentOrSubcomponentAnnotation;
+import static dagger.internal.codegen.ComponentAnnotation.anyComponentAnnotation;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
-import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static javax.lang.model.element.ElementKind.METHOD;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.DECLARED;
@@ -92,14 +91,14 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<Eleme
     TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
     moduleAnnotation(enclosingType)
         .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
-    getComponentOrSubcomponentAnnotation(enclosingType)
+    anyComponentAnnotation(enclosingType)
         .ifPresent(
             componentAnnotation ->
                 report.addError(
                     String.format(
                         "@BindsInstance methods should not be included in @%1$ss. "
                             + "Did you mean to put it in a @%1$s.Builder?",
-                        simpleName(componentAnnotation))));
+                        componentAnnotation.simpleName())));
   }
 
   private static String didYouMeanBinds(ModuleAnnotation moduleAnnotation) {

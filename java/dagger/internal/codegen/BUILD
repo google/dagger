@@ -83,6 +83,7 @@ java_library(
         "ClearableCache.java",
         "CodeBlocks.java",
         "CompilerOptions.java",
+        "ComponentAnnotation.java",
         "ContributionType.java",
         "DaggerElements.java",
         "DaggerStatistics.java",

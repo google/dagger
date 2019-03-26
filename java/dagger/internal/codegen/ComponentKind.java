@@ -83,14 +83,6 @@ enum ComponentKind {
     return SUBCOMPONENT_KINDS;
   }
 
-  /** Returns all annotations that mark a component type. */
-  static ImmutableSet<Class<? extends Annotation>> allAnnotations() {
-    return valuesOf(ComponentKind.class)
-        .filter(kind -> !kind.isForModuleValidation())
-        .map(ComponentKind::annotation)
-        .collect(toImmutableSet());
-  }
-
   /** Returns the annotations for components of the given kinds. */
   static ImmutableSet<Class<? extends Annotation>> annotationsFor(Iterable<ComponentKind> kinds) {
     return stream(kinds).map(ComponentKind::annotation).collect(toImmutableSet());

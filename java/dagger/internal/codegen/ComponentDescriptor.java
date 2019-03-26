@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -39,15 +38,10 @@ import dagger.Subcomponent;
 import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
-import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
-import dagger.producers.ProductionSubcomponent;
-import java.lang.annotation.Annotation;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -66,11 +60,11 @@ import javax.lang.model.type.TypeMirror;
 @AutoValue
 abstract class ComponentDescriptor {
   /** The annotation that specifies that {@link #typeElement()} is a component. */
-  abstract AnnotationMirror annotation();
+  abstract ComponentAnnotation annotation();
 
   /** Returns {@code true} if this is a subcomponent. */
   final boolean isSubcomponent() {
-    return Stream.of(Subcomponent.class, ProductionSubcomponent.class).anyMatch(isAnnotationType());
+    return annotation().isSubcomponent();
   }
 
   /**
@@ -78,8 +72,7 @@ abstract class ComponentDescriptor {
    * {@code @ProducerModule} when doing module binding validation.
    */
   final boolean isProduction() {
-    return Stream.of(ProductionComponent.class, ProductionSubcomponent.class, ProducerModule.class)
-        .anyMatch(isAnnotationType());
+    return annotation().isProduction();
   }
 
   /**
@@ -87,16 +80,7 @@ abstract class ComponentDescriptor {
    * module bindings.
    */
   final boolean isRealComponent() {
-    return Stream.of(
-            Component.class,
-            Subcomponent.class,
-            ProductionComponent.class,
-            ProductionSubcomponent.class)
-        .anyMatch(isAnnotationType());
-  }
-
-  private Predicate<Class<? extends Annotation>> isAnnotationType() {
-    return clazz -> isTypeOf(clazz, annotation().getAnnotationType());
+    return annotation().isRealComponent();
   }
 
   /**

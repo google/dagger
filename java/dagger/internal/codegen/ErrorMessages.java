@@ -51,6 +51,13 @@ final class ErrorMessages {
     return new ComponentMessages(COMPONENT_TRANSFORMATIONS.get(componentKind));
   }
 
+  static ComponentMessages componentMessagesFor(ComponentAnnotation componentAnnotation) {
+    return new ComponentMessages(
+        componentAnnotation.isProduction()
+            ? componentAnnotation.isSubcomponent() ? PRODUCTION.andThen(SUBCOMPONENT) : PRODUCTION
+            : componentAnnotation.isSubcomponent() ? SUBCOMPONENT : UnaryOperator.identity());
+  }
+
   static ComponentCreatorMessages creatorMessagesFor(ComponentCreatorAnnotation creatorAnnotation) {
     return creatorMessagesFor(creatorAnnotation.componentKind(), creatorAnnotation.creatorKind());
   }

@@ -32,6 +32,8 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
@@ -287,43 +289,20 @@ abstract class ComponentDescriptor {
   @Override
   public abstract boolean equals(Object obj);
 
-  /** A function that returns all {@link #scopes()} of its input. */
+  /** A component method. */
   @AutoValue
   abstract static class ComponentMethodDescriptor {
-    abstract ComponentMethodKind kind();
-    abstract Optional<DependencyRequest> dependencyRequest();
+    /** The method itself. Note that this may be declared on a supertype of the component. */
     abstract ExecutableElement methodElement();
 
-    static ComponentMethodDescriptor create(
-        ComponentMethodKind kind,
-        Optional<DependencyRequest> dependencyRequest,
-        ExecutableElement methodElement) {
-      return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor(
-          kind, dependencyRequest, methodElement);
-    }
+    /**
+     * The dependency request for production, provision, and subcomponent creator methods. Absent
+     * for subcomponent factory methods.
+     */
+    abstract Optional<DependencyRequest> dependencyRequest();
 
-    static ComponentMethodDescriptor forProvision(
-        ExecutableElement methodElement, DependencyRequest dependencyRequest) {
-      return create(ComponentMethodKind.PROVISION, Optional.of(dependencyRequest), methodElement);
-    }
-
-    static ComponentMethodDescriptor forMembersInjection(
-        ExecutableElement methodElement, DependencyRequest dependencyRequest) {
-      return create(
-          ComponentMethodKind.MEMBERS_INJECTION, Optional.of(dependencyRequest), methodElement);
-    }
-
-    static ComponentMethodDescriptor forSubcomponent(
-        ComponentMethodKind kind, ExecutableElement methodElement) {
-      return create(kind, Optional.empty(), methodElement);
-    }
-
-    static ComponentMethodDescriptor forSubcomponentCreator(
-        ComponentMethodKind kind,
-        DependencyRequest dependencyRequestForBuilder,
-        ExecutableElement methodElement) {
-      return create(kind, Optional.of(dependencyRequestForBuilder), methodElement);
-    }
+    /** The subcomponent for subcomponent factory methods and subcomponent creator methods. */
+    abstract Optional<ComponentDescriptor> subcomponent();
 
     /**
      * Returns the return type of {@link #methodElement()} as resolved in the {@link
@@ -340,32 +319,29 @@ abstract class ComponentDescriptor {
       return BindingRequest.bindingRequest(dependencyRequest().get())
           .requestedType(dependencyRequest().get().key().type(), types);
     }
-  }
 
-  enum ComponentMethodKind {
-    PROVISION,
-    PRODUCTION,
-    MEMBERS_INJECTION,
-    SUBCOMPONENT,
-    SUBCOMPONENT_CREATOR,
-    PRODUCTION_SUBCOMPONENT,
-    PRODUCTION_SUBCOMPONENT_CREATOR;
+    /** A {@link ComponentMethodDescriptor}builder for a method. */
+    static Builder builder(ExecutableElement method) {
+      return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor.Builder()
+          .methodElement(method);
+    }
 
-    /**
-     * Returns the component kind associated with this component method, if it exists. Otherwise,
-     * throws.
-     */
-    ComponentKind componentKind() {
-      switch (this) {
-        case SUBCOMPONENT:
-        case SUBCOMPONENT_CREATOR:
-          return ComponentKind.SUBCOMPONENT;
-        case PRODUCTION_SUBCOMPONENT:
-        case PRODUCTION_SUBCOMPONENT_CREATOR:
-          return ComponentKind.PRODUCTION_SUBCOMPONENT;
-        default:
-          throw new IllegalStateException("no component associated with method " + this);
-      }
+    /** A builder of {@link ComponentMethodDescriptor}s. */
+    @AutoValue.Builder
+    @CanIgnoreReturnValue
+    interface Builder {
+      /** @see ComponentMethodDescriptor#methodElement() */
+      Builder methodElement(ExecutableElement methodElement);
+
+      /** @see ComponentMethodDescriptor#dependencyRequest() */
+      Builder dependencyRequest(DependencyRequest dependencyRequest);
+
+      /** @see ComponentMethodDescriptor#subcomponent() */
+      Builder subcomponent(ComponentDescriptor subcomponent);
+
+      /** Builds the descriptor. */
+      @CheckReturnValue
+      ComponentMethodDescriptor build();
     }
   }
 

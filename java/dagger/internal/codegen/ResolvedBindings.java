@@ -41,9 +41,8 @@ import javax.lang.model.element.TypeElement;
  *
  * <p>Separate {@link ResolvedBindings} instances should be used if a {@link
  * MembersInjectionBinding} and a {@link ProvisionBinding} for the same key exist in the same
- * component. (this will only happen if a type has an {@code @Inject} constructor and members, the
- * component has a {@link ComponentDescriptor.ComponentMethodKind#MEMBERS_INJECTION members
- * injection method}, and the type is also requested normally.
+ * component. (This will only happen if a type has an {@code @Inject} constructor and members, the
+ * component has a members injection method, and the type is also requested normally.)
  */
 @AutoValue
 abstract class ResolvedBindings implements HasContributionType {

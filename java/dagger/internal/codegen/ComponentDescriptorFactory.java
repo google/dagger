@@ -16,8 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.auto.common.MoreTypes.isTypeOf;
+import static com.google.auto.common.MoreElements.asType;
+import static com.google.auto.common.MoreTypes.asTypeElement;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
@@ -32,23 +33,15 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import dagger.Lazy;
-import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodKind;
-import dagger.model.DependencyRequest;
 import dagger.model.Scope;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -163,31 +156,21 @@ final class ComponentDescriptorFactory {
       ImmutableSet<ExecutableElement> unimplementedMethods =
           elements.getUnimplementedMethods(typeElement);
       for (ExecutableElement componentMethod : unimplementedMethods) {
-        ExecutableType resolvedMethod =
-            MoreTypes.asExecutable(types.asMemberOf(declaredComponentType, componentMethod));
         ComponentMethodDescriptor componentMethodDescriptor =
             getDescriptorForComponentMethod(typeElement, componentAnnotation, componentMethod);
         componentMethodsBuilder.add(componentMethodDescriptor);
-        switch (componentMethodDescriptor.kind()) {
-          case SUBCOMPONENT:
-          case PRODUCTION_SUBCOMPONENT:
-            subcomponentsByFactoryMethod.put(
-                componentMethodDescriptor,
-                subcomponentDescriptor(MoreTypes.asTypeElement(resolvedMethod.getReturnType())));
-            break;
-
-          case SUBCOMPONENT_CREATOR:
-          case PRODUCTION_SUBCOMPONENT_CREATOR:
-            subcomponentsByBuilderMethod.put(
-                componentMethodDescriptor,
-                subcomponentDescriptor(
-                    MoreElements.asType(
-                        MoreTypes.asElement(resolvedMethod.getReturnType())
-                            .getEnclosingElement())));
-            break;
-
-          default: // nothing special to do for other methods.
-        }
+        componentMethodDescriptor
+            .subcomponent()
+            .ifPresent(
+                subcomponent -> {
+                  // If the dependency request is present, that means the method returns the
+                  // subcomponent factory.
+                  if (componentMethodDescriptor.dependencyRequest().isPresent()) {
+                    subcomponentsByBuilderMethod.put(componentMethodDescriptor, subcomponent);
+                  } else {
+                    subcomponentsByFactoryMethod.put(componentMethodDescriptor, subcomponent);
+                  }
+                });
       }
     }
 
@@ -228,63 +211,57 @@ final class ComponentDescriptorFactory {
       TypeElement componentElement,
       ComponentAnnotation componentAnnotation,
       ExecutableElement componentMethod) {
+    ComponentMethodDescriptor.Builder descriptor =
+        ComponentMethodDescriptor.builder(componentMethod);
+
     ExecutableType resolvedComponentMethod =
         MoreTypes.asExecutable(
             types.asMemberOf(MoreTypes.asDeclared(componentElement.asType()), componentMethod));
     TypeMirror returnType = resolvedComponentMethod.getReturnType();
-    if (returnType.getKind().equals(DECLARED)) {
-      if (isTypeOf(Provider.class, returnType) || isTypeOf(Lazy.class, returnType)) {
-        return ComponentMethodDescriptor.forProvision(
-            componentMethod,
-            dependencyRequestFactory.forComponentProvisionMethod(
-                componentMethod, resolvedComponentMethod));
-      } else if (!getQualifier(componentMethod).isPresent()) {
-        Element returnTypeElement = MoreTypes.asElement(returnType);
-        Optional<ComponentAnnotation> subcomponentAnnotation =
-            subcomponentAnnotation(MoreElements.asType(returnTypeElement));
-        if (subcomponentAnnotation.isPresent()) {
-          return ComponentMethodDescriptor.forSubcomponent(
-              subcomponentAnnotation.get().isProduction()
-                  // TODO(dpb): Do we really need all these enums?
-                  ? ComponentMethodKind.PRODUCTION_SUBCOMPONENT
-                  : ComponentMethodKind.SUBCOMPONENT,
-              componentMethod);
-        } else if (isSubcomponentCreator(returnTypeElement)) {
-          DependencyRequest dependencyRequest =
-              dependencyRequestFactory.forComponentProvisionMethod(
-                  componentMethod, resolvedComponentMethod);
-          return ComponentMethodDescriptor.forSubcomponentCreator(
-              isAnnotationPresent(returnTypeElement, Subcomponent.Builder.class)
-                  ? ComponentMethodKind.SUBCOMPONENT_CREATOR
-                  : ComponentMethodKind.PRODUCTION_SUBCOMPONENT_CREATOR,
-              dependencyRequest,
-              componentMethod);
-        }
+    if (returnType.getKind().equals(DECLARED) && !getQualifier(componentMethod).isPresent()) {
+      TypeElement returnTypeElement = asTypeElement(returnType);
+      if (subcomponentAnnotation(returnTypeElement).isPresent()) {
+        // It's a subcomponent factory method. There is no dependency request, and there could be
+        // any number of parameters. Just return the descriptor.
+        return descriptor.subcomponent(subcomponentDescriptor(returnTypeElement)).build();
+      }
+      if (isSubcomponentCreator(returnTypeElement)) {
+        descriptor.subcomponent(
+            subcomponentDescriptor(asType(returnTypeElement.getEnclosingElement())));
       }
     }
 
-    // a typical provision method
-    if (componentMethod.getParameters().isEmpty()
-        && !componentMethod.getReturnType().getKind().equals(VOID)) {
-      return ComponentMethodDescriptor.forProvision(
-          componentMethod,
-          componentAnnotation.isProduction()
-              ? dependencyRequestFactory.forComponentProductionMethod(
-                  componentMethod, resolvedComponentMethod)
-              : dependencyRequestFactory.forComponentProvisionMethod(
-                  componentMethod, resolvedComponentMethod));
+    switch (componentMethod.getParameters().size()) {
+      case 0:
+        checkArgument(
+            !returnType.getKind().equals(VOID),
+            "component method cannot be void: %s",
+            componentMethod);
+        descriptor.dependencyRequest(
+            componentAnnotation.isProduction()
+                ? dependencyRequestFactory.forComponentProductionMethod(
+                    componentMethod, resolvedComponentMethod)
+                : dependencyRequestFactory.forComponentProvisionMethod(
+                    componentMethod, resolvedComponentMethod));
+        break;
+
+      case 1:
+        checkArgument(
+            returnType.getKind().equals(VOID)
+                || MoreTypes.equivalence()
+                    .equivalent(returnType, resolvedComponentMethod.getParameterTypes().get(0)),
+            "members injection method must return void or parameter type: %s",
+            componentMethod);
+        descriptor.dependencyRequest(
+            dependencyRequestFactory.forComponentMembersInjectionMethod(
+                componentMethod, resolvedComponentMethod));
+        break;
+
+      default:
+        throw new IllegalArgumentException(
+            "component method has too many parameters: " + componentMethod);
     }
 
-    List<? extends TypeMirror> parameterTypes = resolvedComponentMethod.getParameterTypes();
-    if (parameterTypes.size() == 1
-        && (returnType.getKind().equals(VOID)
-            || MoreTypes.equivalence().equivalent(returnType, parameterTypes.get(0)))) {
-      return ComponentMethodDescriptor.forMembersInjection(
-          componentMethod,
-          dependencyRequestFactory.forComponentMembersInjectionMethod(
-              componentMethod, resolvedComponentMethod));
-    }
-
-    throw new IllegalArgumentException("not a valid component method: " + componentMethod);
+    return descriptor.build();
   }
 }

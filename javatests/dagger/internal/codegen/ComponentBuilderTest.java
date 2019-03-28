@@ -294,4 +294,73 @@ public class ComponentBuilderTest {
         .inFile(componentFile)
         .onLineContaining("interface Builder");
   }
+
+  @Test
+  public void testBindsInstanceNotAllowedOnBothSetterAndParameter() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "abstract class SimpleComponent {",
+            "  abstract String s();",
+            "",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    @BindsInstance",
+            "    Builder s(@BindsInstance String s);",
+            "",
+            "    SimpleComponent build();",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(MSGS.bindsInstanceNotAllowedOnBothSetterMethodAndParameter())
+        .inFile(componentFile)
+        .onLineContaining("Builder s(");
+  }
+
+  @Test
+  public void testBindsInstanceNotAllowedOnBothSetterAndParameter_inherited() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "abstract class SimpleComponent {",
+            "  abstract String s();",
+            "",
+            "  interface BuilderParent<B extends BuilderParent> {",
+            "    @BindsInstance",
+            "    B s(@BindsInstance String s);",
+            "  }",
+            "",
+            "  @Component.Builder",
+            "  interface Builder extends BuilderParent<Builder> {",
+            "    SimpleComponent build();",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            String.format(
+                MSGS.inheritedBindsInstanceNotAllowedOnBothSetterMethodAndParameter(),
+                "s(java.lang.String)"))
+        .inFile(componentFile)
+        .onLineContaining("Builder extends BuilderParent<Builder>");
+  }
 }

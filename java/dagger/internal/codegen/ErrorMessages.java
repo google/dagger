@@ -212,6 +212,15 @@ final class ErrorMessages {
           component.getQualifiedName(),
           Joiner.on(", ").join(additionalMethods));
     }
+
+    final String bindsInstanceNotAllowedOnBothSetterMethodAndParameter() {
+      return process("@Component.Builder setter methods may not have @BindsInstance on both the "
+          + "method and its parameter; choose one or the other");
+    }
+
+    final String inheritedBindsInstanceNotAllowedOnBothSetterMethodAndParameter() {
+      return bindsInstanceNotAllowedOnBothSetterMethodAndParameter() + ". Inherited method: %s";
+    }
   }
 
   private static final class BuilderMessages extends ComponentCreatorMessages {

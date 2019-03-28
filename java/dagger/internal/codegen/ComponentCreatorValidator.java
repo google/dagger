@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
-import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -224,8 +223,21 @@ final class ComponentCreatorValidator {
 
     validateNotGeneric(method, report, messages);
 
-    if (!isAnyAnnotationPresent(method, BindsInstance.class)
-        && method.getParameters().get(0).asType().getKind().isPrimitive()) {
+    VariableElement parameter = method.getParameters().get(0);
+
+    boolean methodIsBindsInstance = isAnnotationPresent(method, BindsInstance.class);
+    boolean parameterIsBindsInstance = isAnnotationPresent(parameter, BindsInstance.class);
+    boolean bindsInstance = methodIsBindsInstance || parameterIsBindsInstance;
+
+    if (methodIsBindsInstance && parameterIsBindsInstance) {
+      error(
+          report,
+          method,
+          messages.bindsInstanceNotAllowedOnBothSetterMethodAndParameter(),
+          messages.inheritedBindsInstanceNotAllowedOnBothSetterMethodAndParameter());
+    }
+
+    if (!bindsInstance && parameter.asType().getKind().isPrimitive()) {
       error(
           report,
           method,

@@ -202,13 +202,14 @@ abstract class ComponentCreatorDescriptor {
       VariableElement parameter,
       TypeMirror type,
       DependencyRequestFactory dependencyRequestFactory) {
-    boolean methodIsBindsInstance = isAnnotationPresent(method, BindsInstance.class);
-    if (methodIsBindsInstance || isAnnotationPresent(parameter, BindsInstance.class)) {
+    Element bindsInstanceElement =
+        isAnnotationPresent(method, BindsInstance.class)
+            ? method
+            : (isAnnotationPresent(parameter, BindsInstance.class) ? parameter : null);
+    if (bindsInstanceElement != null) {
       DependencyRequest request =
           dependencyRequestFactory.forRequiredResolvedVariable(parameter, type);
-      // Validation already ensured that only setter methods have @BindsInstance, so name the
-      // variable for the method in that case. Otherwise, name the variable for the parameter.
-      String variableName = (methodIsBindsInstance ? method : parameter).getSimpleName().toString();
+      String variableName = bindsInstanceElement.getSimpleName().toString();
       return ComponentRequirement.forBoundInstance(
           request.key(), request.isNullable(), variableName);
     }

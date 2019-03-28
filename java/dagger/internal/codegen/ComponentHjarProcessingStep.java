@@ -30,7 +30,6 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -230,10 +229,22 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
 
   private boolean hasBindsInstanceMethods(ComponentDescriptor componentDescriptor) {
     return componentDescriptor.creatorDescriptor().isPresent()
-        && methodsIn(
-                elements.getAllMembers(componentDescriptor.creatorDescriptor().get().typeElement()))
+        && elements
+            .getUnimplementedMethods(componentDescriptor.creatorDescriptor().get().typeElement())
             .stream()
-            .anyMatch(method -> isAnnotationPresent(method, BindsInstance.class));
+            .anyMatch(method -> isBindsInstance(method));
+  }
+
+  private static boolean isBindsInstance(ExecutableElement method) {
+    if (isAnnotationPresent(method, BindsInstance.class)) {
+      return true;
+    }
+
+    if (method.getParameters().size() == 1) {
+      return isAnnotationPresent(method.getParameters().get(0), BindsInstance.class);
+    }
+
+    return false;
   }
 
   private MethodSpec builderSetterMethod(

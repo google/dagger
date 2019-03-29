@@ -121,41 +121,42 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
     if (!disjoint(annotations, rootComponentAnnotations())) {
-      ComponentValidationReport validationReport =
-          componentValidator.validate(element, subcomponentElements, subcomponentCreatorElements);
-      validationReport.report().printMessagesTo(messager);
-      if (!isClean(validationReport)) {
-        return;
-      }
-      ComponentDescriptor componentDescriptor =
-          componentDescriptorFactory.rootComponentDescriptor(element);
-      ValidationReport<TypeElement> componentDescriptorReport =
-          componentDescriptorValidator.validate(componentDescriptor);
-      componentDescriptorReport.printMessagesTo(messager);
-      if (!componentDescriptorReport.isClean()) {
-        return;
-      }
-      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
-      if (isValid(bindingGraph)) {
-        generateComponent(bindingGraph);
-      }
+      processRootComponent(element);
     }
-    if (compilerOptions.aheadOfTimeSubcomponents()
-        && !disjoint(annotations, subcomponentAnnotations())) {
-      if (!subcomponentIsClean(element)) {
-        return;
-      }
-      ComponentDescriptor componentDescriptor =
-          componentDescriptorFactory.subcomponentDescriptor(element);
-      BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
-      if (isValid(bindingGraph)) {
-        generateComponent(bindingGraph);
-      }
+    if (!disjoint(annotations, subcomponentAnnotations())) {
+      processSubcomponent(element);
     }
   }
 
-  private boolean isValid(BindingGraph bindingGraph) {
-    return bindingGraphValidator.isValid(bindingGraphConverter.convert(bindingGraph));
+  private void processRootComponent(TypeElement component) {
+    if (!isRootComponentValid(component)) {
+      return;
+    }
+    ComponentDescriptor componentDescriptor =
+        componentDescriptorFactory.rootComponentDescriptor(component);
+    if (!isValid(componentDescriptor)) {
+      return;
+    }
+    BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
+    if (isValid(bindingGraph)) {
+      generateComponent(bindingGraph);
+    }
+  }
+
+  private void processSubcomponent(TypeElement subcomponent) {
+    if (!compilerOptions.aheadOfTimeSubcomponents()) {
+      return;
+    }
+    if (!isSubcomponentValid(subcomponent)) {
+      return;
+    }
+    ComponentDescriptor subcomponentDescriptor =
+        componentDescriptorFactory.subcomponentDescriptor(subcomponent);
+    // TODO(dpb): ComponentDescriptorValidator for subcomponents, as we do for root components.
+    BindingGraph bindingGraph = bindingGraphFactory.create(subcomponentDescriptor, false);
+    if (isValid(bindingGraph)) {
+      generateComponent(bindingGraph);
+    }
   }
 
   private void generateComponent(BindingGraph bindingGraph) {
@@ -206,6 +207,39 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     return reports.build();
   }
 
+  private boolean isRootComponentValid(TypeElement rootComponent) {
+    ComponentValidationReport validationReport =
+        componentValidator.validate(
+            rootComponent, subcomponentElements, subcomponentCreatorElements);
+    validationReport.report().printMessagesTo(messager);
+    return isClean(validationReport);
+  }
+
+  // TODO(dpb): Clean up generics so this can take TypeElement.
+  private boolean isSubcomponentValid(Element subcomponentElement) {
+    ValidationReport<?> subcomponentCreatorReport =
+        creatorReportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentCreatorReport != null && !subcomponentCreatorReport.isClean()) {
+      return false;
+    }
+    ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
+    if (subcomponentReport != null && !subcomponentReport.isClean()) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isValid(ComponentDescriptor componentDescriptor) {
+    ValidationReport<TypeElement> componentDescriptorReport =
+        componentDescriptorValidator.validate(componentDescriptor);
+    componentDescriptorReport.printMessagesTo(messager);
+    return componentDescriptorReport.isClean();
+  }
+
+  private boolean isValid(BindingGraph bindingGraph) {
+    return bindingGraphValidator.isValid(bindingGraphConverter.convert(bindingGraph));
+  }
+
   /**
    * Returns true if the component's report is clean, its builder report is clean, and all
    * referenced subcomponent reports and subcomponent builder reports are clean.
@@ -221,23 +255,9 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       return false;
     }
     for (Element element : report.referencedSubcomponents()) {
-      if (!subcomponentIsClean(element)) {
+      if (!isSubcomponentValid(element)) {
         return false;
       }
-    }
-    return true;
-  }
-
-  /** Returns true if the reports associated with the subcomponent are clean. */
-  private boolean subcomponentIsClean(Element subcomponentElement) {
-    ValidationReport<?> subcomponentBuilderReport =
-        creatorReportsBySubcomponent.get(subcomponentElement);
-    if (subcomponentBuilderReport != null && !subcomponentBuilderReport.isClean()) {
-      return false;
-    }
-    ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
-    if (subcomponentReport != null && !subcomponentReport.isClean()) {
-      return false;
     }
     return true;
   }

@@ -20,8 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
 import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
-import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
@@ -65,7 +64,7 @@ final class ConfigurationAnnotations {
   }
 
   static boolean isSubcomponentCreator(Element element) {
-    return isAnyAnnotationPresent(element, creatorAnnotationsFor(subcomponentKinds()));
+    return isAnyAnnotationPresent(element, subcomponentCreatorAnnotations());
   }
 
   // Dagger 1 support.

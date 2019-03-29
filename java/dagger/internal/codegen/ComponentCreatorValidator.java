@@ -69,14 +69,11 @@ final class ComponentCreatorValidator {
 
     // creatorAnnotations should never be empty because the validate method should only ever be
     // called for types that have been found to have some creator annotation
-    ComponentCreatorAnnotation annotation = getOnlyElement(creatorAnnotations);
-    ComponentCreatorMessages messages = ErrorMessages.creatorMessagesFor(annotation);
-
-    ComponentKind componentKind = annotation.componentKind();
-    ComponentCreatorKind creatorKind = annotation.creatorKind();
+    ComponentCreatorAnnotation creatorAnnotation = getOnlyElement(creatorAnnotations);
+    ComponentCreatorMessages messages = ErrorMessages.creatorMessagesFor(creatorAnnotation);
 
     Element componentElement = type.getEnclosingElement();
-    if (!isAnnotationPresent(componentElement, componentKind.annotation())) {
+    if (!isAnnotationPresent(componentElement, creatorAnnotation.componentAnnotation())) {
       report.addError(messages.mustBeInComponent());
     }
 
@@ -84,7 +81,7 @@ final class ComponentCreatorValidator {
     // messages will be bogus.
     if (validateIsClassOrInterface(type, report, messages)) {
       validateTypeRequirements(type, report, messages);
-      switch (creatorKind) {
+      switch (creatorAnnotation.creatorKind()) {
         case FACTORY:
           validateFactory(type, report, componentElement, messages);
           break;

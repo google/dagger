@@ -18,8 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.ComponentKind.COMPONENT;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.COMPONENT_BUILDER;
 import static dagger.internal.codegen.ErrorMessages.creatorMessagesFor;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -47,7 +46,7 @@ public class ComponentBuilderTest {
   }
 
   private static final ErrorMessages.ComponentCreatorMessages MSGS =
-      creatorMessagesFor(COMPONENT, BUILDER);
+      creatorMessagesFor(COMPONENT_BUILDER);
 
   @Test
   public void testUsesBuildAndSetterNames() {

@@ -17,112 +17,134 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
-import static dagger.internal.codegen.ComponentKind.COMPONENT;
-import static dagger.internal.codegen.ComponentKind.PRODUCTION_COMPONENT;
-import static dagger.internal.codegen.ComponentKind.PRODUCTION_SUBCOMPONENT;
-import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
+import static com.google.common.base.Ascii.toUpperCase;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.DaggerStreams.valuesOf;
+import static java.util.stream.Collectors.mapping;
 
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import dagger.Component;
 import dagger.Subcomponent;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
-import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Simple representation of an annotation for a component creator type. Each annotation is for a
- * specific component kind and creator kind.
- */
-@AutoValue
-abstract class ComponentCreatorAnnotation {
+/** Simple representation of a component creator annotation type. */
+enum ComponentCreatorAnnotation {
+  COMPONENT_BUILDER(Component.Builder.class),
+  COMPONENT_FACTORY(Component.Factory.class),
+  SUBCOMPONENT_BUILDER(Subcomponent.Builder.class),
+  SUBCOMPONENT_FACTORY(Subcomponent.Factory.class),
+  PRODUCTION_COMPONENT_BUILDER(ProductionComponent.Builder.class),
+  PRODUCTION_COMPONENT_FACTORY(ProductionComponent.Factory.class),
+  PRODUCTION_SUBCOMPONENT_BUILDER(ProductionSubcomponent.Builder.class),
+  PRODUCTION_SUBCOMPONENT_FACTORY(ProductionSubcomponent.Factory.class),
+  ;
 
-  private static final ImmutableMap<Class<? extends Annotation>, ComponentCreatorAnnotation>
-      ANNOTATIONS =
-          Maps.uniqueIndex(
-              ImmutableList.of(
-                  create(Component.Builder.class, COMPONENT, BUILDER),
-                  create(Component.Factory.class, COMPONENT, FACTORY),
-                  create(Subcomponent.Builder.class, SUBCOMPONENT, BUILDER),
-                  create(Subcomponent.Factory.class, SUBCOMPONENT, FACTORY),
-                  create(ProductionComponent.Builder.class, PRODUCTION_COMPONENT, BUILDER),
-                  create(ProductionComponent.Factory.class, PRODUCTION_COMPONENT, FACTORY),
-                  create(ProductionSubcomponent.Builder.class, PRODUCTION_SUBCOMPONENT, BUILDER),
-                  create(ProductionSubcomponent.Factory.class, PRODUCTION_SUBCOMPONENT, FACTORY)),
-              ComponentCreatorAnnotation::annotation);
+  private final Class<? extends Annotation> annotation;
+  private final ComponentCreatorKind creatorKind;
+  private final Class<? extends Annotation> componentAnnotation;
 
-  /** Returns the set of all component creator annotations. */
-  static ImmutableSet<Class<? extends Annotation>> allCreatorAnnotations() {
-    return ANNOTATIONS.keySet();
+  ComponentCreatorAnnotation(Class<? extends Annotation> annotation) {
+    this.annotation = annotation;
+    this.creatorKind = ComponentCreatorKind.valueOf(toUpperCase(annotation.getSimpleName()));
+    this.componentAnnotation = (Class<? extends Annotation>) annotation.getEnclosingClass();
   }
 
-  /** Returns all creator annotations for the given {@code componentKind}. */
-  static ImmutableSet<Class<? extends Annotation>> creatorAnnotationsFor(
-      ComponentKind componentKind) {
-    return creatorAnnotationsFor(ImmutableSet.of(componentKind));
+  /** The actual annotation type. */
+  Class<? extends Annotation> annotation() {
+    return annotation;
   }
-
-  /** Returns all creator annotations for any of the given {@code componentKinds}. */
-  static ImmutableSet<Class<? extends Annotation>> creatorAnnotationsFor(
-      Set<ComponentKind> componentKinds) {
-    return ANNOTATIONS.values().stream()
-        .filter(annotation -> componentKinds.contains(annotation.componentKind()))
-        .map(ComponentCreatorAnnotation::annotation)
-        .collect(toImmutableSet());
-  }
-
-  /** Returns the legal creator annotations for the given {@code componentAnnotation}. */
-  static ImmutableSet<Class<? extends Annotation>> creatorAnnotationsFor(
-      ComponentAnnotation componentAnnotation) {
-    return ANNOTATIONS.values().stream()
-        .filter(
-            creatorAnnotation ->
-                creatorAnnotation
-                    .componentAnnotation()
-                    .getSimpleName()
-                    .equals(componentAnnotation.simpleName()))
-        .map(ComponentCreatorAnnotation::annotation)
-        .collect(toImmutableSet());
-  }
-
-  /** Returns all creator annotations present on the given {@code type}. */
-  static ImmutableSet<ComponentCreatorAnnotation> getCreatorAnnotations(TypeElement type) {
-    return ImmutableSet.copyOf(
-        Maps.filterKeys(ANNOTATIONS, annotation -> isAnnotationPresent(type, annotation)).values());
-  }
-
-  /** The actual annotation. */
-  abstract Class<? extends Annotation> annotation();
 
   /** The component annotation type that encloses this creator annotation type. */
   final Class<? extends Annotation> componentAnnotation() {
-    return (Class<? extends Annotation>) annotation().getEnclosingClass();
+    return componentAnnotation;
   }
 
-  /** The component kind the annotation is associated with. */
-  abstract ComponentKind componentKind();
+  /** Returns {@code true} if the creator annotation is for a subcomponent. */
+  final boolean isSubcomponentCreatorAnnotation() {
+    return componentAnnotation().getSimpleName().endsWith("Subcomponent");
+  }
+
+  /**
+   * Returns {@code true} if the creator annotation is for a production component or subcomponent.
+   */
+  final boolean isProductionCreatorAnnotation() {
+    return componentAnnotation().getSimpleName().startsWith("Production");
+  }
 
   /** The creator kind the annotation is associated with. */
-  abstract ComponentCreatorKind creatorKind();
+  // TODO(dpb): Remove ComponentCreatorKind.
+  ComponentCreatorKind creatorKind() {
+    return creatorKind;
+  }
 
   @Override
   public final String toString() {
     return annotation().getName();
   }
 
-  private static ComponentCreatorAnnotation create(
-      Class<? extends Annotation> annotation,
-      ComponentKind componentKind,
-      ComponentCreatorKind componentCreatorKind) {
-    return new AutoValue_ComponentCreatorAnnotation(
-        annotation, componentKind, componentCreatorKind);
+  /** Returns all component creator annotations. */
+  static ImmutableSet<Class<? extends Annotation>> allCreatorAnnotations() {
+    return stream().collect(toAnnotationClasses());
+  }
+
+  /** Returns all root component creator annotations. */
+  static ImmutableSet<Class<? extends Annotation>> rootComponentCreatorAnnotations() {
+    return stream()
+        .filter(
+            componentCreatorAnnotation ->
+                !componentCreatorAnnotation.isSubcomponentCreatorAnnotation())
+        .collect(toAnnotationClasses());
+  }
+
+  /** Returns all subcomponent creator annotations. */
+  static ImmutableSet<Class<? extends Annotation>> subcomponentCreatorAnnotations() {
+    return stream()
+        .filter(
+            componentCreatorAnnotation ->
+                componentCreatorAnnotation.isSubcomponentCreatorAnnotation())
+        .collect(toAnnotationClasses());
+  }
+
+  /** Returns all production component creator annotations. */
+  static ImmutableSet<Class<? extends Annotation>> productionCreatorAnnotations() {
+    return stream()
+        .filter(
+            componentCreatorAnnotation ->
+                componentCreatorAnnotation.isProductionCreatorAnnotation())
+        .collect(toAnnotationClasses());
+  }
+
+  /** Returns the legal creator annotations for the given {@code componentAnnotation}. */
+  static ImmutableSet<Class<? extends Annotation>> creatorAnnotationsFor(
+      ComponentAnnotation componentAnnotation) {
+    return stream()
+        .filter(
+            creatorAnnotation ->
+                creatorAnnotation
+                    .componentAnnotation()
+                    .getSimpleName()
+                    .equals(componentAnnotation.simpleName()))
+        .collect(toAnnotationClasses());
+  }
+
+  /** Returns all creator annotations present on the given {@code type}. */
+  static ImmutableSet<ComponentCreatorAnnotation> getCreatorAnnotations(TypeElement type) {
+    return stream()
+        .filter(cca -> isAnnotationPresent(type, cca.annotation()))
+        .collect(toImmutableSet());
+  }
+
+  private static Stream<ComponentCreatorAnnotation> stream() {
+    return valuesOf(ComponentCreatorAnnotation.class);
+  }
+
+  private static Collector<ComponentCreatorAnnotation, ?, ImmutableSet<Class<? extends Annotation>>>
+      toAnnotationClasses() {
+    return mapping(ComponentCreatorAnnotation::annotation, toImmutableSet());
   }
 }

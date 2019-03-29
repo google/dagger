@@ -18,8 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.ErrorMessages.creatorMessagesFor;
 
 import com.google.testing.compile.Compilation;
@@ -34,7 +33,7 @@ import org.junit.runners.JUnit4;
 public class SubcomponentBuilderValidationTest {
 
   private static final ErrorMessages.ComponentCreatorMessages MSGS =
-      creatorMessagesFor(SUBCOMPONENT, BUILDER);
+      creatorMessagesFor(SUBCOMPONENT_BUILDER);
 
   @Test
   public void testMoreThanOneArgFails() {

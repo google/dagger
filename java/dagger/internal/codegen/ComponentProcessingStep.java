@@ -21,9 +21,8 @@ import static dagger.internal.codegen.ComponentAnnotation.allComponentAnnotation
 import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.allCreatorAnnotations;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
-import static dagger.internal.codegen.ComponentKind.rootComponentKinds;
-import static dagger.internal.codegen.ComponentKind.subcomponentKinds;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
@@ -100,15 +99,13 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     subcomponentElements =
         getElementsFromAnnotations(elementsByAnnotation, subcomponentAnnotations());
     subcomponentCreatorElements =
-        getElementsFromAnnotations(
-            elementsByAnnotation, creatorAnnotationsFor(subcomponentKinds()));
+        getElementsFromAnnotations(elementsByAnnotation, subcomponentCreatorAnnotations());
 
     ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
 
     creatorReportsByComponent =
         processCreators(
-            getElementsFromAnnotations(
-                elementsByAnnotation, creatorAnnotationsFor(rootComponentKinds())),
+            getElementsFromAnnotations(elementsByAnnotation, rootComponentCreatorAnnotations()),
             rejectedElements);
     creatorReportsBySubcomponent = processCreators(subcomponentCreatorElements, rejectedElements);
     reportsBySubcomponent =

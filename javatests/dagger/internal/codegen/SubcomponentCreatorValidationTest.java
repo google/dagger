@@ -18,6 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
@@ -40,11 +42,11 @@ import org.junit.runners.Parameterized.Parameters;
 public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelper {
   @Parameters(name = "creatorKind={0}")
   public static Collection<Object[]> parameters() {
-    return ImmutableList.copyOf(new Object[][] {{BUILDER}, {FACTORY}});
+    return ImmutableList.copyOf(new Object[][] {{SUBCOMPONENT_BUILDER}, {SUBCOMPONENT_FACTORY}});
   }
 
-  public SubcomponentCreatorValidationTest(ComponentCreatorKind creatorKind) {
-    super(DEFAULT_MODE, SUBCOMPONENT, creatorKind);
+  public SubcomponentCreatorValidationTest(ComponentCreatorAnnotation componentCreatorAnnotation) {
+    super(DEFAULT_MODE, componentCreatorAnnotation);
   }
 
   @Test

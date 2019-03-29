@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import java.util.Set;
@@ -53,26 +52,27 @@ final class ErrorMessages {
 
   static ComponentMessages componentMessagesFor(ComponentAnnotation componentAnnotation) {
     return new ComponentMessages(
-        componentAnnotation.isProduction()
-            ? componentAnnotation.isSubcomponent() ? PRODUCTION.andThen(SUBCOMPONENT) : PRODUCTION
-            : componentAnnotation.isSubcomponent() ? SUBCOMPONENT : UnaryOperator.identity());
+        transformation(componentAnnotation.isProduction(), componentAnnotation.isSubcomponent()));
   }
 
   static ComponentCreatorMessages creatorMessagesFor(ComponentCreatorAnnotation creatorAnnotation) {
-    return creatorMessagesFor(creatorAnnotation.componentKind(), creatorAnnotation.creatorKind());
-  }
-
-  @VisibleForTesting
-  static ComponentCreatorMessages creatorMessagesFor(
-      ComponentKind componentKind, ComponentCreatorKind creatorKind) {
-    Function<String, String> transformation = COMPONENT_TRANSFORMATIONS.get(componentKind);
-    switch (creatorKind) {
+    Function<String, String> transformation =
+        transformation(
+            creatorAnnotation.isProductionCreatorAnnotation(),
+            creatorAnnotation.isSubcomponentCreatorAnnotation());
+    switch (creatorAnnotation.creatorKind()) {
       case BUILDER:
         return new BuilderMessages(transformation);
       case FACTORY:
         return new FactoryMessages(transformation);
     }
-    throw new AssertionError();
+    throw new AssertionError(creatorAnnotation);
+  }
+
+  private static Function<String, String> transformation(
+      boolean isProduction, boolean isSubcomponent) {
+    Function<String, String> transformation = isProduction ? PRODUCTION : UnaryOperator.identity();
+    return isSubcomponent ? transformation.andThen(SUBCOMPONENT) : transformation;
   }
 
   private abstract static class Messages {

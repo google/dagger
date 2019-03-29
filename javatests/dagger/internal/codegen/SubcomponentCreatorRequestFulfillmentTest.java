@@ -16,19 +16,20 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Sets.cartesianProduct;
+import static com.google.common.collect.Sets.immutableEnumSet;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
-import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import javax.tools.JavaFileObject;
@@ -42,15 +43,15 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
   @Parameters(name = "compilerMode={0}, creatorKind={1}")
   public static Collection<Object[]> parameters() {
     Set<List<Object>> params =
-        Sets.<Object>cartesianProduct(
-            Sets.immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
-            EnumSet.allOf(ComponentCreatorKind.class));
+        cartesianProduct(
+            immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
+            immutableEnumSet(SUBCOMPONENT_FACTORY, SUBCOMPONENT_BUILDER));
     return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
   }
 
   public SubcomponentCreatorRequestFulfillmentTest(
-      CompilerMode compilerMode, ComponentCreatorKind creatorKind) {
-    super(compilerMode, SUBCOMPONENT, creatorKind);
+      CompilerMode compilerMode, ComponentCreatorAnnotation componentCreatorAnnotation) {
+    super(compilerMode, componentCreatorAnnotation);
   }
 
   @Test

@@ -16,10 +16,13 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.collect.Sets.immutableEnumSet;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.COMPONENT_BUILDER;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.COMPONENT_FACTORY;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.ComponentKind.COMPONENT;
@@ -33,7 +36,6 @@ import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import javax.tools.JavaFileObject;
@@ -49,13 +51,14 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   public static Collection<Object[]> parameters() {
     Set<List<Object>> params =
         Sets.<Object>cartesianProduct(
-            Sets.immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
-            EnumSet.allOf(ComponentCreatorKind.class));
+            immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
+            immutableEnumSet(COMPONENT_BUILDER, COMPONENT_FACTORY));
     return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
   }
 
-  public ComponentCreatorTest(CompilerMode compilerMode, ComponentCreatorKind creatorKind) {
-    super(compilerMode, COMPONENT, creatorKind);
+  public ComponentCreatorTest(
+      CompilerMode compilerMode, ComponentCreatorAnnotation componentCreatorAnnotation) {
+    super(compilerMode, componentCreatorAnnotation);
   }
 
   @Test

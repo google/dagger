@@ -40,10 +40,10 @@ abstract class ComponentCreatorTestHelper {
   protected final ErrorMessages.ComponentCreatorMessages messages;
 
   ComponentCreatorTestHelper(
-      CompilerMode compilerMode, ComponentKind componentKind, ComponentCreatorKind creatorKind) {
+      CompilerMode compilerMode, ComponentCreatorAnnotation componentCreatorAnnotation) {
     this.compilerMode = compilerMode;
-    this.creatorKind = creatorKind;
-    this.messages = creatorMessagesFor(componentKind, creatorKind);
+    this.creatorKind = componentCreatorAnnotation.creatorKind();
+    this.messages = creatorMessagesFor(componentCreatorAnnotation);
   }
 
   // For tests where code for both builders and factories can be largely equivalent, i.e. when there

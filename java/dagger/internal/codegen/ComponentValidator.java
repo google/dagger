@@ -24,9 +24,12 @@ import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
+import static com.google.common.collect.Sets.intersection;
 import static dagger.internal.codegen.ComponentAnnotation.anyComponentAnnotation;
 import static dagger.internal.codegen.ComponentAnnotation.componentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotationsFor;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.productionCreatorAnnotations;
+import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
@@ -176,7 +179,7 @@ final class ComponentValidator {
     }
 
     ImmutableList<DeclaredType> creators =
-        creatorAnnotationsFor(componentKind).stream()
+        creatorAnnotationsFor(componentAnnotation).stream()
             .flatMap(annotation -> enclosedAnnotatedTypes(subject, annotation).stream())
             .collect(toImmutableList());
     if (creators.size() > 1) {
@@ -219,7 +222,11 @@ final class ComponentValidator {
                           .collect(toImmutableSet()));
               Optional<AnnotationMirror> subcomponentCreatorAnnotation =
                   checkForAnnotations(
-                      returnType, creatorAnnotationsFor(componentKind.legalSubcomponentKinds()));
+                      returnType,
+                      componentAnnotation.isProduction()
+                          ? intersection(
+                              subcomponentCreatorAnnotations(), productionCreatorAnnotations())
+                          : subcomponentCreatorAnnotations());
               if (subcomponentAnnotation.isPresent()) {
                 referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
                 validateSubcomponentMethod(

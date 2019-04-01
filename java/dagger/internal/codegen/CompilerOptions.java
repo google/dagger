@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
@@ -37,6 +38,7 @@ import com.squareup.javapoet.AnnotationSpec;
 import dagger.internal.GenerationOptions;
 import dagger.producers.Produces;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -175,7 +177,7 @@ abstract class CompilerOptions {
   }
 
   /** An option that can be set into {@link CompilerOptions}. */
-  private interface Option {
+  private interface Option<T extends Enum<T>> {
 
     /** Sets the appropriate property on a {@link CompilerOptions.Builder}. */
     void set(Builder builder, ProcessingEnvironment processingEnvironment);
@@ -187,10 +189,16 @@ abstract class CompilerOptions {
     default boolean useCommandLineOption() {
       return true;
     }
+
+    /** The default value for this option. */
+    T defaultValue();
+
+    /** The valid values for this option. */
+    Set<T> validValues();
   }
 
   /** A feature that can be enabled or disabled. */
-  private enum Feature implements Option {
+  private enum Feature implements Option<FeatureStatus> {
     HEADER_COMPILATION(Builder::headerCompilation) {
       @Override
       boolean isEnabled(ProcessingEnvironment processingEnvironment) {
@@ -259,6 +267,7 @@ abstract class CompilerOptions {
     },
     ;
 
+    final OptionParser<FeatureStatus> parser = new OptionParser<>(this);
     final FeatureStatus defaultValue;
     final BiConsumer<Builder, Boolean> setter;
 
@@ -272,14 +281,22 @@ abstract class CompilerOptions {
     }
 
     @Override
+    public FeatureStatus defaultValue() {
+      return defaultValue;
+    }
+
+    @Override
+    public Set<FeatureStatus> validValues() {
+      return EnumSet.allOf(FeatureStatus.class);
+    }
+
+    @Override
     public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
       setter.accept(builder, isEnabled(processingEnvironment));
     }
 
     boolean isEnabled(ProcessingEnvironment processingEnvironment) {
-      return CompilerOptions.valueOf(
-              processingEnvironment, toString(), defaultValue, allOf(FeatureStatus.class))
-          .equals(ENABLED);
+      return parser.parse(processingEnvironment).equals(ENABLED);
     }
 
     @Override
@@ -300,7 +317,7 @@ abstract class CompilerOptions {
   }
 
   /** The diagnostic kind or validation type for a kind of validation. */
-  private enum Validation implements Option {
+  private enum Validation implements Option<ValidationType> {
     DISABLE_INTER_COMPONENT_SCOPE_VALIDATION(Builder::scopeCycleValidationType),
 
     NULLABLE_VALIDATION(kindSetter(Builder::nullableValidationKind), ERROR, WARNING) {
@@ -328,6 +345,8 @@ abstract class CompilerOptions {
         Builder::explicitBindingConflictsWithInjectValidationType, WARNING, ERROR, NONE),
     ;
 
+    final OptionParser<ValidationType> parser = new OptionParser<>(this);
+
     static BiConsumer<Builder, ValidationType> kindSetter(
         BiConsumer<Builder, Diagnostic.Kind> setter) {
       return (builder, validationType) ->
@@ -352,12 +371,18 @@ abstract class CompilerOptions {
     }
 
     @Override
-    public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
-      setter.accept(builder, validationType(processingEnvironment));
+    public ValidationType defaultValue() {
+      return defaultType;
     }
 
-    ValidationType validationType(ProcessingEnvironment processingEnvironment) {
-      return CompilerOptions.valueOf(processingEnvironment, toString(), defaultType, validTypes);
+    @Override
+    public Set<ValidationType> validValues() {
+      return validTypes;
+    }
+
+    @Override
+    public void set(Builder builder, ProcessingEnvironment processingEnvironment) {
+      setter.accept(builder, parser.parse(processingEnvironment));
     }
 
     @Override
@@ -366,44 +391,62 @@ abstract class CompilerOptions {
     }
   }
 
-  static final ImmutableSet<String> SUPPORTED_OPTIONS =
-      Stream.<Option>concat(Arrays.stream(Feature.values()), Arrays.stream(Validation.values()))
-          .filter(Option::useCommandLineOption)
-          .map(Object::toString)
-          .collect(toImmutableSet());
-
   private static String optionName(String enumName) {
     return "dagger." + UPPER_UNDERSCORE.to(LOWER_CAMEL, enumName);
   }
 
-  private static <T extends Enum<T>> T valueOf(
-      ProcessingEnvironment processingEnv, String key, T defaultValue, Set<T> validValues) {
-    Map<String, String> options = processingEnv.getOptions();
-    if (options.containsKey(key)) {
-      String optionValue = options.get(key);
-      if (optionValue == null) {
-        processingEnv
-            .getMessager()
-            .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
-      } else {
-        try {
-          T type = Enum.valueOf(defaultValue.getDeclaringClass(), Ascii.toUpperCase(optionValue));
-          if (!validValues.contains(type)) {
-            throw new IllegalArgumentException(); // let handler below print out good msg.
+  static ImmutableSet<String> supportedOptions() {
+    return Stream.<Option<?>[]>of(Feature.values(), Validation.values())
+        .flatMap(Arrays::stream)
+        .filter(Option::useCommandLineOption)
+        .map(Option::toString)
+        .collect(toImmutableSet());
+  }
+
+  /** A parser for an {@link Option}. */
+  private static class OptionParser<T extends Enum<T>> {
+    private final Option<T> option;
+
+    OptionParser(Option<T> option) {
+      this.option = checkNotNull(option);
+    }
+
+    /**
+     * Returns the value for this option as set on the command line, or the default value if not.
+     */
+    T parse(ProcessingEnvironment processingEnvironment) {
+      String key = option.toString();
+      Map<String, String> options = processingEnvironment.getOptions();
+      if (options.containsKey(key)) {
+        String stringValue = options.get(key);
+        if (stringValue == null) {
+          processingEnvironment
+              .getMessager()
+              .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
+        } else {
+          try {
+            T value = Enum.valueOf(valueClass(), Ascii.toUpperCase(stringValue));
+            if (option.validValues().contains(value)) {
+              return value;
+            }
+          } catch (IllegalArgumentException e) {
+            // handled below
           }
-          return type;
-        } catch (IllegalArgumentException e) {
-          processingEnv
+          processingEnvironment
               .getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
                   String.format(
                       "Processor option -A%s may only have the values %s "
                           + "(case insensitive), found: %s",
-                      key, validValues, options.get(key)));
+                      key, option.validValues(), stringValue));
         }
       }
+      return option.defaultValue();
     }
-    return defaultValue;
+
+    private Class<T> valueClass() {
+      return option.defaultValue().getDeclaringClass();
+    }
   }
 }

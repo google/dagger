@@ -92,7 +92,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Override
   public Set<String> getSupportedOptions() {
     ImmutableSet.Builder<String> options = ImmutableSet.builder();
-    options.addAll(CompilerOptions.SUPPORTED_OPTIONS);
+    options.addAll(CompilerOptions.supportedOptions());
     options.addAll(bindingGraphPlugins.allSupportedOptions());
     if (compilerOptions.useGradleIncrementalProcessing()) {
       options.add("org.gradle.annotation.processing.isolating");

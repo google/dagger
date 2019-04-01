@@ -61,14 +61,14 @@ nodes and edges instead of `Element`s.
 All reported diagnostics will be prefixed with `[<plugin name>]` so that users
 can easily identify the source/category of the diagnostic. The plugin name
 defaults the fully qualified class name of the `BindingGraphPlugin`, but can be
-configured by returning a value for `BindingGraphPlugin.pluginName()`.
+configured by returning a value for [`pluginName()`].
 
 ## Generating files
 
 If you'd like to generate files based on the binding graph, you can obtain an
-instance of a [`Filer`] from the [`BindingGraph.initFiler()`] method. The filer
-can be used within `visitGraph()` to generate files just like a normal
-annotation processor would.
+instance of a [`Filer`] from the [`initFiler()`] method. The filer can be used
+within `visitGraph()` to generate files just like a normal annotation processor
+would.
 
 One common use case for generating files is to serialize the binding graph model
 to JSON/proto for a UI to use later to help users visualize the binding
@@ -80,20 +80,17 @@ can promote it!)
 Annotation processors are given an instance of [`Types`] in order to simplify
 code that interfaces with Java's type system, as well as an instance of
 [`Elements`] for code that interfaces with source code elements. SPI plugins can
-obtain references to these types via the [`BindingGraph.initTypes()`] and
-[`BindingGraph.initElements()`] methods.
+obtain references to these types via the [`initTypes()`] and [`initElements()`]
+methods.
 
 ## Command line options
 
 SPI plugins may declare a set of supported command line options with the
-`BindingGraph.supportedOptions()` method. If any of these are passed to `javac`,
-Dagger will forward the values to the `initOptions()` method.
+[`supportedOptions()`] method. If any of these are passed to `javac`, Dagger
+will forward the values to the [`initOptions()`] method.
 
 [`@AutoService`]: https://github.com/google/auto/tree/master/service
 [binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/Binding.html
-[`BindingGraph.initElements()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initElements-javax.lang.model.util.Elements-
-[`BindingGraph.initFiler()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initFiler-javax.annotation.processing.Filer-
-[`BindingGraph.initTypes()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initTypes-javax.lang.model.util.Types-
 [BindingGraph javadoc]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.html
 [`BindingGraphPlugin`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html
 [component nodes]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.ComponentNode.html
@@ -101,13 +98,19 @@ Dagger will forward the values to the `initOptions()` method.
 [`DiagnosticReporter`]: https://google.github.io/dagger/api/latest/dagger/spi/DiagnosticReporter.html
 [`Filer`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Filer.html
 [GitHub releases]: https://github.com/google/dagger/releases
+[`initElements()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initElements-javax.lang.model.util.Elements-
+[`initFiler()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initFiler-javax.annotation.processing.Filer-
+[`initOptions()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initOptions-java.util.Map-
+[`initTypes()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initTypes-javax.lang.model.util.Types-
 [`java_plugin`]: https://docs.bazel.build/versions/master/be/java.html#java_plugin
 [`Messager`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Messager.html
 [missing binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/MissingBinding.html
 [module binding validation]: compiler-options.md#module-binding-validation
 [`Network`]: http://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/graph/Network.html
+[`pluginName()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#pluginName--
 [reach out]: https://github.com/google/dagger/issues/new
 [`ServiceLoader`]: https://docs.oracle.com/javase/9/docs/api/java/util/ServiceLoader.html
 [SPI]: https://en.wikipedia.org/wiki/Service_provider_interface
+[`supportedOptions()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#supportedOptions--
 [`visitGraph()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#visitGraph-dagger.model.BindingGraph-dagger.spi.DiagnosticReporter-
 

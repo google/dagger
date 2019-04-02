@@ -171,7 +171,8 @@ abstract class ComponentCreatorDescriptor {
         VariableElement parameter = getOnlyElement(method.getParameters());
         TypeMirror parameterType = getOnlyElement(resolvedMethodType.getParameterTypes());
         setterMethods.put(
-            requirement(method, parameter, parameterType, dependencyRequestFactory), method);
+            requirement(method, parameter, parameterType, dependencyRequestFactory, method),
+            method);
       }
     }
     verify(factoryMethod != null); // validation should have ensured this.
@@ -187,7 +188,7 @@ abstract class ComponentCreatorDescriptor {
       VariableElement parameter = parameters.get(i);
       TypeMirror parameterType = parameterTypes.get(i);
       factoryParameters.put(
-          requirement(factoryMethod, parameter, parameterType, dependencyRequestFactory),
+          requirement(factoryMethod, parameter, parameterType, dependencyRequestFactory, parameter),
           parameter);
     }
 
@@ -201,15 +202,13 @@ abstract class ComponentCreatorDescriptor {
       ExecutableElement method,
       VariableElement parameter,
       TypeMirror type,
-      DependencyRequestFactory dependencyRequestFactory) {
-    Element bindsInstanceElement =
-        isAnnotationPresent(method, BindsInstance.class)
-            ? method
-            : (isAnnotationPresent(parameter, BindsInstance.class) ? parameter : null);
-    if (bindsInstanceElement != null) {
+      DependencyRequestFactory dependencyRequestFactory,
+      Element elementForVariableName) {
+    if (isAnnotationPresent(method, BindsInstance.class)
+        || isAnnotationPresent(parameter, BindsInstance.class)) {
       DependencyRequest request =
           dependencyRequestFactory.forRequiredResolvedVariable(parameter, type);
-      String variableName = bindsInstanceElement.getSimpleName().toString();
+      String variableName = elementForVariableName.getSimpleName().toString();
       return ComponentRequirement.forBoundInstance(
           request.key(), request.isNullable(), variableName);
     }

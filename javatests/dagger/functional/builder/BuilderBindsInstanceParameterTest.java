@@ -39,7 +39,8 @@ public final class BuilderBindsInstanceParameterTest {
 
     @Component.Builder
     interface Builder {
-      Builder s(@BindsInstance String s);
+      // https://github.com/google/dagger/issues/1464
+      Builder s(@BindsInstance String notTheSameNameAsMethod);
 
       Builder i(@BindsInstance int i);
 

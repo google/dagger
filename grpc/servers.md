@@ -104,8 +104,8 @@ call. To do so, follow these steps:
     }
     ```
 
-3.  Install [`NettyServerModule`](or [`InProcessServerModule`] for testing) into
-    your [`@Singleton`] component. That component will provide the gRPC
+3.  Install [`NettyServerModule`][] (or [`InProcessServerModule`] for testing)
+    into your [`@Singleton`] component. That component will provide the gRPC
     [`Server`] object.
 
     ```java

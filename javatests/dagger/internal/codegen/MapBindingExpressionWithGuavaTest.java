@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
 
@@ -194,7 +195,7 @@ public class MapBindingExpressionWithGuavaTest {
                 DEFAULT_MODE, //
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
-                FAST_INIT_MODE,
+                FAST_INIT_MODE, //
                 "        0, getProvideIntProvider());")
             .addLines(
                 "  }",
@@ -534,8 +535,10 @@ public class MapBindingExpressionWithGuavaTest {
             "  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {}",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(
+                compilerMode
+                , CompilerMode.JAVA7
+                )
             .compile(mapModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)

@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
@@ -66,6 +67,7 @@ final class ComponentBindingExpressions {
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final SourceVersion sourceVersion;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final InnerSwitchingProviders innerSwitchingProviders;
@@ -81,6 +83,7 @@ final class ComponentBindingExpressions {
       OptionalFactories optionalFactories,
       DaggerTypes types,
       DaggerElements elements,
+      SourceVersion sourceVersion,
       @GenerationCompilerOptions CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
@@ -89,6 +92,7 @@ final class ComponentBindingExpressions {
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
+    this.sourceVersion = checkNotNull(sourceVersion);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
         new MembersInjectionMethods(componentImplementation, this, graph, elements, types);
@@ -425,7 +429,7 @@ final class ComponentBindingExpressions {
         return producerFromProviderBindingExpression(resolvedBindings);
 
       case FUTURE:
-        return new ImmediateFutureBindingExpression(resolvedBindings, this, types);
+        return new ImmediateFutureBindingExpression(resolvedBindings, this, types, sourceVersion);
 
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
@@ -568,7 +572,8 @@ final class ComponentBindingExpressions {
                 resolvedBindings, componentImplementation, graph, this, types, elements));
 
       case OPTIONAL:
-        return Optional.of(new OptionalBindingExpression(resolvedBindings, this, types));
+        return Optional.of(
+            new OptionalBindingExpression(resolvedBindings, this, types, sourceVersion));
 
       case BOUND_INSTANCE:
         return Optional.of(
@@ -587,7 +592,8 @@ final class ComponentBindingExpressions {
                 membersInjectionMethods,
                 componentRequirementExpressions,
                 types,
-                elements));
+                elements,
+                sourceVersion));
 
       case MEMBERS_INJECTOR:
         return Optional.empty();

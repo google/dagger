@@ -25,22 +25,26 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.OptionalType.OptionalKind;
 import dagger.model.DependencyRequest;
 import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */
 final class OptionalBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
+  private final SourceVersion sourceVersion;
 
   @Inject
   OptionalBindingExpression(
       ResolvedBindings resolvedBindings,
       ComponentBindingExpressions componentBindingExpressions,
-      DaggerTypes types) {
+      DaggerTypes types,
+      SourceVersion sourceVersion) {
     super(resolvedBindings);
     this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
+    this.sourceVersion = sourceVersion;
   }
 
   @Override
@@ -48,14 +52,16 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
-      // When compiling with -source 7, javac's type inference isn't strong enough to detect
-      // Futures.immediateFuture(Optional.absent()) for keys that aren't Object. It also has issues
-      // when used as an argument to some members injection proxy methods (see
-      // https://github.com/google/dagger/issues/916)
-      if (isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
-        return Expression.create(
-            binding.key().type(),
-            optionalKind.parameterizedAbsentValueExpression(optionalType));
+      if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
+        // When compiling with -source 7, javac's type inference isn't strong enough to detect
+        // Futures.immediateFuture(Optional.absent()) for keys that aren't Object. It also has
+        // issues
+        // when used as an argument to some members injection proxy methods (see
+        // https://github.com/google/dagger/issues/916)
+        if (isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
+          return Expression.create(
+              binding.key().type(), optionalKind.parameterizedAbsentValueExpression(optionalType));
+        }
       }
       return Expression.create(binding.key().type(), optionalKind.absentValueExpression());
     }

@@ -25,19 +25,23 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.model.Key;
 import dagger.model.RequestKind;
+import javax.lang.model.SourceVersion;
 
 final class ImmediateFutureBindingExpression extends BindingExpression {
 
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
+  private final SourceVersion sourceVersion;
   private final Key key;
 
   ImmediateFutureBindingExpression(
       ResolvedBindings resolvedBindings,
       ComponentBindingExpressions componentBindingExpressions,
-      DaggerTypes types) {
+      DaggerTypes types,
+      SourceVersion sourceVersion) {
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
+    this.sourceVersion = checkNotNull(sourceVersion);
     this.key = resolvedBindings.key();
   }
 
@@ -52,14 +56,16 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
     Expression expression =
         componentBindingExpressions.getDependencyExpression(
             bindingRequest(key, RequestKind.INSTANCE), requestingClass);
-    // Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
-    // cast.
-    //
-    // For example, javac7 cannot detect that Futures.immediateFuture(ImmutableSet.of("T"))
-    // can safely be assigned to ListenableFuture<Set<T>>.
-    if (!types.isSameType(expression.type(), key.type())) {
-      return CodeBlock.of(
-          "($T) $L", types.accessibleType(key.type(), requestingClass), expression.codeBlock());
+    if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
+      // Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
+      // cast.
+      //
+      // For example, javac7 cannot detect that Futures.immediateFuture(ImmutableSet.of("T"))
+      // can safely be assigned to ListenableFuture<Set<T>>.
+      if (!types.isSameType(expression.type(), key.type())) {
+        return CodeBlock.of(
+            "($T) $L", types.accessibleType(key.type(), requestingClass), expression.codeBlock());
+      }
     }
     return expression.codeBlock();
   }

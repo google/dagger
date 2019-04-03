@@ -24,6 +24,7 @@ import static dagger.internal.codegen.GeneratedLines.GENERATION_OPTIONS_ANNOTATI
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ObjectArrays;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
@@ -1098,7 +1099,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return Optional.<SatisfiedInAncestor>empty();",
             "  }",
             "}");
-    Compilation compilation = compile(filesToCompile.build());
+    Compilation compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerLeaf")
@@ -1154,7 +1159,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerAncestor")
@@ -1208,7 +1217,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return Optional.<SatisfiedInGrandAncestor>empty();",
             "  }",
             "}");
-    Compilation compilation = compile(filesToCompile.build());
+    Compilation compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerLeaf")
@@ -1242,7 +1255,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    protected LeafImpl() {}",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerAncestor")
@@ -1302,7 +1319,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerGreatAncestor")
@@ -1371,7 +1392,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return Optional.<SatisfiedInAncestor>empty();",
             "  }",
             "}");
-    Compilation compilation = compile(filesToCompile.build());
+    Compilation compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerLeaf")
@@ -1426,7 +1451,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerAncestor")
@@ -1515,7 +1544,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerAncestor")
@@ -1575,7 +1608,11 @@ public final class AheadOfTimeSubcomponentsTest {
             "    }",
             "  }",
             "}");
-    compilation = compile(filesToCompile.build());
+    compilation =
+        compile(
+            filesToCompile.build()
+            , CompilerMode.JAVA7
+            );
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerGrandAncestor")
@@ -5598,7 +5635,10 @@ public final class AheadOfTimeSubcomponentsTest {
     }
   }
 
-  private static Compilation compile(Iterable<JavaFileObject> files) {
-    return compilerWithOptions(AHEAD_OF_TIME_SUBCOMPONENTS_MODE).compile(files);
+  private static Compilation compile(Iterable<JavaFileObject> files, CompilerMode... modes) {
+    return compilerWithOptions(
+            ObjectArrays.concat(
+                new CompilerMode[] {AHEAD_OF_TIME_SUBCOMPONENTS_MODE}, modes, CompilerMode.class))
+        .compile(files);
   }
 }

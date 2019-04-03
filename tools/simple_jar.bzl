@@ -15,17 +15,20 @@
 """Macro for creating a jar from a set of flat files"""
 
 def simple_jar(name, srcs):
-    """Creates a jar out of a set of flat files"""
+    """Creates a jar out of a set of flat files.
 
-    # TODO(dpb): consider creating a Fileset() under the hood to support srcs from different
-    # directories, or continually update the same zip file for each source file
+    Currently, this rule is limited to a single input argument.
+
+    Args:
+      name: The name of the target
+      srcs: Sources to be included in the jar
+    """
+    if len(srcs) > 1:
+        fail("More than one directory is not supported by simple_jar yet", attr = srcs)
     native.genrule(
         name = name,
         srcs = srcs,
         outs = ["%s.jar" % name],
-        cmd = """
-            $(location //tools:simple_jar.sh) \
-              "{package_name}" "$@" $(SRCS)
-              """.format(package_name = native.package_name()),
-        tools = ["//tools:simple_jar.sh"],
+        cmd = "$(location @bazel_tools//tools/zip:zipper) c $(OUTS) $(SRCS)",
+        tools = ["@bazel_tools//tools/zip:zipper"],
     )

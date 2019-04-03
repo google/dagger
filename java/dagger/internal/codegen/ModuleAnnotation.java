@@ -39,6 +39,9 @@ import javax.lang.model.element.TypeElement;
 /** A {@code @Module} or {@code @ProducerModule} annotation. */
 @AutoValue
 abstract class ModuleAnnotation {
+  private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
+      ImmutableSet.of(Module.class, ProducerModule.class);
+
   /** The annotation itself. */
   // This does not use AnnotationMirrors.equivalence() because we want the actual annotation
   // instance.
@@ -102,8 +105,10 @@ abstract class ModuleAnnotation {
         .anyMatch(asTypeElement(annotation.getAnnotationType()).getQualifiedName()::contentEquals);
   }
 
-  private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
-      ImmutableSet.of(Module.class, ProducerModule.class);
+  /** The module annotation types. */
+  static ImmutableSet<Class<? extends Annotation>> moduleAnnotations() {
+    return MODULE_ANNOTATIONS;
+  }
 
   /**
    * Creates an object that represents a {@code @Module} or {@code @ProducerModule}.

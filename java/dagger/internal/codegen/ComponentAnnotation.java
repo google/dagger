@@ -19,7 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.auto.common.MoreTypes.isTypeOf;
-import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
@@ -48,6 +47,21 @@ import javax.lang.model.type.TypeMirror;
  * for modules.
  */
 abstract class ComponentAnnotation {
+  /** The root component annotation types. */
+  private static final ImmutableSet<Class<? extends Annotation>> ROOT_COMPONENT_ANNOTATIONS =
+     ImmutableSet.of(Component.class, ProductionComponent.class);
+
+  /** The subcomponent annotation types. */
+  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_ANNOTATIONS =
+     ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
+
+  /** All component annotation types. */
+  private static final ImmutableSet<Class<? extends Annotation>> ALL_COMPONENT_ANNOTATIONS =
+     ImmutableSet.<Class<? extends Annotation>>builder()
+         .addAll(ROOT_COMPONENT_ANNOTATIONS)
+         .addAll(SUBCOMPONENT_ANNOTATIONS)
+         .build();
+
   /** The annotation itself. */
   abstract AnnotationMirror annotation();
 
@@ -117,7 +131,7 @@ abstract class ComponentAnnotation {
    * one is present on {@code typeElement}.
    */
   static Optional<ComponentAnnotation> rootComponentAnnotation(TypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, rootComponentAnnotations());
+    return anyComponentAnnotation(typeElement, ROOT_COMPONENT_ANNOTATIONS);
   }
 
   /**
@@ -125,7 +139,7 @@ abstract class ComponentAnnotation {
    * typeElement}.
    */
   static Optional<ComponentAnnotation> subcomponentAnnotation(TypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, subcomponentAnnotations());
+    return anyComponentAnnotation(typeElement, SUBCOMPONENT_ANNOTATIONS);
   }
 
   /**
@@ -133,7 +147,7 @@ abstract class ComponentAnnotation {
    * on {@code typeElement}.
    */
   static Optional<ComponentAnnotation> anyComponentAnnotation(TypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, allComponentAnnotations());
+    return anyComponentAnnotation(typeElement, ALL_COMPONENT_ANNOTATIONS);
   }
 
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
@@ -143,7 +157,7 @@ abstract class ComponentAnnotation {
 
   /** Returns {@code true} if the argument is a component annotation. */
   static boolean isComponentAnnotation(AnnotationMirror annotation) {
-    return allComponentAnnotations().stream()
+    return ALL_COMPONENT_ANNOTATIONS.stream()
         .anyMatch(annotationClass -> isTypeOf(annotationClass, annotation.getAnnotationType()));
   }
 
@@ -177,17 +191,17 @@ abstract class ComponentAnnotation {
 
   /** The root component annotation types. */
   static ImmutableSet<Class<? extends Annotation>> rootComponentAnnotations() {
-    return ImmutableSet.of(Component.class, ProductionComponent.class);
+    return ROOT_COMPONENT_ANNOTATIONS;
   }
 
   /** The subcomponent annotation types. */
   static ImmutableSet<Class<? extends Annotation>> subcomponentAnnotations() {
-    return ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
+    return SUBCOMPONENT_ANNOTATIONS;
   }
 
   /** All component annotation types. */
   static ImmutableSet<Class<? extends Annotation>> allComponentAnnotations() {
-    return union(rootComponentAnnotations(), subcomponentAnnotations()).immutableCopy();
+    return ALL_COMPONENT_ANNOTATIONS;
   }
 
   /**

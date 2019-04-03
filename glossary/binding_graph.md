@@ -3,11 +3,6 @@ layout: default
 title: Glossary: _Binding Graph_
 ---
 
-<!--*
-# Document freshness: For more information, see go/fresh-source.
-freshness: { owner: 'dpb' reviewed: '2018-09-28' }
-*-->
-
 ## Status: DRAFT
 
 ## Definition:

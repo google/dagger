@@ -3,11 +3,6 @@ layout: default
 title: Glossary: _Dependency Request_
 ---
 
-<!--*
-# Document freshness: For more information, see go/fresh-source.
-freshness: { owner: 'dpb' reviewed: '2018-09-11' }
-*-->
-
 ## Status: DRAFT
 
 ## Definition:

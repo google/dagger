@@ -30,7 +30,9 @@ java_library(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX,
     tags = ["maven_coordinates=com.google.dagger:dagger:" + POM_VERSION],
     exports = ["@google_bazel_common//third_party/java/jsr330_inject"],
-    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
+    deps = [
+        "@google_bazel_common//third_party/java/jsr330_inject",
+    ],
 )
 
 pom_file(

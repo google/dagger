@@ -234,11 +234,12 @@ final class DiagnosticReporterFactory {
         CharSequence message,
         @NullableDecl Element elementToReport) {
       if (graph.isModuleBindingGraph()) {
-        if (compilerOptions.moduleBindingValidationType().equals(NONE)) {
+        ValidationType validationType = compilerOptions.moduleBindingValidationType(rootComponent);
+        if (validationType.equals(NONE)) {
           return;
         }
         if (diagnosticKind.equals(ERROR)) {
-          diagnosticKind = compilerOptions.moduleBindingValidationType().diagnosticKind().get();
+          diagnosticKind = validationType.diagnosticKind().get();
         }
       }
       reportedDiagnosticKinds.add(diagnosticKind);

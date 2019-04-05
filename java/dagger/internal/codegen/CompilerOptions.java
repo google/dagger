@@ -45,7 +45,9 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
+import javax.tools.Diagnostic.Kind;
 
 /** A collection of options that dictate how the compiler will run. */
 @AutoValue
@@ -97,18 +99,27 @@ abstract class CompilerOptions {
 
   abstract ValidationType moduleBindingValidationType();
 
+  /** Returns the binding {@link ValidationType} for the element. */
+  ValidationType moduleBindingValidationType(TypeElement element) {
+    return moduleBindingValidationType();
+  }
+
+  abstract ImmutableSet<String> javacOptions();
+
   abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 
   abstract ValidationType explicitBindingConflictsWithInjectValidationType();
 
   static Builder builder() {
     return new AutoValue_CompilerOptions.Builder()
+        .javacOptions(ImmutableSet.of())
         .headerCompilation(false)
         .useGradleIncrementalProcessing(false);
   }
 
   static CompilerOptions create(ProcessingEnvironment processingEnv) {
-    Builder builder = new AutoValue_CompilerOptions.Builder();
+    Builder builder = new AutoValue_CompilerOptions.Builder()
+        .javacOptions(processingEnv.getOptions().keySet());
     for (Option option : concat(allOf(Feature.class), allOf(Validation.class))) {
       option.set(builder, processingEnv);
     }
@@ -138,6 +149,8 @@ abstract class CompilerOptions {
   @AutoValue.Builder
   @CanIgnoreReturnValue
   interface Builder {
+    Builder javacOptions(Set<String> javacOptions);
+
     Builder usesProducers(boolean usesProduces);
 
     Builder headerCompilation(boolean headerCompilation);

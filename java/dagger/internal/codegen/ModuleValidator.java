@@ -225,7 +225,7 @@ final class ModuleValidator {
     validateSelfCycles(module, builder);
 
     if (builder.build().isClean()
-        && !compilerOptions.moduleBindingValidationType().equals(ValidationType.NONE)) {
+        && !compilerOptions.moduleBindingValidationType(module).equals(ValidationType.NONE)) {
       validateModuleBindings(module, builder);
     }
 

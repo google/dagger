@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.google.common.base.Joiner;
+import java.util.regex.Pattern;
 
 /** Utility methods useful for codegen tests. */
 final class TestUtils {
@@ -24,10 +25,19 @@ final class TestUtils {
   private static final Joiner MESSAGE_JOINER = Joiner.on("\n  ");
 
   /**
-   * Returns the lines joined by newline plus two spaces. Useful for passing to {@link
+   * Returns the lines joined by {@code "\n "}. Useful for passing to {@link
    * com.google.testing.compile.CompilationSubject#hadErrorContaining(String)}, etc.
    */
   static String message(String... lines) {
     return MESSAGE_JOINER.join(lines);
+  }
+
+  /**
+   * Returns a pattern that matches strings that end with the lines joined by {@code "\n "}. Useful
+   * for passing to {@link
+   * com.google.testing.compile.CompilationSubject#hadErrorContainingMatch(Pattern)}, etc.
+   */
+  static Pattern endsWithMessage(String... lines) {
+    return Pattern.compile(Pattern.quote(message(lines)) + "$");
   }
 }

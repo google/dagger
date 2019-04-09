@@ -78,7 +78,7 @@ final class ProcessingEnvironmentModule {
   @Provides
   @Reusable // to avoid parsing options more than once
   CompilerOptions compilerOptions() {
-    return CompilerOptions.create(processingEnvironment);
+    return ProcessingEnvironmentCompilerOptions.create(processingEnvironment);
   }
 
   @Provides

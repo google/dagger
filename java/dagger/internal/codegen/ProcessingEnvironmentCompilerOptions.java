@@ -22,10 +22,12 @@ import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.FeatureStatus.ENABLED;
+import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EMIT_MODIFIABLE_METADATA_ANNOTATIONS;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FAST_INIT;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
+import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FORCE_USE_SERIALIZED_COMPONENT_IMPLEMENTATIONS;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
@@ -126,6 +128,16 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   @Override
   boolean aheadOfTimeSubcomponents() {
     return isEnabled(EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS);
+  }
+
+  @Override
+  boolean forceUseSerializedComponentImplementations() {
+    return isEnabled(FORCE_USE_SERIALIZED_COMPONENT_IMPLEMENTATIONS);
+  }
+
+  @Override
+  boolean emitModifiableMetadataAnnotations() {
+    return isEnabled(EMIT_MODIFIABLE_METADATA_ANNOTATIONS);
   }
 
   @Override
@@ -249,6 +261,10 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT,
 
     EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS,
+
+    FORCE_USE_SERIALIZED_COMPONENT_IMPLEMENTATIONS,
+
+    EMIT_MODIFIABLE_METADATA_ANNOTATIONS(ENABLED),
 
     FLOATING_BINDS_METHODS,
     ;

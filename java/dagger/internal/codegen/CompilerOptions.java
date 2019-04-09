@@ -66,6 +66,21 @@ abstract class CompilerOptions {
 
   abstract boolean aheadOfTimeSubcomponents();
 
+  /**
+   * Enables a testing configuration where all superclass {@link ComponentImplementation}s are
+   * derived from their serialized forms.
+   */
+  abstract boolean forceUseSerializedComponentImplementations();
+
+  /**
+   * If {@code true}, in {@link #aheadOfTimeSubcomponents()} mode, Dagger will emit metadata
+   * annotations to deserialize aspects of the {@link ComponentImplementation}.
+   *
+   * This should only be disabled in compile-testing tests that want to ignore the annotations when
+   * asserting on generated source.
+   */
+  abstract boolean emitModifiableMetadataAnnotations();
+
   abstract boolean useGradleIncrementalProcessing();
 
   /** Returns the binding {@link ValidationType} for the element. */

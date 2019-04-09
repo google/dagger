@@ -47,6 +47,7 @@ CODEGEN_SHARED_DEPS = [
     "@google_bazel_common//third_party/java/jsr250_annotations",
     "@google_bazel_common//third_party/java/jsr330_inject",
     "//java/dagger:core",
+    "//java/dagger/internal/codegen/serialization",
     "//java/dagger/producers",
     "//java/dagger/model",
     "//java/dagger/spi",
@@ -79,6 +80,7 @@ java_library(
     name = "base",
     srcs = [
         "Accessibility.java",
+        "AnnotationProtoConverter.java",
         "AnnotationSpecs.java",
         "ClearableCache.java",
         "CodeBlocks.java",
@@ -117,6 +119,7 @@ java_library(
         "SourceFileGenerator.java",  # Needed by InjectBindingRegistry in :binding and also :writing
         "TypeCheckingProcessingStep.java",
         "TypeNames.java",
+        "TypeProtoConverter.java",
         "TypeSpecs.java",
         "UniqueNameSet.java",
         "Util.java",
@@ -357,6 +360,7 @@ java_library(
         "ComponentProcessingStep.java",
         "ComponentProcessor.java",
         "CurrentImplementationSubcomponent.java",
+        "DeserializedComponentImplementationBuilder.java",
         "GenerationOptionsModule.java",
         "InjectBindingRegistryImpl.java",
         "InjectBindingRegistryModule.java",
@@ -393,6 +397,7 @@ pom_file(
         ":binding_graph_validation",
         ":writing",
         ":validation",
+        "//java/dagger/internal/codegen/serialization",
     ],
 )
 

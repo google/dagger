@@ -68,7 +68,7 @@ final class ComponentCreatorImplementationFactory {
 
   /** Returns a new creator implementation for the given component, if necessary. */
   Optional<ComponentCreatorImplementation> create(
-      ComponentImplementation componentImplementation, BindingGraph graph) {
+      ComponentImplementation componentImplementation, Optional<BindingGraph> graph) {
     if (!componentImplementation.componentDescriptor().hasCreator()) {
       return Optional.empty();
     }
@@ -378,12 +378,12 @@ final class ComponentCreatorImplementationFactory {
   /** Builder for a creator type defined by a {@code ComponentCreatorDescriptor}. */
   private final class BuilderForCreatorDescriptor extends Builder {
     final ComponentCreatorDescriptor creatorDescriptor;
-    private final BindingGraph graph;
+    private final Optional<BindingGraph> graph;
 
     BuilderForCreatorDescriptor(
         ComponentImplementation componentImplementation,
         ComponentCreatorDescriptor creatorDescriptor,
-        BindingGraph graph) {
+        Optional<BindingGraph> graph) {
       super(componentImplementation);
       this.creatorDescriptor = creatorDescriptor;
       this.graph = graph;
@@ -409,8 +409,7 @@ final class ComponentCreatorImplementationFactory {
     protected void setSupertype() {
       if (componentImplementation.baseCreatorImplementation().isPresent()) {
         // If an abstract base implementation for this creator exists, extend that class.
-        classBuilder.superclass(
-            componentImplementation.baseCreatorImplementation().get().name());
+        classBuilder.superclass(componentImplementation.baseCreatorImplementation().get().name());
       } else {
         addSupertype(classBuilder, creatorDescriptor.typeElement());
       }
@@ -476,7 +475,7 @@ final class ComponentCreatorImplementationFactory {
      * Returns whether the given {@code requirement} is for a module type owned by the component.
      */
     private boolean isOwnedModule(ComponentRequirement requirement) {
-      return graph.ownedModuleTypes().contains(requirement.typeElement());
+      return graph.map(g -> g.ownedModuleTypes().contains(requirement.typeElement())).orElse(true);
     }
 
     private boolean hasBaseCreatorImplementation() {

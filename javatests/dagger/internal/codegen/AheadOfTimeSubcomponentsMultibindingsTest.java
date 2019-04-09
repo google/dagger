@@ -118,12 +118,16 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "package test;",
             "",
             "import dagger.internal.GenerationOptions;",
+            "import java.util.Set;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATION_OPTIONS_ANNOTATION,
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Set<InAncestor> contributionsInAncestor();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -652,6 +656,9 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract RequiresInAncestorSet missingWithSetDependency();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -791,6 +798,10 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    return ImmutableSet.<Multibound>of(",
             "        LeafModule_ContributionFactory.contribution());",
             "  }",
+            "",
+            "  @Override",
+            "  public abstract MissingInLeaf_WillDependOnFrameworkInstance",
+            "      willDependOnFrameworkInstance();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -903,12 +914,16 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "package test;",
             "",
             "import dagger.internal.GenerationOptions;",
+            "import java.util.Set;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATION_OPTIONS_ANNOTATION,
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Set<Object> set();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -1291,12 +1306,16 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "package test;",
             "",
             "import dagger.internal.GenerationOptions;",
+            "import java.util.Map;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATION_OPTIONS_ANNOTATION,
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Map<String, InAncestor> contributionsInAncestor();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -2010,6 +2029,10 @@ public final class AheadOfTimeSubcomponentsMultibindingsTest {
             "    return ImmutableMap.<Integer, Multibound>of(",
             "        111, LeafModule_ContributionFactory.contribution());",
             "  }",
+            "",
+            "  @Override",
+            "  public abstract MissingInLeaf_WillDependOnFrameworkInstance",
+            "      willDependOnFrameworkInstance();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();

@@ -25,6 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.serialization.ProtoSerialization.toAnnotationValue;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -47,6 +48,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.ConfigureInitializationParameters;
+import dagger.internal.ModifiableBinding;
+import dagger.internal.ModifiableModule;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -172,8 +176,9 @@ final class ComponentImplementation {
     abstract ImmutableSet<ComponentRequirement> parameters();
   }
 
+  private final CompilerOptions compilerOptions;
   private final ComponentDescriptor componentDescriptor;
-  private final BindingGraph graph;
+  private final Optional<BindingGraph> graph;
   private final ClassName name;
   private final NestingKind nestingKind;
   private final boolean isAbstract;
@@ -181,7 +186,7 @@ final class ComponentImplementation {
   private Optional<ComponentCreatorImplementation> creatorImplementation;
   private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
-  private final SubcomponentNames subcomponentNames;
+  private final Optional<SubcomponentNames> subcomponentNames;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
@@ -205,13 +210,15 @@ final class ComponentImplementation {
 
   private ComponentImplementation(
       ComponentDescriptor componentDescriptor,
-      BindingGraph graph,
+      Optional<BindingGraph> graph,
       ClassName name,
       NestingKind nestingKind,
       Optional<ComponentImplementation> superclassImplementation,
-      SubcomponentNames subcomponentNames,
+      Optional<SubcomponentNames> subcomponentNames,
+      CompilerOptions compilerOptions,
       Modifier... modifiers) {
     checkName(name, nestingKind);
+    this.compilerOptions = compilerOptions;
     this.componentDescriptor = componentDescriptor;
     this.graph = graph;
     this.name = name;
@@ -226,14 +233,16 @@ final class ComponentImplementation {
   static ComponentImplementation topLevelComponentImplementation(
       BindingGraph graph,
       ClassName name,
-      SubcomponentNames subcomponentNames) {
+      SubcomponentNames subcomponentNames,
+      CompilerOptions compilerOptions) {
     return new ComponentImplementation(
         graph.componentDescriptor(),
-        graph,
+        Optional.of(graph),
         name,
         NestingKind.TOP_LEVEL,
         Optional.empty(), // superclass implementation
-        subcomponentNames,
+        Optional.of(subcomponentNames),
+        compilerOptions,
         PUBLIC,
         graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL);
   }
@@ -245,12 +254,36 @@ final class ComponentImplementation {
       Modifier... modifiers) {
     return new ComponentImplementation(
         graph.componentDescriptor(),
-        graph,
+        Optional.of(graph),
         getSubcomponentName(graph.componentDescriptor()),
         NestingKind.MEMBER,
         superclassImplementation,
         subcomponentNames,
+        compilerOptions,
         modifiers);
+  }
+
+  /**
+   * Returns a component implementation that models a previously compiled class. This {@link
+   * ComponentImplementation} is not used for code generation itself; it is used to determine what
+   * methods need to be implemented in a subclass implementation.
+   */
+  static ComponentImplementation forDeserializedComponent(
+      ComponentDescriptor componentDescriptor,
+      ClassName name,
+      NestingKind nestingKind,
+      Optional<ComponentImplementation> superclassImplementation,
+      CompilerOptions compilerOptions) {
+    return new ComponentImplementation(
+        componentDescriptor,
+        Optional.empty(),
+        name,
+        nestingKind,
+        superclassImplementation,
+        Optional.empty(),
+        compilerOptions,
+        PUBLIC,
+        ABSTRACT);
   }
 
   // TODO(dpb): Just determine the nesting kind from the name.
@@ -271,9 +304,22 @@ final class ComponentImplementation {
     }
   }
 
+  /**
+   * Returns {@code true} if this component implementation represents a component that has already
+   * been compiled. If this returns true, the implementation will have no {@link #graph
+   * BindingGraph}.
+   */
+  boolean isDeserializedImplementation() {
+    return !graph.isPresent();
+  }
+
+  // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
+  // need it.
   /** Returns the binding graph for the component being generated. */
   BindingGraph graph() {
-    return graph;
+    checkState(!isDeserializedImplementation(),
+        "A BindingGraph is not available for deserialized component implementations.");
+    return graph.get();
   }
 
   /** Returns the descriptor for the component being generated. */
@@ -362,7 +408,22 @@ final class ComponentImplementation {
    */
   void setConfigureInitializationMethod(ConfigureInitializationMethod method) {
     configureInitializationMethod = Optional.of(method);
-    addMethod(MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD, method.spec());
+    addMethod(
+        MethodSpecKind.CONFIGURE_INITIALIZATION_METHOD,
+        addConfigureInitializationMetadata(method));
+  }
+
+  private MethodSpec addConfigureInitializationMetadata(ConfigureInitializationMethod method) {
+    if (!shouldEmitModifiableMetadataAnnotations()) {
+      return method.spec();
+    }
+    AnnotationSpec.Builder annotation =
+        AnnotationSpec.builder(ConfigureInitializationParameters.class);
+    for (ComponentRequirement parameter : method.parameters()) {
+      annotation.addMember("value", toAnnotationValue(parameter.toProto()));
+    }
+
+    return method.spec().toBuilder().addAnnotation(annotation.build()).build();
   }
 
   void setCreatorImplementation(Optional<ComponentCreatorImplementation> creatorImplementation) {
@@ -403,7 +464,7 @@ final class ComponentImplementation {
    */
   ClassName getCreatorName() {
     return isNested()
-        ? name.peerClass(subcomponentNames.getCreatorName(componentDescriptor()))
+        ? name.peerClass(subcomponentNames().getCreatorName(componentDescriptor()))
         : name.nestedClass(creatorKind().typeName());
   }
 
@@ -414,7 +475,7 @@ final class ComponentImplementation {
         "%s is not a child component of %s",
         childDescriptor.typeElement(),
         componentDescriptor().typeElement());
-    return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
+    return name.nestedClass(subcomponentNames().get(childDescriptor) + "Impl");
   }
 
   /**
@@ -422,7 +483,14 @@ final class ComponentImplementation {
    * {@link Key}.
    */
   String getSubcomponentCreatorSimpleName(Key key) {
-    return subcomponentNames.getCreatorName(key);
+    return subcomponentNames().getCreatorName(key);
+  }
+
+  private SubcomponentNames subcomponentNames() {
+    checkState(
+        subcomponentNames.isPresent(),
+        "SubcomponentNames is not available for deserialized component implementations.");
+    return subcomponentNames.get();
   }
 
   /** Returns the child implementation. */
@@ -482,37 +550,94 @@ final class ComponentImplementation {
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addNewModifiableMethod(
-        type, request, returnType, methodSpec, finalized);
-    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, methodSpec);
+    addModifiableMethod(
+        MethodSpecKind.MODIFIABLE_BINDING_METHOD, type, request, returnType, methodSpec, finalized);
   }
 
   /**
-   * Registers a known method as encapsulating a modifiable binding without adding the method to the
-   * current component. This is relevant when a method of a different type, such as a component
-   * method, encapsulates a modifiable binding.
+   * Adds a component method that is modifiable to the component. In this case, the method
+   * represents an encapsulation of a modifiable binding between implementations of a subcomponent.
+   * This is only relevant for ahead-of-time subcomponents.
    */
-  void registerModifiableBindingMethod(
+  void addModifiableComponentMethod(
       ModifiableBindingType type,
       BindingRequest request,
       TypeMirror returnType,
       MethodSpec methodSpec,
       boolean finalized) {
-    modifiableBindingMethods.addNewModifiableMethod(
+    addModifiableMethod(
+        MethodSpecKind.COMPONENT_METHOD, type, request, returnType, methodSpec, finalized);
+  }
+
+  private void addModifiableMethod(
+      MethodSpecKind methodKind,
+      ModifiableBindingType type,
+      BindingRequest request,
+      TypeMirror returnType,
+      MethodSpec methodSpec,
+      boolean finalized) {
+    modifiableBindingMethods.addModifiableMethod(
         type, request, returnType, methodSpec, finalized);
+    methodSpecsMap.put(methodKind, withModifiableBindingMetadata(methodSpec, type, request));
   }
 
   /** Adds the implementation for the given {@link ModifiableBindingMethod} to the component. */
   void addImplementedModifiableBindingMethod(ModifiableBindingMethod method) {
     modifiableBindingMethods.addReimplementedMethod(method);
-    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method.methodSpec());
+    methodSpecsMap.put(
+        MethodSpecKind.MODIFIABLE_BINDING_METHOD,
+        withModifiableBindingMetadata(method.methodSpec(), method.type(), method.request()));
+  }
+
+  private MethodSpec withModifiableBindingMetadata(
+      MethodSpec method, ModifiableBindingType type, BindingRequest request) {
+    if (!shouldEmitModifiableMetadataAnnotations()) {
+      return method;
+    }
+    AnnotationSpec.Builder metadata =
+        AnnotationSpec.builder(ModifiableBinding.class)
+            .addMember("modifiableBindingType", "$S", type.name())
+            .addMember("bindingRequest", toAnnotationValue(request.toProto()));
+    for (Key multibindingContribution : multibindingContributionsMade.get(request)) {
+      metadata.addMember(
+          "multibindingContributions",
+          toAnnotationValue(KeyFactory.toProto(multibindingContribution)));
+    }
+    return method.toBuilder().addAnnotation(metadata.build()).build();
   }
 
   /** Add's a modifiable module method to this implementation. */
   void addModifiableModuleMethod(ComponentRequirement module, MethodSpec method) {
+    registerModifiableModuleMethod(module, method.name);
+    methodSpecsMap.put(
+        MethodSpecKind.MODIFIABLE_BINDING_METHOD, withModifiableModuleMetadata(module, method));
+  }
+
+  /** Registers a modifiable module method with {@code name} for {@code module}. */
+  void registerModifiableModuleMethod(ComponentRequirement module, String name) {
     checkArgument(module.kind().isModule());
-    checkState(modifiableModuleMethods.put(module, method.name) == null);
-    methodSpecsMap.put(MethodSpecKind.MODIFIABLE_BINDING_METHOD, method);
+    checkState(modifiableModuleMethods.put(module, name) == null);
+  }
+
+  private MethodSpec withModifiableModuleMetadata(ComponentRequirement module, MethodSpec method) {
+    if (!shouldEmitModifiableMetadataAnnotations()) {
+      return method;
+    }
+    return method
+        .toBuilder()
+        .addAnnotation(
+            AnnotationSpec.builder(ModifiableModule.class)
+                .addMember("value", toAnnotationValue(module.toProto()))
+                .build())
+        .build();
+  }
+
+  /**
+   * Returns {@code true} if the generated component should include metadata annotations with
+   * information to deserialize this {@link ComponentImplementation} in future compilations.
+   */
+  boolean shouldEmitModifiableMetadataAnnotations() {
+    return isAbstract && compilerOptions.emitModifiableMetadataAnnotations();
   }
 
   /** Adds the given type to the component. */
@@ -757,10 +882,20 @@ final class ComponentImplementation {
     // We register a multibinding as implemented each time we request the multibinding expression,
     // so only modify the set of contributions once.
     if (!multibindingContributionsMade.containsKey(bindingRequest)) {
-      multibindingContributionsMade.putAll(
+      registerImplementedMultibindingKeys(
           bindingRequest,
           multibinding.dependencies().stream().map(DependencyRequest::key).collect(toList()));
     }
+  }
+
+  /**
+   * Registers the multibinding contributions represented by {@code keys} as having been implemented
+   * in this component. Multibindings are modifiable across subcomponent implementations and this
+   * allows us to know whether a contribution has been made by a superclass implementation. This is
+   * only relevant for ahead-of-time subcomponents.
+   */
+  void registerImplementedMultibindingKeys(BindingRequest bindingRequest, Iterable<Key> keys) {
+    multibindingContributionsMade.putAll(bindingRequest, keys);
   }
 
   /**

@@ -27,6 +27,8 @@ import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import com.squareup.javapoet.CodeBlock;
 import java.util.List;
 import java.util.Objects;
@@ -176,6 +178,7 @@ public abstract class Key {
   }
 
   /** A builder for {@link Key}s. */
+  @CanIgnoreReturnValue
   @AutoValue.Builder
   public abstract static class Builder {
     abstract Builder wrappedType(Equivalence.Wrapper<TypeMirror> wrappedType);
@@ -203,6 +206,7 @@ public abstract class Key {
     public abstract Builder multibindingContributionIdentifier(
         MultibindingContributionIdentifier identifier);
 
+    @CheckReturnValue
     public abstract Key build();
   }
 
@@ -222,9 +226,27 @@ public abstract class Key {
      */
     @Deprecated
     public MultibindingContributionIdentifier(
+        // TODO(ronshapiro): reverse the order of these parameters
         ExecutableElement bindingMethod, TypeElement contributingModule) {
-      this.module = contributingModule.getQualifiedName().toString();
-      this.bindingElement = bindingMethod.getSimpleName().toString();
+      this(
+          bindingMethod.getSimpleName().toString(),
+          contributingModule.getQualifiedName().toString());
+    }
+
+    // TODO(ronshapiro,dpb): create KeyProxies so that these constructors don't need to be public.
+    @Deprecated
+    public MultibindingContributionIdentifier(String bindingElement, String module) {
+      this.module = module;
+      this.bindingElement = bindingElement;
+    }
+
+    /**
+     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
+     * It is not part of a specified API and may change at any point.
+     */
+    @Deprecated
+    public String module() {
+      return module;
     }
 
     /**

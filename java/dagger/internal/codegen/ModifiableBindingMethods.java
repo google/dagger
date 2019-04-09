@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 
 import com.google.auto.common.MoreTypes;
@@ -43,13 +42,14 @@ final class ModifiableBindingMethods {
   private final Map<BindingRequest, ModifiableBindingMethod> methods = Maps.newLinkedHashMap();
 
   /** Registers a new method encapsulating a modifiable binding. */
-  void addNewModifiableMethod(
+  void addModifiableMethod(
       ModifiableBindingType type,
       BindingRequest request,
       TypeMirror returnType,
       MethodSpec method,
       boolean finalized) {
-    checkArgument(type.isModifiable());
+    // It's ok for the type to not be modifiable, since it could be overriding a previously
+    // modifiable method (such as with addReimplementedMethod).
     addMethod(ModifiableBindingMethod.create(type, request, returnType, method, finalized));
   }
 

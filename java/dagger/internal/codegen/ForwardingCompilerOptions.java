@@ -91,6 +91,16 @@ class ForwardingCompilerOptions extends CompilerOptions {
   }
 
   @Override
+  boolean forceUseSerializedComponentImplementations() {
+    return delegate.forceUseSerializedComponentImplementations();
+  }
+
+  @Override
+  boolean emitModifiableMetadataAnnotations() {
+    return delegate.emitModifiableMetadataAnnotations();
+  }
+
+  @Override
   boolean useGradleIncrementalProcessing() {
     return delegate.useGradleIncrementalProcessing();
   }

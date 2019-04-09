@@ -55,12 +55,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.ComponentDefinitionType;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentImplementation.ConfigureInitializationMethod;
@@ -116,7 +118,7 @@ abstract class ComponentImplementationBuilder {
     setSupertype();
     componentImplementation.setCreatorImplementation(
         componentCreatorImplementationFactory.create(
-            componentImplementation, componentImplementation.graph()));
+            componentImplementation, Optional.of(componentImplementation.graph())));
     componentImplementation
         .creatorImplementation()
         .map(ComponentCreatorImplementation::spec)
@@ -147,6 +149,13 @@ abstract class ComponentImplementationBuilder {
     if (componentImplementation.isAbstract()
         && !componentImplementation.baseImplementation().isPresent()) {
       componentImplementation.addAnnotation(compilerOptions.toGenerationOptionsAnnotation());
+    }
+
+    if (componentImplementation.shouldEmitModifiableMetadataAnnotations()) {
+      componentImplementation.addAnnotation(
+          AnnotationSpec.builder(ComponentDefinitionType.class)
+              .addMember("value", "$T.class", graph.componentTypeElement())
+              .build());
     }
 
     done = true;
@@ -207,16 +216,11 @@ abstract class ComponentImplementationBuilder {
       componentImplementation.addMethod(
           COMPONENT_METHOD, implementedComponentMethod.toBuilder().addModifiers(FINAL).build());
     } else {
-      // If the binding for the component method is modifiable, register it as such.
-      ModifiableBindingType modifiableBindingType =
-          bindingExpressions
-              .modifiableBindingExpressions()
-              .registerComponentMethodIfModifiable(methodDescriptor, implementedComponentMethod);
-
-      // If the method should be implemented in this component, implement it.
-      if (modifiableBindingType.hasBaseClassImplementation()) {
-        componentImplementation.addMethod(COMPONENT_METHOD, implementedComponentMethod);
-      }
+      // TODO(b/117833324): Can this class be the one to interface with ComponentImplementation
+      // instead of having it go through ModifiableBindingExpressions?
+      bindingExpressions
+          .modifiableBindingExpressions()
+          .addPossiblyModifiableComponentMethod(methodDescriptor, implementedComponentMethod);
     }
   }
 

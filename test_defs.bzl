@@ -22,6 +22,10 @@ BUILD_VARIANTS = {
         "-Adagger.fastInit=enabled",
         "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
     ],
+    "AheadOfTimeSubcomponents_ForceUseSerializedComponentImplementations": [
+        "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
+        "-Adagger.forceUseSerializedComponentImplementations=enabled",
+    ],
 }
 
 # TODO(ronshapiro): convert this to use bazel_common

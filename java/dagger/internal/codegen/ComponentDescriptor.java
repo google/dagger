@@ -32,6 +32,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Component;
@@ -193,6 +194,12 @@ abstract class ComponentDescriptor {
    */
   abstract ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor>
       childComponentsDeclaredByFactoryMethods();
+
+  /** Returns a map of {@link #childComponents()} indexed by {@link #typeElement()}. */
+  @Memoized
+  ImmutableMap<TypeElement, ComponentDescriptor> childComponentsByElement() {
+    return Maps.uniqueIndex(childComponents(), ComponentDescriptor::typeElement);
+  }
 
   /** Returns the factory method that declares a child component. */
   final Optional<ComponentMethodDescriptor> getFactoryMethodForChildComponent(

@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.ComponentImplementation.MethodSpecKind;
 import dagger.internal.codegen.MethodBindingExpression.MethodImplementationStrategy;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.model.BindingKind;
@@ -62,22 +63,23 @@ final class ModifiableBindingExpressions {
   }
 
   /**
-   * Records the binding exposed by the given component method as modifiable, if it is, and returns
-   * the {@link ModifiableBindingType} associated with the binding.
+   * Adds {@code method} to the component implementation. If the binding for the method is
+   * modifiable, also registers the relevant modifiable binding information.
    */
-  ModifiableBindingType registerComponentMethodIfModifiable(
+  void addPossiblyModifiableComponentMethod(
       ComponentMethodDescriptor componentMethod, MethodSpec method) {
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
     ModifiableBindingType modifiableBindingType = getModifiableBindingType(request);
     if (modifiableBindingType.isModifiable()) {
-      componentImplementation.registerModifiableBindingMethod(
+      componentImplementation.addModifiableComponentMethod(
           modifiableBindingType,
           request,
           componentMethod.resolvedReturnType(types),
           method,
           newModifiableBindingWillBeFinalized(modifiableBindingType, request));
+    } else {
+      componentImplementation.addMethod(MethodSpecKind.COMPONENT_METHOD, method);
     }
-    return modifiableBindingType;
   }
 
   /**
@@ -381,8 +383,17 @@ final class ModifiableBindingExpressions {
           // Futures backed by provision bindings are inlined and contain no wrapping producer, so
           // if the binding is modifiable and is resolved as a provision binding in a superclass
           // but later resolved as a production binding, we can't take the same shortcut as before.
-          if (componentImplementation.superclassImplementation().isPresent()) {
-            return bindingTypeChanged(request, resolvedBindings);
+          Optional<ComponentImplementation> superclassImplementation =
+              componentImplementation.superclassImplementation();
+          if (superclassImplementation.isPresent()) {
+            if (superclassImplementation.get().isDeserializedImplementation()) {
+              // TODO(b/117833324): consider serializing the binding type so that we don't need to
+              // branch here. Or, instead, consider removing this optimization entirely if there
+              // aren't that many FUTURE entry point methods to justify the extra code.
+              break;
+            } else {
+              return bindingTypeChanged(request, resolvedBindings);
+            }
           }
           return false;
 

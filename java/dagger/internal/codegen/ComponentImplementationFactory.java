@@ -19,10 +19,14 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static javax.tools.Diagnostic.Kind.WARNING;
 
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.serialization.ProtoSerialization.InconsistentSerializedProtoException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.TypeElement;
@@ -35,17 +39,27 @@ final class ComponentImplementationFactory implements ClearableCache {
   private final CompilerOptions compilerOptions;
   private final BindingGraphFactory bindingGraphFactory;
   private final TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder;
+  private final DeserializedComponentImplementationBuilder
+      deserializedComponentImplementationBuilder;
+  private final DaggerElements elements;
+  private final Messager messager;
 
   @Inject
   ComponentImplementationFactory(
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
       BindingGraphFactory bindingGraphFactory,
-      TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder) {
+      TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder,
+      DeserializedComponentImplementationBuilder deserializedComponentImplementationBuilder,
+      DaggerElements elements,
+      Messager messager) {
     this.keyFactory = keyFactory;
     this.compilerOptions = compilerOptions;
     this.bindingGraphFactory = bindingGraphFactory;
     this.topLevelImplementationComponentBuilder = topLevelImplementationComponentBuilder;
+    this.deserializedComponentImplementationBuilder = deserializedComponentImplementationBuilder;
+    this.elements = elements;
+    this.messager = messager;
   }
 
   /**
@@ -66,7 +80,9 @@ final class ComponentImplementationFactory implements ClearableCache {
         ComponentImplementation.topLevelComponentImplementation(
             bindingGraph,
             componentName(bindingGraph.componentTypeElement()),
-            new SubcomponentNames(bindingGraph, keyFactory));
+            new SubcomponentNames(bindingGraph, keyFactory),
+            compilerOptions);
+
     // TODO(dpb): explore using optional bindings for the "parent" bindings
     CurrentImplementationSubcomponent currentImplementationSubcomponent =
         topLevelImplementationComponentBuilder
@@ -106,6 +122,28 @@ final class ComponentImplementationFactory implements ClearableCache {
       Optional<ComponentImplementation> superclass = parent.get().childImplementation(child);
       if (superclass.isPresent()) {
         return superclass.get();
+      }
+    }
+
+    if (compilerOptions.emitModifiableMetadataAnnotations()) {
+      ClassName childSuperclassName = componentName(child.typeElement());
+      TypeElement generatedChildSuperclassImplementation =
+          elements.getTypeElement(childSuperclassName);
+      if (generatedChildSuperclassImplementation != null) {
+        try {
+          return deserializedComponentImplementationBuilder.create(
+              child, generatedChildSuperclassImplementation);
+        } catch (InconsistentSerializedProtoException e) {
+          messager.printMessage(
+              WARNING,
+              String.format(
+                  "%s was compiled with a different version of Dagger than the version in this "
+                      + "compilation. To ensure the validity of Dagger's generated code, compile "
+                      + "all Dagger code with the same version.",
+                  child.typeElement().getQualifiedName()));
+        }
+      } else if (compilerOptions.forceUseSerializedComponentImplementations()) {
+        throw new TypeNotPresentException(childSuperclassName.toString(), null);
       }
     }
 

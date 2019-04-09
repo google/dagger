@@ -23,8 +23,11 @@ import com.google.common.collect.ImmutableList;
 enum CompilerMode {
   DEFAULT_MODE,
   FAST_INIT_MODE("-Adagger.fastInit=enabled"),
-  AHEAD_OF_TIME_SUBCOMPONENTS_MODE("-Adagger.experimentalAheadOfTimeSubcomponents=enabled"),
-  JAVA7("-source", "7", "-target", "7");
+  AHEAD_OF_TIME_SUBCOMPONENTS_MODE(
+      "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
+      "-Adagger.emitModifiableMetadataAnnotations=disabled"),
+  JAVA7("-source", "7", "-target", "7"),
+  ;
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   static final ImmutableList<Object[]> TEST_PARAMETERS =

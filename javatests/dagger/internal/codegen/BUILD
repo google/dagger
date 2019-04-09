@@ -33,6 +33,7 @@ GenJavaTests(
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
+        "//java/dagger/internal/codegen/serialization",
         "//java/dagger/model",
         "//java/dagger/model/testing",
         "//java/dagger/producers",

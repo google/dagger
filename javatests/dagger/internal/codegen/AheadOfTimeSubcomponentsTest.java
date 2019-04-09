@@ -67,6 +67,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract MissingInLeaf missingFromComponentMethod();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -163,6 +166,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract MissingInLeaf missingComponentMethod();",
             "",
             "  @Override",
             "  public DependsOnComponentMethod dependsOnComponentMethod() {",
@@ -750,6 +756,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerAncestor implements Ancestor {",
             "  protected DaggerAncestor() {}",
+            "",
+            "  @Override",
+            "  public abstract Leaf.Builder leaf();",
             "",
             "  protected abstract class LeafImpl extends DaggerLeaf {",
             "    protected LeafImpl() {}",
@@ -1484,12 +1493,17 @@ public final class AheadOfTimeSubcomponentsTest {
             "package test;",
             "",
             "import dagger.internal.GenerationOptions;",
+            "import java.util.Optional;",
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATION_OPTIONS_ANNOTATION,
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Optional<SatisfiedInGrandAncestor>",
+            "      boundInAncestorSatisfiedInGrandAncestor();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -3190,6 +3204,10 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return LeafModule_FromModuleFactory.fromModule(leafModule());",
             "  }",
             "",
+            "  @Override",
+            "  public abstract InducesDependenciesOnBuilderFields",
+            "      inducesDependenciesOnBuilderFields();",
+            "",
             "  protected LeafModule leafModule() {",
             "    return leafModule;",
             "  }",
@@ -3269,6 +3287,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerAncestor implements Ancestor {",
             "  protected DaggerAncestor() {}",
+            "",
+            "  @Override",
+            "  public abstract Leaf.Builder leaf();",
             "",
             "  protected abstract class LeafImpl extends DaggerLeaf {",
             "    private String inducedInSubclass;",
@@ -3778,6 +3799,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Object bindsWithMissingDependencyInLeaf();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -4324,6 +4348,9 @@ public final class AheadOfTimeSubcomponentsTest {
             "    return LeafModule_DepOnFooThingFactory.depOnFooThing(getThing());",
             "  }",
             "",
+            "  @Override",
+            "  public abstract WillInduceSetOfRunnable willInduceSetOfRunnable();",
+            "",
             "  protected abstract Thing getThing();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
@@ -4471,6 +4498,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerMaybeLeaf implements MaybeLeaf {",
             "  protected DaggerMaybeLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract Inducer inducer();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();
@@ -4604,6 +4634,9 @@ public final class AheadOfTimeSubcomponentsTest {
             GENERATED_ANNOTATION,
             "public abstract class DaggerLeaf implements Leaf {",
             "  protected DaggerLeaf() {}",
+            "",
+            "  @Override",
+            "  public abstract AtInjectRootScoped shouldBeEffectivelyMissingInLeaf();",
             "}");
     Compilation compilation = compile(filesToCompile.build());
     assertThat(compilation).succeededWithoutWarnings();

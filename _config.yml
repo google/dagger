@@ -42,7 +42,7 @@ nav:
   - item:
       name: gRPC
       url: /grpc
-   - item:
+  - item:
       name: Compiler Options
       url: /compiler-options
   - item:

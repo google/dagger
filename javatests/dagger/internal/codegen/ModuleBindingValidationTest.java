@@ -40,98 +40,17 @@ public final class ModuleBindingValidationTest {
           "",
           "@Module",
           "interface ModuleWithErrors {",
-          "  @Binds Object duplicate1(String string);",
-          "  @Binds Object duplicate2(Long l);",
+          "  @Binds Object object1(String string);",
+          "  @Binds Object object2(Long l);",
           "  @Binds Number missingDependency(Integer i);",
-          "}");
-
-  private static final JavaFileObject A_MODULE =
-      JavaFileObjects.forSourceLines(
-          "test.AModule",
-          "package test;",
-          "",
-          "import dagger.Binds;",
-          "import dagger.Module;",
-          "",
-          "@Module",
-          "interface AModule {",
-          "  @Binds Object duplicate(String string);",
-          "}");
-
-  private static final JavaFileObject INCLUDING_MODULE =
-      JavaFileObjects.forSourceLines(
-          "test.IncludingModule",
-          "package test;",
-          "",
-          "import dagger.Binds;",
-          "import dagger.Module;",
-          "",
-          "@Module(includes = AModule.class)",
-          "interface IncludingModule {",
-          "  @Binds Object duplicate(Long l);",
-          "}");
-
-  private static final JavaFileObject MODULE_WITH_CHILD =
-      JavaFileObjects.forSourceLines(
-          "test.ModuleWithChild",
-          "package test;",
-          "",
-          "import dagger.Binds;",
-          "import dagger.Module;",
-          "",
-          "@Module(subcomponents = Child.class)",
-          "interface ModuleWithChild {}");
-
-  private static final JavaFileObject CHILD =
-      JavaFileObjects.forSourceLines(
-          "test.Child",
-          "package test;",
-          "",
-          "import dagger.BindsInstance;",
-          "import dagger.Subcomponent;",
-          "",
-          "@Subcomponent(modules = ChildModule.class)",
-          "interface Child {",
-          "  @Subcomponent.Builder",
-          "  interface Builder {",
-          "    @BindsInstance Builder duplicate(Object object);",
-          "    Child build();",
-          "  }",
-          "}");
-
-  private static final JavaFileObject CHILD_MODULE =
-      JavaFileObjects.forSourceLines(
-          "test.ChildModule",
-          "package test;",
-          "",
-          "import dagger.Module;",
-          "import dagger.Binds;",
-          "",
-          "@Module",
-          "interface ChildModule {",
-          "  @Binds Object duplicate(Number number);",
           "}");
 
   // Make sure the error doesn't show other bindings or a dependency trace afterwards.
   private static final Pattern MODULE_WITH_ERRORS_MESSAGE =
       endsWithMessage(
           "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
-          "    @Binds Object test.ModuleWithErrors.duplicate1(String)",
-          "    @Binds Object test.ModuleWithErrors.duplicate2(Long)");
-
-  // Make sure the error doesn't show other bindings or a dependency trace afterwards.
-  private static final Pattern INCLUDING_MODULE_MESSAGE =
-      endsWithMessage(
-          "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
-          "    @Binds Object test.AModule.duplicate(String)",
-          "    @Binds Object test.IncludingModule.duplicate(Long)");
-
-  // Make sure the error doesn't show other bindings or a dependency trace afterwards.
-  private static final Pattern CHILD_MESSAGE =
-      endsWithMessage(
-          "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
-          "    @BindsInstance test.Child.Builder test.Child.Builder.duplicate(Object)",
-          "    @Binds Object test.ChildModule.duplicate(Number)");
+          "    @Binds Object test.ModuleWithErrors.object1(String)",
+          "    @Binds Object test.ModuleWithErrors.object2(Long)");
 
   @Test
   public void moduleWithErrors_validationTypeNone() {
@@ -173,9 +92,105 @@ public final class ModuleBindingValidationTest {
     assertThat(compilation).hadWarningCount(1);
   }
 
+  private static final JavaFileObject INCLUDES_MODULE_WITH_ERRORS =
+      JavaFileObjects.forSourceLines(
+          "test.IncludesModuleWithErrors",
+          "package test;",
+          "",
+          "import dagger.Binds;",
+          "import dagger.Module;",
+          "",
+          "@Module(includes = ModuleWithErrors.class)",
+          "interface IncludesModuleWithErrors {}");
+
+  @Test
+  public void includesModuleWithErrors_validationTypeNone() {
+    Compilation compilation =
+        daggerCompiler().compile(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void includesModuleWithErrors_validationTypeError() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS);
+
+    assertThat(compilation).failed();
+
+    assertThat(compilation)
+        .hadErrorContainingMatch(MODULE_WITH_ERRORS_MESSAGE)
+        .inFile(MODULE_WITH_ERRORS)
+        .onLineContaining("interface ModuleWithErrors");
+
+    assertThat(compilation)
+        .hadErrorContainingMatch("test.ModuleWithErrors has errors")
+        .inFile(INCLUDES_MODULE_WITH_ERRORS)
+        .onLineContaining("ModuleWithErrors.class");
+
+    assertThat(compilation).hadErrorCount(2);
+  }
+
+  @Test
+  public void includesModuleWithErrors_validationTypeWarning() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=WARNING")
+            .compile(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS);
+
+    assertThat(compilation).succeeded();
+
+    assertThat(compilation)
+        .hadWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE)
+        .inFile(MODULE_WITH_ERRORS)
+        .onLineContaining("interface ModuleWithErrors");
+
+    // TODO(b/130284666)
+    assertThat(compilation)
+        .hadWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE)
+        .inFile(INCLUDES_MODULE_WITH_ERRORS)
+        .onLineContaining("interface IncludesModuleWithErrors");
+
+    assertThat(compilation).hadWarningCount(2);
+  }
+
+  private static final JavaFileObject A_MODULE =
+      JavaFileObjects.forSourceLines(
+          "test.AModule",
+          "package test;",
+          "",
+          "import dagger.Binds;",
+          "import dagger.Module;",
+          "",
+          "@Module",
+          "interface AModule {",
+          "  @Binds Object object(String string);",
+          "}");
+
+  private static final JavaFileObject COMBINED_WITH_A_MODULE_HAS_ERRORS =
+      JavaFileObjects.forSourceLines(
+          "test.CombinedWithAModuleHasErrors",
+          "package test;",
+          "",
+          "import dagger.Binds;",
+          "import dagger.Module;",
+          "",
+          "@Module(includes = AModule.class)",
+          "interface CombinedWithAModuleHasErrors {",
+          "  @Binds Object object(Long l);",
+          "}");
+
+  // Make sure the error doesn't show other bindings or a dependency trace afterwards.
+  private static final Pattern COMBINED_WITH_A_MODULE_HAS_ERRORS_MESSAGE =
+      endsWithMessage(
+          "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
+          "    @Binds Object test.AModule.object(String)",
+          "    @Binds Object test.CombinedWithAModuleHasErrors.object(Long)");
+
   @Test
   public void moduleIncludingModuleWithCombinedErrors_validationTypeNone() {
-    Compilation compilation = daggerCompiler().compile(A_MODULE, INCLUDING_MODULE);
+    Compilation compilation = daggerCompiler().compile(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS);
 
     assertThat(compilation).succeededWithoutWarnings();
   }
@@ -185,14 +200,14 @@ public final class ModuleBindingValidationTest {
     Compilation compilation =
         daggerCompiler()
             .withOptions("-Adagger.moduleBindingValidation=ERROR")
-            .compile(A_MODULE, INCLUDING_MODULE);
+            .compile(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS);
 
     assertThat(compilation).failed();
 
     assertThat(compilation)
-        .hadErrorContainingMatch(INCLUDING_MODULE_MESSAGE)
-        .inFile(INCLUDING_MODULE)
-        .onLineContaining("interface IncludingModule");
+        .hadErrorContainingMatch(COMBINED_WITH_A_MODULE_HAS_ERRORS_MESSAGE)
+        .inFile(COMBINED_WITH_A_MODULE_HAS_ERRORS)
+        .onLineContaining("interface CombinedWithAModuleHasErrors");
 
     assertThat(compilation).hadErrorCount(1);
   }
@@ -202,21 +217,59 @@ public final class ModuleBindingValidationTest {
     Compilation compilation =
         daggerCompiler()
             .withOptions("-Adagger.moduleBindingValidation=WARNING")
-            .compile(A_MODULE, INCLUDING_MODULE);
+            .compile(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS);
 
     assertThat(compilation).succeeded();
 
     assertThat(compilation)
-        .hadWarningContainingMatch(INCLUDING_MODULE_MESSAGE)
-        .inFile(INCLUDING_MODULE)
-        .onLineContaining("interface IncludingModule");
+        .hadWarningContainingMatch(COMBINED_WITH_A_MODULE_HAS_ERRORS_MESSAGE)
+        .inFile(COMBINED_WITH_A_MODULE_HAS_ERRORS)
+        .onLineContaining("interface CombinedWithAModuleHasErrors");
 
     assertThat(compilation).hadWarningCount(1);
   }
 
+  private static final JavaFileObject SUBCOMPONENT_WITH_ERRORS =
+      JavaFileObjects.forSourceLines(
+          "test.SubcomponentWithErrors",
+          "package test;",
+          "",
+          "import dagger.BindsInstance;",
+          "import dagger.Subcomponent;",
+          "",
+          "@Subcomponent(modules = AModule.class)",
+          "interface SubcomponentWithErrors {",
+          "  @Subcomponent.Builder",
+          "  interface Builder {",
+          "    @BindsInstance Builder object(Object object);",
+          "    SubcomponentWithErrors build();",
+          "  }",
+          "}");
+
+  // Make sure the error doesn't show other bindings or a dependency trace afterwards.
+  private static final Pattern SUBCOMPONENT_WITH_ERRORS_MESSAGE =
+      endsWithMessage(
+          "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
+          "    @Binds Object test.AModule.object(String)",
+          "    @BindsInstance test.SubcomponentWithErrors.Builder"
+              + " test.SubcomponentWithErrors.Builder.object(Object)");
+
+  private static final JavaFileObject MODULE_WITH_SUBCOMPONENT_WITH_ERRORS =
+      JavaFileObjects.forSourceLines(
+          "test.ModuleWithSubcomponentWithErrors",
+          "package test;",
+          "",
+          "import dagger.Binds;",
+          "import dagger.Module;",
+          "",
+          "@Module(subcomponents = SubcomponentWithErrors.class)",
+          "interface ModuleWithSubcomponentWithErrors {}");
+
   @Test
   public void moduleWithSubcomponentWithErrors_validationTypeNone() {
-    Compilation compilation = daggerCompiler().compile(MODULE_WITH_CHILD, CHILD, CHILD_MODULE);
+    Compilation compilation =
+        daggerCompiler()
+            .compile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).succeededWithoutWarnings();
   }
@@ -226,14 +279,14 @@ public final class ModuleBindingValidationTest {
     Compilation compilation =
         daggerCompiler()
             .withOptions("-Adagger.moduleBindingValidation=ERROR")
-            .compile(MODULE_WITH_CHILD, CHILD, CHILD_MODULE);
+            .compile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).failed();
 
     assertThat(compilation)
-        .hadErrorContainingMatch(CHILD_MESSAGE)
-        .inFile(MODULE_WITH_CHILD)
-        .onLineContaining("interface ModuleWithChild");
+        .hadErrorContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface ModuleWithSubcomponentWithErrors");
 
     assertThat(compilation).hadErrorCount(1);
   }
@@ -243,14 +296,92 @@ public final class ModuleBindingValidationTest {
     Compilation compilation =
         daggerCompiler()
             .withOptions("-Adagger.moduleBindingValidation=WARNING")
-            .compile(MODULE_WITH_CHILD, CHILD, CHILD_MODULE);
+            .compile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).succeeded();
 
     assertThat(compilation)
-        .hadWarningContainingMatch(CHILD_MESSAGE)
-        .inFile(MODULE_WITH_CHILD)
-        .onLineContaining("interface ModuleWithChild");
+        .hadWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface ModuleWithSubcomponentWithErrors");
+
+    assertThat(compilation).hadWarningCount(1);
+  }
+
+  private static final JavaFileObject A_SUBCOMPONENT =
+      JavaFileObjects.forSourceLines(
+          "test.ASubcomponent",
+          "package test;",
+          "",
+          "import dagger.BindsInstance;",
+          "import dagger.Subcomponent;",
+          "",
+          "@Subcomponent(modules = AModule.class)",
+          "interface ASubcomponent {",
+          "  @Subcomponent.Builder",
+          "  interface Builder {",
+          "    ASubcomponent build();",
+          "  }",
+          "}");
+
+  private static final JavaFileObject COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS =
+      JavaFileObjects.forSourceLines(
+          "test.CombinedWithASubcomponentHasErrors",
+          "package test;",
+          "",
+          "import dagger.Binds;",
+          "import dagger.Module;",
+          "",
+          "@Module(subcomponents = ASubcomponent.class)",
+          "interface CombinedWithASubcomponentHasErrors {",
+          "  @Binds Object object(Number number);",
+          "}");
+
+  // Make sure the error doesn't show other bindings or a dependency trace afterwards.
+  private static final Pattern COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS_MESSAGE =
+      endsWithMessage(
+          "[Dagger/DuplicateBindings] java.lang.Object is bound multiple times:",
+          "    @Binds Object test.AModule.object(String)",
+          "    @Binds Object test.CombinedWithASubcomponentHasErrors.object(Number)");
+
+  @Test
+  public void moduleWithSubcomponentWithCombinedErrors_validationTypeNone() {
+    Compilation compilation =
+        daggerCompiler().compile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE);
+
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void moduleWithSubcomponentWithCombinedErrors_validationTypeError() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE);
+
+    assertThat(compilation).failed();
+
+    assertThat(compilation)
+        .hadErrorContainingMatch(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS_MESSAGE)
+        .inFile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS)
+        .onLineContaining("interface CombinedWithASubcomponentHasErrors");
+
+    assertThat(compilation).hadErrorCount(1);
+  }
+
+  @Test
+  public void moduleWithSubcomponentWithCombinedErrors_validationTypeWarning() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=WARNING")
+            .compile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE);
+
+    assertThat(compilation).succeeded();
+
+    assertThat(compilation)
+        .hadWarningContainingMatch(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS_MESSAGE)
+        .inFile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS)
+        .onLineContaining("interface CombinedWithASubcomponentHasErrors");
 
     assertThat(compilation).hadWarningCount(1);
   }

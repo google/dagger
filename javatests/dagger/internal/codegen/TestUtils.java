@@ -25,7 +25,7 @@ final class TestUtils {
   private static final Joiner MESSAGE_JOINER = Joiner.on("\n  ");
 
   /**
-   * Returns the lines joined by {@code "\n "}. Useful for passing to {@link
+   * Returns the lines joined by {@code "\n  "}. Useful for passing to {@link
    * com.google.testing.compile.CompilationSubject#hadErrorContaining(String)}, etc.
    */
   static String message(String... lines) {
@@ -33,7 +33,7 @@ final class TestUtils {
   }
 
   /**
-   * Returns a pattern that matches strings that end with the lines joined by {@code "\n "}. Useful
+   * Returns a pattern that matches strings that end with the lines joined by {@code "\n  "}. Useful
    * for passing to {@link
    * com.google.testing.compile.CompilationSubject#hadErrorContainingMatch(Pattern)}, etc.
    */

@@ -411,9 +411,9 @@ java_library(
     deps = [
         ":base",
         ":binding",
+        ":javac",
         ":processor",
         "//java/dagger:core",
-        "@bazel_tools//third_party/java/jdk/langtools:javac",
     ],
 )
 
@@ -424,17 +424,23 @@ java_library(
     deps = [
         ":base",
         ":binding",
+        ":javac",
         ":javac-plugin-module",
         ":kythe_plugin",
         ":processor",
         "//java/dagger:core",
         "//java/dagger/model",
         "//java/dagger/producers",
-        "@bazel_tools//third_party/java/jdk/langtools:javac",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/guava",
     ],
+)
+
+# Replacement for @bazel_tools//third_party/java/jdk/langtools:javac, which seems to have gone away?
+java_import(
+    name = "javac",
+    jars = ["@bazel_tools//third_party/java/jdk/langtools:javac_jar"],
 )
 
 # A _deploy.jar consisting of the java_librarys in https://github.com/kythe/kythe needed to build a
@@ -500,11 +506,11 @@ java_library(
     deps = [
         ":base",
         ":binding",
+        ":javac",
         ":javac-plugin-module",
         ":processor",
         "//java/dagger:core",
         "//java/dagger/model",
-        "@bazel_tools//third_party/java/jdk/langtools:javac",
         "@google_bazel_common//third_party/java/error_prone:check_api",
     ],
 )

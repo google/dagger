@@ -27,12 +27,14 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
+        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
+        "@google_bazel_common//third_party/java/guava",
+        "//:dagger_with_compiler",
         "//:android",
         "//:android-support",
-        "//:dagger_with_compiler",
-        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
-        "@google_bazel_common//third_party/java/guava",
+        # TODO(ronshapiro): figure out why strict deps is failing without this
+        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )
 

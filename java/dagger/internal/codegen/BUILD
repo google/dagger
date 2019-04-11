@@ -23,14 +23,16 @@ load("//tools:simple_jar.bzl", "simple_jar")
 
 EXPERIMENTAL_VISUALIZER_SRCS = ["BindingNetworkVisualizer.java"]
 
-KYTHE_SRCS = [
-    "DaggerKythePlugin.java",
-    "JavacPluginModule.java",
-]
+JAVAC_PLUGIN_MODULE_SRCS = ["JavacPluginModule.java"]
+
+KYTHE_SRCS = ["DaggerKythePlugin.java"]
+
+STATISTICS_COLLECTOR_SRCS = ["BindingGraphStatisticsCollector.java"]
 
 CODEGEN_SRCS = glob(
     ["*.java"],
-    exclude = EXPERIMENTAL_VISUALIZER_SRCS + KYTHE_SRCS,
+    exclude = EXPERIMENTAL_VISUALIZER_SRCS + KYTHE_SRCS + STATISTICS_COLLECTOR_SRCS +
+              JAVAC_PLUGIN_MODULE_SRCS,
 )
 
 CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
@@ -402,12 +404,27 @@ pom_file(
 )
 
 java_library(
+    name = "javac-plugin-module",
+    srcs = JAVAC_PLUGIN_MODULE_SRCS,
+    plugins = [":component-codegen"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":base",
+        ":binding",
+        ":processor",
+        "//java/dagger:core",
+        "@bazel_tools//third_party/java/jdk/langtools:javac",
+    ],
+)
+
+java_library(
     name = "kythe",
     srcs = KYTHE_SRCS,
     plugins = [":component-codegen"],
     deps = [
         ":base",
         ":binding",
+        ":javac-plugin-module",
         ":kythe_plugin",
         ":processor",
         "//java/dagger:core",
@@ -474,4 +491,20 @@ java_plugin(
         "genclass=${package}.Dagger${outerclasses}${classname}",
     ],
     deps = [":processor"],
+)
+
+java_library(
+    name = "statistics",
+    srcs = STATISTICS_COLLECTOR_SRCS,
+    plugins = [":component-codegen"],
+    deps = [
+        ":base",
+        ":binding",
+        ":javac-plugin-module",
+        ":processor",
+        "//java/dagger:core",
+        "//java/dagger/model",
+        "@bazel_tools//third_party/java/jdk/langtools:javac",
+        "@google_bazel_common//third_party/java/error_prone:check_api",
+    ],
 )

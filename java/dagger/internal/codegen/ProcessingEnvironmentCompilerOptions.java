@@ -50,6 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.producers.Produces;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -64,6 +65,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   private final ProcessingEnvironment processingEnvironment;
+  private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
 
   private ProcessingEnvironmentCompilerOptions(ProcessingEnvironment processingEnvironment) {
     this.processingEnvironment = processingEnvironment;
@@ -117,7 +119,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
   @Override
   ValidationType scopeCycleValidationType() {
-    return validationType(DISABLE_INTER_COMPONENT_SCOPE_VALIDATION);
+    return parseOption(DISABLE_INTER_COMPONENT_SCOPE_VALIDATION);
   }
 
   @Override
@@ -151,7 +153,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   private ValidationType moduleBindingValidationType() {
-    return validationType(MODULE_BINDING_VALIDATION);
+    return parseOption(MODULE_BINDING_VALIDATION);
   }
 
   @Override
@@ -161,19 +163,19 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
   @Override
   ValidationType explicitBindingConflictsWithInjectValidationType() {
-    return validationType(EXPLICIT_BINDING_CONFLICTS_WITH_INJECT);
+    return parseOption(EXPLICIT_BINDING_CONFLICTS_WITH_INJECT);
   }
 
-  private boolean isEnabled(BooleanOption booleanOption) {
-    return booleanOption.isEnabled(processingEnvironment);
+  private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
+    return processingEnvironment.getOptions().containsKey(keyOnlyOption.toString());
   }
 
-  private ValidationType validationType(Validation validation) {
-    return validation.parse(processingEnvironment);
+  private boolean isEnabled(Feature feature) {
+    return parseOption(feature).equals(ENABLED);
   }
 
   private Diagnostic.Kind diagnosticKind(Validation validation) {
-    return validationType(validation).diagnosticKind().get();
+    return parseOption(validation).diagnosticKind().get();
   }
 
   @SuppressWarnings("CheckReturnValue")
@@ -182,10 +184,10 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
       isEnabled(keyOnlyOption);
     }
     for (Feature feature : Feature.values()) {
-      isEnabled(feature);
+      parseOption(feature);
     }
     for (Validation validation : Validation.values()) {
-      validationType(validation);
+      parseOption(validation);
     }
     noLongerRecognized(EXPERIMENTAL_ANDROID_MODE);
     noLongerRecognized(FLOATING_BINDS_METHODS);
@@ -197,31 +199,26 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
       processingEnvironment
           .getMessager()
           .printMessage(
-              Diagnostic.Kind.WARNING,
-              commandLineOption.toString() + " is no longer recognized by Dagger");
+              Diagnostic.Kind.WARNING, commandLineOption + " is no longer recognized by Dagger");
     }
   }
 
-  /** An option that can be set on the command line. */
-  private interface CommandLineOption<T> {
-    /** The default value for this option. */
-    T defaultValue();
-
-    /** The valid values for this option. */
-    Set<T> validValues();
-
+  private interface CommandLineOption {
     /** The key of the option (appears after "-A"). */
     @Override
     String toString();
   }
 
-  /** An option that is enabled or not. */
-  private interface BooleanOption {
-    /** Returns {@code true} if the option is enabled. */
-    boolean isEnabled(ProcessingEnvironment processingEnvironment);
+  /** An option that can be set on the command line. */
+  private interface EnumOption<E extends Enum<E>> extends CommandLineOption {
+    /** The default value for this option. */
+    E defaultValue();
+
+    /** The valid values for this option. */
+    Set<E> validValues();
   }
 
-  enum KeyOnlyOption implements BooleanOption {
+  enum KeyOnlyOption implements CommandLineOption {
     HEADER_COMPILATION {
       @Override
       public String toString() {
@@ -235,19 +232,13 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
         return "dagger.gradle.incremental";
       }
     },
-    ;
-
-    @Override
-    public boolean isEnabled(ProcessingEnvironment processingEnvironment) {
-      return processingEnvironment.getOptions().containsKey(toString());
-    }
   }
 
   /**
    * A feature that can be enabled or disabled on the command line by setting {@code -Akey=ENABLED}
    * or {@code -Akey=DISABLED}.
    */
-  enum Feature implements CommandLineOption<FeatureStatus>, BooleanOption {
+  enum Feature implements EnumOption<FeatureStatus> {
     FAST_INIT,
 
     EXPERIMENTAL_ANDROID_MODE,
@@ -290,18 +281,13 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     }
 
     @Override
-    public boolean isEnabled(ProcessingEnvironment processingEnvironment) {
-      return parseOption(this, processingEnvironment).equals(ENABLED);
-    }
-
-    @Override
     public String toString() {
-      return optionName(name());
+      return optionName(this);
     }
   }
 
   /** The diagnostic kind or validation type for a kind of validation. */
-  enum Validation implements CommandLineOption<ValidationType> {
+  enum Validation implements EnumOption<ValidationType> {
     DISABLE_INTER_COMPONENT_SCOPE_VALIDATION(),
 
     NULLABLE_VALIDATION(ERROR, WARNING),
@@ -350,33 +336,35 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
     @Override
     public String toString() {
-      return optionName(name());
-    }
-
-    ValidationType parse(ProcessingEnvironment processingEnvironment) {
-      return parseOption(this, processingEnvironment);
+      return optionName(this);
     }
   }
 
-  private static String optionName(String enumName) {
-    return "dagger." + UPPER_UNDERSCORE.to(LOWER_CAMEL, enumName);
+  private static String optionName(Enum<? extends EnumOption<?>> option) {
+    return "dagger." + UPPER_UNDERSCORE.to(LOWER_CAMEL, option.name());
   }
 
   /** The supported command-line options. */
   static ImmutableSet<String> supportedOptions() {
-    return Stream.<Object[]>of(KeyOnlyOption.values(), Feature.values(), Validation.values())
+    // need explicit type parameter to avoid a runtime stream error
+    return Stream.<CommandLineOption[]>of(
+            KeyOnlyOption.values(), Feature.values(), Validation.values())
         .flatMap(Arrays::stream)
-        .map(Object::toString)
+        .map(CommandLineOption::toString)
         .collect(toImmutableSet());
   }
 
   /** Returns the value for the option as set on the command line, or the default value if not. */
-  private static <T extends Enum<T>> T parseOption(
-      CommandLineOption<T> commandLineOption, ProcessingEnvironment processingEnvironment) {
-    String key = commandLineOption.toString();
-    Map<String, String> options = processingEnvironment.getOptions();
-    if (options.containsKey(key)) {
-      String stringValue = options.get(key);
+  private <T extends Enum<T>> T parseOption(EnumOption<T> option) {
+    @SuppressWarnings("unchecked") // we only put covariant values into the map
+    T value = (T) enumOptions.computeIfAbsent(option, this::parseOptionUncached);
+    return value;
+  }
+
+  private <T extends Enum<T>> T parseOptionUncached(EnumOption<T> option) {
+    String key = option.toString();
+    if (processingEnvironment.getOptions().containsKey(key)) {
+      String stringValue = processingEnvironment.getOptions().get(key);
       if (stringValue == null) {
         processingEnvironment
             .getMessager()
@@ -385,9 +373,8 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
         try {
           T value =
               Enum.valueOf(
-                  commandLineOption.defaultValue().getDeclaringClass(),
-                  Ascii.toUpperCase(stringValue));
-          if (commandLineOption.validValues().contains(value)) {
+                  option.defaultValue().getDeclaringClass(), Ascii.toUpperCase(stringValue));
+          if (option.validValues().contains(value)) {
             return value;
           }
         } catch (IllegalArgumentException e) {
@@ -400,9 +387,9 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
                 String.format(
                     "Processor option -A%s may only have the values %s "
                         + "(case insensitive), found: %s",
-                    key, commandLineOption.validValues(), stringValue));
+                    key, option.validValues(), stringValue));
       }
     }
-    return commandLineOption.defaultValue();
+    return option.defaultValue();
   }
 }

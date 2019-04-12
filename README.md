@@ -198,9 +198,7 @@ the GitHub project's master branch.
 
 ## Building Dagger
 
-Dagger is built with [`bazel`]. The tests can be run with `bazel test //...`.
-`util/install-local-snapshot.sh` will build all of the Dagger libraries and
-install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
+See [the CONTRIBUTING.md docs][Building Dagger].
 
 ## License
 
@@ -221,6 +219,7 @@ install a copy in your local maven repository with the version `LOCAL-SNAPSHOT`.
 [20api]: https://google.github.io/dagger/api/2.0/
 [`bazel`]: https://bazel.build
 [bazel-external-deps]: https://docs.bazel.build/versions/master/external.html#depending-on-other-bazel-projects
+[Building Dagger]: CONTRIBUTING.md#building-dagger
 [community]: https://plus.google.com/communities/111933036769103367883
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/

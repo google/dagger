@@ -1,7 +1,7 @@
 language: android
 
 os: linux
-dist: precise
+dist: trusty
 sudo: required
 addons:
   apt:

@@ -243,7 +243,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
     EXPERIMENTAL_ANDROID_MODE,
 
-    FORMAT_GENERATED_SOURCE(ENABLED),
+    FORMAT_GENERATED_SOURCE,
 
     WRITE_PRODUCER_NAME_IN_TOKEN,
 

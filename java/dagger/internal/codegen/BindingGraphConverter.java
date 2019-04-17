@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
-import static dagger.internal.codegen.DaggerStreams.presentValues;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.common.collect.ImmutableSet;
@@ -103,7 +101,6 @@ final class BindingGraphConverter {
       network.addNode(currentComponent);
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
-        ImmutableSet<TypeElement> declaringModules = subcomponentDeclaringModules(resolvedBindings);
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
           addBinding(binding);
           if (binding.kind().equals(SUBCOMPONENT_CREATOR)
@@ -111,7 +108,8 @@ final class BindingGraphConverter {
             network.addEdge(
                 binding,
                 subcomponentNode(binding.key().type(), graph),
-                new SubcomponentCreatorBindingEdgeImpl(declaringModules));
+                new SubcomponentCreatorBindingEdgeImpl(
+                    resolvedBindings.subcomponentDeclarations()));
           }
         }
       }
@@ -228,16 +226,6 @@ final class BindingGraphConverter {
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
           componentPath().childPath(subcomponent.typeElement()), subcomponent);
-    }
-
-    private ImmutableSet<TypeElement> subcomponentDeclaringModules(
-        ResolvedBindings resolvedBindings) {
-      return resolvedBindings
-          .subcomponentDeclarations()
-          .stream()
-          .map(SubcomponentDeclaration::contributingModule)
-          .flatMap(presentValues())
-          .collect(toImmutableSet());
     }
   }
 }

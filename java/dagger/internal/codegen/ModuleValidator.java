@@ -49,6 +49,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.FormatMethod;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.model.BindingGraph;
@@ -430,6 +431,7 @@ final class ModuleValidator {
                   return null;
                 }
 
+                @FormatMethod
                 private void reportError(String format, Object... args) {
                   subreport.addError(
                       String.format(format, args), annotatedType, annotation, includedModule);

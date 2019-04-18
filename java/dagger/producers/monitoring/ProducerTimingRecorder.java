@@ -41,11 +41,12 @@ public abstract class ProducerTimingRecorder {
    * <p>If the producer was skipped due to any of its inputs failing, then this will not be called.
    *
    * @param startedNanos the wall-clock time, in nanoseconds, when the producer method started
-   *     executing, measured from when the first method on the
-   *     {@linkplain ProductionComponent production component} was called.
+   *     executing, measured from when the first method on the {@linkplain ProductionComponent
+   *     production component} was called.
    * @param durationNanos the wall-clock time, in nanoseconds, that the producer method took to
    *     execute.
    */
+  @SuppressWarnings("GoodTime") // should accept a java.time.Duration x2 (?)
   public void recordMethod(long startedNanos, long durationNanos) {}
 
   /**
@@ -56,6 +57,7 @@ public abstract class ProducerTimingRecorder {
    * @param latencyNanos the wall-clock time, in nanoseconds, of the producer's latency, measured
    *     from when the producer method started to when the future finished.
    */
+  @SuppressWarnings("GoodTime") // should accept a java.time.Duration
   public void recordSuccess(long latencyNanos) {}
 
   /**
@@ -65,6 +67,7 @@ public abstract class ProducerTimingRecorder {
    * @param latencyNanos the wall-clock time, in nanoseconds, of the producer's latency, measured
    *     from when the producer method started to when the future finished.
    */
+  @SuppressWarnings("GoodTime") // should accept a java.time.Duration
   public void recordFailure(Throwable exception, long latencyNanos) {}
 
   /**

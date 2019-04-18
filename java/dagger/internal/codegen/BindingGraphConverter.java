@@ -40,15 +40,11 @@ import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link dagger.internal.codegen.BindingGraph}s to {@link dagger.model.BindingGraph}s. */
 final class BindingGraphConverter {
-
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
-  private final CompilerOptions compilerOptions;
 
   @Inject
-  BindingGraphConverter(
-      BindingDeclarationFormatter bindingDeclarationFormatter, CompilerOptions compilerOptions) {
+  BindingGraphConverter(BindingDeclarationFormatter bindingDeclarationFormatter) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
-    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -89,7 +85,7 @@ final class BindingGraphConverter {
     private ComponentNode currentComponent;
 
     Traverser(BindingGraph graph) {
-      super(graph, compilerOptions);
+      super(graph);
     }
 
     @Override

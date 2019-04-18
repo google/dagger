@@ -23,6 +23,7 @@ import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation
 import static dagger.internal.codegen.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
+import static dagger.internal.codegen.ValidationType.NONE;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
@@ -134,6 +135,9 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     if (!isValid(componentDescriptor)) {
       return;
     }
+    if (!isFullBindingGraphValid(componentDescriptor)) {
+      return;
+    }
     BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
     if (isValid(bindingGraph)) {
       generateComponent(bindingGraph);
@@ -141,7 +145,8 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private void processSubcomponent(TypeElement subcomponent) {
-    if (!compilerOptions.aheadOfTimeSubcomponents()) {
+    if (!compilerOptions.aheadOfTimeSubcomponents()
+        && compilerOptions.moduleBindingValidationType(subcomponent).equals(NONE)) {
       return;
     }
     if (!isSubcomponentValid(subcomponent)) {
@@ -150,9 +155,14 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     ComponentDescriptor subcomponentDescriptor =
         componentDescriptorFactory.subcomponentDescriptor(subcomponent);
     // TODO(dpb): ComponentDescriptorValidator for subcomponents, as we do for root components.
-    BindingGraph bindingGraph = bindingGraphFactory.create(subcomponentDescriptor, false);
-    if (isValid(bindingGraph)) {
-      generateComponent(bindingGraph);
+    if (!isFullBindingGraphValid(subcomponentDescriptor)) {
+      return;
+    }
+    if (compilerOptions.aheadOfTimeSubcomponents()) {
+      BindingGraph bindingGraph = bindingGraphFactory.create(subcomponentDescriptor, false);
+      if (isValid(bindingGraph)) {
+        generateComponent(bindingGraph);
+      }
     }
   }
 
@@ -220,10 +230,17 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       return false;
     }
     ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
-    if (subcomponentReport != null && !subcomponentReport.isClean()) {
-      return false;
+    return subcomponentReport == null || subcomponentReport.isClean();
+  }
+
+  private boolean isFullBindingGraphValid(ComponentDescriptor componentDescriptor) {
+    if (compilerOptions
+        .moduleBindingValidationType(componentDescriptor.typeElement())
+        .equals(NONE)) {
+      return true;
     }
-    return true;
+    BindingGraph fullBindingGraph = bindingGraphFactory.create(componentDescriptor, true);
+    return isValid(fullBindingGraph);
   }
 
   private boolean isValid(ComponentDescriptor componentDescriptor) {

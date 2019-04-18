@@ -233,7 +233,7 @@ final class DiagnosticReporterFactory {
         Diagnostic.Kind diagnosticKind,
         CharSequence message,
         @NullableDecl Element elementToReport) {
-      if (graph.isModuleBindingGraph()) {
+      if (graph.isFullBindingGraph()) {
         ValidationType validationType = compilerOptions.moduleBindingValidationType(rootComponent);
         if (validationType.equals(NONE)) {
           return;
@@ -297,12 +297,12 @@ final class DiagnosticReporterFactory {
       @Override
       public String toString() {
         StringBuilder message =
-            graph.isModuleBindingGraph()
+            graph.isFullBindingGraph()
                 ? new StringBuilder()
                 : new StringBuilder(dependencyTrace.size() * 100 /* a guess heuristic */);
 
-        // Print the dependency trace unless it's a module binding graph
-        if (!graph.isModuleBindingGraph()) {
+        // Print the dependency trace unless it's a full binding graph
+        if (!graph.isFullBindingGraph()) {
           dependencyTrace.forEach(
               edge ->
                   dependencyRequestFormatter.appendFormatLine(message, edge.dependencyRequest()));
@@ -317,7 +317,7 @@ final class DiagnosticReporterFactory {
                 // if printing entry points, skip entry points and the traced request
                 .filter(
                     request ->
-                        graph.isModuleBindingGraph()
+                        graph.isFullBindingGraph()
                             || (!request.isEntryPoint() && !isTracedRequest(request)))
                 .map(request -> request.dependencyRequest().requestElement())
                 .flatMap(presentValues())
@@ -325,14 +325,14 @@ final class DiagnosticReporterFactory {
         if (!requestsToPrint.isEmpty()) {
           message
               .append("\nIt is")
-              .append(graph.isModuleBindingGraph() ? " " : " also ")
+              .append(graph.isFullBindingGraph() ? " " : " also ")
               .append("requested at:");
           elementFormatter().formatIndentedList(message, requestsToPrint, 1);
         }
 
-        // Print the remaining entry points, showing which component they're in, unless we're in a
-        // module binding graph
-        if (!graph.isModuleBindingGraph() && entryPoints.size() > 1) {
+        // Print the remaining entry points, showing which component they're in, unless it's a full
+        // binding graph
+        if (!graph.isFullBindingGraph() && entryPoints.size() > 1) {
           message.append("\nThe following other entry points also depend on it:");
           entryPointFormatter.formatIndentedList(
               message,

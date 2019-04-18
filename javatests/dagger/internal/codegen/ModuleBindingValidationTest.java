@@ -254,6 +254,47 @@ public final class ModuleBindingValidationTest {
           "    @BindsInstance test.SubcomponentWithErrors.Builder"
               + " test.SubcomponentWithErrors.Builder.object(Object)");
 
+  @Test
+  public void subcomponentWithErrors_validationTypeNone() {
+    Compilation compilation = daggerCompiler().compile(SUBCOMPONENT_WITH_ERRORS, A_MODULE);
+
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
+  public void subcomponentWithErrors_validationTypeError() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .compile(SUBCOMPONENT_WITH_ERRORS, A_MODULE);
+
+    assertThat(compilation).failed();
+
+    assertThat(compilation)
+        .hadErrorContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface SubcomponentWithErrors");
+
+    assertThat(compilation).hadErrorCount(1);
+  }
+
+  @Test
+  public void subcomponentWithErrors_validationTypeWarning() {
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.moduleBindingValidation=WARNING")
+            .compile(SUBCOMPONENT_WITH_ERRORS, A_MODULE);
+
+    assertThat(compilation).succeeded();
+
+    assertThat(compilation)
+        .hadWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface SubcomponentWithErrors");
+
+    assertThat(compilation).hadWarningCount(1);
+  }
+
   private static final JavaFileObject MODULE_WITH_SUBCOMPONENT_WITH_ERRORS =
       JavaFileObjects.forSourceLines(
           "test.ModuleWithSubcomponentWithErrors",
@@ -288,7 +329,13 @@ public final class ModuleBindingValidationTest {
         .inFile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS)
         .onLineContaining("interface ModuleWithSubcomponentWithErrors");
 
-    assertThat(compilation).hadErrorCount(1);
+    // TODO(b/130283677)
+    assertThat(compilation)
+        .hadErrorContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface SubcomponentWithErrors");
+
+    assertThat(compilation).hadErrorCount(2);
   }
 
   @Test
@@ -305,7 +352,13 @@ public final class ModuleBindingValidationTest {
         .inFile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS)
         .onLineContaining("interface ModuleWithSubcomponentWithErrors");
 
-    assertThat(compilation).hadWarningCount(1);
+    // TODO(b/130283677)
+    assertThat(compilation)
+        .hadWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
+        .inFile(SUBCOMPONENT_WITH_ERRORS)
+        .onLineContaining("interface SubcomponentWithErrors");
+
+    assertThat(compilation).hadWarningCount(2);
   }
 
   private static final JavaFileObject A_SUBCOMPONENT =

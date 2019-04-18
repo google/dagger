@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
@@ -47,12 +46,7 @@ public class ComponentTreeTraverser {
   private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
 
   /** Constructs a traverser for a root (component, not subcomponent) binding graph. */
-  public ComponentTreeTraverser(BindingGraph rootGraph, CompilerOptions compilerOptions) {
-    checkArgument(
-        !rootGraph.componentDescriptor().isSubcomponent()
-            || compilerOptions.aheadOfTimeSubcomponents(),
-        "only root graphs can be traversed, not %s",
-        rootGraph.componentTypeElement().getQualifiedName());
+  public ComponentTreeTraverser(BindingGraph rootGraph) {
     bindingGraphPath.add(rootGraph);
     componentPaths.add(ComponentPath.create(ImmutableList.of(rootGraph.componentTypeElement())));
   }

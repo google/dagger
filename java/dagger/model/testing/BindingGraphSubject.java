@@ -83,7 +83,7 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
   private BindingSubject bindingWithKeyString(String keyString) {
     ImmutableSet<Binding> bindings = getBindingNodes(keyString);
     if (bindings.isEmpty()) {
-      fail("has binding with key", keyString);
+      failWithActual("expected to have binding with key", keyString);
     }
     // TODO(dpb): Handle multiple bindings for the same key.
     if (bindings.size() > 1) {
@@ -139,7 +139,7 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
     private void dependsOnBindingWithKeyString(String keyString) {
       if (actualBindingGraph().requestedBindings(actual()).stream()
           .noneMatch(binding -> binding.key().toString().equals(keyString))) {
-        fail("depends on binding with key", keyString);
+        failWithActual("expected to depend on binding with key", keyString);
       }
     }
 

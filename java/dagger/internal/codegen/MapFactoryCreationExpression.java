@@ -20,9 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import javax.inject.Provider;
@@ -67,19 +67,18 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
       builder.add("<$T, $T>", mapType.keyType(), valueType);
     }
 
-    ImmutableList<FrameworkDependency> frameworkDependencies = binding.frameworkDependencies();
-    builder.add("builder($L)", frameworkDependencies.size());
+    builder.add("builder($L)", binding.dependencies().size());
 
     superContributions()
         .ifPresent(superContributions -> builder.add(".putAll($L)", superContributions));
 
-    for (FrameworkDependency frameworkDependency : frameworkDependenciesToImplement()) {
+    for (DependencyRequest dependency : dependenciesToImplement()) {
       ContributionBinding contributionBinding =
-          graph.contributionBindings().get(frameworkDependency.key()).contributionBinding();
+          graph.contributionBindings().get(dependency.key()).contributionBinding();
       builder.add(
           ".put($L, $L)",
           getMapKeyExpression(contributionBinding, componentImplementation.name(), elements),
-          multibindingDependencyExpression(frameworkDependency));
+          multibindingDependencyExpression(dependency));
     }
     builder.add(".build()");
 

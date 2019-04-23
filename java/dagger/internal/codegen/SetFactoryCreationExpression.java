@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
 import java.util.Optional;
 
@@ -69,9 +70,9 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
       setProviders++;
     }
 
-    for (FrameworkDependency frameworkDependency : frameworkDependenciesToImplement()) {
+    for (DependencyRequest dependency : dependenciesToImplement()) {
       ContributionType contributionType =
-          graph.contributionBindings().get(frameworkDependency.key()).contributionType();
+          graph.contributionBindings().get(dependency.key()).contributionType();
       String methodNamePrefix;
       switch (contributionType) {
         case SET:
@@ -83,14 +84,14 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
           methodNamePrefix = "addCollection";
           break;
         default:
-          throw new AssertionError(frameworkDependency + " is not a set multibinding");
+          throw new AssertionError(dependency + " is not a set multibinding");
       }
 
       builderMethodCalls.add(
           ".$N$N($L)",
           methodNamePrefix,
           methodNameSuffix,
-          multibindingDependencyExpression(frameworkDependency));
+          multibindingDependencyExpression(dependency));
     }
     builder.add("builder($L, $L)", individualProviders, setProviders);
     builder.add(builderMethodCalls.build());

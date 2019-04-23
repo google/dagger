@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;
 
@@ -43,28 +44,29 @@ abstract class MultibindingFactoryCreationExpression
   }
 
   /** Returns the expression for a dependency of this multibinding. */
-  protected final CodeBlock multibindingDependencyExpression(
-      FrameworkDependency frameworkDependency) {
+  protected final CodeBlock multibindingDependencyExpression(DependencyRequest dependency) {
     CodeBlock expression =
         componentBindingExpressions
             .getDependencyExpression(
-                BindingRequest.bindingRequest(frameworkDependency), componentImplementation.name())
+                BindingRequest.bindingRequest(dependency.key(), binding.frameworkType()),
+                componentImplementation.name())
             .codeBlock();
+
     return useRawType()
-        ? CodeBlocks.cast(expression, frameworkDependency.frameworkClass())
+        ? CodeBlocks.cast(expression, binding.frameworkType().frameworkClass())
         : expression;
   }
 
-  protected final ImmutableSet<FrameworkDependency> frameworkDependenciesToImplement() {
+  protected final ImmutableSet<DependencyRequest> dependenciesToImplement() {
     ImmutableSet<Key> alreadyImplementedKeys =
         componentImplementation.superclassContributionsMade(bindingRequest());
-    return binding.frameworkDependencies().stream()
-        .filter(frameworkDependency -> !alreadyImplementedKeys.contains(frameworkDependency.key()))
+    return binding.dependencies().stream()
+        .filter(dependency -> !alreadyImplementedKeys.contains(dependency.key()))
         .collect(toImmutableSet());
   }
 
   protected Optional<CodeBlock> superContributions() {
-    if (frameworkDependenciesToImplement().size() == binding.frameworkDependencies().size()) {
+    if (dependenciesToImplement().size() == binding.dependencies().size()) {
       return Optional.empty();
     }
     ModifiableBindingMethod superMethod =
@@ -74,9 +76,7 @@ abstract class MultibindingFactoryCreationExpression
 
   /** The binding request for this framework instance. */
   protected final BindingRequest bindingRequest() {
-    return BindingRequest.bindingRequest(
-        binding.key(),
-        binding instanceof ProvisionBinding ? FrameworkType.PROVIDER : FrameworkType.PRODUCER_NODE);
+    return BindingRequest.bindingRequest(binding.key(), binding.frameworkType());
   }
 
   /**

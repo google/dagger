@@ -82,6 +82,11 @@ abstract class Binding extends BindingDeclaration {
   /** The {@link BindingType} of this binding. */
   abstract BindingType bindingType();
 
+  /** The {@link FrameworkType} of this binding. */
+  final FrameworkType frameworkType() {
+    return FrameworkType.forBindingType(bindingType());
+  }
+
   /**
    * The explicit set of {@link DependencyRequest dependencies} required to satisfy this binding as
    * defined by the user-defined injection sites.

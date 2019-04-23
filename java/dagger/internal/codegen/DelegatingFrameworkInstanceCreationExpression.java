@@ -22,6 +22,7 @@ import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.model.DependencyRequest;
 
 /** A framework instance creation expression for a {@link dagger.Binds @Binds} binding. */
 final class DelegatingFrameworkInstanceCreationExpression
@@ -42,12 +43,13 @@ final class DelegatingFrameworkInstanceCreationExpression
 
   @Override
   public CodeBlock creationExpression() {
-    FrameworkDependency frameworkDependency = getOnlyElement(binding.frameworkDependencies());
+    DependencyRequest dependency = getOnlyElement(binding.dependencies());
     return CodeBlocks.cast(
         componentBindingExpressions
             .getDependencyExpression(
-                bindingRequest(frameworkDependency), componentImplementation.name())
+                bindingRequest(dependency.key(), binding.frameworkType()),
+                componentImplementation.name())
             .codeBlock(),
-        frameworkDependency.frameworkClass());
+        binding.frameworkType().frameworkClass());
   }
 }

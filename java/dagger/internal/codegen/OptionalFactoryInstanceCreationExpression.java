@@ -52,7 +52,8 @@ final class OptionalFactoryInstanceCreationExpression
             binding,
             componentBindingExpressions
                 .getDependencyExpression(
-                    bindingRequest(getOnlyElement(binding.frameworkDependencies())),
+                    bindingRequest(
+                        getOnlyElement(binding.dependencies()).key(), binding.frameworkType()),
                     componentImplementation.name())
                 .codeBlock());
   }

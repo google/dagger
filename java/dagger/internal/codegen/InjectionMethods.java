@@ -513,7 +513,7 @@ final class InjectionMethods {
     injectionMethod
         .methodBodyBuilder()
         .add(checkNotNullPolicy.checkForNull(proxyInvocation.build()))
-        .add(";");
+        .add(";\n");
     return injectionMethod.build();
   }
 

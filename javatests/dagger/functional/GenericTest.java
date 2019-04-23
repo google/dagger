@@ -137,7 +137,7 @@ public class GenericTest {
     assertThat(b).isSameAs(component.scopedGenericB());
     assertThat(b.t).isNotNull();
 
-    assertThat(a).isNotSameAs(b);
+    assertThat(a).isNotSameInstanceAs(b);
   }
 
   @Test // See https://github.com/google/dagger/issues/671
@@ -149,7 +149,7 @@ public class GenericTest {
     ScopedSimpleGeneric<B> b = component.scopedSimpleGenericB();
     assertThat(b).isSameAs(component.scopedSimpleGenericB());
 
-    assertThat(a).isNotSameAs(b);
+    assertThat(a).isNotSameInstanceAs(b);
   }
   
   @Test public void genericModules() {

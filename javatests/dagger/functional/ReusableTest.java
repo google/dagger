@@ -43,6 +43,6 @@ public class ReusableTest {
     Object reusableFromChildTwo = childTwo.reusableInChild();
     assertThat(childTwo.reusableInChild()).isSameAs(reusableFromChildTwo);
 
-    assertThat(reusableFromChildTwo).isNotSameAs(reusableFromChildOne);
+    assertThat(reusableFromChildTwo).isNotSameInstanceAs(reusableFromChildOne);
   }
 }

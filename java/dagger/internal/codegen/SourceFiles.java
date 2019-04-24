@@ -247,10 +247,6 @@ class SourceFiles {
     return siblingClassName(componentElement, "_MonitoringModule");
   }
 
-  static ClassName generatedProductionExecutorModuleName(TypeElement componentElement) {
-    return siblingClassName(componentElement, "_ProductionExecutorModule");
-  }
-
   // TODO(ronshapiro): when JavaPoet migration is complete, replace the duplicated code
   // which could use this.
   private static ClassName siblingClassName(TypeElement typeElement, String suffix) {

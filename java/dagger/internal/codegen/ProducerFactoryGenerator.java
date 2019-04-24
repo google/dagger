@@ -25,9 +25,9 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.GwtCompatibility.gwtIncompatibleAnnotation;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
-import static dagger.internal.codegen.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
@@ -327,6 +327,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       return false;
     }
 
+    CodeBlock frameworkTypeUsageStatement(DependencyRequest dependency) {
+      return SourceFiles.frameworkTypeUsageStatement(
+          CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind());
+    }
+
     static FutureTransform create(
         ImmutableMap<Key, FieldSpec> fields,
         ProductionBinding binding,
@@ -364,13 +369,9 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     ImmutableList<CodeBlock> parameterCodeBlocks() {
-      ImmutableList.Builder<CodeBlock> parameterCodeBlocks = ImmutableList.builder();
-      for (DependencyRequest dependency : binding.explicitDependencies()) {
-        parameterCodeBlocks.add(
-            frameworkTypeUsageStatement(
-                CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
-      }
-      return parameterCodeBlocks.build();
+      return binding.explicitDependencies().stream()
+          .map(this::frameworkTypeUsageStatement)
+          .collect(toImmutableList());
     }
   }
 
@@ -413,10 +414,7 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
         if (dependency == asyncDependency) {
           parameterCodeBlocks.add(CodeBlock.of("$L", applyArgName()));
         } else {
-          parameterCodeBlocks.add(
-              // TODO(ronshapiro) extract this into a method shared by FutureTransform subclasses
-              frameworkTypeUsageStatement(
-                  CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
+          parameterCodeBlocks.add(frameworkTypeUsageStatement(dependency));
         }
       }
       return parameterCodeBlocks.build();
@@ -458,7 +456,19 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     @Override
     ImmutableList<CodeBlock> parameterCodeBlocks() {
-      return getParameterCodeBlocks(binding, fields, applyArgName());
+      int argIndex = 0;
+      ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
+      for (DependencyRequest dependency : binding.explicitDependencies()) {
+        if (isAsyncDependency(dependency)) {
+          codeBlocks.add(
+              CodeBlock.of(
+                  "($T) $L.get($L)", asyncDependencyType(dependency), applyArgName(), argIndex));
+          argIndex++;
+        } else {
+          codeBlocks.add(frameworkTypeUsageStatement(dependency));
+        }
+      }
+      return codeBlocks.build();
     }
 
     @Override
@@ -487,25 +497,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
       default:
         throw new AssertionError();
     }
-  }
-
-  private static ImmutableList<CodeBlock> getParameterCodeBlocks(
-      ProductionBinding binding, ImmutableMap<Key, FieldSpec> fields, String listArgName) {
-    int argIndex = 0;
-    ImmutableList.Builder<CodeBlock> codeBlocks = ImmutableList.builder();
-    for (DependencyRequest dependency : binding.explicitDependencies()) {
-      if (isAsyncDependency(dependency)) {
-        codeBlocks.add(
-            CodeBlock.of(
-                "($T) $L.get($L)", asyncDependencyType(dependency), listArgName, argIndex));
-        argIndex++;
-      } else {
-        codeBlocks.add(
-            frameworkTypeUsageStatement(
-                CodeBlock.of("$N", fields.get(dependency.key())), dependency.kind()));
-      }
-    }
-    return codeBlocks.build();
   }
 
   /**

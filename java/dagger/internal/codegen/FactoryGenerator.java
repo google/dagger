@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Maps.transformValues;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -161,15 +162,13 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     if (binding.requiresModuleInstance()) {
       uniqueFieldNames.claim("module");
     }
-    ImmutableMap.Builder<Key, FieldSpec> fields = ImmutableMap.builder();
-    generateBindingFieldsForDependencies(binding)
-        .forEach(
-            (key, frameworkField) -> {
-              TypeName type = frameworkField.type();
-              String name = uniqueFieldNames.getUniqueName(frameworkField.name());
-              fields.put(key, FieldSpec.builder(type, name, PRIVATE, FINAL).build());
-            });
-    return fields.build();
+    return ImmutableMap.copyOf(
+        transformValues(
+            generateBindingFieldsForDependencies(binding),
+            field ->
+                FieldSpec.builder(
+                        field.type(), uniqueFieldNames.getUniqueName(field.name()), PRIVATE, FINAL)
+                    .build()));
   }
 
   private void addCreateMethod(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {

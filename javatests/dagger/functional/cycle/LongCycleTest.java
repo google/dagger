@@ -17,6 +17,7 @@
 package dagger.functional.cycle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.TruthJUnit.assume;
 import static java.util.Arrays.stream;
 
@@ -50,6 +51,8 @@ public class LongCycleTest {
         stream(DaggerLongCycle_LongCycleComponent.class.getDeclaredMethods())
             .map(Method::getName)
             .anyMatch(name -> name.equals("initialize2"));
-    assertThat(hasInitialize2).named("LongCycleComponent impl has an initialize2 method").isTrue();
+    assertWithMessage("LongCycleComponent impl has an initialize2 method")
+        .that(hasInitialize2)
+        .isTrue();
   }
 }

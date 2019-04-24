@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.auto.common.MoreTypes;
@@ -252,7 +253,7 @@ public class KeyFactoryTest {
     assertThat(intType.getKind().isPrimitive()).isTrue();
     TypeMirror integerType = integerMethod.getReturnType();
     assertThat(integerType.getKind().isPrimitive()).isFalse();
-    assertThat(types.isSameType(intType, integerType)).named("type equality").isFalse();
+    assertWithMessage("type equality").that(types.isSameType(intType, integerType)).isFalse();
     Key intKey = keyFactory.forProvidesMethod(intMethod, primitiveHolder);
     Key integerKey = keyFactory.forProvidesMethod(integerMethod, boxedPrimitiveHolder);
     assertThat(intKey).isEqualTo(integerKey);

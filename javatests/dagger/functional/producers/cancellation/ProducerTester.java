@@ -17,7 +17,7 @@
 package dagger.functional.producers.cancellation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractFuture;
@@ -93,7 +93,7 @@ final class ProducerTester {
   /** Asserts that no nodes in this tester have been started. */
   void assertNoStartedNodes() {
     for (TestFuture future : futures.values()) {
-      assertThat(future.isStarted()).named("%s is started", future).isFalse();
+      assertWithMessage("%s is started", future).that(future.isStarted()).isFalse();
     }
   }
 
@@ -101,7 +101,7 @@ final class ProducerTester {
     ImmutableSet.Builder<TestFuture> builder = ImmutableSet.builder();
     for (String node : nodes) {
       TestFuture future = getOrCreate(node);
-      assertThat(assertion.test(future)).named("%s is %s", future, assertion).isTrue();
+      assertWithMessage("%s is %s", future, assertion).that(assertion.test(future)).isTrue();
       builder.add(future);
     }
     return new Only(builder.build(), assertion);
@@ -128,7 +128,7 @@ final class ProducerTester {
     void only() {
       for (TestFuture future : futures.values()) {
         if (!expected.contains(future)) {
-          assertThat(assertion.test(future)).named("%s is %s", future, assertion).isFalse();
+          assertWithMessage("%s is %s", future, assertion).that(assertion.test(future)).isFalse();
         }
       }
     }

@@ -111,7 +111,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 "import com.google.common.base.Optional;",
                 "",
                 GENERATED_ANNOTATION,
-                "public final class DaggerTestComponent implements TestComponent {")
+                "final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  private volatile Provider<Maybe> provideMaybeProvider;",
@@ -251,8 +251,7 @@ public class OptionalBindingRequestFulfillmentTest {
             "import dagger.producers.internal.CancellationListener;",
             "",
             GENERATED_ANNOTATION,
-            "public final class DaggerTestComponent implements TestComponent, "
-                + "CancellationListener {",
+            "final class DaggerTestComponent implements TestComponent, CancellationListener {",
             "  @Override",
             "  public ListenableFuture<Optional<Maybe>> maybe() {",
             "    return Futures.immediateFuture(",

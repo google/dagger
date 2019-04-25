@@ -167,15 +167,15 @@ final class ComponentCreatorImplementationFactory {
     }
 
     private void setModifiers() {
-      classBuilder.addModifiers(visibility());
+      visibility().ifPresent(classBuilder::addModifiers);
       if (!componentImplementation.isNested()) {
         classBuilder.addModifiers(STATIC);
       }
       classBuilder.addModifiers(componentImplementation.isAbstract() ? ABSTRACT : FINAL);
     }
 
-    /** Returns the visibility modifier the generated class should have. */
-    protected abstract Modifier visibility();
+    /** Returns the visibility modifier the generated class should have, if any. */
+    protected abstract Optional<Modifier> visibility();
 
     /** Sets the superclass being extended or interface being implemented for this creator. */
     protected abstract void setSupertype();
@@ -395,14 +395,14 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected Modifier visibility() {
+    protected Optional<Modifier> visibility() {
       if (componentImplementation.isAbstract()) {
         // The component creator class of a top-level component implementation in ahead-of-time
         // subcomponents mode must be public, not protected, because the creator's subclass will
         // be a sibling of the component subclass implementation, not nested.
-        return componentImplementation.isNested() ? PROTECTED : PUBLIC;
+        return Optional.of(componentImplementation.isNested() ? PROTECTED : PUBLIC);
       }
-      return PRIVATE;
+      return Optional.of(PRIVATE);
     }
 
     @Override
@@ -515,8 +515,12 @@ final class ComponentCreatorImplementationFactory {
     }
 
     @Override
-    protected Modifier visibility() {
-      return PUBLIC;
+    protected Optional<Modifier> visibility() {
+      return componentImplementation
+          .componentDescriptor()
+          .typeElement()
+          .getModifiers()
+          .contains(PUBLIC) ? Optional.of(PUBLIC) : Optional.empty();
     }
 
     @Override

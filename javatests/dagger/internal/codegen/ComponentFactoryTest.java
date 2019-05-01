@@ -87,7 +87,7 @@ public class ComponentFactoryTest {
             "import dagger.internal.Preconditions;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerTestComponent implements TestComponent {",
+            "public final class DaggerTestComponent implements TestComponent {",
             "  private static final class Factory implements TestComponent.Factory {",
             "    @Override",
             "    public TestComponent newTestComponent(TestModule mod) {",

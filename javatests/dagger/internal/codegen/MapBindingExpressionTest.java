@@ -93,7 +93,7 @@ public class MapBindingExpressionTest {
                 "import dagger.internal.MapBuilder;",
                 "",
                 GENERATED_ANNOTATION,
-                "final class DaggerTestComponent implements TestComponent {")
+                "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  private volatile Provider<Integer> provideIntProvider;",
@@ -275,7 +275,7 @@ public class MapBindingExpressionTest {
             "import other.UsesInaccessible_Factory;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerTestComponent implements TestComponent {",
+            "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newInstance(",
@@ -338,7 +338,7 @@ public class MapBindingExpressionTest {
             "package test;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerParent implements Parent {",
+            "public final class DaggerParent implements Parent {",
             "  private final ParentModule parentModule;",
             "",
             "  private final class ChildImpl implements Child {",

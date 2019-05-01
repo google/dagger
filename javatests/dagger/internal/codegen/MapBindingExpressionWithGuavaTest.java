@@ -129,7 +129,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "package test;",
                 "",
                 GENERATED_ANNOTATION,
-                "final class DaggerTestComponent implements TestComponent {")
+                "public final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  private volatile Provider<Integer> provideIntProvider;",
@@ -404,7 +404,7 @@ public class MapBindingExpressionWithGuavaTest {
             "import other.UsesInaccessible_Factory;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerTestComponent implements TestComponent {",
+            "public final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newInstance((Map) ImmutableMap.of());",
@@ -467,7 +467,7 @@ public class MapBindingExpressionWithGuavaTest {
             "package test;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerParent implements Parent {",
+            "public final class DaggerParent implements Parent {",
             "  private final ParentModule parentModule;",
             "",
             "  private final class ChildImpl implements Child {",
@@ -523,7 +523,7 @@ public class MapBindingExpressionWithGuavaTest {
             "import dagger.producers.internal.CancellationListener;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerTestComponent implements TestComponent, "
+            "public final class DaggerTestComponent implements TestComponent, "
                 + "CancellationListener {",
             "  @Override",
             "  public ListenableFuture<Map<String, String>> stringMap() {",

@@ -88,7 +88,7 @@ public class ComponentBuilderTest {
             "import dagger.internal.Preconditions;",
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerTestComponent implements TestComponent {",
+            "public final class DaggerTestComponent implements TestComponent {",
             "  private static final class Builder implements TestComponent.Builder {",
             "    private TestModule testModule;",
             "",

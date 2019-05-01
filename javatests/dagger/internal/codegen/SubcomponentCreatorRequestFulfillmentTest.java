@@ -101,7 +101,7 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             IMPORT_GENERATED_ANNOTATION,
             "",
             GENERATED_ANNOTATION,
-            "final class DaggerC implements C {",
+            "public final class DaggerC implements C {",
             "  @Override",
             "  public Sub.Builder sBuilder() {",
             "    return new SubBuilder();",

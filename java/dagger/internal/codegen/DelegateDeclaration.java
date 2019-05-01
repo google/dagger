@@ -79,7 +79,7 @@ abstract class DelegateDeclaration extends BindingDeclaration implements HasCont
               Iterables.getOnlyElement(bindsMethod.getParameters()),
               Iterables.getOnlyElement(resolvedMethod.getParameterTypes()));
       return new AutoValue_DelegateDeclaration(
-          ContributionType.fromBindingMethod(bindsMethod),
+          ContributionType.fromBindingElement(bindsMethod),
           keyFactory.forBindsMethod(bindsMethod, contributingModule),
           Optional.<Element>of(bindsMethod),
           Optional.of(contributingModule),

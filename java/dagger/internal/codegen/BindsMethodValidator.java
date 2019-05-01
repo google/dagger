@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
 import com.google.auto.common.MoreTypes;
@@ -31,9 +31,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * A validator for {@link Binds} methods.
- */
+/** A validator for {@link Binds} methods. */
 final class BindsMethodValidator extends BindingMethodValidator {
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
@@ -58,8 +56,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkMethod(builder);
+  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkElement(builder);
     checkParameters(builder);
   }
 
@@ -82,7 +80,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
     ExecutableElement method = builder.getSubject();
     TypeMirror leftHandSide = boxIfNecessary(method.getReturnType());
     TypeMirror rightHandSide = parameter.asType();
-    ContributionType contributionType = ContributionType.fromBindingMethod(method);
+    ContributionType contributionType = ContributionType.fromBindingElement(method);
     if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
       builder.addError(
           "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter");

@@ -66,7 +66,7 @@ abstract class ProductionBinding extends ContributionBinding {
     static ProductionKind fromProducesMethod(ExecutableElement producesMethod) {
       if (isFutureType(producesMethod.getReturnType())) {
         return FUTURE;
-      } else if (ContributionType.fromBindingMethod(producesMethod)
+      } else if (ContributionType.fromBindingElement(producesMethod)
               .equals(ContributionType.SET_VALUES)
           && isFutureType(SetType.from(producesMethod.getReturnType()).elementType())) {
         return SET_OF_FUTURE;

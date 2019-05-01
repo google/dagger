@@ -17,9 +17,9 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
 
 import com.google.auto.common.MoreTypes;
@@ -34,9 +34,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * A validator for {@link Produces} methods.
- */
+/** A validator for {@link Produces} methods. */
 final class ProducesMethodValidator extends BindingMethodValidator {
 
   @Inject
@@ -57,8 +55,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkMethod(builder);
+  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkElement(builder);
     checkNullable(builder);
   }
 
@@ -71,7 +69,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected String badReturnTypeMessage() {
+  protected String badTypeMessage() {
     return "@Produces methods can return only a primitive, an array, a type variable, "
         + "a declared type, or a ListenableFuture of one of those types";
   }
@@ -106,7 +104,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected String badSetValuesTypeMessage() {
+  protected String elementsIntoSetNotASetMessage() {
     return "@Produces methods of type set values must return a Set or ListenableFuture of Set";
   }
 

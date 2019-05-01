@@ -22,7 +22,7 @@ import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Element;
 
 /** Whether a binding or declaration is for a unique contribution or a map or set multibinding. */
 enum ContributionType {
@@ -49,16 +49,17 @@ enum ContributionType {
   }
 
   /**
-   * The contribution type from a binding method annotations. Presumes a well-formed binding method
-   * (at most one of @IntoSet, @IntoMap, @ElementsIntoSet and @Provides.type). {@link
-   * ProvidesMethodValidator} and {@link ProducesMethodValidator} validate correctness on their own.
+   * The contribution type from a binding element's annotations. Presumes a well-formed binding
+   * element (at most one of @IntoSet, @IntoMap, @ElementsIntoSet and @Provides.type). {@link
+   * BindingMethodValidator} and {@link BindsInstanceProcessingStep} validate correctness on their
+   * own.
    */
-  static ContributionType fromBindingMethod(ExecutableElement method) {
-    if (isAnnotationPresent(method, IntoMap.class)) {
+  static ContributionType fromBindingElement(Element element) {
+    if (isAnnotationPresent(element, IntoMap.class)) {
       return ContributionType.MAP;
-    } else if (isAnnotationPresent(method, IntoSet.class)) {
+    } else if (isAnnotationPresent(element, IntoSet.class)) {
       return ContributionType.SET;
-    } else if (isAnnotationPresent(method, ElementsIntoSet.class)) {
+    } else if (isAnnotationPresent(element, ElementsIntoSet.class)) {
       return ContributionType.SET_VALUES;
     }
     return ContributionType.UNIQUE;

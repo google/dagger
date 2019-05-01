@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
 import com.google.common.collect.ImmutableSet;
@@ -29,9 +29,7 @@ import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 
-/**
- * A validator for {@link Provides} methods.
- */
+/** A validator for {@link Provides} methods. */
 final class ProvidesMethodValidator extends BindingMethodValidator {
 
   private final DependencyRequestValidator dependencyRequestValidator;
@@ -55,8 +53,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkMethod(builder);
+  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkElement(builder);
   }
 
   /** Adds an error if a {@link Provides @Provides} method depends on a producer type. */

@@ -157,7 +157,7 @@ final class KeyFactory {
     ExecutableType methodType =
         MoreTypes.asExecutable(
             types.asMemberOf(MoreTypes.asDeclared(contributingModule.asType()), method));
-    ContributionType contributionType = ContributionType.fromBindingMethod(method);
+    ContributionType contributionType = ContributionType.fromBindingElement(method);
     TypeMirror returnType = methodType.getReturnType();
     if (frameworkType.isPresent()
         && frameworkType.get().equals(elements.getTypeElement(Producer.class))

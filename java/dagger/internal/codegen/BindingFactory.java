@@ -214,7 +214,7 @@ final class BindingFactory {
       builder.unresolved(create.apply(method, MoreElements.asType(method.getEnclosingElement())));
     }
     return builder
-        .contributionType(ContributionType.fromBindingMethod(method))
+        .contributionType(ContributionType.fromBindingElement(method))
         .bindingElement(method)
         .contributingModule(contributedBy)
         .key(key)

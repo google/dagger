@@ -152,12 +152,12 @@ public final class BindsInstanceValidationTest {
     Compilation compilation = daggerCompiler().compile(bindsFrameworkType);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@BindsInstance parameters may not be framework types")
+        .hadErrorContaining("@BindsInstance parameters must not be framework types")
         .inFile(bindsFrameworkType)
         .onLine(8);
 
     assertThat(compilation)
-        .hadErrorContaining("@BindsInstance parameters may not be framework types")
+        .hadErrorContaining("@BindsInstance parameters must not be framework types")
         .inFile(bindsFrameworkType)
         .onLine(9);
   }

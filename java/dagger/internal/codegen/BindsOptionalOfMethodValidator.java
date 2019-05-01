@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.NO_MULTIBINDINGS;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
@@ -58,8 +58,8 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkMethod(builder);
+  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkElement(builder);
     checkParameters(builder);
   }
 

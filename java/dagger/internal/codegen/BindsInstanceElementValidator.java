@@ -16,21 +16,23 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.getAllAnnotations;
-
-import com.google.common.collect.ImmutableSet;
-import dagger.multibindings.ElementsIntoSet;
-import dagger.multibindings.IntoMap;
-import dagger.multibindings.IntoSet;
-import javax.lang.model.element.AnnotationMirror;
+import dagger.BindsInstance;
 import javax.lang.model.element.Element;
 
-/**
- * Utility methods related to processing {@link IntoSet}, {@link ElementsIntoSet}, and {@link
- * IntoMap}.
- */
-final class MultibindingAnnotations {
-  static ImmutableSet<AnnotationMirror> forElement(Element method) {
-    return getAllAnnotations(method, IntoSet.class, ElementsIntoSet.class, IntoMap.class);
+abstract class BindsInstanceElementValidator<E extends Element> extends BindingElementValidator<E> {
+  BindsInstanceElementValidator() {
+    super(BindsInstance.class, AllowsMultibindings.NO_MULTIBINDINGS, AllowsScoping.NO_SCOPING);
+  }
+
+  @Override
+  protected final String bindingElements() {
+    // Even though @BindsInstance may be placed on methods, the subject of errors is the
+    // parameter
+    return "@BindsInstance parameters";
+  }
+
+  @Override
+  protected final String bindingElementTypeVerb() {
+    return "be";
   }
 }

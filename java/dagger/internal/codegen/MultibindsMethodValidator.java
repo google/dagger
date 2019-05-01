@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
+import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsMultibindings.NO_MULTIBINDINGS;
-import static dagger.internal.codegen.BindingMethodValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.FrameworkTypes.isFrameworkType;
 
@@ -53,8 +53,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkMethod(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkMethod(builder);
+  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
+    super.checkElement(builder);
 
     checkParameters(builder);
   }
@@ -68,7 +68,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
 
   /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
   @Override
-  protected void checkReturnType(ValidationReport.Builder<ExecutableElement> builder) {
+  protected void checkType(ValidationReport.Builder<ExecutableElement> builder) {
     if (!isPlainMap(builder.getSubject().getReturnType())
         && !isPlainSet(builder.getSubject().getReturnType())) {
       builder.addError(bindingMethods("must return Map<K, V> or Set<T>"));

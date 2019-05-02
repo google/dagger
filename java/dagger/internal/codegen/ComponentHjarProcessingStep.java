@@ -139,8 +139,12 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
         ClassName generatedTypeName, ComponentDescriptor componentDescriptor) {
       TypeSpec.Builder generatedComponent =
           TypeSpec.classBuilder(generatedTypeName)
-              .addModifiers(PUBLIC, FINAL)
+              .addModifiers(FINAL)
               .addMethod(privateConstructor());
+      if (componentDescriptor.typeElement().getModifiers().contains(PUBLIC)) {
+        generatedComponent.addModifiers(PUBLIC);
+      }
+
       TypeElement componentElement = componentDescriptor.typeElement();
       addSupertype(generatedComponent, componentElement);
 
@@ -156,8 +160,12 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       } else {
         TypeSpec.Builder builder =
             TypeSpec.classBuilder("Builder")
-                .addModifiers(PUBLIC, STATIC, FINAL)
+                .addModifiers(STATIC, FINAL)
                 .addMethod(privateConstructor());
+        if (componentDescriptor.typeElement().getModifiers().contains(PUBLIC)) {
+          builder.addModifiers(PUBLIC);
+        }
+
         ClassName builderClassName = generatedTypeName.nestedClass("Builder");
         builderMethodReturnType = builderClassName;
         creatorKind = BUILDER;

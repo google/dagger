@@ -56,7 +56,6 @@ import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -162,8 +161,7 @@ final class ComponentImplementation {
     /** Creates a new {@link ConfigureInitializationMethod}. */
     static ConfigureInitializationMethod create(
         MethodSpec spec, ImmutableSet<ComponentRequirement> parameters) {
-      return new AutoValue_ComponentImplementation_ConfigureInitializationMethod(
-          spec, parameters);
+      return new AutoValue_ComponentImplementation_ConfigureInitializationMethod(spec, parameters);
     }
 
     /** The spec for the method. */
@@ -216,16 +214,17 @@ final class ComponentImplementation {
       Optional<ComponentImplementation> superclassImplementation,
       Optional<SubcomponentNames> subcomponentNames,
       CompilerOptions compilerOptions,
-      Modifier... modifiers) {
+      ImmutableSet<Modifier> modifiers) {
     checkName(name, nestingKind);
     this.compilerOptions = compilerOptions;
     this.componentDescriptor = componentDescriptor;
     this.graph = graph;
     this.name = name;
     this.nestingKind = nestingKind;
-    this.isAbstract = Arrays.asList(modifiers).contains(ABSTRACT);
+    this.isAbstract = modifiers.contains(ABSTRACT);
     this.superclassImplementation = superclassImplementation;
-    this.component = classBuilder(name).addModifiers(modifiers);
+    this.component = classBuilder(name);
+    modifiers.forEach(component::addModifiers);
     this.subcomponentNames = subcomponentNames;
   }
 
@@ -243,8 +242,18 @@ final class ComponentImplementation {
         Optional.empty(), // superclass implementation
         Optional.of(subcomponentNames),
         compilerOptions,
-        PUBLIC,
-        graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL);
+        topLevelComponentImplementationModifiers(graph));
+  }
+
+  private static ImmutableSet<Modifier> topLevelComponentImplementationModifiers(
+      BindingGraph graph) {
+    ImmutableSet.Builder<Modifier> modifiers = ImmutableSet.builder();
+    if (graph.componentTypeElement().getModifiers().contains(PUBLIC)
+        || graph.componentDescriptor().isSubcomponent()) {
+      // TODO(ronshapiro): perhaps all generated components should be non-public?
+      modifiers.add(PUBLIC);
+    }
+    return modifiers.add(graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL).build();
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
@@ -260,7 +269,7 @@ final class ComponentImplementation {
         superclassImplementation,
         subcomponentNames,
         compilerOptions,
-        modifiers);
+        ImmutableSet.copyOf(modifiers));
   }
 
   /**
@@ -282,8 +291,7 @@ final class ComponentImplementation {
         superclassImplementation,
         Optional.empty(),
         compilerOptions,
-        PUBLIC,
-        ABSTRACT);
+        ImmutableSet.of(PUBLIC, ABSTRACT));
   }
 
   // TODO(dpb): Just determine the nesting kind from the name.
@@ -770,8 +778,7 @@ final class ComponentImplementation {
     Optional<ComponentImplementation> currentSuperImplementation = superclassImplementation;
     Set<Key> cancelledKeysFromSuperclass = new HashSet<>();
     while (currentSuperImplementation.isPresent()) {
-      cancelledKeysFromSuperclass.addAll(
-          currentSuperImplementation.get().cancellableProducerKeys);
+      cancelledKeysFromSuperclass.addAll(currentSuperImplementation.get().cancellableProducerKeys);
       currentSuperImplementation = currentSuperImplementation.get().superclassImplementation;
     }
     return Sets.difference(cancellableProducerKeys, cancelledKeysFromSuperclass)

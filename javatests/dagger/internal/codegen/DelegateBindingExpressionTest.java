@@ -145,7 +145,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -224,7 +224,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -300,7 +300,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
                     "  private volatile Object regularScoped = new MemoizedSentinel();",
@@ -403,7 +403,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "  @SuppressWarnings(\"rawtypes\")",
@@ -512,7 +512,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "  @SuppressWarnings(\"rawtypes\")",
@@ -603,7 +603,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "  @Override",
@@ -705,7 +705,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "  @Override",
@@ -811,7 +811,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerRequestsSubtypeAsProvider",
+                    "final class DaggerRequestsSubtypeAsProvider",
                     "    implements RequestsSubtypeAsProvider {")
                 .addLinesIn(
                     DEFAULT_MODE,
@@ -904,7 +904,7 @@ public class DelegateBindingExpressionTest {
                     "package test;",
                     "",
                     GENERATED_ANNOTATION,
-                    "public final class DaggerTestComponent implements TestComponent {")
+                    "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
                     "  private Provider<String> provideStringProvider;",

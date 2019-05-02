@@ -130,11 +130,11 @@ public class GenericTest {
   @Test public void singletonScopesAppliesToEachResolvedType() {
     SingletonGenericComponent component = DaggerSingletonGenericComponent.create();
     ScopedGeneric<A> a = component.scopedGenericA();
-    assertThat(a).isSameAs(component.scopedGenericA());
+    assertThat(a).isSameInstanceAs(component.scopedGenericA());
     assertThat(a.t).isNotNull();
 
     ScopedGeneric<B> b = component.scopedGenericB();
-    assertThat(b).isSameAs(component.scopedGenericB());
+    assertThat(b).isSameInstanceAs(component.scopedGenericB());
     assertThat(b.t).isNotNull();
 
     assertThat(a).isNotSameInstanceAs(b);
@@ -144,10 +144,10 @@ public class GenericTest {
   public void scopedSimpleGenerics() {
     SingletonGenericComponent component = DaggerSingletonGenericComponent.create();
     ScopedSimpleGeneric<A> a = component.scopedSimpleGenericA();
-    assertThat(a).isSameAs(component.scopedSimpleGenericA());
+    assertThat(a).isSameInstanceAs(component.scopedSimpleGenericA());
 
     ScopedSimpleGeneric<B> b = component.scopedSimpleGenericB();
-    assertThat(b).isSameAs(component.scopedSimpleGenericB());
+    assertThat(b).isSameInstanceAs(component.scopedSimpleGenericB());
 
     assertThat(a).isNotSameInstanceAs(b);
   }

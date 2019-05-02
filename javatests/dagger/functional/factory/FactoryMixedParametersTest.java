@@ -66,7 +66,7 @@ public final class FactoryMixedParametersTest {
     assertThat(component.getDouble()).isEqualTo(3.0);
     assertThat(component.object()).isEqualTo("bar");
     assertThat(component.getLong()).isEqualTo(2L);
-    assertThat(component.randomProvider().get()).isSameAs(random);
-    assertThat(component.randomProvider().get()).isSameAs(random);
+    assertThat(component.randomProvider().get()).isSameInstanceAs(random);
+    assertThat(component.randomProvider().get()).isSameInstanceAs(random);
   }
 }

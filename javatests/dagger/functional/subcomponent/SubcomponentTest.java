@@ -53,21 +53,22 @@ public class SubcomponentTest {
   @Test
   public void scopePropagatesUpward_class() {
     assertThat(childComponent.requiresSingleton().singletonType())
-        .isSameAs(childComponent.requiresSingleton().singletonType());
+        .isSameInstanceAs(childComponent.requiresSingleton().singletonType());
     assertThat(childComponent.requiresSingleton().singletonType())
-        .isSameAs(childComponent.newGrandchildComponent().requiresSingleton().singletonType());
+        .isSameInstanceAs(
+            childComponent.newGrandchildComponent().requiresSingleton().singletonType());
   }
 
   @Test
   public void scopePropagatesUpward_provides() {
-    assertThat(childComponent
-        .requiresSingleton().unscopedTypeBoundAsSingleton())
-            .isSameAs(childComponent
-                .requiresSingleton().unscopedTypeBoundAsSingleton());
-    assertThat(childComponent
-        .requiresSingleton().unscopedTypeBoundAsSingleton())
-            .isSameAs(childComponent.newGrandchildComponent()
-                .requiresSingleton().unscopedTypeBoundAsSingleton());
+    assertThat(childComponent.requiresSingleton().unscopedTypeBoundAsSingleton())
+        .isSameInstanceAs(childComponent.requiresSingleton().unscopedTypeBoundAsSingleton());
+    assertThat(childComponent.requiresSingleton().unscopedTypeBoundAsSingleton())
+        .isSameInstanceAs(
+            childComponent
+                .newGrandchildComponent()
+                .requiresSingleton()
+                .unscopedTypeBoundAsSingleton());
   }
 
   @Test
@@ -88,11 +89,9 @@ public class SubcomponentTest {
   public void unscopedProviders() {
     assume().that(System.getProperty("dagger.mode")).doesNotContain("FastInit");
     assertThat(parentGetters.getUnscopedTypeProvider())
-        .isSameAs(childComponent.getUnscopedTypeProvider());
+        .isSameInstanceAs(childComponent.getUnscopedTypeProvider());
     assertThat(parentGetters.getUnscopedTypeProvider())
-        .isSameAs(childComponent
-            .newGrandchildComponent()
-            .getUnscopedTypeProvider());
+        .isSameInstanceAs(childComponent.newGrandchildComponent().getUnscopedTypeProvider());
   }
 
   @Test

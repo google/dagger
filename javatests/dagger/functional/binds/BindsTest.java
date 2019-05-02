@@ -44,7 +44,7 @@ public class BindsTest {
   @Test
   public void bindWithScope() {
     assertThat(component.qualifiedFooOfStrings())
-        .isSameAs(component.qualifiedFooOfStrings());
+        .isSameInstanceAs(component.qualifiedFooOfStrings());
   }
 
   @Test

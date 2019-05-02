@@ -29,6 +29,6 @@ public final class ScopeTest {
   public void scope() throws Exception {
     SetComponent component = DaggerSetComponent.create();
     assertThat(component.set().get()).hasSize(1);
-    assertThat(component.scopedObject()).isSameAs(component.scopedObject());
+    assertThat(component.scopedObject()).isSameInstanceAs(component.scopedObject());
   }
 }

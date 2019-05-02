@@ -46,7 +46,7 @@ public class BindsProducersTest {
   @Test
   public void bindWithScope() throws Exception {
     assertThat(component.qualifiedFooOfStrings().get())
-        .isSameAs(component.qualifiedFooOfStrings().get());
+        .isSameInstanceAs(component.qualifiedFooOfStrings().get());
   }
 
   @Test

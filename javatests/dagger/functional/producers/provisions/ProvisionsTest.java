@@ -31,6 +31,6 @@ public final class ProvisionsTest {
   public void provisionsOnlyAreHeldInOneProducer() throws Exception {
     TestComponent component = DaggerProvisions_TestComponent.create();
     Output output = component.output().get();
-    assertThat(output.injectedClass1).isSameAs(output.injectedClass2);
+    assertThat(output.injectedClass1).isSameInstanceAs(output.injectedClass2);
   }
 }

@@ -33,15 +33,15 @@ public class ReusableTest {
     ChildTwo childTwo = parent.childTwo();
 
     Object reusableInParent = parent.reusableInParent();
-    assertThat(parent.reusableInParent()).isSameAs(reusableInParent);
-    assertThat(childOne.reusableInParent()).isSameAs(reusableInParent);
-    assertThat(childTwo.reusableInParent()).isSameAs(reusableInParent);
+    assertThat(parent.reusableInParent()).isSameInstanceAs(reusableInParent);
+    assertThat(childOne.reusableInParent()).isSameInstanceAs(reusableInParent);
+    assertThat(childTwo.reusableInParent()).isSameInstanceAs(reusableInParent);
 
     Object reusableFromChildOne = childOne.reusableInChild();
-    assertThat(childOne.reusableInChild()).isSameAs(reusableFromChildOne);
+    assertThat(childOne.reusableInChild()).isSameInstanceAs(reusableFromChildOne);
 
     Object reusableFromChildTwo = childTwo.reusableInChild();
-    assertThat(childTwo.reusableInChild()).isSameAs(reusableFromChildTwo);
+    assertThat(childTwo.reusableInChild()).isSameInstanceAs(reusableFromChildTwo);
 
     assertThat(reusableFromChildTwo).isNotSameInstanceAs(reusableFromChildOne);
   }

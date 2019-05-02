@@ -153,7 +153,7 @@ public final class MonitoringTest {
       output.get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(Throwables.getRootCause(e)).isSameAs(cause);
+      assertThat(Throwables.getRootCause(e)).isSameInstanceAs(cause);
     }
   }
 

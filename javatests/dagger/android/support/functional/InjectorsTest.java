@@ -232,7 +232,7 @@ public class InjectorsTest {
     TestActivityWithScope activityWithScope =
         Robolectric.setupActivity(TestActivityWithScope.class);
     assertThat(activityWithScope.scopedStringProvider.get())
-        .isSameAs(activityWithScope.scopedStringProvider.get());
+        .isSameInstanceAs(activityWithScope.scopedStringProvider.get());
 
     OuterClass.TestInnerClassActivity innerClassActivity =
         Robolectric.setupActivity(OuterClass.TestInnerClassActivity.class);

@@ -63,13 +63,13 @@ public class DoubleCheckTest {
   @Test
   public void doubleWrapping_provider() {
     assertThat(DoubleCheck.provider(DOUBLE_CHECK_OBJECT_PROVIDER))
-        .isSameAs(DOUBLE_CHECK_OBJECT_PROVIDER);
+        .isSameInstanceAs(DOUBLE_CHECK_OBJECT_PROVIDER);
   }
 
   @Test
   public void doubleWrapping_lazy() {
     assertThat(DoubleCheck.lazy(DOUBLE_CHECK_OBJECT_PROVIDER))
-        .isSameAs(DOUBLE_CHECK_OBJECT_PROVIDER);
+        .isSameInstanceAs(DOUBLE_CHECK_OBJECT_PROVIDER);
   }
 
   @Test
@@ -142,7 +142,7 @@ public class DoubleCheckTest {
        return object;
      });
     doubleCheckReference.set(doubleCheck);
-    assertThat(doubleCheck.get()).isSameAs(object);
+    assertThat(doubleCheck.get()).isSameInstanceAs(object);
   }
 
   @Test public void reentranceReturningDifferentInstances_throwsIllegalStateException() {
@@ -165,6 +165,6 @@ public class DoubleCheckTest {
   @Test
   public void instanceFactoryAsLazyDoesNotWrap() {
     Factory<Object> factory = InstanceFactory.create(new Object());
-    assertThat(DoubleCheck.lazy(factory)).isSameAs(factory);
+    assertThat(DoubleCheck.lazy(factory)).isSameInstanceAs(factory);
   }
 }

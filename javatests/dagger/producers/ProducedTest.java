@@ -35,7 +35,7 @@ public class ProducedTest {
     Object o = new Object();
     assertThat(Produced.successful(5).get()).isEqualTo(5);
     assertThat(Produced.successful("monkey").get()).isEqualTo("monkey");
-    assertThat(Produced.successful(o).get()).isSameAs(o);
+    assertThat(Produced.successful(o).get()).isSameInstanceAs(o);
   }
 
   @Test public void failedProduced() {
@@ -44,7 +44,7 @@ public class ProducedTest {
       Produced.failed(cause).get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameAs(cause);
+      assertThat(e).hasCauseThat().isSameInstanceAs(cause);
     }
   }
 

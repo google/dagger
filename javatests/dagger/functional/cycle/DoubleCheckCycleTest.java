@@ -95,7 +95,7 @@ public class DoubleCheckCycleTest {
     assertThat(callCount.get()).isEqualTo(1);
     Object second = component.getObject();
     assertThat(callCount.get()).isEqualTo(1);
-    assertThat(first).isSameAs(second);
+    assertThat(first).isSameInstanceAs(second);
   }
 
   @Test
@@ -122,7 +122,7 @@ public class DoubleCheckCycleTest {
     assertThat(callCount.get()).isEqualTo(2);
     Object second = component.getReentrantObject();
     assertThat(callCount.get()).isEqualTo(2);
-    assertThat(first).isSameAs(second);
+    assertThat(first).isSameInstanceAs(second);
   }
 
   @Test

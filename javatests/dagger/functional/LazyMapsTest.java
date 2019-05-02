@@ -36,7 +36,7 @@ public class LazyMapsTest {
 
     String firstGet = laziesMap.get("key").get();
     assertThat(firstGet).isEqualTo("value-1");
-    assertThat(firstGet).isSameAs(laziesMap.get("key").get());
+    assertThat(firstGet).isSameInstanceAs(laziesMap.get("key").get());
 
     assertThat(component.mapOfLazy().get("key").get()).isEqualTo("value-2");
   }

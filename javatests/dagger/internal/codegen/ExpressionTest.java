@@ -53,7 +53,7 @@ public class ExpressionTest {
 
     Expression castTo = expression.castTo(supertype);
 
-    assertThat(castTo.type()).isSameAs(supertype);
+    assertThat(castTo.type()).isSameInstanceAs(supertype);
     assertThat(castTo.codeBlock().toString())
         .isEqualTo(
             "(dagger.internal.codegen.ExpressionTest.Supertype) "

@@ -155,7 +155,7 @@ public class ProducerFactoryTest {
       producer.get().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameAs(t);
+      assertThat(e).hasCauseThat().isSameInstanceAs(t);
       order.verify(monitor).failed(t);
     }
 

@@ -55,7 +55,7 @@ public final class MapProducerTest {
       mapProducer.get().get();
       fail();
     } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameAs(cause);
+      assertThat(e).hasCauseThat().isSameInstanceAs(cause);
     }
   }
 }

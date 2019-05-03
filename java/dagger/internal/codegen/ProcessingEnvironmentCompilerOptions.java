@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.FeatureStatus.DISABLED;
@@ -36,7 +37,7 @@ import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOn
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.USE_GRADLE_INCREMENTAL_PROCESSING;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.EXPLICIT_BINDING_CONFLICTS_WITH_INJECT;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.MODULE_BINDING_VALIDATION;
+import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.FULL_BINDING_GRAPH_VALIDATION;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.MODULE_HAS_DIFFERENT_SCOPES_VALIDATION;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.NULLABLE_VALIDATION;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.PRIVATE_MEMBER_VALIDATION;
@@ -44,14 +45,19 @@ import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Valid
 import static dagger.internal.codegen.ValidationType.ERROR;
 import static dagger.internal.codegen.ValidationType.NONE;
 import static dagger.internal.codegen.ValidationType.WARNING;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Stream.concat;
 
 import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.producers.Produces;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -66,6 +72,8 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
   private final ProcessingEnvironment processingEnvironment;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
+  private final Map<EnumOption<?>, ImmutableMap<String, ? extends Enum<?>>> allCommandLineOptions =
+      new HashMap<>();
 
   private ProcessingEnvironmentCompilerOptions(ProcessingEnvironment processingEnvironment) {
     this.processingEnvironment = processingEnvironment;
@@ -148,12 +156,12 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  ValidationType moduleBindingValidationType(TypeElement element) {
-    return moduleBindingValidationType();
+  ValidationType fullBindingGraphValidationType(TypeElement element) {
+    return fullBindingGraphValidationType();
   }
 
-  private ValidationType moduleBindingValidationType() {
-    return parseOption(MODULE_BINDING_VALIDATION);
+  private ValidationType fullBindingGraphValidationType() {
+    return parseOption(FULL_BINDING_GRAPH_VALIDATION);
   }
 
   @Override
@@ -207,6 +215,19 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     /** The key of the option (appears after "-A"). */
     @Override
     String toString();
+
+    /**
+     * Returns all aliases besides {@link #toString()}, such as old names for an option, in order of
+     * precedence.
+     */
+    default ImmutableList<String> aliases() {
+      return ImmutableList.of();
+    }
+
+    /** All the command-line names for this option, in order of precedence. */
+    default Stream<String> allNames() {
+      return concat(Stream.of(toString()), aliases().stream());
+    }
   }
 
   /** An option that can be set on the command line. */
@@ -296,8 +317,13 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
 
     STATIC_MEMBER_VALIDATION(ERROR, WARNING),
 
-    /** Whether to validate partial binding graphs associated with modules. */
-    MODULE_BINDING_VALIDATION(NONE, ERROR, WARNING),
+    /** Whether to validate full binding graphs for components, subcomponents, and modules. */
+    FULL_BINDING_GRAPH_VALIDATION(NONE, ERROR, WARNING) {
+      @Override
+      public ImmutableList<String> aliases() {
+        return ImmutableList.of("dagger.moduleBindingValidation");
+      }
+    },
 
     /**
      * How to report conflicting scoped bindings when validating partial binding graphs associated
@@ -350,11 +376,20 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     return Stream.<CommandLineOption[]>of(
             KeyOnlyOption.values(), Feature.values(), Validation.values())
         .flatMap(Arrays::stream)
-        .map(CommandLineOption::toString)
+        .flatMap(CommandLineOption::allNames)
         .collect(toImmutableSet());
   }
 
-  /** Returns the value for the option as set on the command line, or the default value if not. */
+  /**
+   * Returns the value for the option as set on the command line by any name, or the default value
+   * if not set.
+   *
+   * <p>If more than one name is used to set the value, but all names specify the same value,
+   * reports a warning and returns that value.
+   *
+   * <p>If more than one name is used to set the value, and not all names specify the same value,
+   * reports an error and returns the default value.
+   */
   private <T extends Enum<T>> T parseOption(EnumOption<T> option) {
     @SuppressWarnings("unchecked") // we only put covariant values into the map
     T value = (T) enumOptions.computeIfAbsent(option, this::parseOptionUncached);
@@ -362,34 +397,88 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   private <T extends Enum<T>> T parseOptionUncached(EnumOption<T> option) {
-    String key = option.toString();
-    if (processingEnvironment.getOptions().containsKey(key)) {
-      String stringValue = processingEnvironment.getOptions().get(key);
-      if (stringValue == null) {
-        processingEnvironment
-            .getMessager()
-            .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
-      } else {
-        try {
-          T value =
-              Enum.valueOf(
-                  option.defaultValue().getDeclaringClass(), Ascii.toUpperCase(stringValue));
-          if (option.validValues().contains(value)) {
-            return value;
-          }
-        } catch (IllegalArgumentException e) {
-          // handled below
-        }
-        processingEnvironment
-            .getMessager()
-            .printMessage(
-                Diagnostic.Kind.ERROR,
-                String.format(
-                    "Processor option -A%s may only have the values %s "
-                        + "(case insensitive), found: %s",
-                    key, option.validValues(), stringValue));
-      }
+    ImmutableMap<String, T> values = parseOptionWithAllNames(option);
+
+    // If no value is specified, return the default value.
+    if (values.isEmpty()) {
+      return option.defaultValue();
     }
+
+    // If all names have the same value, return that.
+    if (values.asMultimap().inverse().keySet().size() == 1) {
+      // Warn if an option was set with more than one name. That would be an error if the values
+      // differed.
+      if (values.size() > 1) {
+        reportUseOfDifferentNamesForOption(Diagnostic.Kind.WARNING, option, values.keySet());
+      }
+      return values.values().asList().get(0);
+    }
+
+    // If different names have different values, report an error and return the default
+    // value.
+    reportUseOfDifferentNamesForOption(Diagnostic.Kind.ERROR, option, values.keySet());
     return option.defaultValue();
+  }
+
+  private void reportUseOfDifferentNamesForOption(
+      Diagnostic.Kind diagnosticKind, EnumOption<?> option, ImmutableSet<String> usedNames) {
+    processingEnvironment
+        .getMessager()
+        .printMessage(
+            diagnosticKind,
+            String.format(
+                "Only one of the equivalent options (%s) should be used; prefer -A%s",
+                usedNames.stream().map(name -> "-A" + name).collect(joining(", ")), option));
+  }
+
+  private <T extends Enum<T>> ImmutableMap<String, T> parseOptionWithAllNames(
+      EnumOption<T> option) {
+    @SuppressWarnings("unchecked") // map is covariant
+    ImmutableMap<String, T> aliasValues =
+        (ImmutableMap<String, T>)
+            allCommandLineOptions.computeIfAbsent(option, this::parseOptionWithAllNamesUncached);
+    return aliasValues;
+  }
+
+  private <T extends Enum<T>> ImmutableMap<String, T> parseOptionWithAllNamesUncached(
+      EnumOption<T> option) {
+    ImmutableMap.Builder<String, T> values = ImmutableMap.builder();
+    getUsedNames(option)
+        .forEach(
+            name -> parseOptionWithName(option, name).ifPresent(value -> values.put(name, value)));
+    return values.build();
+  }
+
+  private <T extends Enum<T>> Optional<T> parseOptionWithName(EnumOption<T> option, String key) {
+    checkArgument(processingEnvironment.getOptions().containsKey(key), "key %s not found", key);
+    String stringValue = processingEnvironment.getOptions().get(key);
+    if (stringValue == null) {
+      processingEnvironment
+          .getMessager()
+          .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
+    } else {
+      try {
+        T value =
+            Enum.valueOf(option.defaultValue().getDeclaringClass(), Ascii.toUpperCase(stringValue));
+        if (option.validValues().contains(value)) {
+          return Optional.of(value);
+        }
+      } catch (IllegalArgumentException e) {
+        // handled below
+      }
+      processingEnvironment
+          .getMessager()
+          .printMessage(
+              Diagnostic.Kind.ERROR,
+              String.format(
+                  "Processor option -A%s may only have the values %s "
+                      + "(case insensitive), found: %s",
+                  key, option.validValues(), stringValue));
+    }
+    return Optional.empty();
+  }
+
+  private Stream<String> getUsedNames(CommandLineOption option) {
+    return option.allNames().filter(name -> processingEnvironment.getOptions().containsKey(name));
   }
 }

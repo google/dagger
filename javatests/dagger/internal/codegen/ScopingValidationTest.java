@@ -243,7 +243,7 @@ public class ScopingValidationTest {
 
     compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
     // The @Inject binding for ScopedType should not appear here, but the @Singleton binding should.
     assertThat(compilation)
@@ -259,11 +259,11 @@ public class ScopingValidationTest {
   }
 
   @Test
-  public void moduleBindingValidationDoesNotReportForOneScope() {
+  public void fullBindingGraphValidationDoesNotReportForOneScope() {
     Compilation compilation =
         daggerCompiler()
             .withOptions(
-                "-Adagger.moduleBindingValidation=ERROR",
+                "-Adagger.fullBindingGraphValidation=ERROR",
                 "-Adagger.moduleHasDifferentScopesValidation=ERROR")
             .compile(
                 JavaFileObjects.forSourceLines(
@@ -284,11 +284,11 @@ public class ScopingValidationTest {
   }
 
   @Test
-  public void moduleBindingValidationDoesNotReportInjectBindings() {
+  public void fullBindingGraphValidationDoesNotReportInjectBindings() {
     Compilation compilation =
         daggerCompiler()
             .withOptions(
-                "-Adagger.moduleBindingValidation=ERROR",
+                "-Adagger.fullBindingGraphValidation=ERROR",
                 "-Adagger.moduleHasDifferentScopesValidation=ERROR")
             .compile(
                 JavaFileObjects.forSourceLines(

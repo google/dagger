@@ -234,7 +234,8 @@ final class DiagnosticReporterFactory {
         CharSequence message,
         @NullableDecl Element elementToReport) {
       if (graph.isFullBindingGraph()) {
-        ValidationType validationType = compilerOptions.moduleBindingValidationType(rootComponent);
+        ValidationType validationType =
+            compilerOptions.fullBindingGraphValidationType(rootComponent);
         if (validationType.equals(NONE)) {
           return;
         }

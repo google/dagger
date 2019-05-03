@@ -106,7 +106,7 @@ public class DependencyCycleValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(SIMPLE_CYCLIC_DEPENDENCY);
     assertThat(compilation).failed();
 

@@ -154,7 +154,7 @@ public class ProductionGraphValidationTest {
 
     compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
     assertThat(compilation)

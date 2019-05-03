@@ -33,19 +33,19 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class DuplicateBindingsValidationTest {
 
-  @Parameters(name = "moduleBindingValidation={0}")
+  @Parameters(name = "fullBindingGraphValidation={0}")
   public static ImmutableList<Object[]> parameters() {
     return ImmutableList.copyOf(new Object[][] {{false}, {true}});
   }
 
-  private final boolean moduleBindingValidation;
+  private final boolean fullBindingGraphValidation;
 
-  public DuplicateBindingsValidationTest(boolean moduleBindingValidation) {
-    this.moduleBindingValidation = moduleBindingValidation;
+  public DuplicateBindingsValidationTest(boolean fullBindingGraphValidation) {
+    this.fullBindingGraphValidation = fullBindingGraphValidation;
   }
 
   @Test public void duplicateExplicitBindings_ProvidesAndComponentProvision() {
-    assumeFalse(moduleBindingValidation);
+    assumeFalse(fullBindingGraphValidation);
 
     JavaFileObject component = JavaFileObjects.forSourceLines("test.Outer",
         "package test;",
@@ -82,7 +82,7 @@ public class DuplicateBindingsValidationTest {
         "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -134,7 +134,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -145,7 +145,7 @@ public class DuplicateBindingsValidationTest {
         .inFile(component)
         .onLineContaining("interface TestComponent");
 
-    if (moduleBindingValidation) {
+    if (fullBindingGraphValidation) {
       assertThat(compilation)
           .hadErrorContaining(
               message(
@@ -157,7 +157,7 @@ public class DuplicateBindingsValidationTest {
     }
 
     // The duplicate bindngs are also requested from B, but we don't want to report them again.
-    assertThat(compilation).hadErrorCount(moduleBindingValidation ? 2 : 1);
+    assertThat(compilation).hadErrorCount(fullBindingGraphValidation ? 2 : 1);
   }
 
   @Test
@@ -200,7 +200,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -211,7 +211,7 @@ public class DuplicateBindingsValidationTest {
         .inFile(component)
         .onLineContaining("interface TestComponent");
 
-    if (moduleBindingValidation) {
+    if (fullBindingGraphValidation) {
       assertThat(compilation)
           .hadErrorContaining(
               message(
@@ -268,7 +268,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -284,7 +284,7 @@ public class DuplicateBindingsValidationTest {
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
         .onLineContaining(
-            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
+            fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -337,7 +337,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -356,7 +356,7 @@ public class DuplicateBindingsValidationTest {
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
         .inFile(component)
         .onLineContaining(
-            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
+            fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -394,7 +394,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -407,7 +407,7 @@ public class DuplicateBindingsValidationTest {
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
         .inFile(component)
         .onLineContaining(
-            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
+            fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test
@@ -447,7 +447,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -461,7 +461,7 @@ public class DuplicateBindingsValidationTest {
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
         .inFile(component)
         .onLineContaining(
-            moduleBindingValidation ? "class TestModule3" : "interface TestComponent");
+            fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
   }
 
   @Test public void duplicateBindings_TruncateAfterLimit() {
@@ -574,7 +574,7 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(moduleBindingValidationOption()).compile(component);
+        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -592,7 +592,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides test.Outer.A test.Outer.Module10.provideA()",
                 "    and 2 others"))
         .inFile(component)
-        .onLineContaining(moduleBindingValidation ? "class Modules" : "interface TestComponent");
+        .onLineContaining(fullBindingGraphValidation ? "class Modules" : "interface TestComponent");
   }
 
   @Test
@@ -647,7 +647,7 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(moduleBindingValidationOption())
+            .withOptions(fullBindingGraphValidationOption())
             .compile(aComponent, bComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -657,7 +657,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides Object test.A.AModule.abConflict()",
                 "    @Provides Object test.B.BModule.abConflict()"))
         .inFile(aComponent)
-        .onLineContaining(moduleBindingValidation ? "class AModule" : "interface A {");
+        .onLineContaining(fullBindingGraphValidation ? "class AModule" : "interface A {");
   }
 
   @Test
@@ -728,7 +728,7 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(moduleBindingValidationOption())
+            .withOptions(fullBindingGraphValidationOption())
             .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -738,7 +738,7 @@ public class DuplicateBindingsValidationTest {
                 "    @Provides Object test.A.AModule.acConflict()",
                 "    @Provides Object test.C.CModule.acConflict()"))
         .inFile(aComponent)
-        .onLineContaining(moduleBindingValidation ? "class AModule" : "interface A {");
+        .onLineContaining(fullBindingGraphValidation ? "class AModule" : "interface A {");
   }
 
   @Test
@@ -804,7 +804,7 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(moduleBindingValidationOption())
+            .withOptions(fullBindingGraphValidationOption())
             .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -813,13 +813,13 @@ public class DuplicateBindingsValidationTest {
                 "java.lang.Object is bound multiple times:",
                 "    @Provides Object test.B.BModule.bcConflict()",
                 "    @Provides Object test.C.CModule.bcConflict()"))
-        .inFile(moduleBindingValidation ? bComponent : aComponent)
-        .onLineContaining(moduleBindingValidation ? "class BModule" : "interface A {");
+        .inFile(fullBindingGraphValidation ? bComponent : aComponent)
+        .onLineContaining(fullBindingGraphValidation ? "class BModule" : "interface A {");
   }
 
   @Test
   public void childProvidesConflictsWithParentInjects() {
-    assumeFalse(moduleBindingValidation);
+    assumeFalse(fullBindingGraphValidation);
 
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
@@ -992,7 +992,7 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions("-Adagger.nullableValidation=WARNING", moduleBindingValidationOption())
+            .withOptions("-Adagger.nullableValidation=WARNING", fullBindingGraphValidationOption())
             .compile(parentConflictsWithChild, child);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -1004,11 +1004,13 @@ public class DuplicateBindingsValidationTest {
                     + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
         .inFile(parentConflictsWithChild)
         .onLineContaining(
-            moduleBindingValidation ? "class ParentModule" : "interface ParentConflictsWithChild");
+            fullBindingGraphValidation
+                ? "class ParentModule"
+                : "interface ParentConflictsWithChild");
   }
 
-  private String moduleBindingValidationOption() {
-    return "-Adagger.moduleBindingValidation=" + (moduleBindingValidation ? "ERROR" : "NONE");
+  private String fullBindingGraphValidationOption() {
+    return "-Adagger.fullBindingGraphValidation=" + (fullBindingGraphValidation ? "ERROR" : "NONE");
   }
 
   @Test

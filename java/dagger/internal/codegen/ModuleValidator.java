@@ -34,6 +34,7 @@ import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.MoreAnnotationMirrors.simpleName;
 import static dagger.internal.codegen.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.ValidationType.NONE;
 import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -226,7 +227,7 @@ final class ModuleValidator {
     validateSelfCycles(module, builder);
 
     if (builder.build().isClean()
-        && !compilerOptions.moduleBindingValidationType(module).equals(ValidationType.NONE)) {
+        && !compilerOptions.fullBindingGraphValidationType(module).equals(NONE)) {
       validateModuleBindings(module, builder);
     }
 

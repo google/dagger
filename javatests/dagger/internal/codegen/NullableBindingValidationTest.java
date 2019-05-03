@@ -407,7 +407,7 @@ public class NullableBindingValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(module, NULLABLE);
     assertThat(compilation).failed();
     assertThat(compilation)

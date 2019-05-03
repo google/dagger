@@ -106,8 +106,8 @@ class ForwardingCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  ValidationType moduleBindingValidationType(TypeElement element) {
-    return delegate.moduleBindingValidationType(element);
+  ValidationType fullBindingGraphValidationType(TypeElement element) {
+    return delegate.fullBindingGraphValidationType(element);
   }
 
   @Override

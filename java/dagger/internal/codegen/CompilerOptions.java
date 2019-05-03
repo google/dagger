@@ -83,8 +83,12 @@ abstract class CompilerOptions {
 
   abstract boolean useGradleIncrementalProcessing();
 
-  /** Returns the binding {@link ValidationType} for the element. */
-  abstract ValidationType moduleBindingValidationType(TypeElement element);
+  /**
+   * Returns the validation that should be done for the full binding graph for the element.
+   *
+   * @throws IllegalArgumentException if {@code element} is not a module or (sub)component
+   */
+  abstract ValidationType fullBindingGraphValidationType(TypeElement element);
 
   abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 

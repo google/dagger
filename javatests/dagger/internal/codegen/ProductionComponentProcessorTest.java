@@ -167,7 +167,7 @@ public class ProductionComponentProcessorTest {
 
     compilation =
         daggerCompiler()
-            .withOptions("-Adagger.moduleBindingValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(producerModuleFile);
     assertThat(compilation).failed();
     assertThat(compilation)

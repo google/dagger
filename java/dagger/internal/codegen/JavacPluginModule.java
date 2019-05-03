@@ -119,7 +119,7 @@ abstract class JavacPluginModule {
       }
 
       @Override
-      ValidationType moduleBindingValidationType(TypeElement element) {
+      ValidationType fullBindingGraphValidationType(TypeElement element) {
         return NONE;
       }
 

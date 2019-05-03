@@ -106,14 +106,13 @@ public abstract class BindingGraph {
   }
 
   /**
-   * Returns {@code true} if this graph was constructed from a module for module binding validation.
+   * Returns {@code true} if this graph was constructed from a module for full binding graph
+   * validation.
    *
-   * @see <a href="https://google.github.io/dagger/compiler-options#module-binding-validation">Module binding
-   *     validation</a>
    * @deprecated use {@link #isFullBindingGraph()} to tell if this is a full binding graph, or
    *     {@link ComponentNode#isRealComponent() rootComponentNode().isRealComponent()} to tell if
-   *     the root component node is really a component or derived from a module. Dagger will soon
-   *     generate full binding graphs for components and subcomponents as well as modules.
+   *     the root component node is really a component or derived from a module. Dagger can generate
+   *     full binding graphs for components and subcomponents as well as modules.
    */
   @Deprecated
   public final boolean isModuleBindingGraph() {
@@ -124,6 +123,9 @@ public abstract class BindingGraph {
    * Returns {@code true} if this is a full binding graph, which contains all bindings installed in
    * the component, or {@code false} if it is a reachable binding graph, which contains only
    * bindings that are reachable from at least one {@linkplain #entryPointEdges() entry point}.
+   *
+   * @see <a href="https://google.github.io/dagger/compiler-options#full-binding-graph-validation">Full binding
+   *     graph validation</a>
    */
   public abstract boolean isFullBindingGraph();
 

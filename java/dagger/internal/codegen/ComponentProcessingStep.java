@@ -146,7 +146,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   private void processSubcomponent(TypeElement subcomponent) {
     if (!compilerOptions.aheadOfTimeSubcomponents()
-        && compilerOptions.moduleBindingValidationType(subcomponent).equals(NONE)) {
+        && compilerOptions.fullBindingGraphValidationType(subcomponent).equals(NONE)) {
       return;
     }
     if (!isSubcomponentValid(subcomponent)) {
@@ -235,7 +235,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   private boolean isFullBindingGraphValid(ComponentDescriptor componentDescriptor) {
     if (compilerOptions
-        .moduleBindingValidationType(componentDescriptor.typeElement())
+        .fullBindingGraphValidationType(componentDescriptor.typeElement())
         .equals(NONE)) {
       return true;
     }

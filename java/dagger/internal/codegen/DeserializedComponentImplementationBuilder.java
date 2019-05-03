@@ -103,19 +103,19 @@ final class DeserializedComponentImplementationBuilder {
     // getLocalAndInheritedMethods instead of getEnclosedElements() here.
     for (ExecutableElement method : methodsIn(generatedComponent.getEnclosedElements())) {
       getAnnotationMirror(method, ModifiableBinding.class)
-          .toJavaUtil()
-          .ifPresent(
+          .asSet()
+          .forEach(
               annotation ->
                   addModifiableBindingMethod(componentImplementation, method, annotation));
 
       getAnnotationMirror(method, ModifiableModule.class)
-          .toJavaUtil()
-          .ifPresent(
+          .asSet()
+          .forEach(
               annotation -> addModifiableModuleMethod(componentImplementation, method, annotation));
 
       getAnnotationMirror(method, ConfigureInitializationParameters.class)
-          .toJavaUtil()
-          .ifPresent(
+          .asSet()
+          .forEach(
               annotation ->
                   setConfigureInitializationMethod(componentImplementation, method, annotation));
     }
@@ -210,10 +210,10 @@ final class DeserializedComponentImplementationBuilder {
       ComponentImplementation componentImplementation,
       TypeElement nestedType) {
     getAnnotationMirror(nestedType, ComponentDefinitionType.class)
-        .toJavaUtil()
-        .map(annotation -> (TypeMirror) getAnnotationValue(annotation, "value").getValue())
-        .map(MoreTypes::asTypeElement)
-        .ifPresent(
+        .transform(annotation -> (TypeMirror) getAnnotationValue(annotation, "value").getValue())
+        .transform(MoreTypes::asTypeElement)
+        .asSet()
+        .forEach(
             componentDefinitionType -> {
               ComponentDescriptor child =
                   component.childComponentsByElement().get(componentDefinitionType);

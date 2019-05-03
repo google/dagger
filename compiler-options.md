@@ -51,21 +51,23 @@ we can enable this broadly.
 
 
 
-## Module binding validation {#module-binding-validation}
+## Full binding graph validation {#full-binding-graph-validation}
 
-By default, Dagger validates modules only for syntax problems, like having the
-wrong annotations on a binding method. But problems among the bindings in a
-module don't get reported until the module is installed in a root component _and
-the bindings are used in that component._ If you pass
-`-Adagger.moduleBindingValidation=ERROR` or
-`-Adagger.moduleBindingValidation=WARNING` to javac, then each module will be
-checked as if it were a component in which every one of its bindings (and those
-of the modules it includes) is used. Any binding graph errors, such as duplicate
-bindings, will be reported at the module, even if no component uses those
-bindings.
+By default, problems among the bindings in a module or subcomponent or component
+don't get reported unless they are used as part of a whole component tree rooted
+at a root `@Component` or `@ProductionComponent`. However, if you pass
+`-Adagger.fullBindingGraphValidation=ERROR` or
+`-Adagger.fullBindingGraphValidation=WARNING` to javac, then _all_ the bindings
+of each module, subcomponent, and component will be checked, including those
+that aren't used. Any binding graph errors, such as duplicate bindings, will be
+reported at the module, subcomponent, or component. (Note that missing bindings
+will not be reported for full binding graphs unless they're also found when
+analyzing the binding graph that's actually used to generate the root
+component.)
 
-If module binding validation is turned on, [SPI](spi.md) implementations will
-see a `BindingGraph` representing the bindings for each module as well.
+If full binding graph validation is turned on, [SPI](spi.md) implementations
+will see a `BindingGraph` representing the bindings for each module, component,
+and subcomponent as well.
 
 <!-- References -->
 

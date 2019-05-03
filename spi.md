@@ -37,9 +37,11 @@ done with a [`java_plugin`]; in Gradle declare a dependency with
 
 When Dagger detects an SPI plugin on the classpath, it will call its
 [`visitGraph(BindingGraph, DiagnosticReporter)`][`visitGraph()`] method for each
-valid `@Component` that Dagger compiles. If [module binding validation] is
-turned on, Dagger will also call [`visitGraph()`] for each module that has no
-errors. In that case, the `BindingGraph` may contain `MissingBinding` nodes.
+valid `@Component` that Dagger compiles. If [full binding graph validation] is
+turned on, Dagger will also call [`visitGraph()`] for each module, component,
+and subcomponent that has no errors when considering their full binding graph.
+(See [`isFullBindingGraph()`].)In that case, the `BindingGraph` may contain
+`MissingBinding` nodes.
 
 The `BindingGraph` is implemented as a [`Network`] that has nodes for
 [components][component nodes], [bindings][binding nodes], and
@@ -97,15 +99,16 @@ will forward the values to the [`initOptions()`] method.
 [dependency edges]: https://google.github.io/dagger/api/latest/dagger/model/DependencyEdge.html
 [`DiagnosticReporter`]: https://google.github.io/dagger/api/latest/dagger/spi/DiagnosticReporter.html
 [`Filer`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Filer.html
+[full binding graph validation]: compiler-options.md#full-binding-graph-validation
 [GitHub releases]: https://github.com/google/dagger/releases
 [`initElements()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initElements-javax.lang.model.util.Elements-
 [`initFiler()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initFiler-javax.annotation.processing.Filer-
 [`initOptions()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initOptions-java.util.Map-
 [`initTypes()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#initTypes-javax.lang.model.util.Types-
+[`isFullBindingGraph()`]: https://google.github.io/dagger/api/latest/dagger/model/BindingGraph.html#isFullBindingGraph--
 [`java_plugin`]: https://docs.bazel.build/versions/master/be/java.html#java_plugin
 [`Messager`]: https://docs.oracle.com/javase/9/docs/api/javax/annotation/processing/Messager.html
 [missing binding nodes]: https://google.github.io/dagger/api/latest/dagger/model/MissingBinding.html
-[module binding validation]: compiler-options.md#module-binding-validation
 [`Network`]: http://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/graph/Network.html
 [`pluginName()`]: https://google.github.io/dagger/api/latest/dagger/spi/BindingGraphPlugin.html#pluginName--
 [reach out]: https://github.com/google/dagger/issues/new

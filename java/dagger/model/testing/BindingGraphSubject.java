@@ -82,14 +82,8 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
 
   private BindingSubject bindingWithKeyString(String keyString) {
     ImmutableSet<Binding> bindings = getBindingNodes(keyString);
-    if (bindings.isEmpty()) {
-      failWithActual("expected to have binding with key", keyString);
-    }
     // TODO(dpb): Handle multiple bindings for the same key.
-    if (bindings.size() > 1) {
-      failWithBadResults(
-          "has only one binding with key", keyString, "has the following bindings:", bindings);
-    }
+    check("bindingsWithKey(%s)", keyString).that(bindings).hasSize(1);
     return check("bindingWithKey(%s)", keyString)
         .about(BindingSubject::new)
         .that(getOnlyElement(bindings));

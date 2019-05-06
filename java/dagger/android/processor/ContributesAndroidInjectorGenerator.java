@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -171,7 +170,7 @@ final class ContributesAndroidInjectorGenerator implements ProcessingStep {
       ClassName subcomponentFactoryName) {
     AnnotationSpec.Builder subcomponentAnnotation = AnnotationSpec.builder(Subcomponent.class);
     for (ClassName module : descriptor.modules()) {
-      subcomponentAnnotation.addMember("modules", CodeBlock.of("$T.class", module));
+      subcomponentAnnotation.addMember("modules", "$T.class", module);
     }
 
     return interfaceBuilder(subcomponentName)

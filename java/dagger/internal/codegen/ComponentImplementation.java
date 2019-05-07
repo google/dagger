@@ -33,10 +33,10 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
@@ -202,7 +202,7 @@ final class ComponentImplementation {
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
   private final ModifiableBindingMethods modifiableBindingMethods = new ModifiableBindingMethods();
   private final SetMultimap<BindingRequest, Key> multibindingContributionsMade =
-      HashMultimap.create();
+      LinkedHashMultimap.create();
   private Optional<ConfigureInitializationMethod> configureInitializationMethod = Optional.empty();
   private final Map<ComponentRequirement, String> modifiableModuleMethods = new LinkedHashMap<>();
 

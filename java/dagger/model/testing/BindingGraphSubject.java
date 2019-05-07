@@ -36,8 +36,11 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
     return assertAbout(BindingGraphSubject::new).that(bindingGraph);
   }
 
+  private final BindingGraph actual;
+
   private BindingGraphSubject(FailureMetadata metadata, @NullableDecl BindingGraph actual) {
     super(metadata, actual);
+    this.actual = actual;
   }
 
   /**
@@ -90,7 +93,7 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
   }
 
   private ImmutableSet<Binding> getBindingNodes(String keyString) {
-    return actual().bindings().stream()
+    return actual.bindings().stream()
         .filter(binding -> binding.key().toString().equals(keyString))
         .collect(toImmutableSet());
   }
@@ -106,8 +109,11 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
   /** A Truth subject for a {@link Binding}. */
   public final class BindingSubject extends Subject<BindingSubject, Binding> {
 
+    private final Binding actual;
+
     BindingSubject(FailureMetadata metadata, @NullableDecl Binding actual) {
       super(metadata, actual);
+      this.actual = actual;
     }
 
     /**
@@ -131,14 +137,14 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
     }
 
     private void dependsOnBindingWithKeyString(String keyString) {
-      if (actualBindingGraph().requestedBindings(actual()).stream()
+      if (actualBindingGraph().requestedBindings(actual).stream()
           .noneMatch(binding -> binding.key().toString().equals(keyString))) {
         failWithActual("expected to depend on binding with key", keyString);
       }
     }
 
     private BindingGraph actualBindingGraph() {
-      return BindingGraphSubject.this.actual();
+      return BindingGraphSubject.this.actual;
     }
   }
 }

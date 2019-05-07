@@ -74,6 +74,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
     }
   }
 
+  private final String actual;
   private final ImmutableList.Builder<String> imports =
       new ImmutableList.Builder<String>()
           .add(
@@ -89,6 +90,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
 
   private DaggerModuleMethodSubject(FailureMetadata failureMetadata, String subject) {
     super(failureMetadata, subject);
+    this.actual = subject;
   }
 
   /**
@@ -155,7 +157,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
   }
 
   private int methodLine(String source) {
-    String beforeMethod = source.substring(0, source.indexOf(actual()));
+    String beforeMethod = source.substring(0, source.indexOf(actual));
     int methodLine = 1;
     for (int nextNewlineIndex = beforeMethod.indexOf('\n');
         nextNewlineIndex >= 0;
@@ -174,7 +176,7 @@ final class DaggerModuleMethodSubject extends Subject<DaggerModuleMethodSubject,
       writer.println(importLine);
     }
     writer.println();
-    writer.printf(declaration, "TestModule", "\n" + actual() + "\n");
+    writer.printf(declaration, "TestModule", "\n" + actual + "\n");
     writer.println();
     return stringWriter.toString();
   }

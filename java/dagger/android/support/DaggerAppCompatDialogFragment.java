@@ -21,6 +21,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatDialogFragment;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasAndroidInjector;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
@@ -31,9 +32,9 @@ import javax.inject.Inject;
  */
 @Beta
 public abstract class DaggerAppCompatDialogFragment extends AppCompatDialogFragment
-    implements HasSupportFragmentInjector {
+    implements HasAndroidInjector {
 
-  @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
+  @Inject DispatchingAndroidInjector<Object> androidInjector;
 
   @Override
   public void onAttach(Context context) {
@@ -42,7 +43,7 @@ public abstract class DaggerAppCompatDialogFragment extends AppCompatDialogFragm
   }
 
   @Override
-  public AndroidInjector<Fragment> supportFragmentInjector() {
-    return childFragmentInjector;
+  public AndroidInjector<Object> androidInjector() {
+    return androidInjector;
   }
 }

@@ -122,7 +122,7 @@ public final class AndroidInjectionTest {
     } catch (Exception e) {
       assertThat(e)
           .hasMessageThat()
-          .contains("Application does not implement dagger.android.HasActivityInjector");
+          .contains("Application does not implement dagger.android.HasAndroidInjector");
     }
   }
 

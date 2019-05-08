@@ -28,9 +28,9 @@ import javax.inject.Inject;
  * inject {@link Fragment}s attached to it.
  */
 @Beta
-public abstract class DaggerActivity extends Activity implements HasFragmentInjector {
+public abstract class DaggerActivity extends Activity implements HasAndroidInjector {
 
-  @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
+  @Inject DispatchingAndroidInjector<Object> androidInjector;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,7 +39,7 @@ public abstract class DaggerActivity extends Activity implements HasFragmentInje
   }
 
   @Override
-  public AndroidInjector<Fragment> fragmentInjector() {
-    return fragmentInjector;
+  public AndroidInjector<Object> androidInjector() {
+    return androidInjector;
   }
 }

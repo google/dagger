@@ -32,9 +32,9 @@ import javax.inject.Inject;
  */
 @Beta
 @Deprecated
-public abstract class DaggerFragment extends Fragment implements HasFragmentInjector {
+public abstract class DaggerFragment extends Fragment implements HasAndroidInjector {
 
-  @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
+  @Inject DispatchingAndroidInjector<Object> androidInjector;
 
   @Override
   public void onAttach(Context context) {
@@ -43,7 +43,7 @@ public abstract class DaggerFragment extends Fragment implements HasFragmentInje
   }
 
   @Override
-  public AndroidInjector<Fragment> fragmentInjector() {
-    return childFragmentInjector;
+  public AndroidInjector<Object> androidInjector() {
+    return androidInjector;
   }
 }

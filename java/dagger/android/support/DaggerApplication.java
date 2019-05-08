@@ -16,27 +16,15 @@
 
 package dagger.android.support;
 
-import android.support.v4.app.Fragment;
 import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
-import javax.inject.Inject;
 
 /**
- * An {@link android.app.Application} that injects its members and can be used to inject {@link
- * android.app.Activity}s, {@linkplain android.app.Fragment framework fragments}, {@linkplain
- * Fragment support fragments}, {@link android.app.Service}s, {@link
- * android.content.BroadcastReceiver}s, and {@link android.content.ContentProvider}s attached to it.
+ * An {@link Application} that injects its members and can be used to inject classes that the
+ * Android framework instantiates. Injection is performed in {@link #onCreate()} or the first call
+ * to {@link AndroidInjection#inject(ContentProvider)}, whichever happens first.
  */
-public abstract class DaggerApplication extends dagger.android.DaggerApplication
-    implements HasSupportFragmentInjector {
-
-  @Inject DispatchingAndroidInjector<Fragment> supportFragmentInjector;
-
+// TODO(ronshapiro): deprecate and remove this class
+public abstract class DaggerApplication extends dagger.android.DaggerApplication {
   @Override
   protected abstract AndroidInjector<? extends DaggerApplication> applicationInjector();
-
-  @Override
-  public DispatchingAndroidInjector<Fragment> supportFragmentInjector() {
-    return supportFragmentInjector;
-  }
 }

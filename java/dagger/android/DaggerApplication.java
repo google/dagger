@@ -16,36 +16,21 @@
 
 package dagger.android;
 
-import android.app.Activity;
 import android.app.Application;
-import android.app.Fragment;
-import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import com.google.errorprone.annotations.ForOverride;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 
 /**
- * An {@link Application} that injects its members and can be used to inject {@link Activity}s,
- * {@link Fragment}s, {@link Service}s, {@link BroadcastReceiver}s and {@link ContentProvider}s
- * attached to it. Injection is performed in {@link #onCreate()} or the first call to {@link
- * AndroidInjection#inject(ContentProvider)}, whichever happens first.
+ * An {@link Application} that injects its members and can be used to inject objects that the
+ * Android framework instantiates, such as Activitys, Fragments, or Services. Injection is performed
+ * in {@link #onCreate()} or the first call to {@link AndroidInjection#inject(ContentProvider)},
+ * whichever happens first.
  */
 @Beta
-public abstract class DaggerApplication extends Application
-    implements HasActivityInjector,
-        HasFragmentInjector,
-        HasServiceInjector,
-        HasBroadcastReceiverInjector,
-        HasContentProviderInjector {
-
-  @Inject DispatchingAndroidInjector<Activity> activityInjector;
-  @Inject DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector;
-  @Inject DispatchingAndroidInjector<Fragment> fragmentInjector;
-  @Inject DispatchingAndroidInjector<Service> serviceInjector;
-  @Inject DispatchingAndroidInjector<ContentProvider> contentProviderInjector;
-  private volatile boolean needToInject = true;
+public abstract class DaggerApplication extends Application implements HasAndroidInjector {
+  @Inject volatile DispatchingAndroidInjector<Object> androidInjector;
 
   @Override
   public void onCreate() {
@@ -69,14 +54,14 @@ public abstract class DaggerApplication extends Application
    * allowing for a partially-constructed instance to escape.
    */
   private void injectIfNecessary() {
-    if (needToInject) {
+    if (androidInjector == null) {
       synchronized (this) {
-        if (needToInject) {
+        if (androidInjector == null) {
           @SuppressWarnings("unchecked")
           AndroidInjector<DaggerApplication> applicationInjector =
               (AndroidInjector<DaggerApplication>) applicationInjector();
           applicationInjector.inject(this);
-          if (needToInject) {
+          if (androidInjector == null) {
             throw new IllegalStateException(
                 "The AndroidInjector returned from applicationInjector() did not inject the "
                     + "DaggerApplication");
@@ -86,37 +71,12 @@ public abstract class DaggerApplication extends Application
     }
   }
 
-  @Inject
-  void setInjected() {
-    needToInject = false;
-  }
-
   @Override
-  public DispatchingAndroidInjector<Activity> activityInjector() {
-    return activityInjector;
-  }
-
-  @Override
-  public DispatchingAndroidInjector<Fragment> fragmentInjector() {
-    return fragmentInjector;
-  }
-
-  @Override
-  public DispatchingAndroidInjector<BroadcastReceiver> broadcastReceiverInjector() {
-    return broadcastReceiverInjector;
-  }
-
-  @Override
-  public DispatchingAndroidInjector<Service> serviceInjector() {
-    return serviceInjector;
-  }
-
-  // injectIfNecessary is called here but not on the other *Injector() methods because it is the
-  // only one that should be called (in AndroidInjection.inject(ContentProvider)) before
-  // Application.onCreate()
-  @Override
-  public AndroidInjector<ContentProvider> contentProviderInjector() {
+  public AndroidInjector<Object> androidInjector() {
+    // injectIfNecessary should already be called unless we are about to inject a ContentProvider,
+    // which can happen before Application.onCreate()
     injectIfNecessary();
-    return contentProviderInjector;
+
+    return androidInjector;
   }
 }

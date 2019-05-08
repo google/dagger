@@ -33,9 +33,9 @@ import javax.inject.Inject;
  */
 @Deprecated
 @Beta
-public abstract class DaggerDialogFragment extends DialogFragment implements HasFragmentInjector {
+public abstract class DaggerDialogFragment extends DialogFragment implements HasAndroidInjector {
 
-  @Inject DispatchingAndroidInjector<Fragment> childFragmentInjector;
+  @Inject DispatchingAndroidInjector<Object> androidInjector;
 
   @Override
   public void onAttach(Context context) {
@@ -44,7 +44,7 @@ public abstract class DaggerDialogFragment extends DialogFragment implements Has
   }
 
   @Override
-  public AndroidInjector<Fragment> fragmentInjector() {
-    return childFragmentInjector;
+  public AndroidInjector<Object> androidInjector() {
+    return androidInjector;
   }
 }

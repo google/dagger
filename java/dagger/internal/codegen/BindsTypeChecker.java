@@ -68,9 +68,8 @@ final class BindsTypeChecker {
         DeclaredType parameterizedMapType =
             types.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);
         return methodParameterTypes(parameterizedMapType, "put").get(1);
-      default:
-        throw new AssertionError("Unknown contribution type: " + contributionType);
     }
+    throw new AssertionError("Unknown contribution type: " + contributionType);
   }
 
   private ImmutableList<TypeMirror> methodParameterTypes(DeclaredType type, String methodName) {

@@ -122,9 +122,8 @@ final class DependencyRequestFactory {
       case UNIQUE:
         throw new IllegalArgumentException(
             "multibindingContribution must be a multibinding: " + multibindingContribution);
-      default:
-        throw new AssertionError(multibindingContribution.toString());
     }
+    throw new AssertionError(multibindingContribution.toString());
   }
 
   DependencyRequest forRequiredResolvedVariable(

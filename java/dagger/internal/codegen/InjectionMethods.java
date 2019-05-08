@@ -261,9 +261,8 @@ final class InjectionMethods {
               MoreElements.asVariable(injectionSite.element()),
               methodName,
               elements);
-        default:
-          throw new AssertionError(injectionSite);
       }
+      throw new AssertionError(injectionSite);
     }
 
     /**

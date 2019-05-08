@@ -182,10 +182,6 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
         if (isAbstract) {
           builder.addError(bindingMethods("cannot be abstract"));
         }
-        break;
-
-      default:
-        throw new AssertionError();
     }
   }
 

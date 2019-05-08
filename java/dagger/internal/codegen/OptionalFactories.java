@@ -403,10 +403,8 @@ final class OptionalFactories {
             throw new UnsupportedOperationException(
                 spec.factoryType() + " objects are not supported");
         }
-
-      default:
-        throw new AssertionError(spec.frameworkType());
     }
+    throw new AssertionError(spec.frameworkType());
   }
 
   /**

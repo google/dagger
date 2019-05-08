@@ -90,7 +90,7 @@ public abstract class Scope {
 
   /** Returns a debug representation of the scope. */
   @Override
-  public String toString() {
+  public final String toString() {
     return scopeAnnotation().toString();
   }
 }

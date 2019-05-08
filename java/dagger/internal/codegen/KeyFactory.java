@@ -222,15 +222,14 @@ final class KeyFactory {
         // TODO(gak): do we want to allow people to use "covariant return" here?
         checkArgument(SetType.isSet(returnType));
         return returnType;
-      default:
-        throw new AssertionError();
     }
+    throw new AssertionError();
   }
 
   /**
    * Returns the key for a binding associated with a {@link DelegateDeclaration}.
    *
-   * If {@code delegateDeclaration} is {@code @IntoMap}, transforms the {@code Map<K, V>} key
+   * <p>If {@code delegateDeclaration} is {@code @IntoMap}, transforms the {@code Map<K, V>} key
    * from {@link DelegateDeclaration#key()} to {@code Map<K, FrameworkType<V>>}. If {@code
    * delegateDeclaration} is not a map contribution, its key is returned.
    */

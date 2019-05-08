@@ -133,9 +133,8 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
       case SET_VALUES:
       case UNIQUE:
         return key().type();
-      default:
-        throw new AssertionError();
     }
+    throw new AssertionError();
   }
 
   final boolean isSyntheticMultibinding() {

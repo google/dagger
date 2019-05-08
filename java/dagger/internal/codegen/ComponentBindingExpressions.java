@@ -277,10 +277,8 @@ final class ComponentBindingExpressions {
 
       case PRODUCTION:
         return productionBindingExpression(resolvedBindings, request);
-
-      default:
-        throw new AssertionError(resolvedBindings);
     }
+    throw new AssertionError(resolvedBindings);
   }
 
   /**

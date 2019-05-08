@@ -201,10 +201,8 @@ class SourceFiles {
       case MEMBERS_INJECTION:
         return membersInjectorNameForType(
             ((MembersInjectionBinding) binding).membersInjectedType());
-
-      default:
-        throw new AssertionError();
     }
+    throw new AssertionError();
   }
 
   /**

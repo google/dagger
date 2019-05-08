@@ -121,9 +121,6 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       case DELEGATED:
       case INITIALIZED:
         break;
-
-      default:
-        throw new AssertionError("Unhandled initialization state: " + fieldInitializationState);
     }
   }
 

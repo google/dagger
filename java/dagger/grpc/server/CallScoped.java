@@ -16,12 +16,14 @@
 
 package dagger.grpc.server;
 
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
 import javax.inject.Scope;
 
-/**
- * A scope that lasts as long as a single gRPC {@link io.grpc.ServerCall}.
- */
+/** A scope that lasts as long as a single gRPC {@link io.grpc.ServerCall}. */
+@Retention(RUNTIME)
 @Scope
 @Documented
 public @interface CallScoped {}

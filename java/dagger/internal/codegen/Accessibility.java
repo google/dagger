@@ -208,9 +208,8 @@ final class Accessibility {
         case ANONYMOUS:
         case LOCAL:
           return false;
-        default:
-          throw new AssertionError();
       }
+      throw new AssertionError();
     }
 
     boolean accessibleMember(Element element) {

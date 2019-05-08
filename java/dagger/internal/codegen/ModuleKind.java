@@ -24,9 +24,7 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import dagger.Module;
-import dagger.Provides;
 import dagger.producers.ProducerModule;
-import dagger.producers.Produces;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.Optional;
@@ -37,10 +35,10 @@ import javax.lang.model.element.TypeElement;
 /** Enumeration of the kinds of modules. */
 enum ModuleKind {
   /** {@code @Module} */
-  MODULE(Module.class, Provides.class),
+  MODULE(Module.class),
 
   /** {@code @ProducerModule} */
-  PRODUCER_MODULE(ProducerModule.class, Produces.class);
+  PRODUCER_MODULE(ProducerModule.class);
 
   /** Returns the annotations for modules of the given kinds. */
   static ImmutableSet<Class<? extends Annotation>> annotationsFor(Set<ModuleKind> kinds) {
@@ -74,12 +72,9 @@ enum ModuleKind {
   }
 
   private final Class<? extends Annotation> moduleAnnotation;
-  private final Class<? extends Annotation> methodAnnotation;
 
-  ModuleKind(
-      Class<? extends Annotation> moduleAnnotation, Class<? extends Annotation> methodAnnotation) {
+  ModuleKind(Class<? extends Annotation> moduleAnnotation) {
     this.moduleAnnotation = moduleAnnotation;
-    this.methodAnnotation = methodAnnotation;
   }
 
   /**

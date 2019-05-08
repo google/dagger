@@ -77,10 +77,9 @@ final class Util {
       case ANONYMOUS:
       case LOCAL:
         return true;
-      default:
-        throw new AssertionError(
-            "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
     }
+    throw new AssertionError(
+        "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
   }
 
   /**

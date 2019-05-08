@@ -43,9 +43,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
 /**
@@ -85,13 +83,9 @@ abstract class AndroidInjectorDescriptor {
   }
 
   static final class Validator {
-    private final Types types;
-    private final Elements elements;
     private final Messager messager;
 
-    Validator(Types types, Elements elements, Messager messager) {
-      this.types = types;
-      this.elements = elements;
+    Validator(Messager messager) {
       this.messager = messager;
     }
 

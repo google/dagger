@@ -143,8 +143,8 @@ final class DependencyRequestFormatter extends Formatter<DependencyRequest> {
         return "injected";
 
       case PRODUCED:
-      default:
-        throw new AssertionError("illegal request kind for method: " + request);
+        break;
     }
+    throw new AssertionError("illegal request kind for method: " + request);
   }
 }

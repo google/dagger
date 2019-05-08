@@ -58,13 +58,12 @@ public final class AndroidSupportInjectionModuleMigrator extends BugChecker
   @Override
   public Description matchMemberSelect(MemberSelectTree tree, VisitorState state) {
     if (MODULE_CLASS_LITERAL.matches(tree, state)) {
-      return buildDescription(tree)
-          .addFix(
-              SuggestedFix.builder()
-                  .replace(tree, "AndroidInjectionModule.class")
-                  .addImport("dagger.android.AndroidInjectionModule")
-                  .build())
-          .build();
+      return describeMatch(
+          tree,
+          SuggestedFix.builder()
+              .replace(tree, "AndroidInjectionModule.class")
+              .addImport("dagger.android.AndroidInjectionModule")
+              .build());
     }
     return Description.NO_MATCH;
   }

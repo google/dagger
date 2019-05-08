@@ -110,7 +110,6 @@ final class ComponentDescriptorFactory {
 
   private ComponentDescriptor create(
       TypeElement typeElement, ComponentAnnotation componentAnnotation) {
-    DeclaredType declaredComponentType = MoreTypes.asDeclared(typeElement.asType());
     ImmutableSet<ComponentRequirement> componentDependencies =
         componentAnnotation.dependencyTypes().stream()
             .map(ComponentRequirement::forDependency)

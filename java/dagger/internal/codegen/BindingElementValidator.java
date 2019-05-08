@@ -148,10 +148,6 @@ abstract class BindingElementValidator<E extends Element> {
 
       case SET_VALUES:
         checkSetValuesType(builder);
-        break;
-
-      default:
-        throw new AssertionError();
     }
   }
 

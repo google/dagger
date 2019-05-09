@@ -59,15 +59,6 @@ final class MoreAnnotationMirrors {
   }
 
   /**
-   * Returns the value named {@code name} from {@code annotation}.
-   *
-   * @throws IllegalArgumentException unless that member represents a single type
-   */
-  static TypeMirror getTypeValue(AnnotationMirror annotation, String name) {
-    return MoreAnnotationValues.asType(getAnnotationValue(annotation, name));
-  }
-
-  /**
    * Returns the list of types that is the value named {@code name} from {@code annotationMirror}.
    *
    * @throws IllegalArgumentException unless that member represents an array of types

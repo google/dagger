@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.MoreElements;

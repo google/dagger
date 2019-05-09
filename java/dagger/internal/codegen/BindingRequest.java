@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.serialization.BindingRequestProto;
 import dagger.internal.codegen.serialization.FrameworkTypeWrapper;
 import dagger.internal.codegen.serialization.RequestKindWrapper;

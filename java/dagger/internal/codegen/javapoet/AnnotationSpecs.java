@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.javapoet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,8 +24,10 @@ import com.google.common.collect.Lists;
 import com.squareup.javapoet.AnnotationSpec;
 import java.util.Arrays;
 
-final class AnnotationSpecs {
-  enum Suppression {
+/** Static factories to create {@link AnnotationSpec}s. */
+public final class AnnotationSpecs {
+  /** Values for an {@link SuppressWarnings} annotation. */
+  public enum Suppression {
     RAWTYPES,
     UNCHECKED,
     ;
@@ -36,7 +38,8 @@ final class AnnotationSpecs {
     }
   }
 
-  static AnnotationSpec suppressWarnings(Suppression first, Suppression... rest) {
+  /** Creates an {@link AnnotationSpec} for {@link SuppressWarnings}. */
+  public static AnnotationSpec suppressWarnings(Suppression first, Suppression... rest) {
     checkNotNull(first);
     Arrays.stream(rest).forEach(Preconditions::checkNotNull);
     AnnotationSpec.Builder builder = AnnotationSpec.builder(SuppressWarnings.class);

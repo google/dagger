@@ -16,11 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.elementToString;
+import static dagger.internal.codegen.ElementFormatter.elementToString;
 import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produces;
 import java.util.Optional;

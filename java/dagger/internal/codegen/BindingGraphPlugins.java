@@ -21,6 +21,8 @@ import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
 import java.util.Set;

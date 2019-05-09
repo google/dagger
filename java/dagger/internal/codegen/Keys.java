@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;

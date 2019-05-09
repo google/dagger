@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import dagger.MapKey;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;

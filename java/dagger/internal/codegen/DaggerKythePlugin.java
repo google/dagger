@@ -20,7 +20,7 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.DaggerElements.isAnyAnnotationPresent;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;

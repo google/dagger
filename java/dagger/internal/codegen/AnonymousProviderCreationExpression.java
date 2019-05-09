@@ -17,12 +17,13 @@
 package dagger.internal.codegen;
 
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.CodeBlocks.anonymousProvider;
+import static dagger.internal.codegen.javapoet.CodeBlocks.anonymousProvider;
 import static dagger.model.RequestKind.INSTANCE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.javapoet.Expression;
 
 /**
  * A {@link javax.inject.Provider} creation expression for an anonymous inner class whose

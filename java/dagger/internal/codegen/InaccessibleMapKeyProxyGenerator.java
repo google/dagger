@@ -24,6 +24,8 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;

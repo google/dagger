@@ -45,7 +45,7 @@ final class DependencyEdgeImpl implements DependencyEdge {
     String string =
         dependencyRequest
             .requestElement()
-            .map(DaggerElements::elementToString)
+            .map(ElementFormatter::elementToString)
             .orElseGet(
                 () ->
                     "synthetic request for "

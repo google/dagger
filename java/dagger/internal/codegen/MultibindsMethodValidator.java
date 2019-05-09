@@ -25,6 +25,8 @@ import static dagger.internal.codegen.FrameworkTypes.isFrameworkType;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProducerModule;
 import javax.inject.Inject;

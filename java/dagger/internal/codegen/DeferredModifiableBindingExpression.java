@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 

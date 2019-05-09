@@ -21,6 +21,8 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;

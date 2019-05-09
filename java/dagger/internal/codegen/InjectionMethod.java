@@ -18,8 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.Accessibility.isRawTypePubliclyAccessible;
-import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -34,6 +34,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.javapoet;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auto.common.MoreTypes;
 import com.google.testing.compile.CompilationRule;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -56,8 +58,8 @@ public class ExpressionTest {
     assertThat(castTo.type()).isSameInstanceAs(supertype);
     assertThat(castTo.codeBlock().toString())
         .isEqualTo(
-            "(dagger.internal.codegen.ExpressionTest.Supertype) "
-                + "new dagger.internal.codegen.ExpressionTest.Subtype() {}");
+            "(dagger.internal.codegen.javapoet.ExpressionTest.Supertype) "
+                + "new dagger.internal.codegen.javapoet.ExpressionTest.Subtype() {}");
   }
 
   @Test

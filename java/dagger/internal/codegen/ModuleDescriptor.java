@@ -22,11 +22,11 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.transform;
-import static dagger.internal.codegen.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.SourceFiles.classFileName;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -43,6 +43,7 @@ import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
@@ -94,9 +95,7 @@ abstract class ModuleDescriptor {
 
   /** Returns the keys of all bindings declared by this module. */
   ImmutableSet<Key> allBindingKeys() {
-    return allBindingDeclarations().stream()
-        .map(BindingDeclaration::key)
-        .collect(toImmutableSet());
+    return allBindingDeclarations().stream().map(BindingDeclaration::key).collect(toImmutableSet());
   }
 
   @Singleton
@@ -178,8 +177,7 @@ abstract class ModuleDescriptor {
 
     @CanIgnoreReturnValue
     private Set<TypeElement> collectIncludedModules(
-        Set<TypeElement> includedModules,
-        TypeElement moduleElement) {
+        Set<TypeElement> includedModules, TypeElement moduleElement) {
       TypeMirror superclass = moduleElement.getSuperclass();
       if (!superclass.getKind().equals(NONE)) {
         verify(superclass.getKind().equals(DECLARED));
@@ -205,8 +203,7 @@ abstract class ModuleDescriptor {
       if (contributesAndroidInjector == null) {
         return ImmutableSet.of();
       }
-      return methodsIn(moduleElement.getEnclosedElements())
-          .stream()
+      return methodsIn(moduleElement.getEnclosedElements()).stream()
           .filter(method -> isAnnotationPresent(method, contributesAndroidInjector.asType()))
           .map(method -> elements.checkTypePresent(implicitlyIncludedModuleName(method)))
           .collect(toImmutableSet());

@@ -35,6 +35,8 @@ import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.MembersInjector;
 import dagger.Provides;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;

@@ -23,6 +23,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 
 /**

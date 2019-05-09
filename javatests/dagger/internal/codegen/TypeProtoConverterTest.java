@@ -21,6 +21,8 @@ import static javax.lang.model.util.ElementFilter.fieldsIn;
 
 import com.google.testing.compile.CompilationRule;
 import dagger.internal.Factory;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.serialization.TypeProto;
 import java.util.HashMap;
 import java.util.List;

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.BindingKind;
 import dagger.model.Key;
 import java.util.Optional;

@@ -24,6 +24,8 @@ import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;

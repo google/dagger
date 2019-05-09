@@ -22,6 +22,7 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static javax.tools.Diagnostic.Kind.WARNING;
 
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.serialization.ProtoSerialization.InconsistentSerializedProtoException;
 import java.util.HashMap;
 import java.util.Map;

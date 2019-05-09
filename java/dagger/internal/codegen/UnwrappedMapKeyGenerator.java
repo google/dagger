@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import dagger.MapKey;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;

@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.langmodel;
 
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.Formatter.formatArgumentInList;
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
@@ -55,26 +52,24 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementKindVisitor8;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleElementVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Elements} that adds Dagger-specific methods. */
 @Reusable
-final class DaggerElements implements Elements {
+public final class DaggerElements implements Elements {
 
   private final Elements elements;
   private final Types types;
 
-  DaggerElements(Elements elements, Types types) {
+  public DaggerElements(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
     this.types = checkNotNull(types);
   }
 
-  DaggerElements(ProcessingEnvironment processingEnv) {
+  public DaggerElements(ProcessingEnvironment processingEnv) {
     this(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
   }
 
@@ -82,21 +77,21 @@ final class DaggerElements implements Elements {
    * Returns {@code true} if {@code encloser} is equal to {@code enclosed} or recursively encloses
    * it.
    */
-  static boolean elementEncloses(TypeElement encloser, Element enclosed) {
+  public static boolean elementEncloses(TypeElement encloser, Element enclosed) {
     return Iterables.contains(GET_ENCLOSED_ELEMENTS.breadthFirst(encloser), enclosed);
   }
 
   private static final Traverser<Element> GET_ENCLOSED_ELEMENTS =
       Traverser.forTree(Element::getEnclosedElements);
 
-  ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
+  public ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
     return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))
         .filter(hasModifiers(ABSTRACT))
         .toSet();
   }
 
   /** Returns the type element for a class. */
-  TypeElement getTypeElement(Class<?> clazz) {
+  public TypeElement getTypeElement(Class<?> clazz) {
     return getTypeElement(clazz.getCanonicalName());
   }
 
@@ -106,87 +101,12 @@ final class DaggerElements implements Elements {
   }
 
   /** Returns the type element for a class name. */
-  TypeElement getTypeElement(ClassName className) {
+  public TypeElement getTypeElement(ClassName className) {
     return getTypeElement(className.withoutAnnotations().toString());
   }
 
-  /**
-   * Returns a useful string form for an element.
-   *
-   * <p>Elements directly enclosed by a type are preceded by the enclosing type's qualified name.
-   *
-   * <p>Parameters are given with their enclosing executable, with other parameters elided.
-   */
-  static String elementToString(Element element) {
-    return element.accept(ELEMENT_TO_STRING, null);
-  }
-
-  private static final ElementVisitor<String, Void> ELEMENT_TO_STRING =
-      new ElementKindVisitor8<String, Void>() {
-        @Override
-        public String visitExecutable(ExecutableElement executableElement, Void aVoid) {
-          return enclosingTypeAndMemberName(executableElement)
-              .append(
-                  executableElement.getParameters().stream()
-                      .map(parameter -> parameter.asType().toString())
-                      .collect(joining(", ", "(", ")")))
-              .toString();
-        }
-
-        @Override
-        public String visitVariableAsParameter(VariableElement parameter, Void aVoid) {
-          ExecutableElement methodOrConstructor = asExecutable(parameter.getEnclosingElement());
-          return enclosingTypeAndMemberName(methodOrConstructor)
-              .append('(')
-              .append(
-                  formatArgumentInList(
-                      methodOrConstructor.getParameters().indexOf(parameter),
-                      methodOrConstructor.getParameters().size(),
-                      parameter.getSimpleName()))
-              .append(')')
-              .toString();
-        }
-
-        @Override
-        public String visitVariableAsField(VariableElement field, Void aVoid) {
-          return enclosingTypeAndMemberName(field).toString();
-        }
-
-        @Override
-        public String visitType(TypeElement type, Void aVoid) {
-          return type.getQualifiedName().toString();
-        }
-
-        @Override
-        protected String defaultAction(Element element, Void aVoid) {
-          throw new UnsupportedOperationException(
-              "Can't determine string for " + element.getKind() + " element " + element);
-        }
-
-        private StringBuilder enclosingTypeAndMemberName(Element element) {
-          StringBuilder name = new StringBuilder(element.getEnclosingElement().accept(this, null));
-          if (!element.getSimpleName().contentEquals("<init>")) {
-            name.append('.').append(element.getSimpleName());
-          }
-          return name;
-        }
-      };
-
-  /** A formatter that calls {@link #elementToString(Element)}. */
-  static Formatter<Element> elementFormatter() {
-    return ELEMENT_FORMATTER;
-  }
-
-  private static final Formatter<Element> ELEMENT_FORMATTER =
-      new Formatter<Element>() {
-        @Override
-        public String format(Element element) {
-          return elementToString(element);
-        }
-      };
-
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
-  static TypeElement closestEnclosingTypeElement(Element element) {
+  public static TypeElement closestEnclosingTypeElement(Element element) {
     return element.accept(CLOSEST_ENCLOSING_TYPE_ELEMENT, null);
   }
 
@@ -207,7 +127,7 @@ final class DaggerElements implements Elements {
    * Compares elements according to their declaration order among siblings. Only valid to compare
    * elements enclosed by the same parent.
    */
-  static final Comparator<Element> DECLARATION_ORDER =
+  public static final Comparator<Element> DECLARATION_ORDER =
       comparing(element -> siblings(element).indexOf(element));
 
   // For parameter elements, element.getEnclosingElement().getEnclosedElements() is empty. So
@@ -219,11 +139,11 @@ final class DaggerElements implements Elements {
   }
 
   /**
-   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose
-   * {@linkplain AnnotationMirror#getAnnotationType() annotation type} has the same canonical name
-   * as any of that of {@code annotationClasses}.
+   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose {@linkplain
+   * AnnotationMirror#getAnnotationType() annotation type} has the same canonical name as any of
+   * that of {@code annotationClasses}.
    */
-  static boolean isAnyAnnotationPresent(
+  public static boolean isAnyAnnotationPresent(
       Element element, Iterable<? extends Class<? extends Annotation>> annotationClasses) {
     for (Class<? extends Annotation> annotation : annotationClasses) {
       if (MoreElements.isAnnotationPresent(element, annotation)) {
@@ -234,7 +154,7 @@ final class DaggerElements implements Elements {
   }
 
   @SafeVarargs
-  static boolean isAnyAnnotationPresent(
+  public static boolean isAnyAnnotationPresent(
       Element element,
       Class<? extends Annotation> first,
       Class<? extends Annotation>... otherAnnotations) {
@@ -245,10 +165,8 @@ final class DaggerElements implements Elements {
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose {@linkplain
    * AnnotationMirror#getAnnotationType() annotation type} is equivalent to {@code annotationType}.
    */
-  static boolean isAnnotationPresent(Element element, TypeMirror annotationType) {
-    return element
-        .getAnnotationMirrors()
-        .stream()
+  public static boolean isAnnotationPresent(Element element, TypeMirror annotationType) {
+    return element.getAnnotationMirrors().stream()
         .map(AnnotationMirror::getAnnotationType)
         .anyMatch(candidate -> MoreTypes.equivalence().equivalent(candidate, annotationType));
   }
@@ -258,7 +176,7 @@ final class DaggerElements implements Elements {
    * rest}, checking each annotation type in order.
    */
   @SafeVarargs
-  static Optional<AnnotationMirror> getAnyAnnotation(
+  public static Optional<AnnotationMirror> getAnyAnnotation(
       Element element, Class<? extends Annotation> first, Class<? extends Annotation>... rest) {
     return getAnyAnnotation(element, asList(first, rest));
   }
@@ -267,11 +185,9 @@ final class DaggerElements implements Elements {
    * Returns the annotation present on {@code element} whose type is in {@code annotations},
    * checking each annotation type in order.
    */
-  static Optional<AnnotationMirror> getAnyAnnotation(
+  public static Optional<AnnotationMirror> getAnyAnnotation(
       Element element, Collection<? extends Class<? extends Annotation>> annotations) {
-    return element
-        .getAnnotationMirrors()
-        .stream()
+    return element.getAnnotationMirrors().stream()
         .filter(hasAnnotationTypeIn(annotations))
         .map((AnnotationMirror a) -> a) // Avoid returning Optional<? extends AnnotationMirror>.
         .findFirst();
@@ -279,13 +195,11 @@ final class DaggerElements implements Elements {
 
   /** Returns the annotations present on {@code element} of all types. */
   @SafeVarargs
-  static ImmutableSet<AnnotationMirror> getAllAnnotations(
+  public static ImmutableSet<AnnotationMirror> getAllAnnotations(
       Element element, Class<? extends Annotation> first, Class<? extends Annotation>... rest) {
-    return element
-        .getAnnotationMirrors()
-        .stream()
-        .filter(hasAnnotationTypeIn(asList(first, rest)))
-        .collect(toImmutableSet());
+    return ImmutableSet.copyOf(
+        Iterables.filter(
+            element.getAnnotationMirrors(), hasAnnotationTypeIn(asList(first, rest))::test));
   }
 
   /**
@@ -294,7 +208,7 @@ final class DaggerElements implements Elements {
    * safer alternative to calling {@link Element#getAnnotation} as it avoids any interaction with
    * annotation proxies.
    */
-  static Optional<AnnotationMirror> getAnnotationMirror(
+  public static Optional<AnnotationMirror> getAnnotationMirror(
       Element element, Class<? extends Annotation> annotationClass) {
     return Optional.ofNullable(MoreElements.getAnnotationMirror(element, annotationClass).orNull());
   }
@@ -308,7 +222,7 @@ final class DaggerElements implements Elements {
             MoreTypes.asTypeElement(annotation.getAnnotationType()).getQualifiedName().toString());
   }
 
-  static ImmutableSet<String> suppressedWarnings(Element element) {
+  public static ImmutableSet<String> suppressedWarnings(Element element) {
     SuppressWarnings suppressedWarnings = element.getAnnotation(SuppressWarnings.class);
     if (suppressedWarnings == null) {
       return ImmutableSet.of();
@@ -320,7 +234,7 @@ final class DaggerElements implements Elements {
    * Invokes {@link Elements#getTypeElement(CharSequence)}, throwing {@link TypeNotPresentException}
    * if it is not accessible in the current compilation.
    */
-  TypeElement checkTypePresent(String typeName) {
+  public TypeElement checkTypePresent(String typeName) {
     TypeElement type = elements.getTypeElement(typeName);
     if (type == null) {
       throw new TypeNotPresentException(typeName, null);

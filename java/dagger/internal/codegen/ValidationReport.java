@@ -16,8 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.ElementFormatter.elementToString;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;

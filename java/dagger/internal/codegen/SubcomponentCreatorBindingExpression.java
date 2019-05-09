@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.Expression;
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for a subcomponent creator that just invokes the constructor. */

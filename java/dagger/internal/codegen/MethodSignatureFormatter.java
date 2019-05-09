@@ -22,6 +22,7 @@ import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;

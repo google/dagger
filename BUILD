@@ -63,6 +63,8 @@ jarjar_library(
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/serialization",
         "//java/dagger/model:internal-proxies",
         "//java/dagger/errorprone",
@@ -81,6 +83,8 @@ jarjar_library(
         "//java/dagger/internal/codegen:libprocessor-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
+        "//java/dagger/internal/codegen/javapoet:libjavapoet-src.jar",
+        "//java/dagger/internal/codegen/langmodel:liblangmodel-src.jar",
         # TODO(ronshapiro): is there a generated src.jar for protos in Bazel?
         "//java/dagger/errorprone:liberrorprone-src.jar",
     ],

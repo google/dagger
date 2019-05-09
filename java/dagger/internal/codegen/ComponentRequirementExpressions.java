@@ -36,6 +36,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

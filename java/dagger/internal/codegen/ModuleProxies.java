@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.Accessibility.isElementAccessibleFrom;
+import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -24,6 +24,8 @@ import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.langmodel.Accessibility;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;

@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.Expression;
 
 /**
  * A binding expression for instances bound with {@link dagger.BindsInstance} and instances of

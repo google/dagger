@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.langmodel;
 
 import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -45,31 +45,28 @@ import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Utility methods for determining whether a {@linkplain TypeMirror type} or an {@linkplain Element
- * element} is accessible given the rules outlined in
- * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-6.html#jls-6.6">section 6.6 of the
+ * element} is accessible given the rules outlined in <a
+ * href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-6.html#jls-6.6">section 6.6 of the
  * Java Language Specification</a>.
  *
- * <p>This class only provides an approximation for accessibility.  It does not always yield the
- * same result as the compiler, but will always err on the side of declaring something inaccessible.
- * This ensures that using this class will never result in generating code that will not compile.
+ * <p>This class only provides an approximation for accessibility. It does not always yield the same
+ * result as the compiler, but will always err on the side of declaring something inaccessible. This
+ * ensures that using this class will never result in generating code that will not compile.
  *
  * <p>Whenever compiler independence is not a requirement, the compiler-specific implementation of
- * this functionality should be preferred.  For example,
- * {@link com.sun.source.util.Trees#isAccessible(com.sun.source.tree.Scope, TypeElement)} would be
+ * this functionality should be preferred. For example, {@link
+ * com.sun.source.util.Trees#isAccessible(com.sun.source.tree.Scope, TypeElement)} would be
  * preferable for {@code javac}.
  */
-final class Accessibility {
-
-  /**
-   * Returns true if the given type can be referenced from code in the given package.
-   */
-  static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
-    return type.accept(new TypeAccessibilityVisitor(packageName), null);
+public final class Accessibility {
+  /** Returns true if the given type can be referenced from any package. */
+  public static boolean isTypePubliclyAccessible(TypeMirror type) {
+    return type.accept(new TypeAccessibilityVisitor(), null);
   }
 
-  /** Returns true if the given type can be referenced from any package. */
-  static boolean isTypePubliclyAccessible(TypeMirror type) {
-    return type.accept(new TypeAccessibilityVisitor(), null);
+  /** Returns true if the given type can be referenced from code in the given package. */
+  public static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
+    return type.accept(new TypeAccessibilityVisitor(packageName), null);
   }
 
   private static boolean isTypeAccessibleFrom(TypeMirror type, Optional<String> packageName) {
@@ -151,20 +148,21 @@ final class Accessibility {
 
     @Override
     protected Boolean defaultAction(TypeMirror type, Void p) {
-      throw new IllegalArgumentException(String.format(
-          "%s of kind %s should not be checked for accessibility", type, type.getKind()));
+      throw new IllegalArgumentException(
+          String.format(
+              "%s of kind %s should not be checked for accessibility", type, type.getKind()));
     }
   }
 
-  /** Returns true if the given element can be referenced from code in the given package. */
-  //TODO(gak): account for protected
-  static boolean isElementAccessibleFrom(Element element, String packageName) {
-    return element.accept(new ElementAccessibilityVisitor(packageName), null);
+  /** Returns true if the given element can be referenced from any package. */
+  public static boolean isElementPubliclyAccessible(Element element) {
+    return element.accept(new ElementAccessibilityVisitor(), null);
   }
 
-  /** Returns true if the given element can be referenced from any package. */
-  static boolean isElementPubliclyAccessible(Element element) {
-    return element.accept(new ElementAccessibilityVisitor(), null);
+  /** Returns true if the given element can be referenced from code in the given package. */
+  // TODO(gak): account for protected
+  public static boolean isElementAccessibleFrom(Element element, String packageName) {
+    return element.accept(new ElementAccessibilityVisitor(packageName), null);
   }
 
   private static boolean isElementAccessibleFrom(Element element, Optional<String> packageName) {
@@ -172,7 +170,7 @@ final class Accessibility {
   }
 
   /** Returns true if the given element can be referenced from other code in its own package. */
-  static boolean isElementAccessibleFromOwnPackage(Element element) {
+  public static boolean isElementAccessibleFromOwnPackage(Element element) {
     return isElementAccessibleFrom(
         element, MoreElements.getPackage(element).getQualifiedName().toString());
   }
@@ -265,15 +263,14 @@ final class Accessibility {
       };
 
   /** Returns true if the raw type of {@code type} is accessible from the given package. */
-  static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
+  public static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
     return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.of(requestingPackage));
   }
 
   /** Returns true if the raw type of {@code type} is accessible from any package. */
-  static boolean isRawTypePubliclyAccessible(TypeMirror type) {
+  public static boolean isRawTypePubliclyAccessible(TypeMirror type) {
     return type.accept(RAW_TYPE_ACCESSIBILITY_VISITOR, Optional.empty());
   }
 
   private Accessibility() {}
 }
-

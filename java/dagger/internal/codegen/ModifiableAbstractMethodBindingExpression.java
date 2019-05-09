@@ -25,6 +25,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.Accessibility;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 

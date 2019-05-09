@@ -23,6 +23,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import java.util.Map;

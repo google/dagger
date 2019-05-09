@@ -17,17 +17,17 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
-import static dagger.internal.codegen.TypeNames.FACTORY;
-import static dagger.internal.codegen.TypeNames.MAP_FACTORY;
-import static dagger.internal.codegen.TypeNames.PRODUCER;
-import static dagger.internal.codegen.TypeNames.PRODUCERS;
-import static dagger.internal.codegen.TypeNames.PROVIDER;
+import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.TypeNames.FACTORY;
+import static dagger.internal.codegen.javapoet.TypeNames.MAP_FACTORY;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCER;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCERS;
+import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.type.TypeKind.DECLARED;
 
 import com.google.auto.common.MoreTypes;
@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.codegen.javapoet.CodeBlocks;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.type.DeclaredType;

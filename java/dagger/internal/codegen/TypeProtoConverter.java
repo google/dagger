@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
 import com.google.auto.common.MoreTypes;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.serialization.TypeProto;
 import dagger.internal.codegen.serialization.TypeProto.PrimitiveKind;
 import javax.inject.Inject;

@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
-import static dagger.internal.codegen.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.SourceFiles.classFileName;
+import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;

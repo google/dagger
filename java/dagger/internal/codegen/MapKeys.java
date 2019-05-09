@@ -35,6 +35,8 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.MapKey;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.javapoet;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -34,7 +35,7 @@ import javax.lang.model.type.TypeMirror;
  * <p>An {@code Expression} for {@code fooImplProvider.get()} would have a {@link #type()} of {@code
  * java.lang.Object} and not {@code FooImpl}.
  */
-final class Expression {
+public final class Expression {
   private final TypeMirror type;
   private final CodeBlock codeBlock;
 
@@ -44,7 +45,7 @@ final class Expression {
   }
 
   /** Creates a new {@link Expression} with a {@link TypeMirror} and {@link CodeBlock}. */
-  static Expression create(TypeMirror type, CodeBlock expression) {
+  public static Expression create(TypeMirror type, CodeBlock expression) {
     return new Expression(type, expression);
   }
 
@@ -52,14 +53,14 @@ final class Expression {
    * Creates a new {@link Expression} with a {@link TypeMirror}, {@linkplain CodeBlock#of(String,
    * Object[]) format, and arguments}.
    */
-  static Expression create(TypeMirror type, String format, Object... args) {
+  public static Expression create(TypeMirror type, String format, Object... args) {
     return create(type, CodeBlock.of(format, args));
   }
 
   /** Returns a new expression that casts the current expression to {@code newType}. */
   // TODO(ronshapiro): consider overloads that take a Types and Elements and only cast if necessary,
   // or just embedding a Types/Elements instance in an Expression.
-  Expression castTo(TypeMirror newType) {
+  public Expression castTo(TypeMirror newType) {
     return create(newType, "($T) $L", newType, codeBlock);
   }
 
@@ -67,19 +68,19 @@ final class Expression {
    * Returns a new expression that {@link #castTo(TypeMirror)} casts the current expression to its
    * boxed type if this expression has a primitive type.
    */
-  Expression box(DaggerTypes types) {
+  public Expression box(DaggerTypes types) {
     return type.getKind().isPrimitive()
         ? castTo(types.boxedClass(MoreTypes.asPrimitiveType(type)).asType())
         : this;
   }
 
   /** The {@link TypeMirror type} to which the expression evaluates. */
-  TypeMirror type() {
+  public TypeMirror type() {
     return type;
   }
 
   /** The code of the expression. */
-  CodeBlock codeBlock() {
+  public CodeBlock codeBlock() {
     return codeBlock;
   }
 

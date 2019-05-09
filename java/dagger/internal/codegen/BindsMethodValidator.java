@@ -25,6 +25,8 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.Binds;
 import dagger.Module;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.ProducerModule;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;

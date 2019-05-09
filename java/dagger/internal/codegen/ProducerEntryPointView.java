@@ -23,6 +23,8 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import dagger.producers.internal.CancellationListener;

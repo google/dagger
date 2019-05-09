@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.type.TypeMirror;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */

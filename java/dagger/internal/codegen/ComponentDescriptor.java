@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -38,6 +38,8 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;

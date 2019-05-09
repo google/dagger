@@ -30,6 +30,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import dagger.BindsInstance;
 import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;

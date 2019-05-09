@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.GenerationOptions;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 
 /** Adds bindings for serializing and rereading {@link GenerationOptions}. */

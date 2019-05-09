@@ -19,12 +19,15 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.RequestKinds.requestType;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.model.BindingKind.DELEGATE;
 
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 

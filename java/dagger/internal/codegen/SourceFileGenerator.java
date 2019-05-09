@@ -24,6 +24,7 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;

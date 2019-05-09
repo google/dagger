@@ -22,6 +22,7 @@ import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefix
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.Scope;
 import dagger.producers.ProductionScope;
 import java.lang.annotation.Annotation;

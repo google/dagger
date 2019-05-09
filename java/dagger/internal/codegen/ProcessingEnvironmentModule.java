@@ -22,6 +22,7 @@ import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;

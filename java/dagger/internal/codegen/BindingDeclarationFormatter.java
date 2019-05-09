@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.DaggerElements.elementToString;
 import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
+import static dagger.internal.codegen.ElementFormatter.elementToString;
 import static javax.lang.model.element.ElementKind.PARAMETER;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;

@@ -26,6 +26,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;

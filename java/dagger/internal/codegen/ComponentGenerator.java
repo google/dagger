@@ -22,6 +22,7 @@ import static dagger.internal.codegen.SourceFiles.classFileName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;

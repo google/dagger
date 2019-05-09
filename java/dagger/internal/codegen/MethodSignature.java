@@ -23,6 +23,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.List;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;

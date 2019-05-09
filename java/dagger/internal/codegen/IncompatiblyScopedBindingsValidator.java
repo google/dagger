@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.Formatter.INDENT;
 import static dagger.internal.codegen.Scopes.getReadableSource;
+import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 import static dagger.model.BindingKind.INJECTION;
 import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;

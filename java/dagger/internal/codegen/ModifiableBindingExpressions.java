@@ -30,6 +30,7 @@ import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.ComponentImplementation.MethodSpecKind;
 import dagger.internal.codegen.MethodBindingExpression.MethodImplementationStrategy;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import java.util.Optional;

@@ -23,6 +23,7 @@ import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.PRI
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.

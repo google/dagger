@@ -43,6 +43,8 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Collection;

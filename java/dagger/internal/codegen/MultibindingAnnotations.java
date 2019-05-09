@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerElements.getAllAnnotations;
+import static dagger.internal.codegen.langmodel.DaggerElements.getAllAnnotations;
 
 import com.google.common.collect.ImmutableSet;
 import dagger.multibindings.ElementsIntoSet;

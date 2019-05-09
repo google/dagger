@@ -22,6 +22,7 @@ import static dagger.model.BindingKind.INJECTION;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.javapoet.CodeBlocks;
 import javax.inject.Provider;
 
 /**

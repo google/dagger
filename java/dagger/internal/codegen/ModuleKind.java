@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;

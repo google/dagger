@@ -22,6 +22,8 @@ import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import javax.lang.model.type.TypeMirror;

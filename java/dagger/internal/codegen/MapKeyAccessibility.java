@@ -16,8 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
+import dagger.internal.codegen.langmodel.Accessibility;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;

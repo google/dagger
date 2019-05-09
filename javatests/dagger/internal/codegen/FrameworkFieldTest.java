@@ -17,10 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTOR;
-import static dagger.internal.codegen.TypeNames.PROVIDER;
-import static dagger.internal.codegen.TypeNames.membersInjectorOf;
-import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.internal.codegen.javapoet.TypeNames.MEMBERS_INJECTOR;
+import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER;
+import static dagger.internal.codegen.javapoet.TypeNames.membersInjectorOf;
+import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 
 import com.google.testing.compile.CompilationRule;
 import com.squareup.javapoet.ClassName;

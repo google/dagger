@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
-import static dagger.internal.codegen.TypeNames.INSTANCE_FACTORY;
-import static dagger.internal.codegen.TypeNames.MEMBERS_INJECTORS;
+import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
+import static dagger.internal.codegen.javapoet.TypeNames.MEMBERS_INJECTORS;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;

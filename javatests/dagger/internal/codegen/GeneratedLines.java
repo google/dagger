@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.CodeBlocks.stringLiteral;
+import static dagger.internal.codegen.javapoet.CodeBlocks.stringLiteral;
 
 import com.squareup.javapoet.CodeBlock;
 

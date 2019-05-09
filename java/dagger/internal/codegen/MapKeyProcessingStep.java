@@ -23,6 +23,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.MapKey;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;

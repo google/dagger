@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.testing.compile.CompilationRule;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import javax.lang.model.element.AnnotationMirror;

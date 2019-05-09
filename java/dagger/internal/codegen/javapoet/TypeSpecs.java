@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.javapoet;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Convenience methods for use with JavaPoet's {@link TypeSpec}.
- */
-final class TypeSpecs {
+/** Convenience methods for use with JavaPoet's {@link TypeSpec}. */
+public final class TypeSpecs {
 
   /**
    * If {@code supertype} is a class, adds it as a superclass for {@code typeBuilder}; if it is an
@@ -33,7 +31,7 @@ final class TypeSpecs {
    * @return {@code typeBuilder}
    */
   @CanIgnoreReturnValue
-  static TypeSpec.Builder addSupertype(TypeSpec.Builder typeBuilder, TypeElement supertype) {
+  public static TypeSpec.Builder addSupertype(TypeSpec.Builder typeBuilder, TypeElement supertype) {
     switch (supertype.getKind()) {
       case CLASS:
         return typeBuilder.superclass(ClassName.get(supertype));

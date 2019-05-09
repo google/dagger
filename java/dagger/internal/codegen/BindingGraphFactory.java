@@ -45,6 +45,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.Scope;

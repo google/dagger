@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
+import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;

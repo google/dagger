@@ -23,6 +23,7 @@ import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.RequestKinds.canBeSatisfiedByProductionBinding;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;

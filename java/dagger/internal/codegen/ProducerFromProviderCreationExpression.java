@@ -22,6 +22,7 @@ import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import java.util.Optional;

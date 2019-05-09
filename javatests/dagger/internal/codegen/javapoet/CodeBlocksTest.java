@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.javapoet;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.CodeBlocks.javadocLinkTo;
-import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.CodeBlocks.javadocLinkTo;
+import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.testing.compile.CompilationRule;

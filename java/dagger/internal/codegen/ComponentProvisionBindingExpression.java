@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
+import dagger.internal.codegen.javapoet.Expression;
 
 /** A binding expression for component provision methods. */
 final class ComponentProvisionBindingExpression extends SimpleInvocationBindingExpression {

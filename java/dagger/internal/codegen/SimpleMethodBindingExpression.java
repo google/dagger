@@ -18,10 +18,10 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
-import static dagger.internal.codegen.TypeNames.rawTypeName;
+import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +31,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
+import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import java.util.Optional;
 import java.util.function.Function;

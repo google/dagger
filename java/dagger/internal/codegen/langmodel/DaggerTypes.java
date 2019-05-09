@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.langmodel;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -49,13 +49,12 @@ import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Types} that adds Dagger-specific methods. */
-final class DaggerTypes implements Types {
-
+public final class DaggerTypes implements Types {
   private final Types types;
   private final DaggerElements elements;
 
   @Inject
-  DaggerTypes(Types types, DaggerElements elements) {
+  public DaggerTypes(Types types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
   }
@@ -64,7 +63,7 @@ final class DaggerTypes implements Types {
    * Returns the non-{@link Object} superclass of the type with the proper type parameters. An empty
    * {@link Optional} is returned if there is no non-{@link Object} superclass.
    */
-  Optional<DeclaredType> nonObjectSuperclass(DeclaredType type) {
+  public Optional<DeclaredType> nonObjectSuperclass(DeclaredType type) {
     return Optional.ofNullable(MoreTypes.nonObjectSuperclass(types, elements, type).orNull());
   }
 
@@ -72,7 +71,7 @@ final class DaggerTypes implements Types {
    * Returns the {@linkplain #directSupertypes(TypeMirror) supertype}s of a type in breadth-first
    * order.
    */
-  Iterable<TypeMirror> supertypes(TypeMirror type) {
+  public Iterable<TypeMirror> supertypes(TypeMirror type) {
     return Traverser.<TypeMirror>forGraph(this::directSupertypes).breadthFirst(type);
   }
 
@@ -84,7 +83,7 @@ final class DaggerTypes implements Types {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
    *     than one type arguments.
    */
-  TypeMirror unwrapType(TypeMirror type) {
+  public TypeMirror unwrapType(TypeMirror type) {
     TypeMirror unwrapped = unwrapTypeOrDefault(type, null);
     checkArgument(unwrapped != null, "%s is a raw type", type);
     return unwrapped;
@@ -98,7 +97,7 @@ final class DaggerTypes implements Types {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has more than one
    *     type argument.
    */
-  TypeMirror unwrapTypeOrObject(TypeMirror type) {
+  public TypeMirror unwrapTypeOrObject(TypeMirror type) {
     return unwrapTypeOrDefault(type, elements.getTypeElement(Object.class).asType());
   }
 
@@ -118,7 +117,7 @@ final class DaggerTypes implements Types {
    * <p>For example, if {@code type} is {@code List<Number>} and {@code wrappingClass} is {@code
    * Set.class}, this will return {@code Set<List<Number>>}.
    */
-  DeclaredType wrapType(TypeMirror type, Class<?> wrappingClass) {
+  public DeclaredType wrapType(TypeMirror type, Class<?> wrappingClass) {
     return types.getDeclaredType(elements.getTypeElement(wrappingClass), type);
   }
 
@@ -133,7 +132,7 @@ final class DaggerTypes implements Types {
    *
    * @throws IllegalArgumentException if {@code} has more than one type argument.
    */
-  DeclaredType rewrapType(TypeMirror type, Class<?> wrappingClass) {
+  public DeclaredType rewrapType(TypeMirror type, Class<?> wrappingClass) {
     List<? extends TypeMirror> typeArguments = MoreTypes.asDeclared(type).getTypeArguments();
     TypeElement wrappingType = elements.getTypeElement(wrappingClass);
     switch (typeArguments.size()) {
@@ -155,7 +154,7 @@ final class DaggerTypes implements Types {
    *   <li>Otherwise returns {@link Object}.
    * </ul>
    */
-  protected TypeMirror publiclyAccessibleType(TypeMirror type) {
+  public TypeMirror publiclyAccessibleType(TypeMirror type) {
     return accessibleType(
         type, Accessibility::isTypePubliclyAccessible, Accessibility::isRawTypePubliclyAccessible);
   }
@@ -169,7 +168,7 @@ final class DaggerTypes implements Types {
    *   <li>Otherwise returns {@link Object}.
    * </ul>
    */
-  protected TypeMirror accessibleType(TypeMirror type, ClassName requestingClass) {
+  public TypeMirror accessibleType(TypeMirror type, ClassName requestingClass) {
     return accessibleType(
         type,
         t -> Accessibility.isTypeAccessibleFrom(t, requestingClass.packageName()),
@@ -194,7 +193,7 @@ final class DaggerTypes implements Types {
    * Throws {@link TypeNotPresentException} if {@code type} is an {@link
    * javax.lang.model.type.ErrorType}.
    */
-  static void checkTypePresent(TypeMirror type) {
+  public static void checkTypePresent(TypeMirror type) {
     type.accept(
         // TODO(ronshapiro): Extract a base class that visits all components of a complex type
         // and put it in auto.common
@@ -221,11 +220,11 @@ final class DaggerTypes implements Types {
   private static final ImmutableSet<Class<?>> FUTURE_TYPES =
       ImmutableSet.of(ListenableFuture.class, FluentFuture.class);
 
-  static boolean isFutureType(TypeMirror type) {
+  public static boolean isFutureType(TypeMirror type) {
     return FUTURE_TYPES.stream().anyMatch(t -> MoreTypes.isTypeOf(t, type));
   }
 
-  static boolean hasTypeVariable(TypeMirror type) {
+  public static boolean hasTypeVariable(TypeMirror type) {
     return type.accept(
         new SimpleTypeVisitor8<Boolean, Void>() {
           @Override

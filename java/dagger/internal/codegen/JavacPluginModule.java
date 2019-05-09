@@ -25,6 +25,8 @@ import com.sun.tools.javac.util.Context;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;

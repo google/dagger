@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen;
 
+import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
+
 /** Binding expression for provider instances. */
 final class ProviderInstanceBindingExpression extends FrameworkInstanceBindingExpression {
 

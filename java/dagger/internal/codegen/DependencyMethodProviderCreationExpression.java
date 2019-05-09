@@ -21,7 +21,7 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
-import static dagger.internal.codegen.TypeNames.providerOf;
+import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;

@@ -30,7 +30,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.util.Collection;
 import javax.inject.Qualifier;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -86,7 +85,6 @@ public class BindsMethodValidationTest {
   }
 
   @Test
-  @Ignore("TODO: @Binds methods do not check explicitly for void")
   public void returnsVoid() {
     assertThatMethod("@Binds abstract void returnsVoid(Object impl);").hasError("void");
   }

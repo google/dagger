@@ -131,7 +131,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
       messager.printMessage(
           Kind.ERROR,
           String.format(
-              "%s should bind %s, not %s. See https://google.github.io/dagger/android",
+              "%s should bind %s, not %s. See https://dagger.dev/android",
               method, requiredReturnType, returnType),
           method);
     }

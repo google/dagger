@@ -39,7 +39,7 @@ import javax.lang.model.element.Element;
  * @param <T> The input type from which source is to be generated.
  */
 abstract class SourceFileGenerator<T> {
-  private static final String GENERATED_COMMENTS = "https://google.github.io/dagger";
+  private static final String GENERATED_COMMENTS = "https://dagger.dev";
 
   private final Filer filer;
   private final DaggerElements elements;

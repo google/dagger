@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * key/value pair. The {@code Map<K, Provider<V>>} produced from the accumulation of values will be
  * immutable.
  *
- * @see <a href="https://google.github.io/dagger/multibindings#map-multibindings">Map multibinding</a>
+ * @see <a href="https://dagger.dev/multibindings#map-multibindings">Map multibinding</a>
  */
 @Documented
 @Target(METHOD)

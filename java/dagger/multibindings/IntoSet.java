@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * value is contributed to the set. The object graph will pass dependencies to the method as
  * parameters. The {@code Set<T>} produced from the accumulation of values will be immutable.
  *
- * @see <a href="https://google.github.io/dagger/multibindings#set-multibindings">Set multibinding</a>
+ * @see <a href="https://dagger.dev/multibindings#set-multibindings">Set multibinding</a>
  */
 @Documented
 @Target(METHOD)

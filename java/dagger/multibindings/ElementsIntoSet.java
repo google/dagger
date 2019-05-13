@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * Set<T>} produced from the accumulation of values will be immutable. An example use is to provide
  * a default empty set binding, which is otherwise not possible using {@link IntoSet}.
  *
- * @see <a href="https://google.github.io/dagger/multibindings#set-multibindings">Set multibinding</a>
+ * @see <a href="https://dagger.dev/multibindings#set-multibindings">Set multibinding</a>
  */
 @Documented
 @Target(METHOD)

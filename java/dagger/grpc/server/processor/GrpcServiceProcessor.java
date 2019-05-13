@@ -40,7 +40,7 @@ import javax.tools.Diagnostic.Kind;
 /**
  * Generates code from types annotated with {@link GrpcService @GrpcService}.
  *
- * @see <a href="https://google.github.io/dagger/grpc">https://google.github.io/dagger/grpc</a>
+ * @see <a href="https://dagger.dev/grpc">https://dagger.dev/grpc</a>
  */
 @AutoService(Processor.class)
 public class GrpcServiceProcessor extends BasicAnnotationProcessor implements ProcessingStep {

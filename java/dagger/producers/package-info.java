@@ -21,6 +21,6 @@
  * in Java.
  *
  * <p>Extended documentation on Dagger Producers can be found at <a
- * href="https://google.github.io/dagger/producers">https://google.github.io/dagger/producers</a>.
+ * href="https://dagger.dev/producers">https://dagger.dev/producers</a>.
  */
 package dagger.producers;

@@ -124,7 +124,7 @@ public abstract class BindingGraph {
    * the component, or {@code false} if it is a reachable binding graph, which contains only
    * bindings that are reachable from at least one {@linkplain #entryPointEdges() entry point}.
    *
-   * @see <a href="https://google.github.io/dagger/compiler-options#full-binding-graph-validation">Full binding
+   * @see <a href="https://dagger.dev/compiler-options#full-binding-graph-validation">Full binding
    *     graph validation</a>
    */
   public abstract boolean isFullBindingGraph();

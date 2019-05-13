@@ -256,7 +256,7 @@ final class ComponentCreatorImplementationFactory {
           .addAnnotation(Deprecated.class)
           .addJavadoc(
               "@deprecated This module is declared, but an instance is not used in the component. "
-                  + "This method is a no-op. For more, see https://google.github.io/dagger/unused-modules.\n")
+                  + "This method is a no-op. For more, see https://dagger.dev/unused-modules.\n")
           .addStatement("$T.checkNotNull($N)", Preconditions.class, parameter);
       return maybeReturnThis(method);
     }

@@ -18,6 +18,6 @@
  * This package contains the API by which Dagger allows you to bind several objects into a
  * collection that can be injected without depending directly on each of the individual bindings.
  *
- * @see <a href="https://google.github.io/dagger/multibindings">Multibindings in the Dagger User's Guide</a>
+ * @see <a href="https://dagger.dev/multibindings">Multibindings in the Dagger User's Guide</a>
  */
 package dagger.multibindings;

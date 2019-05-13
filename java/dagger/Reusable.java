@@ -29,7 +29,7 @@ import javax.inject.Scope;
  * <p>{@code @Reusable} is useful when you want to limit the number of provisions of a type, but
  * there is no specific lifetime over which there must be only one instance.
  *
- * @see <a href="https://google.github.io/dagger/users-guide#reusable-scope">Reusable Scope</a>
+ * @see <a href="https://dagger.dev/users-guide#reusable-scope">Reusable Scope</a>
  */
 @Documented
 @Beta

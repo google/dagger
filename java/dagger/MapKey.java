@@ -100,7 +100,7 @@ import java.util.Map;
  * <p>(Note that there must be a class {@code MyMapKeyImpl} that implements {@code MyMapKey} in
  * order to call {@link Map#get(Object)} on the provided map.)
  *
- * @see <a href="https://google.github.io/dagger/multibindings#map-multibindings">Map multibinding</a>
+ * @see <a href="https://dagger.dev/multibindings#map-multibindings">Map multibinding</a>
  */
 @Documented
 @Target(ANNOTATION_TYPE)

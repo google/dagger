@@ -206,7 +206,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
             .append(formatWithComponentPath(explicitBinding))
             .append(
                 "\nThis condition was never validated before, and will soon be an error. "
-                    + "See https://google.github.io/dagger/conflicting-inject.");
+                    + "See https://dagger.dev/conflicting-inject.");
 
     diagnosticReporter.reportBinding(diagnosticKind, explicitBinding, message.toString());
   }

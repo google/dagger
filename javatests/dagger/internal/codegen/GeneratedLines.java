@@ -27,7 +27,7 @@ public final class GeneratedLines {
   public static final String GENERATED_ANNOTATION =
      "@Generated("
         + "value = \"dagger.internal.codegen.ComponentProcessor\", "
-        + "comments = \"https://google.github.io/dagger\")";
+        + "comments = \"https://dagger.dev\")";
 
   public static final String IMPORT_GENERATED_ANNOTATION =
       isBeforeJava9()

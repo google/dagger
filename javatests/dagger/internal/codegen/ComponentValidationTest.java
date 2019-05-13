@@ -23,7 +23,6 @@ import static dagger.internal.codegen.TestUtils.message;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import javax.tools.JavaFileObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -139,9 +138,7 @@ public final class ComponentValidationTest {
     assertThat(compilation).hadErrorContaining("wildcard type").inFile(testComponent).onLine(10);
   }
 
-  // TODO(b/34107586): Fix and enable test.
   @Test
-  @Ignore
   public void invalidComponentDependencies() {
     JavaFileObject testComponent =
         JavaFileObjects.forSourceLines(

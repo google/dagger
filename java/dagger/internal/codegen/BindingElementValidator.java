@@ -72,7 +72,7 @@ abstract class BindingElementValidator<E extends Element> {
   }
 
   /**
-   * Returns an error message of the form "<{@link #bindingElements()}> <i>rule</i>", where
+   * Returns an error message of the form "&lt;{@link #bindingElements()}&gt; <i>rule</i>", where
    * <i>rule</i> comes from calling {@link String#format(String, Object...)} on {@code ruleFormat}
    * and the other arguments.
    */
@@ -114,7 +114,7 @@ abstract class BindingElementValidator<E extends Element> {
   /**
    * The type declared by this binding element. This may differ from a binding's {@link Key#type()},
    * for example in multibindings. An {@link Optional#empty()} return value indicates that the
-   * contributed type is ambiguous or missing, i.e. a {@link @BindsInstance} method with zero or
+   * contributed type is ambiguous or missing, i.e. a {@code @BindsInstance} method with zero or
    * many parameters.
    */
   // TODO(dpb): should this be an ImmutableList<TypeMirror>, with this class checking the size?

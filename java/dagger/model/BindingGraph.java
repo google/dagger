@@ -426,6 +426,13 @@ public abstract class BindingGraph {
     public final String toString() {
       return String.format("missing binding for %s in %s", key(), componentPath());
     }
+
+    @Memoized
+    @Override
+    public abstract int hashCode();
+
+    @Override
+    public abstract boolean equals(Object o);
   }
 
   /**

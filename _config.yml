@@ -1,6 +1,6 @@
 auto: true
-url: "https://google.github.io"
-baseurl: '/dagger'
+url: "https://dagger.dev"
+baseurl: '/'
 markdown: kramdown
 repository: google/dagger
 

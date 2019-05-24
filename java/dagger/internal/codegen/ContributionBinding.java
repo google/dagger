@@ -68,7 +68,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
   }
 
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
-  Optional<TypeMirror> contributedPrimitiveType() {
+  final Optional<TypeMirror> contributedPrimitiveType() {
     return bindingElement()
         .filter(bindingElement -> bindingElement instanceof ExecutableElement)
         .map(bindingElement -> MoreElements.asExecutable(bindingElement).getReturnType())
@@ -102,7 +102,7 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
    *
    * <p>All other bindings use the {@link FactoryCreationStrategy#CLASS_CONSTRUCTOR} strategy.
    */
-  FactoryCreationStrategy factoryCreationStrategy() {
+  final FactoryCreationStrategy factoryCreationStrategy() {
     switch (kind()) {
       case DELEGATE:
         return DELEGATE;

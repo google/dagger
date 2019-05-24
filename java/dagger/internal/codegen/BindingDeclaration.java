@@ -49,7 +49,7 @@ abstract class BindingDeclaration {
    * The type enclosing the {@link #bindingElement()}, or {@link Optional#empty()} if {@link
    * #bindingElement()} is empty.
    */
-  Optional<TypeElement> bindingTypeElement() {
+  final Optional<TypeElement> bindingTypeElement() {
     return bindingElement().map(DaggerElements::closestEnclosingTypeElement);
   }
   

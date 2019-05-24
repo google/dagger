@@ -168,6 +168,7 @@ java_library(
         "FrameworkType.java",
         "FrameworkTypeMapper.java",
         "InjectBindingRegistry.java",
+        "InjectionSiteFactory.java",
         "KeyFactory.java",
         "KeyVariableNamer.java",  # needs ConfigurationAnnotations, SourceFiles
         "MapKeys.java",

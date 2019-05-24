@@ -31,7 +31,6 @@ import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.MapKeys.getMapKey;
 import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.Scopes.uniqueScopeOf;
-import static dagger.internal.codegen.langmodel.DaggerElements.DECLARATION_ORDER;
 import static dagger.model.BindingKind.BOUND_INSTANCE;
 import static dagger.model.BindingKind.COMPONENT;
 import static dagger.model.BindingKind.COMPONENT_DEPENDENCY;
@@ -46,16 +45,12 @@ import static dagger.model.BindingKind.PROVISION;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.SetMultimap;
 import dagger.Module;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.ProductionBinding.ProductionKind;
@@ -66,31 +61,24 @@ import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementKindVisitor6;
 
 /** A factory for {@link Binding} objects. */
 final class BindingFactory {
   private final DaggerTypes types;
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
+  private final InjectionSiteFactory injectionSiteFactory;
   private final DaggerElements elements;
 
   @Inject
@@ -98,11 +86,13 @@ final class BindingFactory {
       DaggerTypes types,
       DaggerElements elements,
       KeyFactory keyFactory,
-      DependencyRequestFactory dependencyRequestFactory) {
+      DependencyRequestFactory dependencyRequestFactory,
+      InjectionSiteFactory injectionSiteFactory) {
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
+    this.injectionSiteFactory = injectionSiteFactory;
   }
 
   /**
@@ -146,7 +136,7 @@ final class BindingFactory {
             .bindingElement(constructorElement)
             .key(key)
             .provisionDependencies(provisionDependencies)
-            .injectionSites(getInjectionSites(constructedType))
+            .injectionSites(injectionSiteFactory.getInjectionSites(constructedType))
             .kind(INJECTION)
             .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
@@ -495,7 +485,8 @@ final class BindingFactory {
           types.erasure(declaredType));
       declaredType = resolved;
     }
-    ImmutableSortedSet<InjectionSite> injectionSites = getInjectionSites(declaredType);
+    ImmutableSortedSet<InjectionSite> injectionSites =
+        injectionSiteFactory.getInjectionSites(declaredType);
     ImmutableSet<DependencyRequest> dependencies =
         injectionSites
             .stream()
@@ -513,116 +504,5 @@ final class BindingFactory {
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
             : Optional.empty(),
         injectionSites);
-  }
-
-  private final ElementVisitor<Optional<InjectionSite>, DeclaredType> injectionSiteVisitor =
-      new ElementKindVisitor6<Optional<InjectionSite>, DeclaredType>(Optional.empty()) {
-        @Override
-        public Optional<InjectionSite> visitExecutableAsMethod(
-            ExecutableElement e, DeclaredType type) {
-          return Optional.of(injectionSiteForInjectMethod(e, type));
-        }
-
-        @Override
-        public Optional<InjectionSite> visitVariableAsField(VariableElement e, DeclaredType type) {
-          return (isAnnotationPresent(e, Inject.class)
-                  && !e.getModifiers().contains(PRIVATE)
-                  && !e.getModifiers().contains(STATIC))
-              ? Optional.of(injectionSiteForInjectField(e, type))
-              : Optional.empty();
-        }
-      };
-
-  private ImmutableSortedSet<InjectionSite> getInjectionSites(DeclaredType declaredType) {
-    Set<InjectionSite> injectionSites = new HashSet<>();
-    List<TypeElement> ancestors = new ArrayList<>();
-    SetMultimap<String, ExecutableElement> overriddenMethodMap = LinkedHashMultimap.create();
-    for (Optional<DeclaredType> currentType = Optional.of(declaredType);
-        currentType.isPresent();
-        currentType = types.nonObjectSuperclass(currentType.get())) {
-      DeclaredType type = currentType.get();
-      ancestors.add(MoreElements.asType(type.asElement()));
-      for (Element enclosedElement : type.asElement().getEnclosedElements()) {
-        Optional<InjectionSite> maybeInjectionSite =
-            injectionSiteVisitor.visit(enclosedElement, type);
-        if (maybeInjectionSite.isPresent()) {
-          InjectionSite injectionSite = maybeInjectionSite.get();
-          if (shouldBeInjected(injectionSite.element(), overriddenMethodMap)) {
-            injectionSites.add(injectionSite);
-          }
-          if (injectionSite.kind().equals(InjectionSite.Kind.METHOD)) {
-            ExecutableElement injectionSiteMethod =
-                MoreElements.asExecutable(injectionSite.element());
-            overriddenMethodMap.put(
-                injectionSiteMethod.getSimpleName().toString(), injectionSiteMethod);
-          }
-        }
-      }
-    }
-    return ImmutableSortedSet.copyOf(
-        // supertypes before subtypes
-        Comparator.comparing(
-                (InjectionSite injectionSite) ->
-                    ancestors.indexOf(injectionSite.element().getEnclosingElement()))
-            .reversed()
-            // fields before methods
-            .thenComparing(injectionSite -> injectionSite.element().getKind())
-            // then sort by whichever element comes first in the parent
-            // this isn't necessary, but makes the processor nice and predictable
-            .thenComparing(InjectionSite::element, DECLARATION_ORDER),
-        injectionSites);
-  }
-
-  private boolean shouldBeInjected(
-      Element injectionSite, SetMultimap<String, ExecutableElement> overriddenMethodMap) {
-    if (!isAnnotationPresent(injectionSite, Inject.class)
-        || injectionSite.getModifiers().contains(PRIVATE)
-        || injectionSite.getModifiers().contains(STATIC)) {
-      return false;
-    }
-
-    if (injectionSite.getKind().isField()) { // Inject all fields (self and ancestors)
-      return true;
-    }
-
-    // For each method with the same name belonging to any descendant class, return false if any
-    // method has already overridden the injectionSite method. To decrease the number of methods
-    // that are checked, we store the already injected methods in a SetMultimap and only
-    // check the methods with the same name.
-    ExecutableElement injectionSiteMethod = MoreElements.asExecutable(injectionSite);
-    TypeElement injectionSiteType = MoreElements.asType(injectionSite.getEnclosingElement());
-    for (ExecutableElement method :
-        overriddenMethodMap.get(injectionSiteMethod.getSimpleName().toString())) {
-      if (elements.overrides(method, injectionSiteMethod, injectionSiteType)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private InjectionSite injectionSiteForInjectMethod(
-      ExecutableElement methodElement, DeclaredType containingType) {
-    checkNotNull(methodElement);
-    checkArgument(methodElement.getKind().equals(ElementKind.METHOD));
-    ExecutableType resolved =
-        MoreTypes.asExecutable(types.asMemberOf(containingType, methodElement));
-    return new AutoValue_MembersInjectionBinding_InjectionSite(
-        InjectionSite.Kind.METHOD,
-        methodElement,
-        dependencyRequestFactory.forRequiredResolvedVariables(
-            methodElement.getParameters(), resolved.getParameterTypes()));
-  }
-
-  private InjectionSite injectionSiteForInjectField(
-      VariableElement fieldElement, DeclaredType containingType) {
-    checkNotNull(fieldElement);
-    checkArgument(fieldElement.getKind().equals(ElementKind.FIELD));
-    checkArgument(isAnnotationPresent(fieldElement, Inject.class));
-    TypeMirror resolved = types.asMemberOf(containingType, fieldElement);
-    return new AutoValue_MembersInjectionBinding_InjectionSite(
-        InjectionSite.Kind.FIELD,
-        fieldElement,
-        ImmutableSet.of(
-            dependencyRequestFactory.forRequiredResolvedVariable(fieldElement, resolved)));
   }
 }

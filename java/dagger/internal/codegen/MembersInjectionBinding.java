@@ -28,8 +28,10 @@ import dagger.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 /**
  * Represents the full members injection of a particular type.
@@ -122,6 +124,17 @@ abstract class MembersInjectionBinding extends Binding {
           .filter(element -> element.getSimpleName().equals(this.element().getSimpleName()))
           .collect(toList())
           .indexOf(element());
+    }
+
+    static InjectionSite field(VariableElement element, DependencyRequest dependency) {
+      return new AutoValue_MembersInjectionBinding_InjectionSite(
+          Kind.FIELD, element, ImmutableSet.of(dependency));
+    }
+
+    static InjectionSite method(
+        ExecutableElement element, Iterable<DependencyRequest> dependencies) {
+      return new AutoValue_MembersInjectionBinding_InjectionSite(
+          Kind.METHOD, element, ImmutableSet.copyOf(dependencies));
     }
   }
 }

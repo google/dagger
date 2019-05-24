@@ -35,32 +35,40 @@ final class BindsInstanceParameterValidator extends BindsInstanceElementValidato
   BindsInstanceParameterValidator() {}
 
   @Override
-  protected void checkElement(ValidationReport.Builder<VariableElement> report) {
-    super.checkElement(report);
-
-    VariableElement parameter = report.getSubject();
-    Element enclosing = parameter.getEnclosingElement();
-    if (!enclosing.getKind().equals(METHOD)) {
-      report.addError("@BindsInstance should only be applied to methods or parameters of methods");
-      return;
-    }
-
-    ExecutableElement method = MoreElements.asExecutable(enclosing);
-    if (!method.getModifiers().contains(ABSTRACT)) {
-      report.addError("@BindsInstance parameters may only be used in abstract methods");
-    }
-
-    TypeKind returnKind = method.getReturnType().getKind();
-    if (!(returnKind.equals(DECLARED) || returnKind.equals(TYPEVAR))) {
-      report.addError(
-          "@BindsInstance parameters may not be used in methods with a void, array or primitive "
-              + "return type");
-    }
+  protected ElementValidator elementValidator(VariableElement element) {
+    return new Validator(element);
   }
 
-  @Override
-  protected Optional<TypeMirror> bindingElementType(
-      ValidationReport.Builder<VariableElement> report) {
-    return Optional.of(report.getSubject().asType());
+  private class Validator extends ElementValidator {
+    Validator(VariableElement element) {
+      super(element);
+    }
+
+    @Override
+    protected void checkAdditionalProperties() {
+      Element enclosing = element.getEnclosingElement();
+      if (!enclosing.getKind().equals(METHOD)) {
+        report.addError(
+            "@BindsInstance should only be applied to methods or parameters of methods");
+        return;
+      }
+
+      ExecutableElement method = MoreElements.asExecutable(enclosing);
+      if (!method.getModifiers().contains(ABSTRACT)) {
+        report.addError("@BindsInstance parameters may only be used in abstract methods");
+      }
+
+      TypeKind returnKind = method.getReturnType().getKind();
+      if (!(returnKind.equals(DECLARED) || returnKind.equals(TYPEVAR))) {
+        report.addError(
+            "@BindsInstance parameters may not be used in methods with a void, array or primitive "
+                + "return type");
+      }
+    }
+
+    @Override
+    protected Optional<TypeMirror> bindingElementType() {
+      return Optional.of(element.asType());
+    }
   }
 }

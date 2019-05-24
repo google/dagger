@@ -55,45 +55,49 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
-
-    checkParameters(builder);
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
   }
 
-  @Override
-  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!builder.getSubject().getParameters().isEmpty()) {
-      builder.addError(bindingMethods("cannot have parameters"));
+  private class Validator extends MethodValidator {
+    Validator(ExecutableElement element) {
+      super(element);
     }
-  }
 
-  /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
-  @Override
-  protected void checkType(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!isPlainMap(builder.getSubject().getReturnType())
-        && !isPlainSet(builder.getSubject().getReturnType())) {
-      builder.addError(bindingMethods("must return Map<K, V> or Set<T>"));
+    @Override
+    protected void checkParameters() {
+      if (!element.getParameters().isEmpty()) {
+        report.addError(bindingMethods("cannot have parameters"));
+      }
     }
-  }
 
-  private boolean isPlainMap(TypeMirror returnType) {
-    if (!MapType.isMap(returnType)) {
-      return false;
+    /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
+    @Override
+    protected void checkType() {
+      if (!isPlainMap(element.getReturnType())
+          && !isPlainSet(element.getReturnType())) {
+        report.addError(bindingMethods("must return Map<K, V> or Set<T>"));
+      }
     }
-    MapType mapType = MapType.from(returnType);
-    return !mapType.isRawType()
-        && MoreTypes.isType(mapType.valueType()) // No wildcards.
-        && !isFrameworkType(mapType.valueType());
-  }
 
-  private boolean isPlainSet(TypeMirror returnType) {
-    if (!SetType.isSet(returnType)) {
-      return false;
+    private boolean isPlainMap(TypeMirror returnType) {
+      if (!MapType.isMap(returnType)) {
+        return false;
+      }
+      MapType mapType = MapType.from(returnType);
+      return !mapType.isRawType()
+          && MoreTypes.isType(mapType.valueType()) // No wildcards.
+          && !isFrameworkType(mapType.valueType());
     }
-    SetType setType = SetType.from(returnType);
-    return !setType.isRawType()
-        && MoreTypes.isType(setType.elementType()) // No wildcards.
-        && !isFrameworkType(setType.elementType());
+
+    private boolean isPlainSet(TypeMirror returnType) {
+      if (!SetType.isSet(returnType)) {
+        return false;
+      }
+      SetType setType = SetType.from(returnType);
+      return !setType.isRawType()
+          && MoreTypes.isType(setType.elementType()) // No wildcards.
+          && !isFrameworkType(setType.elementType());
+    }
   }
 }

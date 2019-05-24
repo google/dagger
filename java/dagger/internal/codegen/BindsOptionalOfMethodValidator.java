@@ -60,29 +60,33 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
-    checkParameters(builder);
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
   }
 
-  @Override
-  protected void checkKeyType(
-      ValidationReport.Builder<ExecutableElement> builder, TypeMirror keyType) {
-    super.checkKeyType(builder, keyType);
-    if (isValidImplicitProvisionKey(
-            getQualifiers(builder.getSubject()).stream().findFirst(), keyType, types)
-        && !injectedConstructors(MoreElements.asType(MoreTypes.asDeclared(keyType).asElement()))
-            .isEmpty()) {
-      builder.addError(
-          "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"
-              + "annotated constructor because those are always present");
+  private class Validator extends MethodValidator {
+    Validator(ExecutableElement element) {
+      super(element);
     }
-  }
 
-  @Override
-  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!builder.getSubject().getParameters().isEmpty()) {
-      builder.addError("@BindsOptionalOf methods cannot have parameters");
+    @Override
+    protected void checkKeyType(TypeMirror keyType) {
+      super.checkKeyType(keyType);
+      if (isValidImplicitProvisionKey(
+              getQualifiers(element).stream().findFirst(), keyType, types)
+          && !injectedConstructors(MoreElements.asType(MoreTypes.asDeclared(keyType).asElement()))
+              .isEmpty()) {
+        report.addError(
+            "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"
+                + "annotated constructor because those are always present");
+      }
+    }
+
+    @Override
+    protected void checkParameters() {
+      if (!element.getParameters().isEmpty()) {
+        report.addError("@BindsOptionalOf methods cannot have parameters");
+      }
     }
   }
 }

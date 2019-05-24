@@ -58,48 +58,50 @@ final class BindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
-    checkParameters(builder);
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
   }
 
-  @Override
-  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
-    ExecutableElement method = builder.getSubject();
-    if (method.getParameters().size() != 1) {
-      builder.addError(
-          bindingMethods(
-              "must have exactly one parameter, whose type is assignable to the return type"));
-    } else {
-      super.checkParameters(builder);
-    }
-  }
-
-  @Override
-  protected void checkParameter(
-      ValidationReport.Builder<ExecutableElement> builder, VariableElement parameter) {
-    super.checkParameter(builder, parameter);
-    ExecutableElement method = builder.getSubject();
-    TypeMirror leftHandSide = boxIfNecessary(method.getReturnType());
-    TypeMirror rightHandSide = parameter.asType();
-    ContributionType contributionType = ContributionType.fromBindingElement(method);
-    if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
-      builder.addError(
-          "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter");
+  private class Validator extends MethodValidator {
+    Validator(ExecutableElement element) {
+      super(element);
     }
 
-    if (!bindsTypeChecker.isAssignable(rightHandSide, leftHandSide, contributionType)) {
-      // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
-      // right-hand-side might not be assignable to the left-hand-side, but still compatible with
-      // Set.addAll(Collection<? extends E>)
-      builder.addError("@Binds methods' parameter type must be assignable to the return type");
+    @Override
+    protected void checkParameters() {
+      if (element.getParameters().size() != 1) {
+        report.addError(
+            bindingMethods(
+                "must have exactly one parameter, whose type is assignable to the return type"));
+      } else {
+        super.checkParameters();
+      }
     }
-  }
 
-  private TypeMirror boxIfNecessary(TypeMirror maybePrimitive) {
-    if (maybePrimitive.getKind().isPrimitive()) {
-      return types.boxedClass(MoreTypes.asPrimitiveType(maybePrimitive)).asType();
+    @Override
+    protected void checkParameter(VariableElement parameter) {
+      super.checkParameter(parameter);
+      TypeMirror leftHandSide = boxIfNecessary(element.getReturnType());
+      TypeMirror rightHandSide = parameter.asType();
+      ContributionType contributionType = ContributionType.fromBindingElement(element);
+      if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
+        report.addError(
+            "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter");
+      }
+
+      if (!bindsTypeChecker.isAssignable(rightHandSide, leftHandSide, contributionType)) {
+        // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
+        // right-hand-side might not be assignable to the left-hand-side, but still compatible with
+        // Set.addAll(Collection<? extends E>)
+        report.addError("@Binds methods' parameter type must be assignable to the return type");
+      }
     }
-    return maybePrimitive;
+
+    private TypeMirror boxIfNecessary(TypeMirror maybePrimitive) {
+      if (maybePrimitive.getKind().isPrimitive()) {
+        return types.boxedClass(MoreTypes.asPrimitiveType(maybePrimitive)).asType();
+      }
+      return maybePrimitive;
+    }
   }
 }

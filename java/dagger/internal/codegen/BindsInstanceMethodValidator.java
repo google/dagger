@@ -35,43 +35,50 @@ final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<E
   BindsInstanceMethodValidator() {}
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> report) {
-    super.checkElement(report);
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
+  }
 
-    ExecutableElement method = report.getSubject();
-    if (!method.getModifiers().contains(ABSTRACT)) {
-      report.addError("@BindsInstance methods must be abstract");
+  private class Validator extends ElementValidator {
+    Validator(ExecutableElement element) {
+      super(element);
     }
-    if (method.getParameters().size() != 1) {
-      report.addError(
-          "@BindsInstance methods should have exactly one parameter for the bound type");
+
+    @Override
+    protected void checkAdditionalProperties() {
+      if (!element.getModifiers().contains(ABSTRACT)) {
+        report.addError("@BindsInstance methods must be abstract");
+      }
+      if (element.getParameters().size() != 1) {
+        report.addError(
+            "@BindsInstance methods should have exactly one parameter for the bound type");
+      }
+      TypeElement enclosingType = MoreElements.asType(element.getEnclosingElement());
+      moduleAnnotation(enclosingType)
+          .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
+      anyComponentAnnotation(enclosingType)
+          .ifPresent(
+              componentAnnotation ->
+                  report.addError(
+                      String.format(
+                          "@BindsInstance methods should not be included in @%1$ss. "
+                              + "Did you mean to put it in a @%1$s.Builder?",
+                          componentAnnotation.simpleName())));
     }
-    TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
-    moduleAnnotation(enclosingType)
-        .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
-    anyComponentAnnotation(enclosingType)
-        .ifPresent(
-            componentAnnotation ->
-                report.addError(
-                    String.format(
-                        "@BindsInstance methods should not be included in @%1$ss. "
-                            + "Did you mean to put it in a @%1$s.Builder?",
-                        componentAnnotation.simpleName())));
+
+    @Override
+    protected Optional<TypeMirror> bindingElementType() {
+      List<? extends VariableElement> parameters =
+          MoreElements.asExecutable(element).getParameters();
+      return parameters.size() == 1
+          ? Optional.of(getOnlyElement(parameters).asType())
+          : Optional.empty();
+    }
   }
 
   private static String didYouMeanBinds(ModuleAnnotation moduleAnnotation) {
     return String.format(
         "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?",
         moduleAnnotation.annotationClass().getSimpleName());
-  }
-
-  @Override
-  protected Optional<TypeMirror> bindingElementType(
-      ValidationReport.Builder<ExecutableElement> report) {
-    List<? extends VariableElement> parameters =
-        MoreElements.asExecutable(report.getSubject()).getParameters();
-    return parameters.size() == 1
-        ? Optional.of(getOnlyElement(parameters).asType())
-        : Optional.empty();
   }
 }

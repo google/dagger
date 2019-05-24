@@ -57,17 +57,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
-    checkNullable(builder);
-  }
-
-  /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
-  // TODO(beder): Properly handle nullable with producer methods.
-  private void checkNullable(ValidationReport.Builder<ExecutableElement> builder) {
-    if (ConfigurationAnnotations.getNullableType(builder.getSubject()).isPresent()) {
-      builder.addWarning("@Nullable on @Produces methods does not do anything");
-    }
+  protected String elementsIntoSetNotASetMessage() {
+    return "@Produces methods of type set values must return a Set or ListenableFuture of Set";
   }
 
   @Override
@@ -76,51 +67,67 @@ final class ProducesMethodValidator extends BindingMethodValidator {
         + "a declared type, or a ListenableFuture of one of those types";
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>Allows {@code keyType} to be a {@link ListenableFuture} of an otherwise-valid key type.
-   */
   @Override
-  protected void checkKeyType(
-      ValidationReport.Builder<ExecutableElement> reportBuilder, TypeMirror keyType) {
-    Optional<TypeMirror> typeToCheck = unwrapListenableFuture(reportBuilder, keyType);
-    if (typeToCheck.isPresent()) {
-      super.checkKeyType(reportBuilder, typeToCheck.get());
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
+  }
+
+  private class Validator extends MethodValidator {
+    Validator(ExecutableElement element) {
+      super(element);
     }
-  }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>Allows an {@link ElementsIntoSet @ElementsIntoSet} or {@code SET_VALUES} method to return a
-   * {@link ListenableFuture} of a {@link Set} as well.
-   */
-  @Override
-  protected void checkSetValuesType(ValidationReport.Builder<ExecutableElement> builder) {
-    Optional<TypeMirror> typeToCheck =
-        unwrapListenableFuture(builder, builder.getSubject().getReturnType());
-    if (typeToCheck.isPresent()) {
-      checkSetValuesType(builder, typeToCheck.get());
+    @Override
+    protected void checkAdditionalMethodProperties() {
+      checkNullable();
     }
-  }
 
-  @Override
-  protected String elementsIntoSetNotASetMessage() {
-    return "@Produces methods of type set values must return a Set or ListenableFuture of Set";
-  }
-
-  private static Optional<TypeMirror> unwrapListenableFuture(
-      ValidationReport.Builder<ExecutableElement> reportBuilder, TypeMirror type) {
-    if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
-      DeclaredType declaredType = MoreTypes.asDeclared(type);
-      if (declaredType.getTypeArguments().isEmpty()) {
-        reportBuilder.addError("@Produces methods cannot return a raw ListenableFuture");
-        return Optional.empty();
-      } else {
-        return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));
+    /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
+    // TODO(beder): Properly handle nullable with producer methods.
+    private void checkNullable() {
+      if (ConfigurationAnnotations.getNullableType(element).isPresent()) {
+        report.addWarning("@Nullable on @Produces methods does not do anything");
       }
     }
-    return Optional.of(type);
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Allows {@code keyType} to be a {@link ListenableFuture} of an otherwise-valid key type.
+     */
+    @Override
+    protected void checkKeyType(TypeMirror keyType) {
+      Optional<TypeMirror> typeToCheck = unwrapListenableFuture(keyType);
+      if (typeToCheck.isPresent()) {
+        super.checkKeyType(typeToCheck.get());
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Allows an {@link ElementsIntoSet @ElementsIntoSet} or {@code SET_VALUES} method to return
+     * a {@link ListenableFuture} of a {@link Set} as well.
+     */
+    @Override
+    protected void checkSetValuesType() {
+      Optional<TypeMirror> typeToCheck = unwrapListenableFuture(element.getReturnType());
+      if (typeToCheck.isPresent()) {
+        checkSetValuesType(typeToCheck.get());
+      }
+    }
+
+    private Optional<TypeMirror> unwrapListenableFuture(TypeMirror type) {
+      if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
+        DeclaredType declaredType = MoreTypes.asDeclared(type);
+        if (declaredType.getTypeArguments().isEmpty()) {
+          report.addError("@Produces methods cannot return a raw ListenableFuture");
+          return Optional.empty();
+        } else {
+          return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));
+        }
+      }
+      return Optional.of(type);
+    }
   }
 }

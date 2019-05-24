@@ -123,92 +123,100 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
     return "return";
   }
 
-  @Override
-  protected final Optional<TypeMirror> bindingElementType(
-      ValidationReport.Builder<ExecutableElement> report) {
-    return Optional.of(report.getSubject().getReturnType());
-  }
-
-  @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
-    checkEnclosingElement(builder);
-    checkTypeParameters(builder);
-    checkNotPrivate(builder);
-    checkAbstractness(builder);
-    checkThrows(builder);
-    checkParameters(builder);
-  }
-
-  /**
-   * Adds an error if the method is not declared in a class or interface annotated with one of the
-   * {@link #enclosingElementAnnotations}.
-   */
-  private void checkEnclosingElement(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!isAnyAnnotationPresent(
-        builder.getSubject().getEnclosingElement(), enclosingElementAnnotations)) {
-      builder.addError(
-          bindingMethods(
-              "can only be present within a @%s",
-              enclosingElementAnnotations.stream()
-                  .map(Class::getSimpleName)
-                  .collect(joining(" or @"))));
+  /** Abstract validator for individual binding method elements. */
+  protected abstract class MethodValidator extends ElementValidator {
+    protected MethodValidator(ExecutableElement element) {
+      super(element);
     }
-  }
 
-  /** Adds an error if the method is generic. */
-  private void checkTypeParameters(ValidationReport.Builder<ExecutableElement> builder) {
-    if (!builder.getSubject().getTypeParameters().isEmpty()) {
-      builder.addError(bindingMethods("may not have type parameters"));
+    @Override
+    protected final Optional<TypeMirror> bindingElementType() {
+      return Optional.of(element.getReturnType());
     }
-  }
 
-  /** Adds an error if the method is private. */
-  private void checkNotPrivate(ValidationReport.Builder<ExecutableElement> builder) {
-    if (builder.getSubject().getModifiers().contains(PRIVATE)) {
-      builder.addError(bindingMethods("cannot be private"));
+    @Override
+    protected final void checkAdditionalProperties() {
+      checkEnclosingElement();
+      checkTypeParameters();
+      checkNotPrivate();
+      checkAbstractness();
+      checkThrows();
+      checkParameters();
+      checkAdditionalMethodProperties();
     }
-  }
 
-  /** Adds an error if the method is abstract but must not be, or is not and must be. */
-  private void checkAbstractness(ValidationReport.Builder<ExecutableElement> builder) {
-    boolean isAbstract = builder.getSubject().getModifiers().contains(ABSTRACT);
-    switch (abstractness) {
-      case MUST_BE_ABSTRACT:
-        if (!isAbstract) {
-          builder.addError(bindingMethods("must be abstract"));
-        }
-        break;
+    /** Checks additional properties of the binding method. */
+    protected void checkAdditionalMethodProperties() {}
 
-      case MUST_BE_CONCRETE:
-        if (isAbstract) {
-          builder.addError(bindingMethods("cannot be abstract"));
-        }
+    /**
+     * Adds an error if the method is not declared in a class or interface annotated with one of the
+     * {@link #enclosingElementAnnotations}.
+     */
+    private void checkEnclosingElement() {
+      if (!isAnyAnnotationPresent(
+          element.getEnclosingElement(), enclosingElementAnnotations)) {
+        report.addError(
+            bindingMethods(
+                "can only be present within a @%s",
+                enclosingElementAnnotations.stream()
+                    .map(Class::getSimpleName)
+                    .collect(joining(" or @"))));
+      }
     }
-  }
 
-  /**
-   * Adds an error if the method declares throws anything but an {@link Error} or an appropriate
-   * subtype of {@link Exception}.
-   */
-  private void checkThrows(ValidationReport.Builder<ExecutableElement> builder) {
-    exceptionSuperclass.checkThrows(this, builder);
-  }
-
-  /** Adds errors for the method parameters. */
-  protected void checkParameters(ValidationReport.Builder<ExecutableElement> builder) {
-    for (VariableElement parameter : builder.getSubject().getParameters()) {
-      checkParameter(builder, parameter);
+    /** Adds an error if the method is generic. */
+    private void checkTypeParameters() {
+      if (!element.getTypeParameters().isEmpty()) {
+        report.addError(bindingMethods("may not have type parameters"));
+      }
     }
-  }
 
-  /**
-   * Adds errors for a method parameter. This implementation reports an error if the parameter has
-   * more than one qualifier.
-   */
-  protected void checkParameter(
-      ValidationReport.Builder<ExecutableElement> builder, VariableElement parameter) {
-    dependencyRequestValidator.validateDependencyRequest(builder, parameter, parameter.asType());
+    /** Adds an error if the method is private. */
+    private void checkNotPrivate() {
+      if (element.getModifiers().contains(PRIVATE)) {
+        report.addError(bindingMethods("cannot be private"));
+      }
+    }
+
+    /** Adds an error if the method is abstract but must not be, or is not and must be. */
+    private void checkAbstractness() {
+      boolean isAbstract = element.getModifiers().contains(ABSTRACT);
+      switch (abstractness) {
+        case MUST_BE_ABSTRACT:
+          if (!isAbstract) {
+            report.addError(bindingMethods("must be abstract"));
+          }
+          break;
+
+        case MUST_BE_CONCRETE:
+          if (isAbstract) {
+            report.addError(bindingMethods("cannot be abstract"));
+          }
+      }
+    }
+
+    /**
+     * Adds an error if the method declares throws anything but an {@link Error} or an appropriate
+     * subtype of {@link Exception}.
+     */
+    private void checkThrows() {
+      exceptionSuperclass.checkThrows(BindingMethodValidator.this, element, report);
+    }
+
+    /** Adds errors for the method parameters. */
+    protected void checkParameters() {
+      for (VariableElement parameter : element.getParameters()) {
+        checkParameter(parameter);
+      }
+    }
+
+    /**
+     * Adds errors for a method parameter. This implementation reports an error if the parameter has
+     * more than one qualifier.
+     */
+    protected void checkParameter(VariableElement parameter) {
+      dependencyRequestValidator.validateDependencyRequest(report, parameter, parameter.asType());
+    }
   }
 
   /** An abstract/concrete restriction on methods. */
@@ -231,9 +239,11 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
 
       @Override
       protected void checkThrows(
-          BindingMethodValidator validator, ValidationReport.Builder<ExecutableElement> builder) {
-        if (!builder.getSubject().getThrownTypes().isEmpty()) {
-          builder.addError(validator.bindingMethods("may not throw"));
+          BindingMethodValidator validator,
+          ExecutableElement element,
+          ValidationReport.Builder<ExecutableElement> report) {
+        if (!element.getThrownTypes().isEmpty()) {
+          report.addError(validator.bindingMethods("may not throw"));
           return;
         }
       }
@@ -274,13 +284,15 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      * <p>This method is overridden in {@link #NO_EXCEPTIONS}.
      */
     protected void checkThrows(
-        BindingMethodValidator validator, ValidationReport.Builder<ExecutableElement> builder) {
+        BindingMethodValidator validator,
+        ExecutableElement element,
+        ValidationReport.Builder<ExecutableElement> report) {
       TypeMirror exceptionSupertype = validator.elements.getTypeElement(superclass).asType();
       TypeMirror errorType = validator.elements.getTypeElement(Error.class).asType();
-      for (TypeMirror thrownType : builder.getSubject().getThrownTypes()) {
+      for (TypeMirror thrownType : element.getThrownTypes()) {
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)
             && !validator.types.isSubtype(thrownType, errorType)) {
-          builder.addError(errorMessage(validator));
+          report.addError(errorMessage(validator));
           break;
         }
       }

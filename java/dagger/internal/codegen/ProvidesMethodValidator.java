@@ -55,15 +55,24 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected void checkElement(ValidationReport.Builder<ExecutableElement> builder) {
-    super.checkElement(builder);
+  protected ElementValidator elementValidator(ExecutableElement element) {
+    return new Validator(element);
   }
 
-  /** Adds an error if a {@link Provides @Provides} method depends on a producer type. */
-  @Override
-  protected void checkParameter(
-      ValidationReport.Builder<ExecutableElement> builder, VariableElement parameter) {
-    super.checkParameter(builder, parameter);
-    dependencyRequestValidator.checkNotProducer(builder, parameter);
+  private class Validator extends MethodValidator {
+    Validator(ExecutableElement element) {
+      super(element);
+    }
+
+    @Override
+    protected void checkAdditionalMethodProperties() {
+    }
+
+    /** Adds an error if a {@link Provides @Provides} method depends on a producer type. */
+    @Override
+    protected void checkParameter(VariableElement parameter) {
+      super.checkParameter(parameter);
+      dependencyRequestValidator.checkNotProducer(report, parameter);
+    }
   }
 }

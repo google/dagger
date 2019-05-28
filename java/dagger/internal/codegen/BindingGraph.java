@@ -35,8 +35,10 @@ import dagger.Subcomponent;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -201,19 +203,19 @@ abstract class BindingGraph {
 
   static BindingGraph create(
       ComponentDescriptor componentDescriptor,
-      ImmutableMap<Key, ResolvedBindings> resolvedContributionBindingsMap,
-      ImmutableMap<Key, ResolvedBindings> resolvedMembersInjectionBindings,
-      ImmutableList<BindingGraph> subgraphs,
-      ImmutableSet<ModuleDescriptor> ownedModules,
+      Map<Key, ResolvedBindings> resolvedContributionBindingsMap,
+      Map<Key, ResolvedBindings> resolvedMembersInjectionBindings,
+      List<BindingGraph> subgraphs,
+      Set<ModuleDescriptor> ownedModules,
       Optional<ExecutableElement> factoryMethod,
       boolean isFullBindingGraph) {
     checkForDuplicates(subgraphs);
     return new AutoValue_BindingGraph(
         componentDescriptor,
-        resolvedContributionBindingsMap,
-        resolvedMembersInjectionBindings,
-        subgraphs,
-        ownedModules,
+        ImmutableMap.copyOf(resolvedContributionBindingsMap),
+        ImmutableMap.copyOf(resolvedMembersInjectionBindings),
+        ImmutableList.copyOf(subgraphs),
+        ImmutableSet.copyOf(ownedModules),
         factoryMethod,
         isFullBindingGraph);
   }

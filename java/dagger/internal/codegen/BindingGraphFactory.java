@@ -40,7 +40,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.MembersInjector;
@@ -904,17 +903,11 @@ final class BindingGraphFactory implements ClearableCache {
      * Returns all of the {@link ResolvedBindings} for {@link ContributionBinding}s from this and
      * all ancestor resolvers, indexed by {@link ResolvedBindings#key()}.
      */
-    ImmutableMap<Key, ResolvedBindings> getResolvedContributionBindings() {
-      ImmutableMap.Builder<Key, ResolvedBindings> builder = ImmutableMap.builder();
-      builder.putAll(resolvedContributionBindings);
-      if (parentResolver.isPresent()) {
-        ImmutableMap<Key, ResolvedBindings> parentBindings =
-            parentResolver.get().getResolvedContributionBindings();
-        Map<Key, ResolvedBindings> bindingsResolvedInParent =
-            Maps.difference(parentBindings, resolvedContributionBindings).entriesOnlyOnLeft();
-        builder.putAll(bindingsResolvedInParent);
-      }
-      return builder.build();
+    Map<Key, ResolvedBindings> getResolvedContributionBindings() {
+      Map<Key, ResolvedBindings> bindings = new LinkedHashMap<>();
+      parentResolver.ifPresent(parent -> bindings.putAll(parent.getResolvedContributionBindings()));
+      bindings.putAll(resolvedContributionBindings);
+      return bindings;
     }
 
     /**

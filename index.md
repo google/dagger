@@ -11,7 +11,7 @@ both Java and Android. It is an adaptation of an earlier version
 Dagger aims to address many of the development and performance issues that have
 plagued reflection-based solutions. More details can be found in
 [this talk][dagger-talk-video] ([slides][dagger-talk-slides]) by
-[+Gregory Kick].
+[Gregory Kick][gak].
 
 ## Where are the docs?
 
@@ -37,5 +37,5 @@ plagued reflection-based solutions. More details can be found in
 [dagger-talk-slides]: https://docs.google.com/presentation/d/1fby5VeGU9CN8zjw4lAb2QPPsKRxx6mSwCe9q7ECNSJQ/pub?start=false&loop=false&delayms=3000
 [Square]: http://square.github.io/
 [stack-overflow]: http://stackoverflow.com/questions/tagged/dagger-2
-[+Gregory Kick]: https://google.com/+GregoryKick/
+[gak]: https://twitter.com/gk5885
 

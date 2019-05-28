@@ -29,11 +29,11 @@ All of these methods must be in a [module], except for methods annotated with
      Do we? -->
 
 [binding]: binding.md
-[`@Binds`]: https://google.github.io/dagger/api/latest/dagger/Binds.html
-[`@BindsInstance`]: https://google.github.io/dagger/api/latest/dagger/BindsInstance.html
-[`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
+[`@BindsInstance`]: https://dagger.dev/api/latest/dagger/BindsInstance.html
+[`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [component builder]: component_builder.md
 [module]: module.md
-[`@Multibinds`]: https://google.github.io/dagger/api/latest/dagger/multibindings/Multibinds.html
-[`@Produces`]: https://google.github.io/dagger/api/latest/dagger/producers/Produces.html
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[`@Multibinds`]: https://dagger.dev/api/latest/dagger/multibindings/Multibinds.html
+[`@Produces`]: https://dagger.dev/api/latest/dagger/producers/Produces.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html

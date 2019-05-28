@@ -29,7 +29,7 @@ plagued reflection-based solutions. More details can be found in
 
 <!-- References -->
 
-[api-docs]: http://google.github.io/dagger/api/latest/
+[api-docs]: http://dagger.dev/api/latest/
 [DI]: http://en.wikipedia.org/wiki/Dependency_injection
 [dagger-talk-video]: https://www.youtube.com/watch?v=oK_XtfXPkqw
 [dagger-discuss]: https://groups.google.com/forum/#!forum/dagger-discuss

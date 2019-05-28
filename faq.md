@@ -111,9 +111,9 @@ as handwritten code. If you experience any weirdness, file a bug!
 
 <!-- References -->
 
-[`@Binds`]: https://google.github.io/dagger/api/latest/dagger/Binds.html
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
-[`dagger.producers.monitoring`]: https://google.github.io/dagger/api/latest/dagger/producers/monitoring/package-summary.html
+[`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html
+[`dagger.producers.monitoring`]: https://dagger.dev/api/latest/dagger/producers/monitoring/package-summary.html
 [AOP]: https://en.wikipedia.org/wiki/Aspect-oriented_programming
 [m2e-apt]: https://immutables.github.io/apt.html
 [dagger-2-stack-overflow]: https://stackoverflow.com/questions/tagged/dagger-2?sort=votes&pageSize=15

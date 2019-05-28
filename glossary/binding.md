@@ -66,14 +66,13 @@ Other ways to create bindings include:
 <!-- TODO(ronshapiro): create and link to pages on multibindings and optional
 bindings. Also add an "Advanced" section on synthetic bindings -->
 
-
-[`@Binds`]: https://google.github.io/dagger/api/latest/dagger/Binds.html
+[`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
 [binding graph]: binding_graph.md
-[`@BindsInstance`]: https://google.github.io/dagger/api/latest/dagger/BindsInstance.html
-[`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[`@BindsInstance`]: https://dagger.dev/api/latest/dagger/BindsInstance.html
+[`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [dependency]: dependency_request.md
 [dependency requests]: dependency_request.md
 [`FormatStyle`]: https://docs.oracle.com/javase/8/docs/api/java/time/format/FormatStyle.html
 [`@Inject`]: https://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [key]: key.md
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html

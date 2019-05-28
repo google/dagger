@@ -214,14 +214,14 @@ You create and start the server in the same way as above.
 
 [`AbstractServerBuilder`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/AbstractServerBuilder.java
 [call metadata]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Metadata.java
-[`@CallScope`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/CallScope.html
-[`@ForGrpcService`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/ForGrpcService.html
-[`GrpcCallMetadataModule`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/GrpcCallMetadataModule.html
-[`@GrpcService`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/GrpcService.html
+[`@CallScope`]: https://dagger.dev/api/latest/dagger/grpc/server/CallScope.html
+[`@ForGrpcService`]: https://dagger.dev/api/latest/dagger/grpc/server/ForGrpcService.html
+[`GrpcCallMetadataModule`]: https://dagger.dev/api/latest/dagger/grpc/server/GrpcCallMetadataModule.html
+[`@GrpcService`]: https://dagger.dev/api/latest/dagger/grpc/server/GrpcService.html
 [`@Inject`]: https://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [`Metadata.Headers`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Metadata.java
-[module]: https://google.github.io/dagger/api/latest/dagger/Module.html
-[`NettyServerModule`]: https://google.github.io/dagger/api/latest/dagger/grpc/server/NettyServerModule.html
+[module]: https://dagger.dev/api/latest/dagger/Module.html
+[`NettyServerModule`]: https://dagger.dev/api/latest/dagger/grpc/server/NettyServerModule.html
 [scope]: https://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [`Server`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Server.java
 [`ServerCall`]: https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/ServerCall.java

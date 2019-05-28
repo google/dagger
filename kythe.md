@@ -29,5 +29,5 @@ could be built on top of this (though none have been yet).
 [Language Server Protocol]:  https://microsoft.github.io/language-server-protocol/
 [modules]: glossary/module.md
 [`@Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html
 

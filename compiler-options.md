@@ -71,5 +71,5 @@ and subcomponent as well.
 
 <!-- References -->
 
-[`@Component`]: https://google.github.io/dagger/api/latest/dagger/Component.html
+[`@Component`]: https://dagger.dev/api/latest/dagger/Component.html
 [`Provider`]: http://docs.oracle.com/javaee/7/api/javax/inject/Provider.html

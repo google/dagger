@@ -24,7 +24,7 @@ server](servers#call-scope), bindings in call scope can inject the
 
 <!-- References -->
 
-[`@CallScope`]: https://google.github.io/dagger/api/latest/dagger/grpc/CallScope.html
+[`@CallScope`]: https://dagger.dev/api/latest/dagger/grpc/CallScope.html
 [Dagger]: https://github.com/google/dagger
 [grpc-java]: https://github.com/grpc/grpc-java
 [gRPC]: http://www.grpc.io/

@@ -26,10 +26,10 @@ Dagger generates an implementation of each component in the tree.
 A component is the equivalent of the "injector" in Guice and other
 [dependency injection] frameworks.
 
-[`@Component`]: https://google.github.io/dagger/api/latest/dagger/Component.html
-[`@ProductionComponent`]: https://google.github.io/dagger/api/latest/dagger/producers/ProductionComponent.html
-[`@ProductionSubcomponent`]: https://google.github.io/dagger/api/latest/dagger/producers/ProductionSubcomponent.html
-[`@Subcomponent`]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html
+[`@Component`]: https://dagger.dev/api/latest/dagger/Component.html
+[`@ProductionComponent`]: https://dagger.dev/api/latest/dagger/producers/ProductionComponent.html
+[`@ProductionSubcomponent`]: https://dagger.dev/api/latest/dagger/producers/ProductionSubcomponent.html
+[`@Subcomponent`]: https://dagger.dev/api/latest/dagger/Subcomponent.html
 [component dependency]: component_dependency.md
 [dependency injection]: dependency_injection.md
 [entry point]: entry_point.md

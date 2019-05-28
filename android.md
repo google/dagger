@@ -322,24 +322,24 @@ method.
 
 <!-- References -->
 
-[AndroidInjection.inject(Activity)]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjection.html#inject-android.app.Activity-
-[AndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjector.html
-[AndroidInjector.Factory]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjector.Factory.html
+[AndroidInjection.inject(Activity)]: https://dagger.dev/api/latest/dagger/android/AndroidInjection.html#inject-android.app.Activity-
+[AndroidInjector]: https://dagger.dev/api/latest/dagger/android/AndroidInjector.html
+[AndroidInjector.Factory]: https://dagger.dev/api/latest/dagger/android/AndroidInjector.Factory.html
 [android-performance]: http://developer.android.com/training/best-performance.html
-[`AndroidInjectionModule`]: https://google.github.io/dagger/api/latest/dagger/android/AndroidInjectionModule.html
-[`@ContributesAndroidInjector`]: https://google.github.io/dagger/api/latest/dagger/android/ContributesAndroidInjector.html
-[`dagger.android`]: https://google.github.io/dagger/api/latest/dagger/android/package-summary.html
-[`DaggerActivity`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerActivity.html
-[`DaggerApplication`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerApplication.html
-[`DaggerBroadcastReceiver`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerBroadcastReceiver.html
-[`DaggerContentProvider`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerContentProvider.html
-[`DaggerFragment`]: https://google.github.io/dagger/api/latest/dagger/android/support/DaggerFragment.html
-[`DaggerIntentService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerIntentService.html
-[`DaggerService`]: https://google.github.io/dagger/api/latest/dagger/android/DaggerService.html
-[DispatchingAndroidInjector]: https://google.github.io/dagger/api/latest/dagger/android/DispatchingAndroidInjector.html
+[`AndroidInjectionModule`]: https://dagger.dev/api/latest/dagger/android/AndroidInjectionModule.html
+[`@ContributesAndroidInjector`]: https://dagger.dev/api/latest/dagger/android/ContributesAndroidInjector.html
+[`dagger.android`]: https://dagger.dev/api/latest/dagger/android/package-summary.html
+[`DaggerActivity`]: https://dagger.dev/api/latest/dagger/android/DaggerActivity.html
+[`DaggerApplication`]: https://dagger.dev/api/latest/dagger/android/DaggerApplication.html
+[`DaggerBroadcastReceiver`]: https://dagger.dev/api/latest/dagger/android/DaggerBroadcastReceiver.html
+[`DaggerContentProvider`]: https://dagger.dev/api/latest/dagger/android/DaggerContentProvider.html
+[`DaggerFragment`]: https://dagger.dev/api/latest/dagger/android/support/DaggerFragment.html
+[`DaggerIntentService`]: https://dagger.dev/api/latest/dagger/android/DaggerIntentService.html
+[`DaggerService`]: https://dagger.dev/api/latest/dagger/android/DaggerService.html
+[DispatchingAndroidInjector]: https://dagger.dev/api/latest/dagger/android/DispatchingAndroidInjector.html
 [effective-java]: https://books.google.com/books?id=ka2VUBqHiWkC
 [ErrorProne]: https://github.com/google/error-prone
-[`HasActivityInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasActivityInjector.html
-[`HasFragmentInjector`]: https://google.github.io/dagger/api/latest/dagger/android/HasFragmentInjector.html
+[`HasActivityInjector`]: https://dagger.dev/api/latest/dagger/android/HasActivityInjector.html
+[`HasFragmentInjector`]: https://dagger.dev/api/latest/dagger/android/HasFragmentInjector.html
 [ProGuard]: http://proguard.sourceforge.net/
 

@@ -450,9 +450,9 @@ class ChildModule {
 <!-- References -->
 
 [`@AutoAnnotation`]: https://github.com/google/auto/blob/master/value/src/main/java/com/google/auto/value/AutoAnnotation.java
-[`dagger.multibindings`]: https://google.github.io/dagger/api/latest/dagger/multibindings/package-summary.html
-[`@ElementsIntoSet`]: https://google.github.io/dagger/api/latest/dagger/multibindings/ElementsIntoSet.html
-[`@IntoMap`]: https://google.github.io/dagger/api/latest/dagger/multibindings/IntoMap.html
-[`@IntoSet`]: https://google.github.io/dagger/api/latest/dagger/multibindings/IntoSet.html
-[`@MapKey`]: https://google.github.io/dagger/api/latest/dagger/MapKey.html
-[`@Multibinds`]: https://google.github.io/dagger/api/latest/dagger/multibindings/Multibinds.html
+[`dagger.multibindings`]: https://dagger.dev/api/latest/dagger/multibindings/package-summary.html
+[`@ElementsIntoSet`]: https://dagger.dev/api/latest/dagger/multibindings/ElementsIntoSet.html
+[`@IntoMap`]: https://dagger.dev/api/latest/dagger/multibindings/IntoMap.html
+[`@IntoSet`]: https://dagger.dev/api/latest/dagger/multibindings/IntoSet.html
+[`@MapKey`]: https://dagger.dev/api/latest/dagger/MapKey.html
+[`@Multibinds`]: https://dagger.dev/api/latest/dagger/multibindings/Multibinds.html

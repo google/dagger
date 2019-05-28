@@ -350,14 +350,14 @@ DaggerComponentOne.create().componentThreeBuilder()
 
 <!-- References -->
 
-[`@Component`]: https://google.github.io/dagger/api/latest/dagger/Component.html
-[component builders]: https://google.github.io/dagger/api/latest/dagger/Component.Builder.html
-[component-methods]: https://google.github.io/dagger/api/latest/dagger/Component.html#component-methods
+[`@Component`]: https://dagger.dev/api/latest/dagger/Component.html
+[component builders]: https://dagger.dev/api/latest/dagger/Component.Builder.html
+[component-methods]: https://dagger.dev/api/latest/dagger/Component.html#component-methods
 [`@Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
-[`@Module`]: https://google.github.io/dagger/api/latest/dagger/Module.html
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[`@Module`]: https://dagger.dev/api/latest/dagger/Module.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html
 [`@Scope`]: http://docs.oracle.com/javaee/7/api/javax/inject/Scope.html
 [`@Singleton`]: http://docs.oracle.com/javaee/7/api/javax/inject/Singleton.html
-[`@Subcomponent`]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.html
-[`@Subcomponent.Builder`]: https://google.github.io/dagger/api/latest/dagger/Subcomponent.Builder.html
-[subcomponents-attribute]: https://google.github.io/dagger/api/latest/dagger/Module.html#subcomponents()
+[`@Subcomponent`]: https://dagger.dev/api/latest/dagger/Subcomponent.html
+[`@Subcomponent.Builder`]: https://dagger.dev/api/latest/dagger/Subcomponent.Builder.html
+[subcomponents-attribute]: https://dagger.dev/api/latest/dagger/Module.html#subcomponents()

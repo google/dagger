@@ -319,4 +319,4 @@ reverse order, at the various points of the producer method's lifecycle:
 See the [javadoc][ProducerMonitor] for details, including more threading
 guarantees.
 
-[ProducerMonitor]: https://google.github.io/dagger/api/latest/dagger/producers/monitoring/ProducerMonitor.html
+[ProducerMonitor]: https://dagger.dev/api/latest/dagger/producers/monitoring/ProducerMonitor.html

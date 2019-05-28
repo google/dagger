@@ -34,6 +34,6 @@ You have a few options to fix these conflicts:
     constructor explicitly. In either case, you have to add the qualifier to the
     dependency requests that you want to use the qualified binding.
 
-[`@BindsOptionalOf`]: https://google.github.io/dagger/api/latest/dagger/BindsOptionalOf.html
+[`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [`@Inject`]: https://docs.oracle.com/javaee/6/api/javax/inject/Inject.html
-[`@Provides`]: https://google.github.io/dagger/api/latest/dagger/Provides.html
+[`@Provides`]: https://dagger.dev/api/latest/dagger/Provides.html

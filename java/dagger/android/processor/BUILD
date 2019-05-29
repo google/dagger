@@ -22,8 +22,7 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
-load("//tools:simple_jar.bzl", "simple_jar")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 
 filegroup(
     name = "srcs",
@@ -34,13 +33,13 @@ java_library(
     name = "processor",
     srcs = [":srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    resource_jars = [":processor_manifest_files.jar"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android-processor:" + POM_VERSION],
     deps = [
         "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/google_java_format",
         "//java/dagger:core",
@@ -63,11 +62,6 @@ java_import(
     jars = ["//java/dagger/android:libandroid.jar"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android-jarimpl:" + POM_VERSION],
     visibility = ["//visibility:private"],
-)
-
-simple_jar(
-    name = "processor_manifest_files",
-    srcs = glob(["META-INF/**"]),
 )
 
 pom_file(

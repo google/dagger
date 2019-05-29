@@ -18,6 +18,7 @@ package dagger.android.processor;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
+import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
@@ -36,6 +37,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
  * An {@linkplain javax.annotation.processing.Processor annotation processor} to verify usage of
@@ -51,6 +53,7 @@ import javax.lang.model.util.Types;
  * R8 in <a href="https://r8.googlesource.com/r8/+/389123dfcc11e6dda0eec31ab62e1b7eb0da80d2">May
  * 2018</a>.
  */
+@IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class AndroidProcessor extends BasicAnnotationProcessor {
   private static final String FLAG_EXPERIMENTAL_USE_STRING_KEYS =

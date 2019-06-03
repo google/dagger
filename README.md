@@ -1,34 +1,23 @@
-# Dagger 2
+# Dagger
 
 [![Maven Central][mavenbadge-svg]][mavencentral]
 
-A fast dependency injector for Android and Java.
+A fast dependency injector for Java and Android.
 
-## About Google's Fork
+Dagger is a compile-time framework for dependency injection. It uses no
+reflection or runtime bytecode generation, does all its analysis at
+compile-time, and generates plain Java source code.
 
-Dagger 2 is a compile-time evolution approach to dependency injection.
-Taking the approach started in Dagger 1.x to its ultimate conclusion,
-Dagger 2.x eliminates all reflection, and improves code clarity by
-removing the traditional ObjectGraph/Injector in favor of user-specified
-`@Component` interfaces.
-
-This github project represents the Dagger 2 development stream.  The earlier
-[project page][square] (Square, Inc's repository) represents the earlier 1.0
-development stream. Both versions have benefited from strong involvement from
-Square, Google, and other contributors.
-
-Dagger is currently in active development, primarily internally at Google,
-with regular pushes to the open-source community. Snapshot releases are
-auto-deployed to sonatype's central maven repository on every clean build with
-the version `HEAD-SNAPSHOT`.
-
-> [Dagger 2's main documentation website can be found here.][website]
+Dagger is actively maintained by the same team that works on [Guava]. Snapshot
+releases are auto-deployed to Sonatype's central Maven repository on every clean
+build with the version `HEAD-SNAPSHOT`. The current version builds upon previous
+work done at [Square][square].
 
 ## Documentation
 
 You can [find the dagger documentation here][website] which has extended usage
-instructions and other useful information.  Substantial usage information can be
-found in the [API documentation][20api].
+instructions and other useful information. More detailed information can be
+found in the [API documentation][latestapi].
 
 You can also learn more from [the original proposal][proposal],
 [this talk by Greg Kick][gaktalk], and on the dagger-discuss@googlegroups.com
@@ -172,16 +161,11 @@ gradle.projectsEvaluated {
 }
 ```
 
-### Download
+### Resources
 
-  * 2.x (google/dagger)
-    * [Dagger 2.0 Documentation][website]
-    * [Dagger 2.0 Javadocs][20api]
-    * [Dagger development Javadocs][latestapi] (from the `master` branch
-      on GitHub)
-    * [Google's Dagger project site on GitHub][project]
-  * 1.x (square/dagger)
-    * [Square's original Dagger project site on GitHub][square]
+*   [Documentation][website]
+*   [Javadocs][latestapi]
+*   [GitHub Issues]
 
 
 If you do not use maven, gradle, ivy, or other build systems that consume
@@ -212,13 +196,14 @@ See [the CONTRIBUTING.md docs][Building Dagger].
     See the License for the specific language governing permissions and
     limitations under the License.
 
-[20api]: https://dagger.dev/api/2.0/
 [`bazel`]: https://bazel.build
 [bazel-external-deps]: https://docs.bazel.build/versions/master/external.html#depending-on-other-bazel-projects
 [Building Dagger]: CONTRIBUTING.md#building-dagger
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
+[GitHub Issues]: https://github.com/google/dagger/issues
+[Guava]: https://github.com/google/guava
 [latestapi]: https://dagger.dev/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
 [mavencentral]: https://search.maven.org/artifact/com.google.dagger/dagger

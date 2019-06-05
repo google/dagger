@@ -28,7 +28,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.support.v4.SupportFragmentTestUtil;
 
-@Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
 public final class AndroidSupportInjectionTest {
   @Test
@@ -53,7 +52,7 @@ public final class AndroidSupportInjectionTest {
   }
 
   @Test
-  @Config(manifest = Config.NONE, application = ApplicationReturnsNull.class)
+  @Config(application = ApplicationReturnsNull.class)
   public void fragmentInjector_returnsNull() {
     Fragment fragment = new Fragment();
     SupportFragmentTestUtil.startFragment(fragment);

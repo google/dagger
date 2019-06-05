@@ -29,7 +29,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.FragmentTestUtil;
 
-@Config(manifest = Config.NONE)
 @RunWith(RobolectricTestRunner.class)
 public final class AndroidInjectionTest {
 
@@ -55,7 +54,7 @@ public final class AndroidInjectionTest {
     }
   }
 
-  @Config(manifest = Config.NONE, application = ApplicationInjectsFragment.class)
+  @Config(application = ApplicationInjectsFragment.class)
   @Test
   public void fragmentInjectedByApplication() {
     Activity activity = Robolectric.setupActivity(Activity.class);
@@ -74,7 +73,7 @@ public final class AndroidInjectionTest {
     }
   }
 
-  @Config(manifest = Config.NONE, application = ApplicationInjectsFragment.class)
+  @Config(application = ApplicationInjectsFragment.class)
   @Test
   public void fragmentInjectedByActivity() {
     ActivityInjectsFragment activity = Robolectric.setupActivity(ActivityInjectsFragment.class);
@@ -94,7 +93,7 @@ public final class AndroidInjectionTest {
     }
   }
 
-  @Config(manifest = Config.NONE, application = ApplicationInjectsFragment.class)
+  @Config(application = ApplicationInjectsFragment.class)
   @Test
   public void fragmentInjectedByParentFragment() {
     ActivityInjectsFragment activity = Robolectric.setupActivity(ActivityInjectsFragment.class);
@@ -153,7 +152,7 @@ public final class AndroidInjectionTest {
   }
 
   @Test
-  @Config(manifest = Config.NONE, application = ApplicationReturnsNull.class)
+  @Config(application = ApplicationReturnsNull.class)
   public void activityInjector_returnsNull() {
     Activity activity = Robolectric.setupActivity(Activity.class);
 
@@ -166,7 +165,7 @@ public final class AndroidInjectionTest {
   }
 
   @Test
-  @Config(manifest = Config.NONE, application = ApplicationReturnsNull.class)
+  @Config(application = ApplicationReturnsNull.class)
   public void fragmentInjector_returnsNull() {
     Fragment fragment = new Fragment();
     FragmentTestUtil.startFragment(fragment);

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static dagger.internal.codegen.SourceFiles.protectAgainstKeywords;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -38,6 +39,7 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;
 import java.util.Optional;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Parameterizable;
 import javax.lang.model.element.VariableElement;
@@ -86,8 +88,7 @@ abstract class InjectionMethod {
             .addParameters(parameters().keySet())
             .addCode(methodBody());
     returnType().map(TypeName::get).ifPresent(builder::returns);
-    nullableAnnotation()
-        .ifPresent(nullableType -> CodeBlocks.addAnnotation(builder, nullableType));
+    nullableAnnotation().ifPresent(nullableType -> CodeBlocks.addAnnotation(builder, nullableType));
     exceptions().stream().map(TypeName::get).forEach(builder::addException);
     return builder.build();
   }
@@ -126,12 +127,19 @@ abstract class InjectionMethod {
     private DaggerElements elements;
 
     abstract ImmutableMap.Builder<ParameterSpec, TypeMirror> parametersBuilder();
+
     abstract ImmutableList.Builder<TypeVariableName> typeVariablesBuilder();
+
     abstract Builder name(String name);
+
     abstract Builder varargs(boolean varargs);
+
     abstract Builder returnType(TypeMirror returnType);
+
     abstract Builder exceptions(Iterable<? extends TypeMirror> exceptions);
+
     abstract Builder nullableAnnotation(Optional<DeclaredType> nullableAnnotation);
+
     abstract Builder methodBody(CodeBlock methodBody);
 
     final CodeBlock.Builder methodBodyBuilder() {
@@ -173,11 +181,27 @@ abstract class InjectionMethod {
     CodeBlock copyParameter(VariableElement parameter) {
       TypeMirror elementType = parameter.asType();
       boolean useObject = !isRawTypePubliclyAccessible(elementType);
-      TypeMirror publicType =  useObject ? objectType() : elementType;
-      ParameterSpec parameterSpec = addParameter(parameter.getSimpleName().toString(), publicType);
+      TypeMirror publicType = useObject ? objectType() : elementType;
+      ParameterSpec parameterSpec =
+          addParameter(validJavaName(parameter.getSimpleName().toString()), publicType);
       return useObject
           ? CodeBlock.of("($T) $N", elementType, parameterSpec)
           : CodeBlock.of("$N", parameterSpec);
+    }
+
+    private static String validJavaName(String name) {
+      if (SourceVersion.isIdentifier(name)) {
+        return protectAgainstKeywords(name);
+      }
+
+      StringBuilder newName = new StringBuilder(name.length());
+      char firstChar = name.charAt(0);
+      if (!Character.isJavaIdentifierStart(firstChar)) {
+        newName.append('_');
+      }
+
+      name.chars().forEach(c -> newName.append(Character.isJavaIdentifierPart(c) ? c : '_'));
+      return newName.toString();
     }
 
     private TypeMirror objectType() {

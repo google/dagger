@@ -29,7 +29,7 @@ import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /** A Truth subject for making assertions on a {@link BindingGraph}. */
-public final class BindingGraphSubject extends Subject<BindingGraphSubject, BindingGraph> {
+public final class BindingGraphSubject extends Subject {
 
   /** Starts a fluent assertion about a {@link BindingGraph}. */
   public static BindingGraphSubject assertThat(BindingGraph bindingGraph) {
@@ -107,7 +107,7 @@ public final class BindingGraphSubject extends Subject<BindingGraphSubject, Bind
   }
 
   /** A Truth subject for a {@link Binding}. */
-  public final class BindingSubject extends Subject<BindingSubject, Binding> {
+  public final class BindingSubject extends Subject {
 
     private final Binding actual;
 
